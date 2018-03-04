@@ -67,6 +67,7 @@ func Start() *Engine {
 				watchers[w.id] = w
 				w.update(global)
 			case id := <-e.removeWatcher:
+				watchers[id].close()
 				delete(watchers, id)
 			case req := <-e.updateDb:
 				log.Printf("-> %s", req.expr)
@@ -75,6 +76,7 @@ func Start() *Engine {
 					req.failed <- err
 					continue
 				}
+				req.failed <- nil
 				global = global.With(Root, value)
 				for _, w := range watchers {
 					w.update(global)
@@ -101,19 +103,24 @@ func (e *Engine) Hangup() {
 }
 
 // Update updates the database variable to equal the given expression.
-func (e *Engine) Update(expr rel.Expr, failed chan<- error) {
+func (e *Engine) Update(expr rel.Expr) error {
+	failed := make(chan error)
 	e.updateDb <- updateRequest{expr, failed}
+	return <-failed
 }
 
 // Observe registers and returns an Observation on the given expression.
 func (e *Engine) Observe(
-	expr rel.Expr, updates chan<- rel.Value, errors chan<- error,
-) (cancel func()) {
+	expr rel.Expr,
+	onupdate func(rel.Value) error,
+	onclose func(error),
+) func() {
 	id := atomic.AddUint64(&lastID, 1)
-	e.addWatcher <- &watcher{id, expr, updates, errors}
-	return func() {
+	cancel := func() {
 		e.removeWatcher <- id
 	}
+	e.addWatcher <- &watcher{id, cancel, expr, onupdate, onclose}
+	return cancel
 }
 
 type updateRequest struct {
@@ -122,29 +129,32 @@ type updateRequest struct {
 }
 
 type watcher struct {
-	id      uint64
-	expr    rel.Expr
-	updates chan<- rel.Value
-	errors  chan<- error
+	id       uint64
+	cancel   func()
+	expr     rel.Expr
+	onupdate func(rel.Value) error
+	onclose  func(error)
 }
 
 func (w *watcher) update(global *rel.Scope) {
 	defer func() {
-		if x := recover(); x != nil {
-			w.errors <- errors.WrapPrefix(x, "update panic", 0)
+		if err := recover(); err != nil {
+			w.onclose(errors.WrapPrefix(err, "update panic", 0))
 		}
 	}()
 
 	value, err := w.expr.Eval(global, global)
 	if err != nil {
-		w.errors <- err
+		w.cancel()
+		w.onclose(err)
 		return
 	}
 
-	w.updates <- value.(rel.Value)
+	if err = w.onupdate(value.(rel.Value)); err != nil {
+		w.cancel()
+	}
 }
 
 func (w *watcher) close() {
-	close(w.updates)
-	close(w.errors)
+	w.onclose(nil)
 }
