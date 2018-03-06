@@ -1,7 +1,6 @@
 package tests
 
 import (
-	"bytes"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -60,7 +59,7 @@ func TestMixedJSON(t *testing.T) {
 
 // TestXMLChildrenJSON tests JSON-encoding of XML node with child.
 func TestXMLChildJSON(t *testing.T) {
-	value, err := syntax.Parse(bytes.NewBufferString(`<abc><def/></abc>`))
+	value, err := syntax.Parse(syntax.NewStringLexer(`<abc><def/></abc>`))
 	require.NoError(t, err)
 
 	assertJSON(t,

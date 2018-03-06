@@ -1,7 +1,6 @@
 package engine
 
 import (
-	"bytes"
 	"log"
 	"sync/atomic"
 
@@ -15,7 +14,7 @@ var (
 	// Root holds the variable name used for the database variable.
 	Root = "$"
 
-	initExpr = syntax.MustParse(bytes.NewBufferString(Root))
+	initExpr = syntax.MustParse(syntax.NewStringLexer(Root))
 	lastID   = uint64(0)
 )
 

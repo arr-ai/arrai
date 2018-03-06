@@ -2,7 +2,6 @@ package syntax
 
 import (
 	"bytes"
-	"io"
 	"math"
 
 	"github.com/arr-ai/arrai/rel"
@@ -19,14 +18,8 @@ var noParse = &noParseType{}
 type parseFunc func(l *Lexer) (rel.Expr, error)
 
 // MustParse parses input and returns the parsed Expr or an error.
-func MustParse(reader io.Reader) rel.Expr {
-	return MustParseWithPrefix(bytes.NewBuffer([]byte{}), reader)
-}
-
-// MustParseWithPrefix parses prefix + input and returns the parse Expr or
-// panics.
-func MustParseWithPrefix(prefix *bytes.Buffer, reader io.Reader) rel.Expr {
-	expr, err := ParseWithPrefix(prefix, reader)
+func MustParse(l *Lexer) rel.Expr {
+	expr, err := Parse(l)
 	if err != nil {
 		panic(err)
 	}
@@ -34,14 +27,7 @@ func MustParseWithPrefix(prefix *bytes.Buffer, reader io.Reader) rel.Expr {
 }
 
 // Parse parses input and returns the parsed Expr or an error.
-func Parse(reader io.Reader) (rel.Expr, error) {
-	return ParseWithPrefix(bytes.NewBuffer([]byte{}), reader)
-}
-
-// ParseWithPrefix parses prefix + input and returns the parsed Expr or an
-// error.
-func ParseWithPrefix(prefix *bytes.Buffer, reader io.Reader) (rel.Expr, error) {
-	l := NewLexerWithPrefix(prefix, reader)
+func Parse(l *Lexer) (rel.Expr, error) {
 	expr, err := parseExpr(l)
 	if err != nil {
 		return nil, err

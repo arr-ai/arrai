@@ -165,6 +165,11 @@ type Lexer struct {
 }
 
 // NewLexer returns a new Lexer for the given input.
+func NewStringLexer(input string) *Lexer {
+	return NewLexer(bytes.NewBufferString(input))
+}
+
+// NewLexer returns a new Lexer for the given input.
 func NewLexer(reader io.Reader) *Lexer {
 	return NewLexerWithPrefix(bytes.NewBuffer([]byte{}), reader)
 }

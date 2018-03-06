@@ -1,7 +1,6 @@
 package tests
 
 import (
-	"bytes"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -16,11 +15,11 @@ import (
 func assertCodesEvalToSameValue(
 	t *testing.T, expected string, code string,
 ) bool {
-	expectedExpr, err := syntax.Parse(bytes.NewBufferString(expected))
+	expectedExpr, err := syntax.Parse(syntax.NewStringLexer(expected))
 	if !assert.NoError(t, err, "parsing expected: %s", expected) {
 		return false
 	}
-	codeExpr, err := syntax.Parse(bytes.NewBufferString(code))
+	codeExpr, err := syntax.Parse(syntax.NewStringLexer(code))
 	if !assert.NoError(t, err, "parsing code: %s", code) {
 		return false
 	}
@@ -34,9 +33,9 @@ func assertCodesEvalToSameValue(
 // assertCodesEvalToSameValue requires that code evaluate to the same value as
 // expected.
 func requireCodesEvalToSameValue(t *testing.T, expected string, code string) {
-	expectedExpr, err := syntax.Parse(bytes.NewBufferString(expected))
+	expectedExpr, err := syntax.Parse(syntax.NewStringLexer(expected))
 	require.NoError(t, err)
-	codeExpr, err := syntax.Parse(bytes.NewBufferString(code))
+	codeExpr, err := syntax.Parse(syntax.NewStringLexer(code))
 	require.NoError(t, err)
 	tests.AssertExprsEvalToSameValue(t, expectedExpr, codeExpr)
 }

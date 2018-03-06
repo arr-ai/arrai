@@ -1,7 +1,6 @@
 package tests
 
 import (
-	"bytes"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -23,7 +22,7 @@ func TestParseXMLTrivialWithEndTag(t *testing.T) {
 
 // TestParseNumber tests Parse recognising numbers.
 func TestParseXMLTrivialWithMismatchedEndTags(t *testing.T) {
-	value, err := syntax.Parse(bytes.NewBufferString("<a></ab>"))
+	value, err := syntax.Parse(syntax.NewStringLexer("<a></ab>"))
 	assert.Error(t, err, "%s", value)
 }
 
