@@ -1,17 +1,18 @@
 package tests
 
 import (
+	"bytes"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/arr-ai/arrai/rel"
-	"github.com/arr-ai/arrai/rel/syntax"
+	"github.com/arr-ai/arrai/syntax"
 )
 
 func lxr(input string) *syntax.Lexer {
-	return syntax.NewLexer([]byte(input))
+	return syntax.NewLexer(bytes.NewBufferString(input))
 }
 
 func assertScan(

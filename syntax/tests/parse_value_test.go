@@ -1,22 +1,23 @@
 package tests
 
 import (
+	"bytes"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 
 	"github.com/arr-ai/arrai/rel"
-	"github.com/arr-ai/arrai/rel/syntax"
+	"github.com/arr-ai/arrai/syntax"
 )
 
 func assertParse(t *testing.T, expected rel.Value, input string) bool {
-	value, err := syntax.Parse([]byte(input))
+	value, err := syntax.Parse(bytes.NewBufferString(input))
 	return assert.NoError(t, err) &&
 		assert.True(t, expected.Equal(value), "%s == \n%s", expected, value)
 }
 
 func assertParseError(t *testing.T, input string) bool {
-	value, err := syntax.Parse([]byte(input))
+	value, err := syntax.Parse(bytes.NewBufferString(input))
 	return !assert.Error(t, err) &&
 		assert.Fail(t, "expected error, got value", "%s", value)
 }
@@ -72,6 +73,6 @@ func TestParseMixed(t *testing.T) {
 
 // TestParseRelationShortcut tests Parse recognising relation shortcut syntax.
 func TestParseRelationShortcut(t *testing.T) {
-	value, err := syntax.Parse([]byte(`{|<a,b> {1, 2}, {3, 4}|}`))
+	value, err := syntax.Parse(bytes.NewBufferString(`{|<a,b> {1, 2}, {3, 4}|}`))
 	assert.Error(t, err, "%s", value)
 }

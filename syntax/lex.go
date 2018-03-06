@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"regexp"
 	"strconv"
 
@@ -148,7 +149,9 @@ type lexerState func(l *Lexer) (Token, interface{})
 
 // Lexer extracts a stream of tokens from an input file.
 type Lexer struct {
-	input  []byte
+	reader io.Reader
+	buffer *bytes.Buffer
+	eof    bool
 	offset int
 	prev   int
 	state  lexerState
@@ -162,17 +165,25 @@ type Lexer struct {
 }
 
 // NewLexer returns a new Lexer for the given input.
-func NewLexer(input []byte) *Lexer {
+func NewLexer(reader io.Reader) *Lexer {
+	return NewLexerWithPrefix(bytes.NewBuffer([]byte{}), reader)
+}
+
+// NewLexerWithPrefix returns a new Lexer for the given input.
+func NewLexerWithPrefix(prefix *bytes.Buffer, reader io.Reader) *Lexer {
+	const defaultBufferSize = 4096
+
 	return &Lexer{
-		input: input,
-		state: LexerInitState,
-		fr:    FileRange{FilePos{1, 1}, FilePos{1, 1}},
+		reader: reader,
+		buffer: prefix,
+		state:  LexerInitState,
+		fr:     FileRange{FilePos{1, 1}, FilePos{1, 1}},
 	}
 }
 
-// Input returns the most recently recognized token.
-func (l *Lexer) Input() []byte {
-	return l.input
+// Reader returns the most recently recognized token.
+func (l *Lexer) Reader() io.Reader {
+	return l.reader
 }
 
 // Offset returns the current scanning position as an offset from the start of
@@ -181,9 +192,9 @@ func (l *Lexer) Offset() int {
 	return l.offset
 }
 
-// Tail returns the unconsumed portion of the input.
+// Tail returns the unconsumed portion of the buffer.
 func (l *Lexer) Tail() []byte {
-	return l.input[l.offset:]
+	return l.buffer.Bytes()[l.offset:]
 }
 
 // Token returns the most recently recognized token.
@@ -193,7 +204,7 @@ func (l *Lexer) Token() Token {
 
 // Lexeme returns the lexeme for the most recently recognized token.
 func (l *Lexer) Lexeme() []byte {
-	return l.input[l.lexeme:l.offset]
+	return l.buffer.Bytes()[l.lexeme:l.offset]
 }
 
 // Value returns the Value for the most recently recognized token.
@@ -252,9 +263,37 @@ func (l *Lexer) unpeek() {
 	}
 }
 
+var emptyBlock = make([]byte, 4096)
+
 func (l *Lexer) eatRE(re *regexp.Regexp) [][]byte {
-	m := re.FindSubmatch(l.Tail())
-	if m != nil {
+	var m [][]byte
+	for {
+		tail := l.Tail()
+		m = re.FindSubmatch(tail)
+		if m != nil && len(m[0]) < len(tail) {
+			break
+		}
+		if l.eof {
+			break
+		}
+		size := l.buffer.Len()
+		l.buffer.Write(emptyBlock)
+		n, err := l.reader.Read(l.buffer.Bytes()[size:])
+		if n < len(emptyBlock) {
+			l.buffer.Truncate(size + n)
+		}
+		if err != nil {
+			if err == io.EOF {
+				l.eof = true
+				break
+			}
+			panic(err)
+		}
+		if n == 0 {
+			break
+		}
+	}
+	if len(m) > 0 {
 		l.lexeme = l.offset + len(m[1]) // Skip over whitespace.
 		l.prev = l.offset
 		l.offset += len(m[0])               // Skip over lexeme.
@@ -279,17 +318,18 @@ func (l *Lexer) Failf(fmtStr string, args ...interface{}) Token {
 // String produces a formatted string representation of the lexer with a line
 // marker.
 func (l *Lexer) String() string {
-	sol := bytes.LastIndexByte(l.input[:l.offset], '\n') + 1
+	input := l.buffer.Bytes()
+	sol := bytes.LastIndexByte(input[:l.offset], '\n') + 1
 	eol := bytes.IndexByte(l.Tail(), '\n')
 	if eol == -1 {
-		eol = len(l.input)
+		eol = len(input)
 	} else {
 		eol += l.offset
 	}
 
-	pre := l.input[sol:l.lexeme]
-	lexeme := l.input[l.lexeme:l.offset]
-	post := l.input[l.offset:eol]
+	pre := input[sol:l.lexeme]
+	lexeme := input[l.lexeme:l.offset]
+	post := input[l.offset:eol]
 
 	return fmt.Sprintf("%s🔥 %s🔥 %s", pre, lexeme, post)
 }

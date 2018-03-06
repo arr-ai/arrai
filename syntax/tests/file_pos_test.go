@@ -5,7 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/arr-ai/arrai/rel/syntax"
+	"github.com/arr-ai/arrai/syntax"
 )
 
 func fp(line, column int) syntax.FilePos {

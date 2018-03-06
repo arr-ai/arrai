@@ -1,13 +1,14 @@
 package tests
 
 import (
+	"bytes"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/arr-ai/arrai/rel"
-	"github.com/arr-ai/arrai/rel/syntax"
+	"github.com/arr-ai/arrai/syntax"
 )
 
 // intSet returns a new set from the given elements.
@@ -64,11 +65,11 @@ func RequireExprsEvalToSameValue(
 func assertCodesEvalToSameValue(
 	t *testing.T, expected string, code string,
 ) bool {
-	expectedExpr, err := syntax.Parse([]byte(expected))
+	expectedExpr, err := syntax.Parse(bytes.NewBufferString(expected))
 	if !assert.NoError(t, err, "parsing expected: %s", expected) {
 		return false
 	}
-	codeExpr, err := syntax.Parse([]byte(code))
+	codeExpr, err := syntax.Parse(bytes.NewBufferString(code))
 	if !assert.NoError(t, err, "parsing code: %s", code) {
 		return false
 	}
@@ -82,9 +83,9 @@ func assertCodesEvalToSameValue(
 // assertCodesEvalToSameValue requires that code evaluate to the same value as
 // expected.
 func requireCodesEvalToSameValue(t *testing.T, expected string, code string) {
-	expectedExpr, err := syntax.Parse([]byte(expected))
+	expectedExpr, err := syntax.Parse(bytes.NewBufferString(expected))
 	require.NoError(t, err)
-	codeExpr, err := syntax.Parse([]byte(code))
+	codeExpr, err := syntax.Parse(bytes.NewBufferString(code))
 	require.NoError(t, err)
 	AssertExprsEvalToSameValue(t, expectedExpr, codeExpr)
 }

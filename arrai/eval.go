@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"os"
 
 	"github.com/arr-ai/arrai/rel"
@@ -18,7 +19,7 @@ var evalCommand = cli.Command{
 func eval(c *cli.Context) error {
 	source := c.Args().Get(0)
 
-	expr, err := syntax.Parse([]byte(source))
+	expr, err := syntax.Parse(bytes.NewBufferString(source))
 	if err != nil {
 		return err
 	}

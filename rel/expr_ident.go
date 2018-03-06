@@ -19,6 +19,7 @@ type IdentExpr struct {
 	ident string
 }
 
+// DotIdent represents the special identifier '.'.
 var DotIdent = &IdentExpr{"."}
 
 // NewIdentExpr returns a new identifier.

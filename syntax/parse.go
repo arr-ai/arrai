@@ -2,6 +2,7 @@ package syntax
 
 import (
 	"bytes"
+	"io"
 	"math"
 
 	"github.com/arr-ai/arrai/rel"
@@ -17,9 +18,15 @@ var noParse = &noParseType{}
 
 type parseFunc func(l *Lexer) (rel.Expr, error)
 
-// MustParse parses input and returns the parse Expr or panics.
-func MustParse(input []byte) rel.Expr {
-	expr, err := Parse(input)
+// MustParse parses input and returns the parsed Expr or an error.
+func MustParse(reader io.Reader) rel.Expr {
+	return MustParseWithPrefix(bytes.NewBuffer([]byte{}), reader)
+}
+
+// MustParseWithPrefix parses prefix + input and returns the parse Expr or
+// panics.
+func MustParseWithPrefix(prefix *bytes.Buffer, reader io.Reader) rel.Expr {
+	expr, err := ParseWithPrefix(prefix, reader)
 	if err != nil {
 		panic(err)
 	}
@@ -27,14 +34,20 @@ func MustParse(input []byte) rel.Expr {
 }
 
 // Parse parses input and returns the parsed Expr or an error.
-func Parse(input []byte) (rel.Expr, error) {
-	l := NewLexer(input)
+func Parse(reader io.Reader) (rel.Expr, error) {
+	return ParseWithPrefix(bytes.NewBuffer([]byte{}), reader)
+}
+
+// ParseWithPrefix parses prefix + input and returns the parsed Expr or an
+// error.
+func ParseWithPrefix(prefix *bytes.Buffer, reader io.Reader) (rel.Expr, error) {
+	l := NewLexerWithPrefix(prefix, reader)
 	expr, err := parseExpr(l)
 	if err != nil {
 		return nil, err
 	}
 	if !l.Scan(EOF) {
-		l.Failf("Input not consumed")
+		l.Failf("input not consumed")
 		return nil, l.Error()
 	}
 	return expr, nil
@@ -337,7 +350,7 @@ func parseSuffix(l *Lexer) (rel.Expr, error) {
 }
 
 func parseDot(l *Lexer) (rel.Expr, error) {
-	atom, err := parseAtom(l)
+	atom, err := ParseAtom(l)
 	if err != nil {
 		return nil, err
 	}
@@ -363,7 +376,8 @@ func parseDotTail(l *Lexer, expr rel.Expr) (rel.Expr, error) {
 	return expr, nil
 }
 
-func parseAtom(l *Lexer) (rel.Expr, error) {
+// ParseAtom parses a single arrai value.
+func ParseAtom(l *Lexer) (rel.Expr, error) {
 	tok := l.Peek()
 	switch tok {
 	case NUMBER:
