@@ -1,23 +1,12 @@
 package main
 
 import (
-	"fmt"
 	"os"
 	"path"
 
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli"
 )
-
-var completionCommand = cli.Command{
-	Name:    "complete",
-	Aliases: []string{"c"},
-	Usage:   "complete a task on the list",
-	Action: func(c *cli.Context) error {
-		fmt.Println("completed task: ", c.Args().First())
-		return nil
-	},
-}
 
 func main() {
 	app := cli.NewApp()
@@ -33,7 +22,6 @@ func main() {
 		app.Usage = "the ultimate data engine"
 
 		app.Commands = []cli.Command{
-			completionCommand,
 			transformCommand,
 			evalCommand,
 			serveCommand,
