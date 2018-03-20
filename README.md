@@ -9,12 +9,26 @@ The ultimate data engine.
 ```bash
 $ go get github.com/arr-ai/arrai/arrai
 $ go install github.com/arr-ai/arrai/arrai
+$ arrai -h
 ```
 
-### Stand-alone usage
+### Evaluate an expression
 
 ```bash
 $ arrai eval '41 + 1'
+```
+
+### Transform a stream of values
+
+```bash
+$ echo {0..10} | arrai transform '2^.'
+```
+
+Use `ax` as shorthand for `arrai transform`:
+
+```bash
+$ ln -s arrai "$GOPATH/bin/ax"
+$ echo {0..10} | ax '2^.'
 ```
 
 ### Start a server
