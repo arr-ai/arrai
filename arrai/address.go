@@ -1,12 +1,17 @@
 package main
 
 import (
+	"fmt"
 	"strings"
 )
 
-func arraiAddress(addr string) string {
+func arraiAddressWithPort(addr string, defaultPort int) string {
 	if !strings.ContainsRune(addr, ':') {
-		addr += ":42241"
+		addr = fmt.Sprintf("%s:%d", addr, defaultPort)
 	}
 	return addr
+}
+
+func arraiAddress(addr string) string {
+	return arraiAddressWithPort(addr, 42241)
 }

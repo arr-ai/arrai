@@ -135,8 +135,8 @@ func TokenRepr(token Token) string {
 	return fmt.Sprintf("Token(%d)", token)
 }
 
-// ParseString parses an arr.ai string.
-func ParseString(lexeme []byte) string {
+// ParseArraiString parses an arr.ai string.
+func ParseArraiString(lexeme []byte) string {
 	var s string
 	err := json.Unmarshal(lexeme, &s)
 	if err != nil {

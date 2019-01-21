@@ -17,13 +17,23 @@ var noParse = &noParseType{}
 
 type parseFunc func(l *Lexer) (rel.Expr, error)
 
-// MustParse parses input and returns the parsed Expr or an error.
+// MustParseString parses input string and returns the parsed Expr or panics.
+func MustParseString(s string) rel.Expr {
+	return MustParse(NewStringLexer(s))
+}
+
+// MustParse parses input and returns the parsed Expr or panics.
 func MustParse(l *Lexer) rel.Expr {
 	expr, err := Parse(l)
 	if err != nil {
 		panic(err)
 	}
 	return expr
+}
+
+// ParseString parses input string and returns the parsed Expr or an error.
+func ParseString(s string) (rel.Expr, error) {
+	return Parse(NewStringLexer(s))
 }
 
 // Parse parses input and returns the parsed Expr or an error.
@@ -294,7 +304,7 @@ func parseTouchTail(l *Lexer, expr rel.Expr) (rel.Expr, error) {
 			return nil, expecting(l, "after '.'", "ident", "string", "'*'")
 		}
 		if l.Token() == STRING {
-			path = append(path, ParseString(l.Lexeme()))
+			path = append(path, ParseArraiString(l.Lexeme()))
 		} else if l.Token() == Token('&') {
 			if !l.Scan(IDENT) {
 				return nil, expecting(l, "after '.&'-prefix", "ident")
@@ -350,7 +360,7 @@ func parseDotTail(l *Lexer, expr rel.Expr) (rel.Expr, error) {
 			return nil, expecting(l, "after '.'", "ident", "string", "'*'")
 		}
 		if l.Token() == STRING {
-			expr = rel.NewDotExpr(expr, ParseString(l.Lexeme()))
+			expr = rel.NewDotExpr(expr, ParseArraiString(l.Lexeme()))
 		} else if l.Token() == Token('&') {
 			if !l.Scan(IDENT) {
 				return nil, expecting(l, "after '.&'-prefix", "ident")
@@ -386,7 +396,7 @@ func ParseAtom(l *Lexer) (rel.Expr, error) {
 
 	case STRING:
 		l.Scan()
-		return rel.NewString([]rune(ParseString(l.Lexeme()))), nil
+		return rel.NewString([]rune(ParseArraiString(l.Lexeme()))), nil
 
 	case Token('('):
 		l.Scan()
@@ -443,7 +453,7 @@ func ParseAtom(l *Lexer) (rel.Expr, error) {
 			switch l.Peek() {
 			case STRING:
 				l.Scan()
-				name = ParseString(l.Lexeme())
+				name = ParseArraiString(l.Lexeme())
 			case IDENT:
 				l.Scan()
 				name = string(l.Lexeme())
