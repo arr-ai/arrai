@@ -1,9 +1,7 @@
-package tests
+package rel
 
 import (
 	"testing"
-
-	"github.com/arr-ai/arrai/rel"
 )
 
 var (
@@ -12,18 +10,18 @@ var (
 )
 
 func TestJoinNone(t *testing.T) {
-	assertJoin(t, rel.None, rel.None, rel.None)
+	assertJoin(t, None, None, None)
 }
 
 func TestJoinTrue(t *testing.T) {
-	assertJoin(t, rel.None, rel.None, rel.True)
-	assertJoin(t, rel.None, rel.True, rel.None)
-	assertJoin(t, rel.True, rel.True, rel.True)
+	assertJoin(t, None, None, True)
+	assertJoin(t, None, True, None)
+	assertJoin(t, True, True, True)
 }
 
 func TestJoinTrue1(t *testing.T) {
-	assertJoin(t, odds, odds, rel.True)
-	assertJoin(t, threes, threes, rel.True)
+	assertJoin(t, odds, odds, True)
+	assertJoin(t, threes, threes, True)
 }
 
 func TestJoinSelf1(t *testing.T) {
@@ -54,31 +52,31 @@ func TestJoinIntersect2(t *testing.T) {
 
 // Helpers
 
-func intRel(name string, values ...int) rel.Set {
-	result := rel.None
+func intRel(name string, values ...int) Set {
+	result := None
 	for _, value := range values {
 		result = result.With(
-			rel.NewTuple(rel.Attr{name, rel.NewNumber(float64(value))}))
+			NewTuple(Attr{name, NewNumber(float64(value))}))
 	}
 	return result
 }
 
 type intPair [2]int
 
-func intPairs(a, b string, pairs ...intPair) rel.Set {
-	result := rel.None
+func intPairs(a, b string, pairs ...intPair) Set {
+	result := None
 	for _, pair := range pairs {
 		result = result.With(
-			rel.NewTuple(
-				rel.Attr{a, rel.NewNumber(float64(pair[0]))},
-				rel.Attr{b, rel.NewNumber(float64(pair[1]))},
+			NewTuple(
+				Attr{a, NewNumber(float64(pair[0]))},
+				Attr{b, NewNumber(float64(pair[1]))},
 			),
 		)
 	}
 	return result
 }
 
-func intFunc(a, b string, xes []int, f func(int) int) rel.Set {
+func intFunc(a, b string, xes []int, f func(int) int) Set {
 	pairs := make([]intPair, len(xes))
 	for i, x := range xes {
 		pairs[i] = intPair{x, f(x)}
@@ -86,7 +84,7 @@ func intFunc(a, b string, xes []int, f func(int) int) rel.Set {
 	return intPairs(a, b, pairs...)
 }
 
-func assertJoin(t *testing.T, expected, a, b rel.Set) bool {
-	return assertEqualValues(t, expected, rel.Join(a, b)) &&
-		assertEqualValues(t, expected, rel.Join(b, a))
+func assertJoin(t *testing.T, expected, a, b Set) bool {
+	return AssertEqualValues(t, expected, Join(a, b)) &&
+		AssertEqualValues(t, expected, Join(b, a))
 }

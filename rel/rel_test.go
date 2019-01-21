@@ -1,21 +1,19 @@
-package tests
+package rel
 
 import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-
-	"github.com/arr-ai/arrai/rel"
 )
 
-func testValueFromValue(t *testing.T, v rel.Value) {
-	v2, err := rel.NewValue(v)
+func testValueFromValue(t *testing.T, v Value) {
+	v2, err := NewValue(v)
 	assert.NoError(t, err)
 	assert.Equal(t, v2, v)
 }
 
 func testNumericValue(t *testing.T, intf interface{}) {
-	n, err := rel.NewValue(intf)
+	n, err := NewValue(intf)
 	assert.NoError(t, err)
 	assert.Equal(t, 123.0, n.Export())
 	testValueFromValue(t, n)
@@ -87,7 +85,7 @@ func TestNewValueFromMap(t *testing.T) {
 		"a": 42.0,
 		"b": map[string]interface{}{"c": 299792458.0},
 	}
-	v, err := rel.NewValue(m)
+	v, err := NewValue(m)
 	if assert.NoError(t, err) {
 		assert.Equal(t, m, v.Export(), "%s.Export()", v)
 		testValueFromValue(t, v)
@@ -101,7 +99,7 @@ func TestNewValueFromMap(t *testing.T) {
 // 		43.0,
 // 		[]interface{}{299792458.0},
 // 	}
-// 	v, err := rel.NewValue(m)
+// 	v, err := NewValue(m)
 // 	if assert.NoError(t, err) {
 // 		assert.Equal(t, m, v.Export(), "%s.Export()", v)
 //	}

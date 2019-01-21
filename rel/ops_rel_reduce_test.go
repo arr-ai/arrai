@@ -1,9 +1,7 @@
-package tests
+package rel
 
 import (
 	"testing"
-
-	"github.com/arr-ai/arrai/rel"
 )
 
 var nestData = intPairs("a", "b", []intPair{
@@ -13,88 +11,88 @@ var nestData = intPairs("a", "b", []intPair{
 
 // TestNestA tests nesting attr a of the test data set.
 func TestNestA(t *testing.T) {
-	assertEqualValues(
+	AssertEqualValues(
 		t,
-		rel.NewSet(
-			rel.NewTuple([]rel.Attr{
-				{"b", rel.NewNumber(1)},
+		NewSet(
+			NewTuple([]Attr{
+				{"b", NewNumber(1)},
 				{"g", intRel("a", 1, 2)},
 			}...),
-			rel.NewTuple([]rel.Attr{
-				{"b", rel.NewNumber(2)},
+			NewTuple([]Attr{
+				{"b", NewNumber(2)},
 				{"g", intRel("a", 1, 2)},
 			}...),
-			rel.NewTuple([]rel.Attr{
-				{"b", rel.NewNumber(3)},
+			NewTuple([]Attr{
+				{"b", NewNumber(3)},
 				{"g", intRel("a", 1)},
 			}...),
 		),
-		rel.Nest(nestData, rel.NewNames("a"), "g"),
+		Nest(nestData, NewNames("a"), "g"),
 	)
 }
 
 // TestNestB tests nesting attr b of the test data set.
 func TestNestB(t *testing.T) {
-	assertEqualValues(
+	AssertEqualValues(
 		t,
-		rel.NewSet(
-			rel.NewTuple([]rel.Attr{
-				{"a", rel.NewNumber(1)},
+		NewSet(
+			NewTuple([]Attr{
+				{"a", NewNumber(1)},
 				{"g", intRel("b", 1, 2, 3)},
 			}...),
-			rel.NewTuple([]rel.Attr{
-				{"a", rel.NewNumber(2)},
+			NewTuple([]Attr{
+				{"a", NewNumber(2)},
 				{"g", intRel("b", 1, 2)},
 			}...),
 		),
-		rel.Nest(nestData, rel.NewNames("b"), "g"),
+		Nest(nestData, NewNames("b"), "g"),
 	)
 }
 
 // TestNestAThenB tests nesting attr b then a of the test data set.
 func TestNestAThenB(t *testing.T) {
-	assertEqualValues(
+	AssertEqualValues(
 		t,
-		rel.NewSet(
-			rel.NewTuple([]rel.Attr{
+		NewSet(
+			NewTuple([]Attr{
 				{"g", intRel("a", 1)},
 				{"h", intRel("b", 3)},
 			}...),
-			rel.NewTuple([]rel.Attr{
+			NewTuple([]Attr{
 				{"g", intRel("a", 1, 2)},
 				{"h", intRel("b", 1, 2)},
 			}...),
 		),
-		rel.Nest(
-			rel.Nest(
+		Nest(
+			Nest(
 				nestData,
-				rel.NewNames("a"),
+				NewNames("a"),
 				"g"),
-			rel.NewNames("b"),
+			NewNames("b"),
 			"h"),
 	)
 }
 
 // TestNestBThenA tests nesting attr b then a of the test data set.
 func TestNestBThenA(t *testing.T) {
-	assertEqualValues(
+	AssertEqualValues(
 		t,
-		rel.NewSet(
-			rel.NewTuple([]rel.Attr{
+		NewSet(
+			NewTuple([]Attr{
 				{"g", intRel("a", 1)},
 				{"h", intRel("b", 1, 2, 3)},
 			}...),
-			rel.NewTuple([]rel.Attr{
+			NewTuple([]Attr{
 				{"g", intRel("a", 2)},
 				{"h", intRel("b", 1, 2)},
 			}...),
 		),
-		rel.Nest(
-			rel.Nest(
+		Nest(
+			Nest(
 				nestData,
-				rel.NewNames("b"),
+				NewNames("b"),
 				"h"),
-			rel.NewNames("a"),
+			NewNames("a"),
 			"g"),
 	)
 }

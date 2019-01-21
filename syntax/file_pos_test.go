@@ -1,19 +1,17 @@
-package tests
+package syntax
 
 import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-
-	"github.com/arr-ai/arrai/syntax"
 )
 
-func fp(line, column int) syntax.FilePos {
-	return syntax.FilePos{line, column}
+func fp(line, column int) FilePos {
+	return FilePos{line, column}
 }
 
-func fr(start, end syntax.FilePos) syntax.FileRange {
-	return syntax.FileRange{start, end}
+func fr(start, end FilePos) FileRange {
+	return FileRange{start, end}
 }
 
 // TestFilePosString tests FilePos.String().
@@ -25,7 +23,7 @@ func TestFilePosString(t *testing.T) {
 
 // TestFilePosLess tests FilePos.Less().
 func TestFilePosLess(t *testing.T) {
-	a := []syntax.FilePos{{1, 1}, {1, 3}, {2, 1}, {2, 2}, {2, 3}, {2, 5}}
+	a := []FilePos{{1, 1}, {1, 3}, {2, 1}, {2, 2}, {2, 3}, {2, 5}}
 	for i, x := range a {
 		for j, y := range a {
 			assert.Equal(t, i < j, x.Less(y), "%s < %s", x, y)
@@ -35,7 +33,7 @@ func TestFilePosLess(t *testing.T) {
 
 // TestFilePosAdvance tests FilePos.Advance().
 func TestFilePosAdvance(t *testing.T) {
-	advance := func(line, column int, data string) syntax.FilePos {
+	advance := func(line, column int, data string) FilePos {
 		return fp(line, column).Advance([]byte(data))
 	}
 
@@ -80,7 +78,7 @@ func TestFileRangeUnion(t *testing.T) {
 	e := fp(2, 4)
 	f := fp(3, 3)
 	// fr12_13 := fr(fp(1, 2), fp(1, 3))
-	fps := []syntax.FilePos{a, b, c, d, e, f}
+	fps := []FilePos{a, b, c, d, e, f}
 loop:
 	for i, q := range fps {
 		for j, r := range fps[i:] {

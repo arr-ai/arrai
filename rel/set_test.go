@@ -1,42 +1,39 @@
-package tests
+package rel
 
 import (
 	"sort"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	// "github.com/stretchr/testify/require"
-
-	"github.com/arr-ai/arrai/rel"
 )
 
-// TestNewSet tests rel.NewSet.
+// TestNewSet tests NewSet.
 func TestNewSet(t *testing.T) {
-	assert.NotNil(t, rel.NewSet())
-	assert.NotNil(t, rel.NewSet(rel.NewNumber(42)))
+	assert.NotNil(t, NewSet())
+	assert.NotNil(t, NewSet(NewNumber(42)))
 }
 
-// TestNewSetFrom tests rel.TestNewSetFrom.
+// TestNewSetFrom tests TestNewSetFrom.
 func TestNewSetFrom(t *testing.T) {
-	a, err := rel.NewSetFrom()
+	a, err := NewSetFrom()
 	if assert.NoError(t, err) {
 		assert.EqualValues(t, 0, a.Count())
-		assert.Equal(t, rel.NewSet(), a)
+		assert.Equal(t, NewSet(), a)
 	}
-	a, err = rel.NewSetFrom(42)
+	a, err = NewSetFrom(42)
 	if assert.NoError(t, err) {
 		assert.EqualValues(t, 1, a.Count())
-		assert.Equal(t, rel.NewSet(rel.NewNumber(42)), a)
+		assert.Equal(t, NewSet(NewNumber(42)), a)
 	}
 }
 
-// TestNewSetFromWithBadInput tests rel.TestNewSetFrom(somethingAwful).
+// TestNewSetFromWithBadInput tests TestNewSetFrom(somethingAwful).
 func TestNewSetFromWithBadInput(t *testing.T) {
-	_, err := rel.NewSetFrom(func() {})
+	_, err := NewSetFrom(func() {})
 	assert.Error(t, err)
 }
 
-// TestSetHash tests rel.Set.Hash.
+// TestSetHash tests Set.Hash.
 func TestSetHash(t *testing.T) {
 	a := intSet()
 	b := intSet(42)
@@ -49,14 +46,14 @@ func TestSetHash(t *testing.T) {
 	assert.Equal(t, b.Hash(0), c.Hash(0))
 	assert.Equal(t, e.Hash(0), f.Hash(0))
 
-	allSets := []rel.Set{a, b, c, d, e, f}
+	allSets := []Set{a, b, c, d, e, f}
 	for _, x := range allSets {
 		for i := uint32(0); i < 10; i++ {
 			assert.NotEqual(t, 0, x.Hash(i))
 		}
 	}
 
-	distinctSets := []rel.Set{a, b, d, e}
+	distinctSets := []Set{a, b, d, e}
 	for _, x := range distinctSets {
 		for _, y := range distinctSets {
 			for i := uint32(0); i < 10; i++ {
@@ -74,7 +71,7 @@ func TestSetHash(t *testing.T) {
 	}
 }
 
-// TestSetEqual tests rel.Set.Equal.
+// TestSetEqual tests Set.Equal.
 func TestSetEqual(t *testing.T) {
 	a := intSet()
 	b := intSet(42)
@@ -88,7 +85,7 @@ func TestSetEqual(t *testing.T) {
 	assert.True(t, e.Equal(f))
 	assert.True(t, f.Equal(e))
 
-	distinctSets := []rel.Set{a, b, d, e}
+	distinctSets := []Set{a, b, d, e}
 	for _, x := range distinctSets {
 		for _, y := range distinctSets {
 			if x == y {
@@ -119,15 +116,15 @@ func (vl Float64InterfaceList) Swap(i, j int) {
 	values[i], values[j] = values[j], values[i]
 }
 
-// TestSetBool tests rel.Set.Bool.
+// TestSetBool tests Set.Bool.
 func TestSetBool(t *testing.T) {
 	assert.False(t, intSet().Bool())
 	assert.True(t, intSet(42).Bool())
 }
 
-// TestSetLess tests rel.Set.Less.
+// TestSetLess tests Set.Less.
 func TestSetLess(t *testing.T) {
-	a := []rel.Set{
+	a := []Set{
 		intSet(),
 		intSet(41),
 		intSet(42, 41),
@@ -142,13 +139,13 @@ func TestSetLess(t *testing.T) {
 	}
 }
 
-// TestSetExport tests rel.Set.Export.
+// TestSetExport tests Set.Export.
 func TestSetExport(t *testing.T) {
 	scenario := func(intfs ...interface{}) {
 		if intfs == nil {
 			intfs = []interface{}{}
 		}
-		v, err := rel.NewSetFrom(intfs...)
+		v, err := NewSetFrom(intfs...)
 		if assert.NoError(t, err) {
 			a := v.Export().([]interface{})
 			sort.Sort(Float64InterfaceList(a))
@@ -162,7 +159,7 @@ func TestSetExport(t *testing.T) {
 	scenario(321.0, 4321.0)
 }
 
-// TestSetString tests rel.Set.String.
+// TestSetString tests Set.String.
 func TestSetString(t *testing.T) {
 	scenario := func(repr string, values ...interface{}) {
 		set := intSet(values...)
@@ -179,7 +176,7 @@ func TestSetString(t *testing.T) {
 	scenario(`{|321, 4321|}`, 321, 4321)
 }
 
-// TestSetCount tests rel.Set.Count.
+// TestSetCount tests Set.Count.
 func TestSetCount(t *testing.T) {
 	attrs := []interface{}{42, 43, 44}
 	assert.EqualValues(t, 0, intSet().Count())
@@ -191,23 +188,23 @@ func TestSetCount(t *testing.T) {
 	assert.EqualValues(t, 3, intSet(attrs[0:3]...).Count())
 }
 
-// TestSetHas tests rel.Set.Has.
+// TestSetHas tests Set.Has.
 func TestSetHas(t *testing.T) {
 	set := intSet(42, 43)
-	assert.True(t, set.Has(rel.NewNumber(42)))
-	assert.True(t, set.Has(rel.NewNumber(43)))
-	assert.False(t, set.Has(rel.NewNumber(44)))
+	assert.True(t, set.Has(NewNumber(42)))
+	assert.True(t, set.Has(NewNumber(43)))
+	assert.False(t, set.Has(NewNumber(44)))
 }
 
-// TestSetWith tests rel.Set.With.
+// TestSetWith tests Set.With.
 func TestSetWith(t *testing.T) {
-	n42 := rel.NewNumber(42)
-	n43 := rel.NewNumber(43)
-	n44 := rel.NewNumber(44)
+	n42 := NewNumber(42)
+	n43 := NewNumber(43)
+	n44 := NewNumber(44)
 
 	set := intSet()
 
-	assertHas := func(value rel.Value) {
+	assertHas := func(value Value) {
 		assert.True(t, set.Has(value))
 	}
 
@@ -224,13 +221,13 @@ func TestSetWith(t *testing.T) {
 	assertHas(n44)
 }
 
-// TestSetWithout tests rel.Set.Without.
+// TestSetWithout tests Set.Without.
 func TestSetWithout(t *testing.T) {
-	n42 := rel.NewNumber(42)
-	n43 := rel.NewNumber(43)
-	n44 := rel.NewNumber(44)
+	n42 := NewNumber(42)
+	n43 := NewNumber(43)
+	n44 := NewNumber(44)
 
-	set := rel.NewSet(n42, n43, n44)
+	set := NewSet(n42, n43, n44)
 	assert.EqualValues(t, 3, set.Count())
 
 	assert.True(t, set.Has(n42))
@@ -265,7 +262,7 @@ func TestSetWithout(t *testing.T) {
 	assert.EqualValues(t, 0, set.Count())
 }
 
-// TestSetWalk test rel.Set.Enumerator().
+// TestSetWalk test Set.Enumerator().
 func TestSetWalk(t *testing.T) {
 	set := intSet(42, 43, 44, 45, 46)
 
