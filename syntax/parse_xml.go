@@ -67,7 +67,7 @@ func (xc xmlContext) withAttrExprs(attrs ...rel.AttrExpr) (xmlContext, error) {
 			nses, _ = nses.Set(alias, s)
 		} else {
 			return xmlContext{}, errors.Errorf(
-				"xmlns:... attr must be a string literal, not %s", attr)
+				"xmlns:... attr must be a string literal, not %v", attr)
 		}
 	}
 	return xmlContext{xc.keepWS, nses}, nil
