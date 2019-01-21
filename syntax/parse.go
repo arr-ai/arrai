@@ -230,6 +230,7 @@ func parsePow(l *Lexer) (rel.Expr, error) {
 var ambPrefixOps = map[Token]newUnOpFunc{
 	Token('+'): rel.NewPosExpr,
 	Token('-'): rel.NewNegExpr,
+	Token('^'): rel.NewPowerSetExpr,
 }
 
 func parseAmbPrefix(l *Lexer) (rel.Expr, error) {

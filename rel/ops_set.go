@@ -96,3 +96,17 @@ func (o *orderer) Swap(i, j int) {
 	o.values[i], o.values[j] = o.values[j], o.values[i]
 	o.keys[i], o.keys[j] = o.keys[j], o.keys[i]
 }
+
+// PowerSet computes the power set of a set.
+func PowerSet(s Set) Set {
+	result := NewSet(None)
+	for e := s.Enumerator(); e.MoveNext(); {
+		c := e.Current()
+		newSets := NewSet()
+		for s := result.Enumerator(); s.MoveNext(); {
+			newSets = newSets.With(s.Current().(Set).With(c))
+		}
+		result = Union(result, newSets)
+	}
+	return result
+}

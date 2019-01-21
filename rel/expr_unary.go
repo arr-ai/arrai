@@ -40,6 +40,18 @@ func NewNegExpr(a Expr) Expr {
 	)
 }
 
+// NewPowerSetExpr evaluates to ^a.
+func NewPowerSetExpr(a Expr) Expr {
+	return newUnaryExpr(a, "^", "(^%s)",
+		func(a Value, _, _ *Scope) (Value, error) {
+			if s, ok := a.(Set); ok {
+				return PowerSet(s), nil
+			}
+			return nil, errors.Errorf("eval arg must be a Set, not %T", a)
+		},
+	)
+}
+
 // NewNotExpr evaluates to !a.
 func NewNotExpr(a Expr) Expr {
 	return newUnaryExpr(a, "!", "(!%s)",
