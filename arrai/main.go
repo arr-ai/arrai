@@ -27,6 +27,7 @@ func main() {
 			serveCommand,
 			observeCommand,
 			updateCommand,
+			syncCommand,
 		}
 	}
 
