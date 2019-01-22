@@ -2,8 +2,9 @@ package main
 
 import (
 	"context"
-	"os"
+	"fmt"
 
+	"github.com/arr-ai/arrai/rel"
 	pb "github.com/arr-ai/proto"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli"
@@ -43,10 +44,11 @@ func observe(c *cli.Context) error {
 		if err != nil {
 			return err
 		}
-		s := resp.Value.String()
-		os.Stdout.WriteString(s)
-		if s[len(s)-1] != '\n' {
-			os.Stdout.Write([]byte{'\n'})
+		json := resp.Value.Choice.(*pb.Value_Json).Json
+		value, err := rel.UnmarshalFromJSON([]byte(json))
+		if err != nil {
+			return err
 		}
+		fmt.Println(value.String())
 	}
 }
