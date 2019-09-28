@@ -21,3 +21,6 @@ jobs:
 
     - name: Build
       run: go build -v ./cmd/arrai
+
+    - name: Run tests
+      run: go test -race ./...
