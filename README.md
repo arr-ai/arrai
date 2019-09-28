@@ -1,5 +1,7 @@
 # arrai
 
+![Go build status](https://github.com/arr-ai/arrai/workflows/Go/badge.svg)
+
 The ultimate data engine.
 
 ### Installation
