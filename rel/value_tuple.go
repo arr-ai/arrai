@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"regexp"
 	"sort"
+	"strings"
 
 	"github.com/OneOfOne/xxhash"
 	"github.com/mediocregopher/seq"
@@ -266,7 +267,7 @@ func (t *GenericTuple) Get(name string) (Value, bool) {
 // true iff it was newly added.
 func (t *GenericTuple) With(name string, value Value) (Tuple, bool) {
 	// Strip view/non-view counterpart.
-	if name[:1] == "&" {
+	if strings.HasPrefix(name, "&") {
 		u, _ := t.Without(name[1:])
 		t = u.(*GenericTuple)
 	} else {
