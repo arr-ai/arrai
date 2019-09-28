@@ -43,17 +43,23 @@ func (s *arraiServer) Update(stream pb.Arrai_UpdateServer) error {
 			return nil
 		}
 		if err != nil {
+			logrus.Errorf("Error in arraiServer.Update: %v", err)
 			return err
 		}
+		logrus.Infof("req.Expr: %s", req.Expr)
 		expr, err := syntax.Parse(syntax.NewStringLexer(req.Expr))
 		if err != nil {
+			logrus.Errorf("Error in arraiServer.Update: %v", err)
 			return err
 		}
+		logrus.Info("Parsed successfully")
 		err = s.engine.Update(expr)
 		if err != nil {
+			logrus.Errorf("Error in arraiServer.Update: %v", err)
 			return err
 		}
 		if err = stream.Send(&ack); err != nil {
+			logrus.Errorf("Error in arraiServer.Update: %v", err)
 			return err
 		}
 	}

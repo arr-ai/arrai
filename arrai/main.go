@@ -10,6 +10,7 @@ import (
 
 func main() {
 	app := cli.NewApp()
+	// logrus.SetLevel(logrus.InfoLevel)
 
 	app.EnableBashCompletion = true
 

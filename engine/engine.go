@@ -1,10 +1,10 @@
 package engine
 
 import (
-	"log"
 	"sync/atomic"
 
 	"github.com/go-errors/errors"
+	"github.com/sirupsen/logrus"
 
 	"github.com/arr-ai/arrai/rel"
 	"github.com/arr-ai/arrai/syntax"
@@ -45,6 +45,8 @@ func Start() *Engine {
 
 	// The engine
 	go func() {
+		logrus.Info("Engine starting")
+		defer logrus.Info("Engine dying")
 		watchers := map[uint64]*watcher{}
 
 		closeAllWatchers := func() {
@@ -62,15 +64,20 @@ func Start() *Engine {
 		}
 
 		for {
+			logrus.Info("Engine select")
 			select {
 			case w := <-e.addWatcher:
+				logrus.Info("Add watcher")
 				watchers[w.id] = w
 				w.update(global)
 			case id := <-e.removeWatcher:
+				logrus.Info("Remove watcher")
 				watchers[id].close()
 				delete(watchers, id)
 			case req := <-e.updateDb:
-				log.Printf("-> %s", req.expr)
+				logrus.Info("Update DB")
+				logrus.Infof("-> %#v", req.expr)
+				logrus.Infof("-> %s", req.expr)
 				value, err := req.expr.Eval(global, global)
 				if err != nil {
 					req.failed <- err
@@ -78,12 +85,15 @@ func Start() *Engine {
 				}
 				req.failed <- nil
 				global = global.With(Root, value)
-				for _, w := range watchers {
+				for i, w := range watchers {
+					logrus.Infof("Update watcher %d", i)
 					w.update(global)
 				}
 			case <-e.stop:
+				logrus.Infof("Stop")
 				return
 			case <-e.hangup:
+				logrus.Infof("Hangup")
 				closeAllWatchers()
 			}
 		}
