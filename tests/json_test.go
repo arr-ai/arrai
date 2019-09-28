@@ -10,32 +10,32 @@ import (
 	"github.com/arr-ai/arrai/syntax"
 )
 
-// TestNumberJSON tests JSON-encoding of Numbers.
 func TestNumberJSON(t *testing.T) {
+	t.Parallel()
 	assertJSON(t, `0`, 0)
 	assertJSON(t, `42`, 42)
 	assertJSON(t, `-1.5`, -1.5)
 	assertJSON(t, `3.14e-45`, 3.14e-45)
 }
 
-// TestTupleJSON tests JSON-encoding of Tuples.
 func TestTupleJSON(t *testing.T) {
+	t.Parallel()
 	assertJSON(t, `{}`, map[string]interface{}{})
 	assertJSON(t, `{"a":1}`, map[string]interface{}{"a": 1})
 	assertJSON(t, []string{`{"a":1,"b":2}`, `{"b":2,"a":1}`},
 		map[string]interface{}{"a": 1, "b": 2})
 }
 
-// TestSetJSON tests JSON-encoding of Sets.
 func TestSetJSON(t *testing.T) {
+	t.Parallel()
 	assertJSON(t, `false`, []interface{}{})
 	assertJSON(t, `{"{||}":[1]}`, []interface{}{1})
 	assertJSON(t, []string{`{"{||}":[1,2]}`, `{"{||}":[2,1]}`},
 		[]interface{}{1, 2})
 }
 
-// TestMixedJSON tests JSON-encoding of mixed Values.
 func TestMixedJSON(t *testing.T) {
+	t.Parallel()
 	assertJSON(t, `false`, []interface{}{})
 	assertJSON(t, `{"{||}":[1]}`, []interface{}{1})
 	assertJSON(t,
@@ -57,8 +57,8 @@ func TestMixedJSON(t *testing.T) {
 		})
 }
 
-// TestXMLChildrenJSON tests JSON-encoding of XML node with child.
 func TestXMLChildJSON(t *testing.T) {
+	t.Parallel()
 	value, err := syntax.Parse(syntax.NewStringLexer(`<abc><def/></abc>`))
 	require.NoError(t, err)
 
@@ -74,6 +74,7 @@ func TestXMLChildJSON(t *testing.T) {
 }
 
 func TestPermutations(t *testing.T) {
+	t.Parallel()
 	assert.Equal(t,
 		[][]interface{}{
 			{1, 2, 3},
@@ -87,12 +88,14 @@ func TestPermutations(t *testing.T) {
 }
 
 func TestUnorderedCommaList(t *testing.T) {
+	t.Parallel()
 	assert.Equal(t,
 		[]string{"[1,2]", "[2,1]"},
 		ucl("[", "]", "1", "2").permutations())
 }
 
 func TestUnorderedCommaList2(t *testing.T) {
+	t.Parallel()
 	assert.Equal(t,
 		[]string{"[{1,2},3]", "[{2,1},3]", "[3,{1,2}]", "[3,{2,1}]"},
 		ucl("[", "]", ucl("{", "}", "1", "2"), "3").permutations())

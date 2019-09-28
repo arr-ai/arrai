@@ -6,14 +6,14 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-// TestNewNumber tests NewNumber.
 func TestNewNumber(t *testing.T) {
+	t.Parallel()
 	n := NewNumber(0)
 	assert.NotNil(t, n)
 }
 
-// TestNumberEqual tests Number.Equal.
 func TestNumberEqual(t *testing.T) {
+	t.Parallel()
 	a := NewNumber(42)
 	b := NewNumber(42)
 	c := NewNumber(43)
@@ -23,8 +23,8 @@ func TestNumberEqual(t *testing.T) {
 	assert.False(t, c.Equal(a))
 }
 
-// TestNumberHash tests Number.Hash.
 func TestNumberHash(t *testing.T) {
+	t.Parallel()
 	a := NewNumber(42)
 	b := NewNumber(42)
 	c := NewNumber(43)
@@ -34,8 +34,8 @@ func TestNumberHash(t *testing.T) {
 	assert.NotEqual(t, a.Hash(0), c.Hash(1), "%s.Hash(0) vs %s.Hash(1)", a, c)
 }
 
-// TestNumberBool tests Number.Bool.
 func TestNumberBool(t *testing.T) {
+	t.Parallel()
 	assert.False(t, NewNumber(0).Bool())
 	assert.False(t, NewNumber(0.0).Bool())
 	assert.False(t, NewNumber(-0.0).Bool())
@@ -44,8 +44,8 @@ func TestNumberBool(t *testing.T) {
 	assert.True(t, NewNumber(-0.05).Bool())
 }
 
-// TestNumberLess tests Number.Less.
 func TestNumberLess(t *testing.T) {
+	t.Parallel()
 	n0 := NewNumber(0)
 	n42 := NewNumber(42)
 	assert.False(t, n0.Less(n0))
@@ -54,16 +54,16 @@ func TestNumberLess(t *testing.T) {
 	assert.False(t, n42.Less(n0))
 }
 
-// TestNumberExport tests Number.Export.
 func TestNumberExport(t *testing.T) {
+	t.Parallel()
 	for _, n := range []float64{0, -1, 0.5, -0.05} {
 		number := NewNumber(n)
 		assert.Equal(t, n, number.Export(), "%s.Export()", number)
 	}
 }
 
-// TestNumberString tests Number.String.
 func TestNumberString(t *testing.T) {
+	t.Parallel()
 	for _, s := range []struct {
 		repr   string
 		number *Number

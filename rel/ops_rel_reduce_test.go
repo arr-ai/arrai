@@ -9,8 +9,8 @@ var nestData = intPairs("a", "b", []intPair{
 	{2, 1}, {2, 2},
 }...)
 
-// TestNestA tests nesting attr a of the test data set.
 func TestNestA(t *testing.T) {
+	t.Parallel()
 	AssertEqualValues(
 		t,
 		NewSet(
@@ -31,8 +31,8 @@ func TestNestA(t *testing.T) {
 	)
 }
 
-// TestNestB tests nesting attr b of the test data set.
 func TestNestB(t *testing.T) {
+	t.Parallel()
 	AssertEqualValues(
 		t,
 		NewSet(
@@ -49,8 +49,8 @@ func TestNestB(t *testing.T) {
 	)
 }
 
-// TestNestAThenB tests nesting attr b then a of the test data set.
 func TestNestAThenB(t *testing.T) {
+	t.Parallel()
 	AssertEqualValues(
 		t,
 		NewSet(
@@ -73,8 +73,8 @@ func TestNestAThenB(t *testing.T) {
 	)
 }
 
-// TestNestBThenA tests nesting attr b then a of the test data set.
 func TestNestBThenA(t *testing.T) {
+	t.Parallel()
 	AssertEqualValues(
 		t,
 		NewSet(

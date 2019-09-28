@@ -21,16 +21,16 @@ func assertParseError(t *testing.T, input string) bool {
 		assert.Fail(t, "expected error, got value", "%s", value)
 }
 
-// TestParseNumber tests Parse recognising numbers.
 func TestParseNumber(t *testing.T) {
+	t.Parallel()
 	assertParse(t, rel.NewNumber(0), "0")
 	assertParse(t, rel.NewNumber(123), "123")
 	assertParse(t, rel.NewNumber(0.32), "0.32")
 	assertParse(t, rel.NewNumber(4.5e+123), "4.5e+123")
 }
 
-// TestParseTuple tests Parse recognising tuples.
 func TestParseTuple(t *testing.T) {
+	t.Parallel()
 	assertParse(t, rel.EmptyTuple, `{}`)
 	assertParse(t,
 		rel.NewTuple(rel.Attr{Name: "a", Value: rel.NewNumber(1)}),
@@ -45,8 +45,8 @@ func TestParseTuple(t *testing.T) {
 	), `{a :1, b : 2}`)
 }
 
-// TestParseSet tests Parse recognising sets.
 func TestParseSet(t *testing.T) {
+	t.Parallel()
 	assertParse(t, rel.NewSet(), `{||}`)
 	assertParse(t, rel.NewSet(), `false`)
 	assertParse(t, rel.NewSet(rel.NewNumber(1)), `{|1|}`)
@@ -58,8 +58,8 @@ func TestParseSet(t *testing.T) {
 	), `{|1, {|3, 4|}, 2|}`)
 }
 
-// TestParseMixed tests Parse recognising tuples and sets.
 func TestParseMixed(t *testing.T) {
+	t.Parallel()
 	assertParse(t, rel.NewTuple(
 		rel.Attr{Name: "a", Value: rel.NewNumber(1)},
 		rel.Attr{Name: "b", Value: rel.NewSet(
@@ -70,8 +70,8 @@ func TestParseMixed(t *testing.T) {
 	), `{a:1, b:{|{d:3}, 4,|}, c:2,}`)
 }
 
-// TestParseRelationShortcut tests Parse recognising relation shortcut syntax.
 func TestParseRelationShortcut(t *testing.T) {
+	t.Parallel()
 	value, err := syntax.Parse(syntax.NewStringLexer(`{|<a,b> {1, 2}, {3, 4}|}`))
 	assert.Error(t, err, "%s", value)
 }

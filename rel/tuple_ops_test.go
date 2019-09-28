@@ -4,18 +4,17 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	// "github.com/stretchr/testify/require"
 )
 
-// TestTrivialMerge test Merge({}, {}).
 func TestTrivialMerge(t *testing.T) {
+	t.Parallel()
 	a := EmptyTuple
 	b := EmptyTuple
 	assert.True(t, EmptyTuple.Equal(Merge(a, b)))
 }
 
-// TestOneSidedMerge tests Merge({}, {a:42, b:43}) and vice-versa.
 func TestOneSidedMerge(t *testing.T) {
+	t.Parallel()
 	a := EmptyTuple
 	b := NewTuple(
 		Attr{"a", NewNumber(42)},
@@ -25,8 +24,8 @@ func TestOneSidedMerge(t *testing.T) {
 	assert.True(t, b.Equal(Merge(b, a)))
 }
 
-// TestEqualMerge tests Merge({a:42, b:43}, {a:42, b:43}).
 func TestEqualMerge(t *testing.T) {
+	t.Parallel()
 	a := NewTuple(
 		Attr{"a", NewNumber(42)},
 		Attr{"b", NewNumber(43)},
@@ -38,8 +37,8 @@ func TestEqualMerge(t *testing.T) {
 	assert.True(t, a.Equal(Merge(a, b)))
 }
 
-// TestMixedMerge tests Merge({a:42, b:43}, {b:43, c:44}).
 func TestMixedMerge(t *testing.T) {
+	t.Parallel()
 	a := NewTuple(
 		Attr{"a", NewNumber(42)},
 		Attr{"b", NewNumber(43)},
@@ -56,8 +55,8 @@ func TestMixedMerge(t *testing.T) {
 	assert.True(t, c.Equal(Merge(a, b)))
 }
 
-// TestFailedMerge tests Merge({a:42, b:43}, {b:432, c:44}).
 func TestFailedMerge(t *testing.T) {
+	t.Parallel()
 	a := NewTuple(
 		Attr{"a", NewNumber(42)},
 		Attr{"b", NewNumber(43)},

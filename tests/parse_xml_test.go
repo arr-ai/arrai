@@ -9,33 +9,33 @@ import (
 	"github.com/arr-ai/arrai/syntax"
 )
 
-// TestParseNumber tests Parse recognising numbers.
 func TestParseXMLTrivial(t *testing.T) {
+	t.Parallel()
 	assertParse(t, rel.NewXML([]rune("a"), []rel.Attr{}), "<a/>")
 	assertParse(t, rel.NewXML([]rune("@b-c_1$.D"), []rel.Attr{}), "<@b-c_1$.D/>")
 }
 
-// TestParseNumber tests Parse recognising numbers.
 func TestParseXMLTrivialWithEndTag(t *testing.T) {
+	t.Parallel()
 	assertParse(t, rel.NewXML([]rune("a"), []rel.Attr{}), "<a></a>")
 }
 
-// TestParseNumber tests Parse recognising numbers.
 func TestParseXMLTrivialWithMismatchedEndTags(t *testing.T) {
+	t.Parallel()
 	value, err := syntax.Parse(syntax.NewStringLexer("<a></ab>"))
 	assert.Error(t, err, "%s", value)
 }
 
-// TestParseNumber tests Parse recognising numbers.
 func TestParseXMLNested(t *testing.T) {
+	t.Parallel()
 	assertParse(t,
 		rel.NewXML([]rune("a"), []rel.Attr{},
 			rel.NewXML([]rune("b"), []rel.Attr{})),
 		"<a><b/></a>")
 }
 
-// TestParseNumber tests Parse recognising numbers.
 func TestParseXML1Attr(t *testing.T) {
+	t.Parallel()
 	assertParse(t,
 		rel.NewXML(
 			[]rune("a"),
@@ -44,8 +44,8 @@ func TestParseXML1Attr(t *testing.T) {
 		`<a x=1/>`)
 }
 
-// TestParseNumber tests Parse recognising numbers.
 func TestParseXML2Attrs(t *testing.T) {
+	t.Parallel()
 	assertParse(t,
 		rel.NewXML(
 			[]rune("abc"),
@@ -56,8 +56,8 @@ func TestParseXML2Attrs(t *testing.T) {
 		`<abc x=1 yz="hello"/>`)
 }
 
-// TestParseNumber tests Parse recognising numbers.
 func TestParseXML1Data(t *testing.T) {
+	t.Parallel()
 	assertParse(t,
 		rel.NewXML(
 			[]rune("abc"),
@@ -68,15 +68,15 @@ func TestParseXML1Data(t *testing.T) {
 		`<abc x=1 yz="hello"/>`)
 }
 
-// TestParseNumber tests Parse recognising numbers.
 func TestParseXMLHtmlEntities(t *testing.T) {
+	t.Parallel()
 	assertParse(t,
 		rel.NewXML([]rune("a"), nil, rel.NewString([]rune("&"))),
 		`<a>&amp;</a>`)
 }
 
-// TestParseNumber tests Parse recognising numbers.
 func TestParseXMLHtmlEntitiesEuroBug(t *testing.T) {
+	t.Parallel()
 	assertParse(t,
 		rel.NewXML([]rune("a"), nil, rel.NewString([]rune("€"))),
 		`<a>&euro;</a>`)
@@ -87,9 +87,9 @@ var xmlSpacePreserve = rel.Attr{
 	Value: rel.NewString([]rune("preserve")),
 }
 
-// TestParseTrimSpace tests Parse trimming whitespace.
 // TODO: More edge-case coverage.
 func TestParseTrimSpace(t *testing.T) {
+	t.Parallel()
 	assertParse(t,
 		rel.NewXML([]rune("a"), nil, rel.NewString([]rune("foo"))),
 		`<a>
@@ -97,13 +97,13 @@ func TestParseTrimSpace(t *testing.T) {
 </a>`)
 }
 
-// TestParseXMLSpaceBadValue tests Parse error on xml:space="wrong".
 func TestParseXMLSpaceBadValue(t *testing.T) {
+	t.Parallel()
 	assertParseError(t, `<a xml:space="wrong"/>`)
 }
 
-// TestParseSpacePreserve tests Parse handling xml:space="preserve".
 func TestParseSpacePreserve(t *testing.T) {
+	t.Parallel()
 	assertParse(t,
 		rel.NewXML([]rune("a"), []rel.Attr{xmlSpacePreserve},
 			rel.NewString([]rune("\n  foo\n"))),
@@ -123,8 +123,8 @@ func xmlnsAlias(alias string, ns string) rel.Attr {
 	}
 }
 
-// TestParseXmlns tests Parse handling xmlns="...".
 func TestParseXmlns(t *testing.T) {
+	t.Parallel()
 	assertParse(t,
 		rel.NewXML(
 			[]rune("{my-ns}foobar"),
@@ -133,8 +133,8 @@ func TestParseXmlns(t *testing.T) {
 		`<me:foobar xmlns:me="my-ns"/>`)
 }
 
-// TestParseXmlnsDefault tests Parse handling xmlns="...".
 func TestParseXmlnsDefault(t *testing.T) {
+	t.Parallel()
 	assertParse(t,
 		rel.NewXML(
 			[]rune("{my-ns}foobar"),
@@ -143,8 +143,8 @@ func TestParseXmlnsDefault(t *testing.T) {
 		`<foobar xmlns="my-ns"/>`)
 }
 
-// TestParseXmlnsDefaultInAlias tests Parse handling xmlns="...".
 func TestParseXmlnsDefaultInAlias(t *testing.T) {
+	t.Parallel()
 	assertParse(t,
 		rel.NewXML([]rune("{my-ns}foobar"),
 			[]rel.Attr{
@@ -156,8 +156,8 @@ func TestParseXmlnsDefaultInAlias(t *testing.T) {
 		`<me:foobar xmlns="def-ns" xmlns:me="my-ns"><baz/></me:foobar>`)
 }
 
-// TestParseXmlnsAliasInDefault tests Parse handling xmlns="...".
 func TestParseXmlnsAliasInDefault(t *testing.T) {
+	t.Parallel()
 	assertParse(t,
 		rel.NewXML([]rune("{def-ns}foobar"),
 			[]rel.Attr{
@@ -169,8 +169,8 @@ func TestParseXmlnsAliasInDefault(t *testing.T) {
 		`<foobar xmlns="def-ns" xmlns:me="my-ns"><me:baz/></foobar>`)
 }
 
-// TestParseXmlExprInsideElt tests Parse handling <a>{1}</a>.
 func TestParseXmlExprInsideElt(t *testing.T) {
+	t.Parallel()
 	assertParse(t,
 		rel.NewXML([]rune("a"), []rel.Attr{},
 			rel.NewNumber(1)),
@@ -178,8 +178,8 @@ func TestParseXmlExprInsideElt(t *testing.T) {
 }
 
 // TODO: Fix
-// // TestParseXmlDotExprAttr tests attr=.foo.
 // func TestParseXmlDotExprAttr(t *testing.T) {
+// 	t.Parallel()
 // 	assertParse(t,
 // 		rel.NewXML([]rune("a"),
 // 			[]rel.Attr{

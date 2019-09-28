@@ -2,19 +2,21 @@ package tests
 
 import "testing"
 
-// TestParseIfElseExpr tests Parse recognising `a if b else c`.
 func TestParseIfElseExpr(t *testing.T) {
+	t.Parallel()
 	AssertCodesEvalToSameValue(t, `42`, `42 if true else 43`)
 	AssertCodesEvalToSameValue(t, `43`, `42 if false else 43`)
 }
 
 func TestParseTupleShorthand(t *testing.T) {
+	t.Parallel()
 	AssertCodesEvalToSameValue(t, `{a:42}`, `(\a{a:a})42`)
 	// TODO: Fix
 	// AssertCodesEvalToSameValue(t, `{a:42}`, `(\a{a})42`)
 }
 
 func TestParseArrowStarExprAssignExisting(t *testing.T) {
+	t.Parallel()
 	AssertCodesEvalToSameValue(t, `{a:42}`, `{a:41}->*a: 42`)
 	AssertCodesEvalToSameValue(t, `{a:{b:42}}`, `{a:{b:41}}->*a->*b: 42`)
 	AssertCodesEvalToSameValue(t,
@@ -23,6 +25,7 @@ func TestParseArrowStarExprAssignExisting(t *testing.T) {
 }
 
 func TestParseArrowStarExprAssignNew(t *testing.T) {
+	t.Parallel()
 	AssertCodesEvalToSameValue(t, `{a:41,b:42}`, `{a:41}->*b: 42`)
 	AssertCodesEvalToSameValue(t,
 		`{a:{b:41, c:42}}`,
@@ -33,6 +36,7 @@ func TestParseArrowStarExprAssignNew(t *testing.T) {
 }
 
 func TestParseArrowStarExprAlterExisting(t *testing.T) {
+	// t.Parallel()
 	// TODO: Fix
 	// AssertCodesEvalToSameValue(t,
 	// 	`{a:{b:41,c:42}}`,

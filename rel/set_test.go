@@ -7,14 +7,14 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-// TestNewSet tests NewSet.
 func TestNewSet(t *testing.T) {
+	t.Parallel()
 	assert.NotNil(t, NewSet())
 	assert.NotNil(t, NewSet(NewNumber(42)))
 }
 
-// TestNewSetFrom tests TestNewSetFrom.
 func TestNewSetFrom(t *testing.T) {
+	t.Parallel()
 	a, err := NewSetFrom()
 	if assert.NoError(t, err) {
 		assert.EqualValues(t, 0, a.Count())
@@ -27,14 +27,14 @@ func TestNewSetFrom(t *testing.T) {
 	}
 }
 
-// TestNewSetFromWithBadInput tests TestNewSetFrom(somethingAwful).
 func TestNewSetFromWithBadInput(t *testing.T) {
+	t.Parallel()
 	_, err := NewSetFrom(func() {})
 	assert.Error(t, err)
 }
 
-// TestSetHash tests Set.Hash.
 func TestSetHash(t *testing.T) {
+	t.Parallel()
 	a := intSet()
 	b := intSet(42)
 	c := intSet(42)
@@ -71,8 +71,8 @@ func TestSetHash(t *testing.T) {
 	}
 }
 
-// TestSetEqual tests Set.Equal.
 func TestSetEqual(t *testing.T) {
+	t.Parallel()
 	a := intSet()
 	b := intSet(42)
 	c := intSet(42)
@@ -116,14 +116,14 @@ func (vl Float64InterfaceList) Swap(i, j int) {
 	values[i], values[j] = values[j], values[i]
 }
 
-// TestSetBool tests Set.Bool.
 func TestSetBool(t *testing.T) {
+	t.Parallel()
 	assert.False(t, intSet().Bool())
 	assert.True(t, intSet(42).Bool())
 }
 
-// TestSetLess tests Set.Less.
 func TestSetLess(t *testing.T) {
+	t.Parallel()
 	a := []Set{
 		intSet(),
 		intSet(41),
@@ -139,8 +139,8 @@ func TestSetLess(t *testing.T) {
 	}
 }
 
-// TestSetExport tests Set.Export.
 func TestSetExport(t *testing.T) {
+	t.Parallel()
 	scenario := func(intfs ...interface{}) {
 		if intfs == nil {
 			intfs = []interface{}{}
@@ -159,8 +159,8 @@ func TestSetExport(t *testing.T) {
 	scenario(321.0, 4321.0)
 }
 
-// TestSetString tests Set.String.
 func TestSetString(t *testing.T) {
+	t.Parallel()
 	scenario := func(repr string, values ...interface{}) {
 		set := intSet(values...)
 		if assert.Equal(
@@ -176,8 +176,8 @@ func TestSetString(t *testing.T) {
 	scenario(`{|321, 4321|}`, 321, 4321)
 }
 
-// TestSetCount tests Set.Count.
 func TestSetCount(t *testing.T) {
+	t.Parallel()
 	attrs := []interface{}{42, 43, 44}
 	assert.EqualValues(t, 0, intSet().Count())
 	assert.EqualValues(t, 1, intSet(attrs[0:1]...).Count())
@@ -188,16 +188,16 @@ func TestSetCount(t *testing.T) {
 	assert.EqualValues(t, 3, intSet(attrs[0:3]...).Count())
 }
 
-// TestSetHas tests Set.Has.
 func TestSetHas(t *testing.T) {
+	t.Parallel()
 	set := intSet(42, 43)
 	assert.True(t, set.Has(NewNumber(42)))
 	assert.True(t, set.Has(NewNumber(43)))
 	assert.False(t, set.Has(NewNumber(44)))
 }
 
-// TestSetWith tests Set.With.
 func TestSetWith(t *testing.T) {
+	t.Parallel()
 	n42 := NewNumber(42)
 	n43 := NewNumber(43)
 	n44 := NewNumber(44)
@@ -221,8 +221,8 @@ func TestSetWith(t *testing.T) {
 	assertHas(n44)
 }
 
-// TestSetWithout tests Set.Without.
 func TestSetWithout(t *testing.T) {
+	t.Parallel()
 	n42 := NewNumber(42)
 	n43 := NewNumber(43)
 	n44 := NewNumber(44)
@@ -262,8 +262,8 @@ func TestSetWithout(t *testing.T) {
 	assert.EqualValues(t, 0, set.Count())
 }
 
-// TestSetWalk test Set.Enumerator().
 func TestSetWalk(t *testing.T) {
+	t.Parallel()
 	set := intSet(42, 43, 44, 45, 46)
 
 	a := []interface{}{}

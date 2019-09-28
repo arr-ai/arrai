@@ -4,8 +4,8 @@ import (
 	"testing"
 )
 
-// TestNewIfElseExpr tests NewSet.
 func TestNewIfElseExpr(t *testing.T) {
+	t.Parallel()
 	AssertExprsEvalToSameValue(t, NewNumber(42),
 		NewIfElseExpr(NewNumber(42), True, NewNumber(43)),
 	)

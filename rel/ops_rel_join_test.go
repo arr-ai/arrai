@@ -10,30 +10,36 @@ var (
 )
 
 func TestJoinNone(t *testing.T) {
+	t.Parallel()
 	assertJoin(t, None, None, None)
 }
 
 func TestJoinTrue(t *testing.T) {
+	t.Parallel()
 	assertJoin(t, None, None, True)
 	assertJoin(t, None, True, None)
 	assertJoin(t, True, True, True)
 }
 
 func TestJoinTrue1(t *testing.T) {
+	t.Parallel()
 	assertJoin(t, odds, odds, True)
 	assertJoin(t, threes, threes, True)
 }
 
 func TestJoinSelf1(t *testing.T) {
+	t.Parallel()
 	assertJoin(t, odds, odds, odds)
 	assertJoin(t, threes, threes, threes)
 }
 
 func TestJoinIntersect1(t *testing.T) {
+	t.Parallel()
 	assertJoin(t, intRel("a", 3, 9), odds, threes)
 }
 
 func TestJoinProduct2(t *testing.T) {
+	t.Parallel()
 	assertJoin(t,
 		intPairs("a", "b", []intPair{
 			{1, 1}, {1, 2}, {1, 3},
@@ -44,6 +50,7 @@ func TestJoinProduct2(t *testing.T) {
 }
 
 func TestJoinIntersect2(t *testing.T) {
+	t.Parallel()
 	assertJoin(t,
 		intPairs("a", "b", []intPair{{3, 4}}...),
 		intPairs("a", "b", []intPair{{1, 2}, {3, 4}, {5, 6}}...),

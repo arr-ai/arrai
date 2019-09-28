@@ -7,8 +7,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// TestTupleNewTuple tests NewTuple.
 func TestTupleNewTuple(t *testing.T) {
+	t.Parallel()
 	assert.NotNil(t, EmptyTuple)
 	assert.NotNil(t, Attr{"a", NewNumber(42)})
 	assert.NotNil(t,
@@ -17,8 +17,8 @@ func TestTupleNewTuple(t *testing.T) {
 	)
 }
 
-// TestTupleNewTupleFromMap tests NewTupleFromMap.
 func TestTupleNewTupleFromMap(t *testing.T) {
+	t.Parallel()
 	tuple, err := NewTupleFromMap(map[string]interface{}{})
 	assert.NoError(t, err)
 	assert.NotNil(t, tuple)
@@ -32,8 +32,8 @@ func TestTupleNewTupleFromMap(t *testing.T) {
 	assert.NotNil(t, tuple)
 }
 
-// TestTupleHash tests Tuple.Hash.
 func TestTupleHash(t *testing.T) {
+	t.Parallel()
 	a := EmptyTuple
 	b := NewTuple(Attr{"a", NewNumber(42)})
 	c := NewTuple(Attr{"a", NewNumber(42)})
@@ -78,8 +78,8 @@ func TestTupleHash(t *testing.T) {
 	}
 }
 
-// TestTupleEqual tests Tuple.Equal.
 func TestTupleEqual(t *testing.T) {
+	t.Parallel()
 	a := EmptyTuple
 	b := NewTuple(Attr{"a", NewNumber(42)})
 	c := NewTuple(Attr{"a", NewNumber(42)})
@@ -113,14 +113,14 @@ func TestTupleEqual(t *testing.T) {
 	}
 }
 
-// TestTupleBool tests Tuple.Bool.
 func TestTupleBool(t *testing.T) {
+	t.Parallel()
 	assert.False(t, EmptyTuple.Bool())
 	assert.True(t, NewTuple(Attr{"a", NewNumber(42)}).Bool())
 }
 
-// TestTupleLess tests Tuple.Less.
 func TestTupleLess(t *testing.T) {
+	t.Parallel()
 	attr := func(name string, n float64) Attr {
 		return Attr{name, NewNumber(n)}
 	}
@@ -141,8 +141,8 @@ func TestTupleLess(t *testing.T) {
 	}
 }
 
-// TestTupleExport tests Tuple.Export.
 func TestTupleExport(t *testing.T) {
+	t.Parallel()
 	scenario := func(m map[string]interface{}) {
 		v, err := NewTupleFromMap(m)
 		if assert.NoError(t, err) {
@@ -156,8 +156,8 @@ func TestTupleExport(t *testing.T) {
 	scenario(map[string]interface{}{"a": 4321.0, "b": 321.0})
 }
 
-// TestTupleString tests Tuple.String.
 func TestTupleString(t *testing.T) {
+	t.Parallel()
 	scenario := func(repr string, attrs ...Attr) {
 		tuple := NewTuple(attrs...)
 		if assert.Equal(
@@ -181,8 +181,8 @@ func TestTupleString(t *testing.T) {
 	)
 }
 
-// TestTupleCount tests Tuple.Count.
 func TestTupleCount(t *testing.T) {
+	t.Parallel()
 	attrs := []Attr{
 		{"a", NewNumber(42)},
 		{"b", NewNumber(43)},
@@ -197,8 +197,8 @@ func TestTupleCount(t *testing.T) {
 	assert.EqualValues(t, 3, NewTuple(attrs...).Count())
 }
 
-// TestTupleGet tests Tuple.Get.
 func TestTupleGet(t *testing.T) {
+	t.Parallel()
 	tuple := NewTuple(
 		Attr{"a", NewNumber(42)},
 		Attr{"b", NewNumber(43)},
@@ -217,8 +217,8 @@ func TestTupleGet(t *testing.T) {
 	}
 }
 
-// TestTupleWith tests Tuple.With.
 func TestTupleWith(t *testing.T) {
+	t.Parallel()
 	n42 := NewNumber(42)
 	n43 := NewNumber(43)
 	n44 := NewNumber(44)
@@ -250,8 +250,8 @@ func TestTupleWith(t *testing.T) {
 	assertAttr("c", n44)
 }
 
-// TestTupleWithout tests Tuple.Without.
 func TestTupleWithout(t *testing.T) {
+	t.Parallel()
 	n42 := NewNumber(42)
 	n43 := NewNumber(43)
 	n44 := NewNumber(44)
@@ -310,8 +310,8 @@ func TestTupleWithout(t *testing.T) {
 	assert.False(t, removed)
 }
 
-// TestTupleHasName tests Tuple.HasName.
 func TestTupleHasName(t *testing.T) {
+	t.Parallel()
 	tuple := NewTuple(
 		Attr{"a", NewNumber(42)},
 		Attr{"b", NewNumber(43)},
@@ -321,8 +321,8 @@ func TestTupleHasName(t *testing.T) {
 	assert.False(t, tuple.HasName("c"))
 }
 
-// TestAttrEnumeratorToMap test Tuple.Attributes.
 func TestAttrEnumeratorToMap(t *testing.T) {
+	t.Parallel()
 	n42 := NewNumber(42)
 	n43 := NewNumber(43)
 	n44 := NewNumber(44)
@@ -342,8 +342,8 @@ func TestAttrEnumeratorToMap(t *testing.T) {
 	)
 }
 
-// TestTupleEnumerator test Tuple.Enumerator.
 func TestTupleEnumerator(t *testing.T) {
+	t.Parallel()
 	tuple := NewTuple(
 		Attr{"a", NewNumber(42)},
 		Attr{"b", NewNumber(43)},

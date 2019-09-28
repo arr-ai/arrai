@@ -14,15 +14,15 @@ func fr(start, end FilePos) FileRange {
 	return FileRange{start, end}
 }
 
-// TestFilePosString tests FilePos.String().
 func TestFilePosString(t *testing.T) {
+	t.Parallel()
 	assert.Equal(t, "1:1", fp(1, 1).String())
 	assert.Equal(t, "3:1", fp(3, 1).String())
 	assert.Equal(t, "3:3", fp(3, 3).String())
 }
 
-// TestFilePosLess tests FilePos.Less().
 func TestFilePosLess(t *testing.T) {
+	t.Parallel()
 	a := []FilePos{{1, 1}, {1, 3}, {2, 1}, {2, 2}, {2, 3}, {2, 5}}
 	for i, x := range a {
 		for j, y := range a {
@@ -31,8 +31,8 @@ func TestFilePosLess(t *testing.T) {
 	}
 }
 
-// TestFilePosAdvance tests FilePos.Advance().
 func TestFilePosAdvance(t *testing.T) {
+	t.Parallel()
 	advance := func(line, column int, data string) FilePos {
 		return fp(line, column).Advance([]byte(data))
 	}
@@ -51,8 +51,8 @@ func TestFilePosAdvance(t *testing.T) {
 	assert.Equal(t, fp(4, 5), advance(1, 1, "abc\ndef\n\nghij"))
 }
 
-// TestFileRangeString tests FileRange.String().
 func TestFileRangeString(t *testing.T) {
+	t.Parallel()
 	assert.Equal(t, "1:1", fr(fp(1, 1), fp(1, 1)).String())
 	assert.Equal(t, "1:1-1", fr(fp(1, 1), fp(1, 2)).String())
 	assert.Equal(t, "1:1-2", fr(fp(1, 1), fp(1, 3)).String())
@@ -69,8 +69,8 @@ func TestFileRangeString(t *testing.T) {
 	assert.Equal(t, "(-range)", fr(fp(4, 3), fp(4, 2)).String())
 }
 
-// TestFileRangeUnion tests FileRange.Union().
 func TestFileRangeUnion(t *testing.T) {
+	t.Parallel()
 	a := fp(1, 1)
 	b := fp(1, 2)
 	c := fp(1, 3)
