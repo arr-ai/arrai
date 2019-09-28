@@ -20,4 +20,4 @@ jobs:
       run: go get -v -t -d ./...
 
     - name: Build
-      run: go build -v ./arrai
+      run: go build -v ./cmd/arrai
