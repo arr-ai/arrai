@@ -22,8 +22,6 @@ github.com/gorilla/websocket v1.4.1 h1:q7AeDBpnBk8AogcD4DSag/Ukw/KV+YhzLj2bP5HvK
 github.com/gorilla/websocket v1.4.1/go.mod h1:YR8l580nyteQvAITg2hZ9XVh4b55+EU/adAjf1fMHhE=
 github.com/konsorten/go-windows-terminal-sequences v1.0.1 h1:mweAR1A6xJ3oS2pRaGiHgQ4OO8tzTaLawm8vnODuwDk=
 github.com/konsorten/go-windows-terminal-sequences v1.0.1/go.mod h1:T0+1ngSBFLxvqU3pZ+m/2kptfBszLMUkC4ZK/EgS/cQ=
-github.com/mediocregopher/seq v0.1.0 h1:Y9QAgq5E8k0ba5p912LbSNNd0BZ0NtF3ISbhDF7Bpp0=
-github.com/mediocregopher/seq v0.1.0/go.mod h1:PjY8cqxYmt0xIrCil8xkNmXcOvK5G6ljLMf2+qDN5JA=
 github.com/mediocregopher/seq v0.1.1-0.20170116151952-4c22a2e6eca9 h1:vZEnhWAVUv7IOxkTUyJ7/VjTPHw66olHZWp2bzT9YsQ=
 github.com/mediocregopher/seq v0.1.1-0.20170116151952-4c22a2e6eca9/go.mod h1:PjY8cqxYmt0xIrCil8xkNmXcOvK5G6ljLMf2+qDN5JA=
 github.com/pkg/errors v0.8.1 h1:iURUrRGxPUNPdy5/HRSm+Yj6okJ6UtLINN0Q9M4+h3I=
@@ -43,8 +41,6 @@ github.com/stretchr/objx v0.1.1/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+
 github.com/stretchr/testify v1.2.2/go.mod h1:a8OnRcib4nhh0OaRAV+Yts87kKdq0PP7pXfy6kDkUVs=
 github.com/stretchr/testify v1.4.0 h1:2E4SXV/wtOkTonXsotYi4li6zVWxYlZuYNCXe9XRJyk=
 github.com/stretchr/testify v1.4.0/go.mod h1:j7eGeouHqKxXV5pUuKE4zz7dFj8WfuZ+81PSLYec5m4=
-github.com/tealeg/xlsx v1.0.3 h1:BXsDIQYBPq2HgbwUxrsVXIrnO0BDxmsdUfHSfvwfBuQ=
-github.com/tealeg/xlsx v1.0.3/go.mod h1:uxu5UY2ovkuRPWKQ8Q7JG0JbSivrISjdPzZQKeo74mA=
 github.com/tealeg/xlsx v1.0.4-0.20190807182118-a6243d92b369 h1:/C45QEUCZGnbNdi/zjNXfueS8pnX00eVOyzVuAVlq/o=
 github.com/tealeg/xlsx v1.0.4-0.20190807182118-a6243d92b369/go.mod h1:uxu5UY2ovkuRPWKQ8Q7JG0JbSivrISjdPzZQKeo74mA=
 github.com/urfave/cli v1.22.1 h1:+mkCCcOFKPnCmVYVcURKps1Xe+3zP90gSYGNfRkjoIY=
