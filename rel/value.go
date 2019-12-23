@@ -122,7 +122,7 @@ func NewValue(v interface{}) (Value, error) {
 	case float32:
 		return NewNumber(float64(x)), nil
 	case float64:
-		return NewNumber(float64(x)), nil
+		return NewNumber(x), nil
 	case map[string]interface{}:
 		return NewTupleFromMap(x)
 	case []interface{}:

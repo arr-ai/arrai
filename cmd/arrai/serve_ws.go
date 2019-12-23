@@ -47,7 +47,9 @@ func (wsfe *websocketFrontend) ServeHTTP(w http.ResponseWriter, r *http.Request)
 			expr, err := syntax.ParseString(s)
 			if err != nil {
 				log.Errorf("Error parsing request %#v: %s", s, err)
-				conn.WriteJSON(map[string]interface{}{"error": err.Error()})
+				if err := conn.WriteJSON(map[string]interface{}{"error": err.Error()}); err != nil {
+					panic(err)
+				}
 			}
 			cancelObservation()
 			cancelObservation = wsfe.engine.Observe(

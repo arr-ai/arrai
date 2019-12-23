@@ -25,7 +25,9 @@ func (n *Number) Float64() float64 {
 // Hash computes a hash for a Number.
 func (n *Number) Hash(seed uint32) uint32 {
 	xx := xxhash.NewS32(seed)
-	binary.Write(xx, binary.LittleEndian, n.number)
+	if err := binary.Write(xx, binary.LittleEndian, n.number); err != nil {
+		panic(err)
+	}
 	return xx.Sum32()
 }
 

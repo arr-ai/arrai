@@ -2,7 +2,6 @@ package rel
 
 import (
 	"encoding/binary"
-	"fmt"
 
 	"github.com/OneOfOne/xxhash"
 	"github.com/go-errors/errors"
@@ -32,7 +31,9 @@ func (f *NativeFunction) Fn() func(Value) Value {
 // Hash computes a hash for a NativeFunction.
 func (f *NativeFunction) Hash(seed uint32) uint32 {
 	xx := xxhash.NewS32(seed + 0x48acc265)
-	binary.Write(xx, binary.LittleEndian, f.String())
+	if err := binary.Write(xx, binary.LittleEndian, []byte(f.String())); err != nil {
+		panic(err)
+	}
 	return xx.Sum32()
 }
 
@@ -46,7 +47,7 @@ func (f *NativeFunction) Equal(i interface{}) bool {
 
 // String returns a string representation of the expression.
 func (f *NativeFunction) String() string {
-	return fmt.Sprintf("%s", f.name)
+	return f.name
 }
 
 // Eval returns the Value

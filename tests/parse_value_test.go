@@ -9,7 +9,7 @@ import (
 	"github.com/arr-ai/arrai/syntax"
 )
 
-func assertParse(t *testing.T, expected rel.Value, input string) bool {
+func assertParse(t *testing.T, expected rel.Value, input string) bool { //nolint:unparam
 	value, err := syntax.Parse(syntax.NewStringLexer(input))
 	return assert.NoError(t, err) &&
 		assert.True(t, expected.Equal(value), "%s == \n%s", expected, value)

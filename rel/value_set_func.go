@@ -42,7 +42,9 @@ func (f *Function) Body() Expr {
 // Hash computes a hash for a Function.
 func (f *Function) Hash(seed uint32) uint32 {
 	xx := xxhash.NewS32(seed ^ 0x734be5ff)
-	binary.Write(xx, binary.LittleEndian, f.String())
+	if err := binary.Write(xx, binary.LittleEndian, []byte(f.String())); err != nil {
+		panic(err)
+	}
 	return xx.Sum32()
 }
 

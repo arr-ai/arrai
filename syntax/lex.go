@@ -149,18 +149,18 @@ type lexerState func(l *Lexer) (Token, interface{})
 
 // Lexer extracts a stream of tokens from an input file.
 type Lexer struct {
+	fr     FileRange
+	stack  []lexerState
 	reader io.Reader
+	data   interface{}
+	err    error
 	buffer *bytes.Buffer
-	eof    bool
 	offset int
 	prev   int
 	state  lexerState
-	stack  []lexerState
-	token  Token
 	lexeme int
-	data   interface{}
-	fr     FileRange
-	err    error
+	token  Token
+	eof    bool
 	fresh  bool
 }
 
@@ -176,8 +176,6 @@ func NewLexer(reader io.Reader) *Lexer {
 
 // NewLexerWithPrefix returns a new Lexer for the given input.
 func NewLexerWithPrefix(prefix *bytes.Buffer, reader io.Reader) *Lexer {
-	const defaultBufferSize = 4096
-
 	return &Lexer{
 		reader: reader,
 		buffer: prefix,

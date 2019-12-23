@@ -91,7 +91,9 @@ func sync(c *cli.Context) error {
 		var buf bytes.Buffer
 		writeTreeToBuffer(tree, &buf)
 		log.Printf("TREE: %v", buf.String())
-		update.Send(&pb.UpdateReq{Expr: fmt.Sprintf(template, buf.String())})
+		if err := update.Send(&pb.UpdateReq{Expr: fmt.Sprintf(template, buf.String())}); err != nil {
+			return err
+		}
 		if _, err := update.Recv(); err != nil {
 			return err
 		}

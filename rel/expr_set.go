@@ -50,8 +50,14 @@ func NewArrayExpr(elements ...Expr) Expr {
 		if !ok {
 			tuples := make([]Expr, len(elements))
 			for i, elt := range elements {
-				posAttr, _ := NewAttrExpr("@", NewNumber(float64(i)))
-				valAttr, _ := NewAttrExpr("@item", elt)
+				posAttr, err := NewAttrExpr("@", NewNumber(float64(i)))
+				if err != nil {
+					panic(err)
+				}
+				valAttr, err := NewAttrExpr("@item", elt)
+				if err != nil {
+					panic(err)
+				}
 				tuples[i] = NewTupleExpr(posAttr, valAttr)
 			}
 			return NewSetExpr(tuples...)
@@ -84,7 +90,7 @@ func (e *SetExpr) String() string {
 
 // Eval returns the subject
 func (e *SetExpr) Eval(local, global *Scope) (Value, error) {
-	set := Set(NewSet())
+	set := NewSet()
 	for _, expr := range e.elements {
 		value, err := expr.Eval(local, global)
 		if err != nil {

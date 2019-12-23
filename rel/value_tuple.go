@@ -22,7 +22,6 @@ var (
 	// EmptyTuple is the tuple with no attributes.
 	EmptyTuple Tuple = &GenericTuple{tuple: seq.NewHashMap()}
 
-	hashDelim = []byte{0}
 	negateTag = "@neg"
 )
 
@@ -98,7 +97,9 @@ func (t *GenericTuple) Hash(seed uint32) uint32 {
 	for e := t.Enumerator(); e.MoveNext(); {
 		name, value := e.Current()
 		h1 ^= value.Hash(seed)
-		xx.Write([]byte(name))
+		if _, err := xx.Write([]byte(name)); err != nil {
+			panic(err)
+		}
 		h2 ^= xx.Sum32()
 		xx.Reset()
 	}

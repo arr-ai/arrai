@@ -240,11 +240,11 @@ func TestTupleWith(t *testing.T) {
 	assert.False(t, added)
 	assertAttr("a", n43)
 
-	tuple, added = tuple.With("b", n44)
+	tuple, _ = tuple.With("b", n44)
 	assertAttr("a", n43)
 	assertAttr("b", n44)
 
-	tuple, added = tuple.With("c", n44)
+	tuple, _ = tuple.With("c", n44)
 	assertAttr("a", n43)
 	assertAttr("b", n44)
 	assertAttr("c", n44)
@@ -290,7 +290,7 @@ func TestTupleWithout(t *testing.T) {
 	assertAttr("b", n43)
 	assertNoAttr("c")
 
-	tuple, removed = tuple.Without("a")
+	tuple, _ = tuple.Without("a")
 	assertNoAttr("a")
 	assertAttr("b", n43)
 	assertNoAttr("c")
@@ -298,7 +298,7 @@ func TestTupleWithout(t *testing.T) {
 	tuple, removed = tuple.Without("c")
 	assert.False(t, removed)
 
-	tuple, removed = tuple.Without("b")
+	tuple, _ = tuple.Without("b")
 	assertNoAttr("a")
 	assertNoAttr("b")
 	assertNoAttr("c")

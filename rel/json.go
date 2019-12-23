@@ -202,7 +202,7 @@ func jsonUnescape(i interface{}) (Value, error) {
 			for name, value := range x {
 				if name == "{||}" {
 					if array, ok := value.([]interface{}); ok {
-						result := Set(NewSet())
+						result := NewSet()
 						for _, v := range array {
 							value, err := jsonUnescape(v)
 							if err != nil {

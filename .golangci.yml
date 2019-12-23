@@ -1,0 +1,78 @@
+linters-settings:
+  errcheck:
+    check-blank: true
+  govet:
+    check-shadowing: true
+  golint:
+    min-confidence: 0
+  goimports:
+    local-prefixes: github.com/marcelocantos/frozen
+  maligned:
+    suggest-new: true
+  dupl:
+    threshold: 100
+  # depguard:
+  #   list-type: whitelist
+  #   packages:
+  #   - "github.com/cespare/xxhash"
+  #   - "github.com/marcelocantos/frozen"
+  #   - "github.com/marcelocantos/hash"
+  #   - "github.com/stretchr/testify/*"
+  lll:
+    line-length: 120
+  goimports:
+    local-prefixes: github.com/golangci/golangci-lint
+  gocritic:
+    enabled-tags:
+    - diagnostic
+    - experimental
+    - opinionated
+    - performance
+    - style
+
+linters:
+  # please, do not use `enable-all`: it's deprecated and will be removed soon.
+  # inverted configuration with `enable-all` and `disable` is not scalable during updates of golangci-lint
+  disable-all: true
+  enable:
+  - bodyclose
+  - deadcode
+  - depguard
+  - dogsled
+  - dupl
+  - errcheck
+  # - funlen
+  # - gochecknoglobals
+  - gochecknoinits
+  # - gocognit
+  - goconst
+  # - godox
+  # - gocritic
+  # - gocyclo
+  - gofmt
+  - goimports
+  - golint
+  - gosec
+  - gosimple
+  # - govet
+  - ineffassign
+
+  # - interfacer
+  - lll
+
+  - maligned
+  - misspell
+  - nakedret
+  - prealloc
+  - scopelint
+
+  - staticcheck
+  - structcheck
+  - stylecheck
+  - typecheck
+  - unconvert
+  - unparam
+  - unused
+  - varcheck
+  - whitespace
+  # - wsl

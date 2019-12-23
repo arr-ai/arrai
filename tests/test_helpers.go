@@ -68,5 +68,5 @@ func AssertScan(
 		}
 	}
 
-	return assert.Equal(t, lexeme, string(lexeme), l)
+	return assert.Equal(t, lexeme, lexeme, l)
 }

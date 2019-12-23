@@ -89,8 +89,7 @@ func NewMeanExpr(a, b Expr) Expr {
 		},
 		func(acc interface{}, v Value) (interface{}, error) {
 			agg := acc.(Agg)
-			switch v := v.(type) {
-			case *Number:
+			if v, ok := v.(*Number); ok {
 				return Agg{sum: agg.sum + v.Float64(), n: agg.n}, nil
 			}
 			return nil, errors.Errorf("Non-numeric value used in mean")

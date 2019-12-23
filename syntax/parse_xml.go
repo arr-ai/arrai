@@ -33,10 +33,10 @@ var xmlnsNS = "{http://www.w3.org/2000/xmlns/}"
 var xmlSpaceAttr = xmlNS + "space"
 
 var rootNS = seq.NewHashMap(
-	&seq.KV{"", ""},
-	&seq.KV{"xml", xmlNS},
-	&seq.KV{"xmlns", xmlNS},
-	&seq.KV{"arr.ai", "arr.ai"},
+	&seq.KV{Key: "", Val: ""},
+	&seq.KV{Key: "xml", Val: xmlNS},
+	&seq.KV{Key: "xmlns", Val: xmlNS},
+	&seq.KV{Key: "arr.ai", Val: "arr.ai"},
 )
 
 func newXMLContext() xmlContext {
@@ -169,24 +169,36 @@ func parseXML(l *Lexer, xc xmlContext) (rel.Expr, error) {
 	}
 
 	parts := make([]rel.AttrExpr, 0, 3)
-	tagAttr, _ := rel.NewAttrExpr("tag", rel.NewString([]rune(tag)))
+	tagAttr, err := rel.NewAttrExpr("tag", rel.NewString([]rune(tag)))
+	if err != nil {
+		return nil, err
+	}
 	parts = append(parts, tagAttr)
 	if len(nsAttrs) != 0 {
 		attrs := rel.NewTupleExprFromMap(nsAttrs)
-		attr, _ := rel.NewAttrExpr("attributes", attrs)
+		attr, err := rel.NewAttrExpr("attributes", attrs)
+		if err != nil {
+			return nil, err
+		}
 		parts = append(parts, attr)
 	}
 	if len(children) != 0 {
-		attr, _ := rel.NewAttrExpr("children", rel.NewArrayExpr(children...))
+		attr, err := rel.NewAttrExpr("children", rel.NewArrayExpr(children...))
+		if err != nil {
+			return nil, err
+		}
 		parts = append(parts, attr)
 	}
 
-	xmlExpr, _ := rel.NewAttrExpr("@xml", rel.NewTupleExpr(parts...))
+	xmlExpr, err := rel.NewAttrExpr("@xml", rel.NewTupleExpr(parts...))
+	if err != nil {
+		return nil, err
+	}
 
 	return rel.NewTupleExpr(xmlExpr), nil
 }
 
-func parseXMLAttributes(l *Lexer, tag string) ([]rel.AttrExpr, error) {
+func parseXMLAttributes(l *Lexer, _ string) ([]rel.AttrExpr, error) {
 	l.PushState(xmlLexerAttrState)
 	defer l.PopState()
 
@@ -206,10 +218,16 @@ func parseXMLAttributes(l *Lexer, tag string) ([]rel.AttrExpr, error) {
 				name = xmlnsNS + name[6:]
 			}
 
-			attr, _ := rel.NewAttrExpr(name, expr)
+			attr, err := rel.NewAttrExpr(name, expr)
+			if err != nil {
+				return nil, err
+			}
 			attrs = append(attrs, attr)
 		} else {
-			boolAttr, _ := rel.NewAttrExpr(name, rel.True)
+			boolAttr, err := rel.NewAttrExpr(name, rel.True)
+			if err != nil {
+				return nil, err
+			}
 			attrs = append(attrs, boolAttr)
 		}
 	}

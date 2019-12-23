@@ -101,10 +101,8 @@ func (s *String) Count() uint64 {
 
 // Has returns true iff the given Value is in the String.
 func (s *String) Has(value Value) bool {
-	if pos, char, ok := isStringTuple(value); ok {
-		if 0 <= pos && pos < uint(len(s.s)) {
-			return char == s.s[pos]
-		}
+	if pos, char, ok := isStringTuple(value); ok && pos < uint(len(s.s)) {
+		return char == s.s[pos]
 	}
 	return false
 }
@@ -184,7 +182,7 @@ func newStringTuple(pos uint, char rune) Tuple {
 	)
 }
 
-func isStringTuple(v Value) (uint, rune, bool) {
+func isStringTuple(v Value) (index uint, char rune, is bool) {
 	if tuple, ok := v.(Tuple); ok {
 		if tuple.Count() == 2 {
 			if at, found := tuple.Get("@"); found {

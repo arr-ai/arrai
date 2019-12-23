@@ -103,17 +103,15 @@ func TestSetEqual(t *testing.T) {
 type Float64InterfaceList []interface{}
 
 func (vl Float64InterfaceList) Len() int {
-	return len(([]interface{})(vl))
+	return len(vl)
 }
 
 func (vl Float64InterfaceList) Less(i, j int) bool {
-	values := ([]interface{})(vl)
-	return values[i].(float64) < values[j].(float64)
+	return vl[i].(float64) < vl[j].(float64)
 }
 
 func (vl Float64InterfaceList) Swap(i, j int) {
-	values := ([]interface{})(vl)
-	values[i], values[j] = values[j], values[i]
+	vl[i], vl[j] = vl[j], vl[i]
 }
 
 func TestSetBool(t *testing.T) {

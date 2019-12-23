@@ -356,17 +356,15 @@ func (e *genericSetEnumerator) Current() Value {
 type ValueList []Value
 
 func (vl ValueList) Len() int {
-	return len(([]Value)(vl))
+	return len(vl)
 }
 
 func (vl ValueList) Less(i, j int) bool {
-	values := ([]Value)(vl)
-	return values[i].Less(values[j])
+	return vl[i].Less(vl[j])
 }
 
 func (vl ValueList) Swap(i, j int) {
-	values := ([]Value)(vl)
-	values[i], values[j] = values[j], values[i]
+	vl[i], vl[j] = vl[j], vl[i]
 }
 
 // OrderedValues returns Values in a canonical ordering.

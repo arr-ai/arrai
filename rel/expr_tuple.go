@@ -58,8 +58,7 @@ func (e *AttrExpr) Apply(
 	if e.IsWildcard() {
 		if t, ok := value.(Tuple); ok {
 			for e := t.Enumerator(); e.MoveNext(); {
-				name, value := e.Current()
-				tuple, _ = tuple.With(name, value)
+				tuple, _ = tuple.With(e.Current())
 			}
 			return tuple, nil
 		}
@@ -137,7 +136,6 @@ func (e *TupleExpr) String() string {
 			b.WriteString(": ")
 			b.WriteString(attr.expr.String())
 		}
-		i++
 	}
 	b.WriteByte('}')
 	return b.String()
@@ -158,6 +156,5 @@ func (e *TupleExpr) Eval(local, global *Scope) (Value, error) {
 
 // Get returns the Expr for the given name or nil if not found.
 func (e *TupleExpr) Get(name string) Expr {
-	expr, _ := e.attrMap[name]
-	return expr
+	return e.attrMap[name]
 }

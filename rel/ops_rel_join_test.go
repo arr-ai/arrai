@@ -70,7 +70,7 @@ func intRel(name string, values ...int) Set {
 
 type intPair [2]int
 
-func intPairs(a, b string, pairs ...intPair) Set {
+func intPairs(a, b string, pairs ...intPair) Set { //nolint:unparam
 	result := None
 	for _, pair := range pairs {
 		result = result.With(
@@ -83,15 +83,7 @@ func intPairs(a, b string, pairs ...intPair) Set {
 	return result
 }
 
-func intFunc(a, b string, xes []int, f func(int) int) Set {
-	pairs := make([]intPair, len(xes))
-	for i, x := range xes {
-		pairs[i] = intPair{x, f(x)}
-	}
-	return intPairs(a, b, pairs...)
-}
-
-func assertJoin(t *testing.T, expected, a, b Set) bool {
+func assertJoin(t *testing.T, expected, a, b Set) bool { //nolint:unparam
 	return AssertEqualValues(t, expected, Join(a, b)) &&
 		AssertEqualValues(t, expected, Join(b, a))
 }

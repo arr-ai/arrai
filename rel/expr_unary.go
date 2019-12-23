@@ -20,8 +20,6 @@ func newUnaryExpr(a Expr, op, format string, eval unaryEval) Expr {
 	return &UnaryExpr{a, op, format, eval}
 }
 
-type unaryArithEval func(a float64) float64
-
 // NewPosExpr evaluates to a.
 func NewPosExpr(a Expr) Expr {
 	return newUnaryExpr(a, "+", "(+%s)",

@@ -7,15 +7,13 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/arr-ai/arrai/rel"
-	"github.com/arr-ai/arrai/syntax"
 )
 
 var (
 	// Root holds the variable name used for the database variable.
 	Root = "$"
 
-	initExpr = syntax.MustParse(syntax.NewStringLexer(Root))
-	lastID   = uint64(0)
+	lastID = uint64(0)
 )
 
 var globals = map[string]func(rel.Value) rel.Value{

@@ -461,12 +461,15 @@ func ParseAtom(l *Lexer) (rel.Expr, error) {
 				break tokenLoop
 			case Token('&'):
 				l.Scan()
-				if !l.Scan(Token(IDENT)) {
+				if !l.Scan(IDENT) {
 					return nil, expecting(l, "after '&'-prefix", "ident")
 				}
 				name = "&" + string(l.Lexeme())
 			}
 			expr, err := parseAttrExpr(l, name)
+			if err != nil {
+				return nil, err
+			}
 			attr, err := rel.NewAttrExpr(name, expr)
 			if err != nil {
 				return nil, err
@@ -643,8 +646,7 @@ func parseCommaList(
 		return nil
 	}
 	for {
-		err := parse(l)
-		if err != nil {
+		if err := parse(l); err != nil {
 			return err
 		}
 		if !l.Scan(Token(',')) {
