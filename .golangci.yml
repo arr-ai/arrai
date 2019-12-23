@@ -11,13 +11,6 @@ linters-settings:
     suggest-new: true
   dupl:
     threshold: 100
-  # depguard:
-  #   list-type: whitelist
-  #   packages:
-  #   - "github.com/cespare/xxhash"
-  #   - "github.com/marcelocantos/frozen"
-  #   - "github.com/marcelocantos/hash"
-  #   - "github.com/stretchr/testify/*"
   lll:
     line-length: 120
   goimports:
@@ -37,7 +30,7 @@ linters:
   enable:
   - bodyclose
   - deadcode
-  - depguard
+  # - depguard
   - dogsled
   - dupl
   - errcheck
