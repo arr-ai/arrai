@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestTupleNewTuple(t *testing.T) {
@@ -53,7 +52,7 @@ func TestTupleHash(t *testing.T) {
 
 	allTuples := []Tuple{a, b, c, d, e, f, g}
 	for _, x := range allTuples {
-		for i := uint32(0); i < 10; i++ {
+		for i := uintptr(0); i < 10; i++ {
 			assert.NotEqual(t, 0, x.Hash(i), "shouldn't hash to zero")
 		}
 	}
@@ -61,7 +60,7 @@ func TestTupleHash(t *testing.T) {
 	distinctTuples := []Tuple{a, b, d, e, f}
 	for _, x := range distinctTuples {
 		for _, y := range distinctTuples {
-			for i := uint32(0); i < 10; i++ {
+			for i := uintptr(0); i < 10; i++ {
 				if x == y {
 					assert.Equal(t, x.Hash(i), y.Hash(i), "should hash stably")
 					hx, hy := x.Hash(i), y.Hash(i+1)
@@ -161,7 +160,7 @@ func TestTupleString(t *testing.T) {
 	scenario := func(repr string, attrs ...Attr) {
 		tuple := NewTuple(attrs...)
 		if assert.Equal(
-			t, uint64(len(attrs)), tuple.Count(), "%v", tuple.Export(),
+			t, len(attrs), tuple.Count(), "%v", tuple.Export(),
 		) {
 			assert.Equal(t, repr, tuple.String(), "%v", tuple)
 		}
@@ -232,19 +231,17 @@ func TestTupleWith(t *testing.T) {
 		}
 	}
 
-	tuple, added := tuple.With("a", n42)
-	require.True(t, added)
+	tuple = tuple.With("a", n42)
 	assertAttr("a", n42)
 
-	tuple, added = tuple.With("a", n43)
-	assert.False(t, added)
+	tuple = tuple.With("a", n43)
 	assertAttr("a", n43)
 
-	tuple, _ = tuple.With("b", n44)
+	tuple = tuple.With("b", n44)
 	assertAttr("a", n43)
 	assertAttr("b", n44)
 
-	tuple, _ = tuple.With("c", n44)
+	tuple = tuple.With("c", n44)
 	assertAttr("a", n43)
 	assertAttr("b", n44)
 	assertAttr("c", n44)
@@ -280,34 +277,27 @@ func TestTupleWithout(t *testing.T) {
 	assertAttr("b", n43)
 	assertAttr("c", n44)
 
-	tuple, removed := tuple.Without("d")
-	require.False(t, removed)
-	require.False(t, removed)
-
-	tuple, removed = tuple.Without("c")
-	require.True(t, removed)
+	tuple = tuple.Without("d")
+	tuple = tuple.Without("c")
 	assertAttr("a", n42)
 	assertAttr("b", n43)
 	assertNoAttr("c")
 
-	tuple, _ = tuple.Without("a")
+	tuple = tuple.Without("a")
 	assertNoAttr("a")
 	assertAttr("b", n43)
 	assertNoAttr("c")
 
-	tuple, removed = tuple.Without("c")
-	assert.False(t, removed)
+	tuple = tuple.Without("c")
 
-	tuple, _ = tuple.Without("b")
+	tuple = tuple.Without("b")
 	assertNoAttr("a")
 	assertNoAttr("b")
 	assertNoAttr("c")
 
-	tuple, removed = tuple.Without("a")
-	assert.False(t, removed)
+	tuple = tuple.Without("a")
 
-	tuple, removed = tuple.Without("b")
-	assert.False(t, removed)
+	tuple = tuple.Without("b")
 }
 
 func TestTupleHasName(t *testing.T) {

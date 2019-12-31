@@ -5,15 +5,15 @@ import (
 	"sort"
 
 	"github.com/go-errors/errors"
-	"github.com/mediocregopher/seq"
+	"github.com/marcelocantos/frozen"
 )
 
 // EmptyScope is the scope with no variables.
-var EmptyScope = &Scope{seq.NewHashMap()}
+var EmptyScope = &Scope{}
 
 // Scope represents an expression scope.
 type Scope struct {
-	hmap *seq.HashMap
+	m frozen.Map
 }
 
 func (s *Scope) String() string {
@@ -49,19 +49,19 @@ func (s *Scope) Eval(local, global *Scope) (Value, error) {
 		if err != nil {
 			return nil, err
 		}
-		tuple, _ = tuple.With(name, value)
+		tuple = tuple.With(name, value)
 	}
 	return tuple, nil
 }
 
 // Count returns the number of variables in this Scope.
-func (s *Scope) Count() uint64 {
-	return s.hmap.Size()
+func (s *Scope) Count() int {
+	return s.m.Count()
 }
 
 // Get returns the Expr for the given name or nil.
 func (s *Scope) Get(name string) (Expr, bool) {
-	if expr, found := s.hmap.Get(name); found {
+	if expr, found := s.m.Get(name); found {
 		if expr != nil {
 			return expr.(Expr), true
 		}
@@ -73,12 +73,11 @@ func (s *Scope) Get(name string) (Expr, bool) {
 // With returns a new scope with all the old bindings and a new or replacement
 // binding for the given name to the given Expr.
 func (s *Scope) With(name string, expr Expr) *Scope {
-	hmap, _ := s.hmap.Set(name, expr)
-	return &Scope{hmap}
+	return &Scope{s.m.With(name, expr)}
 }
 
 // Project returns a new scope with just names from the input scope.
-func (s *Scope) Project(names *Names) (*Scope, error) {
+func (s *Scope) Project(names Names) (*Scope, error) {
 	result := EmptyScope
 	for e := names.Enumerator(); e.MoveNext(); {
 		name := e.Current()
@@ -105,7 +104,7 @@ func (s *Scope) Names() []string {
 
 // Enumerator returns an enumerator over the Values in the Scope.
 func (s *Scope) Enumerator() *ScopeEnumerator {
-	return &ScopeEnumerator{s: s.hmap}
+	return &ScopeEnumerator{i: s.m.Range()}
 }
 
 // orderedNames returns the names of this tuple in sorted order.
@@ -117,25 +116,16 @@ func (s *Scope) orderedNames() []string {
 
 // ScopeEnumerator represents an enumerator over a Scope.
 type ScopeEnumerator struct {
-	s    seq.Seq
-	name string
-	expr Expr
+	i *frozen.MapIterator
 }
 
 // MoveNext moves the enumerator to the next Value.
 func (e *ScopeEnumerator) MoveNext() bool {
-	item, s, ok := e.s.FirstRest()
-	e.s = s
-	if !ok {
-		return false
-	}
-	kv := item.(*seq.KV)
-	e.name = kv.Key.(string)
-	e.expr = kv.Val.(Expr)
-	return true
+	return e.i.Next()
 }
 
 // Current returns the enumerator's current Value.
 func (e *ScopeEnumerator) Current() (string, Expr) {
-	return e.name, e.expr
+	name, expr := e.i.Entry()
+	return name.(string), expr.(Expr)
 }

@@ -58,14 +58,14 @@ func (e *AttrExpr) Apply(
 	if e.IsWildcard() {
 		if t, ok := value.(Tuple); ok {
 			for e := t.Enumerator(); e.MoveNext(); {
-				tuple, _ = tuple.With(e.Current())
+				tuple = tuple.With(e.Current())
 			}
 			return tuple, nil
 		}
 		return nil, errors.Errorf(
 			"LHS of wildcard must be tuple, not %T", value)
 	}
-	tuple, _ = tuple.With(e.name, value)
+	tuple = tuple.With(e.name, value)
 	return tuple, nil
 }
 

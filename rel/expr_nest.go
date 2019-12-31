@@ -9,12 +9,12 @@ import (
 // NestExpr returns the relation with names grouped into a nested relation.
 type NestExpr struct {
 	lhs   Expr
-	attrs *Names
+	attrs Names
 	attr  string
 }
 
 // NewNestExpr returns a new NestExpr.
-func NewNestExpr(lhs Expr, attrs *Names, attr string) Expr {
+func NewNestExpr(lhs Expr, attrs Names, attr string) Expr {
 	return &NestExpr{lhs, attrs, attr}
 }
 
@@ -24,12 +24,12 @@ func (e *NestExpr) LHS() Expr {
 }
 
 // AttrsToNest returns the attrs from the LHS to be nested.
-func (e *NestExpr) AttrsToNest() *Names {
+func (e *NestExpr) AttrsToNest() Names {
 	return e.attrs
 }
 
 // NestedAttr returns the attr name for the nested relations.
-func (e *NestExpr) NestedAttr() *Names {
+func (e *NestExpr) NestedAttr() Names {
 	return e.attrs
 }
 

@@ -1,27 +1,27 @@
 package rel
 
 import (
-	"github.com/mediocregopher/seq"
+	"github.com/marcelocantos/frozen"
 )
 
 // RelationAttrs returns the set of names for a relation type, or false if the
 // set isn't a regular relation.
-func RelationAttrs(a Set) (*Names, bool) {
+func RelationAttrs(a Set) (Names, bool) {
 	e := a.Enumerator()
 	if !e.MoveNext() {
-		return nil, true
+		return Names{}, true
 	}
 	names := e.Current().(Tuple).Names()
 	for e.MoveNext() {
 		if !names.Equal(e.Current().(Tuple).Names()) {
-			return nil, false
+			return Names{}, false
 		}
 	}
 	return names, true
 }
 
 // Nest groups the given attributes into nested relations.
-func Nest(a Set, attrs *Names, attr string) Set {
+func Nest(a Set, attrs Names, attr string) Set {
 	names, ok := RelationAttrs(a)
 	if !ok {
 		panic("Tuple names mismatch in nest lhs")
@@ -63,7 +63,7 @@ func Unnest(a Set, attr string) Set {
 			unnested := None
 			t := key.(Tuple)
 			s, _ := t.Get(attr)
-			t, _ = t.Without(attr)
+			t = t.Without(attr)
 			for e := s.(Set).Enumerator(); e.MoveNext(); {
 				unnested = unnested.With(Merge(t, e.Current().(Tuple)))
 			}
@@ -78,7 +78,7 @@ func Reduce(
 	getKey func(value Value) Value,
 	reduce func(key Value, tuples Set) Set,
 ) Set {
-	buckets := seq.NewHashMap()
+	var buckets frozen.Map
 	for e := a.Enumerator(); e.MoveNext(); {
 		value := e.Current()
 		key := getKey(value)
@@ -89,12 +89,12 @@ func Reduce(
 		}
 
 		slot = slot.(Set).With(value)
-		buckets, _ = buckets.Set(key, slot)
+		buckets = buckets.With(key, slot)
 	}
 
 	result := None
-	for kv, b, ok := buckets.FirstRestKV(); ok; kv, b, ok = b.FirstRestKV() {
-		result = Union(result, reduce(kv.Key.(Value), kv.Val.(Set)))
+	for i := buckets.Range(); i.Next(); {
+		result = Union(result, reduce(i.Key().(Value), i.Value().(Set)))
 	}
 	return result
 }
@@ -150,7 +150,7 @@ func Join(a, b Set) Set {
 // 		aNames, bNames = bNames, aNames
 // 	}
 // 	common := aNames.Intersect(bNames)
-// 	buckets := seq.NewHashMap()
+// 	var buckets frozen.Map
 // 	for e := a.Enumerator(); e.MoveNext(); {
 // 		tuple := e.Current().(Tuple)
 // 		key := tuple.Project(common)
@@ -182,26 +182,26 @@ func GenericJoin(
 	getKey func(value Value) Value,
 	join func(key Value, a, b Set) Set,
 ) Set {
-	buckets := seq.NewHashMap()
+	var mb frozen.MapBuilder
 	accumulate := func(s Set, slotKey Value) {
 		for e := s.Enumerator(); e.MoveNext(); {
 			value := e.Current()
 			key := getKey(value)
 
-			slots, found := buckets.Get(key)
+			slots, found := mb.Get(key)
 			if !found {
-				slots = seq.NewHashMap()
+				slots = frozen.Map{}
 			}
 
 			// False denotes lhs accumulator
-			slot, found := slots.(*seq.HashMap).Get(slotKey)
+			slot, found := slots.(frozen.Map).Get(slotKey)
 			if !found {
 				slot = None
 			}
 
 			slot = slot.(Set).With(value)
-			slots, _ = slots.(*seq.HashMap).Set(slotKey, slot)
-			buckets, _ = buckets.Set(key, slots)
+			slots = slots.(frozen.Map).With(slotKey, slot)
+			mb.Put(key, slots)
 		}
 	}
 
@@ -212,9 +212,10 @@ func GenericJoin(
 	accumulate(b, bSlot)
 
 	result := None
-	for kv, b, ok := buckets.FirstRestKV(); ok; kv, b, ok = b.FirstRestKV() {
-		key := kv.Key.(Value)
-		slots := kv.Val.(*seq.HashMap)
+	for i := mb.Finish().Range(); i.Next(); {
+		k, v := i.Entry()
+		key := k.(Value)
+		slots := v.(frozen.Map)
 		aSet := None
 		if aItem, ok := slots.Get(aSlot); ok {
 			aSet = aItem.(Set)

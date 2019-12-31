@@ -43,7 +43,7 @@ func (e *AtArrowExpr) Eval(local, global *Scope) (Value, error) {
 		for i := set.Enumerator(); i.MoveNext(); {
 			t := i.Current().(Tuple)
 			pos, _ := t.Get("@")
-			attr := t.Names().Without("@").TheOne()
+			attr := t.Names().Without("@").Any()
 			item, _ := t.Get(attr)
 			v, err := e.fn.body.Eval(local.With(e.fn.arg, item), global)
 			if err != nil {

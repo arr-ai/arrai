@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"sort"
 
-	"github.com/mediocregopher/seq"
+	"github.com/marcelocantos/frozen"
 )
 
 type setFlavor int
@@ -18,15 +18,15 @@ const (
 )
 
 // genericSet is a set of Values.
-// It is implemented as an immutable map[uint32]set[Value].
+// It is implemented as an immutable map[uintptr]set[Value].
 type genericSet struct {
-	set    *seq.Set
+	set    frozen.Set
 	flavor setFlavor
 }
 
 // genericSet equivalents for Boolean true and false
 var (
-	None  = Set(&genericSet{seq.NewSet(), setFlavorNormal})
+	None  = Set(&genericSet{frozen.Set{}, setFlavorNormal})
 	False = None
 	True  = None.With(EmptyTuple)
 )
@@ -82,7 +82,7 @@ func NewArray(values ...Value) Set {
 }
 
 // Hash computes a hash for a genericSet.
-func (s *genericSet) Hash(seed uint32) uint32 {
+func (s *genericSet) Hash(seed uintptr) uintptr {
 	h := seed
 	for e := s.Enumerator(); e.MoveNext(); {
 		h ^= e.Current().Hash(0)
@@ -227,7 +227,7 @@ func (s *genericSet) Negate() Value {
 
 // Export exports a genericSet as an array of exported Values.
 func (s *genericSet) Export() interface{} {
-	result := make([]interface{}, 0, s.set.Size())
+	result := make([]interface{}, 0, s.set.Count())
 	for e := s.Enumerator(); e.MoveNext(); {
 		result = append(result, e.Current().Export())
 	}
@@ -235,20 +235,19 @@ func (s *genericSet) Export() interface{} {
 }
 
 // Count returns the number of elements in the genericSet.
-func (s *genericSet) Count() uint64 {
-	return s.set.Size()
+func (s *genericSet) Count() int {
+	return s.set.Count()
 }
 
 // Has returns true iff the given Value is in the genericSet.
 func (s *genericSet) Has(value Value) bool {
-	_, found := s.set.GetVal(value)
-	return found
+	return s.set.Has(value)
 }
 
 // With returns the original genericSet with given value added. Iff the value was
 // already present, the original genericSet is returned.
 func (s *genericSet) With(value Value) Set {
-	set, _ := s.set.SetVal(value)
+	set := s.set.With(value)
 
 	var isArrayAttr bool
 	var isStringAttr bool
@@ -283,12 +282,12 @@ func (s *genericSet) With(value Value) Set {
 // Without returns the original genericSet without the given value. Iff the value was
 // already absent, the original genericSet is returned.
 func (s *genericSet) Without(value Value) Set {
-	set, changed := s.set.DelVal(value)
-	if !changed {
+	set := s.set.Without(value)
+	if set == s.set {
 		return s
 	}
 	flavor := s.flavor
-	if set.Size() == 0 {
+	if set.Count() == 0 {
 		flavor = setFlavorNormal
 	}
 	return &genericSet{set, flavor}
@@ -317,7 +316,7 @@ func (s *genericSet) Where(p func(v Value) bool) Set {
 
 // Enumerator returns an enumerator over the Values in the genericSet.
 func (s *genericSet) Enumerator() ValueEnumerator {
-	return &genericSetEnumerator{s.set, nil}
+	return &genericSetEnumerator{s.set.Range(), nil}
 }
 
 // Any return any value from the set.
@@ -330,26 +329,18 @@ func (s *genericSet) Any() Value {
 
 // genericSetEnumerator represents an enumerator over a genericSet.
 type genericSetEnumerator struct {
-	seq     seq.Seq
+	i       frozen.Iterator
 	current Value
 }
 
 // MoveNext moves the enumerator to the next Value.
 func (e *genericSetEnumerator) MoveNext() bool {
-	var first interface{}
-	var ok bool
-	first, e.seq, ok = e.seq.FirstRest()
-	if ok {
-		e.current = first.(Value)
-	} else {
-		e.current = nil
-	}
-	return ok
+	return e.i.Next()
 }
 
 // Current returns the enumerator's current Value.
 func (e *genericSetEnumerator) Current() Value {
-	return e.current
+	return e.i.Value().(Value)
 }
 
 // ValueList represents a []Value for use in sort.Sort().

@@ -3,49 +3,49 @@ package rel
 import (
 	"bytes"
 
-	"github.com/mediocregopher/seq"
+	"github.com/marcelocantos/frozen"
 )
 
 // Names represents a set of names.
-type Names seq.Set
+type Names frozen.Set
 
 // EmptyNames is the empty set of names.
-var EmptyNames = (*Names)(seq.NewSet())
+var EmptyNames = Names(frozen.Set{})
 
 // NewNames returns a new set of names with the given names.
-func NewNames(names ...string) *Names {
-	s := seq.NewSet()
+func NewNames(names ...string) Names {
+	s := frozen.Set{}
 	for _, name := range names {
-		s, _ = s.SetVal(name)
+		s = s.With(name)
 	}
-	return (*Names)(s)
+	return Names(s)
 }
 
 // Bool returns true iff there are names in the set.
-func (n *Names) Bool() bool {
+func (n Names) Bool() bool {
 	return n.Count() != 0
 }
 
 // Count returns the number of names in a set of names.
-func (n *Names) Count() uint64 {
-	return (*seq.Set)(n).Size()
+func (n Names) Count() int {
+	return (frozen.Set(n)).Count()
 }
 
 // Hash computes a hash value for the set of names.
-func (n *Names) Hash(seed uint32) uint32 {
-	return (*seq.Set)(n).Hash(seed + 0x4e351c91)
+func (n Names) Hash(seed uint32) uint32 {
+	return uint32((frozen.Set(n)).Hash(uintptr(seed) + 0x4e351c91))
 }
 
 // Equal returns true iff the given sets of names are equal.
-func (n *Names) Equal(i interface{}) bool {
-	if x, ok := i.(*Names); ok {
-		return (*seq.Set)(n).Equal((*seq.Set)(x))
+func (n Names) Equal(i interface{}) bool {
+	if x, ok := i.(Names); ok {
+		return (frozen.Set(n)).Equal(frozen.Set(x))
 	}
 	return false
 }
 
 // String returns a string representation of the set of names.
-func (n *Names) String() string {
+func (n Names) String() string {
 	var buf bytes.Buffer
 	buf.WriteRune('|')
 	i := 0
@@ -60,34 +60,32 @@ func (n *Names) String() string {
 }
 
 // With returns a set with all the input names and the given name.
-func (n *Names) With(name string) *Names {
-	if s, added := (*seq.Set)(n).SetVal(name); added {
-		return (*Names)(s)
-	}
-	return n
+func (n Names) With(name string) Names {
+	return Names((frozen.Set(n)).With(name))
 }
 
 // Without returns a set with all the input names, excluding the given name.
-func (n *Names) Without(name string) *Names {
-	if s, deleted := (*seq.Set)(n).DelVal(name); deleted {
-		return (*Names)(s)
-	}
-	return n
+func (n Names) Without(name string) Names {
+	return Names((frozen.Set(n)).Without(name))
 }
 
 // Has returns true iff the given name is in the set of names.
-func (n *Names) Has(name string) bool {
-	_, found := (*seq.Set)(n).GetVal(name)
-	return found
+func (n Names) Has(name string) bool {
+	return (frozen.Set(n)).Has(name)
+}
+
+// Any returns an arbitrary element from `n`.
+func (n Names) Any() string {
+	return (frozen.Set(n)).Any().(string)
 }
 
 // Enumerator returns an enumerator over a set of names.
-func (n *Names) Enumerator() *NamesEnumerator {
-	return &NamesEnumerator{seq.Seq((*seq.Set)(n)), ""}
+func (n Names) Enumerator() *NamesEnumerator {
+	return &NamesEnumerator{(frozen.Set(n)).Range()}
 }
 
 // TheOne return the single name in the set; panics otherwise.
-func (n *Names) TheOne() string {
+func (n Names) TheOne() string {
 	if n.Count() != 1 {
 		panic("Names.TheOne expects exactly one name in the set")
 	}
@@ -97,7 +95,7 @@ func (n *Names) TheOne() string {
 }
 
 // ToSlice returns a slice of the names in the set.
-func (n *Names) ToSlice() []string {
+func (n Names) ToSlice() []string {
 	names := make([]string, n.Count())
 	i := 0
 	for e := n.Enumerator(); e.MoveNext(); {
@@ -108,54 +106,31 @@ func (n *Names) ToSlice() []string {
 }
 
 // Intersect returns names in both sets.
-func (n *Names) Intersect(rhs *Names) *Names {
-	result := EmptyNames
-	for e := n.Enumerator(); e.MoveNext(); {
-		name := e.Current()
-		if rhs.Has(name) {
-			result = result.With(name)
-		}
-	}
-	return result
+func (n Names) Intersect(o Names) Names {
+	return Names((frozen.Set(n)).Intersection(frozen.Set(o)))
 }
 
 // Minus returns names in one set not found in the other.
-func (n *Names) Minus(rhs *Names) *Names {
-	result := EmptyNames
-	for e := n.Enumerator(); e.MoveNext(); {
-		name := e.Current()
-		if !rhs.Has(name) {
-			result = result.With(name)
-		}
-	}
-	return result
+func (n Names) Minus(o Names) Names {
+	return Names((frozen.Set(n)).Difference(frozen.Set(o)))
 }
 
-// IsSubsetOf returns true iff the set is a subset of another.
-func (n *Names) IsSubsetOf(rhs *Names) bool {
-	return !n.Minus(rhs).Bool()
+// IsSubsetOf returns true if `n`` is a subset of `o`.
+func (n Names) IsSubsetOf(o Names) bool {
+	return (frozen.Set(n)).IsSubsetOf(frozen.Set(o))
 }
 
 // NamesEnumerator represents an enumerator over a set of names.
 type NamesEnumerator struct {
-	seq     seq.Seq
-	current string
+	i frozen.Iterator
 }
 
 // MoveNext moves the enumerator to the next Value.
 func (e *NamesEnumerator) MoveNext() bool {
-	var first interface{}
-	var ok bool
-	first, e.seq, ok = e.seq.FirstRest()
-	if ok {
-		e.current = first.(string)
-	} else {
-		e.current = ""
-	}
-	return ok
+	return e.i.Next()
 }
 
 // Current returns the enumerator's current Value.
 func (e *NamesEnumerator) Current() string {
-	return e.current
+	return e.i.Value().(string)
 }

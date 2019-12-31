@@ -34,9 +34,9 @@ func TestNewValueFromUint16(t *testing.T) {
 	testNumericValue(t, uint16(123))
 }
 
-func TestNewValueFromUint32(t *testing.T) {
+func TestNewValueFromuintptr(t *testing.T) {
 	t.Parallel()
-	testNumericValue(t, uint32(123))
+	testNumericValue(t, uintptr(123))
 }
 
 func TestNewValueFromUint64(t *testing.T) {

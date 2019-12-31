@@ -226,7 +226,7 @@ func NewCallExpr(a, b Expr) Expr {
 							if t.Count() != 2 {
 								return nil, errors.Errorf("Too many outputs")
 							}
-							rest, _ := t.Without("@")
+							rest := t.Without("@")
 							for e := rest.Enumerator(); e.MoveNext(); {
 								_, value := e.Current()
 								outs = outs.With(value)

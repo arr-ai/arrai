@@ -77,7 +77,7 @@ func NewMaxExpr(a, b Expr) Expr {
 func NewMeanExpr(a, b Expr) Expr {
 	type Agg struct {
 		sum float64
-		n   uint64
+		n   int
 	}
 	return NewReduceExpr(
 		a, ExprAsFunction(b), "%s mean ???",

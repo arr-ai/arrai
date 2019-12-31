@@ -1,10 +1,9 @@
 package rel
 
 import (
-	"encoding/binary"
 	"strconv"
 
-	"github.com/OneOfOne/xxhash"
+	"github.com/marcelocantos/hash"
 )
 
 // Number is a number.
@@ -23,12 +22,8 @@ func (n *Number) Float64() float64 {
 }
 
 // Hash computes a hash for a Number.
-func (n *Number) Hash(seed uint32) uint32 {
-	xx := xxhash.NewS32(seed)
-	if err := binary.Write(xx, binary.LittleEndian, n.number); err != nil {
-		panic(err)
-	}
-	return xx.Sum32()
+func (n *Number) Hash(seed uintptr) uintptr {
+	return hash.Float64(n.number, seed)
 }
 
 // Equal tests two Values for equality. Any other type returns false.

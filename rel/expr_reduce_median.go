@@ -27,7 +27,7 @@ func (h *float64Heap) Pop() interface{} {
 func NewMedianExpr(a, b Expr) Expr {
 	type Agg struct {
 		h float64Heap
-		n uint64
+		n int
 	}
 	return NewReduceExpr(
 		a, ExprAsFunction(b), "%s min ???",

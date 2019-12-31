@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/go-errors/errors"
-	"github.com/mediocregopher/seq"
+	"github.com/marcelocantos/frozen"
 )
 
 // Expr represents an arr.ai expression.
@@ -18,8 +18,7 @@ type Expr interface {
 
 // Value represents any arr.ai value.
 type Value interface {
-	// Allow Values to be used in seq.{HashMap,Set}.
-	seq.Setable
+	frozen.Key
 
 	// Values are Exprs.
 	Expr
@@ -60,16 +59,16 @@ type Tuple interface {
 	Value
 
 	// Access
-	Count() uint64
+	Count() int
 	Get(name string) (Value, bool)
 	HasName(name string) bool
-	Names() *Names
+	Names() Names
 	Enumerator() AttrEnumerator
 
 	// Transform
-	With(name string, value Value) (Tuple, bool)
-	Without(name string) (Tuple, bool)
-	Project(names *Names) Tuple
+	With(name string, value Value) Tuple
+	Without(name string) Tuple
+	Project(names Names) Tuple
 }
 
 // ValueEnumerator enumerates Values.
@@ -83,7 +82,7 @@ type Set interface {
 	Value
 
 	// Access
-	Count() uint64
+	Count() int
 	Has(Value) bool
 	Enumerator() ValueEnumerator
 
@@ -105,7 +104,7 @@ func NewValue(v interface{}) (Value, error) {
 		return NewNumber(float64(x)), nil
 	case uint16:
 		return NewNumber(float64(x)), nil
-	case uint32:
+	case uintptr:
 		return NewNumber(float64(x)), nil
 	case uint64:
 		return NewNumber(float64(x)), nil

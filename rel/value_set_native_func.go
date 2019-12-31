@@ -1,10 +1,8 @@
 package rel
 
 import (
-	"encoding/binary"
-
-	"github.com/OneOfOne/xxhash"
 	"github.com/go-errors/errors"
+	"github.com/marcelocantos/hash"
 )
 
 // NativeFunction represents a binary relation uniquely mapping inputs to outputs.
@@ -29,12 +27,8 @@ func (f *NativeFunction) Fn() func(Value) Value {
 }
 
 // Hash computes a hash for a NativeFunction.
-func (f *NativeFunction) Hash(seed uint32) uint32 {
-	xx := xxhash.NewS32(seed + 0x48acc265)
-	if err := binary.Write(xx, binary.LittleEndian, []byte(f.String())); err != nil {
-		panic(err)
-	}
-	return xx.Sum32()
+func (f *NativeFunction) Hash(seed uintptr) uintptr {
+	return hash.String(f.String(), hash.Uintptr(9714745597188477233, seed))
 }
 
 // Equal tests two Values for equality. Any other type returns false.

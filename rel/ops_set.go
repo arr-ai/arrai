@@ -41,7 +41,7 @@ func Concatenate(a, b Set) (Set, error) {
 		if t, ok := elt.(Tuple); ok {
 			if pos, found := t.Get("@"); found {
 				if n, ok := pos.(*Number); ok {
-					t, _ = t.With("@", NewNumber(float64(offset)+n.Float64()))
+					t = t.With("@", NewNumber(float64(offset)+n.Float64()))
 					a = a.With(t)
 					continue
 				}
@@ -75,8 +75,8 @@ type orderer struct {
 	keys   []Value
 }
 
-func newOrderer(n uint64) *orderer {
-	buf := make([]Value, 2*int(n))
+func newOrderer(n int) *orderer {
+	buf := make([]Value, 2*n)
 	return &orderer{buf[:n], buf[n:]}
 }
 

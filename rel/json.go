@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/go-errors/errors"
+	"github.com/marcelocantos/frozen"
 )
 
 // MarshalToJSON marshals the given value to JSON with sets escaped as
@@ -217,7 +218,7 @@ func jsonUnescape(i interface{}) (Value, error) {
 				}
 			}
 		}
-		result := EmptyTuple
+		var b frozen.MapBuilder
 		for name, v := range x {
 			if name == "{||}" {
 				return nil, errors.Errorf(`"{||}" is a reserved name`)
@@ -226,9 +227,9 @@ func jsonUnescape(i interface{}) (Value, error) {
 			if err != nil {
 				return nil, err
 			}
-			result, _ = result.With(name, value)
+			b.Put(name, value)
 		}
-		return result, nil
+		return &GenericTuple{tuple: b.Finish()}, nil
 	default:
 		panic(fmt.Sprintf("Unrecognised value: %v (%[1]T)", i))
 	}

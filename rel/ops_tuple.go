@@ -1,5 +1,7 @@
 package rel
 
+import "github.com/marcelocantos/frozen"
+
 // CombineOp specifies which pairings to include in Combine().
 type CombineOp int
 
@@ -39,13 +41,12 @@ func Combine(a, b Tuple, op CombineOp) map[string]Pair {
 }
 
 // CombineNames returns names from a and b according to the given mask.
-func CombineNames(a, b Tuple, op CombineOp) *Names {
-	c := Combine(a, b, op)
-	names := EmptyNames
-	for name := range c {
-		names = names.With(name)
+func CombineNames(a, b Tuple, op CombineOp) Names {
+	var sb frozen.SetBuilder
+	for name := range Combine(a, b, op) {
+		sb.Add(name)
 	}
-	return names
+	return Names(sb.Finish())
 }
 
 // Merge returns the merger of a and b, if possible or nil otherwise.
@@ -54,9 +55,9 @@ func Merge(a, b Tuple) Tuple {
 	t := NewTuple()
 	for name, pair := range Combine(a, b, AllPairs) {
 		if pair.a == nil {
-			t, _ = t.With(name, pair.b)
+			t = t.With(name, pair.b)
 		} else if pair.b == nil || pair.a.Equal(pair.b) {
-			t, _ = t.With(name, pair.a)
+			t = t.With(name, pair.a)
 		} else {
 			return nil
 		}
@@ -70,7 +71,7 @@ func MergeLeftToRight(t Tuple, ts ...Tuple) Tuple {
 	for _, u := range ts {
 		for e := u.Enumerator(); e.MoveNext(); {
 			name, value := e.Current()
-			t, _ = t.With(name, value)
+			t = t.With(name, value)
 		}
 	}
 	return t

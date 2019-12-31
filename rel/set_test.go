@@ -17,13 +17,13 @@ func TestNewSetFrom(t *testing.T) {
 	t.Parallel()
 	a, err := NewSetFrom()
 	if assert.NoError(t, err) {
-		assert.EqualValues(t, 0, a.Count())
+		assert.Equal(t, 0, a.Count())
 		assert.Equal(t, NewSet(), a)
 	}
 	a, err = NewSetFrom(42)
 	if assert.NoError(t, err) {
-		assert.EqualValues(t, 1, a.Count())
-		assert.Equal(t, NewSet(NewNumber(42)), a)
+		assert.Equal(t, 1, a.Count())
+		assert.True(t, NewSet(NewNumber(42)).Equal(a))
 	}
 }
 
@@ -48,7 +48,7 @@ func TestSetHash(t *testing.T) {
 
 	allSets := []Set{a, b, c, d, e, f}
 	for _, x := range allSets {
-		for i := uint32(0); i < 10; i++ {
+		for i := uintptr(0); i < 10; i++ {
 			assert.NotEqual(t, 0, x.Hash(i))
 		}
 	}
@@ -56,7 +56,7 @@ func TestSetHash(t *testing.T) {
 	distinctSets := []Set{a, b, d, e}
 	for _, x := range distinctSets {
 		for _, y := range distinctSets {
-			for i := uint32(0); i < 10; i++ {
+			for i := uintptr(0); i < 10; i++ {
 				if x == y {
 					assert.Equal(t, x.Hash(i), y.Hash(i),
 						"%s.Hash(%d) != %s.Hash(%[2]d)", x, i, y)
@@ -162,7 +162,7 @@ func TestSetString(t *testing.T) {
 	scenario := func(repr string, values ...interface{}) {
 		set := intSet(values...)
 		if assert.Equal(
-			t, uint64(len(values)), set.Count(), "%v", set.Export(),
+			t, len(values), set.Count(), "%v", set.Export(),
 		) {
 			assert.Equal(t, repr, set.String(), "%v", set)
 		}

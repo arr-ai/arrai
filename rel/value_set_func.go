@@ -1,11 +1,10 @@
 package rel
 
 import (
-	"encoding/binary"
 	"fmt"
 
-	"github.com/OneOfOne/xxhash"
 	"github.com/go-errors/errors"
+	"github.com/marcelocantos/hash"
 )
 
 // Function represents a binary relation uniquely mapping inputs to outputs.
@@ -40,12 +39,8 @@ func (f *Function) Body() Expr {
 }
 
 // Hash computes a hash for a Function.
-func (f *Function) Hash(seed uint32) uint32 {
-	xx := xxhash.NewS32(seed ^ 0x734be5ff)
-	if err := binary.Write(xx, binary.LittleEndian, []byte(f.String())); err != nil {
-		panic(err)
-	}
-	return xx.Sum32()
+func (f *Function) Hash(seed uintptr) uintptr {
+	return hash.String(f.String(), hash.Uintptr(17297263775284131973, seed))
 }
 
 // Equal tests two Values for equality. Any other type returns false.

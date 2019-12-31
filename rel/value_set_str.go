@@ -6,7 +6,7 @@ import "encoding/json"
 const CharAttr = "@char"
 
 // String is a set of Values.
-// It is implemented as an immutable map[uint32]set[Value].
+// It is implemented as an immutable map[uintptr]set[Value].
 type String struct {
 	s []rune
 }
@@ -20,7 +20,7 @@ func NewString(s []rune) Set {
 }
 
 // Hash computes a hash for a String.
-func (s *String) Hash(seed uint32) uint32 {
+func (s *String) Hash(seed uintptr) uintptr {
 	h := seed
 	for e := s.Enumerator(); e.MoveNext(); {
 		h ^= e.Current().Hash(0)
@@ -95,8 +95,8 @@ func (s *String) Export() interface{} {
 }
 
 // Count returns the number of elements in the String.
-func (s *String) Count() uint64 {
-	return uint64(len(s.s))
+func (s *String) Count() int {
+	return len(s.s)
 }
 
 // Has returns true iff the given Value is in the String.

@@ -8,19 +8,18 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/OneOfOne/xxhash"
-	"github.com/mediocregopher/seq"
+	"github.com/marcelocantos/frozen"
 )
 
 // GenericTuple is the default implementation of Tuple.
 type GenericTuple struct {
-	tuple *seq.HashMap
+	tuple frozen.Map
 	names []string
 }
 
 var (
 	// EmptyTuple is the tuple with no attributes.
-	EmptyTuple Tuple = &GenericTuple{tuple: seq.NewHashMap()}
+	EmptyTuple Tuple = &GenericTuple{}
 
 	negateTag = "@neg"
 )
@@ -57,53 +56,42 @@ func NewTupleAttr(name string, attrs ...Attr) Attr {
 
 // NewTuple constructs a Tuple from attrs. Passes each Val to NewValue().
 func NewTuple(attrs ...Attr) Tuple {
-	tuple := EmptyTuple
+	var b frozen.MapBuilder
 	for _, kv := range attrs {
-		tuple, _ = tuple.With(kv.Name, kv.Value)
+		b.Put(kv.Name, kv.Value)
 	}
-	return tuple
+	return &GenericTuple{tuple: b.Finish()}
 }
 
 // NewTupleFromMap constructs a Tuple from a map of strings to Go values.
 func NewTupleFromMap(m map[string]interface{}) (Tuple, error) {
-	tuple := EmptyTuple
+	var b frozen.MapBuilder
 	for name, intf := range m {
 		value, err := NewValue(intf)
 		if err != nil {
 			return nil, err
 		}
-		tuple, _ = tuple.With(name, value)
+		b.Put(name, value)
 	}
-	return tuple, nil
+	return &GenericTuple{tuple: b.Finish()}, nil
 }
 
 // NewXML constructs an XML Tuple from the given data
 func NewXML(tag []rune, attrs []Attr, children ...Value) Tuple {
-	t, _ := EmptyTuple.With("tag", NewString(tag))
+	var b frozen.MapBuilder
+	b.Put("tag", NewString(tag))
 	if len(attrs) != 0 {
-		t, _ = t.With("attributes", NewTuple(attrs...))
+		b.Put("attributes", NewTuple(attrs...))
 	}
 	if len(children) != 0 {
-		t, _ = t.With("children", NewArray(children...))
+		b.Put("children", NewArray(children...))
 	}
-	xml, _ := EmptyTuple.With("@xml", t)
-	return xml
+	return EmptyTuple.With("@xml", &GenericTuple{tuple: b.Finish()})
 }
 
 // Hash computes a hash for a GenericTuple.
-func (t *GenericTuple) Hash(seed uint32) uint32 {
-	xx := xxhash.NewS32(seed)
-	h1, h2 := seed+0x6b783347, seed+0x7b4da23d
-	for e := t.Enumerator(); e.MoveNext(); {
-		name, value := e.Current()
-		h1 ^= value.Hash(seed)
-		if _, err := xx.Write([]byte(name)); err != nil {
-			panic(err)
-		}
-		h2 ^= xx.Sum32()
-		xx.Reset()
-	}
-	return h1 + 3*h2
+func (t *GenericTuple) Hash(seed uintptr) uintptr {
+	return t.tuple.Hash(seed)
 }
 
 // Equal tests two Tuples for equality. Any other type returns false.
@@ -251,8 +239,8 @@ func (t *GenericTuple) Export() interface{} {
 }
 
 // Count returns how many attributes are in the Tuple.
-func (t *GenericTuple) Count() uint64 {
-	return t.tuple.Size()
+func (t *GenericTuple) Count() int {
+	return t.tuple.Count()
 }
 
 // Get returns the Value associated with a name, and true iff it was found.
@@ -264,26 +252,21 @@ func (t *GenericTuple) Get(name string) (Value, bool) {
 }
 
 // With returns a Tuple with all name/Value pairs in t (except the one for the
-// given name, if present) with the addition of the given name/Value pair, and
-// true iff it was newly added.
-func (t *GenericTuple) With(name string, value Value) (Tuple, bool) {
+// given name, if present) with the addition of the given name/Value pair.
+func (t *GenericTuple) With(name string, value Value) Tuple {
 	// Strip view/non-view counterpart.
 	if strings.HasPrefix(name, "&") {
-		u, _ := t.Without(name[1:])
-		t = u.(*GenericTuple)
+		t = t.Without(name[1:]).(*GenericTuple)
 	} else {
-		u, _ := t.Without("&" + name)
-		t = u.(*GenericTuple)
+		t = t.Without("&" + name).(*GenericTuple)
 	}
-	hm, added := t.tuple.Set(name, value)
-	return &GenericTuple{tuple: hm}, added
+	return &GenericTuple{tuple: t.tuple.With(name, value)}
 }
 
 // Without returns a Tuple with all name/Value pairs in t exception the one of
-// the given name, and true iff it was present.
-func (t *GenericTuple) Without(name string) (Tuple, bool) {
-	hm, removed := t.tuple.Del(name)
-	return &GenericTuple{tuple: hm}, removed
+// the given name.
+func (t *GenericTuple) Without(name string) Tuple {
+	return &GenericTuple{tuple: t.tuple.Without(frozen.NewSet(name))}
 }
 
 // HasName returns true iff the Tuple has an attribute with the given name.
@@ -302,74 +285,60 @@ func (t *GenericTuple) Attributes() map[string]Value {
 	return attrs
 }
 
-// Names returns the attribute names as a slice.
-func (t *GenericTuple) Names() *Names {
-	names := EmptyNames
+// Names returns the attribute names.
+func (t *GenericTuple) Names() Names {
+	var b frozen.SetBuilder
 	for e := t.Enumerator(); e.MoveNext(); {
 		name, _ := e.Current()
-		names = names.With(name)
+		b.Add(name)
 	}
-	return names
+	return Names(b.Finish())
 }
 
 // Project returns a tuple with the given names from this tuple, or nil if any
 // name wasn't found.
-func (t *GenericTuple) Project(names *Names) Tuple {
-	result := NewTuple()
+func (t *GenericTuple) Project(names Names) Tuple {
+	var b frozen.MapBuilder
 	for e := names.Enumerator(); e.MoveNext(); {
 		name := e.Current()
 		value, found := t.Get(name)
 		if !found {
 			return nil
 		}
-		result, _ = result.With(name, value)
+		b.Put(name, value)
 	}
-	return result
+	return &GenericTuple{tuple: b.Finish()}
 }
 
 // GenericTupleEnumerator represents an enumerator over a GenericTuple.
 type GenericTupleEnumerator struct {
-	ts      tupleSeq
-	current Attr
+	i *frozen.MapIterator
 }
 
 // MoveNext moves the enumerator to the next Value.
 func (e *GenericTupleEnumerator) MoveNext() bool {
-	name, value, ts, ok := e.ts.walk()
-	e.ts = ts
-	e.current = Attr{name, value}
-	return ok
+	return e.i.Next()
 }
 
 // Current returns the enumerator's current Value.
 func (e *GenericTupleEnumerator) Current() (string, Value) {
-	return e.current.Name, e.current.Value
+	k, v := e.i.Entry()
+	return k.(string), v.(Value)
 }
 
 // Enumerator returns an enumerator over the Values in the GenericTuple.
 func (t *GenericTuple) Enumerator() AttrEnumerator {
-	return &GenericTupleEnumerator{ts: tupleSeq{t.tuple}}
+	return &GenericTupleEnumerator{i: t.tuple.Range()}
 }
 
 // orderedNames returns the names of this tuple in sorted order.
 func tupleOrderedNames(t *GenericTuple) []string {
-	if t.names == nil {
-		t.names = t.Names().ToSlice()
+	if len(t.names) == 0 {
+		for e := t.Enumerator(); e.MoveNext(); {
+			name, _ := e.Current()
+			t.names = append(t.names, name)
+		}
 		sort.Strings(t.names)
 	}
 	return t.names
-}
-
-type tupleSeq struct {
-	s seq.Seq
-}
-
-// walk returns another name/Value pair and access to the rest.
-func (tr tupleSeq) walk() (string, Value, tupleSeq, bool) {
-	v, s, ok := tr.s.FirstRest()
-	if !ok {
-		return "", nil, tupleSeq{}, false
-	}
-	kv := v.(*seq.KV)
-	return kv.Key.(string), kv.Val.(Value), tupleSeq{s}, true
 }
