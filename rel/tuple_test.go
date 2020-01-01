@@ -165,16 +165,15 @@ func TestTupleString(t *testing.T) {
 			assert.Equal(t, repr, tuple.String(), "%v", tuple)
 		}
 	}
-	scenario("{}")
-	scenario("{a: 42}", Attr{"a", NewNumber(42)})
-	scenario("{a: 42}", Attr{"a", NewNumber(42)})
-	scenario("{b: 42}", Attr{"b", NewNumber(42)})
-	scenario("{a: 5432}", Attr{"a", NewNumber(5432)})
-	scenario("{a: 4321, b: 321}",
+	scenario("()")
+	scenario("(a: 42)", Attr{"a", NewNumber(42)})
+	scenario("(b: 42)", Attr{"b", NewNumber(42)})
+	scenario("(a: 5432)", Attr{"a", NewNumber(5432)})
+	scenario("(a: 4321, b: 321)",
 		Attr{"a", NewNumber(4321)},
 		Attr{"b", NewNumber(321)},
 	)
-	scenario("{a: 4321, b: 321}",
+	scenario("(a: 4321, b: 321)",
 		Attr{"b", NewNumber(321)},
 		Attr{"a", NewNumber(4321)},
 	)

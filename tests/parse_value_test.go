@@ -31,31 +31,31 @@ func TestParseNumber(t *testing.T) {
 
 func TestParseTuple(t *testing.T) {
 	t.Parallel()
-	assertParse(t, rel.EmptyTuple, `{}`)
+	assertParse(t, rel.EmptyTuple, `()`)
 	assertParse(t,
 		rel.NewTuple(rel.Attr{Name: "a", Value: rel.NewNumber(1)}),
-		`{"a":1}`)
+		`("a":1)`)
 	assertParse(t, rel.NewTuple(
 		rel.Attr{Name: "a", Value: rel.NewNumber(1)},
 		rel.Attr{Name: "b", Value: rel.NewNumber(2)},
-	), `{"a":1, "b": 2}`)
+	), `("a":1, "b": 2)`)
 	assertParse(t, rel.NewTuple(
 		rel.Attr{Name: "a", Value: rel.NewNumber(1)},
 		rel.Attr{Name: "b", Value: rel.NewNumber(2)},
-	), `{a :1, b : 2}`)
+	), `(a :1, b : 2)`)
 }
 
 func TestParseSet(t *testing.T) {
 	t.Parallel()
-	assertParse(t, rel.NewSet(), `{||}`)
+	assertParse(t, rel.NewSet(), `{}`)
 	assertParse(t, rel.NewSet(), `false`)
-	assertParse(t, rel.NewSet(rel.NewNumber(1)), `{|1|}`)
-	assertParse(t, rel.NewSet(rel.NewNumber(1), rel.NewNumber(2)), `{|1,2|}`)
+	assertParse(t, rel.NewSet(rel.NewNumber(1)), `{1}`)
+	assertParse(t, rel.NewSet(rel.NewNumber(1), rel.NewNumber(2)), `{1,2}`)
 	assertParse(t, rel.NewSet(
 		rel.NewNumber(1),
 		rel.NewSet(rel.NewNumber(3), rel.NewNumber(4)),
 		rel.NewNumber(2),
-	), `{|1, {|3, 4|}, 2|}`)
+	), `{1, {3, 4}, 2}`)
 }
 
 func TestParseMixed(t *testing.T) {
@@ -67,11 +67,19 @@ func TestParseMixed(t *testing.T) {
 			rel.NewNumber(4),
 		)},
 		rel.Attr{Name: "c", Value: rel.NewNumber(2)},
-	), `{a:1, b:{|{d:3}, 4,|}, c:2,}`)
+	), `(a:1, b:{(d:3), 4,}, c:2,)`)
 }
 
 func TestParseRelationShortcut(t *testing.T) {
 	t.Parallel()
-	value, err := syntax.Parse(syntax.NewStringLexer(`{|<a,b> {1, 2}, {3, 4}|}`))
-	assert.Error(t, err, "%s", value)
+	assertParse(t, rel.NewSet(
+		rel.NewTuple(
+			rel.Attr{Name: "a", Value: rel.NewNumber(1)},
+			rel.Attr{Name: "b", Value: rel.NewNumber(2)},
+		),
+		rel.NewTuple(
+			rel.Attr{Name: "a", Value: rel.NewNumber(3)},
+			rel.Attr{Name: "b", Value: rel.NewNumber(4)},
+		),
+	), `{ |a,b| (1, 2), (3, 4) }`)
 }

@@ -117,14 +117,14 @@ func (s *genericSet) String() string {
 		}
 
 		var buf bytes.Buffer
-		buf.WriteString("{|")
+		buf.WriteString("{")
 		for i, value := range s.OrderedValues() {
 			if i != 0 {
 				buf.WriteString(", ")
 			}
 			buf.WriteString(value.String())
 		}
-		buf.WriteString("|}")
+		buf.WriteString("}")
 		return buf.String()
 
 	case setFlavorArray:

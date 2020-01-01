@@ -4,8 +4,8 @@ import (
 	"testing"
 )
 
-var s = `{||a,b| {3,41}, {2,42}, {1,43}|}`
-var u = `{||a,b| {3,41}, {2,42}, {1,43}, {0, 46}|}`
+var s = `{ |a,b| (3,41), (2,42), (1,43)}`
+var u = `{ |a,b| (3,41), (2,42), (1,43), (0, 46)}`
 
 func TestSumExpr(t *testing.T) {
 	t.Parallel()

@@ -121,7 +121,7 @@ func (e *TupleExpr) Attrs() []AttrExpr {
 // String returns a string representation of the expression.
 func (e *TupleExpr) String() string {
 	var b bytes.Buffer
-	b.WriteByte('{')
+	b.WriteByte('(')
 	for i, attr := range e.attrs {
 		if i > 0 {
 			b.WriteString(", ")
@@ -137,7 +137,7 @@ func (e *TupleExpr) String() string {
 			b.WriteString(attr.expr.String())
 		}
 	}
-	b.WriteByte('}')
+	b.WriteByte(')')
 	return b.String()
 }
 

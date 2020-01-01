@@ -127,7 +127,7 @@ var identRE = regexp.MustCompile(`\A` + LexerNamePat + `\z`)
 // String returns a string representation of a Tuple.
 func (t *GenericTuple) String() string {
 	var buf bytes.Buffer
-	buf.WriteRune('{')
+	buf.WriteRune('(')
 	for i, name := range tupleOrderedNames(t) {
 		if i != 0 {
 			buf.WriteString(", ")
@@ -149,7 +149,7 @@ func (t *GenericTuple) String() string {
 		}
 		buf.WriteString(value.String())
 	}
-	buf.WriteRune('}')
+	buf.WriteRune(')')
 	return buf.String()
 }
 
