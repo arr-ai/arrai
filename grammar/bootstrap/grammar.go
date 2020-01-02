@@ -200,19 +200,18 @@ func (g Delim) Parser(name Rule, c cache) parse.Parser {
 	sep := Seq{g.Sep, g.Term}.Parser("", c)
 	return parse.Func(func(input *parse.Scanner) (interface{}, bool) {
 		captureForDebugging(g)
-		v, ok := term.Parse(input)
-		if !ok {
-			return nil, false
-		}
-		result := []interface{}{v}
-		for {
-			v, ok := sep.Parse(input)
-			if !ok {
-				break
+		if v, ok := term.Parse(input); ok {
+			result := []interface{}{v}
+			for {
+				v, ok := sep.Parse(input)
+				if !ok {
+					break
+				}
+				result = append(result, v.([]interface{})[1:]...)
 			}
-			result = append(result, v.([]interface{})[1:]...)
+			return tag(result...), true
 		}
-		return tag(result...), true
+		return nil, false
 	})
 }
 
