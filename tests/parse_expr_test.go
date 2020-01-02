@@ -10,8 +10,7 @@ func TestParseIfElseExpr(t *testing.T) {
 
 func TestParseTupleShorthand(t *testing.T) {
 	t.Parallel()
-	// TODO: Fix
-	// AssertCodesEvalToSameValue(t, `(a:42)`, `(\a(a:a))42`)
+	AssertCodesEvalToSameValue(t, `(a:42)`, `(\a(a:a))42`)
 	// TODO: Fix
 	// AssertCodesEvalToSameValue(t, `{a:42}`, `(\a{a})42`)
 }

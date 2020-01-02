@@ -399,7 +399,13 @@ func ParseAtom(l *Lexer) (rel.Expr, error) {
 		return rel.NewString([]rune(ParseArraiString(l.Lexeme()))), nil
 
 	case Token('('):
-		return parseTuple(l)
+		return parseTupleOrExpr(l)
+
+	case Token('{'):
+		return parseSetOrRel(l)
+
+	case Token('['):
+		return parseArray(l)
 
 	case Token('<'):
 		return parseXML(l, newXMLContext())
@@ -436,12 +442,6 @@ func ParseAtom(l *Lexer) (rel.Expr, error) {
 		}
 		return rel.NewFunction(arg, body), nil
 
-	case Token('{'):
-		return parseSetOrRel(l)
-
-	case Token('['):
-		return parseArray(l)
-
 	case ERROR:
 		l.Failf("syntax error")
 		return nil, l.Error()
@@ -449,6 +449,44 @@ func ParseAtom(l *Lexer) (rel.Expr, error) {
 	default:
 		return nil, noParse
 	}
+}
+
+func parseTupleOrExpr(l *Lexer) (rel.Expr, error) {
+	if l.Peek() != Token('(') {
+		return nil, expecting(l, "tuple or expr start", "'('")
+	}
+
+	// copy the lexer and attempt to parse an expression
+	lcp := l.copy()
+	lcp.Scan()
+
+	// Check for empty tuple first
+	if lcp.Peek() == Token(')') {
+		l.Scan(Token('('))
+		l.Scan(Token(')'))
+		return rel.EmptyTuple, nil
+	}
+
+	_, err := parseExpr(lcp)
+
+	// Checks we have detected (<expr>)
+	// strings like 'a:a' pass the parseExpr, the extra ')' check makes sure the expression is actually wrapped
+	if err == nil && lcp.Peek() == Token(')') {
+		l.Scan()
+
+		// errors should not occur, but this can detect flaws in the copy
+		expr, err := parseExpr(l)
+		if err != nil {
+			return nil, err
+		}
+		if !l.Scan(Token(')')) {
+			return nil, expecting(l, "after expr body", "')'")
+		}
+		return expr, nil
+	}
+
+	// on error, attempt to parse as a tuple
+	return parseTuple(l)
 }
 
 func parseTuple(l *Lexer) (rel.Expr, error) {
