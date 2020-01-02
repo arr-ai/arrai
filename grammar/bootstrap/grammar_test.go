@@ -23,7 +23,7 @@ func TestInterpreter(t *testing.T) {
 	v, ok := g("expr").Parse(&r)
 	assert.True(t, ok)
 	assert.Equal(t,
-		`[add [mul [neg ["-"{0,1}] [atom [/(\d+)/ 42]]]] [/([-+])/ +] [mul [neg ["-"{0,1}] [atom [/(\d+)/ 54]]]]]`,
+		`[add [mul [neg [/(-)/{0,1}] [atom [/(\d+)/ 42]]]] [/([-+])/ +] [mul [neg [/(-)/{0,1}] [atom [/(\d+)/ 54]]]]]`,
 		fmt.Sprintf("%v", v),
 	)
 
@@ -31,14 +31,14 @@ func TestInterpreter(t *testing.T) {
 	v, ok = g("expr").Parse(&r)
 	assert.True(t, ok)
 	assert.Equal(t,
-		`[add [mul [neg ["-"{0,1}] [atom [/(\d+)/ 1]]]] `+
+		`[add [mul [neg [/(-)/{0,1}] [atom [/(\d+)/ 1]]]] `+
 			`[/([-+])/ +] `+
-			`[mul [neg ["-"{0,1}] [atom [paren ["(" (] `+
-			`[add [mul [neg ["-"{0,1}] [atom [/(\d+)/ 2]]]] `+
+			`[mul [neg [/(-)/{0,1}] [atom [paren [/(\()/ (] `+
+			`[add [mul [neg [/(-)/{0,1}] [atom [/(\d+)/ 2]]]] `+
 			`[/([-+])/ -] `+
-			`[mul [neg ["-"{0,1}] [atom [/(\d+)/ 3]]] `+
+			`[mul [neg [/(-)/{0,1}] [atom [/(\d+)/ 3]]] `+
 			`[/([*/])/ /] `+
-			`[neg ["-"{0,1}] [atom [/(\d+)/ 4]]]]] [")" )]]]]]]`,
+			`[neg [/(-)/{0,1}] [atom [/(\d+)/ 4]]]]] [/(\))/ )]]]]]]`,
 		fmt.Sprintf("%v", v),
 	)
 }

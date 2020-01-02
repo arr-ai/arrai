@@ -52,7 +52,7 @@ var GrammarGrammar = Grammar{
 	str:    RE(`"((?:[^"\\]|\\.)*)"`),
 	i:      RE(`(\d+)`),
 	re:     RE(`/((?:[^/\\]|\\.)*)/`),
-	WrapRE: S(`\s*()\s*`),
+	WrapRE: RE(`\s*()\s*`),
 }
 
 type Grammar map[Rule]Term
@@ -64,7 +64,6 @@ type Term interface {
 }
 
 func (Rule) IsTerm()   {}
-func (S) IsTerm()      {}
 func (RE) IsTerm()     {}
 func (Seq) IsTerm()    {}
 func (Delim) IsTerm()  {}
@@ -72,8 +71,6 @@ func (Quant) IsTerm()  {}
 func (Choice) IsTerm() {}
 
 type Rule string
-
-type S string
 
 type RE string
 
@@ -90,6 +87,8 @@ type Quant struct {
 	Max  int // 0 = infinity
 }
 
+func S(s string) RE { return RE("(" + regexp.QuoteMeta(s) + ")") }
+
 func Opt(term Term) Quant  { return Quant{Term: term, Max: 1} }
 func Any(term Term) Quant  { return Quant{Term: term} }
 func Some(term Term) Quant { return Quant{Term: term, Min: 1} }
@@ -105,7 +104,6 @@ func join(terms []Term, sep string) string {
 }
 
 func (g Rule) String() string   { return string(g) }
-func (g S) String() string      { return fmt.Sprintf("%q", string(g)) }
 func (g RE) String() string     { return fmt.Sprintf("/%v/", string(g)) }
 func (g Seq) String() string    { return join(g, " ") }
 func (g Delim) String() string  { return fmt.Sprintf("%v:%v", g.Term, g.Sep) }
@@ -163,30 +161,11 @@ func (g Rule) Parser(name Rule, c cache) parse.Parser {
 	})
 }
 
-func (g S) Parser(name Rule, c cache) parse.Parser {
-	tag := nameTag(name, g)
-	var parser parse.Parser
-	t := string(g)
-	if wrap, has := c.grammar[WrapRE]; has {
-		t = strings.Replace(string(wrap.(S)), "()", "("+regexp.QuoteMeta(t)+")", 1)
-		parser = parse.Regexp(t)
-	} else {
-		parser = parse.String(string(g))
-	}
-	return parse.Func(func(input *parse.Scanner) (interface{}, bool) {
-		captureForDebugging(g)
-		if v, ok := parser.Parse(input); ok {
-			return tag(v), ok
-		}
-		return nil, false
-	})
-}
-
 func (g RE) Parser(name Rule, c cache) parse.Parser {
 	tag := nameTag(name, g)
 	s := string(g)
 	if wrap, has := c.grammar[WrapRE]; has {
-		s = strings.Replace(string(wrap.(S)), "()", "(?:"+s+")", 1)
+		s = strings.Replace(string(wrap.(RE)), "()", "(?:"+s+")", 1)
 	}
 	parser := parse.Regexp(s)
 	return parse.Func(func(input *parse.Scanner) (interface{}, bool) {
