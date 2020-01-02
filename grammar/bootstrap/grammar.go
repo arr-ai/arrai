@@ -130,12 +130,26 @@ func nameOr(name Rule, descr string) string {
 	return descr
 }
 
-func nameTag(name Rule, term Term) func(v ...interface{}) []interface{} {
+func captureForDebugging(interface{}) {}
+
+func nameTag(name Rule, term Term, parser parse.Parser) parse.Parser {
 	descr := nameOr(name, term.String())
-	return func(v ...interface{}) []interface{} { return append([]interface{}{descr}, v...) }
+	return parse.Func(func(input *parse.Scanner, output interface{}) bool {
+		captureForDebugging(term)
+		var v interface{}
+		if parser.Parse(input, &v) {
+			a, ok := v.([]interface{})
+			if !ok {
+				a = []interface{}{v}
+			}
+			parse.Put(append([]interface{}{descr}, a...), output)
+			return true
+		}
+		return false
+	})
 }
 
-func (g Grammar) Parsers() func(rule Rule) parse.Parser {
+func (g Grammar) Compile() func(rule Rule) parse.Parser {
 	c := cache{parsers: map[Rule]parse.Parser{}, grammar: g}
 	for rule, term := range g {
 		c.parsers[rule] = term.Parser(rule, c)
@@ -145,11 +159,9 @@ func (g Grammar) Parsers() func(rule Rule) parse.Parser {
 	}
 }
 
-func captureForDebugging(interface{}) {}
-
 func (g Rule) Parser(name Rule, c cache) parse.Parser {
 	var parser parse.Parser
-	return parse.Func(func(input *parse.Scanner) (interface{}, bool) {
+	return parse.Func(func(input *parse.Scanner, output interface{}) bool {
 		captureForDebugging(g)
 		if parser == nil {
 			var ok bool
@@ -157,99 +169,79 @@ func (g Rule) Parser(name Rule, c cache) parse.Parser {
 				panic("missing parser: " + g)
 			}
 		}
-		return parser.Parse(input)
+		return parser.Parse(input, output)
 	})
 }
 
 func (g RE) Parser(name Rule, c cache) parse.Parser {
-	tag := nameTag(name, g)
 	s := string(g)
 	if wrap, has := c.grammar[WrapRE]; has {
 		s = strings.Replace(string(wrap.(RE)), "()", "(?:"+s+")", 1)
 	}
 	parser := parse.Regexp(s)
-	return parse.Func(func(input *parse.Scanner) (interface{}, bool) {
-		captureForDebugging(g)
-		if v, ok := parser.Parse(input); ok {
-			return tag(v), ok
-		}
-		return nil, false
-	})
+	return nameTag(name, g, parser)
 }
 
 func (g Seq) Parser(name Rule, c cache) parse.Parser {
-	tag := nameTag(name, g)
 	parsers := c.MakeParsers(g)
-	return parse.Func(func(input *parse.Scanner) (interface{}, bool) {
-		captureForDebugging(g)
+	return nameTag(name, g, parse.Func(func(input *parse.Scanner, output interface{}) bool {
 		result := make([]interface{}, 0, len(parsers))
 		for _, parser := range parsers {
-			v, ok := parser.Parse(input)
-			if !ok {
-				return nil, false
+			var v interface{}
+			if !parser.Parse(input, &v) {
+				return false
 			}
 			result = append(result, v)
 		}
-		return tag(result...), true
-	})
+		parse.Put(result, output)
+		return true
+	}))
 }
 
 func (g Delim) Parser(name Rule, c cache) parse.Parser {
-	tag := nameTag(name, g)
 	term := g.Term.Parser("", c)
 	sep := Seq{g.Sep, g.Term}.Parser("", c)
-	return parse.Func(func(input *parse.Scanner) (interface{}, bool) {
-		captureForDebugging(g)
-		if v, ok := term.Parse(input); ok {
-			result := []interface{}{v}
-			for {
-				v, ok := sep.Parse(input)
-				if !ok {
-					break
-				}
-				result = append(result, v.([]interface{})[1:]...)
-			}
-			return tag(result...), true
+	return nameTag(name, g, parse.Func(func(input *parse.Scanner, output interface{}) bool {
+		var v interface{}
+		if !term.Parse(input, &v) {
+			return false
 		}
-		return nil, false
-	})
+		result := []interface{}{v}
+		for sep.Parse(input, &v) {
+			result = append(result, v.([]interface{})[1:]...)
+		}
+		parse.Put(result, output)
+		return true
+	}))
 }
 
 func (g Quant) Parser(name Rule, c cache) parse.Parser {
-	tag := nameTag(name, g)
 	term := g.Term.Parser("", c)
-	return parse.Func(func(input *parse.Scanner) (interface{}, bool) {
-		captureForDebugging(g)
+	return nameTag(name, g, parse.Func(func(input *parse.Scanner, output interface{}) bool {
 		result := make([]interface{}, 0, g.Min)
+		var v interface{}
 		i := 0
-		max := g.Max
-		if max == 0 {
-			max = int(uint(^max) >> 1)
-		}
-		for ; i < max; i++ {
-			v, ok := term.Parse(input)
-			if !ok {
-				break
-			}
+		for ; (g.Max == 0 || i < g.Max) && term.Parse(input, &v); i++ {
 			result = append(result, v)
 		}
-		if i >= g.Min {
-			return tag(result...), true
+		if i < g.Min {
+			return false
 		}
-		return nil, false
-	})
+		parse.Put(result, output)
+		return true
+	}))
 }
 
 func (g Choice) Parser(name Rule, c cache) parse.Parser {
-	tag := nameTag(name, g)
 	parsers := c.MakeParsers(g)
-	return parse.Func(func(input *parse.Scanner) (interface{}, bool) {
-		captureForDebugging(g)
+	return nameTag(name, g, parse.Func(func(input *parse.Scanner, output interface{}) bool {
 		for _, parser := range parsers {
-			if v, ok := parser.Parse(input); ok {
-				return tag(v), ok
+			var v interface{}
+			if parser.Parse(input, &v) {
+				parse.Put([]interface{}{v}, output)
+				return true
 			}
 		}
-		return nil, false
-	})
+		return false
+	}))
 }

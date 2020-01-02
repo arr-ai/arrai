@@ -19,31 +19,42 @@ func (r Scanner) String() string {
 	return r.slice
 }
 
-func (r *Scanner) Eat(i int) (eaten Scanner, ate bool) {
-	start := r.start + 1
-	eaten = Scanner{src: r.src, slice: r.slice[:i], start: start}
-	*r = Scanner{src: r.src, slice: r.slice[i:], start: start + 1}
-	ate = true
-	return eaten, ate
-}
-
-func (r *Scanner) EatString(s string) (eaten Scanner, ate bool) {
-	if strings.HasPrefix(r.String(), s) {
-		return r.Eat(len(s))
+func (r Scanner) Slice(a, b int) *Scanner {
+	return &Scanner{
+		src:   r.src,
+		slice: r.slice[a:b],
+		start: r.start + a,
 	}
-	return Scanner{}, false
 }
 
-func (r *Scanner) EatRegexp(re *regexp.Regexp) (eaten Scanner, ate bool) {
+func (r Scanner) Skip(i int) *Scanner {
+	return r.Slice(i, len(r.slice))
+}
+
+func (r *Scanner) Eat(i int, eaten *Scanner) *Scanner {
+	eaten.src = r.src
+	eaten.slice = r.slice[:i]
+	eaten.start = r.start
+	*r = *r.Skip(i)
+	return r
+}
+
+func (r *Scanner) EatString(s string, eaten *Scanner) bool {
+	if strings.HasPrefix(r.String(), s) {
+		r.Eat(len(s), eaten)
+		return true
+	}
+	return false
+}
+
+func (r *Scanner) EatRegexp(re *regexp.Regexp, eaten *Scanner) bool {
 	if loc := re.FindStringSubmatchIndex(r.String()); loc != nil {
 		if loc[0] != 0 {
 			panic("re not \\A-anchored")
 		}
-		capture := *r
-		capture.Eat(loc[2])
-		eaten, _ = capture.Eat(loc[3] - loc[2])
-		r.Eat(loc[1])
-		return eaten, true
+		*eaten = *r.Slice(loc[2], loc[3])
+		*r = *r.Skip(loc[1])
+		return true
 	}
-	return Scanner{}, false
+	return false
 }

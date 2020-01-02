@@ -17,19 +17,18 @@ func TestInterpreter(t *testing.T) {
 		"neg":   Seq{Opt(S("-")), Rule("atom")},
 		"atom":  Choice{RE(`(\d+)`), Rule("paren")},
 		"paren": Seq{S("("), Rule("expr"), S(")")},
-	}.Parsers()
+	}.Compile()
 
 	r := parse.NewRange("42+54")
-	v, ok := g("expr").Parse(&r)
-	assert.True(t, ok)
+	var v interface{}
+	assert.True(t, g("expr").Parse(&r, &v))
 	assert.Equal(t,
 		`[add [mul [neg [/(-)/{0,1}] [atom [/(\d+)/ 42]]]] [/([-+])/ +] [mul [neg [/(-)/{0,1}] [atom [/(\d+)/ 54]]]]]`,
 		fmt.Sprintf("%v", v),
 	)
 
 	r = parse.NewRange("1+(2-3/4)")
-	v, ok = g("expr").Parse(&r)
-	assert.True(t, ok)
+	assert.True(t, g("expr").Parse(&r, &v))
 	assert.Equal(t,
 		`[add [mul [neg [/(-)/{0,1}] [atom [/(\d+)/ 1]]]] `+
 			`[/([-+])/ +] `+
@@ -53,10 +52,10 @@ func TestGrammarGrammar(t *testing.T) {
 		atom  -> /(\d+)/ | paren;
 		paren -> "(" expr ")";
 	`
-	gg := GrammarGrammar.Parsers()
+	gg := GrammarGrammar.Compile()
 	r := parse.NewRange(src)
-	v, ok := gg("grammar").Parse(&r)
-	assert.True(t, ok, "%v", r)
+	var v interface{}
+	assert.True(t, gg("grammar").Parse(&r, &v), "%v", r)
 	log.Print(v)
 }
 
@@ -83,9 +82,9 @@ func TestGrammarGrammarGrammar(t *testing.T) {
 		.wrapRE -> /\s*()\s* /
 	`
 
-	gg := GrammarGrammar.Parsers()
+	gg := GrammarGrammar.Compile()
 	r := parse.NewRange(grammarGrammarSrc)
-	v, ok := gg("grammar").Parse(&r)
-	assert.True(t, ok)
+	var v interface{}
+	assert.True(t, gg("grammar").Parse(&r, &v))
 	log.Print(v)
 }
