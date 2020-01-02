@@ -187,12 +187,12 @@ func NewLexerWithPrefix(prefix *bytes.Buffer, reader io.Reader) *Lexer {
 
 func (l *Lexer) copy() *Lexer {
 	// Copy most fields
-	new := *l
+	newL := *l
 
 	if l.stack != nil {
-		new.stack = append([]lexerState{}, l.stack...)
+		newL.stack = append([]lexerState{}, l.stack...)
 	}
-	new.buffer = bytes.NewBuffer(l.buffer.Bytes())
+	newL.buffer = bytes.NewBuffer(l.buffer.Bytes())
 
 	// We need to duplicate the reader since reading from it is destructive
 	remBuf, err := ioutil.ReadAll(l.reader)
@@ -200,8 +200,8 @@ func (l *Lexer) copy() *Lexer {
 		panic(err)
 	}
 	l.reader = bytes.NewBuffer(remBuf)
-	new.reader = bytes.NewBuffer(remBuf)
-	return &new
+	newL.reader = bytes.NewBuffer(remBuf)
+	return &newL
 }
 
 // Reader returns the most recently recognized token.
