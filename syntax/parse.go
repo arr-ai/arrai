@@ -399,15 +399,13 @@ func ParseAtom(l *Lexer) (rel.Expr, error) {
 		return rel.NewString([]rune(ParseArraiString(l.Lexeme()))), nil
 
 	case Token('('):
-		l.Scan()
-		expr, err := parseExpr(l)
-		if err != nil {
-			return nil, err
-		}
-		if !l.Scan(Token(')')) {
-			return nil, expecting(l, "after expr", "')'")
-		}
-		return expr, nil
+		return parseTupleOrExpr(l)
+
+	case Token('{'):
+		return parseSetOrRel(l)
+
+	case Token('['):
+		return parseArray(l)
 
 	case Token('<'):
 		return parseXML(l, newXMLContext())
@@ -444,91 +442,6 @@ func ParseAtom(l *Lexer) (rel.Expr, error) {
 		}
 		return rel.NewFunction(arg, body), nil
 
-	case Token('{'):
-		l.Scan()
-		attrs := []rel.AttrExpr{}
-	tokenLoop:
-		for {
-			var name string
-			switch l.Peek() {
-			case STRING:
-				l.Scan()
-				name = ParseArraiString(l.Lexeme())
-			case IDENT:
-				l.Scan()
-				name = string(l.Lexeme())
-			case Token('}'):
-				break tokenLoop
-			case Token('&'):
-				l.Scan()
-				if !l.Scan(IDENT) {
-					return nil, expecting(l, "after '&'-prefix", "ident")
-				}
-				name = "&" + string(l.Lexeme())
-			}
-			expr, err := parseAttrExpr(l, name)
-			if err != nil {
-				return nil, err
-			}
-			attr, err := rel.NewAttrExpr(name, expr)
-			if err != nil {
-				return nil, err
-			}
-			attrs = append(attrs, attr)
-			if !l.Scan(',') {
-				break
-			}
-		}
-
-		if !l.Scan('}') {
-			return nil, expecting(l, "after tuple body", "'}'")
-		}
-		return rel.NewTupleExpr(attrs...), nil
-
-	case OSET, Token('['):
-		l.Scan()
-
-		var closer Token
-		if tok == OSET {
-			closer = CSET
-		} else {
-			closer = Token(']')
-		}
-
-		if closer == CSET {
-			names, err := parseNameList(l)
-			if err != nil {
-				return nil, err
-			}
-			if names != nil {
-				tuples := [][]rel.Expr{}
-				for l.Scan(Token('{')) {
-					exprs, err := parseExprCommaList(
-						l, Token('}'), "'}'", "after relation body")
-					if err != nil {
-						return nil, err
-					}
-					tuples = append(tuples, exprs)
-					if !l.Scan(Token(',')) {
-						break
-					}
-				}
-				if !l.Scan(CSET) {
-					return nil, expecting(l, "after set tuple", "'|}'")
-				}
-				return rel.NewRelationExpr(names, tuples...)
-			}
-		}
-
-		elts, err := parseExprCommaList(l, closer, "'|}'", "after set body")
-		if err != nil {
-			return nil, err
-		}
-		if closer == CSET {
-			return rel.NewSetExpr(elts...), nil
-		}
-		return rel.NewArrayExpr(elts...), nil
-
 	case ERROR:
 		l.Failf("syntax error")
 		return nil, l.Error()
@@ -536,6 +449,128 @@ func ParseAtom(l *Lexer) (rel.Expr, error) {
 	default:
 		return nil, noParse
 	}
+}
+
+func parseTupleOrExpr(l *Lexer) (rel.Expr, error) {
+	if l.Peek() != Token('(') {
+		return nil, expecting(l, "tuple or expr start", "'('")
+	}
+
+	// copy the lexer and attempt to parse an expression
+	lcp := l.copy()
+	lcp.Scan()
+
+	// Check for empty tuple first
+	if lcp.Peek() == Token(')') {
+		l.Scan(Token('('))
+		l.Scan(Token(')'))
+		return rel.EmptyTuple, nil
+	}
+
+	_, err := parseExpr(lcp)
+
+	// Checks we have detected (<expr>)
+	// strings like 'a:a' pass the parseExpr, the extra ')' check makes sure the expression is actually wrapped
+	if err == nil && lcp.Peek() == Token(')') {
+		l.Scan()
+
+		// errors should not occur, but this can detect flaws in the copy
+		expr, err := parseExpr(l)
+		if err != nil {
+			return nil, err
+		}
+		if !l.Scan(Token(')')) {
+			return nil, expecting(l, "after expr body", "')'")
+		}
+		return expr, nil
+	}
+
+	// on error, attempt to parse as a tuple
+	return parseTuple(l)
+}
+
+func parseTuple(l *Lexer) (rel.Expr, error) {
+	if !l.Scan(Token('(')) {
+		return nil, expecting(l, "tuple start", "'('")
+	}
+	attrs := []rel.AttrExpr{}
+tupleLoop:
+	for {
+		var name string
+		switch l.Peek() {
+		case Token(')'):
+			break tupleLoop
+		case STRING:
+			l.Scan()
+			name = ParseArraiString(l.Lexeme())
+		case IDENT:
+			l.Scan()
+			name = string(l.Lexeme())
+		case Token('&'):
+			l.Scan()
+			if !l.Scan(IDENT) {
+				return nil, expecting(l, "after '&'-prefix", "ident")
+			}
+			name = "&" + string(l.Lexeme())
+		}
+		expr, err := parseAttrExpr(l, name)
+		if err != nil {
+			return nil, err
+		}
+		attr, err := rel.NewAttrExpr(name, expr)
+		if err != nil {
+			return nil, err
+		}
+		attrs = append(attrs, attr)
+		if !l.Scan(Token(',')) {
+			break
+		}
+	}
+	if !l.Scan(Token(')')) {
+		return nil, expecting(l, "after tuple body", "')'")
+	}
+	return rel.NewTupleExpr(attrs...), nil
+}
+
+func parseSetOrRel(l *Lexer) (rel.Expr, error) {
+	if !l.Scan(Token('{')) {
+		return nil, expecting(l, "set beginning", "'{'")
+	}
+	names, err := parseNameList(l)
+	if err != nil {
+		return nil, err
+	}
+	if names != nil {
+		tuples := [][]rel.Expr{}
+		for l.Scan(Token('(')) {
+			exprs, err := parseExprCommaList(l, Token(')'), "')'", "after relation body")
+			if err != nil {
+				return nil, err
+			}
+			tuples = append(tuples, exprs)
+			if !l.Scan(Token(',')) {
+				break
+			}
+		}
+		if !l.Scan(Token('}')) {
+			return nil, expecting(l, "after set tuple", "'}'")
+		}
+		return rel.NewRelationExpr(names, tuples...)
+	}
+	elts, err := parseExprCommaList(l, Token('}'), "'}'", "after set body")
+	if err != nil {
+		return nil, err
+	}
+	return rel.NewSetExpr(elts...), nil
+}
+
+func parseArray(l *Lexer) (rel.Expr, error) {
+	l.Scan()
+	elts, err := parseExprCommaList(l, Token(']'), "']'", "after array body")
+	if err != nil {
+		return nil, err
+	}
+	return rel.NewArrayExpr(elts...), nil
 }
 
 func parseAttrExpr(l *Lexer, name string) (rel.Expr, error) {
@@ -568,7 +603,7 @@ func parseNameList(l *Lexer) ([]string, error) {
 	if !l.Scan(Token('|')) {
 		return nil, nil
 	}
-	// relation shorthand, e.g.: {| |a,b| {1,2}, {3,4} |}
+	// relation shorthand, e.g.: { |a,b| (1,2), (3,4) }
 	names := []string{}
 	for l.Scan(IDENT) {
 		names = append(names, string(l.Lexeme()))

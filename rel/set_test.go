@@ -168,10 +168,10 @@ func TestSetString(t *testing.T) {
 		}
 	}
 	scenario(`none`)
-	scenario(`{|42|}`, 42)
-	scenario(`{|5432|}`, 5432)
-	scenario(`{|321, 4321|}`, 4321, 321)
-	scenario(`{|321, 4321|}`, 321, 4321)
+	scenario(`{42}`, 42)
+	scenario(`{5432}`, 5432)
+	scenario(`{321, 4321}`, 4321, 321)
+	scenario(`{321, 4321}`, 321, 4321)
 }
 
 func TestSetCount(t *testing.T) {

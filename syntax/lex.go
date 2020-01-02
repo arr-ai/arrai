@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"regexp"
 	"strconv"
 
@@ -164,7 +165,7 @@ type Lexer struct {
 	fresh  bool
 }
 
-// NewLexer returns a new Lexer for the given input.
+// NewStringLexer returns a new Lexer for the given input.
 func NewStringLexer(input string) *Lexer {
 	return NewLexer(bytes.NewBufferString(input))
 }
@@ -182,6 +183,25 @@ func NewLexerWithPrefix(prefix *bytes.Buffer, reader io.Reader) *Lexer {
 		state:  LexerInitState,
 		fr:     FileRange{FilePos{1, 1}, FilePos{1, 1}},
 	}
+}
+
+func (l *Lexer) copy() *Lexer {
+	// Copy most fields
+	newL := *l
+
+	if l.stack != nil {
+		newL.stack = append([]lexerState{}, l.stack...)
+	}
+	newL.buffer = bytes.NewBuffer(l.buffer.Bytes())
+
+	// We need to duplicate the reader since reading from it is destructive
+	remBuf, err := ioutil.ReadAll(l.reader)
+	if err != nil {
+		panic(err)
+	}
+	l.reader = bytes.NewBuffer(remBuf)
+	newL.reader = bytes.NewBuffer(remBuf)
+	return &newL
 }
 
 // Reader returns the most recently recognized token.
