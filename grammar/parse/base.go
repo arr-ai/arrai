@@ -5,27 +5,23 @@ import (
 	"strconv"
 )
 
-func Regexp(pattern string) Parser {
-	re := regexp.MustCompile(`(?m)\A(?:` + pattern + `)`)
-	return Func(func(input *Scanner, output interface{}) bool {
-		var eaten Scanner
-		if input.EatRegexp(re, &eaten) {
-			Put(eaten, output)
-			return true
-		}
-		return false
-	})
+type RegexpParser struct {
+	re *regexp.Regexp
 }
 
-func String(s string) Parser {
-	return Func(func(input *Scanner, output interface{}) bool {
-		var eaten Scanner
-		if input.EatString(s, &eaten) {
-			Put(eaten, output)
-			return true
-		}
-		return false
-	})
+func (p *RegexpParser) Parse(input *Scanner, output interface{}) bool {
+	var eaten Scanner
+	if input.EatRegexp(p.re, &eaten) {
+		Put(eaten, output)
+		return true
+	}
+	return false
+}
+
+func Regexp(pattern string) Parser {
+	return &RegexpParser{
+		re: regexp.MustCompile(`(?m)\A(?:` + pattern + `)`),
+	}
 }
 
 type IntToken struct {

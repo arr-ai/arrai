@@ -3,20 +3,17 @@ package bootstrap
 import (
 	"fmt"
 	"regexp"
+	"sort"
 	"strings"
 
 	"github.com/arr-ai/arrai/grammar/parse"
 )
 
 var (
+	stmt    = Rule("stmt")
 	comment = Rule("comment")
 	prod    = Rule("prod")
-	stmt    = Rule("stmt")
 	expr    = Rule("expr")
-	choice  = Rule("choice")
-	seq     = Rule("seq")
-	tag     = Rule("tag")
-	term    = Rule("term")
 	atom    = Rule("atom")
 	quant   = Rule("quant")
 	ident   = Rule("ident")
@@ -33,16 +30,18 @@ var (
 
 var GrammarGrammar = Grammar{
 	"grammar": Some(stmt),
-	stmt:      Choice{comment, prod},
+	stmt:      Oneof{comment, prod},
 	comment:   RE(`(//.*)$`),
 	prod:      Seq{ident, S("->"), Some(expr), S(";")},
-	expr:      choice,
-	choice:    Delim{Term: seq, Sep: S("|")},
-	seq:       Some(tag),
-	tag:       Seq{Opt(Seq{S("<"), ident, S(">")}), term},
-	term:      Seq{atom, Opt(quant)},
-	atom:      Choice{ident, str, re, Seq{S("("), expr, S(")")}},
-	quant: Choice{
+	expr: Tower{
+		Delim{Term: expr, Sep: S("^")},
+		Delim{Term: expr, Sep: S("|")},
+		Some(expr),
+		Oneof{expr, Seq{Opt(Seq{S("<"), ident, S(">")}), expr}},
+		Seq{atom, Opt(quant)},
+	},
+	atom: Oneof{ident, str, re, Seq{S("("), expr, S(")")}},
+	quant: Oneof{
 		RE(`([?*+])`),
 		Seq{S("{"), Opt(i), S(","), Opt(i), S("}")},
 		Seq{S(":"), atom},
@@ -61,20 +60,25 @@ type Term interface {
 	fmt.Stringer
 	IsTerm()
 	Parser(name Rule, c cache) parse.Parser
+	Resolve(oldRule, newRule Rule) Term
 }
 
-func (Rule) IsTerm()   {}
-func (RE) IsTerm()     {}
-func (Seq) IsTerm()    {}
-func (Delim) IsTerm()  {}
-func (Quant) IsTerm()  {}
-func (Choice) IsTerm() {}
+func (t Rule) IsTerm()      {}
+func (t RE) IsTerm()        {}
+func (t Seq) IsTerm()       {}
+func (t Oneof) IsTerm()     {}
+func (t Tower) IsTerm()     {}
+func (t Delim) IsTerm()     {}
+func (t Quant) IsTerm()     {}
+func (t NamedTerm) IsTerm() {}
 
 type Rule string
 
 type RE string
 
 type Seq []Term
+type Oneof []Term
+type Tower []Term
 
 type Delim struct {
 	Term Term
@@ -89,11 +93,18 @@ type Quant struct {
 
 func S(s string) RE { return RE("(" + regexp.QuoteMeta(s) + ")") }
 
-func Opt(term Term) Quant  { return Quant{Term: term, Max: 1} }
-func Any(term Term) Quant  { return Quant{Term: term} }
-func Some(term Term) Quant { return Quant{Term: term, Min: 1} }
+func Opt(term Term) *Quant  { return &Quant{Term: term, Max: 1} }
+func Any(term Term) *Quant  { return &Quant{Term: term} }
+func Some(term Term) *Quant { return &Quant{Term: term, Min: 1} }
 
-type Choice []Term
+type NamedTerm struct {
+	Name string
+	Term Term
+}
+
+func Name(name string, term Term) Term {
+	return NamedTerm{Name: name, Term: term}
+}
 
 func join(terms []Term, sep string) string {
 	s := []string{}
@@ -103,9 +114,30 @@ func join(terms []Term, sep string) string {
 	return strings.Join(s, sep)
 }
 
-func (g Rule) String() string   { return string(g) }
-func (g RE) String() string     { return fmt.Sprintf("/%v/", string(g)) }
-func (g Seq) String() string    { return join(g, " ") }
-func (g Delim) String() string  { return fmt.Sprintf("%v:%v", g.Term, g.Sep) }
-func (g Quant) String() string  { return fmt.Sprintf("%v{%d,%d}", g.Term, g.Min, g.Max) }
-func (g Choice) String() string { return join(g, " | ") }
+func (g Grammar) String() string {
+	keys := make([]string, 0, len(g))
+	for key := range g {
+		keys = append(keys, string(key))
+	}
+	sort.Strings(keys)
+
+	var sb strings.Builder
+	count := 0
+	for _, key := range keys {
+		if count > 0 {
+			sb.WriteString("; ")
+		}
+		fmt.Fprintf(&sb, "%s -> %v", key, g[Rule(key)])
+		count++
+	}
+	return sb.String()
+}
+
+func (t Rule) String() string      { return string(t) }
+func (t RE) String() string        { return fmt.Sprintf("/%v/", string(t)) }
+func (t Seq) String() string       { return join(t, " ") }
+func (t Oneof) String() string     { return join(t, " | ") }
+func (t Tower) String() string     { return join(t, " >> ") }
+func (t Delim) String() string     { return fmt.Sprintf("%v:%v", t.Term, t.Sep) }
+func (t Quant) String() string     { return fmt.Sprintf("%v{%d,%d}", t.Term, t.Min, t.Max) }
+func (t NamedTerm) String() string { return fmt.Sprintf("<%s>%v", t.Name, t.Term) }

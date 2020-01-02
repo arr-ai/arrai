@@ -1,143 +1,286 @@
 package bootstrap
 
 import (
+	"fmt"
+	"log"
+	"regexp"
 	"strings"
 
 	"github.com/arr-ai/arrai/grammar/parse"
 )
 
+const towerDelim = "•"
+
+var towerRE = regexp.MustCompile(fmt.Sprintf(`%s\d+%[1]s`, towerDelim))
+
 type cache struct {
-	parsers map[Rule]parse.Parser
-	grammar Grammar
+	parsers    map[Rule]parse.Parser
+	grammar    Grammar
+	rulePtrses map[Rule][]*parse.Parser
 }
 
-func (c cache) MakeParsers(terms []Term) []parse.Parser {
+func (c cache) registerRule(parser *parse.Parser) {
+	if rule, ok := (*parser).(ruleParser); ok {
+		c.rulePtrses[rule.t] = append(c.rulePtrses[rule.t], parser)
+	}
+}
+
+func (c cache) registerRules(parsers []parse.Parser) {
+	for i := range parsers {
+		c.registerRule(&parsers[i])
+	}
+}
+
+func (c cache) makeParsers(terms []Term) []parse.Parser {
 	parsers := make([]parse.Parser, 0, len(terms))
 	for _, t := range terms {
 		parsers = append(parsers, t.Parser("", c))
 	}
+	c.registerRules(parsers)
 	return parsers
 }
 
-func nameOr(name Rule, descr string) string {
-	if name != "" {
-		return string(name)
+type putter func(output interface{}, values ...interface{}) bool
+
+func nameTag(name Rule) putter {
+	towered := strings.HasSuffix(string(name), towerDelim)
+	if towered {
+		name = Rule(towerRE.ReplaceAllLiteralString(string(name), ""))
 	}
-	return descr
-}
 
-func captureForDebugging(interface{}) {}
+	var head []interface{}
+	if name != "" {
+		// Create rather than append so cap(head) == 1.
+		head = []interface{}{name}
+	}
 
-func nameTag(name Rule, term Term, parser parse.Parser) parse.Parser {
-	descr := nameOr(name, term.String())
-	return parse.Func(func(input *parse.Scanner, output interface{}) bool {
-		captureForDebugging(term)
-		var v interface{}
-		if parser.Parse(input, &v) {
-			a, ok := v.([]interface{})
-			if !ok {
-				a = []interface{}{v}
-			}
-			parse.Put(append([]interface{}{descr}, a...), output)
+	return func(output interface{}, values ...interface{}) bool {
+		if len(values) == 1 && (len(head) == 0 || towered) {
+			parse.Put(values[0], output)
 			return true
 		}
-		return false
-	})
+		parse.Put(append(head, values...), output)
+		return true
+	}
 }
 
-func (g Grammar) Compile() func(rule Rule) parse.Parser {
-	c := cache{parsers: map[Rule]parse.Parser{}, grammar: g}
+func (g Grammar) clone() Grammar {
+	clone := make(Grammar, len(g))
+	for rule, term := range g {
+		clone[rule] = term
+	}
+	return clone
+}
+
+func (g Grammar) resolveTowers() {
+	log.Print(g)
+	for rule, term := range g {
+		if tower, ok := term.(Tower); ok {
+			oldRule := rule
+			for i, layer := range tower {
+				newRule := rule
+				if j := (i + 1) % len(tower); j > 0 {
+					newRule = Rule(fmt.Sprintf("%s%s%d%[2]s", rule, towerDelim, j))
+				}
+				g[oldRule] = layer.Resolve(rule, newRule)
+				oldRule = newRule
+			}
+		}
+	}
+	log.Print(g)
+}
+
+func (g Grammar) Compile() map[Rule]parse.Parser {
+	for _, term := range g {
+		if _, ok := term.(Tower); ok {
+			g = g.clone()
+			g.resolveTowers()
+			break
+		}
+	}
+
+	c := cache{
+		parsers:    map[Rule]parse.Parser{},
+		grammar:    g,
+		rulePtrses: map[Rule][]*parse.Parser{},
+	}
 	for rule, term := range g {
 		c.parsers[rule] = term.Parser(rule, c)
 	}
-	return func(rule Rule) parse.Parser {
-		return c.parsers[rule]
-	}
-}
 
-func (g Rule) Parser(name Rule, c cache) parse.Parser {
-	var parser parse.Parser
-	return parse.Func(func(input *parse.Scanner, output interface{}) bool {
-		captureForDebugging(g)
-		if parser == nil {
-			var ok bool
-			if parser, ok = c.parsers[g]; !ok {
-				panic("missing parser: " + g)
-			}
+	for rule, rulePtrs := range c.rulePtrses {
+		term := c.parsers[rule]
+		for _, rulePtr := range rulePtrs {
+			*rulePtr = term
 		}
-		return parser.Parse(input, output)
-	})
+	}
+
+	return c.parsers
 }
 
-func (g RE) Parser(name Rule, c cache) parse.Parser {
-	s := string(g)
+//-----------------------------------------------------------------------------
+
+type ruleParser struct {
+	t Rule
+}
+
+func (p ruleParser) Parse(input *parse.Scanner, output interface{}) bool {
+	panic("should never get here")
+}
+
+func (t Rule) Parser(name Rule, c cache) parse.Parser {
+	return ruleParser{t: t}
+}
+
+//-----------------------------------------------------------------------------
+
+type reParser struct {
+	t      RE
+	parser parse.Parser
+	put    putter
+}
+
+func (p *reParser) Parse(input *parse.Scanner, output interface{}) bool {
+	var v interface{}
+	if p.parser.Parse(input, &v) {
+		return p.put(output, v)
+	}
+	return false
+}
+
+func (t RE) Parser(name Rule, c cache) parse.Parser {
+	s := string(t)
 	if wrap, has := c.grammar[WrapRE]; has {
 		s = strings.Replace(string(wrap.(RE)), "()", "(?:"+s+")", 1)
 	}
-	parser := parse.Regexp(s)
-	return nameTag(name, g, parser)
+	return &reParser{t: t, parser: parse.Regexp(s), put: nameTag(name)}
 }
 
-func (g Seq) Parser(name Rule, c cache) parse.Parser {
-	parsers := c.MakeParsers(g)
-	return nameTag(name, g, parse.Func(func(input *parse.Scanner, output interface{}) bool {
-		result := make([]interface{}, 0, len(parsers))
-		for _, parser := range parsers {
-			var v interface{}
-			if !parser.Parse(input, &v) {
-				return false
-			}
-			result = append(result, v)
-		}
-		parse.Put(result, output)
-		return true
-	}))
+//-----------------------------------------------------------------------------
+
+type seqParser struct {
+	t       Seq
+	parsers []parse.Parser
+	put     putter
 }
 
-func (g Delim) Parser(name Rule, c cache) parse.Parser {
-	term := g.Term.Parser("", c)
-	sep := Seq{g.Sep, g.Term}.Parser("", c)
-	return nameTag(name, g, parse.Func(func(input *parse.Scanner, output interface{}) bool {
+func (p *seqParser) Parse(input *parse.Scanner, output interface{}) bool {
+	result := make([]interface{}, 0, len(p.parsers))
+	for _, parser := range p.parsers {
 		var v interface{}
-		if !term.Parse(input, &v) {
+		if !parser.Parse(input, &v) {
 			return false
 		}
-		result := []interface{}{v}
-		for sep.Parse(input, &v) {
-			result = append(result, v.([]interface{})[1:]...)
-		}
-		parse.Put(result, output)
-		return true
-	}))
+		result = append(result, v)
+	}
+	return p.put(output, result...)
 }
 
-func (g Quant) Parser(name Rule, c cache) parse.Parser {
-	term := g.Term.Parser("", c)
-	return nameTag(name, g, parse.Func(func(input *parse.Scanner, output interface{}) bool {
-		result := make([]interface{}, 0, g.Min)
-		var v interface{}
-		i := 0
-		for ; (g.Max == 0 || i < g.Max) && term.Parse(input, &v); i++ {
-			result = append(result, v)
-		}
-		if i < g.Min {
-			return false
-		}
-		parse.Put(result, output)
-		return true
-	}))
+func (t Seq) Parser(name Rule, c cache) parse.Parser {
+	return &seqParser{
+		t:       t,
+		parsers: c.makeParsers(t),
+		put:     nameTag(name),
+	}
 }
 
-func (g Choice) Parser(name Rule, c cache) parse.Parser {
-	parsers := c.MakeParsers(g)
-	return nameTag(name, g, parse.Func(func(input *parse.Scanner, output interface{}) bool {
-		for _, parser := range parsers {
-			var v interface{}
-			if parser.Parse(input, &v) {
-				parse.Put([]interface{}{v}, output)
-				return true
-			}
-		}
+//-----------------------------------------------------------------------------
+
+type delimParser struct {
+	t    Delim
+	term parse.Parser
+	sep  parse.Parser
+	put  putter
+}
+
+func (p *delimParser) Parse(input *parse.Scanner, output interface{}) bool {
+	var v interface{}
+	if !p.term.Parse(input, &v) {
 		return false
-	}))
+	}
+	result := []interface{}{v}
+	var d interface{}
+	for p.sep.Parse(input, &d) && p.term.Parse(input, &v) {
+		result = append(result, d, v)
+	}
+	return p.put(output, result...)
+}
+
+func (t Delim) Parser(name Rule, c cache) parse.Parser {
+	p := &delimParser{
+		t:    t,
+		term: t.Term.Parser("", c),
+		sep:  t.Sep.Parser("", c),
+		put:  nameTag(name),
+	}
+	c.registerRule(&p.term)
+	c.registerRule(&p.sep)
+	return p
+}
+
+//-----------------------------------------------------------------------------
+
+type quantParser struct {
+	t    Quant
+	term parse.Parser
+	put  putter
+}
+
+func (p *quantParser) Parse(input *parse.Scanner, output interface{}) bool {
+	result := make([]interface{}, 0, p.t.Min)
+	var v interface{}
+
+	for i := 0; (p.t.Max == 0 || i < p.t.Max) && p.term.Parse(input, &v); i++ {
+		result = append(result, v)
+	}
+	if len(result) >= p.t.Min {
+		return p.put(output, result...)
+	}
+	return false
+}
+
+func (t Quant) Parser(name Rule, c cache) parse.Parser {
+	p := &quantParser{
+		t:    t,
+		term: t.Term.Parser("", c),
+		put:  nameTag(name),
+	}
+	c.registerRule(&p.term)
+	return p
+}
+
+//-----------------------------------------------------------------------------
+
+type choiceParser struct {
+	t       Oneof
+	parsers []parse.Parser
+	put     putter
+}
+
+func (p *choiceParser) Parse(input *parse.Scanner, output interface{}) bool {
+	for _, parser := range p.parsers {
+		var v interface{}
+		if parser.Parse(input, &v) {
+			return p.put(output, v)
+		}
+	}
+	return false
+}
+
+func (t Oneof) Parser(name Rule, c cache) parse.Parser {
+	return &choiceParser{
+		t:       t,
+		parsers: c.makeParsers(t),
+		put:     nameTag(name),
+	}
+}
+
+func (t Tower) Parser(_ Rule, _ cache) parse.Parser {
+	panic("should never get here")
+}
+
+//-----------------------------------------------------------------------------
+
+func (t NamedTerm) Parser(name Rule, c cache) parse.Parser {
+	return t.Term.Parser(name, c)
 }

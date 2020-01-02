@@ -10,52 +10,51 @@ import (
 )
 
 func TestInterpreter(t *testing.T) {
+	expr := Rule("expr")
 	g := Grammar{
-		"expr":  Rule("add"),
-		"add":   Delim{Term: Rule("mul"), Sep: RE(`([-+])`)},
-		"mul":   Delim{Term: Rule("neg"), Sep: RE(`([*/])`)},
-		"neg":   Seq{Opt(S("-")), Rule("atom")},
-		"atom":  Choice{RE(`(\d+)`), Rule("paren")},
-		"paren": Seq{S("("), Rule("expr"), S(")")},
+		expr: Tower{
+			Delim{Term: expr, Sep: RE(`([-+])`)},
+			Delim{Term: expr, Sep: RE(`([*/])`)},
+			Oneof{expr, Seq{Opt(S("-")), expr}},
+			Oneof{RE(`(\d+)`), expr},
+			Seq{S("("), expr, S(")")},
+		},
 	}.Compile()
 
-	r := parse.NewRange("42+54")
+	r := parse.NewRange("1+2*3")
 	var v interface{}
-	assert.True(t, g("expr").Parse(&r, &v))
-	assert.Equal(t,
-		`[add [mul [neg [/(-)/{0,1}] [atom [/(\d+)/ 42]]]] [/([-+])/ +] [mul [neg [/(-)/{0,1}] [atom [/(\d+)/ 54]]]]]`,
-		fmt.Sprintf("%v", v),
-	)
+	assert.True(t, g[expr].Parse(&r, &v))
+	assert.Equal(t, `[expr 1 + [expr 2 * 3]]`, fmt.Sprintf("%v", v))
 
 	r = parse.NewRange("1+(2-3/4)")
-	assert.True(t, g("expr").Parse(&r, &v))
-	assert.Equal(t,
-		`[add [mul [neg [/(-)/{0,1}] [atom [/(\d+)/ 1]]]] `+
-			`[/([-+])/ +] `+
-			`[mul [neg [/(-)/{0,1}] [atom [paren [/(\()/ (] `+
-			`[add [mul [neg [/(-)/{0,1}] [atom [/(\d+)/ 2]]]] `+
-			`[/([-+])/ -] `+
-			`[mul [neg [/(-)/{0,1}] [atom [/(\d+)/ 3]]] `+
-			`[/([*/])/ /] `+
-			`[neg [/(-)/{0,1}] [atom [/(\d+)/ 4]]]]] [/(\))/ )]]]]]]`,
-		fmt.Sprintf("%v", v),
-	)
+	assert.True(t, g[expr].Parse(&r, &v))
+	assert.Equal(t, `[expr 1 + [expr ( [expr 2 - [expr 3 / 4]] )]]`, fmt.Sprintf("%v", v))
 }
 
 func TestGrammarGrammar(t *testing.T) {
 	src := `
 		// Simple expression grammar
-		expr  -> add;
-		add   -> mul:/([-+])/;
-		mul   -> neg:/[/*]/;
-		neg   -> "-"? atom;
-		atom  -> /(\d+)/ | paren;
-		paren -> "(" expr ")";
+		expr -> expr:/([-+])/
+		      ^ expr:/[\/*]/
+		      ^ expr | "-" expr
+		      ^ /(\d+)/ | expr
+		      ^ "(" expr ")";
 	`
-	gg := GrammarGrammar.Compile()
+	g := GrammarGrammar.Compile()
 	r := parse.NewRange(src)
 	var v interface{}
-	assert.True(t, gg("grammar").Parse(&r, &v), "%v", r)
+	assert.True(t, g["grammar"].Parse(&r, &v), "r=%v\nv=%v", r.Context(), v)
+	assert.Equal(t, len(src), r.Offset(), "r=%v\nv=%v", r.Context(), v)
+	assert.Equal(t,
+		`[grammar `+
+			`[stmt [comment // Simple expression grammar]] `+
+			`[stmt [prod [ident expr] -> [expr [expr [atom [ident expr]] [quant [: [atom [re ([-+])]]]]] `+
+			`^ [expr [atom [ident expr]] [quant [: [atom [re [\/*]]]]]] `+
+			`^ [expr [expr [atom [ident expr]] []] | [expr [expr [atom [str -]] []] [expr [atom [ident expr]] []]]] `+
+			`^ [expr [expr [atom [re (\d+)]] []] | [expr [atom [ident expr]] []]] `+
+			`^ [expr [expr [atom [str (]] []] [expr [atom [ident expr]] []] [expr [atom [str )]] []]]] ;]]]`,
+		fmt.Sprintf("%v", v))
+
 	log.Print(v)
 }
 
@@ -66,11 +65,11 @@ func TestGrammarGrammarGrammar(t *testing.T) {
 		stmt    -> comment | prod;
 		comment -> /(//.*$)/;
 		prod    -> ident "->" expr+ ";";
-		expr    -> choice;
-		choice  -> seq:"|";
-		seq     -> tag+;
-		tag     -> ("<" ident ">")? term;
-		term    -> atom quant?;
+		expr    -> expr:"^";
+		         ^ expr:"|";
+		         ^ expr+;
+		         ^ expr | ("<" expr ">")? expr;
+		         ^ atom quant?;
 		atom    -> ident | str | re | "(" expr ")";
 		quant   -> /([?*+])/ | "{" int? "," int? "}" | ":" atom;
 
@@ -82,9 +81,9 @@ func TestGrammarGrammarGrammar(t *testing.T) {
 		.wrapRE -> /\s*()\s* /
 	`
 
-	gg := GrammarGrammar.Compile()
+	g := GrammarGrammar.Compile()
 	r := parse.NewRange(grammarGrammarSrc)
 	var v interface{}
-	assert.True(t, gg("grammar").Parse(&r, &v))
+	assert.True(t, g["grammar"].Parse(&r, &v))
 	log.Print(v)
 }
