@@ -2,16 +2,20 @@ package bootstrap
 
 import (
 	"fmt"
-	"log"
 	"regexp"
 	"strings"
 
 	"github.com/arr-ai/arrai/grammar/parse"
 )
 
-const towerDelim = "•"
+const (
+	towerDelim = "#"
 
-var towerRE = regexp.MustCompile(fmt.Sprintf(`%s\d+%[1]s`, towerDelim))
+	seqTag   = "_"
+	oneofTag = "|"
+	delimTag = ":"
+	quantTag = "?"
+)
 
 type cache struct {
 	parsers    map[Rule]parse.Parser
@@ -40,26 +44,19 @@ func (c cache) makeParsers(terms []Term) []parse.Parser {
 	return parsers
 }
 
-type putter func(output interface{}, values ...interface{}) bool
+type putter func(output interface{}, extra interface{}, children ...interface{}) bool
 
-func nameTag(name Rule) putter {
-	towered := strings.HasSuffix(string(name), towerDelim)
-	if towered {
-		name = Rule(towerRE.ReplaceAllLiteralString(string(name), ""))
+func tag(rule Rule, alt Rule) putter {
+	if rule == "" {
+		rule = alt
 	}
 
-	var head []interface{}
-	if name != "" {
-		// Create rather than append so cap(head) == 1.
-		head = []interface{}{name}
-	}
-
-	return func(output interface{}, values ...interface{}) bool {
-		if len(values) == 1 && (len(head) == 0 || towered) {
-			parse.Put(values[0], output)
-			return true
-		}
-		parse.Put(append(head, values...), output)
+	return func(output interface{}, extra interface{}, children ...interface{}) bool {
+		parse.PtrAssign(output, parse.Node{
+			Tag:      string(rule),
+			Extra:    extra,
+			Children: children,
+		})
 		return true
 	}
 }
@@ -73,24 +70,22 @@ func (g Grammar) clone() Grammar {
 }
 
 func (g Grammar) resolveTowers() {
-	log.Print(g)
 	for rule, term := range g {
 		if tower, ok := term.(Tower); ok {
 			oldRule := rule
 			for i, layer := range tower {
 				newRule := rule
 				if j := (i + 1) % len(tower); j > 0 {
-					newRule = Rule(fmt.Sprintf("%s%s%d%[2]s", rule, towerDelim, j))
+					newRule = Rule(fmt.Sprintf("%s%s%d", rule, towerDelim, j))
 				}
 				g[oldRule] = layer.Resolve(rule, newRule)
 				oldRule = newRule
 			}
 		}
 	}
-	log.Print(g)
 }
 
-func (g Grammar) Compile() map[Rule]parse.Parser {
+func (g Grammar) Compile() Parsers {
 	for _, term := range g {
 		if _, ok := term.(Tower); ok {
 			g = g.clone()
@@ -121,97 +116,141 @@ func (g Grammar) Compile() map[Rule]parse.Parser {
 //-----------------------------------------------------------------------------
 
 type ruleParser struct {
-	t Rule
+	rule Rule
+	t    Rule
 }
 
-func (p ruleParser) Parse(input *parse.Scanner, output interface{}) bool {
-	panic("should never get here")
+func (p ruleParser) Parse(input *parse.Scanner, output interface{}) (out bool) {
+	panic(Inconceivable)
 }
 
-func (t Rule) Parser(name Rule, c cache) parse.Parser {
-	return ruleParser{t: t}
+func (t Rule) Parser(rule Rule, c cache) parse.Parser {
+	return ruleParser{
+		rule: rule,
+		t:    t,
+	}
+}
+
+//-----------------------------------------------------------------------------
+
+type sParser struct {
+	rule Rule
+	t    S
+	re   *regexp.Regexp
+}
+
+func (p *sParser) Parse(input *parse.Scanner, output interface{}) (out bool) {
+	var eaten parse.Scanner
+	if input.EatRegexp(p.re, &eaten) {
+		parse.PtrAssign(output, eaten)
+		return true
+	}
+	return false
+}
+
+func (t S) Parser(rule Rule, c cache) parse.Parser {
+	re := "(" + regexp.QuoteMeta(string(t)) + ")"
+	if wrap, has := c.grammar[WrapRE]; has {
+		re = strings.Replace(string(wrap.(RE)), "()", "(?:"+re+")", 1)
+	}
+	return &sParser{
+		rule: rule,
+		t:    t,
+		re:   regexp.MustCompile(`(?m)\A(?:` + re + `)`),
+	}
 }
 
 //-----------------------------------------------------------------------------
 
 type reParser struct {
-	t      RE
-	parser parse.Parser
-	put    putter
+	rule Rule
+	t    RE
+	re   *regexp.Regexp
 }
 
-func (p *reParser) Parse(input *parse.Scanner, output interface{}) bool {
-	var v interface{}
-	if p.parser.Parse(input, &v) {
-		return p.put(output, v)
+func (p *reParser) Parse(input *parse.Scanner, output interface{}) (out bool) {
+	var eaten parse.Scanner
+	if input.EatRegexp(p.re, &eaten) {
+		parse.PtrAssign(output, eaten)
+		return true
 	}
 	return false
 }
 
-func (t RE) Parser(name Rule, c cache) parse.Parser {
-	s := string(t)
+func (t RE) Parser(rule Rule, c cache) parse.Parser {
+	re := string(t)
 	if wrap, has := c.grammar[WrapRE]; has {
-		s = strings.Replace(string(wrap.(RE)), "()", "(?:"+s+")", 1)
+		re = strings.Replace(string(wrap.(RE)), "()", "(?:"+re+")", 1)
 	}
-	return &reParser{t: t, parser: parse.Regexp(s), put: nameTag(name)}
+	return &reParser{
+		rule: rule,
+		t:    t,
+		re:   regexp.MustCompile(`(?m)\A(?:` + re + `)`),
+	}
 }
 
 //-----------------------------------------------------------------------------
 
 type seqParser struct {
+	rule    Rule
 	t       Seq
 	parsers []parse.Parser
 	put     putter
 }
 
-func (p *seqParser) Parse(input *parse.Scanner, output interface{}) bool {
+func (p *seqParser) Parse(input *parse.Scanner, output interface{}) (out bool) {
+	defer enterf("%s: %T %[2]v", p.rule, p.t).exitf("%v %v", &out, output)
 	result := make([]interface{}, 0, len(p.parsers))
 	for _, parser := range p.parsers {
-		var v interface{}
-		if !parser.Parse(input, &v) {
+		var n interface{}
+		if !parser.Parse(input, &n) {
 			return false
 		}
-		result = append(result, v)
+		result = append(result, n)
 	}
-	return p.put(output, result...)
+	return p.put(output, nil, result...)
 }
 
-func (t Seq) Parser(name Rule, c cache) parse.Parser {
+func (t Seq) Parser(rule Rule, c cache) parse.Parser {
 	return &seqParser{
+		rule:    rule,
 		t:       t,
 		parsers: c.makeParsers(t),
-		put:     nameTag(name),
+		put:     tag(rule, seqTag),
 	}
 }
 
 //-----------------------------------------------------------------------------
 
 type delimParser struct {
+	rule Rule
 	t    Delim
 	term parse.Parser
 	sep  parse.Parser
 	put  putter
 }
 
-func (p *delimParser) Parse(input *parse.Scanner, output interface{}) bool {
-	var v interface{}
-	if !p.term.Parse(input, &v) {
+func (p *delimParser) Parse(input *parse.Scanner, output interface{}) (out bool) {
+	defer enterf("%s: %T %[2]v", p.rule, p.t).exitf("%v %v", &out, output)
+	var n interface{}
+	if !p.term.Parse(input, &n) {
 		return false
 	}
-	result := []interface{}{v}
+	result := []interface{}{n}
 	var d interface{}
-	for p.sep.Parse(input, &d) && p.term.Parse(input, &v) {
-		result = append(result, d, v)
+	for p.sep.Parse(input, &d) && p.term.Parse(input, &n) {
+		result = append(result, d, n)
 	}
-	return p.put(output, result...)
+	return p.put(output, nil, result...)
 }
 
-func (t Delim) Parser(name Rule, c cache) parse.Parser {
+func (t Delim) Parser(rule Rule, c cache) parse.Parser {
 	p := &delimParser{
+		rule: rule,
 		t:    t,
 		term: t.Term.Parser("", c),
 		sep:  t.Sep.Parser("", c),
-		put:  nameTag(name),
+		put:  tag(rule, delimTag),
 	}
 	c.registerRule(&p.term)
 	c.registerRule(&p.sep)
@@ -221,29 +260,31 @@ func (t Delim) Parser(name Rule, c cache) parse.Parser {
 //-----------------------------------------------------------------------------
 
 type quantParser struct {
+	rule Rule
 	t    Quant
 	term parse.Parser
 	put  putter
 }
 
-func (p *quantParser) Parse(input *parse.Scanner, output interface{}) bool {
+func (p *quantParser) Parse(input *parse.Scanner, output interface{}) (out bool) {
+	defer enterf("%s: %T %[2]v", p.rule, p.t).exitf("%v %v", &out, output)
 	result := make([]interface{}, 0, p.t.Min)
-	var v interface{}
-
-	for i := 0; (p.t.Max == 0 || i < p.t.Max) && p.term.Parse(input, &v); i++ {
-		result = append(result, v)
+	var n interface{}
+	for i := 0; (p.t.Max == 0 || i < p.t.Max) && p.term.Parse(input, &n); i++ {
+		result = append(result, n)
 	}
 	if len(result) >= p.t.Min {
-		return p.put(output, result...)
+		return p.put(output, nil, result...)
 	}
 	return false
 }
 
-func (t Quant) Parser(name Rule, c cache) parse.Parser {
+func (t Quant) Parser(rule Rule, c cache) parse.Parser {
 	p := &quantParser{
+		rule: rule,
 		t:    t,
 		term: t.Term.Parser("", c),
-		put:  nameTag(name),
+		put:  tag(rule, quantTag),
 	}
 	c.registerRule(&p.term)
 	return p
@@ -251,36 +292,43 @@ func (t Quant) Parser(name Rule, c cache) parse.Parser {
 
 //-----------------------------------------------------------------------------
 
-type choiceParser struct {
+type oneofParser struct {
+	rule    Rule
 	t       Oneof
 	parsers []parse.Parser
 	put     putter
 }
 
-func (p *choiceParser) Parse(input *parse.Scanner, output interface{}) bool {
-	for _, parser := range p.parsers {
-		var v interface{}
-		if parser.Parse(input, &v) {
-			return p.put(output, v)
+func (p *oneofParser) Parse(input *parse.Scanner, output interface{}) (out bool) {
+	defer enterf("%s: %T %[2]v", p.rule, p.t).exitf("%v %v", &out, output)
+	for i, parser := range p.parsers {
+		var n interface{}
+		start := *input
+		if parser.Parse(&start, &n) {
+			*input = start
+			return p.put(output, i, n)
 		}
 	}
 	return false
 }
 
-func (t Oneof) Parser(name Rule, c cache) parse.Parser {
-	return &choiceParser{
+func (t Oneof) Parser(rule Rule, c cache) parse.Parser {
+	return &oneofParser{
+		rule:    rule,
 		t:       t,
 		parsers: c.makeParsers(t),
-		put:     nameTag(name),
+		put:     tag(rule, oneofTag),
 	}
-}
-
-func (t Tower) Parser(_ Rule, _ cache) parse.Parser {
-	panic("should never get here")
 }
 
 //-----------------------------------------------------------------------------
 
-func (t NamedTerm) Parser(name Rule, c cache) parse.Parser {
-	return t.Term.Parser(name, c)
+func (t Tower) Parser(_ Rule, _ cache) parse.Parser {
+	panic(Inconceivable)
+}
+
+//-----------------------------------------------------------------------------
+
+func (t NamedTerm) Parser(rule Rule, c cache) parse.Parser {
+	return t.Term.Parser(Rule(t.Name), c)
 }

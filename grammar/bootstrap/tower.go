@@ -7,6 +7,10 @@ func (t Rule) Resolve(oldRule, newRule Rule) Term {
 	return t
 }
 
+func (t S) Resolve(oldRule, newRule Rule) Term {
+	return t
+}
+
 func (t RE) Resolve(oldRule, newRule Rule) Term {
 	return t
 }
@@ -28,7 +32,7 @@ func (t Oneof) Resolve(oldRule, newRule Rule) Term {
 }
 
 func (t Tower) Resolve(oldRule, newRule Rule) Term {
-	panic("should never get here")
+	panic(Inconceivable)
 }
 
 func (t Delim) Resolve(oldRule, newRule Rule) Term {

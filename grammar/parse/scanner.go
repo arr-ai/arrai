@@ -12,12 +12,24 @@ type Scanner struct {
 	offset int
 }
 
-func NewRange(src string) Scanner {
-	return Scanner{src: src, slice: src, offset: 0}
+func NewScanner(src string) *Scanner {
+	return &Scanner{src: src, slice: src, offset: 0}
+}
+
+func NewScannerAt(src string, offset, size int) *Scanner {
+	return &Scanner{src: src, slice: src[offset : offset+size], offset: offset}
 }
 
 func (r Scanner) String() string {
 	return r.slice
+}
+
+func (r Scanner) Format(state fmt.State, c rune) {
+	if c == 'q' {
+		fmt.Fprintf(state, "%q", r.String())
+	} else {
+		state.Write([]byte(r.String()))
+	}
 }
 
 func (r Scanner) Context() string {
@@ -60,6 +72,7 @@ func (r *Scanner) EatString(s string, eaten *Scanner) bool {
 	return false
 }
 
+// TODO: Support representation of multiple capturing groups.
 func (r *Scanner) EatRegexp(re *regexp.Regexp, eaten *Scanner) bool {
 	if loc := re.FindStringSubmatchIndex(r.String()); loc != nil {
 		if loc[0] != 0 {

@@ -2,7 +2,7 @@ package bootstrap
 
 import (
 	"fmt"
-	"regexp"
+	"io"
 	"sort"
 	"strings"
 
@@ -38,7 +38,7 @@ var GrammarGrammar = Grammar{
 		Delim{Term: expr, Sep: S("|")},
 		Some(expr),
 		Oneof{expr, Seq{Opt(Seq{S("<"), ident, S(">")}), expr}},
-		Seq{atom, Opt(quant)},
+		Oneof{Seq{atom, Opt(quant)}, atom},
 	},
 	atom: Oneof{ident, str, re, Seq{S("("), expr, S(")")}},
 	quant: Oneof{
@@ -55,54 +55,43 @@ var GrammarGrammar = Grammar{
 }
 
 type Grammar map[Rule]Term
+type Parsers map[Rule]parse.Parser
 
 type Term interface {
 	fmt.Stringer
-	IsTerm()
 	Parser(name Rule, c cache) parse.Parser
+	ValidateParse(v interface{}) error
+	Unparse(v interface{}, w io.Writer) (n int, err error)
 	Resolve(oldRule, newRule Rule) Term
 }
 
-func (t Rule) IsTerm()      {}
-func (t RE) IsTerm()        {}
-func (t Seq) IsTerm()       {}
-func (t Oneof) IsTerm()     {}
-func (t Tower) IsTerm()     {}
-func (t Delim) IsTerm()     {}
-func (t Quant) IsTerm()     {}
-func (t NamedTerm) IsTerm() {}
-
-type Rule string
-
-type RE string
-
-type Seq []Term
-type Oneof []Term
-type Tower []Term
-
-type Delim struct {
-	Term Term
-	Sep  Term
-}
-
-type Quant struct {
-	Term Term
-	Min  int
-	Max  int // 0 = infinity
-}
-
-func S(s string) RE { return RE("(" + regexp.QuoteMeta(s) + ")") }
+type (
+	Rule  string
+	S     string
+	RE    string
+	Seq   []Term
+	Oneof []Term
+	Tower []Term
+	Delim struct {
+		Term Term
+		Sep  Term
+	}
+	Quant struct {
+		Term Term
+		Min  int
+		Max  int // 0 = infinity
+	}
+	NamedTerm struct {
+		Name string
+		Term Term
+	}
+)
 
 func Opt(term Term) *Quant  { return &Quant{Term: term, Max: 1} }
 func Any(term Term) *Quant  { return &Quant{Term: term} }
 func Some(term Term) *Quant { return &Quant{Term: term, Min: 1} }
 
-type NamedTerm struct {
-	Name string
-	Term Term
-}
-
-func Name(name string, term Term) Term {
+func Name(name string, term Term) NamedTerm {
 	return NamedTerm{Name: name, Term: term}
 }
 
@@ -134,6 +123,7 @@ func (g Grammar) String() string {
 }
 
 func (t Rule) String() string      { return string(t) }
+func (t S) String() string         { return fmt.Sprintf("%q", string(t)) }
 func (t RE) String() string        { return fmt.Sprintf("/%v/", string(t)) }
 func (t Seq) String() string       { return join(t, " ") }
 func (t Oneof) String() string     { return join(t, " | ") }
