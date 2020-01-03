@@ -46,7 +46,7 @@ func (t Quant) Resolve(oldRule, newRule Rule) Term {
 	return t
 }
 
-func (t NamedTerm) Resolve(oldRule, newRule Rule) Term {
+func (t Named) Resolve(oldRule, newRule Rule) Term {
 	t.Term = t.Term.Resolve(oldRule, newRule)
 	return t
 }

@@ -1,139 +1,220 @@
 package bootstrap
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
+	"reflect"
 	"strings"
 	"testing"
 
 	"github.com/arr-ai/arrai/grammar/parse"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
-func assertUnparse(t *testing.T, expected string, g Grammar, rule Rule, v interface{}) bool {
+func assertUnparse(t *testing.T, expected string, g Grammar, v interface{}) bool { //nolint:unparam
 	var sb strings.Builder
-	_, err := g.Unparse(rule, v, &sb)
+	_, err := g.Unparse(v, &sb)
 	return assert.NoError(t, err) && assert.Equal(t, expected, sb.String())
 }
 
-func TestInterpreter(t *testing.T) {
+var expr = Rule("expr")
+
+var exprGrammarSrc = `
+// Simple expression grammar
+expr -> expr:/([-+])/
+      ^ expr:/([*\/])/
+      ^ "-"? expr
+	  ^ /(\d+)/ | expr
+	  ^ expr<:"**"
+      ^ "(" expr ")";
+`
+
+var exprGrammar = Grammar{
+	expr: Tower{
+		Delim{Term: expr, Sep: RE(`([-+])`)},
+		Delim{Term: expr, Sep: RE(`([*/])`)},
+		Seq{Opt(S("-")), expr},
+		Oneof{RE(`(\d+)`), expr},
+		R2L(expr, S("**")),
+		Seq{S("("), expr, S(")")},
+	},
+}
+
+func TestGrammarParser(t *testing.T) {
 	t.Parallel()
 
-	expr := Rule("expr")
-	parsers, grammar := Grammar{
-		expr: Tower{
-			Delim{Term: expr, Sep: RE(`([-+])`)},
-			Delim{Term: expr, Sep: RE(`([*/])`)},
-			Oneof{expr, Seq{Opt(S("-")), expr}},
-			Oneof{RE(`(\d+)`), expr},
-			Seq{S("("), expr, S(")")},
-		},
-	}.Compile()
+	parsers, grammar := exprGrammar.Compile()
 
 	r := parse.NewScanner("1+2*3")
-	var v interface{}
-	assert.True(t, parsers[expr].Parse(r, &v))
-	assert.NoError(t, grammar.ValidateParse(expr, v))
-	assertUnparse(t, "1+2*3", grammar, expr, v)
+	v, ok := parsers.Parse(expr, r)
+	require.True(t, ok)
+	assert.NoError(t, grammar.ValidateParse(v))
+	assertUnparse(t, "1+2*3", grammar, v)
 	assert.Equal(t,
-		`expr(expr#1(expr#2(expr#3("1"))), "+", expr#1(expr#2(expr#3("2")), "*", expr#2(expr#3("3"))))`,
+		`expr\:(expr#1\:(expr#2\_(?(), expr#3\|("1"))), `+
+			`"+", `+
+			`expr#1\:(expr#2\_(?(), expr#3\|("2")), "*", expr#2\_(?(), expr#3\|("3"))))`,
 		fmt.Sprintf("%q", v),
 	)
 
 	r = parse.NewScanner("1+(2-3/4)")
-	assert.True(t, parsers[expr].Parse(r, &v))
-	assert.NoError(t, grammar.ValidateParse(expr, v))
-	assertUnparse(t, "1+(2-3/4)", grammar, expr, v)
+	v, ok = parsers.Parse(expr, r)
+	assert.True(t, ok)
+	assert.NoError(t, grammar.ValidateParse(v))
+	assertUnparse(t, "1+(2-3/4)", grammar, v)
 	assert.Equal(t,
-		`expr(`+
-			`expr#1(expr#2(expr#3("1"))), `+
+		`expr\:(`+
+			`expr#1\:(expr#2\_(?(), expr#3\|("1"))), `+
 			`"+", `+
-			`expr#1(expr#2(expr#3(expr#4("(", `+
-			(`expr(expr#1(expr#2(expr#3("2"))), `+
-				`"-", `+
-				(`expr#1(`+
-					`expr#2(expr#3("3")), `+
-					`"/", `+
-					`expr#2(expr#3("4"))`+
-					`)), `))+
-			`")")))))`,
+			`expr#1\:(expr#2\_(?(), expr#3\|(expr#4\:(expr#5\_("(", `+
+			`expr\:(expr#1\:(expr#2\_(?(), expr#3\|("2"))), `+
+			`"-", `+
+			`expr#1\:(expr#2\_(?(), expr#3\|("3")), `+
+			`"/", `+
+			`expr#2\_(?(), expr#3\|("4")))), `+
+			`")"))))))`,
 		fmt.Sprintf("%q", v),
 	)
 }
 
-func TestGrammarGrammar(t *testing.T) {
+func TestExprGrammarGrammar(t *testing.T) {
 	t.Parallel()
 
-	src := `
-		// Simple expression grammar
-		expr -> expr:/([-+])/
-		      ^ expr:/[\/*]/
-		      ^ expr | "-" expr
-		      ^ /(\d+)/ | expr
-		      ^ "(" expr ")";
-	`
 	parsers, grammar := GrammarGrammar.Compile()
-	r := parse.NewScanner(src)
-	var v interface{}
-	assert.True(t, parsers["grammar"].Parse(r, &v), "r=%v\nv=%v", r.Context(), v)
-	assert.Equal(t, len(src), r.Offset(), "r=%v\nv=%v", r.Context(), v)
-	assert.NoError(t, grammar.ValidateParse(grammarR, v))
+	r := parse.NewScanner(exprGrammarSrc)
+	v, ok := parsers.Parse(grammarR, r)
+	require.True(t, ok, "r=%v\nv=%v", r.Context(), v)
+	require.Equal(t, len(exprGrammarSrc), r.Offset(), "r=%v\nv=%v", r.Context(), v)
+	assert.NoError(t, grammar.ValidateParse(v))
 	log.Printf("%#v", v)
 	assertUnparse(t,
 		`// Simple expression grammar`+
 			`expr->expr:([-+])`+
-			`^expr:[\/*]`+
-			`^expr|-expr`+
+			`^expr:([*\/])`+
+			`^-?expr`+
 			`^(\d+)|expr`+
+			`^expr<:**`+
 			`^(expr);`,
 		grammar,
-		grammarR,
 		v,
 	)
 }
 
-func TestGrammarExpr(t *testing.T) {
+func assertGrammarsMatch(t *testing.T, expected, actual Grammar) {
+	if !assert.True(t, reflect.DeepEqual(expected, actual)) {
+		t.Logf("raw expected: %#v", expected)
+		t.Logf("raw actual: %#v", actual)
+
+		expectedJSON, err := json.Marshal(expected)
+		require.NoError(t, err)
+		actualJSON, err := json.Marshal(actual)
+		require.NoError(t, err)
+		t.Log("JSON(expected): ", string(expectedJSON))
+		t.Log("JSON(actual): ", string(actualJSON))
+		assert.JSONEq(t, string(expectedJSON), string(actualJSON))
+	}
+}
+
+func TestGrammarSnippet(t *testing.T) {
 	t.Parallel()
 
 	parsers, grammar := GrammarGrammar.Compile()
 	r := parse.NewScanner(`prod+`)
-	var v interface{}
-	assert.True(t, parsers[expr].Parse(r, &v))
+	v, ok := parsers.Parse(term, r)
+	require.True(t, ok)
 	assert.Equal(t,
-		`expr(expr#1(expr#2(expr#3(expr#4(_(atom("prod"), ?(quant("+"))))))))`,
+		`term\:(term#1\:(term#2\?(term#3\_(?(), term#4\_(atom\|("prod"), ?(quant\|("+")))))))`,
 		fmt.Sprintf("%q", v),
 	)
-	assert.NoError(t, grammar.ValidateParse(expr, v))
-	assertUnparse(t, "prod+", grammar, expr, v)
+	assert.NoError(t, grammar.ValidateParse(v))
+	assertUnparse(t, "prod+", grammar, v)
 }
 
-// Non-terminals
-var grammarGrammarSrc = `
-	grammar -> prod+;
-	stmt    -> comment | prod;
-	comment -> /(//.*$)/;
-	prod    -> ident "->" expr+ ";";
-	expr    -> expr:"^"
-			^ expr:"|"
-			^ expr+
-			^ expr | ("<" expr ">")? expr
-			^ atom quant | atom;
-	atom    -> ident | str | re | "(" expr ")";
-	quant   -> /([?*+])/ | "{" int? "," int? "}" | ":" atom;
-
-	// Terminals
-	ident   -> /([A-Za-z_\.]\w*)/;
-	str     -> /"([^"\\]|\\.)*"/;
-	i       -> /(\d+)/;
-	re      -> /\/([^\/\\]|\\.)\//;
-	.wrapRE -> /\s*()\s*/;
-`
-
-func TestGrammarGrammarGrammarGrammar(t *testing.T) {
+func TestTinyGrammarGrammarGrammar(t *testing.T) {
 	t.Parallel()
 
-	parsers, _ := GrammarGrammar.Compile()
-	r := parse.NewScanner(grammarGrammarSrc)
-	var v interface{}
-	assert.True(t, parsers["grammar"].Parse(r, &v))
+	tiny := Rule("tiny")
+	tinyGrammar := Grammar{tiny: S("x")}
+	tinyGrammarSrc := `tiny -> "x";`
+
+	parsers, grammar := GrammarGrammar.Compile()
+	r := parse.NewScanner(tinyGrammarSrc)
+	v, ok := parsers.Parse(grammarR, r)
+	require.True(t, ok)
+	log.Print(v)
+	assert.Equal(t, len(tinyGrammarSrc), r.Offset(), "r=%v\nv=%v", r.Context(), v)
+	e := v.(parse.Node)
+	assert.NoError(t, grammar.ValidateParse(v))
+
+	grammar2 := CompileGrammarNode(e)
+	assert.NotNil(t, grammar2)
+	assertGrammarsMatch(t, tinyGrammar, grammar2)
+}
+
+func TestExprGrammarGrammarGrammar(t *testing.T) {
+	t.Parallel()
+
+	parsers, grammar := GrammarGrammar.Compile()
+	r := parse.NewScanner(exprGrammarSrc)
+	v, ok := parsers.Parse(grammarR, r)
+	require.True(t, ok)
+	assert.Equal(t, len(exprGrammarSrc), r.Offset(), "r=%v\nv=%v", r.Context(), v)
+	e := v.(parse.Node)
+	assert.NoError(t, grammar.ValidateParse(v))
+
+	grammar2 := CompileGrammarNode(e)
+	assert.NotNil(t, grammar2)
+	assertGrammarsMatch(t, exprGrammar, grammar2)
+}
+
+const grammarGrammarSrc = `
+grammar -> stmt+;
+stmt    -> comment | prod;
+comment -> /(\/\/.*$|(?s:\/\*(?:[^*]|\*+[^*\/])\*\/))/;
+prod    -> ident "->" term+ ";";
+term    -> term:"^"
+         ^ term:"|"
+         ^ term+
+         ^ ("<" ident ">")? term
+         ^ atom quant?;
+atom    -> ident | str | re | "(" term ")";
+quant   -> /([?*+])/
+         | "{" int? "," int? "}"
+         | /(<:|:>?)/ atom;
+ident   -> /([A-Za-z_\.]\w*)/;
+str     -> /"((?:[^"\\]|\\.)*)"/;
+int     -> /(\d+)/;
+re      -> /\/((?:[^\/\\]|\\.)*)\//;
+.wrapRE -> /\s*()\s*/;
+`
+
+func TestGrammarGrammarGrammarGrammarGrammarGrammar(t *testing.T) {
+	t.Parallel()
+
+	// 0. Have a boostrap Grammar schema defined in Go.
+
+	// 1. Build a grammar for itself in that structure.
+	parsers, grammar := GrammarGrammar.Compile()
+
+	for i := 0; i < 2; i++ {
+		// 2. Use that grammar grammar to parse the syntax for the grammar.
+		r := parse.NewScanner(grammarGrammarSrc)
+		v, ok := parsers.Parse(grammarR, r)
+		require.True(t, ok)
+		g := v.(parse.Node)
+		require.Equal(t, len(grammarGrammarSrc), r.Offset(), "r=%v\nv=%v", r.Context(), v)
+		assert.NoError(t, grammar.ValidateParse(g))
+
+		// 3. Compile the resulting AST back into a Grammar structure.
+		grammar2 := CompileGrammarNode(g)
+		assert.NotNil(t, grammar2)
+
+		// 4. Check that that structure matches the previous structure.
+		assertGrammarsMatch(t, GrammarGrammar, grammar2)
+
+		// 5. Repeat steps 2 to 4 to confirm that we've reached a fixed point.
+		parsers, grammar = grammar2.Compile()
+	}
 }

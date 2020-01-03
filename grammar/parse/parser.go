@@ -10,6 +10,30 @@ type Node struct {
 	Children []interface{}
 }
 
+func (n Node) Count() int {
+	return len(n.Children)
+}
+
+func (n Node) Get(path ...int) interface{} {
+	var v interface{} = n
+	for _, i := range path {
+		v = v.(Node).Children[i]
+	}
+	return v
+}
+
+func (n Node) GetNode(path ...int) Node {
+	return n.Get(path...).(Node)
+}
+
+func (n Node) GetScanner(path ...int) Scanner {
+	return n.Get(path...).(Scanner)
+}
+
+func (n Node) GetString(path ...int) string {
+	return n.GetScanner(path...).String()
+}
+
 func (n Node) String() string {
 	return fmt.Sprintf("%s", n) //nolint:gosimple
 }

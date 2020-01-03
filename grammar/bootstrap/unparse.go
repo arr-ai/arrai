@@ -42,14 +42,16 @@ func (t Oneof) Unparse(g Grammar, v interface{}, w io.Writer) (n int, err error)
 
 func (t Delim) Unparse(g Grammar, v interface{}, w io.Writer) (n int, err error) {
 	node := v.(parse.Node)
-	if err = unparse(g, t.Term, node.Children[0], w, &n); err != nil {
+	left, right := t.LRTerms(node)
+
+	if err = unparse(g, left, node.Children[0], w, &n); err != nil {
 		return
 	}
-	for i := 1; i < len(node.Children); i += 2 {
+	for i := 1; i < node.Count(); i += 2 {
 		if err = unparse(g, t.Sep, node.Children[i], w, &n); err != nil {
 			return
 		}
-		if err = unparse(g, t.Term, node.Children[i+1], w, &n); err != nil {
+		if err = unparse(g, right, node.Children[i+1], w, &n); err != nil {
 			return
 		}
 	}
@@ -75,6 +77,6 @@ func (t Tower) Unparse(g Grammar, v interface{}, w io.Writer) (n int, err error)
 	panic(Inconceivable)
 }
 
-func (t NamedTerm) Unparse(g Grammar, v interface{}, w io.Writer) (n int, err error) {
+func (t Named) Unparse(g Grammar, v interface{}, w io.Writer) (n int, err error) {
 	panic(Inconceivable)
 }

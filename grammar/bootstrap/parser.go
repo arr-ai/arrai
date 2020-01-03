@@ -44,14 +44,14 @@ func (c cache) makeParsers(terms []Term) []parse.Parser {
 	return parsers
 }
 
-type putter func(output interface{}, extra interface{}, children ...interface{}) bool
-
 func ruleOrAlt(rule Rule, alt Rule) Rule {
 	if rule == "" {
 		return alt
 	}
-	return rule
+	return rule + "\\" + alt
 }
+
+type putter func(output interface{}, extra interface{}, children ...interface{}) bool
 
 func tag(rule Rule, alt Rule) putter {
 	rule = ruleOrAlt(rule, alt)
@@ -236,16 +236,33 @@ type delimParser struct {
 
 func (p *delimParser) Parse(input *parse.Scanner, output interface{}) (out bool) {
 	defer enterf("%s: %T %[2]v", p.rule, p.t).exitf("%v %v", &out, output)
-	var n interface{}
-	if !p.term.Parse(input, &n) {
+	var term interface{}
+	if !p.term.Parse(input, &term) {
 		return false
 	}
-	result := []interface{}{n}
-	var d interface{}
-	for p.sep.Parse(input, &d) && p.term.Parse(input, &n) {
-		result = append(result, d, n)
+	result := []interface{}{term}
+	var sep interface{}
+	for p.sep.Parse(input, &sep) && p.term.Parse(input, &term) {
+		result = append(result, sep, term)
 	}
-	return p.put(output, nil, result...)
+	if n := len(result); n > 1 {
+		switch p.t.Assoc {
+		case LeftToRight:
+			v := result[0]
+			for i := 1; i < n; i += 2 {
+				p.put(&v, Associativity(i/2), v, result[i], result[i+1])
+			}
+			*output.(*interface{}) = v
+		case RightToLeft:
+			v := result[n-1]
+			for i := 1; i < n; i += 2 {
+				j := n - 1 - i
+				p.put(&v, Associativity(-j/2), result[j-1], result[j], v)
+			}
+			*output.(*interface{}) = v
+		}
+	}
+	return p.put(output, Associativity(0), result...)
 }
 
 func (t Delim) Parser(rule Rule, c cache) parse.Parser {
@@ -259,6 +276,17 @@ func (t Delim) Parser(rule Rule, c cache) parse.Parser {
 	c.registerRule(&p.term)
 	c.registerRule(&p.sep)
 	return p
+}
+
+func (t Delim) LRTerms(node parse.Node) (left, right Term) {
+	associativity := node.Extra.(Associativity)
+	switch {
+	case associativity < 0:
+		return t.Term, t
+	case associativity > 0:
+		return t, t.Term
+	}
+	return t.Term, t.Term
 }
 
 //-----------------------------------------------------------------------------
@@ -333,6 +361,6 @@ func (t Tower) Parser(_ Rule, _ cache) parse.Parser {
 
 //-----------------------------------------------------------------------------
 
-func (t NamedTerm) Parser(rule Rule, c cache) parse.Parser {
+func (t Named) Parser(rule Rule, c cache) parse.Parser {
 	return t.Term.Parser(Rule(t.Name), c)
 }
