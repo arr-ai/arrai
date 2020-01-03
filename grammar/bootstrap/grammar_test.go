@@ -3,17 +3,24 @@ package bootstrap
 import (
 	"fmt"
 	"log"
+	"strings"
 	"testing"
 
 	"github.com/arr-ai/arrai/grammar/parse"
 	"github.com/stretchr/testify/assert"
 )
 
+func assertUnparse(t *testing.T, expected string, g Grammar, rule Rule, v interface{}) bool {
+	var sb strings.Builder
+	_, err := g.Unparse(rule, v, &sb)
+	return assert.NoError(t, err) && assert.Equal(t, expected, sb.String())
+}
+
 func TestInterpreter(t *testing.T) {
 	t.Parallel()
 
 	expr := Rule("expr")
-	g := Grammar{
+	parsers, grammar := Grammar{
 		expr: Tower{
 			Delim{Term: expr, Sep: RE(`([-+])`)},
 			Delim{Term: expr, Sep: RE(`([*/])`)},
@@ -25,15 +32,18 @@ func TestInterpreter(t *testing.T) {
 
 	r := parse.NewScanner("1+2*3")
 	var v interface{}
-	assert.True(t, g[expr].Parse(r, &v))
-	log.Printf("%#v", v)
+	assert.True(t, parsers[expr].Parse(r, &v))
+	assert.NoError(t, grammar.ValidateParse(expr, v))
+	assertUnparse(t, "1+2*3", grammar, expr, v)
 	assert.Equal(t,
 		`expr(expr#1(expr#2(expr#3("1"))), "+", expr#1(expr#2(expr#3("2")), "*", expr#2(expr#3("3"))))`,
 		fmt.Sprintf("%q", v),
 	)
 
 	r = parse.NewScanner("1+(2-3/4)")
-	assert.True(t, g[expr].Parse(r, &v))
+	assert.True(t, parsers[expr].Parse(r, &v))
+	assert.NoError(t, grammar.ValidateParse(expr, v))
+	assertUnparse(t, "1+(2-3/4)", grammar, expr, v)
 	assert.Equal(t,
 		`expr(`+
 			`expr#1(expr#2(expr#3("1"))), `+
@@ -62,24 +72,39 @@ func TestGrammarGrammar(t *testing.T) {
 		      ^ /(\d+)/ | expr
 		      ^ "(" expr ")";
 	`
-	g := GrammarGrammar.Compile()
+	parsers, grammar := GrammarGrammar.Compile()
 	r := parse.NewScanner(src)
 	var v interface{}
-	assert.True(t, g["grammar"].Parse(r, &v), "r=%v\nv=%v", r.Context(), v)
+	assert.True(t, parsers["grammar"].Parse(r, &v), "r=%v\nv=%v", r.Context(), v)
 	assert.Equal(t, len(src), r.Offset(), "r=%v\nv=%v", r.Context(), v)
+	assert.NoError(t, grammar.ValidateParse(grammarR, v))
+	log.Printf("%#v", v)
+	assertUnparse(t,
+		`// Simple expression grammar`+
+			`expr->expr:([-+])`+
+			`^expr:[\/*]`+
+			`^expr|-expr`+
+			`^(\d+)|expr`+
+			`^(expr);`,
+		grammar,
+		grammarR,
+		v,
+	)
 }
 
 func TestGrammarExpr(t *testing.T) {
 	t.Parallel()
 
-	g := GrammarGrammar.Compile()
+	parsers, grammar := GrammarGrammar.Compile()
 	r := parse.NewScanner(`prod+`)
 	var v interface{}
-	assert.True(t, g["expr"].Parse(r, &v))
+	assert.True(t, parsers[expr].Parse(r, &v))
 	assert.Equal(t,
 		`expr(expr#1(expr#2(expr#3(expr#4(_(atom("prod"), ?(quant("+"))))))))`,
 		fmt.Sprintf("%q", v),
 	)
+	assert.NoError(t, grammar.ValidateParse(expr, v))
+	assertUnparse(t, "prod+", grammar, expr, v)
 }
 
 // Non-terminals
@@ -107,8 +132,8 @@ var grammarGrammarSrc = `
 func TestGrammarGrammarGrammarGrammar(t *testing.T) {
 	t.Parallel()
 
-	g := GrammarGrammar.Compile()
+	parsers, _ := GrammarGrammar.Compile()
 	r := parse.NewScanner(grammarGrammarSrc)
 	var v interface{}
-	assert.True(t, g["grammar"].Parse(r, &v))
+	assert.True(t, parsers["grammar"].Parse(r, &v))
 }

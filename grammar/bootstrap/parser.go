@@ -46,11 +46,15 @@ func (c cache) makeParsers(terms []Term) []parse.Parser {
 
 type putter func(output interface{}, extra interface{}, children ...interface{}) bool
 
-func tag(rule Rule, alt Rule) putter {
+func ruleOrAlt(rule Rule, alt Rule) Rule {
 	if rule == "" {
-		rule = alt
+		return alt
 	}
+	return rule
+}
 
+func tag(rule Rule, alt Rule) putter {
+	rule = ruleOrAlt(rule, alt)
 	return func(output interface{}, extra interface{}, children ...interface{}) bool {
 		parse.PtrAssign(output, parse.Node{
 			Tag:      string(rule),
@@ -85,7 +89,7 @@ func (g Grammar) resolveTowers() {
 	}
 }
 
-func (g Grammar) Compile() Parsers {
+func (g Grammar) Compile() (Parsers, Grammar) {
 	for _, term := range g {
 		if _, ok := term.(Tower); ok {
 			g = g.clone()
@@ -110,7 +114,7 @@ func (g Grammar) Compile() Parsers {
 		}
 	}
 
-	return c.parsers
+	return c.parsers, g
 }
 
 //-----------------------------------------------------------------------------
