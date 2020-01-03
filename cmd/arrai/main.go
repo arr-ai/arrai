@@ -23,12 +23,13 @@ func main() {
 		app.Usage = "the ultimate data engine"
 
 		app.Commands = []cli.Command{
-			transformCommand,
 			evalCommand,
-			serveCommand,
+			jsonCommand,
 			observeCommand,
-			updateCommand,
+			serveCommand,
 			syncCommand,
+			transformCommand,
+			updateCommand,
 		}
 	}
 
