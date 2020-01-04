@@ -3,6 +3,7 @@ package bootstrap
 import (
 	"fmt"
 	"io"
+	"reflect"
 	"sort"
 	"strings"
 
@@ -29,7 +30,28 @@ var (
 	WrapRE = Rule(".wrapRE")
 )
 
-var GrammarGrammar = Grammar{
+const grammarGrammarSrc = `
+grammar -> stmt+;
+stmt    -> comment | prod;
+comment -> /(\/\/.*$|(?s:\/\*(?:[^*]|\*+[^*\/])\*\/))/;
+prod    -> ident "->" term+ ";";
+term    -> term:"^"
+         ^ term:"|"
+         ^ term+
+         ^ ("<" ident ">")? term
+         ^ atom quant?;
+atom    -> ident | str | re | "(" term ")";
+quant   -> /([?*+])/
+         | "{" int? "," int? "}"
+         | /(<:|:>?)/ atom;
+ident   -> /([A-Za-z_\.]\w*)/;
+str     -> /"((?:[^"\\]|\\.)*)"/;
+int     -> /(\d+)/;
+re      -> /\/((?:[^\/\\]|\\.)*)\//;
+.wrapRE -> /\s*()\s*/;
+`
+
+var grammarGrammar = Grammar{
 	grammarR: Some(stmt),
 	stmt:     Oneof{comment, prod},
 	comment:  RE(`(//.*$|(?s:/\*(?:[^*]|\*+[^*/])\*/))`),
@@ -63,6 +85,34 @@ func nodeRule(v interface{}) Rule {
 
 type Grammar map[Rule]Term
 
+// Build the grammar grammar from grammarGrammarSrc and check that it matches
+// GrammarGrammar.
+var coreGrammar = func() Grammar {
+	parsers, grammar := grammarGrammar.Compile()
+
+	r := parse.NewScanner(grammarGrammarSrc)
+	v, err := parsers.Parse(grammarR, r)
+	if err != nil {
+		panic(fmt.Errorf("failed to parse core grammar"))
+	}
+	if err := grammar.ValidateParse(v); err != nil {
+		panic(err)
+	}
+	g := v.(parse.Node)
+
+	newGrammarGrammar := CompileGrammarNode(g)
+
+	if !reflect.DeepEqual(newGrammarGrammar, grammarGrammar) {
+		panic(fmt.Errorf("mismatch between parsed and bootstrap grammar"))
+	}
+
+	return newGrammarGrammar
+}()
+
+func CoreGrammar() Grammar {
+	return coreGrammar
+}
+
 // ValidateParse performs numerous checks on a generated AST to ensure it
 // conforms to the parser that generated it. It is useful for testing the
 // parser engine, but also for any tools that synthesise parser output.
@@ -83,12 +133,15 @@ func (g Grammar) Unparse(v interface{}, w io.Writer) (n int, err error) {
 type Parsers map[Rule]parse.Parser
 
 // Parse parses some source per a given rule.
-func (p Parsers) Parse(rule Rule, input *parse.Scanner) (interface{}, bool) {
+func (p Parsers) Parse(rule Rule, input *parse.Scanner) (interface{}, error) {
 	var v interface{}
 	if p[rule].Parse(input, &v) {
-		return v, true
+		if input.String() == "" {
+			return v, nil
+		}
+		return nil, fmt.Errorf("unconsumed input: %s", input.String())
 	}
-	return nil, false
+	return nil, fmt.Errorf("failed to parse %s", rule)
 }
 
 // Term represents the terms of a grammar specification.
