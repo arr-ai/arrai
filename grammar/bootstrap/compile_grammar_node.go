@@ -203,8 +203,8 @@ func compileProdNode(node parse.Node) Term {
 	return seq
 }
 
-// GrammarNodeToGrammar converts the output from parsing an input via
-// GrammarGrammar back into a Grammar.
+// CompileGrammarNode converts the output from parsing an input via
+// GrammarGrammar into a Grammar, which can then be used to generate parsers.
 func CompileGrammarNode(node parse.Node) Grammar {
 	log.Printf("%q\n", node)
 	g := Grammar{}
