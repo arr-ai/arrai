@@ -36,7 +36,8 @@ func TestParseArrowStarExprAssignNew(t *testing.T) {
 }
 
 func TestParseArrowStarExprAlterExisting(t *testing.T) {
-	// t.Parallel()
+	t.Parallel()
+
 	// TODO: Fix
 	// AssertCodesEvalToSameValue(t,
 	// 	`{a:{b:41,c:42}}`,

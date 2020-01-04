@@ -2,7 +2,6 @@ package bootstrap
 
 import (
 	"fmt"
-	"log"
 	"strconv"
 	"strings"
 
@@ -131,7 +130,7 @@ func compileTermQuantNode(node parse.Node) Term {
 			seq := quant.GetNode(0)
 			atom = Delim{
 				Term:  atom,
-				Sep:   compileAtomNode(seq.GetNode(1)),
+				Sep:   compileAtomNode(seq.GetNode(2)),
 				Assoc: NewAssociativity(seq.GetString(0)),
 			}
 		default:
@@ -203,10 +202,9 @@ func compileProdNode(node parse.Node) Term {
 	return seq
 }
 
-// GrammarNodeToGrammar converts the output from parsing an input via
-// GrammarGrammar back into a Grammar.
-func CompileGrammarNode(node parse.Node) Grammar {
-	log.Printf("%q\n", node)
+// NewFromNode converts the output from parsing an input via GrammarGrammar into
+// a Grammar, which can then be used to generate parsers.
+func NewFromNode(node parse.Node) Grammar {
 	g := Grammar{}
 	for _, v := range node.Children {
 		stmt := v.(parse.Node)
