@@ -43,7 +43,7 @@ term    -> term:"^"
 atom    -> ident | str | re | "(" term ")";
 quant   -> /([?*+])/
          | "{" int? "," int? "}"
-         | /(<:|:>?)/ atom;
+         | /(<:|:>?)/ "!"? atom "!"?;
 ident   -> /([A-Za-z_\.]\w*)/;
 str     -> /"((?:[^"\\]|\\.)*)"/;
 int     -> /(\d+)/;
@@ -67,7 +67,7 @@ var grammarGrammar = Grammar{
 	quant: Oneof{
 		RE(`([?*+])`),
 		Seq{S("{"), Opt(intR), S(","), Opt(intR), S("}")},
-		Seq{RE(`(<:|:>?)`), atom},
+		Seq{RE(`(<:|:>?)`), Opt(S("!")), atom, Opt(S("!"))},
 	},
 
 	ident:  RE(`([A-Za-z_\.]\w*)`),
@@ -100,7 +100,7 @@ var core = func() Parsers {
 	}
 	g := v.(parse.Node)
 
-	newGrammarGrammar := CompileGrammarNode(g)
+	newGrammarGrammar := NewFromNode(g)
 
 	if !reflect.DeepEqual(newGrammarGrammar, grammarGrammar) {
 		panic(fmt.Errorf("mismatch between parsed and bootstrap grammar"))
@@ -206,9 +206,11 @@ type (
 	Oneof []Term
 	Tower []Term
 	Delim struct {
-		Term  Term
-		Sep   Term
-		Assoc Associativity
+		Term            Term
+		Sep             Term
+		Assoc           Associativity
+		CanStartWithSep bool
+		CanEndWithSep   bool
 	}
 	Quant struct {
 		Term Term

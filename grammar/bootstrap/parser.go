@@ -236,17 +236,45 @@ type delimParser struct {
 	put  putter
 }
 
+func parseAppend(p parse.Parser, input *parse.Scanner, slice *[]interface{}) bool {
+	var v interface{}
+	if p.Parse(input, &v) {
+		*slice = append(*slice, v)
+		return true
+	}
+	return false
+}
+
+type Empty struct{}
+
 func (p *delimParser) Parse(input *parse.Scanner, output interface{}) (out bool) {
 	defer enterf("%s: %T %[2]v", p.rule, p.t).exitf("%v %v", &out, output)
-	var term interface{}
-	if !p.term.Parse(input, &term) {
+	var result []interface{}
+
+	switch {
+	case parseAppend(p.term, input, &result):
+	case p.t.CanStartWithSep:
+		result = append(result, Empty{})
+		if !parseAppend(p.sep, input, &result) {
+			return false
+		}
+		if !parseAppend(p.term, input, &result) {
+			result = append(result, Empty{})
+			return p.put(output, Associativity(0), result...)
+		}
+	default:
 		return false
 	}
-	result := []interface{}{term}
-	var sep interface{}
-	for p.sep.Parse(input, &sep) && p.term.Parse(input, &term) {
-		result = append(result, sep, term)
+
+	for parseAppend(p.sep, input, &result) && parseAppend(p.term, input, &result) {
 	}
+
+	if p.t.CanEndWithSep {
+		if parseAppend(p.sep, input, &result) {
+			result = append(result, Empty{})
+		}
+	}
+
 	if n := len(result); n > 1 {
 		switch p.t.Assoc {
 		case LeftToRight:
@@ -264,6 +292,7 @@ func (p *delimParser) Parse(input *parse.Scanner, output interface{}) (out bool)
 			*output.(*interface{}) = v
 		}
 	}
+
 	return p.put(output, Associativity(0), result...)
 }
 

@@ -3,7 +3,6 @@ package bootstrap
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"reflect"
 	"strings"
 	"testing"
@@ -88,7 +87,6 @@ func TestExprGrammarGrammar(t *testing.T) {
 	require.NoError(t, err, "r=%v\nv=%v", r.Context(), v)
 	require.Equal(t, len(exprGrammarSrc), r.Offset(), "r=%v\nv=%v", r.Context(), v)
 	assert.NoError(t, parsers.ValidateParse(v))
-	log.Printf("%#v", v)
 	assertUnparse(t,
 		`// Simple expression grammar`+
 			`expr->expr:([-+])`+
@@ -100,21 +98,6 @@ func TestExprGrammarGrammar(t *testing.T) {
 		parsers,
 		v,
 	)
-}
-
-func assertGrammarsMatch(t *testing.T, expected, actual Grammar) {
-	if !assert.True(t, reflect.DeepEqual(expected, actual)) {
-		t.Logf("raw expected: %#v", expected)
-		t.Logf("raw actual: %#v", actual)
-
-		expectedJSON, err := json.Marshal(expected)
-		require.NoError(t, err)
-		actualJSON, err := json.Marshal(actual)
-		require.NoError(t, err)
-		t.Log("JSON(expected): ", string(expectedJSON))
-		t.Log("JSON(actual): ", string(actualJSON))
-		assert.JSONEq(t, string(expectedJSON), string(actualJSON))
-	}
 }
 
 func TestGrammarSnippet(t *testing.T) {
@@ -132,6 +115,21 @@ func TestGrammarSnippet(t *testing.T) {
 	assertUnparse(t, "prod+", parsers, v)
 }
 
+func assertGrammarsMatch(t *testing.T, expected, actual Grammar) {
+	if !assert.True(t, reflect.DeepEqual(expected, actual)) {
+		t.Logf("raw expected: %#v", expected)
+		t.Logf("raw actual: %#v", actual)
+
+		expectedJSON, err := json.Marshal(expected)
+		require.NoError(t, err)
+		actualJSON, err := json.Marshal(actual)
+		require.NoError(t, err)
+		t.Log("JSON(expected): ", string(expectedJSON))
+		t.Log("JSON(actual): ", string(actualJSON))
+		assert.JSONEq(t, string(expectedJSON), string(actualJSON))
+	}
+}
+
 func TestTinyGrammarGrammarGrammar(t *testing.T) {
 	t.Parallel()
 
@@ -146,7 +144,7 @@ func TestTinyGrammarGrammarGrammar(t *testing.T) {
 	e := v.(parse.Node)
 	assert.NoError(t, parsers.ValidateParse(v))
 
-	grammar2 := CompileGrammarNode(e)
+	grammar2 := NewFromNode(e)
 	assertGrammarsMatch(t, tinyGrammar, grammar2)
 }
 
@@ -160,6 +158,6 @@ func TestExprGrammarGrammarGrammar(t *testing.T) {
 	e := v.(parse.Node)
 	assert.NoError(t, parsers.ValidateParse(v))
 
-	grammar2 := CompileGrammarNode(e)
+	grammar2 := NewFromNode(e)
 	assertGrammarsMatch(t, exprGrammar, grammar2)
 }
