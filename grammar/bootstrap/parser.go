@@ -89,7 +89,9 @@ func (g Grammar) resolveTowers() {
 	}
 }
 
-func (g Grammar) Compile() (Parsers, Grammar) {
+// Compile prepares a grammar for parsing. The parser holds a copy of the
+// grammar modified to support parser execution.
+func (g Grammar) Compile() Parsers {
 	for _, term := range g {
 		if _, ok := term.(Tower); ok {
 			g = g.clone()
@@ -114,7 +116,7 @@ func (g Grammar) Compile() (Parsers, Grammar) {
 		}
 	}
 
-	return c.parsers, g
+	return Parsers{parsers: c.parsers, grammar: g}
 }
 
 //-----------------------------------------------------------------------------

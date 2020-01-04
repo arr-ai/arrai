@@ -13,9 +13,9 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func assertUnparse(t *testing.T, expected string, g Grammar, v interface{}) bool { //nolint:unparam
+func assertUnparse(t *testing.T, expected string, parsers Parsers, v interface{}) bool { //nolint:unparam
 	var sb strings.Builder
-	_, err := g.Unparse(v, &sb)
+	_, err := parsers.Unparse(v, &sb)
 	return assert.NoError(t, err) && assert.Equal(t, expected, sb.String())
 }
 
@@ -45,13 +45,13 @@ var exprGrammar = Grammar{
 func TestGrammarParser(t *testing.T) {
 	t.Parallel()
 
-	parsers, grammar := exprGrammar.Compile()
+	parsers := exprGrammar.Compile()
 
 	r := parse.NewScanner("1+2*3")
 	v, err := parsers.Parse(expr, r)
 	require.NoError(t, err)
-	assert.NoError(t, grammar.ValidateParse(v))
-	assertUnparse(t, "1+2*3", grammar, v)
+	assert.NoError(t, parsers.ValidateParse(v))
+	assertUnparse(t, "1+2*3", parsers, v)
 	assert.Equal(t,
 		`expr\:(expr#1\:(expr#2\_(?(), expr#3\|("1"))), `+
 			`"+", `+
@@ -62,8 +62,8 @@ func TestGrammarParser(t *testing.T) {
 	r = parse.NewScanner("1+(2-3/4)")
 	v, err = parsers.Parse(expr, r)
 	assert.NoError(t, err)
-	assert.NoError(t, grammar.ValidateParse(v))
-	assertUnparse(t, "1+(2-3/4)", grammar, v)
+	assert.NoError(t, parsers.ValidateParse(v))
+	assertUnparse(t, "1+(2-3/4)", parsers, v)
 	assert.Equal(t,
 		`expr\:(`+
 			`expr#1\:(expr#2\_(?(), expr#3\|("1"))), `+
@@ -82,12 +82,12 @@ func TestGrammarParser(t *testing.T) {
 func TestExprGrammarGrammar(t *testing.T) {
 	t.Parallel()
 
-	parsers, grammar := grammarGrammar.Compile()
+	parsers := Core()
 	r := parse.NewScanner(exprGrammarSrc)
 	v, err := parsers.Parse(grammarR, r)
 	require.NoError(t, err, "r=%v\nv=%v", r.Context(), v)
 	require.Equal(t, len(exprGrammarSrc), r.Offset(), "r=%v\nv=%v", r.Context(), v)
-	assert.NoError(t, grammar.ValidateParse(v))
+	assert.NoError(t, parsers.ValidateParse(v))
 	log.Printf("%#v", v)
 	assertUnparse(t,
 		`// Simple expression grammar`+
@@ -97,7 +97,7 @@ func TestExprGrammarGrammar(t *testing.T) {
 			`^(\d+)|expr`+
 			`^expr<:**`+
 			`^(expr);`,
-		grammar,
+		parsers,
 		v,
 	)
 }
@@ -120,7 +120,7 @@ func assertGrammarsMatch(t *testing.T, expected, actual Grammar) {
 func TestGrammarSnippet(t *testing.T) {
 	t.Parallel()
 
-	parsers, grammar := grammarGrammar.Compile()
+	parsers := Core()
 	r := parse.NewScanner(`prod+`)
 	v, err := parsers.Parse(term, r)
 	require.NoError(t, err)
@@ -128,8 +128,8 @@ func TestGrammarSnippet(t *testing.T) {
 		`term\:(term#1\:(term#2\?(term#3\_(?(), term#4\_(atom\|("prod"), ?(quant\|("+")))))))`,
 		fmt.Sprintf("%q", v),
 	)
-	assert.NoError(t, grammar.ValidateParse(v))
-	assertUnparse(t, "prod+", grammar, v)
+	assert.NoError(t, parsers.ValidateParse(v))
+	assertUnparse(t, "prod+", parsers, v)
 }
 
 func TestTinyGrammarGrammarGrammar(t *testing.T) {
@@ -139,12 +139,12 @@ func TestTinyGrammarGrammarGrammar(t *testing.T) {
 	tinyGrammar := Grammar{tiny: S("x")}
 	tinyGrammarSrc := `tiny -> "x";`
 
-	parsers, grammar := grammarGrammar.Compile()
+	parsers := Core()
 	r := parse.NewScanner(tinyGrammarSrc)
 	v, err := parsers.Parse(grammarR, r)
 	require.NoError(t, err)
 	e := v.(parse.Node)
-	assert.NoError(t, grammar.ValidateParse(v))
+	assert.NoError(t, parsers.ValidateParse(v))
 
 	grammar2 := CompileGrammarNode(e)
 	assertGrammarsMatch(t, tinyGrammar, grammar2)
@@ -153,12 +153,12 @@ func TestTinyGrammarGrammarGrammar(t *testing.T) {
 func TestExprGrammarGrammarGrammar(t *testing.T) {
 	t.Parallel()
 
-	parsers, grammar := grammarGrammar.Compile()
+	parsers := Core()
 	r := parse.NewScanner(exprGrammarSrc)
 	v, err := parsers.Parse(grammarR, r)
 	require.NoError(t, err)
 	e := v.(parse.Node)
-	assert.NoError(t, grammar.ValidateParse(v))
+	assert.NoError(t, parsers.ValidateParse(v))
 
 	grammar2 := CompileGrammarNode(e)
 	assertGrammarsMatch(t, exprGrammar, grammar2)
