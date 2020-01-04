@@ -31,6 +31,7 @@ var (
 )
 
 const grammarGrammarSrc = `
+// Non-terminals
 grammar -> stmt+;
 stmt    -> comment | prod;
 comment -> /(\/\/.*$|(?s:\/\*(?:[^*]|\*+[^*\/])\*\/))/;
@@ -44,6 +45,8 @@ atom    -> ident | str | re | "(" term ")";
 quant   -> /([?*+])/
          | "{" int? "," int? "}"
          | /(<:|:>?)/ "!"? atom "!"?;
+
+// Terminals
 ident   -> /([A-Za-z_\.]\w*)/;
 str     -> /"((?:[^"\\]|\\.)*)"/;
 int     -> /(\d+)/;
