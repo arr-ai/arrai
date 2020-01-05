@@ -204,11 +204,14 @@ type seqParser struct {
 func (p *seqParser) Parse(input *parse.Scanner, output interface{}) (out bool) {
 	defer enterf("%s: %T %[2]v", p.rule, p.t).exitf("%v %v", &out, output)
 	result := make([]interface{}, 0, len(p.parsers))
+	furthest := *input
 	for _, parser := range p.parsers {
 		var v interface{}
 		if !parser.Parse(input, &v) {
+			*input = furthest
 			return false
 		}
+		furthest = *input
 		result = append(result, v)
 	}
 	return p.put(output, nil, result...)
