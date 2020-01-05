@@ -72,15 +72,28 @@ func (r *Scanner) EatString(s string, eaten *Scanner) bool {
 	return false
 }
 
-// TODO: Support representation of multiple capturing groups.
-func (r *Scanner) EatRegexp(re *regexp.Regexp, eaten *Scanner) bool {
+// EatRegexp eats the text matchin a regexp, populating match (if != nil) with
+// the whole match and captures (if != nil) with any captured groups. Returns
+// n as the number of captures set and ok iff a match was found.
+func (r *Scanner) EatRegexp(re *regexp.Regexp, match *Scanner, captures []Scanner) (n int, ok bool) {
 	if loc := re.FindStringSubmatchIndex(r.String()); loc != nil {
 		if loc[0] != 0 {
-			panic("re not \\A-anchored")
+			panic(`re not \A-anchored`)
 		}
-		*eaten = *r.Slice(loc[2], loc[3])
-		*r = *r.Skip(loc[1])
-		return true
+		if match != nil {
+			*match = *r.Slice(loc[0], loc[1])
+		}
+		skip := loc[1]
+		loc = loc[2:]
+		n = len(loc) / 2
+		if len(captures) > n {
+			captures = captures[:n]
+		}
+		for i := range captures {
+			captures[i] = *r.Slice(loc[2*i], loc[2*i+1])
+		}
+		*r = *r.Skip(skip)
+		return n, true
 	}
-	return false
+	return 0, false
 }

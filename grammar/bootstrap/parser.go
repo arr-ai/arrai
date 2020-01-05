@@ -139,6 +139,15 @@ func (t Rule) Parser(rule Rule, c cache) parse.Parser {
 
 //-----------------------------------------------------------------------------
 
+func eatRegexp(input *parse.Scanner, re *regexp.Regexp, output interface{}) bool {
+	var eaten [2]parse.Scanner
+	if n, ok := input.EatRegexp(re, nil, eaten[:]); ok {
+		parse.PtrAssign(output, eaten[n-1])
+		return true
+	}
+	return false
+}
+
 type sParser struct {
 	rule Rule
 	t    S
@@ -146,12 +155,7 @@ type sParser struct {
 }
 
 func (p *sParser) Parse(input *parse.Scanner, output interface{}) (out bool) {
-	var eaten parse.Scanner
-	if input.EatRegexp(p.re, &eaten) {
-		parse.PtrAssign(output, eaten)
-		return true
-	}
-	return false
+	return eatRegexp(input, p.re, output)
 }
 
 func (t S) Parser(rule Rule, c cache) parse.Parser {
@@ -162,11 +166,9 @@ func (t S) Parser(rule Rule, c cache) parse.Parser {
 	return &sParser{
 		rule: rule,
 		t:    t,
-		re:   regexp.MustCompile(`(?m)\A(?:` + re + `)`),
+		re:   regexp.MustCompile(`(?m)\A` + re),
 	}
 }
-
-//-----------------------------------------------------------------------------
 
 type reParser struct {
 	rule Rule
@@ -175,23 +177,18 @@ type reParser struct {
 }
 
 func (p *reParser) Parse(input *parse.Scanner, output interface{}) (out bool) {
-	var eaten parse.Scanner
-	if input.EatRegexp(p.re, &eaten) {
-		parse.PtrAssign(output, eaten)
-		return true
-	}
-	return false
+	return eatRegexp(input, p.re, output)
 }
 
 func (t RE) Parser(rule Rule, c cache) parse.Parser {
-	re := string(t)
+	re := "(" + string(t) + ")"
 	if wrap, has := c.grammar[WrapRE]; has {
 		re = strings.Replace(string(wrap.(RE)), "()", "(?:"+re+")", 1)
 	}
 	return &reParser{
 		rule: rule,
 		t:    t,
-		re:   regexp.MustCompile(`(?m)\A(?:` + re + `)`),
+		re:   regexp.MustCompile(`(?m)\A` + re),
 	}
 }
 

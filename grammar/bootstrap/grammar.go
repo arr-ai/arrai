@@ -34,7 +34,7 @@ const grammarGrammarSrc = `
 // Non-terminals
 grammar -> stmt+;
 stmt    -> comment | prod;
-comment -> /(\/\/.*$|(?s:\/\*(?:[^*]|\*+[^*\/])\*\/))/;
+comment -> /\/\/.*$|(?s:\/\*(?:[^*]|\*+[^*\/])\*\/)/;
 prod    -> ident "->" term+ ";";
 term    -> term:"^"
          ^ term:"|"
@@ -42,14 +42,14 @@ term    -> term:"^"
          ^ ("<" ident ">")? term
          ^ atom quant?;
 atom    -> ident | str | re | "(" term ")";
-quant   -> /([?*+])/
+quant   -> /[?*+]/
          | "{" int? "," int? "}"
-         | /(<:|:>?)/ "!"? atom "!"?;
+         | /<:|:>?/ "!"? atom "!"?;
 
 // Terminals
-ident   -> /([A-Za-z_\.]\w*)/;
+ident   -> /[A-Za-z_\.]\w*/;
 str     -> /"((?:[^"\\]|\\.)*)"/;
-int     -> /(\d+)/;
+int     -> /\d+/;
 re      -> /\/((?:[^\/\\]|\\.)*)\//;
 .wrapRE -> /\s*()\s*/;
 `
@@ -57,7 +57,7 @@ re      -> /\/((?:[^\/\\]|\\.)*)\//;
 var grammarGrammar = Grammar{
 	grammarR: Some(stmt),
 	stmt:     Oneof{comment, prod},
-	comment:  RE(`(//.*$|(?s:/\*(?:[^*]|\*+[^*/])\*/))`),
+	comment:  RE(`//.*$|(?s:/\*(?:[^*]|\*+[^*/])\*/)`),
 	prod:     Seq{ident, S("->"), Some(term), S(";")},
 	term: Tower{
 		Delim{Term: term, Sep: S("^")},
@@ -68,14 +68,14 @@ var grammarGrammar = Grammar{
 	},
 	atom: Oneof{ident, str, re, Seq{S("("), term, S(")")}},
 	quant: Oneof{
-		RE(`([?*+])`),
+		RE(`[?*+]`),
 		Seq{S("{"), Opt(intR), S(","), Opt(intR), S("}")},
-		Seq{RE(`(<:|:>?)`), Opt(S("!")), atom, Opt(S("!"))},
+		Seq{RE(`<:|:>?`), Opt(S("!")), atom, Opt(S("!"))},
 	},
 
-	ident:  RE(`([A-Za-z_\.]\w*)`),
+	ident:  RE(`[A-Za-z_\.]\w*`),
 	str:    RE(`"((?:[^"\\]|\\.)*)"`),
-	intR:   RE(`(\d+)`),
+	intR:   RE(`\d+`),
 	re:     RE(`/((?:[^/\\]|\\.)*)/`),
 	WrapRE: RE(`\s*()\s*`),
 }
@@ -96,7 +96,7 @@ var core = func() Parsers {
 	r := parse.NewScanner(grammarGrammarSrc)
 	v, err := parsers.Parse(grammarR, r)
 	if err != nil {
-		panic(fmt.Errorf("failed to parse core grammar"))
+		panic(err)
 	}
 	if err := parsers.Grammar().ValidateParse(v); err != nil {
 		panic(err)
@@ -157,7 +157,7 @@ func (p Parsers) Parse(rule Rule, input *parse.Scanner) (interface{}, error) {
 		if input.String() == "" {
 			return v, nil
 		}
-		return nil, fmt.Errorf("unconsumed input: %s", input.String())
+		return nil, fmt.Errorf("unconsumed input: %q", input.String())
 	}
 	return nil, fmt.Errorf("failed to parse %s", rule)
 }
