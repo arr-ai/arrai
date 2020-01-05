@@ -39,7 +39,7 @@ prod    -> ident "->" term+ ";";
 term    -> term:"^"
          ^ term:"|"
          ^ term+
-         ^ ("<" ident ">")? term
+         ^ (ident "=")? term
          ^ atom quant?;
 atom    -> ident | str | re | "(" term ")";
 quant   -> /{[?*+]}
@@ -63,7 +63,7 @@ var grammarGrammar = Grammar{
 		Delim{Term: term, Sep: S("^")},
 		Delim{Term: term, Sep: S("|")},
 		Some(term),
-		Seq{Opt(Seq{S("<"), ident, S(">")}), term},
+		Seq{Opt(Seq{ident, S("=")}), term},
 		Seq{atom, Opt(quant)},
 	},
 	atom: Oneof{ident, str, re, Seq{S("("), term, S(")")}},
