@@ -52,10 +52,10 @@ func TestGrammarParser(t *testing.T) {
 	assert.NoError(t, parsers.ValidateParse(v))
 	assertUnparse(t, "1+2*3", parsers, v)
 	assert.Equal(t,
-		`expr\:(expr#1\:(expr#2\_(?(), expr#3\|("1"))), `+
-			`"+", `+
-			`expr#1\:(expr#2\_(?(), expr#3\|("2")), "*", expr#2\_(?(), expr#3\|("3"))))`,
-		fmt.Sprintf("%q", v),
+		`expr\:║:(expr#1\:║:(expr#2\_(?(), expr#3\|║0(1))), `+
+			`+, `+
+			`expr#1\:║:(expr#2\_(?(), expr#3\|║0(2)), *, expr#2\_(?(), expr#3\|║0(3))))`,
+		fmt.Sprintf("%v", v),
 	)
 
 	r = parse.NewScanner("1+(2-3/4)")
@@ -64,17 +64,17 @@ func TestGrammarParser(t *testing.T) {
 	assert.NoError(t, parsers.ValidateParse(v))
 	assertUnparse(t, "1+(2-3/4)", parsers, v)
 	assert.Equal(t,
-		`expr\:(`+
-			`expr#1\:(expr#2\_(?(), expr#3\|("1"))), `+
-			`"+", `+
-			`expr#1\:(expr#2\_(?(), expr#3\|(expr#4\:(expr#5\_("(", `+
-			`expr\:(expr#1\:(expr#2\_(?(), expr#3\|("2"))), `+
-			`"-", `+
-			`expr#1\:(expr#2\_(?(), expr#3\|("3")), `+
-			`"/", `+
-			`expr#2\_(?(), expr#3\|("4")))), `+
-			`")"))))))`,
-		fmt.Sprintf("%q", v),
+		`expr\:║:(`+
+			`expr#1\:║:(expr#2\_(?(), expr#3\|║0(1))), `+
+			`+, `+
+			`expr#1\:║:(expr#2\_(?(), expr#3\|║1(expr#4\:║:(expr#5\_((, `+
+			`expr\:║:(expr#1\:║:(expr#2\_(?(), expr#3\|║0(2))), `+
+			`-, `+
+			`expr#1\:║:(expr#2\_(?(), expr#3\|║0(3)), `+
+			`/, `+
+			`expr#2\_(?(), expr#3\|║0(4)))), `+
+			`)))))))`,
+		fmt.Sprintf("%v", v),
 	)
 }
 
@@ -108,8 +108,8 @@ func TestGrammarSnippet(t *testing.T) {
 	v, err := parsers.Parse(term, r)
 	require.NoError(t, err)
 	assert.Equal(t,
-		`term\:(term#1\:(term#2\?(term#3\_(?(), term#4\_(atom\|("prod"), ?(quant\|("+")))))))`,
-		fmt.Sprintf("%q", v),
+		`term\:║:(term#1\:║:(term#2\?(term#3\_(?(), term#4\_(atom\|║0(prod), ?(quant\|║0(+)))))))`,
+		fmt.Sprintf("%v", v),
 	)
 	assert.NoError(t, parsers.ValidateParse(v))
 	assertUnparse(t, "prod+", parsers, v)

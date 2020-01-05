@@ -46,8 +46,12 @@ func (n Node) String() string {
 }
 
 func (n Node) Format(state fmt.State, c rune) {
-	fmt.Fprintf(state, "%s(", n.Tag)
+	fmt.Fprintf(state, "%s", n.Tag)
 	format := "%" + string(c)
+	if n.Extra != nil {
+		fmt.Fprintf(state, "║"+format, n.Extra)
+	}
+	state.Write([]byte{'('})
 	for i, child := range n.Children {
 		if i > 0 {
 			fmt.Fprint(state, ", ")
