@@ -95,7 +95,7 @@ func compileTermNamedNode(node parse.Node) Term {
 	term := compileAtomNode(node.GetNode(1))
 	if quant := node.GetNode(0); quant.Count() == 1 {
 		return Named{
-			Name: quant.GetString(0, 1),
+			Name: quant.GetString(0, 0),
 			Term: term,
 		}
 	}

@@ -18,7 +18,10 @@ func (d InterfaceDiff) Equal() bool {
 }
 
 func diffInterfaces(a, b interface{}) InterfaceDiff {
-	return InterfaceDiff{A: a, B: b}
+	if diff := (InterfaceDiff{A: a, B: b}); !diff.Equal() {
+		return diff
+	}
+	return InterfaceDiff{}
 }
 
 //-----------------------------------------------------------------------------

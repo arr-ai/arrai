@@ -123,6 +123,9 @@ func (t Stack) ValidateParse(g Grammar, rule Rule, v interface{}) error {
 	panic(Inconceivable)
 }
 
+//-----------------------------------------------------------------------------
+
 func (t Named) ValidateParse(g Grammar, rule Rule, v interface{}) error {
-	panic(Inconceivable)
+	// TODO: Be a little more thorough.
+	return nil
 }

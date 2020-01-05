@@ -35,15 +35,15 @@ const grammarGrammarSrc = `
 grammar -> stmt+;
 stmt    -> COMMENT | prod;
 prod    -> IDENT "->" term+ ";";
-term    -> term:"^"
-         ^ term:"|"
+term    -> term:op="^"
+         ^ term:op="|"
          ^ term+
-         ^ named quant?;
-named   -> (IDENT "=")? atom;
+         ^ named quant*;
+quant   -> op=/{[?*+]}
+         | "{" min=INT? "," max=INT? "}"
+         | op=/{<:|:>?} lbang="!"? named rbang="!"?;
+named   -> (IDENT op="=")? atom;
 atom    -> IDENT | STR | RE | "(" term ")" | "(" ")";
-quant   -> /{[?*+]}
-         | "{" INT? "," INT? "}"
-         | /{<:|:>?} "!"? named "!"?;
 
 // Terminals
 IDENT   -> /{[A-Za-z_\.]\w*};
@@ -62,18 +62,23 @@ var grammarGrammar = Grammar{
 	stmt:     Oneof{comment, prod},
 	prod:     Seq{ident, S("->"), Some(term), S(";")},
 	term: Stack{
-		Delim{Term: term, Sep: S("^")},
-		Delim{Term: term, Sep: S("|")},
+		Delim{Term: term, Sep: Eq("op", S("^"))},
+		Delim{Term: term, Sep: Eq("op", S("|"))},
 		Some(term),
-		Seq{named, Opt(quant)},
+		Seq{named, Any(quant)},
 	},
-	named: Seq{Opt(Seq{ident, S("=")}), atom},
-	atom:  Oneof{ident, str, re, Seq{S("("), term, S(")")}, Seq{S("("), S(")")}},
 	quant: Oneof{
-		RE(`[?*+]`),
-		Seq{S("{"), Opt(intR), S(","), Opt(intR), S("}")},
-		Seq{RE(`<:|:>?`), Opt(S("!")), named, Opt(S("!"))},
+		Eq("op", RE(`[?*+]`)),
+		Seq{S("{"), Opt(Eq("min", intR)), S(","), Opt(Eq("max", intR)), S("}")},
+		Seq{
+			Eq("op", RE(`<:|:>?`)),
+			Opt(Eq("lbang", S("!"))),
+			named,
+			Opt(Eq("rbang", S("!"))),
+		},
 	},
+	named: Seq{Opt(Seq{ident, Eq("op", S("="))}), atom},
+	atom:  Oneof{ident, str, re, Seq{S("("), term, S(")")}, Seq{S("("), S(")")}},
 
 	// Terminals
 	ident:   RE(`[A-Za-z_\.]\w*`),
@@ -246,7 +251,7 @@ func Opt(term Term) Quant  { return Quant{Term: term, Max: 1} }
 func Any(term Term) Quant  { return Quant{Term: term} }
 func Some(term Term) Quant { return Quant{Term: term, Min: 1} }
 
-func Name(name string, term Term) Named {
+func Eq(name string, term Term) Named {
 	return Named{Name: name, Term: term}
 }
 
@@ -282,7 +287,7 @@ func (t S) String() string     { return fmt.Sprintf("%q", string(t)) }
 func (t RE) String() string    { return fmt.Sprintf("/%v/", string(t)) }
 func (t Seq) String() string   { return join(t, " ") }
 func (t Oneof) String() string { return join(t, " | ") }
-func (t Stack) String() string { return join(t, " >> ") }
+func (t Stack) String() string { return join(t, " ^ ") }
 func (t Delim) String() string { return fmt.Sprintf("%v%s%v", t.Term, t.Assoc, t.Sep) }
 func (t Quant) String() string { return fmt.Sprintf("%v{%d,%d}", t.Term, t.Min, t.Max) }
-func (t Named) String() string { return fmt.Sprintf("<%s>%v", t.Name, t.Term) }
+func (t Named) String() string { return fmt.Sprintf("%s=%v", t.Name, t.Term) }

@@ -73,10 +73,15 @@ func (t Rule) Unparse(g Grammar, v interface{}, w io.Writer) (n int, err error) 
 	return g[t].Unparse(g, v, w)
 }
 
+//-----------------------------------------------------------------------------
+
 func (t Stack) Unparse(g Grammar, v interface{}, w io.Writer) (n int, err error) {
 	panic(Inconceivable)
 }
 
+//-----------------------------------------------------------------------------
+
 func (t Named) Unparse(g Grammar, v interface{}, w io.Writer) (n int, err error) {
-	panic(Inconceivable)
+	err = unparse(g, t.Term, v, w, &n)
+	return
 }
