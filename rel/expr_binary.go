@@ -212,10 +212,13 @@ func NewCallExpr(a, b Expr) Expr {
 			case Set:
 				var match func(at Value) bool
 				multi := false
-				if y, ok := b.(Set); ok {
+				switch y := b.(type) {
+				case *String:
+					match = func(at Value) bool { return y.Equal(at) }
+				case Set:
 					match = func(at Value) bool { return y.Has(at) }
 					multi = true
-				} else {
+				default:
 					match = func(at Value) bool { return b.Equal(at) }
 				}
 
