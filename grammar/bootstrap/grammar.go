@@ -3,7 +3,6 @@ package bootstrap
 import (
 	"fmt"
 	"io"
-	"reflect"
 	"sort"
 	"strings"
 
@@ -111,8 +110,14 @@ var core = func() Parsers {
 
 	newGrammarGrammar := NewFromNode(g)
 
-	if !reflect.DeepEqual(newGrammarGrammar, grammarGrammar) {
-		panic(fmt.Errorf("mismatch between parsed and bootstrap grammar"))
+	if diff := DiffGrammars(grammarGrammar, newGrammarGrammar); !diff.Equal() {
+		panic(fmt.Errorf(
+			"mismatch between parsed and hand-crafted core grammar"+
+				"\nold: %v"+
+				"\nnew: %v"+
+				"\ndiff: %#v",
+			grammarGrammar, newGrammarGrammar, diff,
+		))
 	}
 
 	return newGrammarGrammar.Compile()
