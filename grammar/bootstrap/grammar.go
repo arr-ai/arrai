@@ -40,7 +40,7 @@ term    -> term:"^"
          ^ term+
          ^ named quant?;
 named   -> (IDENT "=")? atom;
-atom    -> IDENT | STR | RE | "(" term ")";
+atom    -> IDENT | STR | RE | "(" term ")" | "(" ")";
 quant   -> /{[?*+]}
          | "{" INT? "," INT? "}"
          | /{<:|:>?} "!"? named "!"?;
@@ -68,7 +68,7 @@ var grammarGrammar = Grammar{
 		Seq{named, Opt(quant)},
 	},
 	named: Seq{Opt(Seq{ident, S("=")}), atom},
-	atom:  Oneof{ident, str, re, Seq{S("("), term, S(")")}},
+	atom:  Oneof{ident, str, re, Seq{S("("), term, S(")")}, Seq{S("("), S(")")}},
 	quant: Oneof{
 		RE(`[?*+]`),
 		Seq{S("{"), Opt(intR), S(","), Opt(intR), S("}")},

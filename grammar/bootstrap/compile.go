@@ -84,6 +84,8 @@ func compileAtomNode(node parse.Node) Term {
 		return RE(strings.ReplaceAll(node.GetString(0), `\/`, `/`))
 	case 3:
 		return compileTermNode(node.GetNode(0, 1))
+	case 4:
+		return Seq{}
 	default:
 		panic(BadInput)
 	}
