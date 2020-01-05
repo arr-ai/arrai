@@ -205,11 +205,11 @@ func (p *seqParser) Parse(input *parse.Scanner, output interface{}) (out bool) {
 	defer enterf("%s: %T %[2]v", p.rule, p.t).exitf("%v %v", &out, output)
 	result := make([]interface{}, 0, len(p.parsers))
 	for _, parser := range p.parsers {
-		var n interface{}
-		if !parser.Parse(input, &n) {
+		var v interface{}
+		if !parser.Parse(input, &v) {
 			return false
 		}
-		result = append(result, n)
+		result = append(result, v)
 	}
 	return p.put(output, nil, result...)
 }
@@ -263,8 +263,15 @@ func (p *delimParser) Parse(input *parse.Scanner, output interface{}) (out bool)
 		return false
 	}
 
-	for parseAppend(p.sep, input, &result) && parseAppend(p.term, input, &result) {
+	start := *input
+	for parseAppend(p.sep, input, &result) {
+		start = *input
+		if !parseAppend(p.term, input, &result) {
+			break
+		}
+		start = *input
 	}
+	*input = start
 
 	if p.t.CanEndWithSep {
 		if parseAppend(p.sep, input, &result) {
@@ -329,9 +336,11 @@ type quantParser struct {
 func (p *quantParser) Parse(input *parse.Scanner, output interface{}) (out bool) {
 	defer enterf("%s: %T %[2]v", p.rule, p.t).exitf("%v %v", &out, output)
 	result := make([]interface{}, 0, p.t.Min)
-	var n interface{}
-	for i := 0; (p.t.Max == 0 || i < p.t.Max) && p.term.Parse(input, &n); i++ {
-		result = append(result, n)
+	var v interface{}
+	start := *input
+	for i := 0; (p.t.Max == 0 || i < p.t.Max) && p.term.Parse(&start, &v); i++ {
+		result = append(result, v)
+		*input = start
 	}
 	if len(result) >= p.t.Min {
 		return p.put(output, nil, result...)
@@ -363,11 +372,11 @@ func (p *oneofParser) Parse(input *parse.Scanner, output interface{}) (out bool)
 	defer enterf("%s: %T %[2]v", p.rule, p.t).exitf("%v %v", &out, output)
 	furthest := *input
 	for i, parser := range p.parsers {
-		var n interface{}
+		var v interface{}
 		start := *input
-		if parser.Parse(&start, &n) {
+		if parser.Parse(&start, &v) {
 			*input = start
-			return p.put(output, i, n)
+			return p.put(output, i, v)
 		}
 		if furthest.Offset() < start.Offset() {
 			furthest = start
