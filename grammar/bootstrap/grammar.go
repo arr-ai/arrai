@@ -13,15 +13,15 @@ import (
 var (
 	grammarR = Rule("grammar")
 	stmt     = Rule("stmt")
-	comment  = Rule("comment")
 	prod     = Rule("prod")
 	term     = Rule("term")
 	atom     = Rule("atom")
 	quant    = Rule("quant")
-	ident    = Rule("ident")
-	str      = Rule("str")
-	intR     = Rule("int")
-	re       = Rule("re")
+	ident    = Rule("IDENT")
+	str      = Rule("STR")
+	intR     = Rule("INT")
+	re       = Rule("RE")
+	comment  = Rule("COMMENT")
 
 	// WrapRE is a special rule to indicate a wrapper around all regexps and
 	// strings. When supplied in the form "pre()post", then all regexes will be
@@ -33,31 +33,33 @@ var (
 const grammarGrammarSrc = `
 // Non-terminals
 grammar -> stmt+;
-stmt    -> comment | prod;
-comment -> /{//.*$|(?s:/\*(?:[^*]|\*+[^*/])\*/)};
-prod    -> ident "->" term+ ";";
+stmt    -> COMMENT | prod;
+prod    -> IDENT "->" term+ ";";
 term    -> term:"^"
          ^ term:"|"
          ^ term+
-         ^ (ident "=")? term
+         ^ (IDENT "=")? term
          ^ atom quant?;
-atom    -> ident | str | re | "(" term ")";
+atom    -> IDENT | STR | RE | "(" term ")";
 quant   -> /{[?*+]}
-         | "{" int? "," int? "}"
+         | "{" INT? "," INT? "}"
          | /{<:|:>?} "!"? atom "!"?;
 
 // Terminals
-ident   -> /{[A-Za-z_\.]\w*};
-str     -> /{"((?:\\.|[^\\"])*)"};
-int     -> /{\d+};
-re      -> /{/{((?:\\.|[^\\\}])*)\}};
+IDENT   -> /{[A-Za-z_\.]\w*};
+STR     -> /{"((?:\\.|[^\\"])*)"};
+INT     -> /{\d+};
+RE      -> /{/{((?:\\.|[^\\\}])*)\}};
+COMMENT -> /{//.*$|(?s:/\*(?:[^*]|\*+[^*/])\*/)};
+
+// Special
 .wrapRE -> /{\s*()\s*};
 `
 
 var grammarGrammar = Grammar{
+	// Non-terminals
 	grammarR: Some(stmt),
 	stmt:     Oneof{comment, prod},
-	comment:  RE(`//.*$|(?s:/\*(?:[^*]|\*+[^*/])\*/)`),
 	prod:     Seq{ident, S("->"), Some(term), S(";")},
 	term: Stack{
 		Delim{Term: term, Sep: S("^")},
@@ -73,10 +75,14 @@ var grammarGrammar = Grammar{
 		Seq{RE(`<:|:>?`), Opt(S("!")), atom, Opt(S("!"))},
 	},
 
-	ident:  RE(`[A-Za-z_\.]\w*`),
-	str:    RE(`"((?:\\.|[^\\"])*)"`),
-	intR:   RE(`\d+`),
-	re:     RE(`/{((?:\\.|[^\\\}])*)\}`),
+	// Terminals
+	ident:   RE(`[A-Za-z_\.]\w*`),
+	str:     RE(`"((?:\\.|[^\\"])*)"`),
+	intR:    RE(`\d+`),
+	re:      RE(`/{((?:\\.|[^\\\}])*)\}`),
+	comment: RE(`//.*$|(?s:/\*(?:[^*]|\*+[^*/])\*/)`),
+
+	// Special
 	WrapRE: RE(`\s*()\s*`),
 }
 
