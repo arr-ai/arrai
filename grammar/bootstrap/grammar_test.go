@@ -22,10 +22,10 @@ var expr = Rule("expr")
 
 var exprGrammarSrc = `
 // Simple expression grammar
-expr -> expr:/([-+])/
-      ^ expr:/([*\/])/
+expr -> expr:/{([-+])}
+      ^ expr:/{([*\/])}
       ^ "-"? expr
-	  ^ /(\d+)/ | expr
+	  ^ /{(\d+)} | expr
 	  ^ expr<:"**"
       ^ "(" expr ")";
 `

@@ -34,7 +34,7 @@ const grammarGrammarSrc = `
 // Non-terminals
 grammar -> stmt+;
 stmt    -> comment | prod;
-comment -> /\/\/.*$|(?s:\/\*(?:[^*]|\*+[^*\/])\*\/)/;
+comment -> /{//.*$|(?s:/\*(?:[^*]|\*+[^*/])\*/)};
 prod    -> ident "->" term+ ";";
 term    -> term:"^"
          ^ term:"|"
@@ -42,16 +42,16 @@ term    -> term:"^"
          ^ ("<" ident ">")? term
          ^ atom quant?;
 atom    -> ident | str | re | "(" term ")";
-quant   -> /[?*+]/
+quant   -> /{[?*+]}
          | "{" int? "," int? "}"
-         | /<:|:>?/ "!"? atom "!"?;
+         | /{<:|:>?} "!"? atom "!"?;
 
 // Terminals
-ident   -> /[A-Za-z_\.]\w*/;
-str     -> /"((?:[^"\\]|\\.)*)"/;
-int     -> /\d+/;
-re      -> /\/((?:[^\/\\]|\\.)*)\//;
-.wrapRE -> /\s*()\s*/;
+ident   -> /{[A-Za-z_\.]\w*};
+str     -> /{"((?:\\.|[^\\"])*)"};
+int     -> /{\d+};
+re      -> /{/{((?:\\.|[^\\\}])*)\}};
+.wrapRE -> /{\s*()\s*};
 `
 
 var grammarGrammar = Grammar{
@@ -74,9 +74,9 @@ var grammarGrammar = Grammar{
 	},
 
 	ident:  RE(`[A-Za-z_\.]\w*`),
-	str:    RE(`"((?:[^"\\]|\\.)*)"`),
+	str:    RE(`"((?:\\.|[^\\"])*)"`),
 	intR:   RE(`\d+`),
-	re:     RE(`/((?:[^/\\]|\\.)*)/`),
+	re:     RE(`/{((?:\\.|[^\\\}])*)\}`),
 	WrapRE: RE(`\s*()\s*`),
 }
 
@@ -157,7 +157,7 @@ func (p Parsers) Parse(rule Rule, input *parse.Scanner) (interface{}, error) {
 		if input.String() == "" {
 			return v, nil
 		}
-		return nil, fmt.Errorf("unconsumed input: %q", input.String())
+		return nil, fmt.Errorf("unconsumed input: %v", input.Context())
 	}
 	return nil, fmt.Errorf("failed to parse %s", rule)
 }
@@ -230,9 +230,9 @@ func NonAssoc(term, sep Term) Delim { return Delim{Term: term, Sep: sep, Assoc: 
 func L2R(term, sep Term) Delim      { return Delim{Term: term, Sep: sep, Assoc: LeftToRight} }
 func R2L(term, sep Term) Delim      { return Delim{Term: term, Sep: sep, Assoc: RightToLeft} }
 
-func Opt(term Term) *Quant  { return &Quant{Term: term, Max: 1} }
-func Any(term Term) *Quant  { return &Quant{Term: term} }
-func Some(term Term) *Quant { return &Quant{Term: term, Min: 1} }
+func Opt(term Term) Quant  { return Quant{Term: term, Max: 1} }
+func Any(term Term) Quant  { return Quant{Term: term} }
+func Some(term Term) Quant { return Quant{Term: term, Min: 1} }
 
 func Name(name string, term Term) Named {
 	return Named{Name: name, Term: term}
