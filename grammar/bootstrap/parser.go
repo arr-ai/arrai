@@ -361,6 +361,7 @@ type oneofParser struct {
 
 func (p *oneofParser) Parse(input *parse.Scanner, output interface{}) (out bool) {
 	defer enterf("%s: %T %[2]v", p.rule, p.t).exitf("%v %v", &out, output)
+	furthest := *input
 	for i, parser := range p.parsers {
 		var n interface{}
 		start := *input
@@ -368,7 +369,11 @@ func (p *oneofParser) Parse(input *parse.Scanner, output interface{}) (out bool)
 			*input = start
 			return p.put(output, i, n)
 		}
+		if furthest.Offset() < start.Offset() {
+			furthest = start
+		}
 	}
+	*input = furthest
 	return false
 }
 
