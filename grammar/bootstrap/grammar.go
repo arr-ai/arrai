@@ -59,7 +59,7 @@ var grammarGrammar = Grammar{
 	stmt:     Oneof{comment, prod},
 	comment:  RE(`//.*$|(?s:/\*(?:[^*]|\*+[^*/])\*/)`),
 	prod:     Seq{ident, S("->"), Some(term), S(";")},
-	term: Tower{
+	term: Stack{
 		Delim{Term: term, Sep: S("^")},
 		Delim{Term: term, Sep: S("|")},
 		Some(term),
@@ -207,7 +207,7 @@ type (
 	RE    string
 	Seq   []Term
 	Oneof []Term
-	Tower []Term
+	Stack []Term
 	Delim struct {
 		Term            Term
 		Sep             Term
@@ -270,7 +270,7 @@ func (t S) String() string     { return fmt.Sprintf("%q", string(t)) }
 func (t RE) String() string    { return fmt.Sprintf("/%v/", string(t)) }
 func (t Seq) String() string   { return join(t, " ") }
 func (t Oneof) String() string { return join(t, " | ") }
-func (t Tower) String() string { return join(t, " >> ") }
+func (t Stack) String() string { return join(t, " >> ") }
 func (t Delim) String() string { return fmt.Sprintf("%v%s%v", t.Term, t.Assoc, t.Sep) }
 func (t Quant) String() string { return fmt.Sprintf("%v{%d,%d}", t.Term, t.Min, t.Max) }
 func (t Named) String() string { return fmt.Sprintf("<%s>%v", t.Name, t.Term) }

@@ -116,7 +116,7 @@ func (t Rule) ValidateParse(g Grammar, rule Rule, v interface{}) error {
 
 //-----------------------------------------------------------------------------
 
-func (t Tower) ValidateParse(g Grammar, rule Rule, v interface{}) error {
+func (t Stack) ValidateParse(g Grammar, rule Rule, v interface{}) error {
 	panic(Inconceivable)
 }
 

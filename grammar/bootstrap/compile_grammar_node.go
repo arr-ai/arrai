@@ -175,19 +175,19 @@ func compileTermOneofNode(node parse.Node) Term {
 	return oneof
 }
 
-func compileTermTowerNode(node parse.Node) Term {
+func compileTermStackNode(node parse.Node) Term {
 	if node.Count() == 1 {
 		return compileTermOneofNode(node.GetNode(0))
 	}
-	var tower Tower
+	var stack Stack
 	for i := 0; i < node.Count(); i += 2 {
-		tower = append(tower, compileTermOneofNode(node.GetNode(i)))
+		stack = append(stack, compileTermOneofNode(node.GetNode(i)))
 	}
-	return tower
+	return stack
 }
 
 func compileTermNode(node parse.Node) Term {
-	return compileTermTowerNode(node)
+	return compileTermStackNode(node)
 }
 
 func compileProdNode(node parse.Node) Term {

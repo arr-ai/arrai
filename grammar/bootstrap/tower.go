@@ -31,7 +31,7 @@ func (t Oneof) Resolve(oldRule, newRule Rule) Term {
 	return result
 }
 
-func (t Tower) Resolve(oldRule, newRule Rule) Term {
+func (t Stack) Resolve(oldRule, newRule Rule) Term {
 	panic(Inconceivable)
 }
 

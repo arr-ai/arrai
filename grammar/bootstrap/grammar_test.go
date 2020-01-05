@@ -31,7 +31,7 @@ expr -> expr:/{([-+])}
 `
 
 var exprGrammar = Grammar{
-	expr: Tower{
+	expr: Stack{
 		Delim{Term: expr, Sep: RE(`([-+])`)},
 		Delim{Term: expr, Sep: RE(`([*/])`)},
 		Seq{Opt(S("-")), expr},

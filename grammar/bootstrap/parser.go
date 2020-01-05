@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	towerDelim = "#"
+	stackDelim = "#"
 
 	seqTag   = "_"
 	oneofTag = "|"
@@ -73,14 +73,14 @@ func (g Grammar) clone() Grammar {
 	return clone
 }
 
-func (g Grammar) resolveTowers() {
+func (g Grammar) resolveStacks() {
 	for rule, term := range g {
-		if tower, ok := term.(Tower); ok {
+		if stack, ok := term.(Stack); ok {
 			oldRule := rule
-			for i, layer := range tower {
+			for i, layer := range stack {
 				newRule := rule
-				if j := (i + 1) % len(tower); j > 0 {
-					newRule = Rule(fmt.Sprintf("%s%s%d", rule, towerDelim, j))
+				if j := (i + 1) % len(stack); j > 0 {
+					newRule = Rule(fmt.Sprintf("%s%s%d", rule, stackDelim, j))
 				}
 				g[oldRule] = layer.Resolve(rule, newRule)
 				oldRule = newRule
@@ -93,9 +93,9 @@ func (g Grammar) resolveTowers() {
 // grammar modified to support parser execution.
 func (g Grammar) Compile() Parsers {
 	for _, term := range g {
-		if _, ok := term.(Tower); ok {
+		if _, ok := term.(Stack); ok {
 			g = g.clone()
-			g.resolveTowers()
+			g.resolveStacks()
 			break
 		}
 	}
@@ -388,7 +388,7 @@ func (t Oneof) Parser(rule Rule, c cache) parse.Parser {
 
 //-----------------------------------------------------------------------------
 
-func (t Tower) Parser(_ Rule, _ cache) parse.Parser {
+func (t Stack) Parser(_ Rule, _ cache) parse.Parser {
 	panic(Inconceivable)
 }
 
