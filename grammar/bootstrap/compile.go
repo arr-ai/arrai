@@ -90,7 +90,7 @@ func compileAtomNode(node parse.Node) Term {
 }
 
 func compileTermQuantNode(node parse.Node) Term {
-	atom := compileAtomNode(node.GetNode(0))
+	term := compileAtomNode(node.GetNode(0))
 	opt := node.GetNode(1)
 	if opt.Count() == 1 {
 		quant := opt.GetNode(0)
@@ -98,11 +98,11 @@ func compileTermQuantNode(node parse.Node) Term {
 		case 0:
 			switch quant.GetString(0) {
 			case "?":
-				atom = Opt(atom)
+				term = Opt(term)
 			case "*":
-				atom = Any(atom)
+				term = Any(term)
 			case "+":
-				atom = Some(atom)
+				term = Some(term)
 			default:
 				panic(BadInput)
 			}
@@ -125,19 +125,19 @@ func compileTermQuantNode(node parse.Node) Term {
 					panic(err)
 				}
 			}
-			atom = Quant{Term: atom, Min: min, Max: max}
+			term = Quant{Term: term, Min: min, Max: max}
 		case 2:
 			seq := quant.GetNode(0)
-			atom = Delim{
-				Term:  atom,
-				Sep:   compileAtomNode(seq.GetNode(2)),
+			term = Delim{
+				Term:  term,
+				Sep:   compileTermNamedNode(seq.GetNode(2)),
 				Assoc: NewAssociativity(seq.GetString(0)),
 			}
 		default:
 			panic(BadInput)
 		}
 	}
-	return atom
+	return term
 }
 
 func compileTermNamedNode(node parse.Node) Term {

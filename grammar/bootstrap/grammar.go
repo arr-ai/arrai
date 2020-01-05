@@ -14,6 +14,7 @@ var (
 	stmt     = Rule("stmt")
 	prod     = Rule("prod")
 	term     = Rule("term")
+	named    = Rule("named")
 	atom     = Rule("atom")
 	quant    = Rule("quant")
 	ident    = Rule("IDENT")
@@ -36,13 +37,13 @@ stmt    -> COMMENT | prod;
 prod    -> IDENT "->" term+ ";";
 term    -> term:"^"
          ^ term:"|"
-         ^ term+
-         ^ (IDENT "=")? term
+         ^ named+;
+named   -> (IDENT "=")? named
          ^ atom quant?;
 atom    -> IDENT | STR | RE | "(" term ")";
 quant   -> /{[?*+]}
          | "{" INT? "," INT? "}"
-         | /{<:|:>?} "!"? atom "!"?;
+         | /{<:|:>?} "!"? named "!"?;
 
 // Terminals
 IDENT   -> /{[A-Za-z_\.]\w*};
@@ -63,15 +64,17 @@ var grammarGrammar = Grammar{
 	term: Stack{
 		Delim{Term: term, Sep: S("^")},
 		Delim{Term: term, Sep: S("|")},
-		Some(term),
-		Seq{Opt(Seq{ident, S("=")}), term},
+		Some(named),
+	},
+	named: Stack{
+		Seq{Opt(Seq{ident, S("=")}), named},
 		Seq{atom, Opt(quant)},
 	},
 	atom: Oneof{ident, str, re, Seq{S("("), term, S(")")}},
 	quant: Oneof{
 		RE(`[?*+]`),
 		Seq{S("{"), Opt(intR), S(","), Opt(intR), S("}")},
-		Seq{RE(`<:|:>?`), Opt(S("!")), atom, Opt(S("!"))},
+		Seq{RE(`<:|:>?`), Opt(S("!")), named, Opt(S("!"))},
 	},
 
 	// Terminals
@@ -207,7 +210,7 @@ func (a Associativity) String() string {
 }
 
 const (
-	RightToLeft = iota - 1
+	RightToLeft Associativity = iota - 1
 	NonAssociative
 	LeftToRight
 )

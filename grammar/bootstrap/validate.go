@@ -35,7 +35,10 @@ func (t S) ValidateParse(g Grammar, rule Rule, v interface{}) error {
 }
 
 func (t RE) ValidateParse(g Grammar, rule Rule, v interface{}) error {
-	return validateScanner(v, func(scanner parse.Scanner) error { return nil })
+	return validateScanner(v, func(scanner parse.Scanner) error {
+		return nil
+		// if _, err := regexp.Parse()
+	})
 }
 
 func (t Seq) ValidateParse(g Grammar, rule Rule, v interface{}) error {

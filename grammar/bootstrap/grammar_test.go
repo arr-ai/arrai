@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
+	"regexp"
 	"strings"
 	"testing"
 
@@ -39,6 +40,123 @@ var exprGrammar = Grammar{
 		R2L(expr, S("**")),
 		Seq{S("("), expr, S(")")},
 	},
+}
+
+func assertEqualObjects(t *testing.T, expected, actual interface{}) bool { //nolint:unparam
+	if assert.True(t, reflect.DeepEqual(expected, actual)) {
+		return true
+	}
+	t.Logf("raw expected: %#v", expected)
+	t.Logf("raw actual:   %#v", actual)
+
+	expectedJSON, err := json.Marshal(expected)
+	require.NoError(t, err)
+	actualJSON, err := json.Marshal(actual)
+	require.NoError(t, err)
+	t.Log("JSON(expected): ", string(expectedJSON))
+	t.Log("JSON(actual):   ", string(actualJSON))
+
+	assert.JSONEq(t, string(expectedJSON), string(actualJSON))
+
+	return false
+}
+
+func assertEqualNodes(t *testing.T, expected, actual parse.Node) bool {
+	if diff := parse.NewNodeDiff(&expected, &actual); !assert.True(t, diff.Equal()) {
+		t.Logf("\nexpected: %v\nactual  : %v\ndiff: %v", expected, actual, diff)
+		return false
+	}
+	return true
+}
+
+func assertParseToNode(t *testing.T, expected parse.Node, rule Rule, input *parse.Scanner) bool { //nolint:unparam
+	parsers := Core()
+	v, err := parsers.Parse(rule, input)
+	if assert.NoError(t, err) {
+		if assert.NoError(t, parsers.ValidateParse(v)) {
+			return assertEqualNodes(t, expected, v.(parse.Node))
+		}
+	} else {
+		t.Logf("input: %s", input.Context())
+	}
+	return false
+}
+
+type stackBuilder struct {
+	stack  []*parse.Node
+	prefix string
+	level  int
+}
+
+var stackNamePrefixRE = regexp.MustCompile(`^([a-z\.]*)(?:` + regexp.QuoteMeta(stackDelim) + `(\d+))?\\`)
+
+func (s *stackBuilder) a(name string, extras ...interface{}) *stackBuilder {
+	var extra interface{}
+	switch len(extras) {
+	case 0:
+	case 1:
+		extra = extras[0]
+	default:
+		panic("Too many extras")
+	}
+	if prefixMatch := stackNamePrefixRE.FindStringSubmatch(name); prefixMatch != nil {
+		if prefix := prefixMatch[1]; prefix != "" {
+			s.prefix = prefix
+			s.level = 0
+		} else {
+			s.level++
+			name = fmt.Sprintf("%s#%d%s", s.prefix, s.level, name)
+		}
+	}
+	s.stack = append(s.stack, parse.NewNode(name, extra))
+	return s
+}
+
+func (s *stackBuilder) z(children ...interface{}) parse.Node {
+	if children == nil {
+		children = []interface{}{}
+	}
+	s.stack[len(s.stack)-1].Children = children
+	for i := len(s.stack) - 1; i > 0; i-- {
+		s.stack[i-1].Children = []interface{}{*s.stack[i]}
+	}
+	return *s.stack[0]
+}
+
+func stack(name string, extras ...interface{}) *stackBuilder {
+	return (&stackBuilder{}).a(name, extras...)
+}
+
+func TestParseNamedTerm(t *testing.T) {
+	r := parse.NewScanner(`opt=""`)
+	x := stack(`term\:`, NonAssociative).a(`term#1\:`, NonAssociative).a(`term#2\?`).a(`named\_`).z(
+		stack(`?`).a(`_`).z(r.Slice(0, 3), r.Slice(3, 4)),
+		stack(`named#1\_`).z(stack(`atom\|`, 1).z(r), stack(`?`).z()),
+	)
+	assertParseToNode(t, x, term, r)
+}
+
+func TestParseNamedTermInDelim(t *testing.T) {
+	r := parse.NewScanner(`"1":op=","`)
+	x := stack(`term\:`, NonAssociative).a(`term#1\:`, NonAssociative).a(`term#2\?`).a(`named\_`).z(
+		stack(`?`).z(),
+		stack(`named#1\_`).z(
+			stack(`atom\|`, 1).z(r.Slice(1, 2)),
+			stack(`?`).a(`quant\|`, 2).a(`_`).z(
+				r.Slice(3, 4),
+				stack(`?`).z(),
+				stack(`named\_`).z(
+					stack(`?`).a(`_`).z(r.Slice(4, 6), r.Slice(6, 7)),
+					stack(`named#1\_`).z(
+						stack(`atom\|`, 1).z(r.Slice(8, 9)),
+						stack(`?`).z(),
+					),
+				),
+				stack(`?`).z(),
+			),
+		),
+	)
+	assertParseToNode(t, x, term, r)
 }
 
 func TestGrammarParser(t *testing.T) {
@@ -108,26 +226,11 @@ func TestGrammarSnippet(t *testing.T) {
 	v, err := parsers.Parse(term, r)
 	require.NoError(t, err)
 	assert.Equal(t,
-		`term\:║:(term#1\:║:(term#2\?(term#3\_(?(), term#4\_(atom\|║0(prod), ?(quant\|║0(+)))))))`,
+		`term\:║:(term#1\:║:(term#2\?(named\_(?(), named#1\_(atom\|║0(prod), ?(quant\|║0(+)))))))`,
 		fmt.Sprintf("%v", v),
 	)
 	assert.NoError(t, parsers.ValidateParse(v))
 	assertUnparse(t, "prod+", parsers, v)
-}
-
-func assertGrammarsMatch(t *testing.T, expected, actual Grammar) {
-	if !assert.True(t, reflect.DeepEqual(expected, actual)) {
-		t.Logf("raw expected: %#v", expected)
-		t.Logf("raw actual: %#v", actual)
-
-		expectedJSON, err := json.Marshal(expected)
-		require.NoError(t, err)
-		actualJSON, err := json.Marshal(actual)
-		require.NoError(t, err)
-		t.Log("JSON(expected): ", string(expectedJSON))
-		t.Log("JSON(actual): ", string(actualJSON))
-		assert.JSONEq(t, string(expectedJSON), string(actualJSON))
-	}
 }
 
 func TestTinyGrammarGrammarGrammar(t *testing.T) {
@@ -145,7 +248,7 @@ func TestTinyGrammarGrammarGrammar(t *testing.T) {
 	assert.NoError(t, parsers.ValidateParse(v))
 
 	grammar2 := NewFromNode(e)
-	assertGrammarsMatch(t, tinyGrammar, grammar2)
+	assertEqualObjects(t, tinyGrammar, grammar2)
 }
 
 func TestExprGrammarGrammarGrammar(t *testing.T) {
@@ -159,5 +262,5 @@ func TestExprGrammarGrammarGrammar(t *testing.T) {
 	assert.NoError(t, parsers.ValidateParse(v))
 
 	grammar2 := NewFromNode(e)
-	assertGrammarsMatch(t, exprGrammar, grammar2)
+	assertEqualObjects(t, exprGrammar, grammar2)
 }
