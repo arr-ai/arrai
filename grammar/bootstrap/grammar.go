@@ -37,9 +37,9 @@ stmt    -> COMMENT | prod;
 prod    -> IDENT "->" term+ ";";
 term    -> term:"^"
          ^ term:"|"
-         ^ named+;
-named   -> (IDENT "=")? named
-         ^ atom quant?;
+         ^ term+
+         ^ named quant?;
+named   -> (IDENT "=")? atom;
 atom    -> IDENT | STR | RE | "(" term ")";
 quant   -> /{[?*+]}
          | "{" INT? "," INT? "}"
@@ -64,13 +64,11 @@ var grammarGrammar = Grammar{
 	term: Stack{
 		Delim{Term: term, Sep: S("^")},
 		Delim{Term: term, Sep: S("|")},
-		Some(named),
+		Some(term),
+		Seq{named, Opt(quant)},
 	},
-	named: Stack{
-		Seq{Opt(Seq{ident, S("=")}), named},
-		Seq{atom, Opt(quant)},
-	},
-	atom: Oneof{ident, str, re, Seq{S("("), term, S(")")}},
+	named: Seq{Opt(Seq{ident, S("=")}), atom},
+	atom:  Oneof{ident, str, re, Seq{S("("), term, S(")")}},
 	quant: Oneof{
 		RE(`[?*+]`),
 		Seq{S("{"), Opt(intR), S(","), Opt(intR), S("}")},

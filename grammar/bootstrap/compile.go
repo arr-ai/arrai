@@ -89,8 +89,19 @@ func compileAtomNode(node parse.Node) Term {
 	}
 }
 
+func compileTermNamedNode(node parse.Node) Term {
+	term := compileAtomNode(node.GetNode(1))
+	if quant := node.GetNode(0); quant.Count() == 1 {
+		return Named{
+			Name: quant.GetString(0, 1),
+			Term: term,
+		}
+	}
+	return term
+}
+
 func compileTermQuantNode(node parse.Node) Term {
-	term := compileAtomNode(node.GetNode(0))
+	term := compileTermNamedNode(node.GetNode(0))
 	opt := node.GetNode(1)
 	if opt.Count() == 1 {
 		quant := opt.GetNode(0)
@@ -140,25 +151,14 @@ func compileTermQuantNode(node parse.Node) Term {
 	return term
 }
 
-func compileTermNamedNode(node parse.Node) Term {
-	term := compileTermQuantNode(node.GetNode(1))
-	if quant := node.GetNode(0); quant.Count() == 1 {
-		return Named{
-			Name: quant.GetString(0, 1),
-			Term: term,
-		}
-	}
-	return term
-}
-
 func compileTermSeqNode(node parse.Node) Term {
 	n := node.Count()
 	if n == 1 {
-		return compileTermNamedNode(node.Children[0].(parse.Node))
+		return compileTermQuantNode(node.Children[0].(parse.Node))
 	}
 	seq := make(Seq, 0, node.Count())
 	for _, child := range node.Children {
-		seq = append(seq, compileTermNamedNode(child.(parse.Node)))
+		seq = append(seq, compileTermQuantNode(child.(parse.Node)))
 	}
 	return seq
 }

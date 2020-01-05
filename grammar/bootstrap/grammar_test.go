@@ -129,31 +129,31 @@ func stack(name string, extras ...interface{}) *stackBuilder {
 
 func TestParseNamedTerm(t *testing.T) {
 	r := parse.NewScanner(`opt=""`)
-	x := stack(`term\:`, NonAssociative).a(`term#1\:`, NonAssociative).a(`term#2\?`).a(`named\_`).z(
-		stack(`?`).a(`_`).z(r.Slice(0, 3), r.Slice(3, 4)),
-		stack(`named#1\_`).z(stack(`atom\|`, 1).z(r), stack(`?`).z()),
+	x := stack(`term\:`, NonAssociative).a(`term#1\:`, NonAssociative).a(`term#2\?`).a(`term#3\_`).z(
+		stack(`named\_`).z(
+			stack(`?`).a(`_`).z(r.Slice(0, 3), r.Slice(3, 4)),
+			stack(`atom\|`, 1).z(r),
+		),
+		stack(`?`).z(),
 	)
 	assertParseToNode(t, x, term, r)
 }
 
 func TestParseNamedTermInDelim(t *testing.T) {
 	r := parse.NewScanner(`"1":op=","`)
-	x := stack(`term\:`, NonAssociative).a(`term#1\:`, NonAssociative).a(`term#2\?`).a(`named\_`).z(
-		stack(`?`).z(),
-		stack(`named#1\_`).z(
+	x := stack(`term\:`, NonAssociative).a(`term#1\:`, NonAssociative).a(`term#2\?`).a(`term#3\_`).z(
+		stack(`named\_`).z(
+			stack(`?`).z(),
 			stack(`atom\|`, 1).z(r.Slice(1, 2)),
-			stack(`?`).a(`quant\|`, 2).a(`_`).z(
-				r.Slice(3, 4),
-				stack(`?`).z(),
-				stack(`named\_`).z(
-					stack(`?`).a(`_`).z(r.Slice(4, 6), r.Slice(6, 7)),
-					stack(`named#1\_`).z(
-						stack(`atom\|`, 1).z(r.Slice(8, 9)),
-						stack(`?`).z(),
-					),
-				),
-				stack(`?`).z(),
+		),
+		stack(`?`).a(`quant\|`, 2).a(`_`).z(
+			r.Slice(3, 4),
+			stack(`?`).z(),
+			stack(`named\_`).z(
+				stack(`?`).a(`_`).z(r.Slice(4, 6), r.Slice(6, 7)),
+				stack(`atom\|`, 1).z(r.Slice(8, 9)),
 			),
+			stack(`?`).z(),
 		),
 	)
 	assertParseToNode(t, x, term, r)
@@ -226,7 +226,7 @@ func TestGrammarSnippet(t *testing.T) {
 	v, err := parsers.Parse(term, r)
 	require.NoError(t, err)
 	assert.Equal(t,
-		`term\:║:(term#1\:║:(term#2\?(named\_(?(), named#1\_(atom\|║0(prod), ?(quant\|║0(+)))))))`,
+		`term\:║:(term#1\:║:(term#2\?(term#3\_(named\_(?(), atom\|║0(prod)), ?(quant\|║0(+))))))`,
 		fmt.Sprintf("%v", v),
 	)
 	assert.NoError(t, parsers.ValidateParse(v))
