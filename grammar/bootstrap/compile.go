@@ -12,7 +12,7 @@ func parseString(s string) string {
 	var sb strings.Builder
 	quote, s := s[0], s[1:len(s)-1]
 	if quote == '`' {
-		return s
+		return strings.ReplaceAll(s, "``", "`")
 	}
 	for i := 0; i < len(s); i++ {
 		c := s[i]
