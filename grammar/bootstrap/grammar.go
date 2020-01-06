@@ -60,6 +60,7 @@ COMMENT -> /{//.*$|(?s:/\*(?:[^*]|\*+[^*/])\*/)};
 
 // Special
 .wrapRE -> /{\s*()\s*};
+.wrapTERM -> COMMENT | COMMENT? .wrapTERM;
 `)
 
 var grammarGrammar = Grammar{
@@ -106,7 +107,7 @@ func nodeRule(v interface{}) Rule {
 type Grammar map[Rule]Term
 
 // Build the grammar grammar from grammarGrammarSrc and check that it matches
-// GrammarGrammar.
+// grammarGrammar.
 var core = func() Parsers {
 	parsers := grammarGrammar.Compile()
 
