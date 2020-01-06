@@ -30,7 +30,13 @@ var (
 	WrapRE = Rule(".wrapRE")
 )
 
-const grammarGrammarSrc = `
+// unfakeBackquote replaces reversed prime with grave accent (backquote) in
+// order to make the grammar below more readable.
+func unfakeBackquote(s string) string {
+	return strings.ReplaceAll(s, "‵", "`")
+}
+
+var grammarGrammarSrc = unfakeBackquote(`
 // Non-terminals
 grammar -> stmt+;
 stmt    -> COMMENT | prod;
@@ -47,14 +53,14 @@ atom    -> IDENT | STR | RE | "(" term ")" | "(" ")";
 
 // Terminals
 IDENT   -> /{[A-Za-z_\.]\w*};
-STR     -> /{"((?:\\.|[^\\"])*)"};
+STR     -> /{"(?:\\.|[^\\"])*"|'(?:\\.|[^\\'])*'|‵(?:[^‵]*)‵};
 INT     -> /{\d+};
 RE      -> /{/{((?:\\.|[^\\\}])*)\}};
 COMMENT -> /{//.*$|(?s:/\*(?:[^*]|\*+[^*/])\*/)};
 
 // Special
 .wrapRE -> /{\s*()\s*};
-`
+`)
 
 var grammarGrammar = Grammar{
 	// Non-terminals
@@ -82,7 +88,7 @@ var grammarGrammar = Grammar{
 
 	// Terminals
 	ident:   RE(`[A-Za-z_\.]\w*`),
-	str:     RE(`"((?:\\.|[^\\"])*)"`),
+	str:     RE(unfakeBackquote(`"(?:\\.|[^\\"])*"|'(?:\\.|[^\\'])*'|‵(?:[^‵]*)‵`)),
 	intR:    RE(`\d+`),
 	re:      RE(`/{((?:\\.|[^\\\}])*)\}`),
 	comment: RE(`//.*$|(?s:/\*(?:[^*]|\*+[^*/])\*/)`),

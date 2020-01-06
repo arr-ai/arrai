@@ -209,10 +209,10 @@ func TestExprGrammarGrammar(t *testing.T) {
 		`// Simple expression grammar`+
 			`expr->expr:([-+])`+
 			`^expr:([*\/])`+
-			`^-?expr`+
+			`^"-"?expr`+
 			`^(\d+)|expr`+
-			`^expr<:**`+
-			`^(expr);`,
+			`^expr<:"**"`+
+			`^"("expr")";`,
 		parsers,
 		v,
 	)

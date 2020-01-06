@@ -10,6 +10,10 @@ import (
 
 func parseString(s string) string {
 	var sb strings.Builder
+	quote, s := s[0], s[1:len(s)-1]
+	if quote == '`' {
+		return s
+	}
 	for i := 0; i < len(s); i++ {
 		c := s[i]
 		switch c {
@@ -62,8 +66,8 @@ func parseString(s string) string {
 				sb.WriteByte('\\')
 			case '\'':
 				sb.WriteByte('\'')
-			case '"':
-				sb.WriteByte('"')
+			case quote:
+				sb.WriteByte(quote)
 			default:
 				panic(fmt.Errorf("unrecognized \\-escape: %q", s[i]))
 			}
