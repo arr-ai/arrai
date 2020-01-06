@@ -50,3 +50,9 @@ func (t Named) Resolve(oldRule, newRule Rule) Term {
 	t.Term = t.Term.Resolve(oldRule, newRule)
 	return t
 }
+
+func (t Diff) Resolve(oldRule, newRule Rule) Term {
+	t.A = t.A.Resolve(oldRule, newRule)
+	t.B = t.B.Resolve(oldRule, newRule)
+	return t
+}

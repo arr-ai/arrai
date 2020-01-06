@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"reflect"
 	"regexp"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -103,6 +104,9 @@ func (s *stackBuilder) a(name string, extras ...interface{}) *stackBuilder {
 		if prefix := prefixMatch[1]; prefix != "" {
 			s.prefix = prefix
 			s.level = 0
+			if n := prefixMatch[2]; n != "" {
+				s.level, _ = strconv.Atoi(n) // nolint:errcheck
+			}
 		} else {
 			s.level++
 			name = fmt.Sprintf("%s#%d%s", s.prefix, s.level, name)
@@ -129,10 +133,13 @@ func stack(name string, extras ...interface{}) *stackBuilder {
 
 func TestParseNamedTerm(t *testing.T) {
 	r := parse.NewScanner(`opt=""`)
-	x := stack(`term\:`, NonAssociative).a(`term#1\:`, NonAssociative).a(`term#2\?`).a(`term#3\_`).z(
-		stack(`named\_`).z(
-			stack(`?`).a(`_`).z(r.Slice(0, 3), r.Slice(3, 4)),
-			stack(`atom\|`, 1).z(r),
+	x := stack(`term\:`, NonAssociative).a(`\:`, NonAssociative).a(`\_`).z(
+		stack(`term#3\?`).a(`\_`).z(
+			stack(`named\_`).z(
+				stack(`?`).a(`_`).z(r.Slice(0, 3), r.Slice(3, 4)),
+				stack(`atom\|`, 1).z(r.Slice(4, 6)),
+			),
+			stack(`?`).z(),
 		),
 		stack(`?`).z(),
 	)
@@ -141,20 +148,23 @@ func TestParseNamedTerm(t *testing.T) {
 
 func TestParseNamedTermInDelim(t *testing.T) {
 	r := parse.NewScanner(`"1":op=","`)
-	x := stack(`term\:`, NonAssociative).a(`term#1\:`, NonAssociative).a(`term#2\?`).a(`term#3\_`).z(
-		stack(`named\_`).z(
-			stack(`?`).z(),
-			stack(`atom\|`, 1).z(r.Slice(1, 2)),
-		),
-		stack(`?`).a(`quant\|`, 2).a(`_`).z(
-			r.Slice(3, 4),
-			stack(`?`).z(),
+	x := stack(`term\:`, NonAssociative).a(`\:`, NonAssociative).a(`\_`).z(
+		stack(`term#3\?`).a(`\_`).z(
 			stack(`named\_`).z(
-				stack(`?`).a(`_`).z(r.Slice(4, 6), r.Slice(6, 7)),
-				stack(`atom\|`, 1).z(r.Slice(8, 9)),
+				stack(`?`).z(),
+				stack(`atom\|`, 1).z(r.Slice(0, 3)),
 			),
-			stack(`?`).z(),
+			stack(`?`).a(`quant\|`, 2).a(`_`).z(
+				r.Slice(3, 4),
+				stack(`?`).z(),
+				stack(`named\_`).z(
+					stack(`?`).a(`_`).z(r.Slice(4, 6), r.Slice(6, 7)),
+					stack(`atom\|`, 1).z(r.Slice(7, 10)),
+				),
+				stack(`?`).z(),
+			),
 		),
+		stack(`?`).z(),
 	)
 	assertParseToNode(t, x, term, r)
 }
@@ -226,7 +236,7 @@ func TestGrammarSnippet(t *testing.T) {
 	v, err := parsers.Parse(term, r)
 	require.NoError(t, err)
 	assert.Equal(t,
-		`term\:║:(term#1\:║:(term#2\?(term#3\_(named\_(?(), atom\|║0(prod)), ?(quant\|║0(+))))))`,
+		`term\:║:(term#1\:║:(term#2\_(term#3\?(term#4\_(named\_(?(), atom\|║0(prod)), ?(quant\|║0(+)))), ?())))`,
 		fmt.Sprintf("%v", v),
 	)
 	assert.NoError(t, parsers.ValidateParse(v))

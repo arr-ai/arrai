@@ -104,6 +104,8 @@ func DiffTerms(a, b Term) TermDiff {
 		return diffQuants(a, b.(Quant))
 	case Named:
 		return diffNameds(a, b.(Named))
+	case Diff:
+		return diffDiff(a, b.(Diff))
 	default:
 		panic(fmt.Errorf("unknown term type: %v %[1]T", a))
 	}
@@ -274,5 +276,22 @@ func diffNameds(a, b Named) NamedDiff {
 	return NamedDiff{
 		Name: diffInterfaces(a.Name, b.Name),
 		Term: DiffTerms(a.Term, b.Term),
+	}
+}
+
+//-----------------------------------------------------------------------------
+
+type DiffDiff struct {
+	A, B TermDiff
+}
+
+func (d DiffDiff) Equal() bool {
+	return d.A.Equal() && d.B.Equal()
+}
+
+func diffDiff(a, b Diff) DiffDiff {
+	return DiffDiff{
+		A: DiffTerms(a.A, b.A),
+		B: DiffTerms(a.B, b.B),
 	}
 }

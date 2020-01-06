@@ -85,3 +85,21 @@ func (t Named) Unparse(g Grammar, v interface{}, w io.Writer) (n int, err error)
 	err = unparse(g, t.Term, v, w, &n)
 	return
 }
+
+//-----------------------------------------------------------------------------
+
+func (t Diff) Unparse(g Grammar, v interface{}, w io.Writer) (n int, err error) {
+	node := v.(parse.Node)
+	if err = unparse(g, t.A, node.Children[0], w, &n); err != nil {
+		return
+	}
+	n2, err := w.Write([]byte(node.Children[1].(parse.Scanner).String()))
+	if err != nil {
+		return
+	}
+	n += n2
+	if err = unparse(g, t.B, node.Children[2], w, &n); err != nil {
+		return
+	}
+	return
+}

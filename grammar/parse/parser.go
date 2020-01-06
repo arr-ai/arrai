@@ -62,23 +62,23 @@ func (n Node) Format(state fmt.State, c rune) {
 }
 
 type Parser interface {
-	Parse(input *Scanner, output interface{}) bool
+	Parse(input, furthest *Scanner, output interface{}) bool
 }
 
 func PtrAssign(output, input interface{}) {
 	*output.(*interface{}) = input
 }
 
-type Func func(input *Scanner, output interface{}) bool
+type Func func(input, furthest *Scanner, output interface{}) bool
 
-func (f Func) Parse(input *Scanner, output interface{}) bool {
-	return f(input, output)
+func (f Func) Parse(input, furthest *Scanner, output interface{}) bool {
+	return f(input, furthest, output)
 }
 
 func Transform(parser Parser, transform func(Node) Node) Parser {
-	return Func(func(input *Scanner, output interface{}) bool {
+	return Func(func(input, furthest *Scanner, output interface{}) bool {
 		var v Node
-		if parser.Parse(input, &v) {
+		if parser.Parse(input, furthest, &v) {
 			PtrAssign(output, transform(v))
 			return true
 		}

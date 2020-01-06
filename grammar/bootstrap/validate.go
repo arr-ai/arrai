@@ -129,3 +129,10 @@ func (t Named) ValidateParse(g Grammar, rule Rule, v interface{}) error {
 	// TODO: Be a little more thorough.
 	return nil
 }
+
+//-----------------------------------------------------------------------------
+
+func (t Diff) ValidateParse(g Grammar, rule Rule, v interface{}) error {
+	// TODO: Be a little more thorough.
+	return nil
+}

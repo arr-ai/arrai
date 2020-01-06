@@ -158,27 +158,34 @@ func compileTermQuantNode(node parse.Node) Term {
 }
 
 func compileTermSeqNode(node parse.Node) Term {
-	n := node.Count()
-	if n == 1 {
-		return compileTermQuantNode(node.Children[0].(parse.Node))
+	if n := node.Count(); n > 1 {
+		seq := make(Seq, 0, node.Count())
+		for _, child := range node.Children {
+			seq = append(seq, compileTermQuantNode(child.(parse.Node)))
+		}
+		return seq
 	}
-	seq := make(Seq, 0, node.Count())
-	for _, child := range node.Children {
-		seq = append(seq, compileTermQuantNode(child.(parse.Node)))
+	return compileTermQuantNode(node.Children[0].(parse.Node))
+}
+
+func compileTermDiffNode(node parse.Node) Term {
+	var a Term = compileTermSeqNode(node.GetNode(0))
+	tail := node.GetNode(1)
+	if tail.Count() == 1 {
+		a = Diff{A: a, B: compileTermSeqNode(tail.GetNode(0, 1))}
 	}
-	return seq
+	return a
 }
 
 func compileTermOneofNode(node parse.Node) Term {
-	n := node.Count()
-	if n == 1 {
-		return compileTermSeqNode(node.GetNode(0))
+	if n := node.Count(); n > 1 {
+		oneof := make(Oneof, 0, n/2+1)
+		for i := 0; i < n; i += 2 {
+			oneof = append(oneof, compileTermDiffNode(node.GetNode(i)))
+		}
+		return oneof
 	}
-	oneof := make(Oneof, 0, n/2+1)
-	for i := 0; i < n; i += 2 {
-		oneof = append(oneof, compileTermSeqNode(node.GetNode(i)))
-	}
-	return oneof
+	return compileTermDiffNode(node.GetNode(0))
 }
 
 func compileTermStackNode(node parse.Node) Term {
