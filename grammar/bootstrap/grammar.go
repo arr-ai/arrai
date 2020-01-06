@@ -60,7 +60,6 @@ COMMENT -> /{//.*$|(?s:/\*(?:[^*]|\*+[^*/])\*/)};
 
 // Special
 .wrapRE -> /{\s*()\s*};
-.wrapTERM -> COMMENT | COMMENT? .wrapTERM;
 `)
 
 var grammarGrammar = Grammar{
