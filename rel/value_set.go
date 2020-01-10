@@ -102,12 +102,12 @@ func (s *genericSet) Equal(v interface{}) bool {
 func (s *genericSet) String() string {
 	switch s.flavor {
 	case setFlavorNormal:
-		// {| |} == none
+		// {} == none
 		if !s.Bool() {
-			return "none"
+			return "{}"
 		}
 
-		// {| {} |} == true
+		// {()} == true
 		if s.Count() == 1 {
 			e := s.Enumerator()
 			e.MoveNext()

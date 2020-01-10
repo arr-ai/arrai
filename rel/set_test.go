@@ -167,7 +167,7 @@ func TestSetString(t *testing.T) {
 			assert.Equal(t, repr, set.String(), "%v", set)
 		}
 	}
-	scenario(`none`)
+	scenario(`{}`)
 	scenario(`{42}`, 42)
 	scenario(`{5432}`, 5432)
 	scenario(`{321, 4321}`, 4321, 321)
