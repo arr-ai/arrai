@@ -3,8 +3,8 @@ package rel
 import (
 	"fmt"
 
+	"github.com/arr-ai/frozen"
 	"github.com/go-errors/errors"
-	"github.com/marcelocantos/frozen"
 )
 
 // Expr represents an arr.ai expression.

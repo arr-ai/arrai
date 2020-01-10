@@ -1,6 +1,6 @@
 package rel
 
-import "github.com/marcelocantos/frozen"
+import "github.com/arr-ai/frozen"
 
 // CombineOp specifies which pairings to include in Combine().
 type CombineOp int

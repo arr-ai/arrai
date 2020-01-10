@@ -8,7 +8,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/marcelocantos/frozen"
+	"github.com/arr-ai/frozen"
 )
 
 // GenericTuple is the default implementation of Tuple.

@@ -1,7 +1,7 @@
 package rel
 
 import (
-	"github.com/marcelocantos/frozen"
+	"github.com/arr-ai/frozen"
 )
 
 // RelationAttrs returns the set of names for a relation type, or false if the

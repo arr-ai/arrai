@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"sort"
 
+	"github.com/arr-ai/frozen"
 	"github.com/go-errors/errors"
-	"github.com/marcelocantos/frozen"
 )
 
 // EmptyScope is the scope with no variables.

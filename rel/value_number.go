@@ -3,7 +3,7 @@ package rel
 import (
 	"strconv"
 
-	"github.com/marcelocantos/hash"
+	"github.com/arr-ai/hash"
 )
 
 // Number is a number.

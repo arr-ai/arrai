@@ -3,7 +3,7 @@ package rel
 import (
 	"bytes"
 
-	"github.com/marcelocantos/frozen"
+	"github.com/arr-ai/frozen"
 )
 
 // Names represents a set of names.

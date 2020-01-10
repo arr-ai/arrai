@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/arr-ai/frozen"
 	"github.com/go-errors/errors"
-	"github.com/marcelocantos/frozen"
 )
 
 // MarshalToJSON marshals the given value to JSON with sets escaped as

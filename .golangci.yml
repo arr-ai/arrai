@@ -6,7 +6,7 @@ linters-settings:
   golint:
     min-confidence: 0
   goimports:
-    local-prefixes: github.com/marcelocantos/frozen
+    local-prefixes: github.com/arr-ai/arrai
   maligned:
     suggest-new: true
   dupl:
