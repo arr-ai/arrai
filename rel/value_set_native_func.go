@@ -1,8 +1,8 @@
 package rel
 
 import (
-	"github.com/go-errors/errors"
 	"github.com/arr-ai/hash"
+	"github.com/go-errors/errors"
 )
 
 // NativeFunction represents a binary relation uniquely mapping inputs to outputs.

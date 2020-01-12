@@ -3,8 +3,8 @@ package rel
 import (
 	"fmt"
 
-	"github.com/go-errors/errors"
 	"github.com/arr-ai/hash"
+	"github.com/go-errors/errors"
 )
 
 // Function represents a binary relation uniquely mapping inputs to outputs.

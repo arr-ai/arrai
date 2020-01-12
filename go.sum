@@ -1,12 +1,9 @@
 cloud.google.com/go v0.26.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMTw=
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
-github.com/arr-ai/frozen v0.4.0 h1:GzYtr+BWZBTGpYeXZvACr3HUDN0wZKDg5tApuKdt59E=
-github.com/arr-ai/frozen v0.4.0/go.mod h1:kMkkLrWmAufGtJqXshM37prrD5O3ovVmb1pvG6mXfvY=
+github.com/arr-ai/arrai v0.0.0-20200106004959-3fa02a294190/go.mod h1:7C6OuoiD7ZK6Aj+Q4R7F9+3f3haQzZry3dwfUz7qP4k=
 github.com/arr-ai/frozen v0.5.0/go.mod h1:AiOxqp+tFhxMXbPDJJJWoAnIXcsPTEFQvZZj3jRbLqs=
 github.com/arr-ai/frozen v0.6.0 h1:G+cAjl9rTShHiJYxBr55GTpUpk68brR1w+5h9LgmQgI=
 github.com/arr-ai/frozen v0.6.0/go.mod h1:YEr4TubkrAoA3f9U1R4PcEVB5ocBUdiS3NKh03cbVts=
-github.com/arr-ai/hash v0.2.0 h1:pHimAPlPACKciZw0VeMbj8qmca7VmG6w8fAuUOi9gZo=
-github.com/arr-ai/hash v0.2.0/go.mod h1:ZpakDB4Kjclkjg4f6wxrlINDjQ/Wxpky/0bvbwyET7A=
 github.com/arr-ai/hash v0.4.0 h1:VPIDl5nkhq8qntxmsNd00bdj+UVs2vRKFzzM7HZkR7Q=
 github.com/arr-ai/hash v0.4.0/go.mod h1:2fLB6qpmZbH+dpvNooTW2m9o5z1pEsUQxfGmZs6Z8QQ=
 github.com/arr-ai/proto v0.0.0-20180422074755-2ffbedebee50 h1:IKdl2NU9J9dt4qtet3WarYf5X9jqmO7x9hCqvoKi1kI=
@@ -43,6 +40,9 @@ github.com/kr/pretty v0.1.0/go.mod h1:dAy3ld7l9f0ibDNOQOHHMYYIIbhfbHSm3C4ZsoJORN
 github.com/kr/pty v1.1.1/go.mod h1:pFQYn66WHrOpPYNljwOMqo10TkYh1fy3cYio2l3bCsQ=
 github.com/kr/text v0.1.0 h1:45sCR5RtlFHMR4UwH9sdQ5TC8v0qDQCHnXt+kaKSTVE=
 github.com/kr/text v0.1.0/go.mod h1:4Jbv+DJW3UT/LiOwJeYQe1efqtUx/iVham/4vfdArNI=
+github.com/mailru/easyjson v0.7.0/go.mod h1:KAzv3t3aY1NaHWoQz1+4F1ccyAH66Jk7yos7ldAVICs=
+github.com/marcelocantos/frozen v0.4.0/go.mod h1:kMkkLrWmAufGtJqXshM37prrD5O3ovVmb1pvG6mXfvY=
+github.com/marcelocantos/hash v0.2.0/go.mod h1:ZpakDB4Kjclkjg4f6wxrlINDjQ/Wxpky/0bvbwyET7A=
 github.com/mediocregopher/seq v0.1.1-0.20170116151952-4c22a2e6eca9 h1:vZEnhWAVUv7IOxkTUyJ7/VjTPHw66olHZWp2bzT9YsQ=
 github.com/mediocregopher/seq v0.1.1-0.20170116151952-4c22a2e6eca9/go.mod h1:PjY8cqxYmt0xIrCil8xkNmXcOvK5G6ljLMf2+qDN5JA=
 github.com/pkg/errors v0.8.1 h1:iURUrRGxPUNPdy5/HRSm+Yj6okJ6UtLINN0Q9M4+h3I=
