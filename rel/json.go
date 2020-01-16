@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/arr-ai/frozen"
 	"github.com/go-errors/errors"
 )
 
@@ -218,7 +217,7 @@ func jsonUnescape(i interface{}) (Value, error) {
 				}
 			}
 		}
-		var b frozen.MapBuilder
+		var b TupleBuilder
 		for name, v := range x {
 			if name == "{||}" {
 				return nil, errors.Errorf(`"{||}" is a reserved name`)
@@ -229,7 +228,7 @@ func jsonUnescape(i interface{}) (Value, error) {
 			}
 			b.Put(name, value)
 		}
-		return &GenericTuple{tuple: b.Finish()}, nil
+		return b.Finish(), nil
 	default:
 		panic(fmt.Sprintf("Unrecognised value: %v (%[1]T)", i))
 	}

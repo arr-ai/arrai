@@ -24,6 +24,16 @@ var (
 	negateTag = "@neg"
 )
 
+type TupleBuilder frozen.MapBuilder
+
+func (b *TupleBuilder) Put(name string, value Value) {
+	(*frozen.MapBuilder)(b).Put(name, value)
+}
+
+func (b *TupleBuilder) Finish() Tuple {
+	return &GenericTuple{tuple: (*frozen.MapBuilder)(b).Finish()}
+}
+
 // NewAttr returns an Attr with the given name and value.
 func NewAttr(name string, value Value) Attr {
 	return Attr{Name: name, Value: value}
@@ -56,16 +66,16 @@ func NewTupleAttr(name string, attrs ...Attr) Attr {
 
 // NewTuple constructs a Tuple from attrs. Passes each Val to NewValue().
 func NewTuple(attrs ...Attr) Tuple {
-	var b frozen.MapBuilder
+	var b TupleBuilder
 	for _, kv := range attrs {
 		b.Put(kv.Name, kv.Value)
 	}
-	return &GenericTuple{tuple: b.Finish()}
+	return b.Finish()
 }
 
 // NewTupleFromMap constructs a Tuple from a map of strings to Go values.
 func NewTupleFromMap(m map[string]interface{}) (Tuple, error) {
-	var b frozen.MapBuilder
+	var b TupleBuilder
 	for name, intf := range m {
 		value, err := NewValue(intf)
 		if err != nil {
@@ -73,12 +83,12 @@ func NewTupleFromMap(m map[string]interface{}) (Tuple, error) {
 		}
 		b.Put(name, value)
 	}
-	return &GenericTuple{tuple: b.Finish()}, nil
+	return b.Finish(), nil
 }
 
 // NewXML constructs an XML Tuple from the given data
 func NewXML(tag []rune, attrs []Attr, children ...Value) Tuple {
-	var b frozen.MapBuilder
+	var b TupleBuilder
 	b.Put("tag", NewString(tag))
 	if len(attrs) != 0 {
 		b.Put("attributes", NewTuple(attrs...))
@@ -86,7 +96,7 @@ func NewXML(tag []rune, attrs []Attr, children ...Value) Tuple {
 	if len(children) != 0 {
 		b.Put("children", NewArray(children...))
 	}
-	return EmptyTuple.With("@xml", &GenericTuple{tuple: b.Finish()})
+	return EmptyTuple.With("@xml", b.Finish())
 }
 
 // Hash computes a hash for a GenericTuple.
@@ -298,7 +308,7 @@ func (t *GenericTuple) Names() Names {
 // Project returns a tuple with the given names from this tuple, or nil if any
 // name wasn't found.
 func (t *GenericTuple) Project(names Names) Tuple {
-	var b frozen.MapBuilder
+	var b TupleBuilder
 	for e := names.Enumerator(); e.MoveNext(); {
 		name := e.Current()
 		value, found := t.Get(name)
@@ -307,7 +317,7 @@ func (t *GenericTuple) Project(names Names) Tuple {
 		}
 		b.Put(name, value)
 	}
-	return &GenericTuple{tuple: b.Finish()}
+	return b.Finish()
 }
 
 // GenericTupleEnumerator represents an enumerator over a GenericTuple.
