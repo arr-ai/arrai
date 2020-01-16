@@ -316,7 +316,7 @@ func (s *genericSet) Where(p func(v Value) bool) Set {
 
 // Enumerator returns an enumerator over the Values in the genericSet.
 func (s *genericSet) Enumerator() ValueEnumerator {
-	return &genericSetEnumerator{s.set.Range(), nil}
+	return &genericSetEnumerator{s.set.Range()}
 }
 
 // Any return any value from the set.
@@ -329,8 +329,7 @@ func (s *genericSet) Any() Value {
 
 // genericSetEnumerator represents an enumerator over a genericSet.
 type genericSetEnumerator struct {
-	i       frozen.Iterator
-	current Value
+	i frozen.Iterator
 }
 
 // MoveNext moves the enumerator to the next Value.
