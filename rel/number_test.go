@@ -66,7 +66,7 @@ func TestNumberString(t *testing.T) {
 	t.Parallel()
 	for _, s := range []struct {
 		repr   string
-		number *Number
+		number Number
 	}{
 		{"0", NewNumber(0)},
 		{"-1", NewNumber(-1)},

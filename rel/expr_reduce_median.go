@@ -40,7 +40,7 @@ func NewMedianExpr(a, b Expr) Expr {
 		func(acc interface{}, v Value) (interface{}, error) {
 			agg := acc.(Agg)
 			switch v := v.(type) {
-			case *Number:
+			case Number:
 				heap.Push(&agg.h, v.Float64())
 				if len(agg.h) == cap(agg.h) {
 					heap.Pop(&agg.h)

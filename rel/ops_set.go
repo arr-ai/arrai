@@ -40,7 +40,7 @@ func Concatenate(a, b Set) (Set, error) {
 		elt := e.Current()
 		if t, ok := elt.(Tuple); ok {
 			if pos, found := t.Get("@"); found {
-				if n, ok := pos.(*Number); ok {
+				if n, ok := pos.(Number); ok {
 					t = t.With("@", NewNumber(float64(offset)+n.Float64()))
 					a = a.With(t)
 					continue

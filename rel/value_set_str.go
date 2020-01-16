@@ -186,12 +186,11 @@ func isStringTuple(v Value) (index uint, char rune, is bool) {
 	if tuple, ok := v.(Tuple); ok {
 		if tuple.Count() == 2 {
 			if at, found := tuple.Get("@"); found {
-				if pos, ok := at.(*Number); ok {
-					p := pos.number
-					i := uint(p)
-					if p == float64(i) {
+				if pos, ok := at.(Number); ok {
+					i := uint(pos)
+					if pos == Number(i) {
 						if char, found := tuple.Get(CharAttr); found {
-							if number, ok := char.(*Number); ok {
+							if number, ok := char.(Number); ok {
 								n := number.Float64()
 								if n == float64(uint(n)) {
 									return i, rune(n), true

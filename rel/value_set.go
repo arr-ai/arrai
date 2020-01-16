@@ -152,7 +152,7 @@ func (s *genericSet) String() string {
 		for i, tuple := range s.OrderedValues() {
 			if tuple, ok := tuple.(Tuple); ok {
 				if value, found := tuple.Get(CharAttr); found {
-					if n, ok := value.(*Number); ok {
+					if n, ok := value.(Number); ok {
 						runes[i] = rune(n.Float64())
 					} else {
 						panic("String tuple " + CharAttr +
@@ -254,11 +254,11 @@ func (s *genericSet) With(value Value) Set {
 	if tuple, ok := value.(Tuple); ok {
 		if tuple.Count() == 2 {
 			if at, found := tuple.Get("@"); found {
-				if _, ok := at.(*Number); ok {
+				if _, ok := at.(Number); ok {
 					if _, found := tuple.Get("@item"); found {
 						isArrayAttr = true
 					} else if char, found := tuple.Get(CharAttr); found {
-						if number, ok := char.(*Number); ok {
+						if number, ok := char.(Number); ok {
 							n := number.Float64()
 							if n == float64(int64(n)) {
 								isStringAttr = true

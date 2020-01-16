@@ -106,7 +106,7 @@ func jsonEscape(value Expr) interface{} {
 				"\\": jsonEscapeExpr(x),
 			},
 		}
-	case *Number:
+	case Number:
 		return x.Export()
 	case Tuple:
 		result := make(map[string]interface{}, x.Count())
@@ -150,7 +150,7 @@ func jsonEscape(value Expr) interface{} {
 			for i, tuple := range x.OrderedValues() {
 				if tuple, ok := tuple.(Tuple); ok {
 					if value, found := tuple.Get(CharAttr); found {
-						if n, ok := value.(*Number); ok {
+						if n, ok := value.(Number); ok {
 							runes[i] = rune(n.Float64())
 						} else {
 							panic("String tuple " + CharAttr +

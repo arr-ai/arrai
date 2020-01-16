@@ -54,9 +54,9 @@ type arithEval func(a, b float64) float64
 func newArithExpr(a, b Expr, op string, eval arithEval) Expr {
 	return newBinExpr(a, b, op, "(%s "+op+" %s)",
 		func(a, b Value, _, _ *Scope) (Value, error) {
-			if a, ok := a.(*Number); ok {
-				if b, ok := b.(*Number); ok {
-					return NewNumber(eval(a.number, b.number)), nil
+			if a, ok := a.(Number); ok {
+				if b, ok := b.(Number); ok {
+					return NewNumber(eval(a.Float64(), b.Float64())), nil
 				}
 			}
 			return nil, errors.Errorf(
@@ -65,9 +65,9 @@ func newArithExpr(a, b Expr, op string, eval arithEval) Expr {
 }
 
 func addValues(a, b Value) (Value, error) {
-	if a, ok := a.(*Number); ok {
-		if b, ok := b.(*Number); ok {
-			return NewNumber(a.number + b.number), nil
+	if a, ok := a.(Number); ok {
+		if b, ok := b.(Number); ok {
+			return NewNumber(a.Float64() + b.Float64()), nil
 		}
 	}
 	if a, ok := a.(Tuple); ok {
