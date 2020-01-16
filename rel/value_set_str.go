@@ -6,7 +6,6 @@ import "encoding/json"
 const CharAttr = "@char"
 
 // String is a set of Values.
-// It is implemented as an immutable map[uintptr]set[Value].
 type String struct {
 	s []rune
 }
@@ -153,6 +152,11 @@ func (s *String) Where(p func(v Value) bool) Set {
 	return result
 }
 
+// Call ...
+func (s *String) Call(arg Value) Value {
+	return NewNumber(float64(string(s.s)[int(arg.(Number).Float64())]))
+}
+
 // StringEnumerator represents an enumerator over a String.
 type StringEnumerator struct {
 	s []rune
@@ -183,24 +187,12 @@ func newStringTuple(pos uint, char rune) Tuple {
 }
 
 func isStringTuple(v Value) (index uint, char rune, is bool) {
-	if tuple, ok := v.(Tuple); ok {
-		if tuple.Count() == 2 {
-			if at, found := tuple.Get("@"); found {
-				if pos, ok := at.(Number); ok {
-					i := uint(pos)
-					if pos == Number(i) {
-						if char, found := tuple.Get(CharAttr); found {
-							if number, ok := char.(Number); ok {
-								n := number.Float64()
-								if n == float64(uint(n)) {
-									return i, rune(n), true
-								}
-							}
-						}
-					}
-				}
-			}
-		}
-	}
-	return 0, 0, false
+	is = NewTupleMatcher(
+		map[string]Matcher{
+			"@":      MatchInt(func(i int) { index = uint(i) }),
+			CharAttr: MatchInt(func(i int) { char = rune(i) }),
+		},
+		Lit(EmptyTuple),
+	).Match(v)
+	return
 }

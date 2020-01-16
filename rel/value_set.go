@@ -314,6 +314,21 @@ func (s *genericSet) Where(p func(v Value) bool) Set {
 	return result
 }
 
+// Call ...
+func (s *genericSet) Call(arg Value) Value {
+	for e := s.Enumerator(); e.MoveNext(); {
+		var at Value
+		var t Tuple
+		if NewTupleMatcher(map[string]Matcher{"@": Bind(&at)}, Bind(&t)).Match(e.Current()) && at.Equal(arg) {
+			for attr := t.Enumerator(); attr.MoveNext(); {
+				_, value := attr.Current()
+				return value
+			}
+		}
+	}
+	return nil
+}
+
 // Enumerator returns an enumerator over the Values in the genericSet.
 func (s *genericSet) Enumerator() ValueEnumerator {
 	return &genericSetEnumerator{s.set.Range()}

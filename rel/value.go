@@ -91,6 +91,7 @@ type Set interface {
 	Without(Value) Set
 	Map(func(Value) Value) Set
 	Where(func(Value) bool) Set
+	Call(arg Value) Value
 }
 
 // NewValue constructs a new value from a Go value.
