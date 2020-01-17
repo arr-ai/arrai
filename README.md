@@ -9,8 +9,8 @@ The ultimate data engine.
 [Install Go](https://golang.org/doc/install), then:
 
 ```bash
-$ go get github.com/arr-ai/arrai/arrai
-$ go install github.com/arr-ai/arrai/arrai
+$ go get github.com/arr-ai/arrai/cmd/arrai
+$ go install github.com/arr-ai/arrai/cmd/arrai
 $ arrai -h
 ```
 
