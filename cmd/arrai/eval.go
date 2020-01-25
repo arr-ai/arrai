@@ -5,6 +5,7 @@ import (
 
 	"github.com/arr-ai/arrai/rel"
 	"github.com/arr-ai/arrai/syntax"
+	"github.com/arr-ai/wbnf/parser"
 	"github.com/urfave/cli"
 )
 
@@ -18,7 +19,7 @@ var evalCommand = cli.Command{
 func eval(c *cli.Context) error {
 	source := c.Args().Get(0)
 
-	expr, err := syntax.Parse(syntax.NewStringLexer(source))
+	expr, err := syntax.Parse(parser.NewScanner(source))
 	if err != nil {
 		return err
 	}

@@ -1,0 +1,98 @@
+package rel
+
+import (
+	"reflect"
+
+	"github.com/go-errors/errors"
+)
+
+// Closure represents the closure of a function over a scope.
+type Closure struct {
+	scope *Scope
+	f     *Function
+}
+
+// NewFunction returns a new function.
+func NewClosure(scope *Scope, f *Function) Value {
+	return Closure{scope: scope, f: f}
+}
+
+// Hash computes a hash for a Closure.
+func (c Closure) Hash(seed uintptr) uintptr {
+	// TODO: Is this enough?
+	return c.f.Hash(seed)
+}
+
+// Equal tests two Values for equality. Any other type returns false.
+func (c Closure) Equal(i interface{}) bool {
+	if d, ok := i.(Closure); ok {
+		return c.f.Equal(d.f)
+	}
+	return false
+}
+
+// Equal tests two Values for equality. Any other type returns false.
+func (c Closure) EqualClosure(d Closure) bool {
+	return c.f.EqualFunction(d.f)
+}
+
+// String returns a string representation of the expression.
+func (c Closure) String() string {
+	return "⦇" + c.f.String() + "⦈"
+}
+
+// Eval returns the Value
+func (c Closure) Eval(local, global *Scope) (Value, error) {
+	return c, nil
+}
+
+var closureKind = registerKind(205, reflect.TypeOf(Closure{}))
+
+// Kind returns a number that is unique for each major kind of Value.
+func (c Closure) Kind() int {
+	return closureKind
+}
+
+// Bool returns true iff the tuple has attributes.
+func (c Closure) Bool() bool {
+	return true
+}
+
+// Less returns true iff g is not a number or f.number < g.number.
+func (c Closure) Less(d Value) bool {
+	if c.Kind() != d.Kind() {
+		return c.Kind() < d.Kind()
+	}
+	return c.String() < d.String()
+}
+
+// Negate returns {(negateTag): f}.
+func (c Closure) Negate() Value {
+	return NewTuple(NewAttr(negateTag, c))
+}
+
+// Export exports a Closure.
+func (c Closure) Export() interface{} {
+	if c.f.arg == "-" {
+		return func(_ Value, local *Scope, global *Scope) (Value, error) {
+			return c.Call(None, local, global)
+		}
+	}
+	return func(e Value, local *Scope, global *Scope) (Value, error) {
+		return c.f.body.Eval(local.With(c.f.arg, e), global)
+	}
+}
+
+// Call calls the Closure with the given parameter.
+func (c Closure) Call(expr Expr, local, global *Scope) (Value, error) {
+	niladic := c.f.arg == "-"
+	noArg := expr == nil
+	if niladic != noArg {
+		return nil, errors.Errorf(
+			"nullary-vs-unary function arg mismatch (%s vs %s)", c.f.arg, expr)
+	}
+	if niladic {
+		return c.f.body.Eval(local, global)
+	}
+	return c.f.body.Eval(c.scope.With(c.f.arg, expr), global)
+}

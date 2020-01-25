@@ -1,4 +1,4 @@
-package tests
+package syntax
 
 import (
 	"testing"
@@ -6,17 +6,17 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/arr-ai/arrai/rel"
-	"github.com/arr-ai/arrai/syntax"
+	"github.com/arr-ai/wbnf/parser"
 )
 
 func assertParse(t *testing.T, expected rel.Value, input string) bool { //nolint:unparam
-	value, err := syntax.Parse(syntax.NewStringLexer(input))
+	value, err := Parse(parser.NewScanner(input))
 	return assert.NoError(t, err) &&
 		assert.True(t, expected.Equal(value), "%s == \n%s", expected, value)
 }
 
 func assertParseError(t *testing.T, input string) bool {
-	value, err := syntax.Parse(syntax.NewStringLexer(input))
+	value, err := Parse(parser.NewScanner(input))
 	return !assert.Error(t, err) &&
 		assert.Fail(t, "expected error, got value", "%s", value)
 }

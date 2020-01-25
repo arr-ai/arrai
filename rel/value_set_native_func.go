@@ -1,6 +1,8 @@
 package rel
 
 import (
+	"reflect"
+
 	"github.com/arr-ai/hash"
 	"github.com/go-errors/errors"
 )
@@ -14,6 +16,11 @@ type NativeFunction struct {
 // NewNativeFunction returns a new function.
 func NewNativeFunction(name string, fn func(Value) Value) Expr {
 	return &NativeFunction{name, fn}
+}
+
+// NewNativeFunction returns a new function.
+func NewNativeFunctionAttrExpr(name string, fn func(Value) Value) AttrExpr {
+	return MustNewAttrExpr(name, NewNativeFunction(name, fn))
 }
 
 // Name returns a native function's name.
@@ -49,9 +56,11 @@ func (f *NativeFunction) Eval(local, global *Scope) (Value, error) {
 	return f, nil
 }
 
+var nativeFunctionKind = registerKind(203, reflect.TypeOf(NativeFunction{}))
+
 // Kind returns a number that is unique for each major kind of Value.
 func (f *NativeFunction) Kind() int {
-	return 203
+	return nativeFunctionKind
 }
 
 // Bool always returns true.

@@ -3,6 +3,7 @@ package rel
 import (
 	"bytes"
 	"encoding/json"
+	"reflect"
 	"sort"
 
 	"github.com/arr-ai/frozen"
@@ -69,18 +70,6 @@ func NewBool(b bool) Set {
 	return False
 }
 
-// NewArray constructs an array as a relation.
-func NewArray(values ...Value) Set {
-	tuples := make([]Value, len(values))
-	for i, value := range values {
-		tuples[i] = NewTuple(
-			Attr{"@", NewNumber(float64(i))},
-			Attr{"@item", value},
-		)
-	}
-	return NewSet(tuples...)
-}
-
 // Hash computes a hash for a genericSet.
 func (s *genericSet) Hash(seed uintptr) uintptr {
 	h := seed
@@ -135,7 +124,7 @@ func (s *genericSet) String() string {
 				buf.WriteString(", ")
 			}
 			if tuple, ok := tuple.(Tuple); ok {
-				if value, found := tuple.Get("@item"); found {
+				if value, found := tuple.Get(ArrayItemAttr); found {
 					buf.WriteString(value.String())
 				} else {
 					panic("Array item tuple must have @item attr")
@@ -181,9 +170,11 @@ func (s *genericSet) Eval(local, global *Scope) (Value, error) {
 	return s, nil
 }
 
+var genericSetKind = registerKind(200, reflect.TypeOf(Function{}))
+
 // Kind returns a number that is unique for each major kind of Value.
 func (s *genericSet) Kind() int {
-	return 200
+	return genericSetKind
 }
 
 // Bool returns true iff the tuple has attributes.
@@ -255,7 +246,7 @@ func (s *genericSet) With(value Value) Set {
 		if tuple.Count() == 2 {
 			if at, found := tuple.Get("@"); found {
 				if _, ok := at.(Number); ok {
-					if _, found := tuple.Get("@item"); found {
+					if _, found := tuple.Get(ArrayItemAttr); found {
 						isArrayAttr = true
 					} else if char, found := tuple.Get(CharAttr); found {
 						if number, ok := char.(Number); ok {
@@ -303,15 +294,9 @@ func (s *genericSet) Map(f func(v Value) Value) Set {
 }
 
 // Where returns a new genericSet with all the Values satisfying predicate p.
-func (s *genericSet) Where(p func(v Value) bool) Set {
-	result := Set(s)
-	for e := s.Enumerator(); e.MoveNext(); {
-		value := e.Current()
-		if !p(value) {
-			result = result.Without(value)
-		}
-	}
-	return result
+func (s genericSet) Where(p func(v Value) bool) Set {
+	s.set = s.set.Where(func(elem interface{}) bool { return p(elem.(Value)) })
+	return &s
 }
 
 // Call ...

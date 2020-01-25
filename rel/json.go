@@ -134,7 +134,7 @@ func jsonEscape(value Expr) interface{} {
 			array := make([]interface{}, x.Count())
 			for i, tuple := range x.OrderedValues() {
 				if tuple, ok := tuple.(Tuple); ok {
-					if value, found := tuple.Get("@item"); found {
+					if value, found := tuple.Get(ArrayItemAttr); found {
 						array[i] = jsonEscape(value)
 					} else {
 						panic("Array item tuple must have @item attr")

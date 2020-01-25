@@ -36,8 +36,8 @@ func jsonObjToArrai(data map[string]interface{}) (rel.Value, error) {
 			return nil, err
 		}
 		tuples[i] = rel.NewTuple(
-			rel.Attr{"@", rel.NewString([]rune(key))},
-			rel.Attr{"@item", item},
+			rel.Attr{Name: "@", Value: rel.NewString([]rune(key))},
+			rel.Attr{Name: rel.ArrayItemAttr, Value: item},
 		)
 		i++
 	}

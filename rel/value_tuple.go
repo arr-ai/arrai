@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"reflect"
 	"regexp"
 	"sort"
 	"strings"
@@ -168,6 +169,8 @@ func (t *GenericTuple) Eval(local, global *Scope) (Value, error) {
 	return t, nil
 }
 
+var genericTupleKind = registerKind(300, reflect.TypeOf((*GenericTuple)(nil)))
+
 // Kind returns a number that is unique for each major kind of Value.
 func (t *GenericTuple) Kind() int {
 	if t.Count() == 1 {
@@ -175,7 +178,7 @@ func (t *GenericTuple) Kind() int {
 			return -x.Kind()
 		}
 	}
-	return 300
+	return genericTupleKind
 }
 
 // Bool returns true iff the tuple has attributes.
@@ -259,6 +262,14 @@ func (t *GenericTuple) Get(name string) (Value, bool) {
 		return v.(Value), true
 	}
 	return nil, false
+}
+
+// MustGet returns e.Get(name) or panics if an error occurs.
+func (t *GenericTuple) MustGet(name string) Value {
+	if v, has := t.Get(name); has {
+		return v
+	}
+	panic(fmt.Errorf("%q not found", name))
 }
 
 // With returns a Tuple with all name/Value pairs in t (except the one for the

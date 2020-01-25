@@ -2,6 +2,7 @@ package rel
 
 import (
 	"fmt"
+	"reflect"
 
 	"github.com/arr-ai/hash"
 	"github.com/go-errors/errors"
@@ -45,28 +46,37 @@ func (f *Function) Hash(seed uintptr) uintptr {
 
 // Equal tests two Values for equality. Any other type returns false.
 func (f *Function) Equal(i interface{}) bool {
+	// Function equality is undecidable in the general case. Should we panic?
 	if g, ok := i.(*Function); ok {
-		return f.body == g.body
+		return f.EqualFunction(g)
 	}
 	return false
+}
+
+// Equal tests two Values for equality. Any other type returns false.
+func (f *Function) EqualFunction(g *Function) bool {
+	// Function equality is undecidable in the general case. Should we panic?
+	return f.body == g.body
 }
 
 // String returns a string representation of the expression.
 func (f *Function) String() string {
 	if f.arg == "-" {
-		return fmt.Sprintf("(& %s)", f.body)
+		return fmt.Sprintf("(&%s)", f.body)
 	}
 	return fmt.Sprintf("(\\%s %s)", f.arg, f.body)
 }
 
 // Eval returns the Value
 func (f *Function) Eval(local, global *Scope) (Value, error) {
-	return f, nil
+	return NewClosure(local, f), nil
 }
+
+var functionKind = registerKind(202, reflect.TypeOf(Function{}))
 
 // Kind returns a number that is unique for each major kind of Value.
 func (f *Function) Kind() int {
-	return 202
+	return functionKind
 }
 
 // Bool returns true iff the tuple has attributes.

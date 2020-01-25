@@ -1,4 +1,4 @@
-package tests
+package syntax
 
 import (
 	"testing"
@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/arr-ai/arrai/rel"
-	"github.com/arr-ai/arrai/syntax"
+	"github.com/arr-ai/wbnf/parser"
 )
 
 func TestParseXMLTrivial(t *testing.T) {
@@ -22,7 +22,7 @@ func TestParseXMLTrivialWithEndTag(t *testing.T) {
 
 func TestParseXMLTrivialWithMismatchedEndTags(t *testing.T) {
 	t.Parallel()
-	value, err := syntax.Parse(syntax.NewStringLexer("<a></ab>"))
+	value, err := Parse(parser.NewScanner("<a></ab>"))
 	assert.Error(t, err, "%s", value)
 }
 

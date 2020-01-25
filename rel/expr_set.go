@@ -54,7 +54,7 @@ func NewArrayExpr(elements ...Expr) Expr {
 				if err != nil {
 					panic(err)
 				}
-				valAttr, err := NewAttrExpr("@item", elt)
+				valAttr, err := NewAttrExpr(ArrayItemAttr, elt)
 				if err != nil {
 					panic(err)
 				}

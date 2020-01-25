@@ -7,6 +7,7 @@ import (
 	"github.com/arr-ai/arrai/rel"
 	"github.com/arr-ai/arrai/syntax"
 	pb "github.com/arr-ai/proto"
+	"github.com/arr-ai/wbnf/parser"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -47,7 +48,7 @@ func (s *arraiServer) Update(stream pb.Arrai_UpdateServer) error {
 			return err
 		}
 		logrus.Infof("req.Expr: %s", req.Expr)
-		expr, err := syntax.Parse(syntax.NewStringLexer(req.Expr))
+		expr, err := syntax.Parse(parser.NewScanner(req.Expr))
 		if err != nil {
 			logrus.Errorf("Error in arraiServer.Update: %v", err)
 			return err
@@ -68,7 +69,7 @@ func (s *arraiServer) Update(stream pb.Arrai_UpdateServer) error {
 func (s *arraiServer) Observe(
 	req *pb.ObserveReq, stream pb.Arrai_ObserveServer,
 ) error {
-	expr, err := syntax.Parse(syntax.NewStringLexer(req.Expr))
+	expr, err := syntax.Parse(parser.NewScanner(req.Expr))
 	if err != nil {
 		return err
 	}

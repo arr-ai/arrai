@@ -1,4 +1,4 @@
-package tests
+package syntax
 
 import (
 	"testing"

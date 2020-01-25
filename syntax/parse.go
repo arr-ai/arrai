@@ -1,13 +1,18 @@
 package syntax
 
 import (
-	"bytes"
-	"math"
+	"fmt"
+	"strconv"
 
 	"github.com/arr-ai/arrai/rel"
+	"github.com/arr-ai/wbnf/ast"
+	"github.com/arr-ai/wbnf/parser"
+	"github.com/arr-ai/wbnf/wbnf"
 )
 
 type noParseType struct{}
+
+type parseFunc func(v interface{}) (rel.Expr, error)
 
 func (*noParseType) Error() string {
 	return "No parse"
@@ -15,16 +20,216 @@ func (*noParseType) Error() string {
 
 var noParse = &noParseType{}
 
-type parseFunc func(l *Lexer) (rel.Expr, error)
+var parsers = wbnf.MustCompile(`
+expr    -> amp="&"* @ arrow=(nest | unnest | ARROW @)* ";"?
+         > @:binop=("with" | "without")
+         > @:binop="||"
+         > @:binop="&&"
+         > @:binop=/{!?(?:<>?=?|>=?|=)}
+         > @ if=("if" t=expr "else" f=expr)*
+         > @:binop=/{[-+|]}
+         > @:binop=/{&|[-<][-&][->]}
+         > @:binop=/{[\*/%]|-%|//}
+         > @:rbinop="**"
+		 > unop=/{[-+!]|\*\*?}* @
+		 > @ call=("(" arg=expr:",", ")")*
+         > @ "count"? touch?
+         > dot+ | @ dot*
+         > "{" rel=(names tuple=("(" v=@:",", ")"):",",?) "}"
+         | "{" set=(elt=@:",",?) "}"
+         | "[" array=(item=@:",",?) "]"
+         | "{:" embed=(grammar=@ "." rule=IDENT subgrammar=()) ":}"
+         | op="\\\\" @
+         | fn="\\" IDENT @
+         | pkg="//" ("." IDENT? | IDENT:"." ("/" IDENT)*)
+         | "(" tuple=(k=IDENT ":" v=@ | ":" vk=(@ "." k=IDENT)):",",? ")"
+         | "(" @ ")"
+         | IDENT | STR | NUM;
+nest    -> "nest" names IDENT;
+unnest  -> "unnest" IDENT;
+touch   -> ("->*" ("&"? IDENT | STR))+ "(" expr:"," ","? ")";
+dot     -> dot="." ("&"? IDENT | STR | "*");
+names   -> "|" IDENT:"," "|";
+
+ARROW  -> /{->|:>|=>|>>|order|where|sum|max|mean|median|min};
+IDENT  -> /{[$@A-Za-z_][0-9$@A-Za-z_]*};
+STR    -> /{ " (?: \\. | [^\\"] )* " };
+NUM    -> /{(?: [0-9]+(?:\.[0-9]*)? | \.[0-9]+ ) (?: [Ee][-+]?[0-9]+ )?};
+
+.wrapRE -> /{\s*()};
+`)
+
+func parseExpr(b ast.Branch) rel.Expr {
+	// log.Printf("b=%v", b)
+	name, c := which(b,
+		"amp", "arrow", "unop", "binop", "rbinop",
+		"if", "call", "touch", "dot",
+		"rel", "set", "array", "embed", "op", "fn", "pkg", "tuple",
+		"IDENT", "STR", "NUM",
+		"expr",
+	)
+	if c == nil {
+		panic(fmt.Errorf("misshapen node AST: %v", b))
+	}
+	switch name {
+	case "amp", "arrow":
+		expr := parseExpr(b["expr"].(ast.One).Node.(ast.Branch))
+		if arrows, has := b["arrow"]; has {
+			for _, arrow := range arrows.(ast.Many) {
+				part, d := which(arrow.(ast.Branch), "nest", "unnest", "ARROW")
+				switch part {
+				case "nest":
+				case "unnset":
+					panic("unfinished")
+				case "ARROW":
+					f := binops[d.(ast.One).Node.(ast.Leaf).Scanner().String()]
+					expr = f(expr, parseExpr(arrow.(ast.Branch)["expr"].(ast.One).Node.(ast.Branch)))
+				}
+			}
+		}
+		if name == "amp" {
+			for range c.(ast.Many) {
+				expr = rel.NewFunction("-", expr)
+			}
+		}
+		return expr
+	case "unop":
+		ops := c.(ast.Many)
+		result := parseExpr(b.MustOne("expr").(ast.Branch))
+		for i := len(ops) - 1; i >= 0; i-- {
+			f := unops[ops[i].(ast.Leaf).String()]
+			result = f(result)
+		}
+		return result
+	case "binop":
+		ops := c.(ast.Many)
+		args := b["expr"].(ast.Many)
+		result := parseExpr(args[0].(ast.Branch))
+		for i, arg := range args[1:] {
+			f := binops[ops[i].(ast.Leaf).Scanner().String()]
+			result = f(result, parseExpr(arg.(ast.Branch)))
+		}
+		return result
+	case "rbinop":
+		ops := c.(ast.Many)
+		args := b["expr"].(ast.Many)
+		result := parseExpr(args[len(args)-1].(ast.Branch))
+		for i := len(args) - 2; i >= 0; i-- {
+			f := binops[ops[i].(ast.Leaf).String()]
+			result = f(parseExpr(args[i].(ast.Branch)), result)
+		}
+		return result
+	case "if":
+		result := parseExpr(b.MustOne("expr").(ast.Branch))
+		for _, ifelse := range c.(ast.Many) {
+			t := parseExpr(ifelse.MustOne("t").(ast.Branch))
+			f := parseExpr(ifelse.MustOne("f").(ast.Branch))
+			result = rel.NewIfElseExpr(result, t, f)
+		}
+		return result
+	case "call":
+		result := parseExpr(b.MustOne("expr").(ast.Branch))
+		for _, call := range c.(ast.Many) {
+			for _, arg := range parseExprs(call.MustMany("arg")...) {
+				result = rel.NewCallExpr(result, arg)
+			}
+		}
+		return result
+	case "touch":
+		// touch -> ("->*" ("&"? IDENT | STR))+ "(" expr:"," ","? ")";
+		// result := parseExpr(b.MustOne("expr").(ast.Branch))
+
+	case "dot":
+		result := parseExpr(b.MustOne("expr").(ast.Branch))
+		if result == nil {
+			result = rel.DotIdent
+		}
+		for _, dot := range c.(ast.Many) {
+			ident := dot.(ast.Branch)["IDENT"].(ast.One).Node.(ast.Leaf).Scanner().String()
+			result = rel.NewDotExpr(result, ident)
+		}
+		return result
+	case "rel":
+		names := parseNames(c.(ast.One).Node.(ast.Branch)["names"].(ast.One).Node.(ast.Branch))
+		tuples := c.(ast.One).Node.(ast.Branch)["tuple"].(ast.Many)
+		tupleExprs := make([][]rel.Expr, 0, len(tuples))
+		for _, tuple := range tuples {
+			tupleExprs = append(tupleExprs, parseExprs(tuple.(ast.Branch)["v"].(ast.Many)...))
+		}
+		result, err := rel.NewRelationExpr(names, tupleExprs...)
+		if err != nil {
+			panic(err)
+		}
+		return result
+	case "set":
+		return rel.NewSetExpr(parseExprs(c.(ast.One).Node.(ast.Branch)["elt"].(ast.Many)...)...)
+	case "fn":
+		ident := b.MustMany("IDENT")[0]
+		expr := parseExpr(b.MustOne("expr").(ast.Branch))
+		return rel.NewFunction(ident.Scanner().String(), expr)
+	case "tuple":
+		entries := c.(ast.Many)
+		attrs := make([]rel.AttrExpr, 0, len(entries))
+		for _, entry := range entries {
+			k := entry.MustOne("k").(ast.Leaf).Scanner().String()
+			v := parseExpr(entry.MustOne("v").(ast.Branch))
+			attr, err := rel.NewAttrExpr(k, v)
+			if err != nil {
+				panic(err)
+			}
+			attrs = append(attrs, attr)
+		}
+		return rel.NewTupleExpr(attrs...)
+	case "IDENT":
+		s := c.(ast.Many)[0].Scanner().String()
+		switch s {
+		case "true":
+			return rel.True
+		case "false":
+			return rel.False
+		}
+		return rel.NewIdentExpr(s)
+	case "STR":
+		s := c.Scanner().String()
+		return rel.NewString([]rune(parseArraiString(s)))
+	case "NUM":
+		s := c.Scanner().String()
+		n, err := strconv.ParseFloat(s, 64)
+		if err != nil {
+			panic("Wat?")
+		}
+		return rel.NewNumber(n)
+	case "expr":
+		return parseExpr(c.(ast.One).Node.(ast.Branch))
+	}
+	panic(fmt.Errorf("unhandled node: %v", b))
+}
+
+func parseExprs(exprs ...ast.Node) []rel.Expr {
+	result := make([]rel.Expr, 0, len(exprs))
+	for _, expr := range exprs {
+		result = append(result, parseExpr(expr.(ast.Branch)))
+	}
+	return result
+}
+
+func parseNames(names ast.Branch) []string {
+	idents := names["IDENT"].(ast.Many)
+	result := make([]string, 0, len(idents))
+	for _, ident := range idents {
+		result = append(result, ident.(ast.Leaf).Scanner().String())
+	}
+	return result
+}
 
 // MustParseString parses input string and returns the parsed Expr or panics.
 func MustParseString(s string) rel.Expr {
-	return MustParse(NewStringLexer(s))
+	return MustParse(parser.NewScanner(s))
 }
 
 // MustParse parses input and returns the parsed Expr or panics.
-func MustParse(l *Lexer) rel.Expr {
-	expr, err := Parse(l)
+func MustParse(s *parser.Scanner) rel.Expr {
+	expr, err := Parse(s)
 	if err != nil {
 		panic(err)
 	}
@@ -33,691 +238,398 @@ func MustParse(l *Lexer) rel.Expr {
 
 // ParseString parses input string and returns the parsed Expr or an error.
 func ParseString(s string) (rel.Expr, error) {
-	return Parse(NewStringLexer(s))
+	return Parse(parser.NewScanner(s))
 }
 
 // Parse parses input and returns the parsed Expr or an error.
-func Parse(l *Lexer) (rel.Expr, error) {
-	expr, err := parseExpr(l)
+func Parse(s *parser.Scanner) (rel.Expr, error) {
+	v, err := parsers.Parse(wbnf.Rule("expr"), s)
 	if err != nil {
 		return nil, err
 	}
-	if !l.Scan(EOF) {
-		l.Failf("input not consumed")
-		return nil, l.Error()
+	if s.String() != "" {
+		return nil, fmt.Errorf("input not consumed: %v", s)
 	}
-	return expr, nil
+	// log.Print("v=", v)
+	ast := ast.ParserNodeToNode(parsers.Grammar(), v)
+	return parseExpr(ast), nil
 }
-
-func parseExpr(l *Lexer) (rel.Expr, error) {
-	return parseNullaryFunc(l)
-}
-
-func parseNullaryFunc(l *Lexer) (rel.Expr, error) {
-	i := 0
-	for l.Scan(Token('&')) {
-		i++
+func which(b ast.Branch, names ...string) (string, ast.Children) {
+	if len(names) == 0 {
+		panic("wat?")
 	}
-	expr, err := parseArrow(l)
-	if err != nil {
-		return nil, err
-	}
-	for i > 0 {
-		expr = rel.NewFunction("-", expr)
-		i--
-	}
-	return expr, nil
-}
-
-var arrowOps = map[Token]newBinOpFunc{
-	ARROW:   rel.NewArrowExpr,
-	ATARROW: rel.NewAtArrowExpr,
-	DARROW:  rel.NewDArrowExpr,
-	ORDER:   rel.NewOrderExpr,
-	WHERE:   rel.NewWhereExpr,
-	SUM:     rel.NewSumExpr,
-	MAX:     rel.NewMaxExpr,
-	MEAN:    rel.NewMeanExpr,
-	MEDIAN:  rel.NewMedianExpr,
-	MIN:     rel.NewMinExpr,
-}
-
-func parseArrow(l *Lexer) (rel.Expr, error) {
-	a, err := parseWith(l)
-	if err != nil {
-		return nil, err
-	}
-	parsedTail := false
-	for {
-		if l.Scan(NEST) {
-			names, err := parseNameList(l)
-			if err != nil {
-				return nil, err
-			}
-			if names == nil {
-				return nil, expecting(l, "after nest", "name list")
-			}
-			if !l.Scan(IDENT) {
-				return nil, expecting(l, "after nest |name,...|", "ident")
-			}
-			a = rel.NewNestExpr(
-				a, rel.NewNames(names...), string(l.Lexeme()),
-			)
-			parsedTail = false
-		} else if l.Scan(UNNEST) {
-			if !l.Scan(IDENT) {
-				return nil, expecting(l, "after nest |name,...|", "ident")
-			}
-			a = rel.NewUnnestExpr(a, string(l.Lexeme()))
-			parsedTail = false
-		} else if !parsedTail {
-			a, err = parseBinOpTail(a, l, arrowOps, parseWith)
-			if err != nil {
-				return nil, err
-			}
-			parsedTail = true
-		} else {
-			return a, nil
+	for _, name := range names {
+		if children, has := b[name]; has {
+			return name, children
 		}
 	}
+	return "", nil
 }
 
-var withOps = map[Token]newBinOpFunc{
-	WITH:    rel.NewWithExpr,
-	WITHOUT: rel.NewWithoutExpr,
+var unops = map[string]newUnOpFunc{
+	"+":  rel.NewPosExpr,
+	"-":  rel.NewNegExpr,
+	"**": rel.NewPowerSetExpr,
+	"!":  rel.NewNotExpr,
+	"*":  rel.NewEvalExpr,
+	"//": rel.NewPackageExpr,
 }
 
-func parseWith(l *Lexer) (rel.Expr, error) {
-	return parseBinOp(l, withOps, parseLogicalOps)
-}
-
-var logicalOps = map[Token]newBinOpFunc{
-	AND: rel.MakeBinValExpr("and", func(a, b rel.Value) rel.Value {
+var binops = map[string]newBinOpFunc{
+	"->":      rel.NewArrowExpr,
+	">>":      rel.NewAngleArrowExpr,
+	"=>":      rel.NewDArrowExpr,
+	"order":   rel.NewOrderExpr,
+	"where":   rel.NewWhereExpr,
+	"sum":     rel.NewSumExpr,
+	"max":     rel.NewMaxExpr,
+	"mean":    rel.NewMeanExpr,
+	"median":  rel.NewMedianExpr,
+	"min":     rel.NewMinExpr,
+	"with":    rel.NewWithExpr,
+	"without": rel.NewWithoutExpr,
+	"&&": rel.MakeBinValExpr("and", func(a, b rel.Value) rel.Value {
 		if !a.Bool() {
 			return a
 		}
 		return b
 	}),
-	OR: rel.MakeBinValExpr("and", func(a, b rel.Value) rel.Value {
+	"||": rel.MakeBinValExpr("and", func(a, b rel.Value) rel.Value {
 		if a.Bool() {
 			return a
 		}
 		return b
 	}),
-}
-
-func parseLogicalOps(l *Lexer) (rel.Expr, error) {
-	return parseBinOp(l, logicalOps, parseEqOps)
-}
-
-var eqOps = map[Token]newBinOpFunc{
-	'=': rel.MakeEqExpr("=", func(a, b rel.Value) bool { return a.Equal(b) }),
-	'<': rel.MakeEqExpr("<", func(a, b rel.Value) bool { return a.Less(b) }),
-	'>': rel.MakeEqExpr(">", func(a, b rel.Value) bool { return b.Less(a) }),
-	NEQ: rel.MakeEqExpr("!=", func(a, b rel.Value) bool { return !a.Equal(b) }),
-	LEQ: rel.MakeEqExpr("<=", func(a, b rel.Value) bool { return !b.Less(a) }),
-	GEQ: rel.MakeEqExpr(">=", func(a, b rel.Value) bool { return !a.Less(b) }),
-}
-
-func parseEqOps(l *Lexer) (rel.Expr, error) {
-	next := parseIfElse
-	a, err := next(l)
-	if err != nil {
-		return nil, err
-	}
-	e := a
-	for op, found := eqOps[l.Peek()]; found; op, found = eqOps[l.Peek()] {
-		l.Scan()
-		b, err := next(l)
-		if err != nil {
-			return nil, err
-		}
-		// Chain eqOps such that, e.g.: a < b < c = (a < b) and (b < c).
-		if e == a {
-			a = op(a, b)
-		} else {
-			a = logicalOps[AND](a, op(e, b))
-		}
-		e = b
-	}
-	return a, nil
-}
-
-func parseIfElse(l *Lexer) (rel.Expr, error) {
-	expr, err := parseAdd(l)
-	if err != nil {
-		return nil, err
-	}
-	for l.Scan(IF) {
-		cond, err := parseExpr(l)
-		if err != nil {
-			return nil, err
-		}
-		if !l.Scan(ELSE) {
-			return nil, expecting(l, "after `expr if pred`", "'else'")
-		}
-		ifFalse, err := parseExpr(l)
-		if err != nil {
-			return nil, err
-		}
-		expr = rel.NewIfElseExpr(expr, cond, ifFalse)
-	}
-	return expr, nil
-}
-
-var addOps = map[Token]newBinOpFunc{
-	Token('+'): rel.NewAddExpr,
-	Token('-'): rel.NewSubExpr,
-	JOIN:       rel.NewJoinExpr,
-}
-
-func parseAdd(l *Lexer) (rel.Expr, error) {
-	return parseBinOp(l, addOps, parseMul)
-}
-
-var mulOps = map[Token]newBinOpFunc{
-	Token('*'): rel.NewMulExpr,
-	Token('/'): rel.NewDivExpr,
-	Token('%'): rel.NewModExpr,
-	SUBMOD:     rel.NewSubModExpr,
-	IDIV:       rel.NewIdivExpr,
-}
-
-func parseMul(l *Lexer) (rel.Expr, error) {
-	return parseBinOp(l, mulOps, parsePow)
-}
-
-var powOp = map[Token]newBinOpFunc{
-	Token('^'): rel.NewPowExpr,
-}
-
-func parsePow(l *Lexer) (rel.Expr, error) {
-	return parseBinOp(l, powOp, parseAmbPrefix)
-}
-
-// Ambiguous prefixes also have binary counterparts. To avoid unexpected
-// interactions with function calls, these must have lower precedence.
-var ambPrefixOps = map[Token]newUnOpFunc{
-	Token('+'): rel.NewPosExpr,
-	Token('-'): rel.NewNegExpr,
-	Token('^'): rel.NewPowerSetExpr,
-}
-
-func parseAmbPrefix(l *Lexer) (rel.Expr, error) {
-	return parsePrefixOp(l, ambPrefixOps, parseCall)
-}
-
-func parseCall(l *Lexer) (rel.Expr, error) {
-	lhs, err := parsePrefix(l)
-	if err != nil {
-		return nil, err
-	}
-	for {
-		// Parse `a*b` as `a * b`, not `a (*b)`.
-		if l.Peek() == Token('*') {
-			return lhs, nil
-		}
-
-		rhs, err := parsePrefix(l)
-		if err != nil {
-			if err == noParse {
-				return lhs, nil
-			}
-			return nil, err
-		}
-		lhs = rel.NewCallExpr(lhs, rhs)
-	}
-}
-
-var prefixOps = map[Token]newUnOpFunc{
-	Token('!'): rel.NewNotExpr,
-	Token('*'): rel.NewEvalExpr,
-}
-
-func parsePrefix(l *Lexer) (rel.Expr, error) {
-	return parsePrefixOp(l, prefixOps, parseTouch)
-}
-
-func parseTouch(l *Lexer) (rel.Expr, error) {
-	lhs, err := parseSuffix(l)
-	if err != nil {
-		return nil, err
-	}
-	return parseTouchTail(l, lhs)
+	"=":   rel.MakeEqExpr("=", func(a, b rel.Value) bool { return a.Equal(b) }),
+	"<":   rel.MakeEqExpr("<", func(a, b rel.Value) bool { return a.Less(b) }),
+	">":   rel.MakeEqExpr(">", func(a, b rel.Value) bool { return b.Less(a) }),
+	"!=":  rel.MakeEqExpr("!=", func(a, b rel.Value) bool { return !a.Equal(b) }),
+	"<=":  rel.MakeEqExpr("<=", func(a, b rel.Value) bool { return !b.Less(a) }),
+	">=":  rel.MakeEqExpr(">=", func(a, b rel.Value) bool { return !a.Less(b) }),
+	"+":   rel.NewAddExpr,
+	"-":   rel.NewSubExpr,
+	"<&>": rel.NewJoinExpr,
+	"*":   rel.NewMulExpr,
+	"/":   rel.NewDivExpr,
+	"%":   rel.NewModExpr,
+	"-%":  rel.NewSubModExpr,
+	"//":  rel.NewIdivExpr,
+	"**":  rel.NewPowExpr,
 }
 
 func makeTupleExpr(name string, attr rel.Expr) rel.Expr {
-	attrExpr, err := rel.NewAttrExpr(name, attr)
-	if err != nil {
-		panic(err)
-	}
-	return rel.NewTupleExpr(
-		rel.NewWildcardExpr(rel.NewIdentExpr(".")),
-		attrExpr,
-	)
+	panic("not implemented")
+	// attrExpr, err := rel.NewAttrExpr(name, attr)
+	// if err != nil {
+	// 	panic(err)
+	// }
+	// return rel.NewTupleExpr(
+	// 	rel.NewWildcardExpr(rel.NewIdentExpr(".")),
+	// 	attrExpr,
+	// )
 }
 
-func parseTouchTail(l *Lexer, expr rel.Expr) (rel.Expr, error) {
-	path := make([]string, 0, 4) // A bit of spare buffer
-	for l.Scan(ARROWST) {
-		if !l.Scan(IDENT, Token('&'), STRING) {
-			return nil, expecting(l, "after '.'", "ident", "string", "'*'")
-		}
-		if l.Token() == STRING {
-			path = append(path, ParseArraiString(l.Lexeme()))
-		} else if l.Token() == Token('&') {
-			if !l.Scan(IDENT) {
-				return nil, expecting(l, "after '.&'-prefix", "ident")
-			}
-			path = append(path, "&"+string(l.Lexeme()))
-		} else {
-			path = append(path, string(l.Lexeme()))
-		}
-	}
-	if len(path) == 0 {
-		return expr, nil
-	}
-	leaf := path[len(path)-1]
-	attrExpr, err := parseAttrExpr(l, leaf)
-	tupleExpr := makeTupleExpr(leaf, attrExpr)
-	if err != nil {
-		return nil, err
-	}
-	for i := len(path) - 2; i >= 0; i-- {
-		tupleFunc := rel.NewFunction(".", tupleExpr)
-		dotExpr := rel.NewDotExpr(rel.DotIdent, path[i])
-		arrowExpr := rel.NewArrowExpr(dotExpr, tupleFunc)
-		tupleExpr = makeTupleExpr(path[i], arrowExpr)
-		if err != nil {
-			panic(err)
-		}
-	}
-	return rel.NewArrowExpr(expr, rel.NewFunction(".", tupleExpr)), nil
+func parseTouchTail(v interface{}, expr rel.Expr) (rel.Expr, error) {
+	panic("not implemented")
+	// path := make([]string, 0, 4) // A bit of spare buffer
+	// for v.Scan(ARROWST) {
+	// 	if !v.Scan(IDENT, Token('&'), STR) {
+	// 		return nil, expecting(v, "after '.'", "ident", "string", "'*'")
+	// 	}
+	// 	if v.Token() == STR {
+	// 		path = append(path, ParseArraiString(v.Lexeme()))
+	// 	} else if v.Token() == Token('&') {
+	// 		if !v.Scan(IDENT) {
+	// 			return nil, expecting(v, "after '.&'-prefix", "ident")
+	// 		}
+	// 		path = append(path, "&"+string(v.Lexeme()))
+	// 	} else {
+	// 		path = append(path, string(v.Lexeme()))
+	// 	}
+	// }
+	// if len(path) == 0 {
+	// 	return expr, nil
+	// }
+	// leaf := path[len(path)-1]
+	// attrExpr, err := parseAttrExpr(v, leaf)
+	// tupleExpr := makeTupleExpr(leaf, attrExpr)
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// for i := len(path) - 2; i >= 0; i-- {
+	// 	tupleFunc := rel.NewFunction(".", tupleExpr)
+	// 	dotExpr := rel.NewDotExpr(rel.DotIdent, path[i])
+	// 	arrowExpr := rel.NewArrowExpr(dotExpr, tupleFunc)
+	// 	tupleExpr = makeTupleExpr(path[i], arrowExpr)
+	// 	if err != nil {
+	// 		panic(err)
+	// 	}
+	// }
+	// return rel.NewArrowExpr(expr, rel.NewFunction(".", tupleExpr)), nil
 }
 
-func parseSuffix(l *Lexer) (rel.Expr, error) {
-	dot, err := parseDot(l)
-	if err != nil {
-		return nil, err
-	}
-	if l.Scan(COUNT) {
-		return rel.NewCountExpr(dot), nil
-	}
-	return dot, nil
+func parseSuffix(ast ast.Branch) rel.Expr {
+	panic("not implemented")
+	// dot, err := parseDot(ast)
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// if v.Scan(COUNT) {
+	// 	return rel.NewCountExpr(dot), nil
+	// }
+	// return dot, nil
 }
 
-func parseDot(l *Lexer) (rel.Expr, error) {
-	atom, err := ParseAtom(l)
-	if err != nil {
-		return nil, err
-	}
-	return parseDotTail(l, atom)
+func parseDot(ast ast.Branch) rel.Expr {
+	panic("not implemented")
+	// atom, err := ParseAtom(ast)
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// return parseDotTail(v, atom)
 }
 
-func parseDotTail(l *Lexer, expr rel.Expr) (rel.Expr, error) {
-	for l.Scan(Token('.')) {
-		if !l.Scan(IDENT, Token('&'), STRING, Token('*')) {
-			return nil, expecting(l, "after '.'", "ident", "string", "'*'")
-		}
-		if l.Token() == STRING {
-			expr = rel.NewDotExpr(expr, ParseArraiString(l.Lexeme()))
-		} else if l.Token() == Token('&') {
-			if !l.Scan(IDENT) {
-				return nil, expecting(l, "after '.&'-prefix", "ident")
-			}
-			expr = rel.NewDotExpr(expr, "&"+string(l.Lexeme()))
-		} else {
-			expr = rel.NewDotExpr(expr, string(l.Lexeme()))
-		}
-	}
-	return expr, nil
+func parseDotTail(v interface{}, expr rel.Expr) (rel.Expr, error) {
+	panic("not implemented")
+	// for v.Scan(Token('.')) {
+	// 	if !v.Scan(IDENT, Token('&'), STR, Token('*')) {
+	// 		return nil, expecting(v, "after '.'", "ident", "string", "'*'")
+	// 	}
+	// 	if v.Token() == STR {
+	// 		expr = rel.NewDotExpr(expr, ParseArraiString(v.Lexeme()))
+	// 	} else if v.Token() == Token('&') {
+	// 		if !v.Scan(IDENT) {
+	// 			return nil, expecting(v, "after '.&'-prefix", "ident")
+	// 		}
+	// 		expr = rel.NewDotExpr(expr, "&"+string(v.Lexeme()))
+	// 	} else {
+	// 		expr = rel.NewDotExpr(expr, string(v.Lexeme()))
+	// 	}
+	// }
+	// return expr, nil
 }
 
 // ParseAtom parses a single arrai value.
-func ParseAtom(l *Lexer) (rel.Expr, error) {
-	tok := l.Peek()
-	switch tok {
-	case NUMBER:
-		l.Scan()
-		return l.Value(), nil
+func ParseAtom(ast ast.Branch) rel.Expr {
+	panic("not implemented")
+	// tok := v.Peek()
+	// switch tok {
+	// case NUM:
+	// 	v.Scan()
+	// 	return v.Value(), nil
 
-	case IDENT:
-		l.Scan()
-		ident := string(l.Lexeme())
-		switch ident {
-		case "false":
-			return rel.False, nil
-		case "true":
-			return rel.True, nil
-		case "none":
-			return rel.None, nil
-		}
-		return rel.NewIdentExpr(ident), nil
+	// case IDENT:
+	// 	v.Scan()
+	// 	ident := string(v.Lexeme())
+	// 	switch ident {
+	// 	case "false":
+	// 		return rel.False, nil
+	// 	case "true":
+	// 		return rel.True, nil
+	// 	case "none":
+	// 		return rel.None, nil
+	// 	}
+	// 	return rel.NewIdentExpr(ident), nil
 
-	case STRING:
-		l.Scan()
-		return rel.NewString([]rune(ParseArraiString(l.Lexeme()))), nil
+	// case STR:
+	// 	v.Scan()
+	// 	return rel.NewString([]rune(ParseArraiString(v.Lexeme()))), nil
 
-	case Token('('):
-		return parseTupleOrExpr(l)
+	// case Token('('):
+	// 	return parseTupleOrExpr(ast)
 
-	case Token('{'):
-		return parseSetOrRel(l)
+	// case Token('{'):
+	// 	return parseSetOrRel(ast)
 
-	case Token('['):
-		return parseArray(l)
+	// case Token('['):
+	// 	return parseArray(ast)
 
-	case Token('<'):
-		return parseXML(l, newXMLContext())
+	// case Token('<'):
+	// 	return parseXML(v, newXMLContext())
 
-	case Token('.'):
-		l.Scan()
-		var expr rel.Expr = rel.NewIdentExpr(".")
-		if l.Scan(IDENT, Token('*')) {
-			expr = rel.NewDotExpr(expr, string(l.Lexeme()))
-		}
-		return expr, nil
+	// case Token('.'):
+	// 	v.Scan()
+	// 	var expr rel.Expr = rel.NewIdentExpr(".")
+	// 	if v.Scan(IDENT, Token('*')) {
+	// 		expr = rel.NewDotExpr(expr, string(v.Lexeme()))
+	// 	}
+	// 	return expr, nil
 
-	case PI:
-		l.Scan()
-		return rel.NewNumber(math.Pi), nil
+	// case PI:
+	// 	v.Scan()
+	// 	return rel.NewNumber(math.Pi), nil
 
-	case SQRT:
-		l.Scan()
-		expr, err := parseExpr(l)
-		if err != nil {
-			return nil, err
-		}
-		return rel.NewPowExpr(expr, rel.NewNumber(0.5)), nil
+	// case SQRT:
+	// 	v.Scan()
+	// 	expr, err := parseExpr(ast)
+	// 	if err != nil {
+	// 		return nil, err
+	// 	}
+	// 	return rel.NewPowExpr(expr, rel.NewNumber(0.5)), nil
 
-	case Token('\\'):
-		l.Scan()
-		if !l.Scan(IDENT, Token('-'), Token('.')) {
-			return nil, expecting(l, "after '\\'", "ident", "'-'")
-		}
-		arg := string(l.Lexeme())
-		body, err := parseExpr(l)
-		if err != nil {
-			return nil, err
-		}
-		return rel.NewFunction(arg, body), nil
+	// case Token('\\'):
+	// 	v.Scan()
+	// 	if !v.Scan(IDENT, Token('-'), Token('.')) {
+	// 		return nil, expecting(v, "after '\\'", "ident", "'-'")
+	// 	}
+	// 	arg := string(v.Lexeme())
+	// 	body, err := parseExpr(ast)
+	// 	if err != nil {
+	// 		return nil, err
+	// 	}
+	// 	return rel.NewFunction(arg, body), nil
 
-	case ERROR:
-		l.Failf("syntax error")
-		return nil, l.Error()
+	// case ERROR:
+	// 	v.Failf("syntax error")
+	// 	return nil, v.Error()
 
-	default:
-		return nil, noParse
-	}
+	// default:
+	// 	return nil, noParse
+	// }
 }
 
-func parseTupleOrExpr(l *Lexer) (rel.Expr, error) {
-	if l.Peek() != Token('(') {
-		return nil, expecting(l, "tuple or expr start", "'('")
-	}
+func parseTupleOrExpr(ast ast.Branch) rel.Expr {
+	panic("not implemented")
+	// if v.Peek() != Token('(') {
+	// 	return nil, expecting(v, "tuple or expr start", "'('")
+	// }
 
-	// copy the lexer and attempt to parse an expression
-	lcp := l.copy()
-	lcp.Scan()
+	// // copy the lexer and attempt to parse an expression
+	// lcp := v.copy()
+	// lcp.Scan()
 
-	// Check for empty tuple first
-	if lcp.Peek() == Token(')') {
-		l.Scan(Token('('))
-		l.Scan(Token(')'))
-		return rel.EmptyTuple, nil
-	}
+	// // Check for empty tuple first
+	// if lcp.Peek() == Token(')') {
+	// 	v.Scan(Token('('))
+	// 	v.Scan(Token(')'))
+	// 	return rel.EmptyTuple, nil
+	// }
 
-	_, err := parseExpr(lcp)
+	// _, err := parseExpr(lcp)
 
-	// Checks we have detected (<expr>)
-	// strings like 'a:a' pass the parseExpr, the extra ')' check makes sure the expression is actually wrapped
-	if err == nil && lcp.Peek() == Token(')') {
-		l.Scan()
+	// // Checks we have detected (<expr>)
+	// // strings like 'a:a' pass the parseExpr, the extra ')' check makes sure the expression is actually wrapped
+	// if err == nil && lcp.Peek() == Token(')') {
+	// 	v.Scan()
 
-		// errors should not occur, but this can detect flaws in the copy
-		expr, err := parseExpr(l)
-		if err != nil {
-			return nil, err
-		}
-		if !l.Scan(Token(')')) {
-			return nil, expecting(l, "after expr body", "')'")
-		}
-		return expr, nil
-	}
+	// 	// errors should not occur, but this can detect flaws in the copy
+	// 	expr, err := parseExpr(ast)
+	// 	if err != nil {
+	// 		return nil, err
+	// 	}
+	// 	if !v.Scan(Token(')')) {
+	// 		return nil, expecting(v, "after expr body", "')'")
+	// 	}
+	// 	return expr, nil
+	// }
 
-	// on error, attempt to parse as a tuple
-	return parseTuple(l)
+	// // on error, attempt to parse as a tuple
+	// return parseTuple(ast)
 }
 
-func parseTuple(l *Lexer) (rel.Expr, error) {
-	if !l.Scan(Token('(')) {
-		return nil, expecting(l, "tuple start", "'('")
-	}
-	attrs := []rel.AttrExpr{}
-tupleLoop:
-	for {
-		var name string
-		switch l.Peek() {
-		case Token(')'):
-			break tupleLoop
-		case STRING:
-			l.Scan()
-			name = ParseArraiString(l.Lexeme())
-		case IDENT:
-			l.Scan()
-			name = string(l.Lexeme())
-		case Token('&'):
-			l.Scan()
-			if !l.Scan(IDENT) {
-				return nil, expecting(l, "after '&'-prefix", "ident")
-			}
-			name = "&" + string(l.Lexeme())
-		}
-		expr, err := parseAttrExpr(l, name)
-		if err != nil {
-			return nil, err
-		}
-		attr, err := rel.NewAttrExpr(name, expr)
-		if err != nil {
-			return nil, err
-		}
-		attrs = append(attrs, attr)
-		if !l.Scan(Token(',')) {
-			break
-		}
-	}
-	if !l.Scan(Token(')')) {
-		return nil, expecting(l, "after tuple body", "')'")
-	}
-	return rel.NewTupleExpr(attrs...), nil
+func parseTuple(ast ast.Branch) rel.Expr {
+	panic("not implemented")
+	// 	if !v.Scan(Token('(')) {
+	// 		return nil, expecting(v, "tuple start", "'('")
+	// 	}
+	// 	attrs := []rel.AttrExpr{}
+	// tupleLoop:
+	// 	for {
+	// 		var name string
+	// 		switch v.Peek() {
+	// 		case Token(')'):
+	// 			break tupleLoop
+	// 		case STR:
+	// 			v.Scan()
+	// 			name = ParseArraiString(v.Lexeme())
+	// 		case IDENT:
+	// 			v.Scan()
+	// 			name = string(v.Lexeme())
+	// 		case Token('&'):
+	// 			v.Scan()
+	// 			if !v.Scan(IDENT) {
+	// 				return nil, expecting(v, "after '&'-prefix", "ident")
+	// 			}
+	// 			name = "&" + string(v.Lexeme())
+	// 		}
+	// 		expr, err := parseAttrExpr(v, name)
+	// 		if err != nil {
+	// 			return nil, err
+	// 		}
+	// 		attr, err := rel.NewAttrExpr(name, expr)
+	// 		if err != nil {
+	// 			return nil, err
+	// 		}
+	// 		attrs = append(attrs, attr)
+	// 		if !v.Scan(Token(',')) {
+	// 			break
+	// 		}
+	// 	}
+	// 	if !v.Scan(Token(')')) {
+	// 		return nil, expecting(v, "after tuple body", "')'")
+	// 	}
+	// 	return rel.NewTupleExpr(attrs...), nil
 }
 
-func parseSetOrRel(l *Lexer) (rel.Expr, error) {
-	if !l.Scan(Token('{')) {
-		return nil, expecting(l, "set beginning", "'{'")
-	}
-	names, err := parseNameList(l)
-	if err != nil {
-		return nil, err
-	}
-	if names != nil {
-		tuples := [][]rel.Expr{}
-		for l.Scan(Token('(')) {
-			exprs, err := parseExprCommaList(l, Token(')'), "')'", "after relation body")
-			if err != nil {
-				return nil, err
-			}
-			tuples = append(tuples, exprs)
-			if !l.Scan(Token(',')) {
-				break
-			}
-		}
-		if !l.Scan(Token('}')) {
-			return nil, expecting(l, "after set tuple", "'}'")
-		}
-		return rel.NewRelationExpr(names, tuples...)
-	}
-	elts, err := parseExprCommaList(l, Token('}'), "'}'", "after set body")
-	if err != nil {
-		return nil, err
-	}
-	return rel.NewSetExpr(elts...), nil
+func parseSetOrRel(ast ast.Branch) rel.Expr {
+	panic("not implemented")
+	// if !v.Scan(Token('{')) {
+	// 	return nil, expecting(v, "set beginning", "'{'")
+	// }
+	// names, err := parseNameList(ast)
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// if names != nil {
+	// 	tuples := [][]rel.Expr{}
+	// 	for v.Scan(Token('(')) {
+	// 		exprs, err := parseExprCommaList(v, Token(')'), "')'", "after relation body")
+	// 		if err != nil {
+	// 			return nil, err
+	// 		}
+	// 		tuples = append(tuples, exprs)
+	// 		if !v.Scan(Token(',')) {
+	// 			break
+	// 		}
+	// 	}
+	// 	if !v.Scan(Token('}')) {
+	// 		return nil, expecting(v, "after set tuple", "'}'")
+	// 	}
+	// 	return rel.NewRelationExpr(names, tuples...)
+	// }
+	// elts, err := parseExprCommaList(v, Token('}'), "'}'", "after set body")
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// return rel.NewSetExpr(elts...), nil
 }
 
-func parseArray(l *Lexer) (rel.Expr, error) {
-	l.Scan()
-	elts, err := parseExprCommaList(l, Token(']'), "']'", "after array body")
-	if err != nil {
-		return nil, err
-	}
-	return rel.NewArrayExpr(elts...), nil
-}
-
-func parseAttrExpr(l *Lexer, name string) (rel.Expr, error) {
-	if name != "" && !l.Scan(Token(':')) {
-		return nil, expecting(l, "after tuple name", "':'")
-	}
-	expr, err := parseExpr(l)
-	if err != nil {
-		return nil, err
-	}
-	if name == "" {
-		e := expr
-		for b, ok := e.(rel.LHSExpr); ok; b, ok = e.(rel.LHSExpr) {
-			e = b.LHS()
-		}
-		if dot, ok := e.(*rel.DotExpr); ok {
-			name = dot.Attr()
-		} else {
-			return nil, expecting(
-				l, "after omitted attr ident", "expr with ident LHS")
-		}
-	}
-	if name[:1] == "&" {
-		expr = rel.NewFunction("-", expr)
-	}
-	return expr, nil
-}
-
-func parseNameList(l *Lexer) ([]string, error) {
-	if !l.Scan(Token('|')) {
-		return nil, nil
-	}
-	// relation shorthand, e.g.: { |a,b| (1,2), (3,4) }
-	names := []string{}
-	for l.Scan(IDENT) {
-		names = append(names, string(l.Lexeme()))
-		if !l.Scan(Token(',')) {
-			break
-		}
-	}
-	if !l.Scan(Token('|')) {
-		return nil, expecting(l, "after name-list", "'|'")
-	}
-	return names, nil
+func parseAttrExpr(v interface{}, name string) (rel.Expr, error) {
+	panic("not implemented")
+	// if name != "" && !v.Scan(Token(':')) {
+	// 	return nil, expecting(v, "after tuple name", "':'")
+	// }
+	// expr, err := parseExpr(ast)
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// if name == "" {
+	// 	e := expr
+	// 	for b, ok := e.(rel.LHSExpr); ok; b, ok = e.(rel.LHSExpr) {
+	// 		e = b.LHS()
+	// 	}
+	// 	if dot, ok := e.(*rel.DotExpr); ok {
+	// 		name = dot.Attr()
+	// 	} else {
+	// 		return nil, expecting(
+	// 			v, "after omitted attr ident", "expr with ident LHS")
+	// 	}
+	// }
+	// if name[:1] == "&" {
+	// 	expr = rel.NewFunction("-", expr)
+	// }
+	// return expr, nil
 }
 
 type newBinOpFunc func(a, b rel.Expr) rel.Expr
 type newUnOpFunc func(e rel.Expr) rel.Expr
-
-func parseBinOp(
-	l *Lexer, ops map[Token]newBinOpFunc, next parseFunc,
-) (rel.Expr, error) {
-	a, err := next(l)
-	if err != nil {
-		return nil, err
-	}
-	return parseBinOpTail(a, l, ops, next)
-}
-
-func parseBinOpTail(
-	a rel.Expr, l *Lexer, ops map[Token]newBinOpFunc, next parseFunc,
-) (rel.Expr, error) {
-	for op, found := ops[l.Peek()]; found; op, found = ops[l.Peek()] {
-		l.Scan()
-		b, err := next(l)
-		if err != nil {
-			return nil, err
-		}
-		a = op(a, b)
-	}
-	return a, nil
-}
-
-func parsePrefixOp(
-	l *Lexer, ops map[Token]newUnOpFunc, next parseFunc,
-) (rel.Expr, error) {
-	if op, found := ops[l.Peek()]; found {
-		l.Scan()
-		rhs, err := parsePrefixOp(l, ops, next)
-		if err != nil {
-			return nil, err
-		}
-		return op(rhs), nil
-	}
-	return next(l)
-}
-
-func parseExprCommaList(
-	l *Lexer, delim Token, delimStr, context string,
-) ([]rel.Expr, error) {
-	elts := []rel.Expr{}
-	err := parseCommaList(l, delim, delimStr, context, func(l *Lexer) error {
-		elt, err := parseExpr(l)
-		if err != nil {
-			return err
-		}
-		elts = append(elts, elt)
-		return nil
-	})
-	return elts, err
-}
-
-func parseCommaList(
-	l *Lexer, delim Token, delimStr, context string, parse func(l *Lexer) error,
-) error {
-	var err error
-	if l.Scan(delim) {
-		return nil
-	}
-	for {
-		if err := parse(l); err != nil {
-			return err
-		}
-		if !l.Scan(Token(',')) {
-			break
-		}
-		if l.Scan(delim) {
-			return nil
-		}
-	}
-	if err != nil {
-		return err
-	}
-	if !l.Scan(delim) {
-		return expecting(l, context, delimStr)
-	}
-	return nil
-}
-
-func expecting(l *Lexer, context string, expected ...string) error {
-	var b bytes.Buffer
-	n := len(expected)
-	for i, x := range expected[:n-1] {
-		if i > 0 {
-			b.WriteString(", ")
-		}
-		b.WriteString(x)
-	}
-	if n > 0 {
-		if n > 2 {
-			b.WriteString(", or ") // Oxford comma
-		} else if n > 1 {
-			b.WriteString(" or ")
-		}
-		b.WriteString(expected[n-1])
-	}
-	l.Failf("Expected %s %s, not %q (%s)",
-		b.String(), context, l.Lexeme(), TokenRepr(l.Token()))
-	return l.Error()
-}

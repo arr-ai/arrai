@@ -55,7 +55,7 @@ const (
 	CSET    // |}
 	DARROW  // =>
 	GEQ     // >=
-	IDIV    // //
+	DSLASH  // //
 	JOIN    // <&>
 	LEQ     // <=
 	NEQ     // !=
@@ -97,7 +97,7 @@ var wideTokens = map[string]Token{
 	"|}":  CSET,
 	"=>":  DARROW,
 	">=":  GEQ,
-	"//":  IDIV,
+	"//":  DSLASH,
 	"<&>": JOIN,
 	"<=":  LEQ,
 	"!=":  NEQ,
@@ -474,8 +474,8 @@ var lexerOperatorsRe = tokRE(
 		`=>|` +
 		`>=|` +
 		`@>|` +
-		`{\||` +
-		`\|}|` +
+		`{[|:]|` +
+		`[|:]}|` +
 		`π|√|` +
 		`[-!%&()*+,./:<=>[\\\]^{|}~]`,
 )

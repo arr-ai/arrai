@@ -61,6 +61,7 @@ type Tuple interface {
 	// Access
 	Count() int
 	Get(name string) (Value, bool)
+	MustGet(name string) Value
 	HasName(name string) bool
 	Names() Names
 	Enumerator() AttrEnumerator

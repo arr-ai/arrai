@@ -27,6 +27,14 @@ func NewAttrExpr(name string, expr Expr) (AttrExpr, error) {
 	return AttrExpr{name, expr}, nil
 }
 
+func MustNewAttrExpr(name string, expr Expr) AttrExpr {
+	attrExpr, err := NewAttrExpr(name, expr)
+	if err != nil {
+		panic(err)
+	}
+	return attrExpr
+}
+
 // NewWildcardExpr constructs a new wildcard AttrExpr.
 func NewWildcardExpr(lhs Expr) AttrExpr {
 	return AttrExpr{"*", lhs}

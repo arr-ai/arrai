@@ -2,6 +2,7 @@ package rel
 
 import (
 	"fmt"
+	"log"
 	"math"
 
 	"github.com/go-errors/errors"
@@ -117,7 +118,7 @@ func NewIdivExpr(a, b Expr) Expr {
 
 // NewModExpr evaluates a % b, given two Numbers.
 func NewModExpr(a, b Expr) Expr {
-	return newArithExpr(a, b, "%", func(a, b float64) float64 {
+	return newArithExpr(a, b, "%%", func(a, b float64) float64 {
 		return math.Mod(a, b)
 	})
 }
@@ -166,6 +167,7 @@ func NewWhereExpr(a, pred Expr) Expr {
 			if x, ok := a.(Set); ok {
 				if p, ok := pred.(*Function); ok {
 					return x.Where(func(v Value) bool {
+						log.Print(v)
 						match, err := p.Call(v, local, global)
 						if err != nil {
 							panic(err)
@@ -202,57 +204,40 @@ func NewOrderExpr(a, key Expr) Expr {
 
 // NewCallExpr evaluates a without b, given a set lhs.
 func NewCallExpr(a, b Expr) Expr {
-	return newBinExpr(a, b, "call", "(%s %s)",
+	return newBinExpr(a, b, "call", "«%s»(%s)",
 		func(a, b Value, local, global *Scope) (Value, error) {
 			switch x := a.(type) {
-			case *Function:
+			case Closure:
 				return x.Call(b, local, global)
 			case *NativeFunction:
 				return x.Call(b, local, global)
 			case Set:
-				var match func(at Value) bool
-				multi := false
-				switch y := b.(type) {
-				case *String:
-					match = func(at Value) bool { return y.Equal(at) }
-				case Set:
-					match = func(at Value) bool { return y.Has(at) }
-					multi = true
-				default:
-					match = func(at Value) bool { return b.Equal(at) }
-				}
-
-				outs := None
+				var out Value
 				for e := x.Enumerator(); e.MoveNext(); {
 					if t, ok := e.Current().(Tuple); ok {
-						if v, found := t.Get("@"); found && match(v) {
+						// log.Printf("%v %v %[2]T %v %[3]T", t, t.MustGet("@"), b)
+						if v, found := t.Get("@"); found && b.Equal(v) {
+							if out != nil {
+								return nil, errors.Errorf("Too many items found")
+							}
 							if t.Count() != 2 {
 								return nil, errors.Errorf("Too many outputs")
 							}
 							rest := t.Without("@")
 							for e := rest.Enumerator(); e.MoveNext(); {
 								_, value := e.Current()
-								outs = outs.With(value)
+								out = value
 							}
 						}
 					}
 				}
-				if multi {
-					return outs, nil
+				if out == nil {
+					return nil, errors.Errorf("No items founds")
 				}
-				n := outs.Count()
-				if n != 1 {
-					if n == 0 {
-						return nil, errors.Errorf("No items founds")
-					}
-					return nil, errors.Errorf("Too many items found")
-				}
-				if e := outs.Enumerator(); e.MoveNext() {
-					return e.Current(), nil
-				}
+				return out, nil
 			}
 			return nil, errors.Errorf(
-				"call lhs must be a Function, not %T", a)
+				"call lhs must be a function, not %T", a)
 		})
 }
 

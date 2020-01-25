@@ -40,7 +40,7 @@ func NewNegExpr(a Expr) Expr {
 
 // NewPowerSetExpr evaluates to ^a.
 func NewPowerSetExpr(a Expr) Expr {
-	return newUnaryExpr(a, "^", "(^%s)",
+	return newUnaryExpr(a, "**", "(**%s)",
 		func(a Value, _, _ *Scope) (Value, error) {
 			if s, ok := a.(Set); ok {
 				return PowerSet(s), nil

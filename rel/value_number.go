@@ -1,6 +1,7 @@
 package rel
 
 import (
+	"reflect"
 	"strconv"
 
 	"github.com/arr-ai/hash"
@@ -42,9 +43,11 @@ func (n Number) Eval(local, global *Scope) (Value, error) {
 	return n, nil
 }
 
+var numberKind = registerKind(100, reflect.TypeOf(Number(0)))
+
 // Kind returns a number that is unique for each major kind of Value.
 func (n Number) Kind() int {
-	return 100
+	return numberKind
 }
 
 // Bool returns true iff the tuple has attributes.

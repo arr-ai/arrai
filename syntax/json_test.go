@@ -1,4 +1,4 @@
-package tests
+package syntax
 
 import (
 	"testing"
@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/arr-ai/arrai/rel"
-	"github.com/arr-ai/arrai/syntax"
+	"github.com/arr-ai/wbnf/parser"
 )
 
 func TestNumberJSON(t *testing.T) {
@@ -59,7 +59,7 @@ func TestMixedJSON(t *testing.T) {
 
 func TestXMLChildJSON(t *testing.T) {
 	t.Parallel()
-	value, err := syntax.Parse(syntax.NewStringLexer(`<abc><def/></abc>`))
+	value, err := Parse(parser.NewScanner(`<abc><def/></abc>`))
 	require.NoError(t, err)
 
 	assertJSON(t,

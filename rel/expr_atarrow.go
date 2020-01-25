@@ -12,8 +12,8 @@ type AtArrowExpr struct {
 	fn  *Function
 }
 
-// NewAtArrowExpr returns a new AtArrowExpr.
-func NewAtArrowExpr(lhs Expr, fn Expr) Expr {
+// NewAngleArrowExpr returns a new AtArrowExpr.
+func NewAngleArrowExpr(lhs Expr, fn Expr) Expr {
 	return &AtArrowExpr{lhs, ExprAsFunction(fn)}
 }
 
