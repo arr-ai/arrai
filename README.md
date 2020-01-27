@@ -9,43 +9,43 @@ The ultimate data engine.
 [Install Go](https://golang.org/doc/install), then:
 
 ```bash
-$ go get -u github.com/arr-ai/arrai/cmd/arrai
-$ arrai -h
+go get -v -u github.com/arr-ai/arrai/cmd/arrai
+arrai -h
 ```
 
 ### Evaluate an expression
 
 ```bash
-$ arrai eval '41 + 1'
+arrai eval '41 + 1'
 ```
 
 ### Transform a stream of values
 
 ```bash
-$ echo {0..10} | arrai transform '2^.'
+echo {0..10} | arrai transform '2^.'
 ```
 
 Use `ax` as shorthand for `arrai transform`:
 
 ```bash
-$ ln -s arrai "$GOPATH/bin/ax"
-$ echo {0..10} | ax '2^.'
+ln -s arrai "$GOPATH/bin/ax"
+echo {0..10} | ax '2^.'
 ```
 
 ### Start a server
 
 ```bash
-$ arrai serve --listen localhost
+arrai serve --listen localhost
 ```
 
 ### Observe a server
 
 ```bash
-$ arrai observe localhost '$'
+arrai observe localhost '$'
 ```
 
 ### Update a server
 
 ```bash
-$ arrai update localhost '{a: {|1, 2, 3|}, b: "hello"}'
+arrai update localhost '{a: {|1, 2, 3|}, b: "hello"}'
 ```
