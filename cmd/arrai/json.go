@@ -8,10 +8,10 @@ import (
 
 	"github.com/arr-ai/arrai/translate"
 	"github.com/sirupsen/logrus"
-	"github.com/urfave/cli"
+	"github.com/urfave/cli/v2"
 )
 
-var jsonCommand = cli.Command{
+var jsonCommand = &cli.Command{
 	Name:      "json",
 	Aliases:   []string{"jx"},
 	Usage:     "Convert json to arrai",

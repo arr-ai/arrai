@@ -18,16 +18,16 @@ import (
 	"github.com/go-errors/errors"
 	"github.com/rjeczalik/notify"
 	log "github.com/sirupsen/logrus"
-	"github.com/urfave/cli"
+	"github.com/urfave/cli/v2"
 	"google.golang.org/grpc"
 )
 
-var syncCommand = cli.Command{
+var syncCommand = &cli.Command{
 	Name:    "sync",
 	Aliases: []string{"s"},
 	Usage:   "sync local files to a server",
 	Flags: []cli.Flag{
-		cli.StringFlag{
+		&cli.StringFlag{
 			Name:  "template",
 			Value: "%v",
 			Usage: "Template for command to send (%v denotes the content)",

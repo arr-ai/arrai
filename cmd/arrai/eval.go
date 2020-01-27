@@ -6,10 +6,10 @@ import (
 	"github.com/arr-ai/arrai/rel"
 	"github.com/arr-ai/arrai/syntax"
 	"github.com/arr-ai/wbnf/parser"
-	"github.com/urfave/cli"
+	"github.com/urfave/cli/v2"
 )
 
-var evalCommand = cli.Command{
+var evalCommand = &cli.Command{
 	Name:    "eval",
 	Aliases: []string{"e"},
 	Usage:   "evaluate an arrai expression",

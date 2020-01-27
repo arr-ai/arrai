@@ -5,11 +5,11 @@ import (
 
 	pb "github.com/arr-ai/proto"
 	"github.com/sirupsen/logrus"
-	"github.com/urfave/cli"
+	"github.com/urfave/cli/v2"
 	"google.golang.org/grpc"
 )
 
-var updateCommand = cli.Command{
+var updateCommand = &cli.Command{
 	Name:    "update",
 	Aliases: []string{"u"},
 	Usage:   "update a server with an expression",

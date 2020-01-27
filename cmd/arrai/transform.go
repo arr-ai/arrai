@@ -1,10 +1,10 @@
 package main
 
 import (
-	"github.com/urfave/cli"
+	"github.com/urfave/cli/v2"
 )
 
-var transformCommand = cli.Command{
+var transformCommand = &cli.Command{
 	Name:    "transform",
 	Aliases: []string{"x"},
 	Usage:   "transform a stream of input data with an expression",

@@ -7,11 +7,11 @@ import (
 	"github.com/arr-ai/arrai/rel"
 	pb "github.com/arr-ai/proto"
 	"github.com/sirupsen/logrus"
-	"github.com/urfave/cli"
+	"github.com/urfave/cli/v2"
 	"google.golang.org/grpc"
 )
 
-var observeCommand = cli.Command{
+var observeCommand = &cli.Command{
 	Name:    "observe",
 	Aliases: []string{"o"},
 	Usage:   "observe an expression on a server",

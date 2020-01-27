@@ -5,7 +5,7 @@ import (
 	"path"
 
 	"github.com/sirupsen/logrus"
-	"github.com/urfave/cli"
+	"github.com/urfave/cli/v2"
 )
 
 func main() {
@@ -22,7 +22,7 @@ func main() {
 		app.Name = "arrai"
 		app.Usage = "the ultimate data engine"
 
-		app.Commands = []cli.Command{
+		app.Commands = []*cli.Command{
 			evalCommand,
 			jsonCommand,
 			observeCommand,
