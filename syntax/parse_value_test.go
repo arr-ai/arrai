@@ -10,13 +10,13 @@ import (
 )
 
 func assertParse(t *testing.T, expected rel.Value, input string) bool { //nolint:unparam
-	value, err := Parse(parser.NewScanner(input))
+	value, err := Parse(parser.NewScanner(input), "")
 	return assert.NoError(t, err) &&
 		assert.True(t, expected.Equal(value), "%s == \n%s", expected, value)
 }
 
 func assertParseError(t *testing.T, input string) bool {
-	value, err := Parse(parser.NewScanner(input))
+	value, err := Parse(parser.NewScanner(input), "")
 	return !assert.Error(t, err) &&
 		assert.Fail(t, "expected error, got value", "%s", value)
 }

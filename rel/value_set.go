@@ -166,7 +166,7 @@ func (s *genericSet) String() string {
 }
 
 // Eval returns the set.
-func (s *genericSet) Eval(local, global *Scope) (Value, error) {
+func (s *genericSet) Eval(local, global Scope) (Value, error) {
 	return s, nil
 }
 

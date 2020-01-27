@@ -9,14 +9,14 @@ import (
 )
 
 // EmptyScope is the scope with no variables.
-var EmptyScope = &Scope{}
+var EmptyScope Scope
 
 // Scope represents an expression scope.
 type Scope struct {
 	m frozen.Map
 }
 
-func (s *Scope) String() string {
+func (s Scope) String() string {
 	var buf bytes.Buffer
 	buf.WriteRune('{')
 	for i, name := range s.orderedNames() {
@@ -27,8 +27,7 @@ func (s *Scope) String() string {
 		buf.WriteString(": ")
 		expr, found := s.Get(name)
 		if !found {
-			panic(errors.Errorf(
-				"Scope iteration produced name %v, which fails lookup", name))
+			panic(errors.Errorf("Scope iteration produced name %v, which fails lookup", name))
 		}
 		if expr != nil {
 			buf.WriteString(expr.String())
@@ -41,7 +40,7 @@ func (s *Scope) String() string {
 }
 
 // Eval evaluates an expression in a given symbol environment.
-func (s *Scope) Eval(local, global *Scope) (Value, error) {
+func (s Scope) Eval(local, global Scope) (Value, error) {
 	tuple := NewTuple()
 	for e := s.Enumerator(); e.MoveNext(); {
 		name, expr := e.Current()
@@ -55,12 +54,12 @@ func (s *Scope) Eval(local, global *Scope) (Value, error) {
 }
 
 // Count returns the number of variables in this Scope.
-func (s *Scope) Count() int {
+func (s Scope) Count() int {
 	return s.m.Count()
 }
 
 // Get returns the Expr for the given name or nil.
-func (s *Scope) Get(name string) (Expr, bool) {
+func (s Scope) Get(name string) (Expr, bool) {
 	if expr, found := s.m.Get(name); found {
 		if expr != nil {
 			return expr.(Expr), true
@@ -72,19 +71,19 @@ func (s *Scope) Get(name string) (Expr, bool) {
 
 // With returns a new scope with all the old bindings and a new or replacement
 // binding for the given name to the given Expr.
-func (s *Scope) With(name string, expr Expr) *Scope {
-	return &Scope{s.m.With(name, expr)}
+func (s Scope) With(name string, expr Expr) Scope {
+	return Scope{s.m.With(name, expr)}
 }
 
 // Project returns a new scope with just names from the input scope.
-func (s *Scope) Project(names Names) (*Scope, error) {
+func (s Scope) Project(names Names) (Scope, error) {
 	result := EmptyScope
 	for e := names.Enumerator(); e.MoveNext(); {
 		name := e.Current()
 		if expr, found := s.Get(name); found {
 			result = result.With(name, expr)
 		} else {
-			return nil, errors.Errorf(
+			return Scope{}, errors.Errorf(
 				"name %q not found in scope.Project", name)
 		}
 	}
@@ -92,7 +91,7 @@ func (s *Scope) Project(names Names) (*Scope, error) {
 }
 
 // Names returns the attribute names as a slice.
-func (s *Scope) Names() []string {
+func (s Scope) Names() []string {
 	names := make([]string, s.Count())
 	i := 0
 	for e := s.Enumerator(); e.MoveNext(); {
@@ -103,12 +102,12 @@ func (s *Scope) Names() []string {
 }
 
 // Enumerator returns an enumerator over the Values in the Scope.
-func (s *Scope) Enumerator() *ScopeEnumerator {
+func (s Scope) Enumerator() *ScopeEnumerator {
 	return &ScopeEnumerator{i: s.m.Range()}
 }
 
 // orderedNames returns the names of this tuple in sorted order.
-func (s *Scope) orderedNames() []string {
+func (s Scope) orderedNames() []string {
 	names := s.Names()
 	sort.Strings(names)
 	return names
@@ -120,12 +119,12 @@ type ScopeEnumerator struct {
 }
 
 // MoveNext moves the enumerator to the next Value.
-func (e *ScopeEnumerator) MoveNext() bool {
+func (e ScopeEnumerator) MoveNext() bool {
 	return e.i.Next()
 }
 
 // Current returns the enumerator's current Value.
-func (e *ScopeEnumerator) Current() (string, Expr) {
+func (e ScopeEnumerator) Current() (string, Expr) {
 	name, expr := e.i.Entry()
 	return name.(string), expr.(Expr)
 }

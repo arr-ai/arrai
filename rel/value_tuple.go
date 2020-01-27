@@ -165,7 +165,7 @@ func (t *GenericTuple) String() string {
 }
 
 // Eval returns the tuple.
-func (t *GenericTuple) Eval(local, global *Scope) (Value, error) {
+func (t *GenericTuple) Eval(local, global Scope) (Value, error) {
 	return t, nil
 }
 

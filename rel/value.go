@@ -13,7 +13,7 @@ type Expr interface {
 	fmt.Stringer
 
 	// Eval evaluates the expr in a given scope.
-	Eval(local, global *Scope) (Value, error)
+	Eval(local, global Scope) (Value, error)
 }
 
 // Value represents any arr.ai value.

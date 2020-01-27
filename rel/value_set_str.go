@@ -1,7 +1,6 @@
 package rel
 
 import (
-	"encoding/json"
 	"reflect"
 )
 
@@ -60,15 +59,11 @@ func (s String) Equal(v interface{}) bool {
 
 // String returns a string representation of a String.
 func (s String) String() string {
-	j, err := json.Marshal(string(s.s))
-	if err != nil {
-		panic(err)
-	}
-	return string(j)
+	return string(s.s)
 }
 
 // Eval returns the string.
-func (s String) Eval(_, _ *Scope) (Value, error) {
+func (s String) Eval(_, _ Scope) (Value, error) {
 	return s, nil
 }
 

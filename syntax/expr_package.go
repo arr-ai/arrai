@@ -1,21 +1,23 @@
-package rel
+package syntax
 
 import (
 	"fmt"
+
+	"github.com/arr-ai/arrai/rel"
 )
 
 // PackageExpr represents a range of operators.
 type PackageExpr struct {
-	a Expr
+	a rel.Expr
 }
 
 // NewPackageExpr evaluates to !a.
-func NewPackageExpr(a Expr) Expr {
+func NewPackageExpr(a rel.Expr) rel.Expr {
 	return PackageExpr{a: a}
 }
 
 // Arg returns the PackageExpr's arg.
-func (e PackageExpr) Arg() Expr {
+func (e PackageExpr) Arg() rel.Expr {
 	return e.a
 }
 
@@ -25,6 +27,6 @@ func (e PackageExpr) String() string {
 }
 
 // Eval returns the subject
-func (e PackageExpr) Eval(_, _ *Scope) (Value, error) {
-	return e.a.Eval(stdScope, EmptyScope)
+func (e PackageExpr) Eval(_, _ rel.Scope) (rel.Value, error) {
+	return e.a.Eval(stdScope, rel.EmptyScope)
 }

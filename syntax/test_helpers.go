@@ -11,12 +11,12 @@ import (
 
 // AssertCodesEvalToSameValue asserts that code evaluate to the same value as
 // expected.
-func AssertCodesEvalToSameValue(t *testing.T, expected string, code string) bool {
-	expectedExpr, err := Parse(parser.NewScanner(expected))
+func AssertCodesEvalToSameValue(t *testing.T, expected, code string) bool {
+	expectedExpr, err := Parse(parser.NewScanner(expected), "..")
 	if !assert.NoError(t, err, "parsing expected: %s", expected) {
 		return false
 	}
-	codeExpr, err := Parse(parser.NewScanner(code))
+	codeExpr, err := Parse(parser.NewScanner(code), "..")
 	if !assert.NoError(t, err, "parsing code: %s", code) {
 		return false
 	}
@@ -30,9 +30,9 @@ func AssertCodesEvalToSameValue(t *testing.T, expected string, code string) bool
 // RequireCodesEvalToSameValue requires that code evaluate to the same value as
 // expected.
 func RequireCodesEvalToSameValue(t *testing.T, expected string, code string) {
-	expectedExpr, err := Parse(parser.NewScanner(expected))
+	expectedExpr, err := Parse(parser.NewScanner(expected), "..")
 	require.NoError(t, err)
-	codeExpr, err := Parse(parser.NewScanner(code))
+	codeExpr, err := Parse(parser.NewScanner(code), "..")
 	require.NoError(t, err)
 	rel.AssertExprsEvalToSameValue(t, expectedExpr, codeExpr)
 }

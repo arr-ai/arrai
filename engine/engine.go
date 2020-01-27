@@ -144,7 +144,7 @@ type watcher struct {
 	onclose  func(error)
 }
 
-func (w *watcher) update(global *rel.Scope) {
+func (w *watcher) update(global rel.Scope) {
 	defer func() {
 		if err := recover(); err != nil {
 			w.onclose(errors.WrapPrefix(err, "update panic", 0))

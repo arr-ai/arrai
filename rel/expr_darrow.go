@@ -33,7 +33,7 @@ func (e *DArrowExpr) String() string {
 }
 
 // Eval returns the lhs transformed elementwise by fn.
-func (e *DArrowExpr) Eval(local, global *Scope) (Value, error) {
+func (e *DArrowExpr) Eval(local, global Scope) (Value, error) {
 	value, err := e.lhs.Eval(local, global)
 	if err != nil {
 		return nil, err

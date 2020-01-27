@@ -135,7 +135,7 @@ func (e *ReduceExpr) String() string {
 }
 
 // Eval returns the subject
-func (e *ReduceExpr) Eval(local, global *Scope) (Value, error) {
+func (e *ReduceExpr) Eval(local, global Scope) (Value, error) {
 	a, err := e.a.Eval(local, global)
 	if err != nil {
 		return nil, err

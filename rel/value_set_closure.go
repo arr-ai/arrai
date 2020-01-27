@@ -8,12 +8,12 @@ import (
 
 // Closure represents the closure of a function over a scope.
 type Closure struct {
-	scope *Scope
+	scope Scope
 	f     *Function
 }
 
 // NewFunction returns a new function.
-func NewClosure(scope *Scope, f *Function) Value {
+func NewClosure(scope Scope, f *Function) Value {
 	return Closure{scope: scope, f: f}
 }
 
@@ -42,7 +42,7 @@ func (c Closure) String() string {
 }
 
 // Eval returns the Value
-func (c Closure) Eval(local, global *Scope) (Value, error) {
+func (c Closure) Eval(local, global Scope) (Value, error) {
 	return c, nil
 }
 
@@ -74,17 +74,17 @@ func (c Closure) Negate() Value {
 // Export exports a Closure.
 func (c Closure) Export() interface{} {
 	if c.f.arg == "-" {
-		return func(_ Value, local *Scope, global *Scope) (Value, error) {
+		return func(_ Value, local Scope, global Scope) (Value, error) {
 			return c.Call(None, local, global)
 		}
 	}
-	return func(e Value, local *Scope, global *Scope) (Value, error) {
+	return func(e Value, local Scope, global Scope) (Value, error) {
 		return c.f.body.Eval(local.With(c.f.arg, e), global)
 	}
 }
 
 // Call calls the Closure with the given parameter.
-func (c Closure) Call(expr Expr, local, global *Scope) (Value, error) {
+func (c Closure) Call(expr Expr, local, global Scope) (Value, error) {
 	niladic := c.f.arg == "-"
 	noArg := expr == nil
 	if niladic != noArg {

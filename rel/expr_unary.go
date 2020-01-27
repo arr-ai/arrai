@@ -6,7 +6,7 @@ import (
 	"github.com/go-errors/errors"
 )
 
-type unaryEval func(a Value, local, global *Scope) (Value, error)
+type unaryEval func(a Value, local, global Scope) (Value, error)
 
 // UnaryExpr represents a range of operators.
 type UnaryExpr struct {
@@ -23,7 +23,7 @@ func newUnaryExpr(a Expr, op, format string, eval unaryEval) Expr {
 // NewPosExpr evaluates to a.
 func NewPosExpr(a Expr) Expr {
 	return newUnaryExpr(a, "+", "(+%s)",
-		func(a Value, _, _ *Scope) (Value, error) {
+		func(a Value, _, _ Scope) (Value, error) {
 			return a, nil
 		},
 	)
@@ -32,7 +32,7 @@ func NewPosExpr(a Expr) Expr {
 // NewNegExpr evaluates to -a.
 func NewNegExpr(a Expr) Expr {
 	return newUnaryExpr(a, "-", "(-%s)",
-		func(a Value, _, _ *Scope) (Value, error) {
+		func(a Value, _, _ Scope) (Value, error) {
 			return a.Negate(), nil
 		},
 	)
@@ -41,7 +41,7 @@ func NewNegExpr(a Expr) Expr {
 // NewPowerSetExpr evaluates to ^a.
 func NewPowerSetExpr(a Expr) Expr {
 	return newUnaryExpr(a, "**", "(**%s)",
-		func(a Value, _, _ *Scope) (Value, error) {
+		func(a Value, _, _ Scope) (Value, error) {
 			if s, ok := a.(Set); ok {
 				return PowerSet(s), nil
 			}
@@ -53,7 +53,7 @@ func NewPowerSetExpr(a Expr) Expr {
 // NewNotExpr evaluates to !a.
 func NewNotExpr(a Expr) Expr {
 	return newUnaryExpr(a, "!", "(!%s)",
-		func(a Value, _, _ *Scope) (Value, error) {
+		func(a Value, _, _ Scope) (Value, error) {
 			return NewBool(!a.Bool()), nil
 		})
 }
@@ -61,7 +61,7 @@ func NewNotExpr(a Expr) Expr {
 // NewEvalExpr evaluates to *a, given a set lhs.
 func NewEvalExpr(a Expr) Expr {
 	return newUnaryExpr(a, "*", "(*%s)",
-		func(a Value, local, global *Scope) (Value, error) {
+		func(a Value, local, global Scope) (Value, error) {
 			if x, ok := a.(*Function); ok {
 				return x.Call(None, local, global)
 			}
@@ -72,7 +72,7 @@ func NewEvalExpr(a Expr) Expr {
 // NewCountExpr evaluates to the number of elements in a.
 func NewCountExpr(a Expr) Expr {
 	return newUnaryExpr(a, "count", "(%s count)",
-		func(a Value, local, global *Scope) (Value, error) {
+		func(a Value, local, global Scope) (Value, error) {
 			if x, ok := a.(Set); ok {
 				return NewNumber(float64(x.Count())), nil
 			}
@@ -91,7 +91,7 @@ func (e *UnaryExpr) String() string {
 }
 
 // Eval returns the subject
-func (e *UnaryExpr) Eval(local, global *Scope) (Value, error) {
+func (e *UnaryExpr) Eval(local, global Scope) (Value, error) {
 	a, err := e.a.Eval(local, global)
 	if err != nil {
 		return nil, err

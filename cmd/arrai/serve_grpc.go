@@ -48,7 +48,7 @@ func (s *arraiServer) Update(stream pb.Arrai_UpdateServer) error {
 			return err
 		}
 		logrus.Infof("req.Expr: %s", req.Expr)
-		expr, err := syntax.Parse(parser.NewScanner(req.Expr))
+		expr, err := syntax.Parse(parser.NewScanner(req.Expr), "-")
 		if err != nil {
 			logrus.Errorf("Error in arraiServer.Update: %v", err)
 			return err
@@ -69,7 +69,7 @@ func (s *arraiServer) Update(stream pb.Arrai_UpdateServer) error {
 func (s *arraiServer) Observe(
 	req *pb.ObserveReq, stream pb.Arrai_ObserveServer,
 ) error {
-	expr, err := syntax.Parse(parser.NewScanner(req.Expr))
+	expr, err := syntax.Parse(parser.NewScanner(req.Expr), "")
 	if err != nil {
 		return err
 	}

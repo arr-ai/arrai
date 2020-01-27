@@ -35,7 +35,7 @@ func (e *IfElseExpr) String() string {
 }
 
 // Eval returns the ifTrue
-func (e *IfElseExpr) Eval(local, global *Scope) (Value, error) {
+func (e *IfElseExpr) Eval(local, global Scope) (Value, error) {
 	cond, err := e.cond.Eval(local, global)
 	if err != nil {
 		return nil, err

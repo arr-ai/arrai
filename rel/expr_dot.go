@@ -35,7 +35,7 @@ func (e *DotExpr) String() string {
 }
 
 // Eval returns the lhs
-func (e *DotExpr) Eval(local, global *Scope) (Value, error) {
+func (e *DotExpr) Eval(local, global Scope) (Value, error) {
 	if e.attr == "*" {
 		return nil, errors.Errorf("expr.* not allowed outside tuple attr")
 	}

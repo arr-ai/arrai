@@ -24,3 +24,7 @@ require (
 	google.golang.org/grpc v1.26.0
 	gopkg.in/yaml.v2 v2.2.8 // indirect
 )
+
+replace github.com/arr-ai/wbnf => ../wbnf
+
+replace github.com/arr-ai/frozen => ../frozen

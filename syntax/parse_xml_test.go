@@ -22,7 +22,7 @@ func TestParseXMLTrivialWithEndTag(t *testing.T) {
 
 func TestParseXMLTrivialWithMismatchedEndTags(t *testing.T) {
 	t.Parallel()
-	value, err := Parse(parser.NewScanner("<a></ab>"))
+	value, err := Parse(parser.NewScanner("<a></ab>"), "")
 	assert.Error(t, err, "%s", value)
 }
 

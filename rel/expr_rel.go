@@ -7,7 +7,7 @@ import (
 // NewJoinExpr evaluates a <&> b.
 func NewJoinExpr(a, b Expr) Expr {
 	return newBinExpr(a, b, "<&>", "(%s <&> %s)",
-		func(a, b Value, _, _ *Scope) (Value, error) {
+		func(a, b Value, _, _ Scope) (Value, error) {
 			if x, ok := a.(Set); ok {
 				if y, ok := b.(Set); ok {
 					return Join(x, y), nil

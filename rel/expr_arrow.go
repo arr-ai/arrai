@@ -34,7 +34,7 @@ func (e *ArrowExpr) String() string {
 }
 
 // Eval returns the lhs
-func (e *ArrowExpr) Eval(local, global *Scope) (Value, error) {
+func (e *ArrowExpr) Eval(local, global Scope) (Value, error) {
 	value, err := e.lhs.Eval(local, global)
 	if err != nil {
 		return nil, err

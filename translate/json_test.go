@@ -7,13 +7,14 @@ import (
 	"github.com/arr-ai/arrai/rel"
 	"github.com/arr-ai/arrai/syntax"
 	"github.com/arr-ai/arrai/translate"
+	"github.com/arr-ai/wbnf/parser"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 // AssertExpectedTranslation asserts that the translated value is the same as the expected string
 func AssertExpectedTranslation(t *testing.T, expected string, value rel.Value) bool {
-	expectedExpr, err := syntax.Parse(syntax.NewStringLexer(expected))
+	expectedExpr, err := syntax.Parse(parser.NewScanner(expected), "")
 	if !assert.NoError(t, err, "parsing expected: %s", expected) {
 		return false
 	}

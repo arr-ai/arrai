@@ -59,7 +59,7 @@ func TestMixedJSON(t *testing.T) {
 
 func TestXMLChildJSON(t *testing.T) {
 	t.Parallel()
-	value, err := Parse(parser.NewScanner(`<abc><def/></abc>`))
+	value, err := Parse(parser.NewScanner(`<abc><def/></abc>`), "")
 	require.NoError(t, err)
 
 	assertJSON(t,

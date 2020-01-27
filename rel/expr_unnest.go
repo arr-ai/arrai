@@ -33,7 +33,7 @@ func (e *UnnestExpr) String() string {
 }
 
 // Eval returns e.lhs with e.attrs grouped under e.attr.
-func (e *UnnestExpr) Eval(local, global *Scope) (Value, error) {
+func (e *UnnestExpr) Eval(local, global Scope) (Value, error) {
 	value, err := e.lhs.Eval(local, global)
 	if err != nil {
 		return nil, err

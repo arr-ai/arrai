@@ -19,12 +19,12 @@ var evalCommand = &cli.Command{
 func eval(c *cli.Context) error {
 	source := c.Args().Get(0)
 
-	expr, err := syntax.Parse(parser.NewScanner(source))
+	expr, err := syntax.Parse(parser.NewScanner(source), ".")
 	if err != nil {
 		return err
 	}
 
-	global := &rel.Scope{}
+	global := rel.Scope{}
 	value, err := expr.Eval(global, global)
 	if err != nil {
 		return err

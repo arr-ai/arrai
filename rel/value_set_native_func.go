@@ -14,13 +14,13 @@ type NativeFunction struct {
 }
 
 // NewNativeFunction returns a new function.
-func NewNativeFunction(name string, fn func(Value) Value) Expr {
-	return &NativeFunction{name, fn}
+func NewNativeFunction(name string, fn func(Value) Value) Value {
+	return &NativeFunction{"⦑" + name + "⦒", fn}
 }
 
 // NewNativeFunction returns a new function.
-func NewNativeFunctionAttrExpr(name string, fn func(Value) Value) AttrExpr {
-	return MustNewAttrExpr(name, NewNativeFunction(name, fn))
+func NewNativeFunctionAttr(name string, fn func(Value) Value) Attr {
+	return NewAttr(name, NewNativeFunction(name, fn))
 }
 
 // Name returns a native function's name.
@@ -52,7 +52,7 @@ func (f *NativeFunction) String() string {
 }
 
 // Eval returns the Value
-func (f *NativeFunction) Eval(local, global *Scope) (Value, error) {
+func (f *NativeFunction) Eval(local, global Scope) (Value, error) {
 	return f, nil
 }
 
@@ -87,7 +87,7 @@ func (f *NativeFunction) Export() interface{} {
 }
 
 // Call calls the NativeFunction with the given parameter.
-func (f *NativeFunction) Call(expr Expr, local, global *Scope) (Value, error) {
+func (f *NativeFunction) Call(expr Expr, local, global Scope) (Value, error) {
 	if expr == nil {
 		return nil, errors.Errorf("missing function arg")
 	}
