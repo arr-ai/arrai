@@ -58,6 +58,19 @@ func TestParseSet(t *testing.T) {
 	), `{1, {3, 4}, 2}`)
 }
 
+func TestParseArray(t *testing.T) {
+	t.Parallel()
+	assertParse(t, rel.NewArray(), `[]`)
+	assertParse(t, rel.NewArray(), `false`)
+	assertParse(t, rel.NewArray(rel.NewNumber(1)), `[1]`)
+	assertParse(t, rel.NewArray(rel.NewNumber(1), rel.NewNumber(2)), `[1,2]`)
+	assertParse(t, rel.NewArray(
+		rel.NewNumber(1),
+		rel.NewArray(rel.NewNumber(3), rel.NewNumber(4)),
+		rel.NewNumber(2),
+	), `[1, [3, 4], 2]`)
+}
+
 func TestParseMixed(t *testing.T) {
 	t.Parallel()
 	assertParse(t, rel.NewTuple(

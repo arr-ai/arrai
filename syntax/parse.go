@@ -171,7 +171,15 @@ func (p *parse) parseExpr(b ast.Branch) rel.Expr {
 		}
 		return result
 	case "set":
-		return rel.NewSetExpr(p.parseExprs(c.(ast.One).Node.(ast.Branch)["elt"].(ast.Many)...)...)
+		if elts := c.(ast.One).Node.(ast.Branch)["elt"]; elts != nil {
+			return rel.NewSetExpr(p.parseExprs(elts.(ast.Many)...)...)
+		}
+		return rel.NewSetExpr()
+	case "array":
+		if items := c.(ast.One).Node.(ast.Branch)["item"]; items != nil {
+			return rel.NewArrayExpr(p.parseExprs(items.(ast.Many)...)...)
+		}
+		return rel.NewArray()
 	case "fn":
 		ident := b.MustOne("IDENT")
 		expr := p.parseExpr(b.MustOne("expr").(ast.Branch))
