@@ -46,7 +46,7 @@ expr    -> amp="&"* @ arrow=(nest | unnest | ARROW @)*
          | "//" pkg=( "." ("/" local=IDENT)+
                     | "." std=IDENT?
                     | http="http://"? fqdn=IDENT:"." ("/" path=IDENT)*
-					)
+                    )
          | "(" tuple=(pairs=(k=IDENT ":" v=@ | ":" vk=(@ "." k=IDENT)):",",?) ")"
          | "(" @ ")"
          | IDENT | STR | NUM;
