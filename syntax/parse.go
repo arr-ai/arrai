@@ -47,7 +47,7 @@ expr    -> amp="&"* @ arrow=(nest | unnest | ARROW @)*
                     | "." std=IDENT?
                     | http="http://"? fqdn=IDENT:"." ("/" path=IDENT)*
                     )
-         | "(" tuple=(k=IDENT ":" v=@ | ":" vk=(@ "." k=IDENT)):",",? ")"
+		 | "(" tuple=(pairs=(k=IDENT ":" v=@ | ":" vk=(@ "." k=IDENT)):",",?) ")"
          | "(" @ ")"
          | IDENT | STR | NUM;
 nest    -> "nest" names IDENT;
@@ -226,7 +226,11 @@ func (p *parse) parseExpr(b ast.Branch) rel.Expr {
 			return NewPackageExpr(rel.DotIdent)
 		}
 	case "tuple":
-		entries := c.(ast.Many)
+		pairs := c.(ast.One).Node.(ast.Branch)["pairs"]
+		if pairs == nil {
+			return rel.EmptyTuple
+		}
+		entries := pairs.(ast.Many)
 		attrs := make([]rel.AttrExpr, 0, len(entries))
 		for _, entry := range entries {
 			k := entry.MustOne("k").(ast.Leaf).Scanner().String()
@@ -507,3 +511,41 @@ func parseAttrExpr(v interface{}, name string) (rel.Expr, error) {
 
 type newBinOpFunc func(a, b rel.Expr) rel.Expr
 type newUnOpFunc func(e rel.Expr) rel.Expr
+
+//(
+// 	@rule: expr,
+// 	expr: (
+// 	  '': [0‣"(", 4‣")"],
+// 	  @choice: [1, 7],
+// 	  @skip: 13,
+// 	  tuple: [(
+// 		'': 2‣":",
+// 		@choice: [0],
+// 		k: 1‣a,
+// 		v: (
+// 		  @choice: [1, 11],
+// 		  @skip: 14,
+// 		  NUM: 3‣1,
+// 		),
+// 	  )],
+// 	),
+//)
+
+//(
+// 	@rule: expr,
+// 	expr: (
+// 	  '': [0‣"(", 4‣")"],
+// 	  @choice: [1, 7],
+// 	  @skip: 13,
+// 	  tuple: (
+// 		'': [2‣":"],
+// 		@choice: [0],
+// 		k: [1‣a],
+// 		v: [(
+// 		  @choice: [1, 11],
+// 		  @skip: 14,
+// 		  NUM: 3‣1,
+// 		)],
+// 	  ),
+// 	),
+//)

@@ -32,17 +32,23 @@ func TestParseNumber(t *testing.T) {
 func TestParseTuple(t *testing.T) {
 	t.Parallel()
 	assertParse(t, rel.EmptyTuple, `()`)
-	assertParse(t,
-		rel.NewTuple(rel.Attr{Name: "a", Value: rel.NewNumber(1)}),
-		`("a":1)`)
 	assertParse(t, rel.NewTuple(
 		rel.Attr{Name: "a", Value: rel.NewNumber(1)},
-		rel.Attr{Name: "b", Value: rel.NewNumber(2)},
-	), `("a":1, "b": 2)`)
+	), `(a: 1)`)
 	assertParse(t, rel.NewTuple(
 		rel.Attr{Name: "a", Value: rel.NewNumber(1)},
 		rel.Attr{Name: "b", Value: rel.NewNumber(2)},
 	), `(a :1, b : 2)`)
+
+	// TODO: fix or discard, new grammar does not allow strings as keys, only IDENTs
+	//
+	// assertParse(t,
+	// 	rel.NewTuple(rel.Attr{Name: "a", Value: rel.NewNumber(1)}),
+	// 	`("a":1)`)
+	// assertParse(t, rel.NewTuple(
+	// 	rel.Attr{Name: "a", Value: rel.NewNumber(1)},
+	// 	rel.Attr{Name: "b", Value: rel.NewNumber(2)},
+	// ), `("a":1, "b": 2)`)
 }
 
 func TestParseSet(t *testing.T) {
