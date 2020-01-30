@@ -4,36 +4,58 @@
 
 ```bash
 $ arrai eval '41 + 1'
+42
 ```
+
 ### Evaluate count of string
 
 ```bash
 $ arrai eval '"123456789" count'
+9
 ```
 
-### Evaluate a stream of values
+### Evaluate a collection of values
+
 ```bash
 $ arrai eval '[1,2,3,4] @> .^2'
-$ arrai eval '{1,2,3,4} => .^2'
+[1,4,9,16]
 ```
 
-### Filter a stream of values
+```bash
+$ arrai eval '{1,2,3,4} => .^2'
+{1,4,9,16}
+```
+
+### Filter a collection of values
+
 ```bash
 $ arrai eval '{(a:1, b:2), (a:2, b:3), (a:2, b:4)} where .a=2'
+{(a:2, b:4)}
 ```
 
 ### Operations for filtering a stream of values
+
 ```bash
 $ arrai eval '{(a:1, b:2), (a:2, b:3), (a:2, b:4)} where .a=2 and .b=3'
-$ arrai eval '{(a:1, b:2), (a:2, b:3), (a:2, b:4)} where .a=2 or .b=4'
-$ arrai eval '{(a:1, b:2), (a:2, b:3), (a:2, b:4)} where .a!=2'
+{(a:2, b:3)}
 ```
 
-### Transform a stream of values
+```bash
+$ arrai eval '{(a:1, b:2), (a:2, b:3), (a:2, b:4)} where .a=2 or .b=4'
+{(a:2, b:3), (a:2, b:4)}
+```
+
+```bash
+$ arrai eval '{(a:1, b:2), (a:2, b:3), (a:2, b:4)} where .a!=2'
+{(a:1, b:2)}
+```
+
+### Apply a transform to inbound data
 
 ```bash
 $ echo {0..10} | arrai transform '2^.'
 ```
+
 Use `ax` as shorthand for `arrai transform`:
 
 ```bash
@@ -42,31 +64,70 @@ $ echo {0..10} | ax '2^.'
 ```
 
 ### Transform json and filter value from it
+
 Filter out value of `a` from json 
+
 ```bash
 $ echo '{"a": "hello", "b": "world"}'| arrai json | arrai x '."a"'
+"hello"
 ```
 
 ### Nest
-It collects all the b values grouped by the common a values. 
+
+Nest groups the given attributes into a nested relation, keys on the given key. 
 
 ```bash
-$ arrai eval '{ |a,b| (1,2), (1,3), (2, 4) } nest |b|nested-b'
+relation nest |attr1,attr2,...|key
 ```
-Examples:
+
+####Examples
+
+```bash
+$ arrai eval '{ |a,b| (1,2), (1,3), (2,4) } nest |b|nested-b'
+{(a: 1, nested-b:{(b: 2), (b: 3)}), (a: 2, nested-b: {(b: 4)})}
+```
+
 ```bash
 $ arrai eval '{ |a,b| (1,2), (2,3) } nest |b|nestb'
-$ arrai eval '{ |a,b,c| (1,2,3), (1,3,3), (1,2,2) } nest |b|nestb'
-$ arrai eval '{ |a,b,c| (1,2,3), (1,3,3), (1,2,2) } nest |b,c|nestbc'
+{(a: 1, nestb:{(b: 2)}), (a: 2, nestb:{(b: 3)})}
 ```
+
+```bash
+$ arrai eval '{ |a,b,c| (1,2,3), (1,3,3), (1,2,2) } nest |b|nestb'
+{(a: 1, c: 3, nestb: {(b: 2), (b: 3)}), (a: 1, c: 2, nestb: {(b: 2)})}
+```
+
+```bash
+$ arrai eval '{ |a,b,c| (1,2,3), (1,3,3), (1,2,2) } nest |b,c|nestbc'
+{(a: 1, nestbc: {(b: 2, c: 3), (b: 3, c: 3), (b: 2, c: 2)})}
+```
+
+Nest collects all the b values grouped by the common a values.
+
 ### Join
-It matches each relation by the common attributes (matched tables by common column names)
+
+Join takes two relations and joins them by matching tuples on common attribute names.
+
+####Examples
+
 ```bash
 $ arrai eval '{ |a,b| (1,2), (2,2) } <&> { |a,c| (1,2), (1,3) }'
+{(a: 1, b: 2, c: 2), (a: 1, b: 2, c: 3)}
 ```
-Examples: 
+
 ```bash
 $ arrai eval '{ |a,b| (1,2), (2,2) } <&> { |a,c| (1,2), (1,3), (2,3) }'
-$ arrai eval '{ |a,b| (1,2), (1,3) } <&> { |a,c| (1,2), (1,3) }'      
-$ arrai eval '{ |a,b,c| (1,2,2), (1,2,3) } <&> { |b,c,d| (2,3,4), (1,3,4) }'
+{(a: 1, b: 2, c: 2), (a: 1, b: 2, c: 3), (a: 2, b: 2, c: 3)}
 ```
+
+```bash
+$ arrai eval '{ |a,b| (1,2), (1,3) } <&> { |a,c| (1,2), (1,3) }'   
+{(a: 1, b: 2, c: 2), (a: 1, b: 2, c: 3), (a: 1, b: 3, c: 2), (a: 1, b: 3, c: 3)}   
+```
+
+```bash
+$ arrai eval '{ |a,b,c| (1,2,2), (1,2,3) } <&> { |b,c,d| (2,3,4), (1,3,4) }'
+{(a: 1, b: 2, c: 3, d: 4)}
+```
+
+Join matches each relation by the common attributes (matched tables by common column names).
