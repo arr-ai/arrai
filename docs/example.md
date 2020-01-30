@@ -80,7 +80,7 @@ Nest groups the given attributes into a nested relation, keys on the given key.
 relation nest |attr1,attr2,...|key
 ```
 
-####Examples
+#### Examples
 
 ```bash
 $ arrai eval '{ |a,b| (1,2), (1,3), (2,4) } nest |b|nested-b'
@@ -108,7 +108,7 @@ Nest collects all the b values grouped by the common a values.
 
 Join takes two relations and joins them by matching tuples on common attribute names.
 
-####Examples
+#### Examples
 
 ```bash
 $ arrai eval '{ |a,b| (1,2), (2,2) } <&> { |a,c| (1,2), (1,3) }'
