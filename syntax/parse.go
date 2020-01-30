@@ -47,7 +47,7 @@ expr    -> amp="&"* @ arrow=(nest | unnest | ARROW @)*
                     | "." std=IDENT?
                     | http="http://"? fqdn=IDENT:"." ("/" path=IDENT)*
                     )
-         | "(" tuple=(k=IDENT ":" v=@ | ":" vk=(@ "." k=IDENT)):",",? ")"
+         | "(" tuple=(pairs=(k=IDENT ":" v=@ | ":" vk=(@ "." k=IDENT)):",",?) ")"
          | "(" @ ")"
          | IDENT | STR | NUM;
 nest    -> "nest" names IDENT;
@@ -229,7 +229,11 @@ func (p *parse) parseExpr(b ast.Branch) rel.Expr {
 			return NewPackageExpr(rel.DotIdent)
 		}
 	case "tuple":
-		entries := c.(ast.Many)
+		pairs := c.(ast.One).Node.(ast.Branch)["pairs"]
+		if pairs == nil {
+			return rel.EmptyTuple
+		}
+		entries := pairs.(ast.Many)
 		attrs := make([]rel.AttrExpr, 0, len(entries))
 		for _, entry := range entries {
 			k := entry.MustOne("k").(ast.Leaf).Scanner().String()
