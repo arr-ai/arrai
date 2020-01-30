@@ -50,4 +50,4 @@ arrai observe localhost '$'
 arrai update localhost '{a: {|1, 2, 3|}, b: "hello"}'
 ```
 
-###[Arrai Examples](docs/example.md)
+##[Arrai Examples](docs/example.md)
