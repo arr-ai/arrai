@@ -69,7 +69,7 @@ type parse struct {
 }
 
 func (p *parse) parseExpr(b ast.Branch) rel.Expr {
-	// log.Printf("b=%v", b)
+	// fmt.Println(b)
 	name, c := which(b,
 		"amp", "arrow", "unop", "binop", "rbinop",
 		"if", "call", "touch", "dot",
@@ -80,15 +80,18 @@ func (p *parse) parseExpr(b ast.Branch) rel.Expr {
 	if c == nil {
 		panic(fmt.Errorf("misshapen node AST: %v", b))
 	}
+	// fmt.Println(name, "\n", b)
 	switch name {
 	case "amp", "arrow":
 		expr := p.parseExpr(b["expr"].(ast.One).Node.(ast.Branch))
 		if arrows, has := b["arrow"]; has {
 			for _, arrow := range arrows.(ast.Many) {
-				part, d := which(arrow.(ast.Branch), "nest", "unnest", "ARROW")
+				branch := arrow.(ast.Branch)
+				part, d := which(branch, "nest", "unnest", "ARROW")
 				switch part {
 				case "nest":
-				case "unnset":
+					expr = parseNest(expr, branch["nest"].(ast.One).Node.(ast.Branch))
+				case "unnest":
 					panic("unfinished")
 				case "ARROW":
 					f := binops[d.(ast.One).Node.(ast.Leaf).Scanner().String()]
@@ -503,6 +506,16 @@ func parseAttrExpr(v interface{}, name string) (rel.Expr, error) {
 	// 	expr = rel.NewFunction("-", expr)
 	// }
 	// return expr, nil
+}
+
+func parseNest(lhs rel.Expr, branch ast.Branch) rel.Expr {
+	attr := branch["IDENT"].Scanner().String()
+	names := branch["names"].(ast.One).Node.(ast.Branch)["IDENT"].(ast.Many)
+	namestrings := make([]string, len(names))
+	for i, name := range names {
+		namestrings[i] = name.Scanner().String()
+	}
+	return rel.NewNestExpr(lhs, rel.NewNames(namestrings...), attr)
 }
 
 type newBinOpFunc func(a, b rel.Expr) rel.Expr

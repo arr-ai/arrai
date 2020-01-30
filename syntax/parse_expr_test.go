@@ -80,3 +80,24 @@ func TestParseArrowStarExprAlterExisting(t *testing.T) {
 	// 	`{a:{b:{c:42}}}`,
 	// 	`{a:{b:{c:41}}}->*a->*b->*c: 42`)
 }
+
+func TestParseNestExpr(t *testing.T) {
+	t.Parallel()
+
+	AssertCodesEvalToSameValue(t,
+		`{(a: 1, b: {(b: 1), (b: 2)})}`,
+		`{(a: 1, b: 1), (a: 1, b: 2)} nest |b|b`,
+	)
+	AssertCodesEvalToSameValue(t,
+		`{(a: 1, b: {(b: 1), (b: 2)}), (a: 2, b: {(b: 3)})}`,
+		`{|a,b| (1,1), (1,2), (2,3)} nest |b|b`,
+	)
+	AssertCodesEvalToSameValue(t,
+		`{(a: 1, bc: {(b: 1, c: 1), (b: 2, c: 1)})}`,
+		`{|a,b,c| (1,1,1), (1,2,1)} nest |b,c|bc`,
+	)
+	AssertCodesEvalToSameValue(t,
+		`{(a: 1, b: 2, c:{(c: 1), (c: 2)})}`,
+		`{|a,b,c| (1,2,1), (1,2,2)} nest |c|c`,
+	)
+}
