@@ -71,7 +71,7 @@ func parseGrammar(v rel.Value) rel.Value {
 			if err != nil {
 				panic(err)
 			}
-			return rel.ASTNodeToValue(ast.FromParserNode(wbnf.Core().Grammar(), node))
+			return rel.ASTNodeToValue(ast.FromParserNode(parsers.Grammar(), node))
 		})
 	})
 }

@@ -22,7 +22,11 @@ func (*noParseType) Error() string {
 
 var noParse = &noParseType{}
 
-var arraiParsers = wbnf.MustCompile(`
+func unfakeBackquote(s string) string {
+	return strings.ReplaceAll(s, "‵", "`")
+}
+
+var arraiParsers = wbnf.MustCompile(unfakeBackquote(`
 expr   -> amp="&"* @ arrow=(nest | unnest | ARROW @)*
         > @:binop=("with" | "without")
         > @:binop="||"
@@ -59,11 +63,11 @@ name   -> IDENT | STR;
 
 ARROW -> /{->|:>|=>|>>|order|where|sum|max|mean|median|min};
 IDENT -> /{ \. | [$@A-Za-z_][0-9$@A-Za-z_]* };
-STR   -> /{ " (?: \\. | [^\\"] )* " | ' (?: \\. | [^\\'] )* ' };
+STR   -> /{ " (?: \\. | [^\\"] )* " | ' (?: \\. | [^\\'] )* '  | ‵ (?: ‵‵ | [^‵] )* ‵ };
 NUM   -> /{(?: [0-9]+(?:\.[0-9]*)? | \.[0-9]+ ) (?: [Ee][-+]?[0-9]+ )?};
 
 .wrapRE -> /{\s*()};
-`)
+`))
 
 type parse struct {
 	sourceDir string
