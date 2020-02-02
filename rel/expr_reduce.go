@@ -135,8 +135,8 @@ func (e *ReduceExpr) String() string {
 }
 
 // Eval returns the subject
-func (e *ReduceExpr) Eval(local, global Scope) (Value, error) {
-	a, err := e.a.Eval(local, global)
+func (e *ReduceExpr) Eval(local Scope) (Value, error) {
+	a, err := e.a.Eval(local)
 	if err != nil {
 		return nil, err
 	}
@@ -146,7 +146,7 @@ func (e *ReduceExpr) Eval(local, global Scope) (Value, error) {
 			return nil, err
 		}
 		for i := s.Enumerator(); i.MoveNext(); {
-			b, err := e.f.Call(i.Current(), local, global)
+			b, err := e.f.Call(i.Current(), local)
 			if err != nil {
 				return nil, err
 			}

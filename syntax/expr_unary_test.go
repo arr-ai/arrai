@@ -11,7 +11,7 @@ func TestCountExpr(t *testing.T) {
 
 func TestPowerSet(t *testing.T) {
 	t.Parallel()
-	AssertCodesEvalToSameValue(t, `{none}`, `^{}`)
+	AssertCodesEvalToSameValue(t, `{{}}`, `^{}`)
 	AssertCodesEvalToSameValue(t, `{{}, {1}}`, `^{1}`)
 	AssertCodesEvalToSameValue(t, `{{}, {1}, {2}, {1, 2}}`, `^{1, 2}`)
 	AssertCodesEvalToSameValue(t,

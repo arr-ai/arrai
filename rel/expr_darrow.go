@@ -13,7 +13,7 @@ type DArrowExpr struct {
 }
 
 // NewDArrowExpr returns a new DArrowExpr.
-func NewDArrowExpr(lhs Expr, fn Expr) Expr {
+func NewMapExpr(lhs Expr, fn Expr) Expr {
 	return &DArrowExpr{lhs, ExprAsFunction(fn)}
 }
 
@@ -33,15 +33,15 @@ func (e *DArrowExpr) String() string {
 }
 
 // Eval returns the lhs transformed elementwise by fn.
-func (e *DArrowExpr) Eval(local, global Scope) (Value, error) {
-	value, err := e.lhs.Eval(local, global)
+func (e *DArrowExpr) Eval(local Scope) (Value, error) {
+	value, err := e.lhs.Eval(local)
 	if err != nil {
 		return nil, err
 	}
 	if set, ok := value.(Set); ok {
 		result := NewSet()
 		for i := set.Enumerator(); i.MoveNext(); {
-			v, err := e.fn.body.Eval(local.With(e.fn.arg, i.Current()), global)
+			v, err := e.fn.body.Eval(local.With(e.fn.arg, i.Current()))
 			if err != nil {
 				return nil, err
 			}

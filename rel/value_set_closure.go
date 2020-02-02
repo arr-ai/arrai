@@ -42,7 +42,7 @@ func (c Closure) String() string {
 }
 
 // Eval returns the Value
-func (c Closure) Eval(local, global Scope) (Value, error) {
+func (c Closure) Eval(local Scope) (Value, error) {
 	return c, nil
 }
 
@@ -74,17 +74,17 @@ func (c Closure) Negate() Value {
 // Export exports a Closure.
 func (c Closure) Export() interface{} {
 	if c.f.arg == "-" {
-		return func(_ Value, local Scope, global Scope) (Value, error) {
-			return c.Call(None, local, global)
+		return func(_ Value, local Scope) (Value, error) {
+			return c.Call(None, local)
 		}
 	}
-	return func(e Value, local Scope, global Scope) (Value, error) {
-		return c.f.body.Eval(local.With(c.f.arg, e), global)
+	return func(e Value, local Scope) (Value, error) {
+		return c.f.body.Eval(local.With(c.f.arg, e))
 	}
 }
 
 // Call calls the Closure with the given parameter.
-func (c Closure) Call(expr Expr, local, global Scope) (Value, error) {
+func (c Closure) Call(expr Expr, local Scope) (Value, error) {
 	niladic := c.f.arg == "-"
 	noArg := expr == nil
 	if niladic != noArg {
@@ -92,7 +92,7 @@ func (c Closure) Call(expr Expr, local, global Scope) (Value, error) {
 			"nullary-vs-unary function arg mismatch (%s vs %s)", c.f.arg, expr)
 	}
 	if niladic {
-		return c.f.body.Eval(local, global)
+		return c.f.body.Eval(local)
 	}
-	return c.f.body.Eval(c.scope.With(c.f.arg, expr), global)
+	return c.f.body.Eval(c.scope.With(c.f.arg, expr))
 }

@@ -63,7 +63,7 @@ func (s String) String() string {
 }
 
 // Eval returns the string.
-func (s String) Eval(_, _ Scope) (Value, error) {
+func (s String) Eval(_ Scope) (Value, error) {
 	return s, nil
 }
 

@@ -20,6 +20,7 @@ func AssertCodesEvalToSameValue(t *testing.T, expected, code string) bool {
 	if !assert.NoError(t, err, "parsing code: %s", code) {
 		return false
 	}
+	// log.Printf("code=%v, codeExpr=%v", code, codeExpr)
 	if !rel.AssertExprsEvalToSameValue(t, expectedExpr, codeExpr) {
 		t.Logf("\nexpected: %s\ncode:     %s", expected, code)
 		return false

@@ -8,7 +8,7 @@ import (
 	"github.com/go-errors/errors"
 )
 
-type binEval func(a, b Value, local, global Scope) (Value, error)
+type binEval func(a, b Value, local Scope) (Value, error)
 
 // BinExpr represents a range of operators.
 type BinExpr struct {
@@ -29,7 +29,7 @@ type valueEval func(a, b Value) Value
 func MakeBinValExpr(op string, eval valueEval) func(a, b Expr) Expr {
 	return func(a, b Expr) Expr {
 		return newBinExpr(a, b, op, "(%s "+op+" %s)",
-			func(a, b Value, _, _ Scope) (Value, error) {
+			func(a, b Value, _ Scope) (Value, error) {
 				return eval(a, b), nil
 			})
 	}
@@ -41,7 +41,7 @@ type eqEval func(a, b Value) bool
 func MakeEqExpr(op string, eval eqEval) func(a, b Expr) Expr {
 	return func(a, b Expr) Expr {
 		return newBinExpr(a, b, op, "(%s "+op+" %s)",
-			func(a, b Value, _, _ Scope) (Value, error) {
+			func(a, b Value, _ Scope) (Value, error) {
 				if eval(a, b) {
 					return True, nil
 				}
@@ -54,7 +54,7 @@ type arithEval func(a, b float64) float64
 
 func newArithExpr(a, b Expr, op string, eval arithEval) Expr {
 	return newBinExpr(a, b, op, "(%s "+op+" %s)",
-		func(a, b Value, _, _ Scope) (Value, error) {
+		func(a, b Value, _ Scope) (Value, error) {
 			if a, ok := a.(Number); ok {
 				if b, ok := b.(Number); ok {
 					return NewNumber(eval(a.Float64(), b.Float64())), nil
@@ -89,7 +89,7 @@ func addValues(a, b Value) (Value, error) {
 // NewAddExpr evaluates a + b, given two Numbers.
 func NewAddExpr(a, b Expr) Expr {
 	return newBinExpr(a, b, "+", "(%s + %s)",
-		func(a, b Value, _, _ Scope) (Value, error) {
+		func(a, b Value, _ Scope) (Value, error) {
 			return addValues(a, b)
 		})
 }
@@ -132,7 +132,7 @@ func NewSubModExpr(a, b Expr) Expr {
 
 // NewPowExpr evaluates a to the power of b, given two Numbers.
 func NewPowExpr(a, b Expr) Expr {
-	return newArithExpr(a, b, "**", func(a, b float64) float64 {
+	return newArithExpr(a, b, "^", func(a, b float64) float64 {
 		return math.Pow(a, b)
 	})
 }
@@ -140,7 +140,7 @@ func NewPowExpr(a, b Expr) Expr {
 // NewWithExpr evaluates a with b, given a set lhs.
 func NewWithExpr(a, b Expr) Expr {
 	return newBinExpr(a, b, "with", "(%s with %s)",
-		func(a, b Value, _, _ Scope) (Value, error) {
+		func(a, b Value, _ Scope) (Value, error) {
 			if x, ok := a.(Set); ok {
 				return x.With(b), nil
 			}
@@ -151,7 +151,7 @@ func NewWithExpr(a, b Expr) Expr {
 // NewWithoutExpr evaluates a without b, given a set lhs.
 func NewWithoutExpr(a, b Expr) Expr {
 	return newBinExpr(a, b, "without", "(%s without %s)",
-		func(a, b Value, _, _ Scope) (Value, error) {
+		func(a, b Value, _ Scope) (Value, error) {
 			if x, ok := a.(Set); ok {
 				return x.Without(b), nil
 			}
@@ -163,12 +163,12 @@ func NewWithoutExpr(a, b Expr) Expr {
 func NewWhereExpr(a, pred Expr) Expr {
 	pred = ExprAsFunction(pred)
 	return newBinExpr(a, pred, "where", "(%s where %s)",
-		func(a, pred Value, local, global Scope) (Value, error) {
+		func(a, pred Value, local Scope) (Value, error) {
 			if x, ok := a.(Set); ok {
-				if p, ok := pred.(*Function); ok {
+				if p, ok := pred.(Closure); ok {
 					return x.Where(func(v Value) bool {
 						log.Print(v)
-						match, err := p.Call(v, local, global)
+						match, err := p.Call(v, local)
 						if err != nil {
 							panic(err)
 						}
@@ -185,11 +185,11 @@ func NewWhereExpr(a, pred Expr) Expr {
 func NewOrderExpr(a, key Expr) Expr {
 	key = ExprAsFunction(key)
 	return newBinExpr(a, key, "order", "(%s order %s)",
-		func(a, key Value, local, global Scope) (Value, error) {
+		func(a, key Value, local Scope) (Value, error) {
 			if x, ok := a.(Set); ok {
 				if k, ok := key.(*Function); ok {
 					values, err := Order(x, func(value Value) (Value, error) {
-						return k.Call(value, local, global)
+						return k.Call(value, local)
 					})
 					if err != nil {
 						return nil, err
@@ -205,12 +205,12 @@ func NewOrderExpr(a, key Expr) Expr {
 // NewCallExpr evaluates a without b, given a set lhs.
 func NewCallExpr(a, b Expr) Expr {
 	return newBinExpr(a, b, "call", "«%s»(%s)",
-		func(a, b Value, local, global Scope) (Value, error) {
+		func(a, b Value, local Scope) (Value, error) {
 			switch x := a.(type) {
 			case Closure:
-				return x.Call(b, local, global)
+				return x.Call(b, local)
 			case *NativeFunction:
-				return x.Call(b, local, global)
+				return x.Call(b, local)
 			case Set:
 				var out Value
 				for e := x.Enumerator(); e.MoveNext(); {
@@ -238,7 +238,8 @@ func NewCallExpr(a, b Expr) Expr {
 			}
 			return nil, errors.Errorf(
 				"call lhs must be a function, not %T", a)
-		})
+		},
+	)
 }
 
 // LHS returns the left hand side of the BinExpr.
@@ -257,16 +258,16 @@ func (e *BinExpr) String() string {
 }
 
 // Eval returns the subject
-func (e *BinExpr) Eval(local, global Scope) (Value, error) {
-	a, err := e.a.Eval(local, global)
+func (e *BinExpr) Eval(local Scope) (Value, error) {
+	a, err := e.a.Eval(local)
 	if err != nil {
 		return nil, err
 	}
 
-	b, err := e.b.Eval(local, global)
+	b, err := e.b.Eval(local)
 	if err != nil {
 		return nil, err
 	}
 
-	return e.eval(a, b, local, global)
+	return e.eval(a, b, local)
 }

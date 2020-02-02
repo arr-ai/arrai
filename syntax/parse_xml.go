@@ -8,7 +8,6 @@ import (
 	"github.com/mediocregopher/seq"
 
 	"github.com/arr-ai/arrai/rel"
-	"github.com/arr-ai/wbnf/wbnf"
 )
 
 // XML tokens
@@ -108,7 +107,7 @@ func (xc xmlContext) apply(name string, useDefault bool) (string, error) {
 //   }}
 //
 
-var xmlParsers = wbnf.MustCompile(`a->a;`)
+// var xmlParsers = wbnf.MustCompile(`a->a;`)
 var _ = (`
 // Document
 document            -> prolog element Misc*;

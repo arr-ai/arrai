@@ -24,8 +24,7 @@ func eval(c *cli.Context) error {
 		return err
 	}
 
-	global := rel.Scope{}
-	value, err := expr.Eval(global, global)
+	value, err := expr.Eval(rel.Scope{})
 	if err != nil {
 		return err
 	}

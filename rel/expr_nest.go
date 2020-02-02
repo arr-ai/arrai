@@ -39,8 +39,8 @@ func (e *NestExpr) String() string {
 }
 
 // Eval returns e.lhs with e.attrs grouped under e.attr.
-func (e *NestExpr) Eval(local, global Scope) (Value, error) {
-	value, err := e.lhs.Eval(local, global)
+func (e *NestExpr) Eval(local Scope) (Value, error) {
+	value, err := e.lhs.Eval(local)
 	if err != nil {
 		return nil, err
 	}

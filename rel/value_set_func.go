@@ -68,7 +68,7 @@ func (f *Function) String() string {
 }
 
 // Eval returns the Value
-func (f *Function) Eval(local, global Scope) (Value, error) {
+func (f *Function) Eval(local Scope) (Value, error) {
 	return NewClosure(local, f), nil
 }
 
@@ -100,17 +100,17 @@ func (f *Function) Negate() Value {
 // Export exports a Function.
 func (f *Function) Export() interface{} {
 	if f.arg == "-" {
-		return func(local Scope, global Scope) (Value, error) {
-			return f.Call(None, local, global)
+		return func(local Scope) (Value, error) {
+			return f.Call(None, local)
 		}
 	}
-	return func(e Value, local Scope, global Scope) (Value, error) {
-		return f.body.Eval(local.With(f.arg, e), global)
+	return func(e Value, local Scope) (Value, error) {
+		return f.body.Eval(local.With(f.arg, e))
 	}
 }
 
 // Call calls the Function with the given parameter.
-func (f *Function) Call(expr Expr, local, global Scope) (Value, error) {
+func (f *Function) Call(expr Expr, local Scope) (Value, error) {
 	niladic := f.arg == "-"
 	noArg := expr == nil
 	if niladic != noArg {
@@ -118,7 +118,7 @@ func (f *Function) Call(expr Expr, local, global Scope) (Value, error) {
 			"nullary-vs-unary function arg mismatch (%s vs %s)", f.arg, expr)
 	}
 	if niladic {
-		return f.body.Eval(local, global)
+		return f.body.Eval(local)
 	}
-	return f.body.Eval(local.With(f.arg, expr), global)
+	return f.body.Eval(local.With(f.arg, expr))
 }

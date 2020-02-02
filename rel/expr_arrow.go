@@ -11,7 +11,7 @@ type ArrowExpr struct {
 }
 
 // NewArrowExpr returns a new ArrowExpr.
-func NewArrowExpr(lhs, fn Expr) Expr {
+func NewApplyExpr(lhs, fn Expr) Expr {
 	return &ArrowExpr{lhs, ExprAsFunction(fn)}
 }
 
@@ -34,10 +34,10 @@ func (e *ArrowExpr) String() string {
 }
 
 // Eval returns the lhs
-func (e *ArrowExpr) Eval(local, global Scope) (Value, error) {
-	value, err := e.lhs.Eval(local, global)
+func (e *ArrowExpr) Eval(local Scope) (Value, error) {
+	value, err := e.lhs.Eval(local)
 	if err != nil {
 		return nil, err
 	}
-	return e.fn.body.Eval(local.With(e.fn.arg, value), global)
+	return e.fn.body.Eval(local.With(e.fn.arg, value))
 }

@@ -57,9 +57,9 @@ func (e *AttrExpr) Expr() Expr {
 
 // Apply applies the AttrExpr to the Tuple.
 func (e *AttrExpr) Apply(
-	local, global Scope, tuple Tuple,
+	local Scope, tuple Tuple,
 ) (Tuple, error) {
-	value, err := e.expr.Eval(local, global)
+	value, err := e.expr.Eval(local)
 	if err != nil {
 		return nil, err
 	}
@@ -150,11 +150,11 @@ func (e *TupleExpr) String() string {
 }
 
 // Eval returns the subject
-func (e *TupleExpr) Eval(local, global Scope) (Value, error) {
+func (e *TupleExpr) Eval(local Scope) (Value, error) {
 	tuple := EmptyTuple
 	for _, attr := range e.attrs {
 		var err error
-		tuple, err = attr.Apply(local, global, tuple)
+		tuple, err = attr.Apply(local, tuple)
 		if err != nil {
 			return nil, err
 		}

@@ -35,11 +35,11 @@ func (e *DotExpr) String() string {
 }
 
 // Eval returns the lhs
-func (e *DotExpr) Eval(local, global Scope) (Value, error) {
+func (e *DotExpr) Eval(local Scope) (Value, error) {
 	if e.attr == "*" {
 		return nil, errors.Errorf("expr.* not allowed outside tuple attr")
 	}
-	a, err := e.lhs.Eval(local, global)
+	a, err := e.lhs.Eval(local)
 	if err != nil {
 		return nil, err
 	}
@@ -50,7 +50,7 @@ func (e *DotExpr) Eval(local, global Scope) (Value, error) {
 		if e.attr[:1] != "&" {
 			if value, found := t.Get("&" + e.attr); found {
 				tupleScope := local.With("self", t)
-				return value.(*Function).Call(nil, tupleScope, global)
+				return value.(*Function).Call(nil, tupleScope)
 			}
 		}
 		return nil, errors.Errorf("Missing attr %s", e.attr)

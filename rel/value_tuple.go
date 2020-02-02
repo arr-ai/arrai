@@ -165,7 +165,7 @@ func (t *GenericTuple) String() string {
 }
 
 // Eval returns the tuple.
-func (t *GenericTuple) Eval(local, global Scope) (Value, error) {
+func (t *GenericTuple) Eval(local Scope) (Value, error) {
 	return t, nil
 }
 
@@ -288,6 +288,15 @@ func (t *GenericTuple) With(name string, value Value) Tuple {
 // the given name.
 func (t *GenericTuple) Without(name string) Tuple {
 	return &GenericTuple{tuple: t.tuple.Without(frozen.NewSet(name))}
+}
+
+func (t *GenericTuple) Map(f func(Value) Value) Tuple {
+	var b frozen.MapBuilder
+	for e := t.Enumerator(); e.MoveNext(); {
+		key, value := e.Current()
+		b.Put(key, f(value))
+	}
+	return &GenericTuple{tuple: b.Finish()}
 }
 
 // HasName returns true iff the Tuple has an attribute with the given name.

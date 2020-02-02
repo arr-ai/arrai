@@ -30,11 +30,11 @@ func requireEqualValues(t *testing.T, expected, actual Value) {
 func AssertExprsEvalToSameValue(
 	t *testing.T, expected, expr Expr,
 ) bool {
-	expectedValue, err := expected.Eval(EmptyScope, EmptyScope)
+	expectedValue, err := expected.Eval(EmptyScope)
 	if !assert.NoError(t, err, "evaluating expected: %s", expected) {
 		return false
 	}
-	value, err := expr.Eval(EmptyScope, EmptyScope)
+	value, err := expr.Eval(EmptyScope)
 	if !assert.NoError(t, err, "evaluating expr: %s", expr) {
 		return false
 	}
@@ -50,9 +50,9 @@ func AssertExprsEvalToSameValue(
 func RequireExprsEvalToSameValue(
 	t *testing.T, expected, expr Expr,
 ) {
-	expectedValue, err := expected.Eval(EmptyScope, EmptyScope)
+	expectedValue, err := expected.Eval(EmptyScope)
 	require.NoError(t, err)
-	value, err := expr.Eval(EmptyScope, EmptyScope)
+	value, err := expr.Eval(EmptyScope)
 	require.NoError(t, err)
 	requireEqualValues(t, expectedValue, value)
 }

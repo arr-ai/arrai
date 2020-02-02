@@ -7,7 +7,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/arr-ai/arrai/rel"
-	"github.com/arr-ai/wbnf/parser"
 )
 
 func TestNumberJSON(t *testing.T) {
@@ -57,21 +56,21 @@ func TestMixedJSON(t *testing.T) {
 		})
 }
 
-func TestXMLChildJSON(t *testing.T) {
-	t.Parallel()
-	value, err := Parse(parser.NewScanner(`<abc><def/></abc>`), "")
-	require.NoError(t, err)
+// func TestXMLChildJSON(t *testing.T) {
+// 	t.Parallel()
+// 	value, err := Parse(parser.NewScanner(`<abc><def/></abc>`), "")
+// 	require.NoError(t, err)
 
-	assertJSON(t,
-		ucl(`{"@xml":{`, `}}`,
-			`"tag":"abc"`,
-			ucl(`"children":[{"@xml":{`, `}}]`,
-				`"tag":"def"`,
-			),
-		).permutations(),
-		value,
-	)
-}
+// 	assertJSON(t,
+// 		ucl(`{"@xml":{`, `}}`,
+// 			`"tag":"abc"`,
+// 			ucl(`"children":[{"@xml":{`, `}}]`,
+// 				`"tag":"def"`,
+// 			),
+// 		).permutations(),
+// 		value,
+// 	)
+// }
 
 func TestPermutations(t *testing.T) {
 	t.Parallel()

@@ -40,11 +40,11 @@ func (s Scope) String() string {
 }
 
 // Eval evaluates an expression in a given symbol environment.
-func (s Scope) Eval(local, global Scope) (Value, error) {
+func (s Scope) Eval(local Scope) (Value, error) {
 	tuple := NewTuple()
 	for e := s.Enumerator(); e.MoveNext(); {
 		name, expr := e.Current()
-		value, err := expr.Eval(local, global)
+		value, err := expr.Eval(local)
 		if err != nil {
 			return nil, err
 		}

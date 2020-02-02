@@ -44,9 +44,9 @@ func (e IdentExpr) String() string {
 }
 
 // Eval returns the value from scope corresponding to the ident.
-func (e IdentExpr) Eval(local, global Scope) (Value, error) {
+func (e IdentExpr) Eval(local Scope) (Value, error) {
 	if a, found := local.Get(e.ident); found && a != nil {
-		return a.Eval(global, global)
+		return a.Eval(local)
 	}
 	return nil, IdentLookupFailed{local, e}
 }

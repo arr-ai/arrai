@@ -89,10 +89,10 @@ func (e *SetExpr) String() string {
 }
 
 // Eval returns the subject
-func (e *SetExpr) Eval(local, global Scope) (Value, error) {
+func (e *SetExpr) Eval(local Scope) (Value, error) {
 	set := NewSet()
 	for _, expr := range e.elements {
-		value, err := expr.Eval(local, global)
+		value, err := expr.Eval(local)
 		if err != nil {
 			return nil, err
 		}

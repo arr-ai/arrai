@@ -39,7 +39,7 @@ func (n Number) String() string {
 }
 
 // Eval returns the number.
-func (n Number) Eval(local, global Scope) (Value, error) {
+func (n Number) Eval(_ Scope) (Value, error) {
 	return n, nil
 }
 

@@ -76,7 +76,7 @@ func Start() *Engine {
 				logrus.Info("Update DB")
 				logrus.Infof("-> %#v", req.expr)
 				logrus.Infof("-> %s", req.expr)
-				value, err := req.expr.Eval(global, global)
+				value, err := req.expr.Eval(global)
 				if err != nil {
 					req.failed <- err
 					continue
@@ -151,7 +151,7 @@ func (w *watcher) update(global rel.Scope) {
 		}
 	}()
 
-	value, err := w.expr.Eval(global, global)
+	value, err := w.expr.Eval(global)
 	if err != nil {
 		w.cancel()
 		w.onclose(err)

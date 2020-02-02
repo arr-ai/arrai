@@ -34,7 +34,7 @@ func ASTBranchToValue(b ast.Branch) Tuple {
 			ints := children.(ast.Many)
 			values := make([]Value, 0, len(ints))
 			for _, i := range ints {
-				values = append(values, NewNumber(float64(i.(ast.Extra).Data.(int))))
+				values = append(values, NewNumber(float64(i.(ast.Extra).Data.(wbnf.Choice))))
 			}
 			value = NewArray(values...)
 		case "@rule":
@@ -86,7 +86,7 @@ func ASTBranchFromValue(b Tuple) ast.Branch {
 			values := value.(*genericSet).OrderedValues()
 			ints := make(ast.Many, 0, len(values))
 			for _, v := range values {
-				ints = append(ints, ast.Extra{Data: int(v.(Tuple).MustGet(ArrayItemAttr).(Number).Float64())})
+				ints = append(ints, ast.Extra{Data: wbnf.Choice(v.(Tuple).MustGet(ArrayItemAttr).(Number).Float64())})
 			}
 			children = ints
 		case "@rule":

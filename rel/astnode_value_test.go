@@ -40,7 +40,7 @@ func stripASTNodeSrc(node ast.Node) ast.Node {
 func assertASTNodeToValueToNode(t *testing.T, p wbnf.Parsers, rule, src string) bool { //nolint:unparam
 	v, err := p.Parse(wbnf.Rule(rule), parser.NewScanner(src))
 	assert.NoError(t, err)
-	ast1 := ast.ParserNodeToNode(p.Grammar(), v)
+	ast1 := ast.FromParserNode(p.Grammar(), v)
 	value := ASTBranchToValue(ast1)
 	ast2 := ASTBranchFromValue(value)
 	return assert.EqualValues(t, stripASTNodeSrc(ast1), ast2)

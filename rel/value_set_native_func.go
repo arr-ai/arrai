@@ -18,6 +18,11 @@ func NewNativeFunction(name string, fn func(Value) Value) Value {
 	return &NativeFunction{"⦑" + name + "⦒", fn}
 }
 
+// NewNativeLambda returns a nameless function.
+func NewNativeLambda(fn func(Value) Value) Value {
+	return NewNativeFunction("", fn)
+}
+
 // NewNativeFunction returns a new function.
 func NewNativeFunctionAttr(name string, fn func(Value) Value) Attr {
 	return NewAttr(name, NewNativeFunction(name, fn))
@@ -52,7 +57,7 @@ func (f *NativeFunction) String() string {
 }
 
 // Eval returns the Value
-func (f *NativeFunction) Eval(local, global Scope) (Value, error) {
+func (f *NativeFunction) Eval(local Scope) (Value, error) {
 	return f, nil
 }
 
@@ -87,11 +92,11 @@ func (f *NativeFunction) Export() interface{} {
 }
 
 // Call calls the NativeFunction with the given parameter.
-func (f *NativeFunction) Call(expr Expr, local, global Scope) (Value, error) {
+func (f *NativeFunction) Call(expr Expr, local Scope) (Value, error) {
 	if expr == nil {
 		return nil, errors.Errorf("missing function arg")
 	}
-	value, err := expr.Eval(local, global)
+	value, err := expr.Eval(local)
 	if err != nil {
 		return nil, err
 	}

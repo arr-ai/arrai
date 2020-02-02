@@ -14,13 +14,13 @@ func NewArray(values ...Value) Set {
 	return NewSet(tuples...)
 }
 
-func isArrayTuple(v Value) (index int, item Value, is bool) {
-	is = NewTupleMatcher(
-		map[string]Matcher{
-			"@":           MatchInt(func(i int) { index = i }),
-			ArrayItemAttr: Bind(&item),
-		},
-		Lit(EmptyTuple),
-	).Match(v)
-	return
-}
+// func isArrayTuple(v Value) (index int, item Value, is bool) {
+// 	is = NewTupleMatcher(
+// 		map[string]Matcher{
+// 			"@":           MatchInt(func(i int) { index = i }),
+// 			ArrayItemAttr: Bind(&item),
+// 		},
+// 		Lit(EmptyTuple),
+// 	).Match(v)
+// 	return
+// }

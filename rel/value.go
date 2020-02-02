@@ -13,7 +13,7 @@ type Expr interface {
 	fmt.Stringer
 
 	// Eval evaluates the expr in a given scope.
-	Eval(local, global Scope) (Value, error)
+	Eval(local Scope) (Value, error)
 }
 
 // Value represents any arr.ai value.
@@ -69,6 +69,7 @@ type Tuple interface {
 	// Transform
 	With(name string, value Value) Tuple
 	Without(name string) Tuple
+	Map(func(Value) Value) Tuple
 	Project(names Names) Tuple
 }
 

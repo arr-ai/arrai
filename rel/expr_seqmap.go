@@ -6,35 +6,35 @@ import (
 	"github.com/go-errors/errors"
 )
 
-// AtArrowExpr returns the tuple applied to a function.
-type AtArrowExpr struct {
+// SequenceMapExpr returns the tuple applied to a function.
+type SequenceMapExpr struct {
 	lhs Expr
 	fn  *Function
 }
 
 // NewAngleArrowExpr returns a new AtArrowExpr.
-func NewAngleArrowExpr(lhs Expr, fn Expr) Expr {
-	return &AtArrowExpr{lhs, ExprAsFunction(fn)}
+func NewSequenceMapExpr(lhs Expr, fn Expr) Expr {
+	return &SequenceMapExpr{lhs, ExprAsFunction(fn)}
 }
 
 // LHS returns the LHS of the AtArrowExpr.
-func (e *AtArrowExpr) LHS() Expr {
+func (e *SequenceMapExpr) LHS() Expr {
 	return e.lhs
 }
 
 // Fn returns the function to be applied to the LHS.
-func (e *AtArrowExpr) Fn() *Function {
+func (e *SequenceMapExpr) Fn() *Function {
 	return e.fn
 }
 
 // String returns a string representation of the expression.
-func (e *AtArrowExpr) String() string {
-	return fmt.Sprintf("(%s @> %s)", e.lhs, e.fn)
+func (e *SequenceMapExpr) String() string {
+	return fmt.Sprintf("(%s >> %s)", e.lhs, e.fn)
 }
 
 // Eval returns the lhs
-func (e *AtArrowExpr) Eval(local, global Scope) (Value, error) {
-	value, err := e.lhs.Eval(local, global)
+func (e *SequenceMapExpr) Eval(local Scope) (Value, error) {
+	value, err := e.lhs.Eval(local)
 	if err != nil {
 		return nil, err
 	}
@@ -45,7 +45,7 @@ func (e *AtArrowExpr) Eval(local, global Scope) (Value, error) {
 			pos, _ := t.Get("@")
 			attr := t.Names().Without("@").Any()
 			item, _ := t.Get(attr)
-			v, err := e.fn.body.Eval(local.With(e.fn.arg, item), global)
+			v, err := e.fn.body.Eval(local.With(e.fn.arg, item))
 			if err != nil {
 				return nil, err
 			}

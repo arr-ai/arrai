@@ -35,13 +35,13 @@ func (e *IfElseExpr) String() string {
 }
 
 // Eval returns the ifTrue
-func (e *IfElseExpr) Eval(local, global Scope) (Value, error) {
-	cond, err := e.cond.Eval(local, global)
+func (e *IfElseExpr) Eval(local Scope) (Value, error) {
+	cond, err := e.cond.Eval(local)
 	if err != nil {
 		return nil, err
 	}
 	if cond.Bool() {
-		return e.ifTrue.Eval(local, global)
+		return e.ifTrue.Eval(local)
 	}
-	return e.ifFalse.Eval(local, global)
+	return e.ifFalse.Eval(local)
 }

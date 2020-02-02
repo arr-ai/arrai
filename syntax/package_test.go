@@ -17,11 +17,12 @@ func TestPackagePi(t *testing.T) {
 }
 
 func TestPackageLocalImport(t *testing.T) {
-	data, err := ioutil.ReadFile("../rel/value_set_rel.go")
+	filename := "rel/value_set_rel.go"
+	data, err := ioutil.ReadFile("../" + filename)
 	require.NoError(t, err)
 	AssertCodesEvalToSameValue(t,
-		"\""+strings.ReplaceAll(string(data), "\n", `\n`)+"\"",
-		`//./rel/'value_set_rel.go'`)
+		"'"+strings.ReplaceAll(string(data), "\n", `\n`)+"'",
+		"//./'"+filename+"'")
 }
 
 // func TestPackageExternalImport(t *testing.T) {

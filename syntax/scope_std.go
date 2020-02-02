@@ -6,6 +6,7 @@ import (
 	"math"
 	"net/http"
 	"strings"
+	"sync"
 
 	"github.com/arr-ai/arrai/rel"
 	"github.com/arr-ai/wbnf/ast"
@@ -13,24 +14,45 @@ import (
 	"github.com/arr-ai/wbnf/wbnf"
 )
 
-var stdScope = rel.EmptyScope.
-	With(".", rel.NewTuple(
-		rel.NewAttr("math", rel.NewTuple(
-			rel.NewAttr("pi", rel.NewNumber(math.Pi)),
-			newFloatFuncAttr("sin", math.Sin),
-			newFloatFuncAttr("cos", math.Cos),
-		)),
-		rel.NewAttr("grammar", rel.NewTuple(
-			rel.NewNativeFunctionAttr("parse", parseGrammar),
-			rel.NewAttr("lang", rel.NewTuple(
-				rel.NewAttr("arrai", rel.ASTNodeToValue(ast.ParserNodeToNode(
-					wbnf.Core().Grammar(), *arraiParsers.Node()))),
-				rel.NewAttr("wbnf", rel.ASTNodeToValue(ast.CoreNode())),
-			)),
-		)),
-	)).
-	With("//./", rel.NewNativeFunction("//./", importLocalFile)).
-	With("//", rel.NewNativeFunction("//", importURL))
+var once sync.Once
+var stdScopeVar rel.Scope
+
+func stdScope() rel.Scope {
+	once.Do(func() {
+		stdScopeVar = rel.EmptyScope.
+			With(".", rel.NewTuple(
+				rel.NewAttr("math", rel.NewTuple(
+					rel.NewAttr("pi", rel.NewNumber(math.Pi)),
+					newFloatFuncAttr("sin", math.Sin),
+					newFloatFuncAttr("cos", math.Cos),
+				)),
+				rel.NewAttr("grammar", rel.NewTuple(
+					rel.NewNativeFunctionAttr("parse", parseGrammar),
+					rel.NewAttr("lang", rel.NewTuple(
+						rel.NewAttr("arrai", rel.ASTNodeToValue(ast.FromParserNode(
+							wbnf.Core().Grammar(), *arraiParsers.Node()))),
+						rel.NewAttr("wbnf", rel.ASTNodeToValue(ast.CoreNode())),
+					)),
+				)),
+				rel.NewAttr("func", rel.NewTuple(
+					rel.NewAttr("fix", parseLit(`(\f f(f))(\f \g \n g(f(f)(g))(n))`)),
+					rel.NewAttr("fixt", parseLit(`(\f f(f))(\f \t t :> \n .(f(f)(t))(n))`)),
+				)),
+			)).
+			With("//./", rel.NewNativeFunction("//./", importLocalFile)).
+			With("//", rel.NewNativeFunction("//", importURL))
+	})
+	return stdScopeVar
+}
+
+func parseLit(s string) rel.Value {
+	e := MustParseString(s, "")
+	v, err := e.Eval(rel.EmptyScope)
+	if err != nil {
+		panic(err)
+	}
+	return v
+}
 
 func newFloatFuncAttr(name string, f func(float64) float64) rel.Attr {
 	return rel.NewNativeFunctionAttr(name, func(value rel.Value) rel.Value {
@@ -40,7 +62,7 @@ func newFloatFuncAttr(name string, f func(float64) float64) rel.Attr {
 
 func parseGrammar(v rel.Value) rel.Value {
 	astNode := rel.ASTNodeFromValue(v).(ast.Branch)
-	parserNode := ast.NodeToParserNode(wbnf.Core().Grammar(), astNode).(parser.Node)
+	parserNode := ast.ToParserNode(wbnf.Core().Grammar(), astNode).(parser.Node)
 	parsers := wbnf.NewFromNode(parserNode).Compile(&parserNode)
 	return rel.NewNativeFunction("parse(<grammar>)", func(v rel.Value) rel.Value {
 		rule := v.String()
@@ -49,7 +71,7 @@ func parseGrammar(v rel.Value) rel.Value {
 			if err != nil {
 				panic(err)
 			}
-			return rel.ASTNodeToValue(ast.ParserNodeToNode(wbnf.Core().Grammar(), node))
+			return rel.ASTNodeToValue(ast.FromParserNode(wbnf.Core().Grammar(), node))
 		})
 	})
 }
