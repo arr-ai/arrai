@@ -9,7 +9,6 @@ import (
 	"sync"
 
 	"github.com/arr-ai/arrai/rel"
-	"github.com/arr-ai/wbnf/ast"
 	"github.com/arr-ai/wbnf/parser"
 	"github.com/arr-ai/wbnf/wbnf"
 )
@@ -29,9 +28,9 @@ func stdScope() rel.Scope {
 				rel.NewAttr("grammar", rel.NewTuple(
 					rel.NewNativeFunctionAttr("parse", parseGrammar),
 					rel.NewAttr("lang", rel.NewTuple(
-						rel.NewAttr("arrai", rel.ASTNodeToValue(ast.FromParserNode(
+						rel.NewAttr("arrai", rel.ASTNodeToValue(wbnf.FromParserNode(
 							wbnf.Core().Grammar(), *arraiParsers.Node()))),
-						rel.NewAttr("wbnf", rel.ASTNodeToValue(ast.CoreNode())),
+						rel.NewAttr("wbnf", rel.ASTNodeToValue(wbnf.FromParserNode(wbnf.Core().Grammar(), *wbnf.Core().Node()))),
 					)),
 				)),
 				rel.NewAttr("func", rel.NewTuple(
@@ -61,17 +60,17 @@ func newFloatFuncAttr(name string, f func(float64) float64) rel.Attr {
 }
 
 func parseGrammar(v rel.Value) rel.Value {
-	astNode := rel.ASTNodeFromValue(v).(ast.Branch)
-	parserNode := ast.ToParserNode(wbnf.Core().Grammar(), astNode).(parser.Node)
+	astNode := rel.ASTNodeFromValue(v).(wbnf.Branch)
+	parserNode := wbnf.ToParserNode(wbnf.Core().Grammar(), astNode).(parser.Node)
 	parsers := wbnf.NewFromNode(parserNode).Compile(&parserNode)
 	return rel.NewNativeFunction("parse(<grammar>)", func(v rel.Value) rel.Value {
 		rule := v.String()
 		return rel.NewNativeFunction(fmt.Sprintf("parse(%s)", rule), func(v rel.Value) rel.Value {
-			node, err := parsers.Parse(wbnf.Rule(rule), parser.NewScanner(v.String()))
+			node, err := parsers.Parse(parser.Rule(rule), parser.NewScanner(v.String()))
 			if err != nil {
 				panic(err)
 			}
-			return rel.ASTNodeToValue(ast.FromParserNode(parsers.Grammar(), node))
+			return rel.ASTNodeToValue(wbnf.FromParserNode(parsers.Grammar(), node))
 		})
 	})
 }

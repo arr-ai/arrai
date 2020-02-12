@@ -17,6 +17,8 @@ github.com/arr-ai/wbnf v0.8.0 h1:cMc7XLua5CCfHolrfZEo+J0MUXA/DGN8Y0UPSEscjEI=
 github.com/arr-ai/wbnf v0.8.0/go.mod h1:2hVtQMZz6WiKbadyq0wY7g6YJPzk+OweNgMpt2LoHyY=
 github.com/arr-ai/wbnf v0.9.0 h1:sZK2kZG/LV1iWyGt7m0A3fwxEYVO2CTSjCMGE8TUWak=
 github.com/arr-ai/wbnf v0.9.0/go.mod h1:2hVtQMZz6WiKbadyq0wY7g6YJPzk+OweNgMpt2LoHyY=
+github.com/arr-ai/wbnf v0.10.0 h1:svsP1K/Z7M9oCG0g8K+4NHj7O6DBRs0KXfXn4Z9mMnY=
+github.com/arr-ai/wbnf v0.10.0/go.mod h1:2hVtQMZz6WiKbadyq0wY7g6YJPzk+OweNgMpt2LoHyY=
 github.com/census-instrumentation/opencensus-proto v0.2.1/go.mod h1:f6KPmirojxKA12rnyqOA5BBL4O983OfeGPqjHWSTneU=
 github.com/client9/misspell v0.3.4/go.mod h1:qj6jICC3Q7zFZvVWo7KLAzC3yx5G7kyvSDkc90ppPyw=
 github.com/coreos/etcd v3.3.10+incompatible/go.mod h1:uF7uidLiAD3TWHmW31ZFd/JWoc32PjwdhPthX9715RE=
@@ -31,6 +33,7 @@ github.com/cpuguy83/go-md2man/v2 v2.0.0/go.mod h1:maD7wRr/U5Z6m/iR4s+kqSMx2CaBsr
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
+github.com/eknkc/amber v0.0.0-20171010120322-cdade1c07385/go.mod h1:0vRUJqYpeSZifjYj7uP3BG/gKcuzL9xWVV/Y+cK33KM=
 github.com/envoyproxy/go-control-plane v0.9.1-0.20191026205805-5f8ba28d4473/go.mod h1:YTl/9mNaCwkRvm6d1a2C3ymFceY/DCBVvsKhRF0iEA4=
 github.com/envoyproxy/protoc-gen-validate v0.1.0/go.mod h1:iSmxcyjqTsJpI2R4NaDN7+kN2VEUnK/pcBlmesArF7c=
 github.com/fsnotify/fsnotify v1.4.7/go.mod h1:jwhsz4b93w/PPRr/qN1Yymfu8t87LnFCMoQvtojpjFo=

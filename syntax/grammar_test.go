@@ -25,12 +25,13 @@ func TestGrammarToValueExprStd(t *testing.T) {
 				)
 			]
 		)`, "")
-	AssertCodesEvalToSameValue(t, expected, `//.grammar.parse(//.grammar.lang.wbnf, "grammar", "a-> '1';")`)
-	AssertCodesEvalToSameValue(t, expected, `//.grammar -> .parse(.lang.wbnf, "grammar", "a-> '1';")`)
+	// AssertCodesEvalToSameValue(t, expected, `//.grammar.parse(//.grammar.lang.wbnf, "grammar", "a-> '1';")`)
+	// AssertCodesEvalToSameValue(t, expected, `//.grammar -> .parse(.lang.wbnf, "grammar", "a-> '1';")`)
+	AssertCodesEvalToSameValue(t, expected, `{://.grammar.lang.wbnf.grammar: a -> '1'; :}`)
 }
 
 func TestGrammarParseParse(t *testing.T) {
 	AssertCodesEvalToSameValue(t,
 		`("": ["+"], @rule: "expr", expr: [(expr: [("": "1")]), ("": ["*"], expr: [("": "2"), ("": "3")])])`,
-		`//.grammar -> .parse(.parse(.lang.wbnf, "grammar", "expr -> @:'+' > @:'*' > /{\\d+};"), "expr", "1+2*3")`)
+		`//.grammar -> .parse(.parse(.lang.wbnf, "grammar", "expr -> @:'+' > @:'*' > \\d+;"), "expr", "1+2*3")`)
 }

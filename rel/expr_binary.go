@@ -2,7 +2,6 @@ package rel
 
 import (
 	"fmt"
-	"log"
 	"math"
 
 	"github.com/go-errors/errors"
@@ -167,7 +166,6 @@ func NewWhereExpr(a, pred Expr) Expr {
 			if x, ok := a.(Set); ok {
 				if p, ok := pred.(Closure); ok {
 					return x.Where(func(v Value) bool {
-						log.Print(v)
 						match, err := p.Call(v, local)
 						if err != nil {
 							panic(err)

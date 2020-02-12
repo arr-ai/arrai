@@ -113,10 +113,10 @@ var _ = (`
 document            -> prolog element Misc*;
 
 // Character Range
-Char                -> /{[\t \n \r \_-\uD7FF \uE000-#xFFFD \u10000-\U0010FFFF]};
+Char                -> [\t \n \r \_-\uD7FF \uE000-#xFFFD \u10000-\U0010FFFF];
 
 // Whitespace
-S                   -> /{[\_ \t \r \n]+};
+S                   -> [\_ \t \r \n]+;
 
 // Names and Tokens
 NameChar            -> Letter | Digit
@@ -128,16 +128,16 @@ Nmtoken             -> (NameChar)+;
 Nmtokens            -> Nmtoken (\_ Nmtoken)*;
 
 // Literals
-EntityValue         -> '"' (/{[^%&"]} | PEReference | Reference)* '"'
-                     | "'" (/{[^%&']} | PEReference | Reference)* "'";
-AttValue            -> '"' (/{[^<&"]} | Reference)* '"'
-                     | "'" (/{[^<&']} | Reference)* "'";
-SystemLiteral       -> ('"' /{[^"]*} '"') | ("'" /{[^']*} "'");
+EntityValue         -> '"' ([^%&"] | PEReference | Reference)* '"'
+                     | "'" ([^%&'] | PEReference | Reference)* "'";
+AttValue            -> '"' ([^<&"] | Reference)* '"'
+                     | "'" ([^<&'] | Reference)* "'";
+SystemLiteral       -> ('"' [^"]* '"') | ("'" [^']* "'");
 PubidLiteral        -> '"' PubidChar* '"' | "'" (PubidChar ~ "'")* "'";
-PubidChar           -> /{[\_ \r \n a-zA-Z0-9 -'()+,./:=?;!*#@$_%]};
+PubidChar           -> [\_ \r \n a-zA-Z0-9 -'()+,./:=?;!*#@$_%];
 
 // Character Data
-CharData            -> /{[^<&]*} ~ (/{[^<&]*} ']]>' /{[^<&]*});
+CharData            -> [^<&]* ~ ([^<&]* ']]>' [^<&]*);
 
 // Comments
 Comment             -> '<!--' ((Char ~ '-') | ('-' (Char ~ '-')))* '-->';
@@ -211,7 +211,7 @@ ignoreSectContents  -> Ignore ('<![' ignoreSectContents ']]>' Ignore)*;
 Ignore              -> Char* ~ (Char* ('<![' | ']]>') Char*);
 
 // Character and Entity References
-CharRef             -> '&#' /{[0-9]+} ';' | '&#x' /{[0-9a-fA-F]+} ';';
+CharRef             -> '&#' [0-9]+ ';' | '&#x' [0-9a-fA-F]+ ';';
 Reference           -> EntityRef | CharRef;
 EntityRef           -> '&' Name ';';
 PEReference         -> '%' Name ';';
@@ -230,14 +230,14 @@ NDataDecl           -> S 'NDATA' S Name;
 TextDecl            -> '<?xml' VersionInfo? EncodingDecl S? '?>';
 extParsedEnt        -> TextDecl? content;
 EncodingDecl        -> S 'encoding' Eq ('"' EncName '"' | "'" EncName "'" );
-EncName             -> /{[A-Za-z][-A-Za-z0-9._]}*;
+EncName             -> [A-Za-z][-A-Za-z0-9._]*;
 NotationDecl        -> '<!NOTATION' S Name S (ExternalID | PublicID) S? '>';
 PublicID            -> 'PUBLIC' S PubidLiteral;
 
 // Characters
 Letter -> BaseChar | Ideographic;
 
-BaseChar -> /{[
+BaseChar -> [
       \x41-  \x5A   \x61-  \x7A   \xC0-  \xD6
       \xD8-  \xF6   \xF8-  \xFF \u0100-\u0131
     \u0134-\u013E \u0141-\u0148 \u014A-\u017E
@@ -294,11 +294,11 @@ BaseChar -> /{[
     \u1FE0-\u1FEC \u1FF2-\u1FF4 \u1FF6-\u1FFC \u2126
     \u212A-\u212B \u212E \u2180-\u2182 \u3041-\u3094
 	\u30A1-\u30FA \u3105-\u312C \uAC00-\uD7A3
-]};
-Ideographic -> /{[
+];
+Ideographic -> [
 	\u4E00-\u9FA5 \u3007 \u3021-\u3029
-]};
-CombiningChar -> /{[
+];
+CombiningChar -> [
 	\u0300-\u0345 \u0360-\u0361 \u0483-\u0486
     \u0591-\u05A1 \u05A3-\u05B9 \u05BB-\u05BD \u05BF
     \u05C1-\u05C2 \u05C4 \u064B-\u0652 \u0670
@@ -325,19 +325,19 @@ CombiningChar -> /{[
     \u0F90-\u0F95 \u0F97 \u0F99-\u0FAD \u0FB1-\u0FB7
     \u0FB9 \u20D0-\u20DC \u20E1 \u302A-\u302F
 	\u3099 \u309A
-]};
-Digit -> /{[
+];
+Digit -> [
       \x30-  \x39 \u0660-\u0669 \u06F0-\u06F9
     \u0966-\u096F \u09E6-\u09EF \u0A66-\u0A6F
     \u0AE6-\u0AEF \u0B66-\u0B6F \u0BE7-\u0BEF
     \u0C66-\u0C6F \u0CE6-\u0CEF \u0D66-\u0D6F
 	\u0E50-\u0E59 \u0ED0-\u0ED9 \u0F20-\u0F29
-]};
-Extender -> /{[
+];
+Extender -> [
       \xB7 \u02D0 \u02D1 \u0387 \u0640 \u0E46
     \u0EC6 \u3005 \u3031-\u3035 \u309D-\u309E
 	\u30FC-\u30FE
-]};
+];
 
 .escape -> "{" () "}";
 `)
