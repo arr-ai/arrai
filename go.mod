@@ -6,7 +6,7 @@ require (
 	github.com/arr-ai/frozen v0.13.0
 	github.com/arr-ai/hash v0.4.0
 	github.com/arr-ai/proto v0.0.0-20180422074755-2ffbedebee50
-	github.com/arr-ai/wbnf v0.9.0
+	github.com/arr-ai/wbnf v0.11.1-0.20200213001740-50a1cd593f7a
 	github.com/cpuguy83/go-md2man/v2 v2.0.0 // indirect
 	github.com/go-errors/errors v1.0.1
 	github.com/gorilla/websocket v1.4.1

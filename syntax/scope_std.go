@@ -29,9 +29,8 @@ func stdScope() rel.Scope {
 				rel.NewAttr("grammar", rel.NewTuple(
 					rel.NewNativeFunctionAttr("parse", parseGrammar),
 					rel.NewAttr("lang", rel.NewTuple(
-						rel.NewAttr("arrai", rel.ASTNodeToValue(ast.FromParserNode(
-							wbnf.Core().Grammar(), *arraiParsers.Node()))),
-						rel.NewAttr("wbnf", rel.ASTNodeToValue(ast.CoreNode())),
+						rel.NewAttr("arrai", rel.ASTNodeToValue(arraiParsers.Node().(wbnf.GrammarNode).Node)),
+						rel.NewAttr("wbnf", rel.ASTNodeToValue(wbnf.Core().Node().(wbnf.GrammarNode).Node)),
 					)),
 				)),
 				rel.NewAttr("func", rel.NewTuple(
@@ -62,12 +61,11 @@ func newFloatFuncAttr(name string, f func(float64) float64) rel.Attr {
 
 func parseGrammar(v rel.Value) rel.Value {
 	astNode := rel.ASTNodeFromValue(v).(ast.Branch)
-	parserNode := ast.ToParserNode(wbnf.Core().Grammar(), astNode).(parser.Node)
-	parsers := wbnf.NewFromNode(parserNode).Compile(&parserNode)
+	parsers := wbnf.NewFromAst(astNode).Compile(astNode)
 	return rel.NewNativeFunction("parse(<grammar>)", func(v rel.Value) rel.Value {
 		rule := v.String()
 		return rel.NewNativeFunction(fmt.Sprintf("parse(%s)", rule), func(v rel.Value) rel.Value {
-			node, err := parsers.Parse(wbnf.Rule(rule), parser.NewScanner(v.String()))
+			node, err := parsers.Parse(parser.Rule(rule), parser.NewScanner(v.String()))
 			if err != nil {
 				panic(err)
 			}

@@ -5,7 +5,6 @@ import (
 
 	"github.com/arr-ai/wbnf/ast"
 	"github.com/arr-ai/wbnf/parser"
-	"github.com/arr-ai/wbnf/wbnf"
 )
 
 func ASTNodeToValue(n ast.Node) Value {
@@ -34,11 +33,11 @@ func ASTBranchToValue(b ast.Branch) Tuple {
 			ints := children.(ast.Many)
 			values := make([]Value, 0, len(ints))
 			for _, i := range ints {
-				values = append(values, NewNumber(float64(i.(ast.Extra).Data.(wbnf.Choice))))
+				values = append(values, NewNumber(float64(i.(ast.Extra).Data.(parser.Choice))))
 			}
 			value = NewArray(values...)
 		case "@rule":
-			value = NewString([]rune(string(children.(ast.One).Node.(ast.Extra).Data.(wbnf.Rule))))
+			value = NewString([]rune(string(children.(ast.One).Node.(ast.Extra).Data.(parser.Rule))))
 		case "@skip":
 			value = NewNumber(float64(children.(ast.One).Node.(ast.Extra).Data.(int)))
 		default:
@@ -86,11 +85,11 @@ func ASTBranchFromValue(b Tuple) ast.Branch {
 			values := value.(*genericSet).OrderedValues()
 			ints := make(ast.Many, 0, len(values))
 			for _, v := range values {
-				ints = append(ints, ast.Extra{Data: wbnf.Choice(v.(Tuple).MustGet(ArrayItemAttr).(Number).Float64())})
+				ints = append(ints, ast.Extra{Data: parser.Choice(v.(Tuple).MustGet(ArrayItemAttr).(Number).Float64())})
 			}
 			children = ints
 		case "@rule":
-			children = ast.One{Node: ast.Extra{Data: wbnf.Rule(value.(String).String())}}
+			children = ast.One{Node: ast.Extra{Data: parser.Rule(value.(String).String())}}
 		case "@skip":
 			children = ast.One{Node: ast.Extra{Data: int(value.(Number).Float64())}}
 		default:

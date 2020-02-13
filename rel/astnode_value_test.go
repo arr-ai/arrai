@@ -37,8 +37,8 @@ func stripASTNodeSrc(node ast.Node) ast.Node {
 	}
 }
 
-func assertASTNodeToValueToNode(t *testing.T, p wbnf.Parsers, rule, src string) bool { //nolint:unparam
-	v, err := p.Parse(wbnf.Rule(rule), parser.NewScanner(src))
+func assertASTNodeToValueToNode(t *testing.T, p parser.Parsers, rule, src string) bool { //nolint:unparam
+	v, err := p.Parse(parser.Rule(rule), parser.NewScanner(src))
 	assert.NoError(t, err)
 	ast1 := ast.FromParserNode(p.Grammar(), v)
 	value := ASTBranchToValue(ast1)
@@ -52,10 +52,6 @@ func TestNodeToValueSimple(t *testing.T) {
 
 func TestGrammarToValueExpr(t *testing.T) {
 	assertASTNodeToValueToNode(t, wbnf.Core(), "grammar", `x->@:"+" > @:"*" > "1";`)
-}
-
-func TestGrammarToValueCore(t *testing.T) {
-	assertASTNodeToValueToNode(t, wbnf.Core(), "grammar", wbnf.GrammarGrammar())
 }
 
 func TestNodeToValueExpr(t *testing.T) {

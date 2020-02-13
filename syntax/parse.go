@@ -349,7 +349,7 @@ func ParseString(s, sourceDir string) (rel.Expr, error) {
 
 // Parse parses input and returns the parsed Expr or an error.
 func Parse(s *parser.Scanner, sourceDir string) (rel.Expr, error) {
-	v, err := arraiParsers.Parse(wbnf.Rule("expr"), s)
+	v, err := arraiParsers.Parse("expr", s)
 	// log.Print(v)
 	if err != nil {
 		return nil, err
