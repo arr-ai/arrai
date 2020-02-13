@@ -13,6 +13,10 @@ github.com/arr-ai/wbnf v0.11.1-0.20200213000500-d45e0aa84a5c h1:E84slVwtRtYRnfys
 github.com/arr-ai/wbnf v0.11.1-0.20200213000500-d45e0aa84a5c/go.mod h1:WRCWNNBAGJU3JwitK7FwbOA68f0/yr4m/Iq64/wyqCo=
 github.com/arr-ai/wbnf v0.11.1-0.20200213001740-50a1cd593f7a h1:B3j7O698VO6ytNJkebZi7+kJx/k/W/oeYv1aUtjohbM=
 github.com/arr-ai/wbnf v0.11.1-0.20200213001740-50a1cd593f7a/go.mod h1:WRCWNNBAGJU3JwitK7FwbOA68f0/yr4m/Iq64/wyqCo=
+github.com/arr-ai/wbnf v0.11.1-0.20200213005036-b8188671f959 h1:MeWrE8i60cY77Deylay8Q8ceA8t/tFClrV9uu0qhMvY=
+github.com/arr-ai/wbnf v0.11.1-0.20200213005036-b8188671f959/go.mod h1:WRCWNNBAGJU3JwitK7FwbOA68f0/yr4m/Iq64/wyqCo=
+github.com/arr-ai/wbnf v0.12.0 h1:T+TsPn18eQuaNVQ8ocWdcmk8JptSUGoq0RiI9mO6qSI=
+github.com/arr-ai/wbnf v0.12.0/go.mod h1:WRCWNNBAGJU3JwitK7FwbOA68f0/yr4m/Iq64/wyqCo=
 github.com/census-instrumentation/opencensus-proto v0.2.1/go.mod h1:f6KPmirojxKA12rnyqOA5BBL4O983OfeGPqjHWSTneU=
 github.com/client9/misspell v0.3.4/go.mod h1:qj6jICC3Q7zFZvVWo7KLAzC3yx5G7kyvSDkc90ppPyw=
 github.com/coreos/etcd v3.3.10+incompatible/go.mod h1:uF7uidLiAD3TWHmW31ZFd/JWoc32PjwdhPthX9715RE=
