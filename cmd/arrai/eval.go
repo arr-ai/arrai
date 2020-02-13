@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+	"io"
 	"os"
 
 	"github.com/arr-ai/arrai/rel"
@@ -16,9 +18,7 @@ var evalCommand = &cli.Command{
 	Action:  eval,
 }
 
-func eval(c *cli.Context) error {
-	source := c.Args().Get(0)
-
+func evalImpl(source string, w io.Writer) error {
 	expr, err := syntax.Parse(parser.NewScanner(source), ".")
 	if err != nil {
 		return err
@@ -30,10 +30,17 @@ func eval(c *cli.Context) error {
 	}
 
 	s := value.String()
-	os.Stdout.WriteString(s)
+	fmt.Fprintf(w, "%s", s)
 	if s[len(s)-1] != '\n' {
-		os.Stdout.Write([]byte{'\n'})
+		if _, err := w.Write([]byte{'\n'}); err != nil {
+			return err
+		}
 	}
 
 	return nil
+}
+
+func eval(c *cli.Context) error {
+	source := c.Args().Get(0)
+	return evalImpl(source, os.Stdout)
 }

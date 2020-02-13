@@ -54,44 +54,43 @@ func TestParseFix(t *testing.T) {
 	// AssertCodesEvalToSameValue(t, `{a:42}`, `(\a{a})42`)
 }
 
-// func TestParseFixt(t *testing.T) {
-// 	t.Parallel()
+func TestParseFixt(t *testing.T) {
+	t.Parallel()
 
-// 	/*
-// 		$ python3
-// 		>>> dmap = lambda d, f: {k: f(v) for k, v in d.items()}
-// 		>>> fixt = (lambda f: f(f))(lambda f: lambda t: dmap(t, lambda g: lambda n: g(f(f)(t))(n)))
-// 		>>> eo = fixt({
-// 			'even': lambda t: lambda n: n == 0 or t['odd'](n-1),
-// 			'odd':  lambda t: lambda n: n != 0 and t['even'](n-1),
-// 		})
-// 		>>> [eo['even'](i) for i in range(6)]
-// 		[True, False, True, False, True, False]\
-// 	*/
+	/*
+		$ python3
+		>>> dmap = lambda d, f: {k: f(v) for k, v in d.items()}
+		>>> fixt = (lambda f: f(f))(lambda f: lambda t: dmap(t, lambda g: lambda n: g(f(f)(t))(n)))
+		>>> eo = fixt({
+			'even': lambda t: lambda n: n == 0 or t['odd'](n-1),
+			'odd':  lambda t: lambda n: n != 0 and t['even'](n-1),
+		})
+		>>> [eo['even'](i) for i in range(6)]
+		[True, False, True, False, True, False]\
+	*/
 
-// 	// fixt = (\f f(f))(\f \t t :> \g \n g(f(f)(t))(n))
+	// fixt = (\f f(f))(\f \t t :> \g \n g(f(f)(t))(n))
 
-// 	eo := `(
-// 		even: \t \n n = 0 || t.odd(n-1),
-// 		odd:  \t \n n != 0 && t.even(n-1)
-// 	)`
-// 	// AssertCodesEvalToSameValue(t, `true`,
-// 	// 	`(\f f(f))(\f \t t :> \g \n g(f(f)(t))(n)) (`+eo+`)`)
-// 	AssertCodesEvalToSameValue(t, `true`,
-// 		`((\f f(f))(\f \t t :> \g \n g(f(f)(t))(n)) (`+eo+`)).even(0)`)
-// 	// AssertCodesEvalToSameValue(t, `2`,
-// 	// 	`(\f f(f))(\f \t t :> \n .(f(f)(t))(n)) (\gcd \a \b a if b = 0 else gcd(b)(a % b))(20)(14)`)
-// 	// AssertCodesEvalToSameValue(t, `2`,
-// 	// 	`(\f f(f))(\f \t t :> \n .(f(f)(t))(n)) (\gcd \a \b a if b = 0 else gcd(b, a % b))(20, 14)`)
-// 	// AssertCodesEvalToSameValue(t, `720`,
-// 	// 	`//.func.fix(\fact \n 1 if n < 2 else fact(n - 1) * n)(6)`)
-// 	// AssertCodesEvalToSameValue(t, `2`,
-// 	// 	`//.func.fix(\gcd \a \b a if b = 0 else gcd(b)(a % b))(20)(14)`)
-// 	// AssertCodesEvalToSameValue(t, `2`,
-// 	// 	`//.func.fix(\gcd \a \b a if b = 0 else gcd(b, a % b))(20, 14)`)
-// 	// TODO: Fix
-// 	// AssertCodesEvalToSameValue(t, `{a:42}`, `(\a{a})42`)
-// }
+	eo := `(
+		even: \t \n (//.log.print(n)) = 0 || t.odd(n-1),
+		odd:  \t \n (//.log.print(n)) != 0 && t.even(n-1)
+	)`
+	// AssertCodesEvalToSameValue(t, `true`,
+	// 	`(\f f(f))(\f \t t :> \g \n g(f(f)(t))(n)) (`+eo+`)`)
+	AssertCodesEvalToSameValue(t, `true`, `(//.func.fixt(`+eo+`)).even(0)`)
+	// AssertCodesEvalToSameValue(t, `2`,
+	// 	`(\f f(f))(\f \t t :> \n .(f(f)(t))(n)) (\gcd \a \b a if b = 0 else gcd(b)(a % b))(20)(14)`)
+	// AssertCodesEvalToSameValue(t, `2`,
+	// 	`(\f f(f))(\f \t t :> \n .(f(f)(t))(n)) (\gcd \a \b a if b = 0 else gcd(b, a % b))(20, 14)`)
+	// AssertCodesEvalToSameValue(t, `720`,
+	// 	`//.func.fix(\fact \n 1 if n < 2 else fact(n - 1) * n)(6)`)
+	// AssertCodesEvalToSameValue(t, `2`,
+	// 	`//.func.fix(\gcd \a \b a if b = 0 else gcd(b)(a % b))(20)(14)`)
+	// AssertCodesEvalToSameValue(t, `2`,
+	// 	`//.func.fix(\gcd \a \b a if b = 0 else gcd(b, a % b))(20, 14)`)
+	// TODO: Fix
+	// AssertCodesEvalToSameValue(t, `{a:42}`, `(\a{a})42`)
+}
 
 // func TestParseArrowStarExprAssignExisting(t *testing.T) {
 // 	t.Parallel()

@@ -3,6 +3,7 @@ package syntax
 import (
 	"fmt"
 	"io/ioutil"
+	"log"
 	"math"
 	"net/http"
 	"strings"
@@ -35,7 +36,14 @@ func stdScope() rel.Scope {
 				)),
 				rel.NewAttr("func", rel.NewTuple(
 					rel.NewAttr("fix", parseLit(`(\f f(f))(\f \g \n g(f(f)(g))(n))`)),
-					rel.NewAttr("fixt", parseLit(`(\f f(f))(\f \t t :> \n .(f(f)(t))(n))`)),
+					// rel.NewAttr("fixt", parseLit(`(\f f(f))(\f \g \n g(f(f)(g))(n))`)),
+					rel.NewAttr("fixt", parseLit(`(\f f(f))(\f \t t :> \g \n g(f(f)(t))(n))`)),
+				)),
+				rel.NewAttr("log", rel.NewTuple(
+					rel.NewNativeFunctionAttr("print", func(value rel.Value) rel.Value {
+						log.Print(value)
+						return value
+					}),
 				)),
 			)).
 			With("//./", rel.NewNativeFunction("//./", importLocalFile)).

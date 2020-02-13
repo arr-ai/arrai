@@ -3,6 +3,7 @@ package rel
 import (
 	"reflect"
 	"strconv"
+	"unsafe"
 
 	"github.com/arr-ai/hash"
 )
@@ -33,9 +34,27 @@ func (n Number) Equal(v interface{}) bool {
 	return false
 }
 
+func (n Number) format() string {
+	return strconv.FormatFloat(float64(n), 'G', -1, 64)
+}
+
 // String returns a string representation of a Number.
 func (n Number) String() string {
-	return strconv.FormatFloat(float64(n), 'G', -1, 64)
+	// TODO: Validate ulp heuristic parameters.
+	s := n.format()
+	if len(s) < 15 {
+		return s
+	}
+	u := *(*uint64)(unsafe.Pointer(&n))
+	u++
+	if s := (*Number)(unsafe.Pointer(&u)).format(); len(s) < 10 {
+		return s
+	}
+	u -= 2
+	if s := (*Number)(unsafe.Pointer(&u)).format(); len(s) < 10 {
+		return s
+	}
+	return s
 }
 
 // Eval returns the number.
