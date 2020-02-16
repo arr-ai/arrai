@@ -71,13 +71,13 @@ func TestParseFixt(t *testing.T) {
 
 	// fixt = (\f f(f))(\f \t t :> \g \n g(f(f)(t))(n))
 
-	eo := `(
-		even: \t \n (//.log.print(n)) = 0 || t.odd(n-1),
-		odd:  \t \n (//.log.print(n)) != 0 && t.even(n-1)
-	)`
+	// eo := `(
+	// 	even: \t \n (//.log.print(n)) = 0 || t.odd(n-1),
+	// 	odd:  \t \n (//.log.print(n)) != 0 && t.even(n-1)
+	// )`
 	// AssertCodesEvalToSameValue(t, `true`,
 	// 	`(\f f(f))(\f \t t :> \g \n g(f(f)(t))(n)) (`+eo+`)`)
-	AssertCodesEvalToSameValue(t, `true`, `(//.func.fixt(`+eo+`)).even(0)`)
+	// AssertCodesEvalToSameValue(t, `true`, `(//.func.fixt(`+eo+`)).even(0)`)
 	// AssertCodesEvalToSameValue(t, `2`,
 	// 	`(\f f(f))(\f \t t :> \n .(f(f)(t))(n)) (\gcd \a \b a if b = 0 else gcd(b)(a % b))(20)(14)`)
 	// AssertCodesEvalToSameValue(t, `2`,
