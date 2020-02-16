@@ -23,6 +23,7 @@ func stdScope() rel.Scope {
 			With(".", rel.NewTuple(
 				rel.NewAttr("math", rel.NewTuple(
 					rel.NewAttr("pi", rel.NewNumber(math.Pi)),
+					rel.NewAttr("e", rel.NewNumber(math.E)),
 					newFloatFuncAttr("sin", math.Sin),
 					newFloatFuncAttr("cos", math.Cos),
 				)),

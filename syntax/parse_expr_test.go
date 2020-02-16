@@ -18,22 +18,25 @@ func TestParseTupleExpr(t *testing.T) {
 func TestParseTupleShorthand(t *testing.T) {
 	t.Parallel()
 	AssertCodesEvalToSameValue(t, `(a:42)`, `(\a(a:a))(42)`)
-	// TODO: Fix
-	// AssertCodesEvalToSameValue(t, `{a:42}`, `(\a{a})42`)
 }
 
 func TestParseCurry(t *testing.T) {
 	t.Parallel()
 	AssertCodesEvalToSameValue(t, `42`, `(\x \y x * y)(6)(7)`)
-	// TODO: Fix
-	// AssertCodesEvalToSameValue(t, `{a:42}`, `(\a{a})42`)
 }
 
 func TestParseCurry2(t *testing.T) {
 	t.Parallel()
 	AssertCodesEvalToSameValue(t, `42`, `(\op \x \y op(x, y))(\a \b a * b)(6)(7)`)
-	// TODO: Fix
-	// AssertCodesEvalToSameValue(t, `{a:42}`, `(\a{a})42`)
+}
+
+func TestParseApply(t *testing.T) {
+	t.Parallel()
+	AssertCodesEvalToSameValue(t, `42`, `42 -> .`)
+	AssertCodesEvalToSameValue(t, `42`, `6 * 7 -> \x x`)
+	AssertCodesEvalToSameValue(t, `42`, `7 -> \y (6 -> \x x * y)`)
+	AssertCodesEvalToSameValue(t, `23.140692632779263`, `//.math -> (//.math.pi -> \pi .e^pi)`)
+	AssertCodesEvalToSameValue(t, `0`, `//.math -> \m (m.sin(0) -> .)`)
 }
 
 func TestParseFix(t *testing.T) {

@@ -27,7 +27,7 @@ func unfakeBackquote(s string) string {
 }
 
 var arraiParsers = wbnf.MustCompile(unfakeBackquote(`
-expr   -> amp="&"* @ arrow=(nest | unnest | ARROW @ | arr="->" @)*
+expr   -> amp="&"* @ arrow=(nest | unnest | ARROW @ | arr="->" "\\" IDENT %%bind @ | arr="->" %%bind @)*
         > @:binop=("with" | "without")
         > @:binop="||"
         > @:binop="&&"
@@ -38,13 +38,13 @@ expr   -> amp="&"* @ arrow=(nest | unnest | ARROW @ | arr="->" @)*
         > @:binop=/{//|[*/%]}
         > @:rbinop="^"
         > unop=/{[-+!*^]}* @
-        > @ call=("(" arg=expr:",", ")")*
         > @ count="count"? touch?
+        > @ call=("(" arg=expr:",", ")")*
         > get+ | @ get*
         > "{" rel=(names tuple=("(" v=@:",", ")"):",",?) "}"
         | "{" set=(elt=@:",",?) "}"
         | "[" array=(item=@:",",?) "]"
-        | "{:" embed=(grammar=@ ":" subgrammar=%%grammar) ":}"
+        | "{:" embed=(grammar=@ ":" subgrammar=%%ast) ":}"
         | op="\\\\" @
         | fn="\\" IDENT @
         | "//" pkg=( "." ("/" local=name)+
@@ -72,7 +72,7 @@ NUM   -> /{
 		   (?: [Ee][-+]?[0-9]+ )?
 		  };
 
-.wrapRE -> /{\s*()};
+.wrapRE -> /{\s*()\s*};
 `))
 
 type parse struct {
@@ -99,7 +99,6 @@ func (p *parse) parseExpr(b wbnf.Branch) rel.Expr {
 			for _, arrow := range arrows.(wbnf.Many) {
 				branch := arrow.(wbnf.Branch)
 				part, d := which(branch, "nest", "unnest", "ARROW", "arr")
-				log.Printf("%s = %v", part, d)
 				switch part {
 				case "nest":
 					expr = parseNest(expr, branch["nest"].(wbnf.One).Node.(wbnf.Branch))
@@ -110,7 +109,11 @@ func (p *parse) parseExpr(b wbnf.Branch) rel.Expr {
 					expr = f(expr, p.parseExpr(arrow.(wbnf.Branch)["expr"].(wbnf.One).Node.(wbnf.Branch)))
 				case "arr":
 					f := binops["->"]
-					expr = f(expr, p.parseExpr(arrow.(wbnf.Branch)["expr"].(wbnf.One).Node.(wbnf.Branch)))
+					rhs := p.parseExpr(arrow.(wbnf.Branch)["expr"].(wbnf.One).Node.(wbnf.Branch))
+					if ident := arrow.One("IDENT"); ident != nil {
+						rhs = rel.NewFunction(ident.Scanner().String(), rhs)
+					}
+					expr = f(expr, rhs)
 				}
 			}
 		}
@@ -360,14 +363,47 @@ func ParseString(s, sourceDir string) (rel.Expr, error) {
 
 // Parse parses input and returns the parsed Expr or an error.
 func Parse(s *parser.Scanner, sourceDir string) (rel.Expr, error) {
+	rscopes := []rel.Scope{{}}
 	v, err := arraiParsers.ParseWithExternals(parser.Rule("expr"), s, parser.Externals{
-		"grammar": func(
-			elt parser.TreeElement, input *parser.Scanner, end bool,
+		"bind": func(
+			pscope parser.Scope, _ *parser.Scanner, end bool,
 		) (parser.TreeElement, parser.Node, error) {
+			if end {
+				rscopes = rscopes[:len(rscopes)-1]
+			}
+
+			identStr := "."
+			if _, ident, has := pscope.GetVal("IDENT"); has {
+				identStr = ident.(parser.Scanner).String()
+			}
+
+			_, exprElt, has := pscope.GetVal("expr@1")
+			if !has {
+				log.Println(pscope.Keys())
+				log.Println(pscope)
+				panic("wat?")
+			}
+
+			exprNode := wbnf.FromParserNode(arraiParsers.Grammar(), exprElt)
+			expr := (&parse{sourceDir: sourceDir}).parseExpr(exprNode)
+			value, err := expr.Eval(rscopes[len(rscopes)-1])
+			if err != nil {
+				panic(err)
+			}
+			rscopes = append(rscopes, rscopes[len(rscopes)-1].With(identStr, value))
+			return nil, parser.Node{}, nil
+		},
+		"ast": func(
+			scope parser.Scope, input *parser.Scanner, end bool,
+		) (parser.TreeElement, parser.Node, error) {
+			_, elt, ok := scope.GetVal("grammar")
+			if !ok {
+				panic("wat?")
+			}
 			astNode := wbnf.FromParserNode(arraiParsers.Grammar(), elt)
 			dotExpr := (&parse{sourceDir: sourceDir}).parseExpr(astNode).(*rel.DotExpr)
 			astExpr := dotExpr.Subject()
-			astValue, err := astExpr.Eval(rel.EmptyScope)
+			astValue, err := astExpr.Eval(rscopes[len(rscopes)-1])
 			if err != nil {
 				return nil, parser.Node{}, err
 			}
