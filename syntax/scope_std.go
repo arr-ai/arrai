@@ -45,6 +45,12 @@ func stdScope() rel.Scope {
 						log.Print(value)
 						return value
 					}),
+					rel.NewNativeFunctionAttr("printf1", func(format rel.Value) rel.Value {
+						return rel.NewNativeFunction("printf1()", func(arg rel.Value) rel.Value {
+							log.Printf(format.(rel.String).String(), arg)
+							return arg
+						})
+					}),
 				)),
 			)).
 			With("//./", rel.NewNativeFunction("//./", importLocalFile)).
