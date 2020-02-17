@@ -462,35 +462,25 @@ var binops = map[string]binOpFunc{
 	"min":     rel.NewMinExpr,
 	"with":    rel.NewWithExpr,
 	"without": rel.NewWithoutExpr,
-	"&&": rel.MakeBinValExpr("&&", func(a, b rel.Value) rel.Value {
-		if !a.Bool() {
-			return a
-		}
-		return b
-	}),
-	"||": rel.MakeBinValExpr("||", func(a, b rel.Value) rel.Value {
-		if a.Bool() {
-			return a
-		}
-		return b
-	}),
-	"=":   rel.MakeEqExpr("=", func(a, b rel.Value) bool { return a.Equal(b) }),
-	"<":   rel.MakeEqExpr("<", func(a, b rel.Value) bool { return a.Less(b) }),
-	">":   rel.MakeEqExpr(">", func(a, b rel.Value) bool { return b.Less(a) }),
-	"!=":  rel.MakeEqExpr("!=", func(a, b rel.Value) bool { return !a.Equal(b) }),
-	"<=":  rel.MakeEqExpr("<=", func(a, b rel.Value) bool { return !b.Less(a) }),
-	">=":  rel.MakeEqExpr(">=", func(a, b rel.Value) bool { return !a.Less(b) }),
-	"+":   rel.NewAddExpr,
-	"-":   rel.NewSubExpr,
-	"|":   unimplementedBinOpFunc, // rel.NewUnionExpr,
-	"(+)": unimplementedBinOpFunc, // rel.NewXorExpr,
-	"<&>": rel.NewJoinExpr,
-	"*":   rel.NewMulExpr,
-	"/":   rel.NewDivExpr,
-	"%":   rel.NewModExpr,
-	"-%":  rel.NewSubModExpr,
-	"//":  rel.NewIdivExpr,
-	"^":   rel.NewPowExpr,
+	"&&":      rel.NewAndExpr,
+	"||":      rel.NewOrExpr,
+	"=":       rel.MakeEqExpr("=", func(a, b rel.Value) bool { return a.Equal(b) }),
+	"<":       rel.MakeEqExpr("<", func(a, b rel.Value) bool { return a.Less(b) }),
+	">":       rel.MakeEqExpr(">", func(a, b rel.Value) bool { return b.Less(a) }),
+	"!=":      rel.MakeEqExpr("!=", func(a, b rel.Value) bool { return !a.Equal(b) }),
+	"<=":      rel.MakeEqExpr("<=", func(a, b rel.Value) bool { return !b.Less(a) }),
+	">=":      rel.MakeEqExpr(">=", func(a, b rel.Value) bool { return !a.Less(b) }),
+	"+":       rel.NewAddExpr,
+	"-":       rel.NewSubExpr,
+	"|":       unimplementedBinOpFunc, // rel.NewUnionExpr,
+	"(+)":     unimplementedBinOpFunc, // rel.NewXorExpr,
+	"<&>":     rel.NewJoinExpr,
+	"*":       rel.NewMulExpr,
+	"/":       rel.NewDivExpr,
+	"%":       rel.NewModExpr,
+	"-%":      rel.NewSubModExpr,
+	"//":      rel.NewIdivExpr,
+	"^":       rel.NewPowExpr,
 }
 
 func parseNest(lhs rel.Expr, branch wbnf.Branch) rel.Expr {
