@@ -383,11 +383,8 @@ func Parse(s *parser.Scanner, sourceDir string) (rel.Expr, error) {
 
 			exprNode := wbnf.FromParserNode(arraiParsers.Grammar(), exprElt)
 			expr := (&parse{sourceDir: sourceDir}).parseExpr(exprNode)
-			value, err := expr.Eval(rscopes[len(rscopes)-1])
-			if err != nil {
-				panic(err)
-			}
-			rscopes = append(rscopes, rscopes[len(rscopes)-1].With(identStr, value))
+			expr = rel.NewExprClosure(rscopes[len(rscopes)-1], expr)
+			rscopes = append(rscopes, rscopes[len(rscopes)-1].With(identStr, expr))
 			return nil, parser.Node{}, nil
 		},
 		"ast": func(
@@ -400,7 +397,7 @@ func Parse(s *parser.Scanner, sourceDir string) (rel.Expr, error) {
 			astNode := wbnf.FromParserNode(arraiParsers.Grammar(), elt)
 			dotExpr := (&parse{sourceDir: sourceDir}).parseExpr(astNode).(*rel.DotExpr)
 			astExpr := dotExpr.Subject()
-			astValue, err := astExpr.Eval(rscopes[len(rscopes)-1])
+			astValue, err := astExpr.Eval(rel.Scope{})
 			if err != nil {
 				return nil, parser.Node{}, err
 			}

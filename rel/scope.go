@@ -75,6 +75,10 @@ func (s Scope) With(name string, expr Expr) Scope {
 	return Scope{s.m.With(name, expr)}
 }
 
+func (s Scope) Update(t Scope) Scope {
+	return Scope{m: s.m.Update(t.m)}
+}
+
 // Project returns a new scope with just names from the input scope.
 func (s Scope) Project(names Names) (Scope, error) {
 	result := EmptyScope

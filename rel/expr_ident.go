@@ -11,7 +11,7 @@ type IdentLookupFailed struct {
 }
 
 func (e IdentLookupFailed) Error() string {
-	return fmt.Sprintf("Name not found: %q", e.expr.ident)
+	return fmt.Sprintf("Name %q not found in %v", e.expr.ident, e.scope.m.Keys())
 }
 
 // IdentExpr returns the variable referenced by ident.
