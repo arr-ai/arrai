@@ -397,7 +397,7 @@ func Parse(s *parser.Scanner, sourceDir string) (rel.Expr, error) {
 			astNode := wbnf.FromParserNode(arraiParsers.Grammar(), elt)
 			dotExpr := (&parse{sourceDir: sourceDir}).parseExpr(astNode).(*rel.DotExpr)
 			astExpr := dotExpr.Subject()
-			astValue, err := astExpr.Eval(rel.Scope{})
+			astValue, err := astExpr.Eval(rscopes[len(rscopes)-1])
 			if err != nil {
 				return nil, parser.Node{}, err
 			}
