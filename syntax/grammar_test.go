@@ -112,3 +112,20 @@ func TestGrammarParseParseScopeVar(t *testing.T) {
 		})
 	}
 }
+
+// func TestGrammarParseWithEscape(t *testing.T) {
+// 	AssertCodesEvalToSameValue(t,
+// 		`(
+// 			"": ["+"],
+// 			@rule: "expr",
+// 			expr: [
+// 				(expr: [("": "1")]),
+// 				(
+// 					"": ["*"],
+// 					expr: [("": "2"), ("": "3")]
+// 				)
+// 			]
+// 		)`,
+// 		`{://.grammar.lang.wbnf.grammar: expr -> @:'+' > @:'*' > \d+; :} -> {:.expr:1+:{'2'}:*3:}`,
+// 	)
+// }

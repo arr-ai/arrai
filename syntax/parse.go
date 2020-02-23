@@ -27,7 +27,7 @@ func unfakeBackquote(s string) string {
 }
 
 var arraiParsers = wbnf.MustCompile(unfakeBackquote(`
-expr   -> amp="&"* @ arrow=(nest | unnest | ARROW @ | arr="->" "\\" IDENT %%bind @ | arr="->" %%bind @)*
+expr   -> amp="&"* @ arrow=(nest | unnest | ARROW @ | binding="->" "\\" IDENT %%bind @ | binding="->" %%bind @)*
         > @:binop=("with" | "without")
         > @:binop="||"
         > @:binop="&&"
@@ -37,7 +37,7 @@ expr   -> amp="&"* @ arrow=(nest | unnest | ARROW @ | arr="->" "\\" IDENT %%bind
         > @:binop=/{&|[-<][-&][->]}
         > @:binop=/{//|[*/%]}
         > @:rbinop="^"
-        > unop=/{[-+!*^]}* @
+        > unop=/{:>|=>|>>|[-+!*^]}* @
         > @ count="count"? touch?
         > @ call=("(" arg=expr:",", ")")*
         > get+ | @ get*
@@ -46,7 +46,7 @@ expr   -> amp="&"* @ arrow=(nest | unnest | ARROW @ | arr="->" "\\" IDENT %%bind
         | "[" array=(item=@:",",?) "]"
         | "{:" embed=(grammar=@ ":" subgrammar=%%ast) ":}"
         | op="\\\\" @
-        | fn="\\" IDENT @
+		| fn="\\" IDENT @
         | "//" pkg=( "." ("/" local=name)+
                    | "." std=IDENT?
                    | http="http://"? fqdn=name:"." ("/" path=name)*
@@ -72,11 +72,11 @@ NUM    -> /{ (?: \d+(?:\.\d*)? | \.\d+ ) (?: [Ee][-+]?\d+ )? };
 .wrapRE -> /{\s*()\s*};
 `))
 
-type parse struct {
-	sourceDir string
+type ParseContext struct {
+	SourceDir string
 }
 
-func (p *parse) parseExpr(b wbnf.Branch) rel.Expr {
+func (pc ParseContext) CompileExpr(b wbnf.Branch) rel.Expr {
 	// fmt.Println(b)
 	name, c := which(b,
 		"amp", "arrow", "unop", "binop", "rbinop",
@@ -91,11 +91,11 @@ func (p *parse) parseExpr(b wbnf.Branch) rel.Expr {
 	// log.Println(name, "\n", b)
 	switch name {
 	case "amp", "arrow":
-		expr := p.parseExpr(b["expr"].(wbnf.One).Node.(wbnf.Branch))
+		expr := pc.CompileExpr(b["expr"].(wbnf.One).Node.(wbnf.Branch))
 		if arrows, has := b["arrow"]; has {
 			for _, arrow := range arrows.(wbnf.Many) {
 				branch := arrow.(wbnf.Branch)
-				part, d := which(branch, "nest", "unnest", "ARROW", "arr")
+				part, d := which(branch, "nest", "unnest", "ARROW", "binding")
 				switch part {
 				case "nest":
 					expr = parseNest(expr, branch["nest"].(wbnf.One).Node.(wbnf.Branch))
@@ -103,10 +103,10 @@ func (p *parse) parseExpr(b wbnf.Branch) rel.Expr {
 					panic("unfinished")
 				case "ARROW":
 					f := binops[d.(wbnf.One).Node.One("").(wbnf.Leaf).Scanner().String()]
-					expr = f(expr, p.parseExpr(arrow.(wbnf.Branch)["expr"].(wbnf.One).Node.(wbnf.Branch)))
-				case "arr":
+					expr = f(expr, pc.CompileExpr(arrow.(wbnf.Branch)["expr"].(wbnf.One).Node.(wbnf.Branch)))
+				case "binding":
 					f := binops["->"]
-					rhs := p.parseExpr(arrow.(wbnf.Branch)["expr"].(wbnf.One).Node.(wbnf.Branch))
+					rhs := pc.CompileExpr(arrow.(wbnf.Branch)["expr"].(wbnf.One).Node.(wbnf.Branch))
 					if ident := arrow.One("IDENT"); ident != nil {
 						rhs = rel.NewFunction(ident.Scanner().String(), rhs)
 					}
@@ -122,7 +122,7 @@ func (p *parse) parseExpr(b wbnf.Branch) rel.Expr {
 		return expr
 	case "unop":
 		ops := c.(wbnf.Many)
-		result := p.parseExpr(b.One("expr").(wbnf.Branch))
+		result := pc.CompileExpr(b.One("expr").(wbnf.Branch))
 		for i := len(ops) - 1; i >= 0; i-- {
 			op := ops[i].One("").(wbnf.Leaf).Scanner().String()
 			f := unops[op]
@@ -132,38 +132,38 @@ func (p *parse) parseExpr(b wbnf.Branch) rel.Expr {
 	case "binop":
 		ops := c.(wbnf.Many)
 		args := b["expr"].(wbnf.Many)
-		result := p.parseExpr(args[0].(wbnf.Branch))
+		result := pc.CompileExpr(args[0].(wbnf.Branch))
 		for i, arg := range args[1:] {
 			op := ops[i].One("").(wbnf.Leaf).Scanner().String()
 			f := binops[op]
-			result = f(result, p.parseExpr(arg.(wbnf.Branch)))
+			result = f(result, pc.CompileExpr(arg.(wbnf.Branch)))
 		}
 		return result
 	case "rbinop":
 		ops := c.(wbnf.Many)
 		args := b["expr"].(wbnf.Many)
-		result := p.parseExpr(args[len(args)-1].(wbnf.Branch))
+		result := pc.CompileExpr(args[len(args)-1].(wbnf.Branch))
 		for i := len(args) - 2; i >= 0; i-- {
 			op := ops[i].One("").(wbnf.Leaf).Scanner().String()
 			f, has := binops[op]
 			if !has {
 				panic("rbinop %q not found")
 			}
-			result = f(p.parseExpr(args[i].(wbnf.Branch)), result)
+			result = f(pc.CompileExpr(args[i].(wbnf.Branch)), result)
 		}
 		return result
 	case "if":
-		result := p.parseExpr(b.One("expr").(wbnf.Branch))
+		result := pc.CompileExpr(b.One("expr").(wbnf.Branch))
 		for _, ifelse := range c.(wbnf.Many) {
-			t := p.parseExpr(ifelse.One("t").(wbnf.Branch))
-			f := p.parseExpr(ifelse.One("f").(wbnf.Branch))
+			t := pc.CompileExpr(ifelse.One("t").(wbnf.Branch))
+			f := pc.CompileExpr(ifelse.One("f").(wbnf.Branch))
 			result = rel.NewIfElseExpr(result, t, f)
 		}
 		return result
 	case "call":
-		result := p.parseExpr(b.One("expr").(wbnf.Branch))
+		result := pc.CompileExpr(b.One("expr").(wbnf.Branch))
 		for _, call := range c.(wbnf.Many) {
-			for _, arg := range p.parseExprs(call.Many("arg")...) {
+			for _, arg := range pc.parseExprs(call.Many("arg")...) {
 				result = rel.NewCallExpr(result, arg)
 			}
 		}
@@ -172,14 +172,14 @@ func (p *parse) parseExpr(b wbnf.Branch) rel.Expr {
 		if _, has := b["touch"]; has {
 			panic("unfinished")
 		}
-		return rel.NewCountExpr(p.parseExpr(b.One("expr").(wbnf.Branch)))
+		return rel.NewCountExpr(pc.CompileExpr(b.One("expr").(wbnf.Branch)))
 
 		// touch -> ("->*" ("&"? IDENT | STR))+ "(" expr:"," ","? ")";
 		// result := p.parseExpr(b.One("expr").(wbnf.Branch))
 	case "get":
 		var result rel.Expr
 		if expr := b.One("expr"); expr != nil {
-			result = p.parseExpr(expr.(wbnf.Branch))
+			result = pc.CompileExpr(expr.(wbnf.Branch))
 		} else {
 			result = rel.DotIdent
 		}
@@ -196,7 +196,7 @@ func (p *parse) parseExpr(b wbnf.Branch) rel.Expr {
 		tuples := c.(wbnf.One).Node.(wbnf.Branch)["tuple"].(wbnf.Many)
 		tupleExprs := make([][]rel.Expr, 0, len(tuples))
 		for _, tuple := range tuples {
-			tupleExprs = append(tupleExprs, p.parseExprs(tuple.(wbnf.Branch)["v"].(wbnf.Many)...))
+			tupleExprs = append(tupleExprs, pc.parseExprs(tuple.(wbnf.Branch)["v"].(wbnf.Many)...))
 		}
 		result, err := rel.NewRelationExpr(names, tupleExprs...)
 		if err != nil {
@@ -205,19 +205,19 @@ func (p *parse) parseExpr(b wbnf.Branch) rel.Expr {
 		return result
 	case "set":
 		if elts := c.(wbnf.One).Node.(wbnf.Branch)["elt"]; elts != nil {
-			return rel.NewSetExpr(p.parseExprs(elts.(wbnf.Many)...)...)
+			return rel.NewSetExpr(pc.parseExprs(elts.(wbnf.Many)...)...)
 		}
 		return rel.NewSetExpr()
 	case "array":
 		if items := c.(wbnf.One).Node.(wbnf.Branch)["item"]; items != nil {
-			return rel.NewArrayExpr(p.parseExprs(items.(wbnf.Many)...)...)
+			return rel.NewArrayExpr(pc.parseExprs(items.(wbnf.Many)...)...)
 		}
 		return rel.NewArray()
 	case "embed":
 		return rel.ASTNodeToValue(b.One("embed").One("subgrammar").One("").One("@node"))
 	case "fn":
 		ident := b.One("IDENT")
-		expr := p.parseExpr(b.One("expr").(wbnf.Branch))
+		expr := pc.CompileExpr(b.One("expr").(wbnf.Branch))
 		return rel.NewFunction(ident.One("").Scanner().String(), expr)
 	case "pkg":
 		pkg := c.(wbnf.One).Node.(wbnf.Branch)
@@ -234,12 +234,12 @@ func (p *parse) parseExpr(b wbnf.Branch) rel.Expr {
 				sb.WriteString(strings.Trim(parseName(part.One("name").(wbnf.Branch)), "'"))
 			}
 			filepath := sb.String()
-			if p.sourceDir == "" {
+			if pc.SourceDir == "" {
 				panic(fmt.Errorf("local import %q invalid; no local context", filepath))
 			}
 			return rel.NewCallExpr(
 				NewPackageExpr(rel.NewIdentExpr("//./")),
-				rel.NewString([]rune(path.Join(p.sourceDir, filepath))))
+				rel.NewString([]rune(path.Join(pc.SourceDir, filepath))))
 		} else if fqdn := pkg["fqdn"]; fqdn != nil {
 			var sb strings.Builder
 			if http := pkg["http"]; http != nil {
@@ -266,7 +266,7 @@ func (p *parse) parseExpr(b wbnf.Branch) rel.Expr {
 			attrs := make([]rel.AttrExpr, 0, len(entries))
 			for _, entry := range entries {
 				k := parseName(entry.One("name").(wbnf.Branch))
-				v := p.parseExpr(entry.One("v").(wbnf.Branch))
+				v := pc.CompileExpr(entry.One("v").(wbnf.Branch))
 				attr, err := rel.NewAttrExpr(k, v)
 				if err != nil {
 					panic(err)
@@ -298,10 +298,10 @@ func (p *parse) parseExpr(b wbnf.Branch) rel.Expr {
 	case "expr":
 		switch c := c.(type) {
 		case wbnf.One:
-			return p.parseExpr(c.Node.(wbnf.Branch))
+			return pc.CompileExpr(c.Node.(wbnf.Branch))
 		case wbnf.Many:
 			if len(c) == 1 {
-				return p.parseExpr(c[0].(wbnf.Branch))
+				return pc.CompileExpr(c[0].(wbnf.Branch))
 			}
 			panic("too many expr children")
 		}
@@ -309,10 +309,10 @@ func (p *parse) parseExpr(b wbnf.Branch) rel.Expr {
 	panic(fmt.Errorf("unhandled node: %v", b))
 }
 
-func (p *parse) parseExprs(exprs ...wbnf.Node) []rel.Expr {
+func (pc ParseContext) parseExprs(exprs ...wbnf.Node) []rel.Expr {
 	result := make([]rel.Expr, 0, len(exprs))
 	for _, expr := range exprs {
-		result = append(result, p.parseExpr(expr.(wbnf.Branch)))
+		result = append(result, pc.CompileExpr(expr.(wbnf.Branch)))
 	}
 	return result
 }
@@ -340,31 +340,29 @@ func parseName(name wbnf.Branch) string {
 }
 
 // MustParseString parses input string and returns the parsed Expr or panics.
-func MustParseString(s, sourceDir string) rel.Expr {
-	return MustParse(parser.NewScanner(s), sourceDir)
+func (pc ParseContext) MustParseString(s string) wbnf.Branch {
+	return pc.MustParse(parser.NewScanner(s))
 }
 
 // MustParse parses input and returns the parsed Expr or panics.
-func MustParse(s *parser.Scanner, sourceDir string) rel.Expr {
-	expr, err := Parse(s, sourceDir)
+func (pc ParseContext) MustParse(s *parser.Scanner) wbnf.Branch {
+	ast, err := pc.Parse(s)
 	if err != nil {
 		panic(err)
 	}
-	return expr
+	return ast
 }
 
 // ParseString parses input string and returns the parsed Expr or an error.
-func ParseString(s, sourceDir string) (rel.Expr, error) {
-	return Parse(parser.NewScanner(s), sourceDir)
+func (pc ParseContext) ParseString(s string) (wbnf.Branch, error) {
+	return pc.Parse(parser.NewScanner(s))
 }
 
 // Parse parses input and returns the parsed Expr or an error.
-func Parse(s *parser.Scanner, sourceDir string) (rel.Expr, error) {
+func (pc ParseContext) Parse(s *parser.Scanner) (wbnf.Branch, error) {
 	rscopes := []rel.Scope{{}}
-	v, err := arraiParsers.ParseWithExternals(parser.Rule("expr"), s, parser.Externals{
-		"bind": func(
-			pscope parser.Scope, _ *parser.Scanner, end bool,
-		) (parser.TreeElement, parser.Node, error) {
+	v, err := arraiParsers.ParsePartial(parser.Rule("expr"), s, parser.Externals{
+		"bind": func(pscope parser.Scope, _ *parser.Scanner, end bool) (parser.TreeElement, parser.Node, error) {
 			if end {
 				rscopes = rscopes[:len(rscopes)-1]
 			}
@@ -382,20 +380,18 @@ func Parse(s *parser.Scanner, sourceDir string) (rel.Expr, error) {
 			}
 
 			exprNode := wbnf.FromParserNode(arraiParsers.Grammar(), exprElt)
-			expr := (&parse{sourceDir: sourceDir}).parseExpr(exprNode)
+			expr := pc.CompileExpr(exprNode)
 			expr = rel.NewExprClosure(rscopes[len(rscopes)-1], expr)
 			rscopes = append(rscopes, rscopes[len(rscopes)-1].With(identStr, expr))
 			return nil, parser.Node{}, nil
 		},
-		"ast": func(
-			scope parser.Scope, input *parser.Scanner, end bool,
-		) (parser.TreeElement, parser.Node, error) {
+		"ast": func(scope parser.Scope, input *parser.Scanner, _ bool) (parser.TreeElement, parser.Node, error) {
 			_, elt, ok := scope.GetVal("grammar")
 			if !ok {
 				panic("wat?")
 			}
 			astNode := wbnf.FromParserNode(arraiParsers.Grammar(), elt)
-			dotExpr := (&parse{sourceDir: sourceDir}).parseExpr(astNode).(*rel.DotExpr)
+			dotExpr := pc.CompileExpr(astNode).(*rel.DotExpr)
 			astExpr := dotExpr.Subject()
 			astValue, err := astExpr.Eval(rscopes[len(rscopes)-1])
 			if err != nil {
@@ -405,7 +401,21 @@ func Parse(s *parser.Scanner, sourceDir string) (rel.Expr, error) {
 			subgrammar := wbnf.ToParserNode(wbnf.Core().Grammar(), astValueNode).(parser.Node)
 			rule := parser.Rule(dotExpr.Attr())
 			parsers := wbnf.NewFromNode(subgrammar).Compile(&subgrammar)
-			ast, err := parsers.ParsePartial(rule, input, nil)
+			ast, err := parsers.ParsePartial(rule, input, parser.Externals{
+				"*:{()}:": func(
+					pscope parser.Scope, input *parser.Scanner, _ bool,
+				) (parser.TreeElement, parser.Node, error) {
+					ast, err := pc.Parse(input)
+					switch err.(type) {
+					case nil, parser.UnconsumedInputError:
+					default:
+						return nil, parser.Node{}, err
+					}
+					log.Printf("ast: %v", ast)
+					node := wbnf.ToParserNode(arraiParsers.Grammar(), ast)
+					return node, parser.Node{}, nil
+				},
+			})
 			if err != nil {
 				return nil, parser.Node{}, err
 			}
@@ -416,12 +426,12 @@ func Parse(s *parser.Scanner, sourceDir string) (rel.Expr, error) {
 	if err != nil {
 		return nil, err
 	}
+	result := wbnf.FromParserNode(arraiParsers.Grammar(), v)
+	// log.Printf("Parse: result = %v", result)
 	if s.String() != "" {
-		return nil, fmt.Errorf("input not consumed: %v", s)
+		return result, parser.UnconsumedInput(*s)
 	}
-	ast := wbnf.FromParserNode(arraiParsers.Grammar(), v)
-	// log.Print(ast)
-	return (&parse{sourceDir: sourceDir}).parseExpr(ast), nil
+	return result, nil
 }
 
 func which(b wbnf.Branch, names ...string) (string, wbnf.Children) {

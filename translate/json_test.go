@@ -14,10 +14,12 @@ import (
 
 // AssertExpectedTranslation asserts that the translated value is the same as the expected string
 func AssertExpectedTranslation(t *testing.T, expected string, value rel.Value) bool {
-	expectedExpr, err := syntax.Parse(parser.NewScanner(expected), "")
+	var pc syntax.ParseContext
+	ast, err := pc.Parse(parser.NewScanner(expected))
 	if !assert.NoError(t, err, "parsing expected: %s", expected) {
 		return false
 	}
+	expectedExpr := pc.CompileExpr(ast)
 	if !rel.AssertExprsEvalToSameValue(t, expectedExpr, value) {
 		return assert.Fail(
 			t, "Input should translate to same value", "%s == %s", expected, value)

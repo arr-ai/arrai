@@ -19,10 +19,12 @@ var evalCommand = &cli.Command{
 }
 
 func evalImpl(source string, w io.Writer) error {
-	expr, err := syntax.Parse(parser.NewScanner(source), ".")
+	pc := syntax.ParseContext{SourceDir: "."}
+	ast, err := pc.Parse(parser.NewScanner(source))
 	if err != nil {
 		return err
 	}
+	expr := pc.CompileExpr(ast)
 
 	value, err := expr.Eval(rel.Scope{})
 	if err != nil {

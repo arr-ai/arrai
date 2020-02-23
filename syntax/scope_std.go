@@ -60,7 +60,9 @@ func stdScope() rel.Scope {
 }
 
 func parseLit(s string) rel.Value {
-	e := MustParseString(s, "")
+	pc := ParseContext{}
+	ast := pc.MustParseString(s)
+	e := pc.CompileExpr(ast)
 	v, err := e.Eval(rel.EmptyScope)
 	if err != nil {
 		panic(err)
