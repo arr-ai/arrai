@@ -6,6 +6,7 @@ import (
 	"log"
 	"math"
 	"net/http"
+	"strconv"
 	"strings"
 	"sync"
 
@@ -45,18 +46,36 @@ func stdScope() rel.Scope {
 						log.Print(value)
 						return value
 					}),
-					rel.NewNativeFunctionAttr("printf1", func(format rel.Value) rel.Value {
-						return rel.NewNativeFunction("printf1()", func(arg rel.Value) rel.Value {
-							log.Printf(format.(rel.String).String(), arg)
-							return arg
-						})
+					createFunc("printf", 2, func(args ...rel.Value) rel.Value {
+						format := args[0].(rel.String).String()
+						strs := make([]interface{}, 0, args[1].(rel.Set).Count())
+						for i := args[1].(rel.Array).ArrayEnumerator(); i.MoveNext(); {
+							strs = append(strs, i.Current())
+						}
+						log.Printf(format, strs...)
+						return args[1]
 					}),
 				)),
+				loadStrLib(),
 			)).
 			With("//./", rel.NewNativeFunction("//./", importLocalFile)).
 			With("//", rel.NewNativeFunction("//", importURL))
 	})
 	return stdScopeVar
+}
+
+func createNestedFunc(name string, nArgs, curArgsNum int, f func(...rel.Value) rel.Value, args ...rel.Value) rel.Value {
+	if nArgs == curArgsNum {
+		return f(args...)
+	}
+
+	return rel.NewNativeFunction(name+strconv.Itoa(curArgsNum), func(parent rel.Value) rel.Value {
+		return createNestedFunc(name, nArgs, curArgsNum+1, f, append(args, parent)...)
+	})
+}
+
+func createFunc(name string, nArgs int, f func(...rel.Value) rel.Value, args ...rel.Value) rel.Attr {
+	return rel.NewAttr(name, createNestedFunc(name, nArgs, 0, f))
 }
 
 func parseLit(s string) rel.Value {
