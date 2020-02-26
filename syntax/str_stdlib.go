@@ -36,7 +36,7 @@ func loadStrLib() rel.Attr {
 		createFunc("title", 1, func(args ...rel.Value) rel.Value {
 			return rel.NewString([]rune(strings.Title(args[0].(rel.String).String())))
 		}),
-		createFunc("split", 2, func(args ...rel.Value) rel.Value {
+		createFunc("contains", 2, func(args ...rel.Value) rel.Value {
 			return rel.NewBool(strings.Contains(args[0].(rel.String).String(), args[1].(rel.String).String()))
 		}),
 		createFunc("concat", 1, func(args ...rel.Value) rel.Value {

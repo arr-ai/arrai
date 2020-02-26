@@ -6,6 +6,7 @@ const ArrayItemAttr = "@item"
 
 // Array represents a sequence of elements.
 type Array interface {
+	Set
 	// ArrayEnumerator lets you enumerate an array by its index.
 	ArrayEnumerator() ValueEnumerator
 }
