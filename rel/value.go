@@ -95,7 +95,6 @@ type Set interface {
 	Where(func(Value) bool) Set
 	Call(arg Value) Value
 
-	// Casting
 	AsString() (String, bool)
 }
 

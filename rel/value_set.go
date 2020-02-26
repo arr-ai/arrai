@@ -328,7 +328,7 @@ func (s *genericSet) Any() Value {
 }
 
 func (s *genericSet) AsString() (String, bool) {
-	if s.set.Count() == 0 {
+	if !s.Bool() {
 		return String{}, true
 	}
 
