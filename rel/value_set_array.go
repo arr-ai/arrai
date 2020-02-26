@@ -4,17 +4,6 @@ import "github.com/arr-ai/frozen"
 
 const ArrayItemAttr = "@item"
 
-// Array represents a sequence of elements.
-type Array interface {
-	Set
-	// ArrayEnumerator lets you enumerate an array by its index.
-	ArrayEnumerator() ValueEnumerator
-}
-
-type arrayEnumerator struct {
-	i frozen.Iterator
-}
-
 // NewArray constructs an array as a relation.
 func NewArray(values ...Value) Set {
 	tuples := make([]Value, len(values))
@@ -27,10 +16,15 @@ func NewArray(values ...Value) Set {
 	return NewSet(tuples...)
 }
 
-func (s *genericSet) ArrayEnumerator() ValueEnumerator {
+func ArrayEnumerator(set Set) ValueEnumerator {
+	s := set.(*genericSet)
 	return &arrayEnumerator{s.set.OrderedRange(func(a, b interface{}) bool {
 		return a.(Tuple).MustGet("@").(Number) < b.(Tuple).MustGet("@").(Number)
 	})}
+}
+
+type arrayEnumerator struct {
+	i frozen.Iterator
 }
 
 func (a *arrayEnumerator) MoveNext() bool {

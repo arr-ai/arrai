@@ -38,7 +38,6 @@ func stdScope() rel.Scope {
 				)),
 				rel.NewAttr("func", rel.NewTuple(
 					rel.NewAttr("fix", parseLit(`(\f f(f))(\f \g \n g(f(f)(g))(n))`)),
-					// rel.NewAttr("fixt", parseLit(`(\f f(f))(\f \g \n g(f(f)(g))(n))`)),
 					rel.NewAttr("fixt", parseLit(`(\f f(f))(\f \t t :> \g \n g(f(f)(t))(n))`)),
 				)),
 				rel.NewAttr("log", rel.NewTuple(
@@ -49,7 +48,7 @@ func stdScope() rel.Scope {
 					createFunc("printf", 2, func(args ...rel.Value) rel.Value {
 						format := args[0].(rel.String).String()
 						strs := make([]interface{}, 0, args[1].(rel.Set).Count())
-						for i := args[1].(rel.Array).ArrayEnumerator(); i.MoveNext(); {
+						for i := rel.ArrayEnumerator(args[1].(rel.Set)); i.MoveNext(); {
 							strs = append(strs, i.Current())
 						}
 						log.Printf(format, strs...)
@@ -64,18 +63,18 @@ func stdScope() rel.Scope {
 	return stdScopeVar
 }
 
-func createNestedFunc(name string, nArgs, curArgsNum int, f func(...rel.Value) rel.Value, args ...rel.Value) rel.Value {
-	if nArgs == curArgsNum {
+func createNestedFunc(name string, nArgs int, f func(...rel.Value) rel.Value, args ...rel.Value) rel.Value {
+	if nArgs == 0 {
 		return f(args...)
 	}
 
-	return rel.NewNativeFunction(name+strconv.Itoa(curArgsNum), func(parent rel.Value) rel.Value {
-		return createNestedFunc(name, nArgs, curArgsNum+1, f, append(args, parent)...)
+	return rel.NewNativeFunction(name+strconv.Itoa(nArgs), func(parent rel.Value) rel.Value {
+		return createNestedFunc(name, nArgs-1, f, append(args, parent)...)
 	})
 }
 
 func createFunc(name string, nArgs int, f func(...rel.Value) rel.Value, args ...rel.Value) rel.Attr {
-	return rel.NewAttr(name, createNestedFunc(name, nArgs, 0, f))
+	return rel.NewAttr(name, createNestedFunc(name, nArgs, f))
 }
 
 func parseLit(s string) rel.Value {

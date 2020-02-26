@@ -240,6 +240,13 @@ func NewCallExpr(a, b Expr) Expr {
 	)
 }
 
+func NewCallExprCurry(f Expr, args ...Expr) Expr {
+	for _, arg := range args {
+		f = NewCallExpr(f, arg)
+	}
+	return f
+}
+
 // LHS returns the left hand side of the BinExpr.
 func (e *BinExpr) LHS() Expr {
 	return e.a

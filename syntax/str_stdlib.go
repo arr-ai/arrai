@@ -1,9 +1,60 @@
 package syntax
 
 import (
+	"fmt"
+	"log"
 	"strings"
 
 	"github.com/arr-ai/arrai/rel"
+)
+
+func formatValue(format string, value rel.Value) string {
+	v := value.Export()
+	switch format[len(format)-1] {
+	case 't':
+		v = value.Bool()
+	case 'b', 'c', 'd', 'o', 'O', 'q', 'x', 'X', 'U':
+		v = int(v.(float64))
+	}
+	return fmt.Sprintf(format, v)
+}
+
+var (
+	libStrConcat = createNestedFunc("concat", 1, func(args ...rel.Value) rel.Value {
+		var sb strings.Builder
+		for i := rel.ArrayEnumerator(args[0].(rel.Set)); i.MoveNext(); {
+			sb.WriteString(i.Current().(rel.String).String())
+		}
+		return rel.NewString([]rune(sb.String()))
+	})
+
+	libStrExpand = createNestedFunc("expand", 3, func(args ...rel.Value) rel.Value {
+		var format string
+		if args[0].(rel.Set).Bool() {
+			format = "%" + args[0].(rel.String).String()
+		} else {
+			format = "%v"
+		}
+		log.Printf("%s %v %v", format, args[1], args[2])
+		if strings.HasSuffix(format, "*") { // array
+			format = format[:len(format)-1]
+
+			var sb strings.Builder
+			var delim string
+			if args[2].(rel.Set).Bool() {
+				delim = args[2].(rel.String).String()
+			}
+
+			for n, i := 0, rel.ArrayEnumerator(args[1].(rel.Set)); i.MoveNext(); n++ {
+				if n > 0 {
+					sb.WriteString(delim)
+				}
+				sb.WriteString(formatValue(format, i.Current()))
+			}
+			return rel.NewString([]rune(sb.String()))
+		}
+		return rel.NewString([]rune(formatValue(format, args[1])))
+	})
 )
 
 func loadStrLib() rel.Attr {
@@ -39,20 +90,15 @@ func loadStrLib() rel.Attr {
 		createFunc("contains", 2, func(args ...rel.Value) rel.Value {
 			return rel.NewBool(strings.Contains(args[0].(rel.String).String(), args[1].(rel.String).String()))
 		}),
-		createFunc("concat", 1, func(args ...rel.Value) rel.Value {
-			var sb strings.Builder
-			for i := args[0].(rel.Array).ArrayEnumerator(); i.MoveNext(); {
-				sb.WriteString(i.Current().(rel.String).String())
-			}
-			return rel.NewString([]rune(sb.String()))
-		}),
+		rel.NewAttr("concat", libStrConcat),
 		createFunc("join", 2, func(args ...rel.Value) rel.Value {
 			strs := args[0].(rel.Set)
 			toJoin := make([]string, 0, strs.Count())
-			for i := strs.(rel.Array).ArrayEnumerator(); i.MoveNext(); {
+			for i := rel.ArrayEnumerator(strs.(rel.Set)); i.MoveNext(); {
 				toJoin = append(toJoin, i.Current().(rel.String).String())
 			}
 			return rel.NewString([]rune(strings.Join(toJoin, args[1].(rel.String).String())))
 		}),
+		rel.NewAttr("expand", libStrExpand),
 	))
 }

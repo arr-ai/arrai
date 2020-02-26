@@ -6,12 +6,8 @@ import (
 	"strings"
 )
 
-func parseArraiString(s string) string {
+func parseArraiStringFragment(s string, quote byte, validEscapes string) string {
 	var sb strings.Builder
-	quote, s := s[0], s[1:len(s)-1]
-	if quote == '`' {
-		return strings.ReplaceAll(s, "``", "`")
-	}
 	for i := 0; i < len(s); i++ {
 		c := s[i]
 		switch c {
@@ -67,6 +63,9 @@ func parseArraiString(s string) string {
 			case quote:
 				sb.WriteByte(quote)
 			default:
+				if strings.ContainsRune(validEscapes, rune(c)) {
+					sb.WriteByte(c)
+				}
 				panic(fmt.Errorf("unrecognized \\-escape: %q", s[i]))
 			}
 		default:
@@ -74,4 +73,12 @@ func parseArraiString(s string) string {
 		}
 	}
 	return sb.String()
+}
+
+func parseArraiString(s string) string {
+	quote, s := s[0], s[1:len(s)-1]
+	if quote == '`' {
+		return strings.ReplaceAll(s, "``", "`")
+	}
+	return parseArraiStringFragment(s, quote, "")
 }

@@ -52,20 +52,24 @@ expr   -> amp="&"* @ arrow=(nest | unnest | ARROW @ | binding="->" "\\" IDENT %%
                    | http="http://"? fqdn=name:"." ("/" path=name)*
                    )
         | "(" tuple=(pairs=(name ":" v=@ | ":" vk=(@ "." k=IDENT)):",",?) ")"
-        | "(" @ ")"
-        | IDENT | STR | NUM;
+		| "(" @ ")"
+		| xstr | IDENT | STR | NUM;
 nest   -> "nest" names IDENT;
 unnest -> "unnest" IDENT;
 touch  -> ("->*" ("&"? IDENT | STR))+ "(" expr:"," ","? ")";
 get    -> dot="." ("&"? IDENT | STR | "*");
 names  -> "|" IDENT:"," "|";
 name   -> IDENT | STR;
+xstr   -> quote=/{\$"\s*} part=( sexpr | fragment=/{(?: \\. | :[^{"] | [^\\":] )+} )* '"'
+        | quote=/{\$'\s*} part=( sexpr | fragment=/{(?: \\. | :[^{'] | [^\\':] )+} )* "'"
+		| quote=/{\$‵\s*} part=( sexpr | fragment=/{(?: ‵‵  | :[^{‵] | [^‵  :] )+} )* "‵";
+sexpr  -> ":{" format=/{(?:[-+#*.\_0-9a-z]+:)?} expr delim=/{(?:(?: \\. | [^\\}] )+)?} "}:";
 
 ARROW  -> /{:>|=>|>>|order|where|sum|max|mean|median|min};
 IDENT  -> /{ \. | [$@A-Za-z_][0-9$@A-Za-z_]* };
 STR    -> /{ " (?: \\. | [^\\"] )* "
            | ' (?: \\. | [^\\'] )* '
-           | ‵ (?: ‵‵ | [^‵] )* ‵
+           | ‵ (?: ‵‵  | [^‵  ] )* ‵
            };
 NUM    -> /{ (?: \d+(?:\.\d*)? | \.\d+ ) (?: [Ee][-+]?\d+ )? };
 
@@ -82,7 +86,7 @@ func (pc ParseContext) CompileExpr(b wbnf.Branch) rel.Expr {
 		"amp", "arrow", "unop", "binop", "rbinop",
 		"if", "call", "count", "touch", "get",
 		"rel", "set", "array", "embed", "op", "fn", "pkg", "tuple",
-		"IDENT", "STR", "NUM",
+		"xstr", "IDENT", "STR", "NUM",
 		"expr",
 	)
 	if c == nil {
@@ -288,6 +292,36 @@ func (pc ParseContext) CompileExpr(b wbnf.Branch) rel.Expr {
 	case "STR":
 		s := c.(wbnf.One).Node.One("").Scanner().String()
 		return rel.NewString([]rune(parseArraiString(s)))
+	case "xstr":
+		quote := c.(wbnf.One).Node.One("quote").Scanner().String()[1]
+		parts := c.(wbnf.One).Node.Many("part")
+		exprs := make([]rel.Expr, 0, len(parts))
+		for _, part := range parts {
+			p, part := which(part.(wbnf.Branch), "sexpr", "fragment")
+			switch p {
+			case "sexpr":
+				sexpr := part.(wbnf.One).Node.(wbnf.Branch)
+				format := sexpr.One("format").One("").(wbnf.Leaf).Scanner().String()
+				if format != "" {
+					format = format[:len(format)-1]
+				}
+				expr := sexpr.One("expr").(wbnf.Branch)
+				delim := sexpr.One("delim").One("").(wbnf.Leaf).Scanner().String()
+				if delim != "" {
+					delim = delim[1:]
+				}
+				exprs = append(exprs,
+					rel.NewCallExprCurry(libStrExpand,
+						rel.NewString([]rune(format)),
+						pc.CompileExpr(expr),
+						rel.NewString([]rune(delim)),
+					))
+			case "fragment":
+				s := part.(wbnf.One).Node.One("").Scanner().String()
+				exprs = append(exprs, rel.NewString([]rune(parseArraiStringFragment(s, quote, ":"))))
+			}
+		}
+		return rel.NewCallExpr(libStrConcat, rel.NewArrayExpr(exprs...))
 	case "NUM":
 		s := c.(wbnf.One).Node.One("").Scanner().String()
 		n, err := strconv.ParseFloat(s, 64)
