@@ -94,6 +94,9 @@ type Set interface {
 	Map(func(Value) Value) Set
 	Where(func(Value) bool) Set
 	Call(arg Value) Value
+
+	// Casting
+	AsString() (String, bool)
 }
 
 // NewValue constructs a new value from a Go value.

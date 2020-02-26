@@ -327,6 +327,55 @@ func (s *genericSet) Any() Value {
 	panic("Any(): empty set")
 }
 
+func (s *genericSet) AsString() (String, bool) {
+	if s.set.Count() == 0 {
+		return NewString([]rune{}).(String), true
+	}
+
+	var index int
+	var str rune
+	tm := stringTupleMatcher(func(i int, r rune) {
+		index = i
+		str = r
+	})
+
+	middle := s.set.Count()
+	strs := make([]rune, 2*middle)
+
+	for i := s.set.Range(); i.Next(); {
+		if tm.Match(i.Value().(rel.Value)) {
+			strs[middle] = str
+		}
+	}
+
+
+	i := s.set.Range()
+	i.Next()
+	anchor := i.Value().(Tuple).MustGet("@").Export().(int)
+	offset := anchor
+	lowestIndex, highestIndex := 2*middle-1, 0
+
+	// 	for i.Next() {
+	// 		curRune := i.Value().(Tuple).MustGet(CharAttr).Export().(rune)
+	// 		curIndex := i.Value().(Tuple).MustGet("@").Export().(int)
+	// 		if curIndex < offset {
+	// 			offset = curIndex
+	// 		}
+	// 		index := middle - (anchor - curIndex)
+	// 		strs[index] = curRune
+	// 		if index < lowestIndex {
+	// 			lowestIndex = index
+	// 		}
+
+	// 		if index > highestIndex {
+	// 			highestIndex = index
+	// 		}
+	// 	}
+	// 	return NewOffsetString(strs[lowestIndex:highestIndex + 1], offset).(String), true
+	// }
+	// return NewString([]rune{}).(String), false
+}
+
 // genericSetEnumerator represents an enumerator over a genericSet.
 type genericSetEnumerator struct {
 	i frozen.Iterator
