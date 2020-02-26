@@ -329,47 +329,44 @@ func (s *genericSet) Any() Value {
 
 func (s *genericSet) AsString() (String, bool) {
 	if s.set.Count() == 0 {
-		return NewString([]rune{}).(String), true
+		return String{}, true
 	}
 
-	var index int
+	var tupleIndex int
 	var str rune
-	tm := stringTupleMatcher(func(i int, r rune) {
-		index = i
-		str = r
-	})
+	var isStrTuple bool
+
 	i := s.set.Range()
 	i.Next()
-	if !tm.Match(i.Value().(rel.Value)) {
+	if tupleIndex, str, isStrTuple = isStringTuple(i.Value().(Value)); !isStrTuple {
 		return NewString([]rune{}).(String), false
 	}
 
-	strs[middle] = str
 	middle := s.set.Count()
 	strs := make([]rune, 2*middle)
-	anchor, offset := index, index
-	lowestIndex, highestIndex := 2*middle-1, 0
-
-	for i.Next(); {
-		if !tm.Match(i.Value().(rel.Value)) {
+	strs[middle] = str
+	anchor, offset := tupleIndex, tupleIndex
+	lowestIndex, highestIndex := 2*middle-1, middle
+	for i.Next() {
+		if tupleIndex, str, isStrTuple = isStringTuple(i.Value().(Value)); !isStrTuple {
 			return NewString([]rune{}).(String), false
 		}
-		if index < offset {
-			offset = index
+		if tupleIndex < offset {
+			offset = tupleIndex
 		}
-		curIndex := middle - (anchor - index)
-		strs[curIndex] = str
+		sliceIndex := middle - (anchor - tupleIndex)
+		strs[sliceIndex] = str
 
-		if curIndex < lowestIndex {
-			lowestIndex = curIndex
+		if sliceIndex < lowestIndex {
+			lowestIndex = sliceIndex
 		}
 
-		if index > highestIndex {
-			highestIndex = curIndex
+		if sliceIndex > highestIndex {
+			highestIndex = sliceIndex
 		}
 	}
 
-	return NewOffsetString(strs[lowestIndex:highestIndex + 1], offset).(String), true
+	return NewOffsetString(strs[lowestIndex:highestIndex+1], offset).(String), true
 }
 
 // genericSetEnumerator represents an enumerator over a genericSet.
