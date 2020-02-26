@@ -338,42 +338,38 @@ func (s *genericSet) AsString() (String, bool) {
 		index = i
 		str = r
 	})
+	i := s.set.Range()
+	i.Next()
+	if !tm.Match(i.Value().(rel.Value)) {
+		return NewString([]rune{}).(String), false
+	}
 
+	strs[middle] = str
 	middle := s.set.Count()
 	strs := make([]rune, 2*middle)
+	anchor, offset := index, index
+	lowestIndex, highestIndex := 2*middle-1, 0
 
-	for i := s.set.Range(); i.Next(); {
-		if tm.Match(i.Value().(rel.Value)) {
-			strs[middle] = str
+	for i.Next(); {
+		if !tm.Match(i.Value().(rel.Value)) {
+			return NewString([]rune{}).(String), false
+		}
+		if index < offset {
+			offset = index
+		}
+		curIndex := middle - (anchor - index)
+		strs[curIndex] = str
+
+		if curIndex < lowestIndex {
+			lowestIndex = curIndex
+		}
+
+		if index > highestIndex {
+			highestIndex = curIndex
 		}
 	}
 
-
-	i := s.set.Range()
-	i.Next()
-	anchor := i.Value().(Tuple).MustGet("@").Export().(int)
-	offset := anchor
-	lowestIndex, highestIndex := 2*middle-1, 0
-
-	// 	for i.Next() {
-	// 		curRune := i.Value().(Tuple).MustGet(CharAttr).Export().(rune)
-	// 		curIndex := i.Value().(Tuple).MustGet("@").Export().(int)
-	// 		if curIndex < offset {
-	// 			offset = curIndex
-	// 		}
-	// 		index := middle - (anchor - curIndex)
-	// 		strs[index] = curRune
-	// 		if index < lowestIndex {
-	// 			lowestIndex = index
-	// 		}
-
-	// 		if index > highestIndex {
-	// 			highestIndex = index
-	// 		}
-	// 	}
-	// 	return NewOffsetString(strs[lowestIndex:highestIndex + 1], offset).(String), true
-	// }
-	// return NewString([]rune{}).(String), false
+	return NewOffsetString(strs[lowestIndex:highestIndex + 1], offset).(String), true
 }
 
 // genericSetEnumerator represents an enumerator over a genericSet.
