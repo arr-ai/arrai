@@ -42,7 +42,7 @@ expr   -> C? amp="&"* @ C? arrow=(
         > C? @:binop="||" C?
         > C? @:binop="&&" C?
         > C? @:binop=/{!?(?:<:|<>?=?|>=?|=)} C?
-        > C? @ if=("if" t=expr "else" f=expr)* C?
+        > C? @ if=("if" t=expr ("else" f=expr)?)* C?
         > C? @:binop=/{[+|]|-%?|\(\+\)} C?
         > C? @:binop=/{&|[-<][-&][->]} C?
         > C? @:binop=/{//|[*/%]} C?
@@ -186,7 +186,10 @@ func (pc ParseContext) CompileExpr(b wbnf.Branch) rel.Expr {
 		result := pc.CompileExpr(b.One("expr").(wbnf.Branch))
 		for _, ifelse := range c.(wbnf.Many) {
 			t := pc.CompileExpr(ifelse.One("t").(wbnf.Branch))
-			f := pc.CompileExpr(ifelse.One("f").(wbnf.Branch))
+			var f rel.Expr = rel.None
+			if fNode := ifelse.One("f"); fNode != nil {
+				f = pc.CompileExpr(fNode.(wbnf.Branch))
+			}
 			result = rel.NewIfElseExpr(result, t, f)
 		}
 		return result
