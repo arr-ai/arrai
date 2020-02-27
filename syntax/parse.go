@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"path"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -11,6 +12,9 @@ import (
 	"github.com/arr-ai/wbnf/parser"
 	"github.com/arr-ai/wbnf/wbnf"
 )
+
+var leadingWSRE = regexp.MustCompile(`[^\t ]`)
+var trailingWSRE = regexp.MustCompile(`[\t ]*\z`)
 
 type noParseType struct{}
 
@@ -63,7 +67,7 @@ name   -> IDENT | STR;
 xstr   -> quote=/{\$"\s*} part=( sexpr | fragment=/{(?: \\. | :[^{"] | [^\\":] )+} )* '"'
         | quote=/{\$'\s*} part=( sexpr | fragment=/{(?: \\. | :[^{'] | [^\\':] )+} )* "'"
 		| quote=/{\$‵\s*} part=( sexpr | fragment=/{(?: ‵‵  | :[^{‵] | [^‵  :] )+} )* "‵";
-sexpr  -> ":{" format=/{(?:[-+#*.\_0-9a-z]+:)?} expr delim=/{(?:(?: \\. | [^\\}] )+)?} "}:";
+sexpr  -> ":{" format=/{(?:[-+#*.\_0-9a-z]+:)?} expr delim=/{(?:(?: \\. | [^\\}] )+)?} close=/{\}:\s*};
 
 ARROW  -> /{:>|=>|>>|order|where|sum|max|mean|median|min};
 IDENT  -> /{ \. | [$@A-Za-z_][0-9$@A-Za-z_]* };
@@ -293,20 +297,47 @@ func (pc ParseContext) CompileExpr(b wbnf.Branch) rel.Expr {
 		s := c.(wbnf.One).Node.One("").Scanner().String()
 		return rel.NewString([]rune(parseArraiString(s)))
 	case "xstr":
-		quote := c.(wbnf.One).Node.One("quote").Scanner().String()[1]
+		quote := c.(wbnf.One).Node.One("quote").Scanner().String()
+		q := quote[1]
+		ws := quote[2:]
 		parts := c.(wbnf.One).Node.Many("part")
 		exprs := make([]rel.Expr, 0, len(parts))
-		for _, part := range parts {
+		trim := ""
+		trimIndent := func(s string) string {
+			if trim == "" {
+				if strings.HasPrefix(s, "\n") {
+					s = s[1:]
+				}
+				if i := leadingWSRE.FindStringIndex(s); i != nil {
+					trim = "\n" + s[:i[0]]
+					return s[i[0]:]
+				}
+				trim = "\n" + s
+				return s
+			}
+			if trim != "\n" {
+				return strings.ReplaceAll(s, trim, "\n")
+			}
+			return s
+		}
+		indent := ""
+		for i, part := range parts {
 			p, part := which(part.(wbnf.Branch), "sexpr", "fragment")
 			switch p {
 			case "sexpr":
+				if i == 0 {
+					trim = "\n" + ws
+					ws = ""
+				}
 				sexpr := part.(wbnf.One).Node.(wbnf.Branch)
 				format := sexpr.One("format").One("").(wbnf.Leaf).Scanner().String()
 				if format != "" {
 					format = format[:len(format)-1]
 				}
 				expr := sexpr.One("expr").(wbnf.Branch)
-				delim := sexpr.One("delim").One("").(wbnf.Leaf).Scanner().String()
+				delim := parseArraiStringFragment(
+					sexpr.One("delim").One("").(wbnf.Leaf).Scanner().String(), '}', "", indent)
+				ws = sexpr.One("close").One("").(wbnf.Leaf).Scanner().String()[2:]
 				if delim != "" {
 					delim = delim[1:]
 				}
@@ -318,7 +349,11 @@ func (pc ParseContext) CompileExpr(b wbnf.Branch) rel.Expr {
 					))
 			case "fragment":
 				s := part.(wbnf.One).Node.One("").Scanner().String()
-				exprs = append(exprs, rel.NewString([]rune(parseArraiStringFragment(s, quote, ":"))))
+				f := parseArraiStringFragment(s, q, ":", "")
+				t := trimIndent(ws + f)
+				ws = ""
+				indent = trailingWSRE.FindString(t)
+				exprs = append(exprs, rel.NewString([]rune(t)))
 			}
 		}
 		return rel.NewCallExpr(libStrConcat, rel.NewArrayExpr(exprs...))

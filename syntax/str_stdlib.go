@@ -2,19 +2,23 @@ package syntax
 
 import (
 	"fmt"
-	"log"
 	"strings"
 
 	"github.com/arr-ai/arrai/rel"
 )
 
+// TODO: Make this more robust.
 func formatValue(format string, value rel.Value) string {
 	v := value.Export()
 	switch format[len(format)-1] {
 	case 't':
 		v = value.Bool()
-	case 'b', 'c', 'd', 'o', 'O', 'q', 'x', 'X', 'U':
-		v = int(v.(float64))
+	case 'c', 'd', 'o', 'O', 'x', 'X', 'U':
+		v = int(value.Export().(float64))
+	case 'q':
+		if f, ok := v.(float64); ok {
+			v = int(f)
+		}
 	}
 	return fmt.Sprintf(format, v)
 }
@@ -22,7 +26,7 @@ func formatValue(format string, value rel.Value) string {
 var (
 	libStrConcat = createNestedFunc("concat", 1, func(args ...rel.Value) rel.Value {
 		var sb strings.Builder
-		for i := rel.ArrayEnumerator(args[0].(rel.Set)); i.MoveNext(); {
+		for i := args[0].(rel.Set).ArrayEnumerator(); i.MoveNext(); {
 			sb.WriteString(mustAsString(i.Current()).String())
 		}
 		return rel.NewString([]rune(sb.String()))
@@ -31,27 +35,29 @@ var (
 	libStrExpand = createNestedFunc("expand", 3, func(args ...rel.Value) rel.Value {
 		var format string
 		if args[0].(rel.Set).Bool() {
-			format = "%" + mustAsString(args[0]).String()
+			format = mustAsString(args[0]).String()
+			isArray := strings.HasSuffix(format, "*")
+			if isArray {
+				format = format[:len(format)-1]
+				if format == "" {
+					format = "%v"
+				}
+				var sb strings.Builder
+				var delim string
+				if args[2].(rel.Set).Bool() {
+					delim = mustAsString(args[2]).String()
+				}
+
+				for n, i := 0, args[1].(rel.Set).ArrayEnumerator(); i.MoveNext(); n++ {
+					if n > 0 {
+						sb.WriteString(delim)
+					}
+					sb.WriteString(formatValue(format, i.Current()))
+				}
+				return rel.NewString([]rune(sb.String()))
+			}
 		} else {
 			format = "%v"
-		}
-		log.Printf("%s %v %v", format, args[1], args[2])
-		if strings.HasSuffix(format, "*") { // array
-			format = format[:len(format)-1]
-
-			var sb strings.Builder
-			var delim string
-			if args[2].(rel.Set).Bool() {
-				delim = mustAsString(args[2]).String()
-			}
-
-			for n, i := 0, rel.ArrayEnumerator(args[1].(rel.Set)); i.MoveNext(); n++ {
-				if n > 0 {
-					sb.WriteString(delim)
-				}
-				sb.WriteString(formatValue(format, i.Current()))
-			}
-			return rel.NewString([]rune(sb.String()))
 		}
 		return rel.NewString([]rune(formatValue(format, args[1])))
 	})
@@ -94,7 +100,7 @@ func loadStrLib() rel.Attr {
 		createFunc("join", 2, func(args ...rel.Value) rel.Value {
 			strs := args[0].(rel.Set)
 			toJoin := make([]string, 0, strs.Count())
-			for i := rel.ArrayEnumerator(strs.(rel.Set)); i.MoveNext(); {
+			for i := strs.(rel.Set).ArrayEnumerator(); i.MoveNext(); {
 				toJoin = append(toJoin, mustAsString(i.Current()).String())
 			}
 			return rel.NewString([]rune(strings.Join(toJoin, mustAsString(args[1]).String())))

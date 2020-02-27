@@ -96,6 +96,7 @@ type Set interface {
 	Call(arg Value) Value
 
 	AsString() (String, bool)
+	ArrayEnumerator() ValueEnumerator
 }
 
 // NewValue constructs a new value from a Go value.

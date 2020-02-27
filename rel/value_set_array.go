@@ -16,13 +16,6 @@ func NewArray(values ...Value) Set {
 	return NewSet(tuples...)
 }
 
-func ArrayEnumerator(set Set) ValueEnumerator {
-	s := set.(*genericSet)
-	return &arrayEnumerator{s.set.OrderedRange(func(a, b interface{}) bool {
-		return a.(Tuple).MustGet("@").(Number) < b.(Tuple).MustGet("@").(Number)
-	})}
-}
-
 type arrayEnumerator struct {
 	i frozen.Iterator
 }

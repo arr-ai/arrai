@@ -48,7 +48,7 @@ func stdScope() rel.Scope {
 					createFunc("printf", 2, func(args ...rel.Value) rel.Value {
 						format := args[0].(rel.String).String()
 						strs := make([]interface{}, 0, args[1].(rel.Set).Count())
-						for i := rel.ArrayEnumerator(args[1].(rel.Set)); i.MoveNext(); {
+						for i := args[1].(rel.Set).ArrayEnumerator(); i.MoveNext(); {
 							strs = append(strs, i.Current())
 						}
 						log.Printf(format, strs...)

@@ -218,6 +218,9 @@ func (s *genericSet) Negate() Value {
 
 // Export exports a genericSet as an array of exported Values.
 func (s *genericSet) Export() interface{} {
+	if s, is := s.AsString(); is {
+		return s.Export()
+	}
 	result := make([]interface{}, 0, s.set.Count())
 	for e := s.Enumerator(); e.MoveNext(); {
 		result = append(result, e.Current().Export())
@@ -362,6 +365,12 @@ func (s *genericSet) AsString() (String, bool) {
 		return NewOffsetString(strs[lowestIndex:highestIndex+1], minOffset).(String), true
 	}
 	return String{}, true
+}
+
+func (s *genericSet) ArrayEnumerator() ValueEnumerator {
+	return &arrayEnumerator{s.set.OrderedRange(func(a, b interface{}) bool {
+		return a.(Tuple).MustGet("@").(Number) < b.(Tuple).MustGet("@").(Number)
+	})}
 }
 
 // genericSetEnumerator represents an enumerator over a genericSet.

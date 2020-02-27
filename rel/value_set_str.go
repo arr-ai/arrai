@@ -99,7 +99,7 @@ func (s String) Negate() Value {
 
 // Export exports a String as a string.
 func (s String) Export() interface{} {
-	return s.s
+	return string(s.s)
 }
 
 // Count returns the number of elements in the String.
@@ -213,6 +213,10 @@ func (s String) AsString() (String, bool) {
 	return s, true
 }
 
+func (s String) ArrayEnumerator() ValueEnumerator {
+	return &stringEnumerator{s.s, -1}
+}
+
 func newStringTuple(index int, char rune) Tuple {
 	return NewTuple(
 		NewAttr("@", NewNumber(float64(index))),
@@ -242,6 +246,23 @@ func stringTupleMatcher(match func(index int, char rune)) TupleMatcher {
 		},
 		Lit(EmptyTuple),
 	)
+}
+
+type stringEnumerator struct {
+	s []rune
+	i int
+}
+
+func (e *stringEnumerator) MoveNext() bool {
+	if e.i >= len(e.s)-1 {
+		return false
+	}
+	e.i++
+	return true
+}
+
+func (e *stringEnumerator) Current() Value {
+	return NewNumber(float64(e.s[e.i]))
 }
 
 // func stringSet(s Set) Set {

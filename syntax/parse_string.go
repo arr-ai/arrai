@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-func parseArraiStringFragment(s string, quote byte, validEscapes string) string {
+func parseArraiStringFragment(s string, quote byte, validEscapes string, indent string) string {
 	var sb strings.Builder
 	for i := 0; i < len(s); i++ {
 		c := s[i]
@@ -62,6 +62,8 @@ func parseArraiStringFragment(s string, quote byte, validEscapes string) string 
 				sb.WriteByte('\'')
 			case quote:
 				sb.WriteByte(quote)
+			case 'i':
+				sb.WriteString(indent)
 			default:
 				if strings.ContainsRune(validEscapes, rune(c)) {
 					sb.WriteByte(c)
@@ -80,5 +82,5 @@ func parseArraiString(s string) string {
 	if quote == '`' {
 		return strings.ReplaceAll(s, "``", "`")
 	}
-	return parseArraiStringFragment(s, quote, "")
+	return parseArraiStringFragment(s, quote, "", "")
 }
