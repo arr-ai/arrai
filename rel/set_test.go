@@ -150,7 +150,6 @@ func TestSetExport(t *testing.T) {
 			assert.Equal(t, intfs, a)
 		}
 	}
-	scenario()
 	scenario(42.0)
 	scenario(42.0)
 	scenario(5432.0)
