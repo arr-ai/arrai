@@ -1,5 +1,8 @@
 # Introduction to Arr.ai
 
+| Status: **INCOMPLETE DRAFT** |
+|-|
+
 Arr.ai is many things, but it is first and foremost a data representation and
 transformation language. This tutorial-style introduction will guide you through
 the basic concepts underpinning arr.ai's model of data and computation and will
@@ -66,10 +69,15 @@ seem. You can in fact represent:
 * Strings: `""`, `"hello"`
 * Booleans: `true`, `false`
 * Maps: `{}`, `{"a": 42}`, `{1: 34, 2: 45, 3: 56}`
-* Functions: `\x 1 / x`
+* Functions:
+  * Functions are unary: `\x 1 / x`
+  * Binary functions don't exist, but `\x \y //.math.sqrt(x^2 + y^2)` is a unary
+    function that takes a single parameter, `x`, and returns a unary function.
+    The returned function takes a single parameter, `y`, and returns the
+    hypotenuse of a right triangle with sides *x* and *y*.
 * Packages: `//.math.sin(1)`, `//./myutil/work(42)`, `//github.com/foo/bar`
 
-All of the above are all syntactic sugar for specific combinations of numbers,
+All of the above forms are syntactic sugar for specific combinations of numbers,
 tuples and sets. For example, the string `"hello"` is a shorthand for the
 following set:
 
@@ -125,6 +133,10 @@ sets of tuples. There is no semantic distinction between the two forms.
 
 ### Literals
 
+#### Core literals
+
+The core syntax for literals can expresses numbers, tuples and sets.
+
 1. Numbers: `0`, `1`, `-2`, `3.45e-6`, `7+8.9i`,
    `9969216677189303386214405760200`
 
@@ -150,24 +162,74 @@ sets of tuples. There is no semantic distinction between the two forms.
 
 3. Sets: `{}`, `{1, 2, 3}`, `{(a:1, b:2), (a:4, b:7)}`, `{2, {}, (c:4)}`
 
+#### Sugared literals
+
+As explained earlier, many other structures are expressible beyond just numbers,
+tuples and sets. It is important to remember that these other structures are
+simply special arrangements of the base types. They do, however, give arr.ai the
+flavor and power of much richer type systems while retaining a remarkably simple
+data model. Also, because these sugared forms are all just the base types in
+disguise, all of the expressive machinery designed for numbers, tuples and sets
+can be applied to strings, arrays, etc.
+
+##### Boolean syntax
+
+Arr.ai takes a leaf out of the C89 playbook and omits Boolean types from the
+base type systems. Nonetheless, `false` and `true` are defined in the core
+language as aliases for the following sets.
+
+1. `false = {}`
+2. `true = {()}`
+
+These are not the only values that may be used in logical operations. All values
+can be tested for "trueness". Most values are considered "true". The only
+exceptions are `0`, `()` and `{}`.
+
+##### String syntax
+
+TODO
+
+##### Array syntax
+
+TODO
+
+##### Relation syntax
+
+TODO
+
+### Logic expressions
+
+Arr.ai supports operations on "true" and "false" values. The values `0`, `()`
+and `{}` are considered "false", while all other values are "true".
+
+1. `expr1 if testexpr else expr2` evaluates to `expr1` if `testexpr` is "true",
+   or `expr2` otherwise.
+2. `expr1 && expr2` evaluates to `expr1` if it is "true" or `expr2` otherwise.
+3. `expr1 || expr2` evaluates to `expr1` if it is "false" or `expr2` otherwise.
+
+All above expressions exhibit short-circuit behaviours, which means that that
+`expr2` will be evaluated if its value is needed. While the arr.ai language has
+no side-effects, short-circuit behaviour is still needed to terminate recursion.
+
 ### Arithmetic expressions
 
-Arr.ai supports a variety of operations on numbers.
+Arr.ai supports operations on numbers.
 
-* Unary: `+`, `-`
-* Binary:
-  * Well known: `+`, `-`, `*`, `/`, `%` (modulo)
-  * Power: `^`
-  * Modulo-truncation: `-%` (`x -% y = x - x % y`)
+1. Unary: `+`, `-`
+2. Binary:
+   1. Well known: `+`, `-`, `*`, `/`, `%` (modulo), `^` (power)
+   2. Modulo-truncation: `-%` (`x -% y = x - x % y`)
 
 ### Structure access expressions
 
-* Tuple attribute: `tuple.attr`
-* Dot variable attribute: `.attr = (.).attr`
-* Keyed-collection element: `[2, 4, 6, 8](2) = 6`, `"hello"(1) = 101`
-* Keyed-collection slice:
-  * `[1, 1, 2, 3, 5, 8](2:5) = [2, 3, 5]`
-  * `[1, 2, 3, 4, 5, 6](1:5:2) = [2, 4]`
+1. Tuple attribute: `tuple.attr`
+2. Dot variable attribute: `.attr = (.).attr`
+3. Function element:
+   1. `[2, 4, 6, 8](2) = 6`, `"hello"(1) = 101`
+   2. `{"red": 0.3, "green": 0.5, "blue", 0.2}("green") = 0.5`
+4. Function slice:
+   1. `[1, 1, 2, 3, 5, 8](2:5) = [2, 3, 5]`
+   2. `[1, 2, 3, 4, 5, 6](1:5:2) = [2, 4]`
 
 ### Binding expressions
 
@@ -218,8 +280,8 @@ name at the moment of assignment, this presents a challenge for implementing
 recursion. This problem is solved by a couple of functions in the standard
 library:
 
-1. **`//.fn.fix`** is a fixed-point combinator. It's purpose is to transform a
-   non-recursive function into a recursive one, e.g.:
+1. **`//.fn.fix`** is a fixed-point combinator. It is typically used to
+   transform non-recursive functions into recursive ones, e.g.:
 
    ```arrai
    let factorial = //.fn.fix \factorial \n 1 if n < 2 else n * factorial(n - 1)
