@@ -67,7 +67,10 @@ name   -> IDENT | STR;
 xstr   -> quote=/{\$"\s*} part=( sexpr | fragment=/{(?: \\. | :[^{"] | [^\\":] )+} )* '"'
         | quote=/{\$'\s*} part=( sexpr | fragment=/{(?: \\. | :[^{'] | [^\\':] )+} )* "'"
 		| quote=/{\$‵\s*} part=( sexpr | fragment=/{(?: ‵‵  | :[^{‵] | [^‵  :] )+} )* "‵";
-sexpr  -> ":{" format=/{(?: [-+#*\.\_0-9a-z]* : )?} expr delim=/{(?: : (?: \\. | [^\\}] )*)?} close=/{\}:\s*};
+sexpr  -> ":{"
+		  expr
+		  control=/{ (?: : [-+#*\.\_0-9a-z]* (?: : (?: \\. | [^\\}] )* )? )? }
+		  close=/{\}:\s*};
 
 ARROW  -> /{:>|=>|>>|order|where|sum|max|mean|median|min};
 IDENT  -> /{ \. | [$@A-Za-z_][0-9$@A-Za-z_]* };
@@ -305,9 +308,7 @@ func (pc ParseContext) CompileExpr(b wbnf.Branch) rel.Expr {
 		trim := ""
 		trimIndent := func(s string) string {
 			if trim == "" {
-				if strings.HasPrefix(s, "\n") {
-					s = s[1:]
-				}
+				s = strings.TrimPrefix(s, "\n")
 				if i := leadingWSRE.FindStringIndex(s); i != nil {
 					trim = "\n" + s[:i[0]]
 					return s[i[0]:]
@@ -327,16 +328,21 @@ func (pc ParseContext) CompileExpr(b wbnf.Branch) rel.Expr {
 			case "sexpr":
 				if i == 0 {
 					trim = "\n" + ws
-					ws = ""
 				}
 				sexpr := part.(wbnf.One).Node.(wbnf.Branch)
-				format := sexpr.One("format").One("").(wbnf.Leaf).Scanner().String()
-				if format != "" {
-					format = format[:len(format)-1]
+				format := ""
+				delim := ""
+				if control := sexpr.One("control").One("").(wbnf.Leaf).Scanner().String(); control != "" {
+					control = control[1:]
+					colon := strings.IndexByte(control, ':')
+					if colon == -1 {
+						colon = len(control)
+					}
+					format = control[:colon]
+					delim = control[colon:]
+					delim = parseArraiStringFragment(delim, '}', "", indent)
 				}
 				expr := sexpr.One("expr").(wbnf.Branch)
-				delim := parseArraiStringFragment(
-					sexpr.One("delim").One("").(wbnf.Leaf).Scanner().String(), '}', "", indent)
 				ws = sexpr.One("close").One("").(wbnf.Leaf).Scanner().String()[2:]
 				exprs = append(exprs,
 					rel.NewCallExprCurry(libStrExpand,
