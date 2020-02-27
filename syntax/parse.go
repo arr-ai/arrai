@@ -67,7 +67,7 @@ name   -> IDENT | STR;
 xstr   -> quote=/{\$"\s*} part=( sexpr | fragment=/{(?: \\. | :[^{"] | [^\\":] )+} )* '"'
         | quote=/{\$'\s*} part=( sexpr | fragment=/{(?: \\. | :[^{'] | [^\\':] )+} )* "'"
 		| quote=/{\$‵\s*} part=( sexpr | fragment=/{(?: ‵‵  | :[^{‵] | [^‵  :] )+} )* "‵";
-sexpr  -> ":{" format=/{(?:[-+#*.\_0-9a-z]+:)?} expr delim=/{(?:(?: \\. | [^\\}] )+)?} close=/{\}:\s*};
+sexpr  -> ":{" format=/{(?: [-+#*\.\_0-9a-z]* : )?} expr delim=/{(?: : (?: \\. | [^\\}] )*)?} close=/{\}:\s*};
 
 ARROW  -> /{:>|=>|>>|order|where|sum|max|mean|median|min};
 IDENT  -> /{ \. | [$@A-Za-z_][0-9$@A-Za-z_]* };
@@ -338,9 +338,6 @@ func (pc ParseContext) CompileExpr(b wbnf.Branch) rel.Expr {
 				delim := parseArraiStringFragment(
 					sexpr.One("delim").One("").(wbnf.Leaf).Scanner().String(), '}', "", indent)
 				ws = sexpr.One("close").One("").(wbnf.Leaf).Scanner().String()[2:]
-				if delim != "" {
-					delim = delim[1:]
-				}
 				exprs = append(exprs,
 					rel.NewCallExprCurry(libStrExpand,
 						rel.NewString([]rune(format)),

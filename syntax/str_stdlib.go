@@ -33,31 +33,22 @@ var (
 	})
 
 	libStrExpand = createNestedFunc("expand", 3, func(args ...rel.Value) rel.Value {
-		var format string
-		if args[0].(rel.Set).Bool() {
-			format = mustAsString(args[0]).String()
-			isArray := strings.HasSuffix(format, "*")
-			if isArray {
-				format = format[:len(format)-1]
-				if format == "" {
-					format = "%v"
-				}
-				var sb strings.Builder
-				var delim string
-				if args[2].(rel.Set).Bool() {
-					delim = mustAsString(args[2]).String()
-				}
-
-				for n, i := 0, args[1].(rel.Set).ArrayEnumerator(); i.MoveNext(); n++ {
-					if n > 0 {
-						sb.WriteString(delim)
-					}
-					sb.WriteString(formatValue(format, i.Current()))
-				}
-				return rel.NewString([]rune(sb.String()))
-			}
+		format := mustAsString(args[0]).String()
+		if format != "" {
+			format = "%" + format
 		} else {
 			format = "%v"
+		}
+
+		if delim := mustAsString(args[2]).String(); strings.HasPrefix(delim, ":") {
+			var sb strings.Builder
+			for n, i := 0, args[1].(rel.Set).ArrayEnumerator(); i.MoveNext(); n++ {
+				if n > 0 {
+					sb.WriteString(delim[1:])
+				}
+				sb.WriteString(formatValue(format, i.Current()))
+			}
+			return rel.NewString([]rune(sb.String()))
 		}
 		return rel.NewString([]rune(formatValue(format, args[1])))
 	})
