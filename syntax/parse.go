@@ -41,7 +41,7 @@ expr   -> C? amp="&"* @ C? arrow=(
         > C? @:binop=("with" | "without") C?
         > C? @:binop="||" C?
         > C? @:binop="&&" C?
-        > C? @:binop=/{!?(?:<>?=?|>=?|=)} C?
+        > C? @:binop=/{!?(?:<:|<>?=?|>=?|=)} C?
         > C? @ if=("if" t=expr "else" f=expr)* C?
         > C? @:binop=/{[+|]|-%?|\(\+\)} C?
         > C? @:binop=/{&|[-<][-&][->]} C?
@@ -63,7 +63,7 @@ expr   -> C? amp="&"* @ C? arrow=(
                    )
         | C? "(" tuple=(pairs=(name ":" v=@ | ":" vk=(@ "." k=IDENT)):",",?) ")" C?
         | C? "(" @ ")" C?
-        | C? arrow=(binding="let" C? IDENT C? "=" C? @ %%bind C? @) C?
+        | C? let=("let" C? IDENT C? "=" C? @ %%bind C? @) C?
         | C? xstr C?
         | C? IDENT C?
         | C? STR C?
@@ -101,7 +101,7 @@ type ParseContext struct {
 func (pc ParseContext) CompileExpr(b wbnf.Branch) rel.Expr {
 	// fmt.Println(b)
 	name, c := which(b,
-		"amp", "arrow", "unop", "binop", "rbinop",
+		"amp", "arrow", "let", "unop", "binop", "rbinop",
 		"if", "call", "count", "touch", "get",
 		"rel", "set", "array", "embed", "op", "fn", "pkg", "tuple",
 		"xstr", "IDENT", "STR", "NUM",
@@ -127,12 +127,11 @@ func (pc ParseContext) CompileExpr(b wbnf.Branch) rel.Expr {
 					f := binops[d.(wbnf.One).Node.One("").(wbnf.Leaf).Scanner().String()]
 					expr = f(expr, pc.CompileExpr(arrow.(wbnf.Branch)["expr"].(wbnf.One).Node.(wbnf.Branch)))
 				case "binding":
-					f := binops["->"]
 					rhs := pc.CompileExpr(arrow.(wbnf.Branch)["expr"].(wbnf.One).Node.(wbnf.Branch))
 					if ident := arrow.One("IDENT"); ident != nil {
 						rhs = rel.NewFunction(ident.Scanner().String(), rhs)
 					}
-					expr = f(expr, rhs)
+					expr = binops["->"](expr, rhs)
 				}
 			}
 		}
@@ -141,6 +140,15 @@ func (pc ParseContext) CompileExpr(b wbnf.Branch) rel.Expr {
 				expr = rel.NewFunction("-", expr)
 			}
 		}
+		return expr
+	case "let":
+		exprs := c.(wbnf.One).Node.Many("expr")
+		expr := pc.CompileExpr(exprs[0].(wbnf.Branch))
+		rhs := pc.CompileExpr(exprs[1].(wbnf.Branch))
+		if ident := c.(wbnf.One).Node.One("IDENT"); ident != nil {
+			rhs = rel.NewFunction(ident.Scanner().String(), rhs)
+		}
+		expr = binops["->"](expr, rhs)
 		return expr
 	case "unop":
 		ops := c.(wbnf.Many)
@@ -457,9 +465,12 @@ func (pc ParseContext) Parse(s *parser.Scanner) (wbnf.Branch, error) {
 
 			_, exprElt, has := pscope.GetVal("expr@1")
 			if !has {
-				log.Println(pscope.Keys())
-				log.Println(pscope)
-				panic("wat?")
+				_, exprElt, has = pscope.GetVal("expr")
+				if !has {
+					log.Println(pscope.Keys())
+					log.Println(pscope)
+					panic("wat?")
+				}
 			}
 
 			exprNode := wbnf.FromParserNode(arraiParsers.Grammar(), exprElt)
@@ -571,6 +582,7 @@ var binops = map[string]binOpFunc{
 	"-%":      rel.NewSubModExpr,
 	"//":      rel.NewIdivExpr,
 	"^":       rel.NewPowExpr,
+	"<:":      rel.NewMemberExpr,
 }
 
 func parseNest(lhs rel.Expr, branch wbnf.Branch) rel.Expr {
