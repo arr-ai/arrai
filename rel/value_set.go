@@ -327,46 +327,41 @@ func (s *genericSet) Any() Value {
 	panic("Any(): empty set")
 }
 
+// TODO: handle sparse string and overlapping strings
 func (s *genericSet) AsString() (String, bool) {
-	if !s.Bool() {
-		return String{}, true
+	if i := s.set.Range(); i.Next() {
+		tupleOffset, str, isStrTuple := isStringTuple(i.Value().(Value))
+		if !isStrTuple {
+			return String{}, false
+		}
+
+		middleIndex := s.set.Count()
+		strs := make([]rune, 2*middleIndex)
+		strs[middleIndex] = str
+		anchorOffset, minOffset := tupleOffset, tupleOffset
+		lowestIndex, highestIndex := middleIndex, middleIndex
+		for i.Next() {
+			if tupleOffset, str, isStrTuple = isStringTuple(i.Value().(Value)); !isStrTuple {
+				return String{}, false
+			}
+			if tupleOffset < minOffset {
+				minOffset = tupleOffset
+			}
+			sliceIndex := middleIndex - (anchorOffset - tupleOffset)
+			strs[sliceIndex] = str
+
+			if sliceIndex < lowestIndex {
+				lowestIndex = sliceIndex
+			}
+
+			if sliceIndex > highestIndex {
+				highestIndex = sliceIndex
+			}
+		}
+
+		return NewOffsetString(strs[lowestIndex:highestIndex+1], minOffset).(String), true
 	}
-
-	var tupleIndex int
-	var str rune
-	var isStrTuple bool
-
-	i := s.set.Range()
-	i.Next()
-	if tupleIndex, str, isStrTuple = isStringTuple(i.Value().(Value)); !isStrTuple {
-		return NewString([]rune{}).(String), false
-	}
-
-	middle := s.set.Count()
-	strs := make([]rune, 2*middle)
-	strs[middle] = str
-	anchor, offset := tupleIndex, tupleIndex
-	lowestIndex, highestIndex := 2*middle-1, middle
-	for i.Next() {
-		if tupleIndex, str, isStrTuple = isStringTuple(i.Value().(Value)); !isStrTuple {
-			return NewString([]rune{}).(String), false
-		}
-		if tupleIndex < offset {
-			offset = tupleIndex
-		}
-		sliceIndex := middle - (anchor - tupleIndex)
-		strs[sliceIndex] = str
-
-		if sliceIndex < lowestIndex {
-			lowestIndex = sliceIndex
-		}
-
-		if sliceIndex > highestIndex {
-			highestIndex = sliceIndex
-		}
-	}
-
-	return NewOffsetString(strs[lowestIndex:highestIndex+1], offset).(String), true
+	return String{}, true
 }
 
 // genericSetEnumerator represents an enumerator over a genericSet.
