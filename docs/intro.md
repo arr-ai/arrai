@@ -325,7 +325,7 @@ External libraries may be accessed via package references.
       and `//.math.pi`.
    2. **`//.str`:** string functions such as `//.str.upper` and
       `//.str.join`.
-   3. **`//.fn`:** higher order functions such as `//.fn.fix`.
+   3. **`//.fn`:** higher order functions such as `//.fn.fix` and `//.fn.fixt`.
 2. **`//./path`** provides access to other arrai files relative to the current
    arrai file's parent directory (current working directory for expressions such
    as the `arrai eval` source that aren't associated with a file).

@@ -36,7 +36,7 @@ func stdScope() rel.Scope {
 						rel.NewAttr("wbnf", rel.ASTNodeToValue(wbnf.FromParserNode(wbnf.Core().Grammar(), *wbnf.Core().Node()))),
 					)),
 				)),
-				rel.NewAttr("func", rel.NewTuple(
+				rel.NewAttr("fn", rel.NewTuple(
 					rel.NewAttr("fix", parseLit(`(\f f(f))(\f \g \n g(f(f)(g))(n))`)),
 					rel.NewAttr("fixt", parseLit(`(\f f(f))(\f \t t :> \g \n g(f(f)(t))(n))`)),
 				)),

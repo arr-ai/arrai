@@ -51,11 +51,11 @@ func TestParseFix(t *testing.T) {
 	AssertCodesEvalToSameValue(t, `2`,
 		`(\f f(f))(\f \g \n g(f(f)(g))(n)) (\gcd \a \b a if b = 0 else gcd(b, a % b)) (20, 14)`)
 	AssertCodesEvalToSameValue(t, `720`,
-		`//.func.fix(\fact \n 1 if n < 2 else fact(n - 1) * n)(6)`)
+		`//.fn.fix(\fact \n 1 if n < 2 else fact(n - 1) * n)(6)`)
 	AssertCodesEvalToSameValue(t, `2`,
-		`//.func.fix(\gcd \a \b a if b = 0 else gcd(b)(a % b))(20)(14)`)
+		`//.fn.fix(\gcd \a \b a if b = 0 else gcd(b)(a % b))(20)(14)`)
 	AssertCodesEvalToSameValue(t, `2`,
-		`//.func.fix(\gcd \a \b a if b = 0 else gcd(b, a % b))(20, 14)`)
+		`//.fn.fix(\gcd \a \b a if b = 0 else gcd(b, a % b))(20, 14)`)
 	// TODO: Fix
 	// AssertCodesEvalToSameValue(t, `{a:42}`, `(\a{a})42`)
 }
@@ -70,7 +70,7 @@ func TestParseFixt(t *testing.T) {
 	// 	`(\f f(f))(\f \t t :> \g \n g(f(f)(t))(n)) (`+eo+`)`)
 	for _, fixt := range []string{
 		`(\f f(f))(\f \t t :> \g \n g(f(f)(t))(n))`,
-		`//.func.fixt`,
+		`//.fn.fixt`,
 	} {
 		for i := 0; i < 5; i++ {
 			for _, p := range []struct {
