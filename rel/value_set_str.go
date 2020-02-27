@@ -209,6 +209,10 @@ func (s String) Enumerator() ValueEnumerator {
 	return &StringEnumerator{s.s, -1}
 }
 
+func (s String) AsString() (String, bool) {
+	return s, true
+}
+
 func newStringTuple(index int, char rune) Tuple {
 	return NewTuple(
 		NewAttr("@", NewNumber(float64(index))),

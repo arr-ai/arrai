@@ -327,6 +327,43 @@ func (s *genericSet) Any() Value {
 	panic("Any(): empty set")
 }
 
+// TODO: handle sparse string and overlapping strings
+func (s *genericSet) AsString() (String, bool) {
+	if i := s.set.Range(); i.Next() {
+		tupleOffset, str, isStrTuple := isStringTuple(i.Value().(Value))
+		if !isStrTuple {
+			return String{}, false
+		}
+
+		middleIndex := s.set.Count()
+		strs := make([]rune, 2*middleIndex)
+		strs[middleIndex] = str
+		anchorOffset, minOffset := tupleOffset, tupleOffset
+		lowestIndex, highestIndex := middleIndex, middleIndex
+		for i.Next() {
+			if tupleOffset, str, isStrTuple = isStringTuple(i.Value().(Value)); !isStrTuple {
+				return String{}, false
+			}
+			if tupleOffset < minOffset {
+				minOffset = tupleOffset
+			}
+			sliceIndex := middleIndex - (anchorOffset - tupleOffset)
+			strs[sliceIndex] = str
+
+			if sliceIndex < lowestIndex {
+				lowestIndex = sliceIndex
+			}
+
+			if sliceIndex > highestIndex {
+				highestIndex = sliceIndex
+			}
+		}
+
+		return NewOffsetString(strs[lowestIndex:highestIndex+1], minOffset).(String), true
+	}
+	return String{}, true
+}
+
 // genericSetEnumerator represents an enumerator over a genericSet.
 type genericSetEnumerator struct {
 	i frozen.Iterator

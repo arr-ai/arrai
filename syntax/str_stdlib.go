@@ -23,7 +23,7 @@ var (
 	libStrConcat = createNestedFunc("concat", 1, func(args ...rel.Value) rel.Value {
 		var sb strings.Builder
 		for i := rel.ArrayEnumerator(args[0].(rel.Set)); i.MoveNext(); {
-			sb.WriteString(i.Current().(rel.String).String())
+			sb.WriteString(mustAsString(i.Current()).String())
 		}
 		return rel.NewString([]rune(sb.String()))
 	})
@@ -31,7 +31,7 @@ var (
 	libStrExpand = createNestedFunc("expand", 3, func(args ...rel.Value) rel.Value {
 		var format string
 		if args[0].(rel.Set).Bool() {
-			format = "%" + args[0].(rel.String).String()
+			format = "%" + mustAsString(args[0]).String()
 		} else {
 			format = "%v"
 		}
@@ -42,7 +42,7 @@ var (
 			var sb strings.Builder
 			var delim string
 			if args[2].(rel.Set).Bool() {
-				delim = args[2].(rel.String).String()
+				delim = mustAsString(args[2]).String()
 			}
 
 			for n, i := 0, rel.ArrayEnumerator(args[1].(rel.Set)); i.MoveNext(); n++ {
@@ -63,15 +63,15 @@ func loadStrLib() rel.Attr {
 			return rel.NewString(
 				[]rune(
 					strings.ReplaceAll(
-						args[0].(rel.String).String(),
-						args[1].(rel.String).String(),
-						args[2].(rel.String).String(),
+						mustAsString(args[0]).String(),
+						mustAsString(args[1]).String(),
+						mustAsString(args[2]).String(),
 					),
 				),
 			)
 		}),
 		createFunc("split", 2, func(args ...rel.Value) rel.Value {
-			splitted := strings.Split(args[0].(rel.String).String(), args[1].(rel.String).String())
+			splitted := strings.Split(mustAsString(args[0]).String(), mustAsString(args[1]).String())
 			vals := make([]rel.Value, 0, len(splitted))
 			for _, s := range splitted {
 				vals = append(vals, rel.NewString([]rune(s)))
@@ -79,26 +79,34 @@ func loadStrLib() rel.Attr {
 			return rel.NewArray(vals...)
 		}),
 		createFunc("lower", 1, func(args ...rel.Value) rel.Value {
-			return rel.NewString([]rune(strings.ToLower(args[0].(rel.String).String())))
+			return rel.NewString([]rune(strings.ToLower(mustAsString(args[0]).String())))
 		}),
 		createFunc("upper", 1, func(args ...rel.Value) rel.Value {
-			return rel.NewString([]rune(strings.ToUpper(args[0].(rel.String).String())))
+			return rel.NewString([]rune(strings.ToUpper(mustAsString(args[0]).String())))
 		}),
 		createFunc("title", 1, func(args ...rel.Value) rel.Value {
-			return rel.NewString([]rune(strings.Title(args[0].(rel.String).String())))
+			return rel.NewString([]rune(strings.Title(mustAsString(args[0]).String())))
 		}),
 		createFunc("contains", 2, func(args ...rel.Value) rel.Value {
-			return rel.NewBool(strings.Contains(args[0].(rel.String).String(), args[1].(rel.String).String()))
+			return rel.NewBool(strings.Contains(mustAsString(args[0]).String(), mustAsString(args[1]).String()))
 		}),
 		rel.NewAttr("concat", libStrConcat),
 		createFunc("join", 2, func(args ...rel.Value) rel.Value {
 			strs := args[0].(rel.Set)
 			toJoin := make([]string, 0, strs.Count())
 			for i := rel.ArrayEnumerator(strs.(rel.Set)); i.MoveNext(); {
-				toJoin = append(toJoin, i.Current().(rel.String).String())
+				toJoin = append(toJoin, mustAsString(i.Current()).String())
 			}
-			return rel.NewString([]rune(strings.Join(toJoin, args[1].(rel.String).String())))
+			return rel.NewString([]rune(strings.Join(toJoin, mustAsString(args[1]).String())))
 		}),
 		rel.NewAttr("expand", libStrExpand),
 	))
+}
+
+func mustAsString(v rel.Value) rel.String {
+	s, isString := v.(rel.Set).AsString()
+	if isString {
+		return s
+	}
+	panic("can not be a string")
 }
