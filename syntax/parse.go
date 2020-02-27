@@ -31,46 +31,56 @@ func unfakeBackquote(s string) string {
 }
 
 var arraiParsers = wbnf.MustCompile(unfakeBackquote(`
-expr   -> amp="&"* @ arrow=(nest | unnest | ARROW @ | binding="->" "\\" IDENT %%bind @ | binding="->" %%bind @)*
-        > @:binop=("with" | "without")
-        > @:binop="||"
-        > @:binop="&&"
-        > @:binop=/{!?(?:<>?=?|>=?|=)}
-        > @ if=("if" t=expr "else" f=expr)*
-        > @:binop=/{[+|]|-%?|\(\+\)}
-        > @:binop=/{&|[-<][-&][->]}
-        > @:binop=/{//|[*/%]}
-        > @:rbinop="^"
-        > unop=/{:>|=>|>>|[-+!*^]}* @
-        > @ count="count"? touch?
-        > @ call=("(" arg=expr:",", ")")*
-        > get+ | @ get*
-        > "{" rel=(names tuple=("(" v=@:",", ")"):",",?) "}"
-        | "{" set=(elt=@:",",?) "}"
-        | "[" array=(item=@:",",?) "]"
-        | "{:" embed=(grammar=@ ":" subgrammar=%%ast) ":}"
-        | op="\\\\" @
-		| fn="\\" IDENT @
-        | "//" pkg=( "." ("/" local=name)+
+expr   -> C? amp="&"* @ C? arrow=(
+              nest |
+              unnest |
+              ARROW @ |
+              binding="->" C? "\\" C? IDENT C? %%bind C? @ |
+              binding="->" C? %%bind @
+          )* C?
+        > C? @:binop=("with" | "without") C?
+        > C? @:binop="||" C?
+        > C? @:binop="&&" C?
+        > C? @:binop=/{!?(?:<>?=?|>=?|=)} C?
+        > C? @ if=("if" t=expr "else" f=expr)* C?
+        > C? @:binop=/{[+|]|-%?|\(\+\)} C?
+        > C? @:binop=/{&|[-<][-&][->]} C?
+        > C? @:binop=/{//|[*/%]} C?
+        > C? @:rbinop="^" C?
+        > C? unop=/{:>|=>|>>|[-+!*^]}* @ C?
+        > C? @ count="count"? C? touch? C?
+        > C? @ call=("(" arg=expr:",", ")")* C?
+        > C? get+ C? | C? @ get* C?
+        > C? "{" C? rel=(names tuple=("(" v=@:",", ")"):",",?) "}" C?
+        | C? "{" C? set=(elt=@:",",?) "}" C?
+        | C? "[" C? array=(item=@:",",?) "]" C?
+        | C? "{:" C? embed=(grammar=@ ":" subgrammar=%%ast) ":}" C?
+        | C? op="\\\\" @ C?
+        | C? fn="\\" IDENT @ C?
+        | C? "//" pkg=( "." ("/" local=name)+
                    | "." std=IDENT?
                    | http="http://"? fqdn=name:"." ("/" path=name)*
                    )
-        | "(" tuple=(pairs=(name ":" v=@ | ":" vk=(@ "." k=IDENT)):",",?) ")"
-		| "(" @ ")"
-		| xstr | IDENT | STR | NUM;
-nest   -> "nest" names IDENT;
-unnest -> "unnest" IDENT;
-touch  -> ("->*" ("&"? IDENT | STR))+ "(" expr:"," ","? ")";
-get    -> dot="." ("&"? IDENT | STR | "*");
-names  -> "|" IDENT:"," "|";
-name   -> IDENT | STR;
-xstr   -> quote=/{\$"\s*} part=( sexpr | fragment=/{(?: \\. | :[^{"] | [^\\":] )+} )* '"'
-        | quote=/{\$'\s*} part=( sexpr | fragment=/{(?: \\. | :[^{'] | [^\\':] )+} )* "'"
-		| quote=/{\$‵\s*} part=( sexpr | fragment=/{(?: ‵‵  | :[^{‵] | [^‵  :] )+} )* "‵";
+        | C? "(" tuple=(pairs=(name ":" v=@ | ":" vk=(@ "." k=IDENT)):",",?) ")" C?
+        | C? "(" @ ")" C?
+        | C? arrow=(binding="let" C? IDENT C? "=" C? @ %%bind C? @) C?
+        | C? xstr C?
+        | C? IDENT C?
+        | C? STR C?
+        | C? NUM C?;
+nest   -> C? "nest" names IDENT C?;
+unnest -> C? "unnest" IDENT C?;
+touch  -> C? ("->*" ("&"? IDENT | STR))+ "(" expr:"," ","? ")" C?;
+get    -> C? dot="." ("&"? IDENT | STR | "*") C?;
+names  -> C? "|" C? IDENT:"," C? "|" C?;
+name   -> C? IDENT C? | C? STR C?;
+xstr   -> C? quote=/{\$"\s*} part=( sexpr | fragment=/{(?: \\. | :[^{"] | [^\\":] )+} )* '"' C?
+        | C? quote=/{\$'\s*} part=( sexpr | fragment=/{(?: \\. | :[^{'] | [^\\':] )+} )* "'" C?
+        | C? quote=/{\$‵\s*} part=( sexpr | fragment=/{(?: ‵‵  | :[^{‵] | [^‵  :] )+} )* "‵" C?;
 sexpr  -> ":{"
-		  expr
-		  control=/{ (?: : [-+#*\.\_0-9a-z]* (?: : (?: \\. | [^\\}] )* )? )? }
-		  close=/{\}:\s*};
+          C? expr C?
+          control=/{ (?: : [-+#*\.\_0-9a-z]* (?: : (?: \\. | [^\\}] )* )? )? }
+          close=/{\}:\s*};
 
 ARROW  -> /{:>|=>|>>|order|where|sum|max|mean|median|min};
 IDENT  -> /{ \. | [$@A-Za-z_][0-9$@A-Za-z_]* };
@@ -79,6 +89,7 @@ STR    -> /{ " (?: \\. | [^\\"] )* "
            | ‵ (?: ‵‵  | [^‵  ] )* ‵
            };
 NUM    -> /{ (?: \d+(?:\.\d*)? | \.\d+ ) (?: [Ee][-+]?\d+ )? };
+C      -> /{ # .* $ };
 
 .wrapRE -> /{\s*()\s*};
 `))
@@ -483,7 +494,7 @@ func (pc ParseContext) Parse(s *parser.Scanner) (wbnf.Branch, error) {
 					default:
 						return nil, parser.Node{}, err
 					}
-					log.Printf("ast: %v", ast)
+					// log.Printf("ast: %v", ast)
 					node := wbnf.ToParserNode(arraiParsers.Grammar(), ast)
 					return node, parser.Node{}, nil
 				},
