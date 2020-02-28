@@ -36,6 +36,7 @@ func TestXStringNested(t *testing.T) {
 	AssertCodesEvalToSameValue(t,
 		strings.ReplaceAll(
 			`"type Customer interface {
+				IsCustomer()
 				GetCustid() int
 				GetDob() date
 				GetAlias() string
@@ -47,6 +48,7 @@ func TestXStringNested(t *testing.T) {
 			(name: "alias",  type: "string"),
 		]) -> $"
 			type :{.name}: interface {
+				Is:{.name}:()
 				:{.fields >> $"Get:{//.str.title(.name)}:() :{.type}:"::\n\i}:
 			}"`,
 	)

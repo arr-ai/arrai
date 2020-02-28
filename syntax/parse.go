@@ -13,7 +13,7 @@ import (
 	"github.com/arr-ai/wbnf/wbnf"
 )
 
-var leadingWSRE = regexp.MustCompile(`[^\t ]`)
+var leadingWSRE = regexp.MustCompile(`\A[\t ]*`)
 var trailingWSRE = regexp.MustCompile(`[\t ]*\z`)
 
 type noParseType struct{}
@@ -331,12 +331,9 @@ func (pc ParseContext) CompileExpr(b wbnf.Branch) rel.Expr {
 		trimIndent := func(s string) string {
 			if trim == "" {
 				s = strings.TrimPrefix(s, "\n")
-				if i := leadingWSRE.FindStringIndex(s); i != nil {
-					trim = "\n" + s[:i[0]]
-					return s[i[0]:]
-				}
-				trim = "\n" + s
-				return s
+				i := leadingWSRE.FindStringIndex(s)
+				trim = "\n" + s[:i[1]]
+				s = s[i[1]:]
 			}
 			if trim != "\n" {
 				return strings.ReplaceAll(s, trim, "\n")
