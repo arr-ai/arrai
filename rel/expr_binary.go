@@ -207,6 +207,8 @@ func NewCallExpr(a, b Expr) Expr {
 			switch x := a.(type) {
 			case Closure:
 				return x.Call(b, local)
+			case *Function:
+				return x.Call(b, local)
 			case *NativeFunction:
 				return x.Call(b, local)
 			case Set:
