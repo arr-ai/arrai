@@ -18,6 +18,11 @@ func TestXStringStrings(t *testing.T) {
 	AssertCodesEvalToSameValue(t, `"hello"`, `$":{'hello'}:"`)
 }
 
+func TestXStringWS(t *testing.T) {
+	AssertCodesEvalToSameValue(t, `"1 2"`, `$":{1}: :{2}:"`)
+	// TODO: Test indent trimming
+}
+
 func TestXStringMap(t *testing.T) {
 	AssertCodesEvalToSameValue(t,
 		`"Getcustid() int"`,
