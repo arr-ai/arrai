@@ -345,12 +345,9 @@ func (pc ParseContext) CompileExpr(b wbnf.Branch) rel.Expr {
 			p, part := which(part.(wbnf.Branch), "sexpr", "fragment")
 			switch p {
 			case "sexpr":
-				if i == 0 {
-					trim = "\n" + ws
-				} else if ws != "" {
+				if i == 0 || ws != "" {
 					s := trimIndent(ws)
 					exprs = append(exprs, rel.NewString([]rune(s)))
-					ws = ""
 				}
 				sexpr := part.(wbnf.One).Node.(wbnf.Branch)
 				format := ""

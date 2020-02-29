@@ -18,9 +18,14 @@ func TestXStringStrings(t *testing.T) {
 	AssertCodesEvalToSameValue(t, `"hello"`, `$":{'hello'}:"`)
 }
 
+func TestXStringIndent(t *testing.T) {
+	AssertCodesEvalToSameValue(t, `"a\nb"`, "$`\n  a\n  b`")
+	AssertCodesEvalToSameValue(t, `"a\nb\n  c\nd"`, "$'\n  a\n  b\n    c\n  d'")
+}
+
 func TestXStringWS(t *testing.T) {
 	AssertCodesEvalToSameValue(t, `"1 2"`, `$":{1}: :{2}:"`)
-	// TODO: Test indent trimming
+	AssertCodesEvalToSameValue(t, `"1\n2"`, "$'\n  :{1}:\n  :{2}:'")
 }
 
 func TestXStringMap(t *testing.T) {
