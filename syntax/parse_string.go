@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-func parseArraiStringFragment(s string, quote byte, validEscapes string, indent string) string {
+func parseArraiStringFragment(s string, validEscapes string, indent string) string {
 	var sb strings.Builder
 	for i := 0; i < len(s); i++ {
 		c := s[i]
@@ -60,8 +60,6 @@ func parseArraiStringFragment(s string, quote byte, validEscapes string, indent 
 				sb.WriteByte('\\')
 			case '\'':
 				sb.WriteByte('\'')
-			case quote:
-				sb.WriteByte(quote)
 			case 'i':
 				sb.WriteString(indent)
 			default:
@@ -78,9 +76,9 @@ func parseArraiStringFragment(s string, quote byte, validEscapes string, indent 
 }
 
 func parseArraiString(s string) string {
-	quote, s := s[0], s[1:len(s)-1]
-	if quote == '`' {
+	quote, s := s[:1], s[1:len(s)-1]
+	if quote == "`" {
 		return strings.ReplaceAll(s, "``", "`")
 	}
-	return parseArraiStringFragment(s, quote, "", "")
+	return parseArraiStringFragment(s, quote, "")
 }

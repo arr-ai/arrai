@@ -32,7 +32,7 @@ var (
 		return rel.NewString([]rune(sb.String()))
 	})
 
-	libStrExpand = createNestedFunc("expand", 3, func(args ...rel.Value) rel.Value {
+	libStrExpand = createNestedFunc("expand", 4, func(args ...rel.Value) rel.Value {
 		format := mustAsString(args[0])
 		if format != "" {
 			format = "%" + format
@@ -40,6 +40,7 @@ var (
 			format = "%v"
 		}
 
+		var s string
 		if delim := mustAsString(args[2]); strings.HasPrefix(delim, ":") {
 			var sb strings.Builder
 			for n, i := 0, args[1].(rel.Set).ArrayEnumerator(); i.MoveNext(); n++ {
@@ -48,9 +49,14 @@ var (
 				}
 				sb.WriteString(formatValue(format, i.Current()))
 			}
-			return rel.NewString([]rune(sb.String()))
+			s = sb.String()
+		} else {
+			s = formatValue(format, args[1])
 		}
-		return rel.NewString([]rune(formatValue(format, args[1])))
+		if s != "" {
+			s += mustAsString(args[3])
+		}
+		return rel.NewString([]rune(s))
 	})
 )
 

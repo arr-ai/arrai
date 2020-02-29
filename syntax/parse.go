@@ -15,6 +15,7 @@ import (
 
 var leadingWSRE = regexp.MustCompile(`\A[\t ]*`)
 var trailingWSRE = regexp.MustCompile(`[\t ]*\z`)
+var expansionRE = regexp.MustCompile(`(?::([-+#*\.\_0-9a-z]*))(:(?:\\.|[^\\:}])*)?(?::((?:\\.|[^\\:}])*))?`)
 
 type noParseType struct{}
 
@@ -79,7 +80,7 @@ xstr   -> C? quote=/{\$"\s*} part=( sexpr | fragment=/{(?: \\. | :[^{"] | [^\\":
         | C? quote=/{\$‵\s*} part=( sexpr | fragment=/{(?: ‵‵  | :[^{‵] | [^‵  :] )+} )* "‵" C?;
 sexpr  -> ":{"
           C? expr C?
-          control=/{ (?: : [-+#*\.\_0-9a-z]* (?: : (?: \\. | [^\\}] )* )? )? }
+          control=/{ (?: : [-+#*\.\_0-9a-z]* (?: : (?: \\. | [^\\:}] )* ){0,2} )? }
           close=/{\}:\s*};
 
 ARROW  -> /{:>|=>|>>|order|where|sum|max|mean|median|min};
@@ -323,60 +324,99 @@ func (pc ParseContext) CompileExpr(b wbnf.Branch) rel.Expr {
 		return rel.NewString([]rune(parseArraiString(s)))
 	case "xstr":
 		quote := c.(wbnf.One).Node.One("quote").Scanner().String()
-		q := quote[1]
-		ws := quote[2:]
-		parts := c.(wbnf.One).Node.Many("part")
-		exprs := make([]rel.Expr, 0, len(parts))
-		trim := ""
-		trimIndent := func(s string) string {
-			if trim == "" {
-				s = strings.TrimPrefix(s, "\n")
-				i := leadingWSRE.FindStringIndex(s)
-				trim = "\n" + s[:i[1]]
-				s = s[i[1]:]
-			}
-			if trim != "\n" {
-				return strings.ReplaceAll(s, trim, "\n")
-			}
-			return s
-		}
-		indent := ""
-		for i, part := range parts {
-			p, part := which(part.(wbnf.Branch), "sexpr", "fragment")
-			switch p {
-			case "sexpr":
-				if i == 0 || ws != "" {
-					s := trimIndent(ws)
-					exprs = append(exprs, rel.NewString([]rune(s)))
+		parts := []interface{}{}
+		{
+			ws := quote[2:]
+			trim := ""
+			trimIndent := func(s string) {
+				s = ws + s
+				ws = ""
+				if trim == "" {
+					s = strings.TrimPrefix(s, "\n")
+					i := leadingWSRE.FindStringIndex(s)
+					trim = "\n" + s[:i[1]]
+					s = s[i[1]:]
 				}
-				sexpr := part.(wbnf.One).Node.(wbnf.Branch)
+				if trim != "\n" {
+					s = strings.ReplaceAll(s, trim, "\n")
+				}
+				if s != "" {
+					parts = append(parts, s)
+				}
+			}
+			for i, part := range c.(wbnf.One).Node.Many("part") {
+				p, part := which(part.(wbnf.Branch), "sexpr", "fragment")
+				switch p {
+				case "sexpr":
+					if i == 0 || ws != "" {
+						trimIndent("")
+					}
+					sexpr := part.(wbnf.One).Node.(wbnf.Branch)
+					ws = sexpr.One("close").One("").(wbnf.Leaf).Scanner().String()[2:]
+					parts = append(parts, sexpr)
+				case "fragment":
+					s := part.(wbnf.One).Node.One("").Scanner().String()
+					s = parseArraiStringFragment(s, quote[1:2]+":", "")
+					trimIndent(s)
+				}
+			}
+		}
+		next := ""
+		exprs := make([]rel.Expr, len(parts))
+		for i := len(parts) - 1; i >= 0; i-- {
+			part := parts[i]
+			switch part := part.(type) {
+			case wbnf.Branch:
+				indent := ""
+				if i > 0 {
+					if s, ok := parts[i-1].(string); ok {
+						indent = trailingWSRE.FindString(s)
+					}
+				}
+
 				format := ""
 				delim := ""
-				if control := sexpr.One("control").One("").(wbnf.Leaf).Scanner().String(); control != "" {
-					control = control[1:]
-					colon := strings.IndexByte(control, ':')
-					if colon == -1 {
-						colon = len(control)
+				appendIfNotEmpty := ""
+				if control := part.One("control").One("").(wbnf.Leaf).Scanner().String(); control != "" {
+					m := expansionRE.FindStringSubmatchIndex(control)
+					if m[2] >= 0 {
+						format = control[m[2]:m[3]]
 					}
-					format = control[:colon]
-					delim = control[colon:]
-					delim = parseArraiStringFragment(delim, '}', "", indent)
+					if m[4] >= 0 {
+						delim = parseArraiStringFragment(control[m[4]:m[5]], ":}", "\n"+indent)
+					}
+					if m[6] >= 0 {
+						appendIfNotEmpty = parseArraiStringFragment(control[m[6]:m[7]], ":}", "\n"+indent)
+					}
 				}
-				expr := sexpr.One("expr").(wbnf.Branch)
-				ws = sexpr.One("close").One("").(wbnf.Leaf).Scanner().String()[2:]
-				exprs = append(exprs,
-					rel.NewCallExprCurry(libStrExpand,
-						rel.NewString([]rune(format)),
-						pc.CompileExpr(expr),
-						rel.NewString([]rune(delim)),
-					))
-			case "fragment":
-				s := part.(wbnf.One).Node.One("").Scanner().String()
-				f := parseArraiStringFragment(s, q, ":", "")
-				t := trimIndent(ws + f)
-				ws = ""
-				indent = trailingWSRE.FindString(t)
-				exprs = append(exprs, rel.NewString([]rune(t)))
+				expr := part.One("expr").(wbnf.Branch)
+				if strings.HasPrefix(next, "\n") {
+					if i > 0 {
+						if s, ok := parts[i-1].(string); ok {
+							if strings.HasSuffix(s, "\n") {
+								appendIfNotEmpty += "\n"
+								parts[i+1] = next[1:]
+							}
+						}
+					} else {
+						appendIfNotEmpty += "\n"
+						parts[i+1] = next[1:]
+					}
+					next = ""
+				}
+				exprs[i] = rel.NewCallExprCurry(libStrExpand,
+					rel.NewString([]rune(format)),
+					pc.CompileExpr(expr),
+					rel.NewString([]rune(delim)),
+					rel.NewString([]rune(appendIfNotEmpty)),
+				)
+			case string:
+				next = part
+			}
+		}
+		for i, part := range parts {
+			if s, ok := part.(string); ok {
+				exprs[i] = rel.NewString([]rune(s))
 			}
 		}
 		return rel.NewCallExpr(libStrConcat, rel.NewArrayExpr(exprs...))

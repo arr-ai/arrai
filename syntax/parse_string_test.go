@@ -6,6 +6,7 @@ import (
 )
 
 func TestXStringSimple(t *testing.T) {
+	t.Parallel()
 	AssertCodesEvalToSameValue(t, `""               `, `$""`)
 	AssertCodesEvalToSameValue(t, `"42"             `, `$":{6*7}:"`)
 	AssertCodesEvalToSameValue(t, `"a42z"           `, `$"a:{6*7}:z"`)
@@ -15,20 +16,36 @@ func TestXStringSimple(t *testing.T) {
 }
 
 func TestXStringStrings(t *testing.T) {
+	t.Parallel()
 	AssertCodesEvalToSameValue(t, `"hello"`, `$":{'hello'}:"`)
 }
 
 func TestXStringIndent(t *testing.T) {
+	t.Parallel()
 	AssertCodesEvalToSameValue(t, `"a\nb"`, "$`\n  a\n  b`")
 	AssertCodesEvalToSameValue(t, `"a\nb\n  c\nd"`, "$'\n  a\n  b\n    c\n  d'")
 }
 
 func TestXStringWS(t *testing.T) {
+	t.Parallel()
 	AssertCodesEvalToSameValue(t, `"1 2"`, `$":{1}: :{2}:"`)
 	AssertCodesEvalToSameValue(t, `"1\n2"`, "$'\n  :{1}:\n  :{2}:'")
 }
 
+func TestXStringSuppressEmptyComputedLines(t *testing.T) {
+	t.Parallel()
+	AssertCodesEvalToSameValue(t, `"x\ny\n2"`, "$'\n  x\n  :{'y'}:\n  :{2}:'")
+	AssertCodesEvalToSameValue(t, `"x\n2"`, "$'\n  x\n  :{''}:\n  :{2}:'")
+	AssertCodesEvalToSameValue(t, `"x\n2"`, "$'\n  x\n  :{''}:\n  :{''}:\n  :{2}:'")
+}
+
+func TestXStringArrays(t *testing.T) {
+	t.Parallel()
+	AssertCodesEvalToSameValue(t, `"x\n  1\n  2\n  3\ny"`, "$'x\n  :{[1, 2, 3]::\\i}:\ny'")
+}
+
 func TestXStringMap(t *testing.T) {
+	t.Parallel()
 	AssertCodesEvalToSameValue(t,
 		`"Getcustid() int"`,
 		`(name: "custid", type: "int") -> $"Get:{.name}:() :{.type}:"`,
@@ -36,6 +53,7 @@ func TestXStringMap(t *testing.T) {
 }
 
 func TestXStringMap2(t *testing.T) {
+	t.Parallel()
 	AssertCodesEvalToSameValue(t,
 		`"GetCustid()"`,
 		`[(name: "custid", type: "int")] -> $":{. >> $"Get:{//.str.title(.name)}:()"::}:"`,
@@ -43,6 +61,7 @@ func TestXStringMap2(t *testing.T) {
 }
 
 func TestXStringNested(t *testing.T) {
+	t.Parallel()
 	AssertCodesEvalToSameValue(t,
 		strings.ReplaceAll(
 			`"type Customer interface {
@@ -59,7 +78,7 @@ func TestXStringNested(t *testing.T) {
 		]) -> $"
 			type :{.name}: interface {
 				Is:{.name}:()
-				:{.fields >> $"Get:{//.str.title(.name)}:() :{.type}:"::\n\i}:
+				:{.fields >> $"Get:{//.str.title(.name)}:() :{.type}:"::\i}:
 			}"`,
 	)
 }
