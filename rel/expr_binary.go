@@ -232,7 +232,7 @@ func NewCallExpr(a, b Expr) Expr {
 					}
 				}
 				if out == nil {
-					return nil, errors.Errorf("No items founds")
+					return nil, errors.Errorf("No items found")
 				}
 				return out, nil
 			}
