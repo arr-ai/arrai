@@ -20,50 +20,50 @@ func NewDotExpr(lhs Expr, attr string) Expr {
 }
 
 // Subject returns the DotExpr's LHS.
-func (e *DotExpr) Subject() Expr {
-	return e.lhs
+func (x *DotExpr) Subject() Expr {
+	return x.lhs
 }
 
 // Attr returns the name of the attribute accessed by the DotExpr.
-func (e *DotExpr) Attr() string {
-	return e.attr
+func (x *DotExpr) Attr() string {
+	return x.attr
 }
 
 // String returns a string representation of the expression.
-func (e *DotExpr) String() string {
-	return fmt.Sprintf("(%s.%s)", e.lhs, e.attr)
+func (x *DotExpr) String() string {
+	return fmt.Sprintf("(%s.%s)", x.lhs, x.attr)
 }
 
 // Eval returns the lhs
-func (e *DotExpr) Eval(local Scope) (Value, error) {
-	if e.attr == "*" {
+func (x *DotExpr) Eval(local Scope) (Value, error) {
+	if x.attr == "*" {
 		return nil, errors.Errorf("expr.* not allowed outside tuple attr")
 	}
-	a, err := e.lhs.Eval(local)
+	a, err := x.lhs.Eval(local)
 	if err != nil {
 		return nil, err
 	}
 	get := func(t Tuple) (Value, error) {
-		if value, found := t.Get(e.attr); found {
+		if value, found := t.Get(x.attr); found {
 			return value, nil
 		}
-		if e.attr[:1] != "&" {
-			if value, found := t.Get("&" + e.attr); found {
+		if x.attr[:1] != "&" {
+			if value, found := t.Get("&" + x.attr); found {
 				tupleScope := local.With("self", t)
 				return value.(*Function).Call(nil, tupleScope)
 			}
 		}
-		return nil, errors.Errorf("Missing attr %s", e.attr)
+		return nil, errors.Errorf("Missing attr %s", x.attr)
 	}
 
-	switch x := a.(type) {
+	switch t := a.(type) {
 	case Tuple:
-		return get(x)
+		return get(t)
 	case Set:
-		if !x.Bool() {
-			return nil, errors.Errorf("Cannot get attr from empty set")
+		if !t.Bool() {
+			return nil, errors.Errorf("Cannot get attr %q from empty set", x.attr)
 		}
-		e := x.Enumerator()
+		e := t.Enumerator()
 		e.MoveNext()
 		v := e.Current()
 		if e.MoveNext() {
@@ -72,10 +72,9 @@ func (e *DotExpr) Eval(local Scope) (Value, error) {
 		if t, ok := v.(Tuple); ok {
 			return get(t)
 		}
-		return nil, errors.Errorf(
-			"Cannot get attr from non-tuple set elt %s", v)
+		return nil, errors.Errorf("Cannot get attr %q from non-tuple set elt", x.attr)
 	default:
 		return nil, errors.Errorf(
-			"(%s).%s: lhs must be a Tuple, not %T", e.lhs, e.attr, a)
+			"(%s).%s: lhs must be a Tuple, not %T", x.lhs, x.attr, a)
 	}
 }
