@@ -21,6 +21,46 @@ func NewString(s []rune) Set {
 	return String{s: s}
 }
 
+func AsString(s Set) (String, bool) {
+	if s, ok := s.(String); ok {
+		return s, true
+	}
+	if i := s.Enumerator(); i.MoveNext() {
+		match := stringTupleMatcher()
+		tupleOffset, str, isStrTuple := match(i.Current())
+		if !isStrTuple {
+			return String{}, false
+		}
+
+		middleIndex := s.Count()
+		strs := make([]rune, 2*middleIndex)
+		strs[middleIndex] = str
+		anchorOffset, minOffset := tupleOffset, tupleOffset
+		lowestIndex, highestIndex := middleIndex, middleIndex
+		for i.MoveNext() {
+			if tupleOffset, str, isStrTuple = match(i.Current()); !isStrTuple {
+				return String{}, false
+			}
+			if tupleOffset < minOffset {
+				minOffset = tupleOffset
+			}
+			sliceIndex := middleIndex - (anchorOffset - tupleOffset)
+			strs[sliceIndex] = str
+
+			if sliceIndex < lowestIndex {
+				lowestIndex = sliceIndex
+			}
+
+			if sliceIndex > highestIndex {
+				highestIndex = sliceIndex
+			}
+		}
+
+		return NewOffsetString(strs[lowestIndex:highestIndex+1], minOffset).(String), true
+	}
+	return String{}, true
+}
+
 // NewString constructs an array as a relation.
 func NewOffsetString(s []rune, offset int) Set {
 	if len(s) == 0 {
@@ -31,6 +71,7 @@ func NewOffsetString(s []rune, offset int) Set {
 
 // Hash computes a hash for a String.
 func (s String) Hash(seed uintptr) uintptr {
+	// TODO: Optimize.
 	h := seed
 	for e := s.Enumerator(); e.MoveNext(); {
 		h ^= e.Current().Hash(seed)
@@ -109,7 +150,8 @@ func (s String) Count() int {
 
 // Has returns true iff the given Value is in the String.
 func (s String) Has(value Value) bool {
-	if pos, char, ok := isStringTuple(value); ok {
+	match := stringTupleMatcher()
+	if pos, char, ok := match(value); ok {
 		if s.offset <= pos && pos < s.offset+len(s.s) {
 			return char == s.s[pos-s.offset]
 		}
@@ -132,7 +174,8 @@ func (s String) with(index int, char rune) Set {
 // With returns the original String with given value added. Iff the value was
 // already present, the original String is returned.
 func (s String) With(value Value) Set {
-	if index, char, ok := isStringTuple(value); ok {
+	match := stringTupleMatcher()
+	if index, char, ok := match(value); ok {
 		return s.with(index, char)
 	}
 	return newSetFromSet(s).With(value)
@@ -141,7 +184,8 @@ func (s String) With(value Value) Set {
 // Without returns the original String without the given value. Iff the value
 // was already absent, the original String is returned.
 func (s String) Without(value Value) Set {
-	if pos, char, ok := isStringTuple(value); ok {
+	match := stringTupleMatcher()
+	if pos, char, ok := match(value); ok {
 		if i := s.index(pos); i >= 0 && char == s.s[i] {
 			if pos == s.offset+i {
 				return String{s: s.s[:i], offset: s.offset}
@@ -209,12 +253,8 @@ func (s String) Enumerator() ValueEnumerator {
 	return &StringEnumerator{s.s, -1}
 }
 
-func (s String) AsString() (String, bool) {
-	return s, true
-}
-
-func (s String) ArrayEnumerator() ValueEnumerator {
-	return &stringEnumerator{s.s, -1}
+func (s String) ArrayEnumerator() (ValueEnumerator, bool) {
+	return &stringEnumerator{s.s, -1}, true
 }
 
 func newStringTuple(index int, char rune) Tuple {
@@ -224,28 +264,20 @@ func newStringTuple(index int, char rune) Tuple {
 	)
 }
 
-func isStringTuple(v Value) (index int, char rune, is bool) {
-	is = stringTupleMatcher(func(i int, c rune) { index = i; char = c }).Match(v)
-	return
-}
-
-func stringTupleMatcher(match func(index int, char rune)) TupleMatcher {
-	n := 0
+func stringTupleMatcher() func(v Value) (index int, char rune, matches bool) {
 	var index int
 	var char rune
-	check := func() {
-		if n == 1 {
-			match(index, char)
-		}
-		n++
-	}
-	return NewTupleMatcher(
+	m := NewTupleMatcher(
 		map[string]Matcher{
-			"@":      MatchInt(func(i int) { index = i; check() }),
-			CharAttr: MatchInt(func(i int) { char = rune(i); check() }),
+			"@":      MatchInt(func(i int) { index = i }),
+			CharAttr: MatchInt(func(i int) { char = rune(i) }),
 		},
 		Lit(EmptyTuple),
 	)
+	return func(v Value) (int, rune, bool) {
+		matches := m.Match(v)
+		return index, char, matches
+	}
 }
 
 type stringEnumerator struct {

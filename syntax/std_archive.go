@@ -1,0 +1,88 @@
+package syntax
+
+import (
+	"archive/tar"
+	"archive/zip"
+	"bytes"
+	"fmt"
+	"io"
+	"path"
+
+	"github.com/arr-ai/arrai/rel"
+)
+
+func stdArchive() rel.Attr {
+	return rel.NewAttr("archive", rel.NewTuple(
+		rel.NewAttr("tar", rel.NewTuple(
+			rel.NewNativeFunctionAttr("tar", func(v rel.Value) rel.Value {
+				return createArchive(v, func(w io.Writer) (io.Closer, func(string, []byte) (io.Writer, error)) {
+					aw := tar.NewWriter(w)
+					return aw, func(path string, data []byte) (io.Writer, error) {
+						return aw, aw.WriteHeader(&tar.Header{
+							Name: path,
+							Mode: 0600,
+							Size: int64(len(data)),
+						})
+					}
+				})
+			}),
+		)),
+		rel.NewAttr("zip", rel.NewTuple(
+			rel.NewNativeFunctionAttr("zip", func(v rel.Value) rel.Value {
+				return createArchive(v, func(w io.Writer) (io.Closer, func(string, []byte) (io.Writer, error)) {
+					aw := zip.NewWriter(w)
+					return aw, func(path string, _ []byte) (io.Writer, error) {
+						return aw.Create(path)
+					}
+				})
+			}),
+		)),
+	))
+}
+
+func createArchive(v rel.Value, creator func(io.Writer) (io.Closer, func(string, []byte) (io.Writer, error))) rel.Set {
+	var b bytes.Buffer
+	closer, create := creator(&b)
+	d, ok := rel.AsDict(v.(rel.Set))
+	if !ok {
+		panic(fmt.Errorf("//.archive.zip.zip arg not a dict: %v", v))
+	}
+	if err := writeDictToArchive(d, create, ""); err != nil {
+		panic(err)
+	}
+	if err := closer.Close(); err != nil {
+		panic(err)
+	}
+	return rel.NewBytes(b.Bytes())
+}
+
+func writeDictToArchive(d rel.Dict, w func(string, []byte) (io.Writer, error), parent string) error {
+	for e := d.DictEnumerator(); e.MoveNext(); {
+		k, v := e.Current()
+		name, is := rel.AsString(k.(rel.Set))
+		if !is {
+			return fmt.Errorf("dict key %v not a string", k)
+		}
+		subpath := path.Join(parent, name.String())
+		switch v := v.(type) {
+		case rel.Set:
+			if s, ok := rel.AsString(v); ok {
+				data := []byte(s.String())
+				fw, err := w(subpath, data)
+				if err != nil {
+					return err
+				}
+				if _, err = fw.Write(data); err != nil {
+					return err
+				}
+			} else if d, ok := rel.AsDict(v); ok {
+				if err := writeDictToArchive(d, w, subpath); err != nil {
+					return err
+				}
+			}
+		default:
+			return fmt.Errorf("unsupported entry %q: %v", subpath, v)
+		}
+	}
+	return nil
+}

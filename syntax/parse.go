@@ -54,6 +54,7 @@ expr   -> C? amp="&"* @ C? arrow=(
         > C? get+ C? | C? @ get* C?
         > C? "{" C? rel=(names tuple=("(" v=@:",", ")"):",",?) "}" C?
         | C? "{" C? set=(elt=@:",",?) "}" C?
+        | C? "{" C? dict=((key=@ ":" value=@):",",?) "}" C?
         | C? "[" C? array=(item=@:",",?) "]" C?
         | C? "{:" C? embed=(grammar=@ ":" subgrammar=%%ast) ":}" C?
         | C? op="\\\\" @ C?
@@ -64,7 +65,7 @@ expr   -> C? amp="&"* @ C? arrow=(
                    )
         | C? "(" tuple=(pairs=(name ":" v=@ | ":" vk=(@ "." k=IDENT)):",",?) ")" C?
         | C? "(" @ ")" C?
-        | C? let=("let" C? IDENT C? "=" C? @ %%bind C? @) C?
+        | C? let=("let" C? IDENT C? "=" C? @ %%bind C? "in"? C? @) C?
         | C? xstr C?
         | C? IDENT C?
         | C? STR C?
@@ -104,7 +105,7 @@ func (pc ParseContext) CompileExpr(b wbnf.Branch) rel.Expr {
 	name, c := which(b,
 		"amp", "arrow", "let", "unop", "binop", "rbinop",
 		"if", "call", "count", "touch", "get",
-		"rel", "set", "array", "embed", "op", "fn", "pkg", "tuple",
+		"rel", "set", "dict", "array", "embed", "op", "fn", "pkg", "tuple",
 		"xstr", "IDENT", "STR", "NUM",
 		"expr",
 	)
@@ -242,6 +243,26 @@ func (pc ParseContext) CompileExpr(b wbnf.Branch) rel.Expr {
 			return rel.NewSetExpr(pc.parseExprs(elts.(wbnf.Many)...)...)
 		}
 		return rel.NewSetExpr()
+	case "dict":
+		// C? "{" C? dict=((key=@ ":" value=@):",",?) "}" C?
+		keys := c.(wbnf.One).Node.(wbnf.Branch)["key"]
+		values := c.(wbnf.One).Node.(wbnf.Branch)["value"]
+		if (keys != nil) || (values != nil) {
+			if (keys != nil) && (values != nil) {
+				keyExprs := pc.parseExprs(keys.(wbnf.Many)...)
+				valueExprs := pc.parseExprs(values.(wbnf.Many)...)
+				if len(keyExprs) == len(valueExprs) {
+					pairs := make([][2]rel.Expr, 0, len(keyExprs))
+					for i, keyExpr := range keyExprs {
+						valueExpr := valueExprs[i]
+						pairs = append(pairs, [2]rel.Expr{keyExpr, valueExpr})
+					}
+					return rel.NewDictExpr(pairs...)
+				}
+			}
+			panic("mismatch between dict keys and values")
+		}
+		return rel.NewDict()
 	case "array":
 		if items := c.(wbnf.One).Node.(wbnf.Branch)["item"]; items != nil {
 			return rel.NewArrayExpr(pc.parseExprs(items.(wbnf.Many)...)...)

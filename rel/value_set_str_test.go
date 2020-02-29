@@ -9,7 +9,8 @@ import (
 func TestIsStringTuple(t *testing.T) {
 	s := "hello"
 	for e := NewString([]rune(s)).Enumerator(); e.MoveNext(); {
-		index, char, is := isStringTuple(e.Current())
+		match := stringTupleMatcher()
+		index, char, is := match(e.Current())
 		if assert.True(t, is) {
 			assert.Equal(t, rune(s[index]), char)
 		}

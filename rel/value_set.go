@@ -218,7 +218,7 @@ func (s *genericSet) Negate() Value {
 
 // Export exports a genericSet as an array of exported Values.
 func (s *genericSet) Export() interface{} {
-	if s, is := s.AsString(); is {
+	if s, is := AsString(s); is {
 		return s.Export()
 	}
 	result := make([]interface{}, 0, s.set.Count())
@@ -330,47 +330,10 @@ func (s *genericSet) Any() Value {
 	panic("Any(): empty set")
 }
 
-// TODO: handle sparse string and overlapping strings
-func (s *genericSet) AsString() (String, bool) {
-	if i := s.set.Range(); i.Next() {
-		tupleOffset, str, isStrTuple := isStringTuple(i.Value().(Value))
-		if !isStrTuple {
-			return String{}, false
-		}
-
-		middleIndex := s.set.Count()
-		strs := make([]rune, 2*middleIndex)
-		strs[middleIndex] = str
-		anchorOffset, minOffset := tupleOffset, tupleOffset
-		lowestIndex, highestIndex := middleIndex, middleIndex
-		for i.Next() {
-			if tupleOffset, str, isStrTuple = isStringTuple(i.Value().(Value)); !isStrTuple {
-				return String{}, false
-			}
-			if tupleOffset < minOffset {
-				minOffset = tupleOffset
-			}
-			sliceIndex := middleIndex - (anchorOffset - tupleOffset)
-			strs[sliceIndex] = str
-
-			if sliceIndex < lowestIndex {
-				lowestIndex = sliceIndex
-			}
-
-			if sliceIndex > highestIndex {
-				highestIndex = sliceIndex
-			}
-		}
-
-		return NewOffsetString(strs[lowestIndex:highestIndex+1], minOffset).(String), true
-	}
-	return String{}, true
-}
-
-func (s *genericSet) ArrayEnumerator() ValueEnumerator {
+func (s *genericSet) ArrayEnumerator() (ValueEnumerator, bool) {
 	return &arrayEnumerator{s.set.OrderedRange(func(a, b interface{}) bool {
 		return a.(Tuple).MustGet("@").(Number) < b.(Tuple).MustGet("@").(Number)
-	})}
+	})}, true
 }
 
 // genericSetEnumerator represents an enumerator over a genericSet.

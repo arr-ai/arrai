@@ -26,7 +26,7 @@ func formatValue(format string, value rel.Value) string {
 var (
 	libStrConcat = createNestedFunc("concat", 1, func(args ...rel.Value) rel.Value {
 		var sb strings.Builder
-		for i := args[0].(rel.Set).ArrayEnumerator(); i.MoveNext(); {
+		for i, ok := args[0].(rel.Set).ArrayEnumerator(); ok && i.MoveNext(); {
 			sb.WriteString(mustAsString(i.Current()))
 		}
 		return rel.NewString([]rune(sb.String()))
@@ -43,7 +43,8 @@ var (
 		var s string
 		if delim := mustAsString(args[2]); strings.HasPrefix(delim, ":") {
 			var sb strings.Builder
-			for n, i := 0, args[1].(rel.Set).ArrayEnumerator(); i.MoveNext(); n++ {
+			n := 0
+			for i, ok := args[1].(rel.Set).ArrayEnumerator(); ok && i.MoveNext(); n++ {
 				if n > 0 {
 					sb.WriteString(delim[1:])
 				}
@@ -102,7 +103,7 @@ func stdStr() rel.Attr {
 		createNestedFuncAttr("join", 2, func(args ...rel.Value) rel.Value {
 			strs := args[0].(rel.Set)
 			toJoin := make([]string, 0, strs.Count())
-			for i := strs.(rel.Set).ArrayEnumerator(); i.MoveNext(); {
+			for i, ok := strs.(rel.Set).ArrayEnumerator(); ok && i.MoveNext(); {
 				toJoin = append(toJoin, mustAsString(i.Current()))
 			}
 			return rel.NewString([]rune(strings.Join(toJoin, mustAsString(args[1]))))
@@ -113,7 +114,7 @@ func stdStr() rel.Attr {
 }
 
 func mustAsString(v rel.Value) string {
-	if s, ok := v.(rel.Set).AsString(); ok {
+	if s, ok := rel.AsString(v.(rel.Set)); ok {
 		return s.String()
 	}
 	panic("can not be a string")

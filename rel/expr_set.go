@@ -44,27 +44,54 @@ func NewRelationExpr(names []string, tuples ...[]Expr) (Expr, error) {
 
 // NewArrayExpr returns a new TupleExpr.
 func NewArrayExpr(elements ...Expr) Expr {
-	values := make([]Value, len(elements))
-	for i, expr := range elements {
-		value, ok := expr.(Value)
-		if !ok {
-			tuples := make([]Expr, len(elements))
-			for i, elt := range elements {
-				posAttr, err := NewAttrExpr("@", NewNumber(float64(i)))
-				if err != nil {
-					panic(err)
-				}
-				valAttr, err := NewAttrExpr(ArrayItemAttr, elt)
-				if err != nil {
-					panic(err)
-				}
-				tuples[i] = NewTupleExpr(posAttr, valAttr)
-			}
-			return NewSetExpr(tuples...)
+	values := make([]Value, 0, len(elements))
+	for _, expr := range elements {
+		if value, ok := expr.(Value); ok {
+			values = append(values, value)
+			continue
 		}
-		values[i] = value
+		tuples := make([]Expr, 0, len(elements))
+		for i, elt := range elements {
+			posAttr, err := NewAttrExpr("@", NewNumber(float64(i)))
+			if err != nil {
+				return nil
+			}
+			valAttr, err := NewAttrExpr(ArrayItemAttr, elt)
+			if err != nil {
+				return nil
+			}
+			tuples = append(tuples, NewTupleExpr(posAttr, valAttr))
+		}
+		return NewSetExpr(tuples...)
 	}
 	return NewArray(values...)
+}
+
+// NewDictExpr returns a new MapExpr from pairs.
+func NewDictExpr(keyvals ...[2]Expr) Expr {
+	values := make([]Value, 0, len(keyvals))
+	for _, kv := range keyvals {
+		if key, ok := kv[0].(Value); ok {
+			if value, ok := kv[1].(Value); ok {
+				values = append(values, NewTuple(NewAttr("@", key), NewAttr(DictValueAttr, value)))
+				continue
+			}
+		}
+		tuples := make([]Expr, 0, len(keyvals))
+		for _, elt := range keyvals {
+			posAttr, err := NewAttrExpr("@", elt[0])
+			if err != nil {
+				return nil
+			}
+			valAttr, err := NewAttrExpr(DictValueAttr, elt[1])
+			if err != nil {
+				return nil
+			}
+			tuples = append(tuples, NewTupleExpr(posAttr, valAttr))
+		}
+		return NewSetExpr(tuples...)
+	}
+	return NewSet(values...)
 }
 
 // Elements returns a Set's elements.

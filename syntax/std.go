@@ -48,13 +48,15 @@ func stdScope() rel.Scope {
 					createNestedFuncAttr("printf", 2, func(args ...rel.Value) rel.Value {
 						format := args[0].(rel.String).String()
 						strs := make([]interface{}, 0, args[1].(rel.Set).Count())
-						for i := args[1].(rel.Set).ArrayEnumerator(); i.MoveNext(); {
+						for i, ok := args[1].(rel.Set).ArrayEnumerator(); ok && i.MoveNext(); {
 							strs = append(strs, i.Current())
 						}
 						log.Printf(format, strs...)
 						return args[1]
 					}),
 				)),
+				stdArchive(),
+				stdReflect(),
 				stdRel(),
 				stdStr(),
 			)).

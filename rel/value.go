@@ -95,8 +95,7 @@ type Set interface {
 	Where(func(Value) bool) Set
 	Call(arg Value) Value
 
-	AsString() (String, bool)
-	ArrayEnumerator() ValueEnumerator
+	ArrayEnumerator() (ValueEnumerator, bool)
 }
 
 // NewValue constructs a new value from a Go value.
