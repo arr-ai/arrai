@@ -45,7 +45,7 @@ func stdScope() rel.Scope {
 						log.Print(value)
 						return value
 					}),
-					createFunc("printf", 2, func(args ...rel.Value) rel.Value {
+					createNestedFuncAttr("printf", 2, func(args ...rel.Value) rel.Value {
 						format := args[0].(rel.String).String()
 						strs := make([]interface{}, 0, args[1].(rel.Set).Count())
 						for i := args[1].(rel.Set).ArrayEnumerator(); i.MoveNext(); {
@@ -55,7 +55,8 @@ func stdScope() rel.Scope {
 						return args[1]
 					}),
 				)),
-				loadStrLib(),
+				stdRel(),
+				stdStr(),
 			)).
 			With("//./", rel.NewNativeFunction("//./", importLocalFile)).
 			With("//", rel.NewNativeFunction("//", importURL))
@@ -73,7 +74,7 @@ func createNestedFunc(name string, nArgs int, f func(...rel.Value) rel.Value, ar
 	})
 }
 
-func createFunc(name string, nArgs int, f func(...rel.Value) rel.Value, args ...rel.Value) rel.Attr {
+func createNestedFuncAttr(name string, nArgs int, f func(...rel.Value) rel.Value) rel.Attr {
 	return rel.NewAttr(name, createNestedFunc(name, nArgs, f))
 }
 
