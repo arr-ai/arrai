@@ -44,7 +44,7 @@ expr   -> C? amp="&"* @ C? arrow=(
         > C? @:binop=/{!?(?:<:|<>?=?|>=?|=)} C?
         > C? @ if=("if" t=expr ("else" f=expr)?)* C?
         > C? @:binop=/{[+|]|-%?|\(\+\)} C?
-        > C? @:binop=/{&|[-<][-&][->]} C?
+        > C? @:binop=/{&|--|[-<][-&][->]} C?
         > C? @:binop=/{//|[*/%]} C?
         > C? @:rbinop="^" C?
         > C? unop=/{:>|=>|>>|[-+!*^]}* @ C?
@@ -577,7 +577,8 @@ var binops = map[string]binOpFunc{
 	">=":      rel.MakeEqExpr(">=", func(a, b rel.Value) bool { return !a.Less(b) }),
 	"+":       rel.NewAddExpr,
 	"-":       rel.NewSubExpr,
-	"|":       unimplementedBinOpFunc, // rel.NewUnionExpr,
+	"--":      rel.NewDiffExpr,
+	"|":       rel.NewUnionExpr,
 	"(+)":     unimplementedBinOpFunc, // rel.NewXorExpr,
 	"<&>":     rel.NewJoinExpr,
 	"*":       rel.NewMulExpr,

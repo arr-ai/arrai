@@ -11,12 +11,32 @@ func Intersect(a, b Set) Set {
 	return a.Where(func(v Value) bool { return b.Has(v) })
 }
 
+func NIntersect(a Set, bs ...Set) Set {
+	for _, b := range bs {
+		a = Intersect(a, b)
+	}
+	return a
+}
+
 // Union returns every Values that is in either input Set or both.
 func Union(a, b Set) Set {
+	if ga, ok := a.(*genericSet); ok {
+		if gb, ok := b.(*genericSet); ok {
+			return &genericSet{set: ga.set.Union(gb.set)}
+		}
+	}
 	for e := b.Enumerator(); e.MoveNext(); {
 		a = a.With(e.Current())
 	}
 	return a
+}
+
+func NUnion(sets ...Set) Set {
+	result := None
+	for _, s := range sets {
+		result = Union(result, s)
+	}
+	return result
 }
 
 // Difference returns every Value from the first Set that is not in the second.
@@ -48,6 +68,17 @@ func Concatenate(a, b Set) (Set, error) {
 			}
 		}
 		return nil, errors.Errorf("Mismatched elt in set + set: %v", elt)
+	}
+	return a, nil
+}
+
+func NConcatenate(a Set, bs ...Set) (Set, error) {
+	for _, b := range bs {
+		var err error
+		a, err = Concatenate(a, b)
+		if err != nil {
+			return nil, err
+		}
 	}
 	return a, nil
 }
