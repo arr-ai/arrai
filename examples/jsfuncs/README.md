@@ -1,6 +1,6 @@
 # jsfuncs example
 
 ```bash
-cd examples/jsfuncs
-go run ../../cmd/arrai e "//./jsfuncs"
+go install ./cmd/arrai # Or use `go run ./cmd/arrai` below.
+arrai e "//./examples/jsfuncs/jsfuncs"
 ```
