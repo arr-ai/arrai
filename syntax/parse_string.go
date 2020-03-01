@@ -12,6 +12,16 @@ func parseArraiStringFragment(s string, validEscapes string, indent string) stri
 	}
 
 	var sb strings.Builder
+
+	number := func(i, size, base int) int {
+		n, err := strconv.ParseUint(s[i:i+size], base, size*base/4)
+		if err != nil {
+			panic(err)
+		}
+		sb.WriteRune(rune(n))
+		return i + size
+	}
+
 	for i := 0; i < len(s); i++ {
 		c := s[i]
 		switch c {
@@ -19,33 +29,13 @@ func parseArraiStringFragment(s string, validEscapes string, indent string) stri
 			i++
 			switch s[i] {
 			case 'x':
-				n, err := strconv.ParseInt(s[i:i+2], 16, 8)
-				if err != nil {
-					panic(err)
-				}
-				sb.WriteByte(uint8(n))
-				i++
+				i = number(i+1, 2, 16)
 			case 'u':
-				n, err := strconv.ParseInt(s[i:i+4], 16, 16)
-				if err != nil {
-					panic(err)
-				}
-				sb.WriteByte(uint8(n))
-				i += 2
+				i = number(i+1, 4, 16)
 			case 'U':
-				n, err := strconv.ParseInt(s[i:i+8], 16, 32)
-				if err != nil {
-					panic(err)
-				}
-				sb.WriteByte(uint8(n))
-				i += 4
+				i = number(i+1, 8, 16)
 			case '0', '1', '2', '3', '4', '5', '6', '7':
-				n, err := strconv.ParseInt(s[i:i+3], 8, 8)
-				if err != nil {
-					panic(err)
-				}
-				sb.WriteByte(uint8(n))
-				i++
+				i = number(i, 3, 8)
 			case 'a':
 				sb.WriteByte('\a')
 			case 'b':
