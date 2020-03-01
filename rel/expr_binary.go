@@ -179,16 +179,53 @@ func NewWhereExpr(a, pred Expr) Expr {
 		})
 }
 
-// NewOrderExpr evaluates a order key, given a set lhs, returning an array.
-func NewOrderExpr(a, key Expr) Expr {
+// NewOrderByExpr evaluates a orderby key, given a set lhs, returning an array.
+func NewOrderByExpr(a, key Expr) Expr {
 	key = ExprAsFunction(key)
 	return newBinExpr(a, key, "order", "(%s order %s)",
 		func(a, key Value, local Scope) (Value, error) {
 			if x, ok := a.(Set); ok {
 				if k, ok := key.(Closure); ok {
-					values, err := Order(x, func(value Value) (Value, error) {
-						return k.Call(value, local)
-					})
+					values, err := OrderBy(x,
+						func(value Value) (Value, error) {
+							return k.Call(value, local)
+						},
+						func(a, b Value) bool {
+							return a.Less(b)
+						})
+					if err != nil {
+						return nil, err
+					}
+					return NewArray(values...), nil
+				}
+				return nil, errors.Errorf("'order' rhs must be a Fn, not %T", a)
+			}
+			return nil, errors.Errorf("'order' lhs must be a Set, not %T", a)
+		})
+}
+
+// NewOrderExpr evaluates a order less, given a set lhs, returning an array.
+func NewOrderExpr(a, key Expr) Expr {
+	key = ExprAsFunction(key)
+	return newBinExpr(a, key, "order", "(%s order %s)",
+		func(a, less Value, local Scope) (Value, error) {
+			if x, ok := a.(Set); ok {
+				if l, ok := less.(Closure); ok {
+					values, err := OrderBy(x,
+						func(value Value) (Value, error) {
+							return value, nil
+						},
+						func(a, b Value) bool {
+							f, err := l.Call(a, local)
+							if err != nil {
+								panic(err)
+							}
+							result, err := f.(Closure).Call(b, local)
+							if err != nil {
+								panic(err)
+							}
+							return result.Bool()
+						})
 					if err != nil {
 						return nil, err
 					}

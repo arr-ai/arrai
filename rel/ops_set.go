@@ -83,11 +83,10 @@ func NConcatenate(a Set, bs ...Set) (Set, error) {
 	return a, nil
 }
 
-// Order returns a slice with the sets Values sorted by the given key.
-func Order(s Set, key func(v Value) (Value, error)) ([]Value, error) {
-	o := newOrderer(s.Count())
-	i := 0
-	for e := s.Enumerator(); e.MoveNext(); {
+// OrderBy returns a slice with the sets Values sorted by the given key.
+func OrderBy(s Set, key func(v Value) (Value, error), less func(a, b Value) bool) ([]Value, error) {
+	o := newOrderer(s.Count(), less)
+	for i, e := 0, s.Enumerator(); e.MoveNext(); i++ {
 		value := e.Current()
 		o.values[i] = value
 		var err error
@@ -95,7 +94,6 @@ func Order(s Set, key func(v Value) (Value, error)) ([]Value, error) {
 		if err != nil {
 			return nil, err
 		}
-		i++
 	}
 	sort.Sort(o)
 	return o.values, nil
@@ -104,11 +102,12 @@ func Order(s Set, key func(v Value) (Value, error)) ([]Value, error) {
 type orderer struct {
 	values []Value
 	keys   []Value
+	less   func(a, b Value) bool
 }
 
-func newOrderer(n int) *orderer {
+func newOrderer(n int, less func(a, b Value) bool) *orderer {
 	buf := make([]Value, 2*n)
-	return &orderer{buf[:n], buf[n:]}
+	return &orderer{values: buf[:n], keys: buf[n:], less: less}
 }
 
 // Len is the number of elements in the collection.
@@ -119,7 +118,7 @@ func (o *orderer) Len() int {
 // Less reports whether the element with
 // index i should sort before the element with index j.
 func (o *orderer) Less(i, j int) bool {
-	return o.keys[i].Less(o.keys[j])
+	return o.less(o.keys[i], o.keys[j])
 }
 
 // Swap swaps the elements with indexes i and j.
