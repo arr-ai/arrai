@@ -2,6 +2,7 @@
 
 | Status: **INCOMPLETE DRAFT** |
 |-|
+| Features marked **(⛔ NYI)** are not yet implemented. |
 
 Arr.ai is many things, but it is first and foremost a data representation and
 transformation language. This tutorial-style introduction will guide you through
@@ -37,11 +38,13 @@ worth covering upfront to aid comprehension below.
 4. **Offset collections:** In the string `"hello"`, the first character, `h`, is
    at position zero. In the alternate form `12▸"hello"`, the `h` is at position
    12 and the remaining characters occupy positions 13&ndash;16. This is known
-   as an offset-string or a string with holes. While this syntax is allowed in
-   arr.ai, `▸` isn't available on most keyboards, so the syntax `"12\>hello"`
-   represents the same offset-string. When printing such strings, arr.ai will
-   normally use the more compact representation with `▸`. This form may also be
-   used to represent offset arrays: `[12\> 1, 2, 3]`.
+   as an offset-string or a string with holes.
+
+   **(⛔ NYI)** While this syntax is allowed in arr.ai, `▸` isn't
+   available on most keyboards, so the syntax `"12\>hello"` represents the same
+   offset-string. When printing such strings, arr.ai will normally use the more
+   compact representation with `▸`. This form may also be used to represent
+   offset arrays: `[12\> 1, 2, 3]`.
 
 ## Data
 
@@ -51,8 +54,8 @@ We start with data, because:
 > structures and their relationships.* &mdash; [Linus
 > Torvalds](https://www.goodreads.com/quotes/1188397-bad-programmers-worry-about-the-code-good-programmers-worry-about)
 
-Arr.ai's data model is remarkably simple, having only three kinds of value, all
-of them immutable:
+Arr.ai's data model is remarkably simple, having only three kinds of values, all
+immutable:
 
 1. **Numbers** are 64-bit binary floats.
 2. **Tuples** associate names with values.
@@ -65,17 +68,20 @@ streams. Arr.ai has numbers, tuples and sets. There is nothing else.
 But let's also be clear that this is far less restrictive than it might at first
 seem. You can in fact represent:
 
-* Arrays: `[]`, `[2, 4, 8]`
-* Strings: `""`, `"hello"`
-* Booleans: `true`, `false`
-* Maps: `{}`, `{"a": 42}`, `{1: 34, 2: 45, 3: 56}`
-* Functions:
-  * Functions are unary: `\x 1 / x`
-  * Binary functions don't exist, but `\x \y //.math.sqrt(x^2 + y^2)` is a unary
-    function that takes a single parameter, `x`, and returns a unary function.
-    The returned function takes a single parameter, `y`, and returns the
-    hypotenuse of a right triangle with sides *x* and *y*.
-* Packages: `//.math.sin(1)`, `//./myutil/work(42)`, `//github.com/foo/bar`
+1. Arrays: `[]`, `[2, 4, 8]`
+2. Strings: `""`, `"hello"`
+3. Booleans: `true`, `false`
+4. Maps: `{}`, `{"a": 42}`, `{1: 34, 2: 45, 3: 56}`
+5. Functions:
+   1. Functions are unary: `\x 1 / x`
+   2. Binary functions don't exist, but `\x \y //.math.sqrt(x^2 + y^2)` is a
+      unary function that takes a single parameter, `x`, and returns a unary
+      function. The returned function takes a single parameter, `y`, and returns
+      the hypotenuse of a right triangle with sides *x* and *y*.
+6. Packages:
+   1. `//.math.sin(1)`
+   2. `//./myutil/work(42)`
+   3. * **(⛔ NYI)** `//github.com/foo/bar`
 
 All of the above forms are syntactic sugar for specific combinations of numbers,
 tuples and sets. For example, the string `"hello"` is a shorthand for the
@@ -140,12 +146,13 @@ The core syntax for literals can expresses numbers, tuples and sets.
 1. Numbers: `0`, `1`, `-2`, `3.45e-6`, `7+8.9i`,
    `9969216677189303386214405760200`
 
-   Integer components may be written in the following forms:
+   The parts may be written in the following forms:
 
    * Decimal: `123`
-   * Hexadecimal: `0x7b`
-   * Octal: `0o173`
-   * Binary: `0b1111011`
+   * **(⛔ NYI)** Use spaces to break up long numbers: `12 345 678`
+   * **(⛔ NYI)** Hexadecimal: `0x7b`
+   * **(⛔ NYI)** Octal: `0o173`
+   * **(⛔ NYI)** Binary: `0b 111 1011`
 
 2. Tuples: `()`, `(a:1)`, `('t.m.o.l.': 42)`, `(x: (a: (), b: 2), y: -3i)`
 
@@ -185,17 +192,98 @@ These are not the only values that may be used in logical operations. All values
 can be tested for "trueness". Most values are considered "true". The only
 exceptions are `0`, `()` and `{}`.
 
+##### Relation syntax
+
+A relation is a set of tuples with the same names. For example:
+
+```text
+{
+   (acctid: 1, descr: "ACME Corp", balance: 123456789.01),
+   (acctid: 2, descr: "Francis Jones", balance: 4567.23),
+}
+```
+
+Arr.ai allows a shorthand form to represent relations:
+
+```text
+{|acctid, descr          , balance     |
+ (     1, "ACME Corp"    , 123456789.01),
+ (     2, "Francis Jones", 4567.23     ),
+}
+```
+
 ##### String syntax
 
-TODO
+Strings may be expressed in arr.ai. They are syntactic sugar for relations of
+the form `{|@, @item| ...}`.
+
+Strings may be expressed in three different forms:
+
+```text
+"abc"
+'abc'
+`abc`
+```
+
+The three forms differ only in their escaping rules.
+
+1. The double- and single-quoted forms have the same set of escapes, roughly
+   following C string syntax, the only difference being that, in `"..."`
+   strings, `"` requires escaping via `\"`.
+2. The same applies for `"` in `"..."` strings.
+3. Backquoted strings support no escaping other than the backquote character,
+   which may be escaped with a double backquote:
+
+   ```text
+   `Let's escape some ``backquotes``!`
+   ```
+
+##### Expression string syntax
+
+Expression strings appear on the surface to be quite similar to regular strings:
+
+```text
+$"abc"
+$'abc'
+$`abc`
+```
+
+They are, however, a very powerful text templating mechanism that allows
+arbitrarily complex nestings of strings and logic. For example, the following
+expression:
+
+```text
+let lib = (
+   functions: [
+      (name: "square", params: ["x"], expr: "x ^ 2"),
+      (name: "sum", params: ["x", "y"], expr: "x + y"),
+   ]
+) in
+$`:{lib.functions >> $`
+   function :{.name}:(:{.params::, }:) {
+      return :{.expr}:
+   }
+`::\i:\n}:`
+```
+
+Outputs the following text:
+
+```text
+function square(x) {
+   return x ^ 2
+}
+
+function sum(x, y) {
+   return x + y
+}
+```
+
+Expression strings are fully described in [Expression strings](expr-str.md).
 
 ##### Array syntax
 
-TODO
-
-##### Relation syntax
-
-TODO
+Arrays may be expressed using the conventional `[...]` notation, e.g.:
+`[1, 2, [3, 4]]`. They represent relations of the form `{|@, @item| ...}`.
 
 ### Logic expressions
 
@@ -223,8 +311,8 @@ Arr.ai supports operations on numbers.
 ### Structure access expressions
 
 1. Tuple attribute: `tuple.attr`
-2. Dot variable attribute: `.attr = (.).attr`
-3. Function element:
+2. Dot variable attribute: `.attr` (shorthand for `(.).attr`)
+3. Function call:
    1. `[2, 4, 6, 8](2) = 6`, `"hello"(1) = 101`
    2. `{"red": 0.3, "green": 0.5, "blue", 0.2}("green") = 0.5`
 4. Function slice:
@@ -233,35 +321,38 @@ Arr.ai supports operations on numbers.
 
 ### Binding expressions
 
-The following operators bind `name` to something related to `expr` (details
-below) and evaluates expression `transform` with `name` in scope. The effect is
-to transform `expr`.
+The following operators bind `name` to something related to `expr1` (details
+below) and evaluates expression `expr2` with `name` in scope.
 
-1. **`let name = expr transform`** or **`expr -> \name transform`**: Transforms
-   `expr`.
-2. **`expr => \name transform`**: Transforms each element of set `expr` and
+1. **`let name = expr1 expr2 in`** or **`expr1 -> \name expr2 in`**:
+   Evaluates `expr2` with `expr1` in scope as `name`.
+2. **`expr1 => \name expr2`**: Transforms each element of set `expr1` and
    evaluates to the set of results.
-3. **`expr >> \name transform`**: Transforms each item of keyed-collection
-   `expr` and evaluates to the key-collection of results, with each result being
+3. **`expr1 >> \name expr2`**: Transforms each item of keyed-collection
+   `expr1` and evaluates to the key-collection of results, with each result being
    associated with the same key that the original item was. This works for any
    binary relation with an `@` attribute, which includes strings, arrays,
    functions and other structures.
-4. **`expr :> \name transform`**: Binds `name` to each value in tuple `expr`,
-   evaluates `transform` and reassociates each result with the corresponding
+4. **`expr1 :> \name expr2`**: Binds `name` to each value in tuple `expr1`,
+   evaluates `expr2` and reassociates each result with the corresponding
    name, producing a new tuple.
 
-If `expr` is omitted, `.` is assumed.
+If `expr1` is omitted, `.` is assumed.
 
 If `\name` is omitted, `\.` is assumed.
+
+<!-- TODO: Examples -->
 
 ### Relations
 
 Relations are sets of tuples with a common set of names across all tuples. They
 are analogous to SQL tables. Numerous operators exist that work on these
-structures:
+structures.
 
-1. **Join:** TODO: describe
-2. TODO: complete
+<!-- TODO
+1. **Join:**
+2.
+-->
 
 ### Functions
 
@@ -330,7 +421,7 @@ External libraries may be accessed via package references.
    arrai file's parent directory (current working directory for expressions such
    as the `arrai eval` source that aren't associated with a file).
 3. **`///path`** provides access to other arrai files relative to the root of
-   the current module (TODO: explain modules).
+   the current module. <!-- TODO: explain modules -->
 4. **`//hostname/path`** provides access to arrai files in remote packages,
    e.g.: `//github.com/foo/bar`.
 
@@ -371,10 +462,10 @@ of known attributes, which should be expressed as tuples:
 }
 ```
 
-## Macros
+## Macros **(⛔ NYI)**
 
-Arr.ai has a macro system. The following example expresses a URL as a strongly
-typed value:
+Arr.ai has a macro system. The following example expresses a
+URL as a strongly typed value:
 
 ```bash
 $ arrai e '//.web.url{https://me@foo.com/bar?x=42}'
