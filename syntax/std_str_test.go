@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestSub(t *testing.T) {
+func TestStrSub(t *testing.T) {
 	t.Parallel()
 	AssertCodesEvalToSameValue(t,
 		`"this is a test"`,
@@ -20,7 +20,7 @@ func TestSub(t *testing.T) {
 	assertExprPanics(t, `//.str.sub("hello there", "test", 1)`)
 }
 
-func TestSplit(t *testing.T) {
+func TestStrSplit(t *testing.T) {
 	t.Parallel()
 	AssertCodesEvalToSameValue(t,
 		`["t", "h", "i", "s", " ", "i", "s", " ", "a", " ", "t", "e", "s", "t"]`,
@@ -31,7 +31,7 @@ func TestSplit(t *testing.T) {
 	assertExprPanics(t, `//.str.split("this is a test", 1)`)
 }
 
-func TestLower(t *testing.T) {
+func TestStrLower(t *testing.T) {
 	t.Parallel()
 	AssertCodesEvalToSameValue(t, `""              `, `//.str.lower("")              `)
 	AssertCodesEvalToSameValue(t, `"this is a test"`, `//.str.lower("THIS IS A TEST")`)
@@ -40,7 +40,7 @@ func TestLower(t *testing.T) {
 	assertExprPanics(t, `//.str.lower(123)`)
 }
 
-func TestUpper(t *testing.T) {
+func TestStrUpper(t *testing.T) {
 	t.Parallel()
 	AssertCodesEvalToSameValue(t, `""              `, `//.str.upper("")              `)
 	AssertCodesEvalToSameValue(t, `"THIS IS A TEST"`, `//.str.upper("THIS IS A TEST")`)
@@ -49,7 +49,7 @@ func TestUpper(t *testing.T) {
 	assertExprPanics(t, `//.str.upper(123)`)
 }
 
-func TestTitle(t *testing.T) {
+func TestStrTitle(t *testing.T) {
 	t.Parallel()
 	AssertCodesEvalToSameValue(t, `""              `, `//.str.title("")              `)
 	AssertCodesEvalToSameValue(t, `"THIS IS A TEST"`, `//.str.title("THIS IS A TEST")`)
@@ -58,7 +58,7 @@ func TestTitle(t *testing.T) {
 	assertExprPanics(t, `//.str.title(123)`)
 }
 
-func TestContains(t *testing.T) {
+func TestStrContains(t *testing.T) {
 	t.Parallel()
 	AssertCodesEvalToSameValue(t, `true `, `//.str.contains("this is a test", "")             `)
 	AssertCodesEvalToSameValue(t, `true `, `//.str.contains("this is a test", "is a test")    `)
@@ -66,7 +66,7 @@ func TestContains(t *testing.T) {
 	assertExprPanics(t, `//.str.contains(123, 124)`)
 }
 
-func TestConcat(t *testing.T) {
+func TestStrConcat(t *testing.T) {
 	t.Parallel()
 	AssertCodesEvalToSameValue(t, `""              `, `//.str.concat([])                            `)
 	AssertCodesEvalToSameValue(t, `""              `, `//.str.concat(["", "", "", ""])              `)
@@ -76,7 +76,7 @@ func TestConcat(t *testing.T) {
 	assertExprPanics(t, `//.str.concat("this")`)
 }
 
-func TestJoin(t *testing.T) {
+func TestStrJoin(t *testing.T) {
 	t.Parallel()
 	AssertCodesEvalToSameValue(t, `""                `, `//.str.join([], ",")                         `)
 	AssertCodesEvalToSameValue(t, `",,"              `, `//.str.join(["", "", ""], ",")               `)

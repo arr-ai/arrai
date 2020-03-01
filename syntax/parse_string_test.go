@@ -15,6 +15,12 @@ func TestXStringSimple(t *testing.T) {
 	AssertCodesEvalToSameValue(t, `"a42k3.142z"     `, `$"a:{6*7}:k:{//.math.pi:.3f}:z"`)
 }
 
+func TestXStringBackquote(t *testing.T) {
+	t.Parallel()
+	AssertCodesEvalToSameValue(t, `""      `, "$``")
+	AssertCodesEvalToSameValue(t, `"a\\n42"`, "$`a\\n:{6*7}:`")
+}
+
 func TestXStringStrings(t *testing.T) {
 	t.Parallel()
 	AssertCodesEvalToSameValue(t, `"hello"`, `$":{'hello'}:"`)

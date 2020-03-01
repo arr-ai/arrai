@@ -7,6 +7,10 @@ import (
 )
 
 func parseArraiStringFragment(s string, validEscapes string, indent string) string {
+	if strings.HasPrefix(validEscapes, "`") {
+		return strings.ReplaceAll(s, "``", "`")
+	}
+
 	var sb strings.Builder
 	for i := 0; i < len(s); i++ {
 		c := s[i]
@@ -77,8 +81,5 @@ func parseArraiStringFragment(s string, validEscapes string, indent string) stri
 
 func parseArraiString(s string) string {
 	quote, s := s[:1], s[1:len(s)-1]
-	if quote == "`" {
-		return strings.ReplaceAll(s, "``", "`")
-	}
 	return parseArraiStringFragment(s, quote, "")
 }
