@@ -1,0 +1,35 @@
+//./'grpc-proto'((
+    name: "Foo",
+    attrs: (
+        package: "github.com/foo/foo",
+        patterns: {},
+    ),
+    types: [
+        (
+            key: "Customer",
+            fields: [
+                (key: "customerID", type: "primitive", primitive: "STRING", attrs: (rpcId: 1)),
+                (key: "dob", type: "primitive", primitive: "DATE", attrs: (rpcId: 2)),
+            ],
+        ),
+        (
+            key: "Account",
+            fields: [
+                (key: "accountID", type: "primitive", primitive: "STRING", attrs: (rpcId: 1)),
+                (key: "opened", type: "primitive", primitive: "DATE", attrs: (rpcId: 2)),
+                (key: "balance", type: "primitive", primitive: "DECIMAL", attrs: (rpcId: 3)),
+            ],
+        )
+    ],
+    endpoints: [
+        (
+            name: "GetCustomer",
+            params: [],
+            ret: {
+                |@, @item|
+                ("ok", "sequence of Customer"),
+            }
+        ),
+    ],
+    alias: [],
+))
