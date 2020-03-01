@@ -2,6 +2,7 @@ package rel
 
 import (
 	"github.com/arr-ai/frozen"
+	"github.com/go-errors/errors"
 )
 
 // RelationAttrs returns the set of names for a relation type, or false if the
@@ -227,4 +228,38 @@ func GenericJoin(
 		result = Union(result, join(key, aSet, bSet))
 	}
 	return result
+}
+
+// Concatenate is equivalent to a <&> (b => . + {.@ + a count}). Naturally, this
+// assumes that every element in b is a tuple with at least an '@' attribute,
+// which is numeric.
+//
+// E.g., [1, 2] + [3] = [1, 2, 3]; "hell" + "o" = "hello"
+func Concatenate(a, b Set) (Set, error) {
+	offset := a.Count()
+	for e := b.Enumerator(); e.MoveNext(); {
+		elt := e.Current()
+		if t, ok := elt.(Tuple); ok {
+			if pos, found := t.Get("@"); found {
+				if n, ok := pos.(Number); ok {
+					t = t.With("@", NewNumber(float64(offset)+n.Float64()))
+					a = a.With(t)
+					continue
+				}
+			}
+		}
+		return nil, errors.Errorf("Mismatched elt in set + set: %v", elt)
+	}
+	return a, nil
+}
+
+func NConcatenate(a Set, bs ...Set) (Set, error) {
+	for _, b := range bs {
+		var err error
+		a, err = Concatenate(a, b)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return a, nil
 }

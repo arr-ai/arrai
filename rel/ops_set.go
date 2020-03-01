@@ -3,11 +3,16 @@ package rel
 import (
 	"sort"
 
-	"github.com/go-errors/errors"
+	"github.com/arr-ai/frozen"
 )
 
 // Intersect returns every Value from a that is also in b.
 func Intersect(a, b Set) Set {
+	if ga, ok := a.(*genericSet); ok {
+		if gb, ok := b.(*genericSet); ok {
+			return &genericSet{set: ga.set.Intersection(gb.set)}
+		}
+	}
 	return a.Where(func(v Value) bool { return b.Has(v) })
 }
 
@@ -41,46 +46,22 @@ func NUnion(sets ...Set) Set {
 
 // Difference returns every Value from the first Set that is not in the second.
 func Difference(a, b Set) Set {
+	if ga, ok := a.(*genericSet); ok {
+		if gb, ok := b.(*genericSet); ok {
+			return &genericSet{set: ga.set.Difference(gb.set)}
+		}
+	}
 	return a.Where(func(v Value) bool { return !b.Has(v) })
 }
 
 // SymmetricDifference returns Values in either Set, but not in both.
 func SymmetricDifference(a, b Set) Set {
+	if ga, ok := a.(*genericSet); ok {
+		if gb, ok := b.(*genericSet); ok {
+			return &genericSet{set: ga.set.SymmetricDifference(gb.set)}
+		}
+	}
 	return Union(Difference(a, b), Difference(b, a))
-}
-
-// Concatenate is equivalent to a <&> (b => . + {.@ + a count}). Naturally, this
-// assumes that every element in b is a tuple with at least an '@' attribute,
-// which is numeric.
-//
-// E.g., [1, 2] + [3] = [1, 2, 3]; "hell" + "o" = "hello"
-func Concatenate(a, b Set) (Set, error) {
-	offset := a.Count()
-	for e := b.Enumerator(); e.MoveNext(); {
-		elt := e.Current()
-		if t, ok := elt.(Tuple); ok {
-			if pos, found := t.Get("@"); found {
-				if n, ok := pos.(Number); ok {
-					t = t.With("@", NewNumber(float64(offset)+n.Float64()))
-					a = a.With(t)
-					continue
-				}
-			}
-		}
-		return nil, errors.Errorf("Mismatched elt in set + set: %v", elt)
-	}
-	return a, nil
-}
-
-func NConcatenate(a Set, bs ...Set) (Set, error) {
-	for _, b := range bs {
-		var err error
-		a, err = Concatenate(a, b)
-		if err != nil {
-			return nil, err
-		}
-	}
-	return a, nil
 }
 
 // OrderBy returns a slice with the sets Values sorted by the given key.
@@ -129,6 +110,13 @@ func (o *orderer) Swap(i, j int) {
 
 // PowerSet computes the power set of a set.
 func PowerSet(s Set) Set {
+	if gs, ok := s.(*genericSet); ok {
+		var sb frozen.SetBuilder
+		for i := gs.set.Powerset().Range(); i.Next(); {
+			sb.Add(&genericSet{set: i.Value().(frozen.Set)})
+		}
+		return &genericSet{set: sb.Finish()}
+	}
 	result := NewSet(None)
 	for e := s.Enumerator(); e.MoveNext(); {
 		c := e.Current()
