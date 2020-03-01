@@ -169,7 +169,7 @@ func jsonEscape(value Expr) interface{} {
 		default:
 			panic("Unhandled set flavor")
 		}
-	case *String:
+	case String:
 		return string(x.s)
 	case Expr:
 		panic(fmt.Sprintf("Bare expressions cannot be JSON escaped: %#v", x))

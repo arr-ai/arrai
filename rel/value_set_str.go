@@ -130,7 +130,7 @@ func (s String) Less(v Value) bool {
 		return s.Kind() < v.Kind()
 	}
 
-	return string(s.s) < string(v.(*String).s)
+	return s.String() < v.(String).String()
 }
 
 // Negate returns {(negateTag): s}.

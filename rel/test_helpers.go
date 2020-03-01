@@ -39,7 +39,7 @@ func AssertExprsEvalToSameValue(
 		return false
 	}
 	if !AssertEqualValues(t, expectedValue, value) {
-		t.Logf("\nexpected:%s\nexpr:     %s", expected, expr)
+		t.Logf("\nexpected:%v\nexpr:     %v", expected, expr)
 		return false
 	}
 	return true
