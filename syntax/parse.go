@@ -32,55 +32,55 @@ func unfakeBackquote(s string) string {
 }
 
 var arraiParsers = wbnf.MustCompile(unfakeBackquote(`
-expr   -> C? amp="&"* @ C? arrow=(
+expr   -> C* amp="&"* @ C* arrow=(
               nest |
               unnest |
               ARROW @ |
-              binding="->" C? "\\" C? IDENT C? %%bind C? @ |
-              binding="->" C? %%bind @
-          )* C?
-        > C? @:binop=("with" | "without") C?
-        > C? @:binop="||" C?
-        > C? @:binop="&&" C?
-        > C? @:binop=/{!?(?:<:|<>?=?|>=?|=)} C?
-        > C? @ if=("if" t=expr ("else" f=expr)?)* C?
-        > C? @:binop=/{\+\+|[+|]|-%?} C?
-        > C? @:binop=/{&~|&|~|[-<][-&][->]} C?
-        > C? @:binop=/{//|[*/%]} C?
-        > C? @:rbinop="^" C?
-        > C? unop=/{:>|=>|>>|[-+!*^]}* @ C?
-        > C? @ count="count"? C? touch? C?
-        > C? @ call=("(" arg=expr:",", ")")* C?
-        > C? get+ C? | C? @ get* C?
-        > C? "{" C? rel=(names tuple=("(" v=@:",", ")"):",",?) "}" C?
-        | C? "{" C? set=(elt=@:",",?) "}" C?
-        | C? "{" C? dict=((key=@ ":" value=@):",",?) "}" C?
-        | C? "[" C? array=(item=@:",",?) "]" C?
-        | C? "{:" C? embed=(grammar=@ ":" subgrammar=%%ast) ":}" C?
-        | C? op="\\\\" @ C?
-        | C? fn="\\" IDENT @ C?
-        | C? "//" pkg=( dot="." ("/" local=name)+
+              binding="->" C* "\\" C* IDENT C* %%bind C* @ |
+              binding="->" C* %%bind @
+          )* C*
+        > C* @:binop=("with" | "without") C*
+        > C* @:binop="||" C*
+        > C* @:binop="&&" C*
+        > C* @:binop=/{!?(?:<:|<>?=?|>=?|=)} C*
+        > C* @ if=("if" t=expr ("else" f=expr)?)* C*
+        > C* @:binop=/{\+\+|[+|]|-%?} C*
+        > C* @:binop=/{&~|&|~|[-<][-&][->]} C*
+        > C* @:binop=/{//|[*/%]} C*
+        > C* @:rbinop="^" C*
+        > C* unop=/{:>|=>|>>|[-+!*^]}* @ C*
+        > C* @ count="count"? C* touch? C*
+        > C* @ call=("(" arg=expr:",", ")")* C*
+        > C* get+ C* | C* @ get* C*
+        > C* "{" C* rel=(names tuple=("(" v=@:",", ")"):",",?) "}" C*
+        | C* "{" C* set=(elt=@:",",?) "}" C*
+        | C* "{" C* dict=((key=@ ":" value=@):",",?) "}" C*
+        | C* "[" C* array=(item=@:",",?) "]" C*
+        | C* "{:" C* embed=(grammar=@ ":" subgrammar=%%ast) ":}" C*
+        | C* op="\\\\" @ C*
+        | C* fn="\\" IDENT @ C*
+        | C* "//" pkg=( dot="." ("/" local=name)+
                    | "." std=IDENT?
                    | http=/{https?://}? fqdn=name:"." ("/" path=name)*
                    )
-        | C? "(" tuple=(pairs=(name ":" v=@ | ":" vk=(@ "." k=IDENT)):",",?) ")" C?
-        | C? "(" @ ")" C?
-        | C? let=("let" C? IDENT C? "=" C? @ %%bind C? "in"? C? @) C?
-        | C? xstr C?
-        | C? IDENT C?
-        | C? STR C?
-        | C? NUM C?;
-nest   -> C? "nest" names IDENT C?;
-unnest -> C? "unnest" IDENT C?;
-touch  -> C? ("->*" ("&"? IDENT | STR))+ "(" expr:"," ","? ")" C?;
-get    -> C? dot="." ("&"? IDENT | STR | "*") C?;
-names  -> C? "|" C? IDENT:"," C? "|" C?;
-name   -> C? IDENT C? | C? STR C?;
-xstr   -> C? quote=/{\$"\s*} part=( sexpr | fragment=/{(?: \\. | :[^{"] | [^\\":] )+} )* '"' C?
-        | C? quote=/{\$'\s*} part=( sexpr | fragment=/{(?: \\. | :[^{'] | [^\\':] )+} )* "'" C?
-        | C? quote=/{\$‵\s*} part=( sexpr | fragment=/{(?: ‵‵  | :[^{‵] | [^‵  :] )+} )* "‵" C?;
+        | C* "(" tuple=(pairs=(name ":" v=@ | ":" vk=(@ "." k=IDENT)):",",?) ")" C*
+        | C* "(" @ ")" C*
+        | C* let=("let" C* IDENT C* "=" C* @ %%bind C* "in"? C* @) C*
+        | C* xstr C*
+        | C* IDENT C*
+        | C* STR C*
+        | C* NUM C*;
+nest   -> C* "nest" names IDENT C*;
+unnest -> C* "unnest" IDENT C*;
+touch  -> C* ("->*" ("&"? IDENT | STR))+ "(" expr:"," ","? ")" C*;
+get    -> C* dot="." ("&"? IDENT | STR | "*") C*;
+names  -> C* "|" C* IDENT:"," C* "|" C*;
+name   -> C* IDENT C* | C* STR C*;
+xstr   -> C* quote=/{\$"\s*} part=( sexpr | fragment=/{(?: \\. | :[^{"] | [^\\":] )+} )* '"' C*
+        | C* quote=/{\$'\s*} part=( sexpr | fragment=/{(?: \\. | :[^{'] | [^\\':] )+} )* "'" C*
+        | C* quote=/{\$‵\s*} part=( sexpr | fragment=/{(?: ‵‵  | :[^{‵] | [^‵  :] )+} )* "‵" C*;
 sexpr  -> ":{"
-          C? expr C?
+          C* expr C*
           control=/{ (?: : [-+#*\.\_0-9a-z]* (?: : (?: \\. | [^\\:}] )* ){0,2} )? }
           close=/{\}:\s*};
 
@@ -276,7 +276,7 @@ func (pc ParseContext) CompileExpr(b wbnf.Branch) rel.Expr {
 		}
 		return rel.NewSetExpr()
 	case "dict":
-		// C? "{" C? dict=((key=@ ":" value=@):",",?) "}" C?
+		// C* "{" C* dict=((key=@ ":" value=@):",",?) "}" C*
 		keys := c.(wbnf.One).Node.(wbnf.Branch)["key"]
 		values := c.(wbnf.One).Node.(wbnf.Branch)["value"]
 		if (keys != nil) || (values != nil) {
