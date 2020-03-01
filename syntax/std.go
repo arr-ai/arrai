@@ -2,12 +2,9 @@ package syntax
 
 import (
 	"fmt"
-	"io/ioutil"
 	"log"
 	"math"
-	"net/http"
 	"strconv"
-	"strings"
 	"sync"
 
 	"github.com/arr-ai/arrai/rel"
@@ -15,11 +12,11 @@ import (
 	"github.com/arr-ai/wbnf/wbnf"
 )
 
-var once sync.Once
+var stdScopeOnce sync.Once
 var stdScopeVar rel.Scope
 
 func stdScope() rel.Scope {
-	once.Do(func() {
+	stdScopeOnce.Do(func() {
 		stdScopeVar = rel.EmptyScope.
 			With(".", rel.NewTuple(
 				rel.NewAttr("math", rel.NewTuple(
@@ -59,9 +56,7 @@ func stdScope() rel.Scope {
 				stdReflect(),
 				stdRel(),
 				stdStr(),
-			)).
-			With("//./", rel.NewNativeFunction("//./", importLocalFile)).
-			With("//", rel.NewNativeFunction("//", importURL))
+			))
 	})
 	return stdScopeVar
 }
@@ -81,10 +76,7 @@ func createNestedFuncAttr(name string, nArgs int, f func(...rel.Value) rel.Value
 }
 
 func parseLit(s string) rel.Value {
-	pc := ParseContext{}
-	ast := pc.MustParseString(s)
-	e := pc.CompileExpr(ast)
-	v, err := e.Eval(rel.EmptyScope)
+	v, err := MustCompile(NoPath, s).Eval(rel.EmptyScope)
 	if err != nil {
 		panic(err)
 	}
@@ -111,29 +103,4 @@ func parseGrammar(v rel.Value) rel.Value {
 			return rel.ASTNodeToValue(wbnf.FromParserNode(parsers.Grammar(), node))
 		})
 	})
-}
-
-func importLocalFile(v rel.Value) rel.Value {
-	data, err := ioutil.ReadFile(v.String())
-	if err != nil {
-		panic(err)
-	}
-	return rel.NewString([]rune(string(data)))
-}
-
-func importURL(v rel.Value) rel.Value {
-	url := v.String()
-	if !strings.HasPrefix(url, "http://") {
-		url = "https://" + url
-	}
-	resp, err := http.Get(url) //nolint:gosec
-	if err != nil {
-		panic(err)
-	}
-	defer resp.Body.Close()
-	data, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		panic(err)
-	}
-	return rel.NewString([]rune(string(data)))
 }

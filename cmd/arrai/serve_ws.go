@@ -44,8 +44,7 @@ func (wsfe *websocketFrontend) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		}
 		if msgtype == websocket.TextMessage {
 			s := string(p)
-			var pc syntax.ParseContext
-			ast, err := pc.ParseString(s)
+			expr, err := syntax.Compile(syntax.NoPath, s)
 			if err != nil {
 				log.Errorf("Error parsing request %#v: %s", s, err)
 				if err := conn.WriteJSON(map[string]interface{}{"error": err.Error()}); err != nil {
@@ -53,7 +52,6 @@ func (wsfe *websocketFrontend) ServeHTTP(w http.ResponseWriter, r *http.Request)
 				}
 				continue
 			}
-			expr := pc.CompileExpr(ast)
 
 			cancelObservation()
 			cancelObservation = wsfe.engine.Observe(

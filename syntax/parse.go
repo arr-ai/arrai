@@ -59,9 +59,9 @@ expr   -> C? amp="&"* @ C? arrow=(
         | C? "{:" C? embed=(grammar=@ ":" subgrammar=%%ast) ":}" C?
         | C? op="\\\\" @ C?
         | C? fn="\\" IDENT @ C?
-        | C? "//" pkg=( "." ("/" local=name)+
+        | C? "//" pkg=( dot="." ("/" local=name)+
                    | "." std=IDENT?
-                   | http="http://"? fqdn=name:"." ("/" path=name)*
+                   | http=/{https?://}? fqdn=name:"." ("/" path=name)*
                    )
         | C? "(" tuple=(pairs=(name ":" v=@ | ":" vk=(@ "." k=IDENT)):",",?) ")" C?
         | C? "(" @ ")" C?
@@ -98,6 +98,38 @@ C      -> /{ # .* $ };
 
 type ParseContext struct {
 	SourceDir string
+}
+
+const NoPath = "\000"
+
+func Compile(filepath, source string) (_ rel.Expr, err error) {
+	defer func() {
+		if e := recover(); e != nil {
+			if e, ok := e.(error); ok {
+				err = e
+			} else {
+				err = fmt.Errorf("error compiling %q: %v", filepath, e)
+			}
+		}
+	}()
+	return MustCompile(filepath, source), nil
+}
+
+func MustCompile(filepath, source string) rel.Expr {
+	dirpath := "."
+	if filepath != "" {
+		if filepath == NoPath {
+			dirpath = NoPath
+		} else {
+			dirpath = path.Dir(filepath)
+		}
+	}
+	pc := ParseContext{SourceDir: dirpath}
+	ast, err := pc.Parse(parser.NewScanner(source))
+	if err != nil {
+		panic(err)
+	}
+	return pc.CompileExpr(ast)
 }
 
 func (pc ParseContext) CompileExpr(b wbnf.Branch) rel.Expr {
@@ -293,8 +325,9 @@ func (pc ParseContext) CompileExpr(b wbnf.Branch) rel.Expr {
 				panic(fmt.Errorf("local import %q invalid; no local context", filepath))
 			}
 			return rel.NewCallExpr(
-				NewPackageExpr(rel.NewIdentExpr("//./")),
-				rel.NewString([]rune(path.Join(pc.SourceDir, filepath))))
+				NewPackageExpr(importLocalFile()),
+				rel.NewString([]rune(path.Join(pc.SourceDir, filepath))),
+			)
 		} else if fqdn := pkg["fqdn"]; fqdn != nil {
 			var sb strings.Builder
 			if http := pkg["http"]; http != nil {
@@ -312,7 +345,7 @@ func (pc ParseContext) CompileExpr(b wbnf.Branch) rel.Expr {
 					sb.WriteString(strings.Trim(parseName(part.One("name").(wbnf.Branch)), "'"))
 				}
 			}
-			return rel.NewCallExpr(NewPackageExpr(rel.NewIdentExpr("//")), rel.NewString([]rune(sb.String())))
+			return rel.NewCallExpr(NewPackageExpr(importURL), rel.NewString([]rune(sb.String())))
 		} else {
 			return NewPackageExpr(rel.DotIdent)
 		}

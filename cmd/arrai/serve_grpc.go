@@ -7,7 +7,6 @@ import (
 	"github.com/arr-ai/arrai/rel"
 	"github.com/arr-ai/arrai/syntax"
 	pb "github.com/arr-ai/proto"
-	"github.com/arr-ai/wbnf/parser"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -48,13 +47,11 @@ func (s *arraiServer) Update(stream pb.Arrai_UpdateServer) error {
 			return err
 		}
 		logrus.Infof("req.Expr: %s", req.Expr)
-		pc := syntax.ParseContext{SourceDir: "-"}
-		ast, err := pc.Parse(parser.NewScanner(req.Expr))
+		expr, err := syntax.Compile(syntax.NoPath, req.Expr)
 		if err != nil {
 			logrus.Errorf("Error in arraiServer.Update: %v", err)
 			return err
 		}
-		expr := pc.CompileExpr(ast)
 		logrus.Info("Parsed successfully")
 		err = s.engine.Update(expr)
 		if err != nil {
@@ -68,15 +65,11 @@ func (s *arraiServer) Update(stream pb.Arrai_UpdateServer) error {
 	}
 }
 
-func (s *arraiServer) Observe(
-	req *pb.ObserveReq, stream pb.Arrai_ObserveServer,
-) error {
-	var pc syntax.ParseContext
-	ast, err := pc.Parse(parser.NewScanner(req.Expr))
+func (s *arraiServer) Observe(req *pb.ObserveReq, stream pb.Arrai_ObserveServer) error {
+	expr, err := syntax.Compile(syntax.NoPath, req.Expr)
 	if err != nil {
 		return err
 	}
-	expr := pc.CompileExpr(ast)
 	retch := make(chan error)
 
 	send := func(resp *pb.ObserveResp) error {
