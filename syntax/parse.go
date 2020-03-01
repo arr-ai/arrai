@@ -84,7 +84,7 @@ sexpr  -> ":{"
           control=/{ (?: : [-+#*\.\_0-9a-z]* (?: : (?: \\. | [^\\:}] )* ){0,2} )? }
           close=/{\}:\s*};
 
-ARROW  -> /{:>|=>|>>|order|where|sum|max|mean|median|min};
+ARROW  -> /{:>|=>|>>|orderby|where|sum|max|mean|median|min};
 IDENT  -> /{ \. | [$@A-Za-z_][0-9$@A-Za-z_]* };
 STR    -> /{ " (?: \\. | [^\\"] )* "
            | ' (?: \\. | [^\\'] )* '
@@ -649,7 +649,7 @@ var binops = map[string]binOpFunc{
 	"=>":      rel.NewMapExpr,
 	">>":      rel.NewSequenceMapExpr,
 	":>":      rel.NewTupleMapExpr,
-	"order":   rel.NewOrderExpr,
+	"orderby": rel.NewOrderExpr,
 	"where":   rel.NewWhereExpr,
 	"sum":     rel.NewSumExpr,
 	"max":     rel.NewMaxExpr,

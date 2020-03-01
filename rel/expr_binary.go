@@ -185,7 +185,7 @@ func NewOrderExpr(a, key Expr) Expr {
 	return newBinExpr(a, key, "order", "(%s order %s)",
 		func(a, key Value, local Scope) (Value, error) {
 			if x, ok := a.(Set); ok {
-				if k, ok := key.(*Function); ok {
+				if k, ok := key.(Closure); ok {
 					values, err := Order(x, func(value Value) (Value, error) {
 						return k.Call(value, local)
 					})
@@ -194,9 +194,9 @@ func NewOrderExpr(a, key Expr) Expr {
 					}
 					return NewArray(values...), nil
 				}
-				return nil, errors.Errorf("'where' rhs must be a Fn, not %T", a)
+				return nil, errors.Errorf("'order' rhs must be a Fn, not %T", a)
 			}
-			return nil, errors.Errorf("'where' lhs must be a Set, not %T", a)
+			return nil, errors.Errorf("'order' lhs must be a Set, not %T", a)
 		})
 }
 
