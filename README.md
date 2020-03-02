@@ -19,6 +19,9 @@ arrai -h
 arrai eval '41 + 1'
 ```
 
+See the [Introduction to Arr.ai](docs/intro.md) to learn more about the arr.ai
+language.
+
 <!-- TODO: Uncomment once this works again.
 ### Transform a stream of values
 
