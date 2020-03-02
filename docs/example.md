@@ -17,7 +17,7 @@ $ arrai eval '"123456789" count'
 ### Evaluate a collection of values
 
 ```bash
-$ arrai eval '[1,2,3,4] @> .^2'
+$ arrai eval '[1,2,3,4] >> .^2'
 [1,4,9,16]
 ```
 
@@ -50,6 +50,7 @@ $ arrai eval '{(a:1, b:2), (a:2, b:3), (a:2, b:4)} where .a!=2'
 {(a:1, b:2)}
 ```
 
+<!-- TODO: Uncomment once this works again.
 ### Apply a transform to inbound data
 
 ```bash
@@ -62,6 +63,7 @@ Use `ax` as shorthand for `arrai transform`:
 $ ln -s arrai "$GOPATH/bin/ax"
 $ echo {0..10} | ax '2^.'
 ```
+-->
 
 ### Transform json and filter value from it
 
@@ -129,5 +131,3 @@ $ arrai eval '{ |a,b| (1,2), (1,3) } <&> { |a,c| (1,2), (1,3) }'
 $ arrai eval '{ |a,b,c| (1,2,2), (1,2,3) } <&> { |b,c,d| (2,3,4), (1,3,4) }'
 {(a: 1, b: 2, c: 3, d: 4)}
 ```
-
-Join matches each relation by the common attributes (matched tables by common column names).

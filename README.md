@@ -19,6 +19,7 @@ arrai -h
 arrai eval '41 + 1'
 ```
 
+<!-- TODO: Uncomment once this works again.
 ### Transform a stream of values
 
 ```bash
@@ -31,6 +32,7 @@ Use `ax` as shorthand for `arrai transform`:
 ln -s arrai "$GOPATH/bin/ax"
 echo {0..10} | ax '2^.'
 ```
+-->
 
 ### Start a server
 
@@ -50,4 +52,7 @@ arrai observe localhost '$'
 arrai update localhost '{a: {|1, 2, 3|}, b: "hello"}'
 ```
 
-#### [Arrai Examples](docs/example.md)
+#### Arrai Examples
+
+1. [Snippets](docs/example.md)
+2. [More complete examples](examples)
