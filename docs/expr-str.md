@@ -1,6 +1,6 @@
 # Expression strings
 
-Expressions turn arr.ai into a sophisticated text templating engine.
+Expressions strings turn arr.ai into a sophisticated text templating engine.
 Conceptually, they are a simple extension to strings, allowing expressions to be
 nested inside such strings. In practice, this opens up a rich text formatting
 system that allows production of very complex output structures, including the
