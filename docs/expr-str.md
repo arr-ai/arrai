@@ -37,7 +37,7 @@ Expression strings apply the following rules to handle whitespace:
    to the first newline or non-whitespace character will be removed. Subsequent
    occurrences of the same leading whitespace after a newline are also removed.
 
-   **Example:** The following string is equal to `"abc\n  def\nghi\n"`.
+   **Example:** The following:
 
    ```text
    $"
@@ -45,6 +45,14 @@ Expression strings apply the following rules to handle whitespace:
          def
        ghi
    "
+   ```
+
+   produces the following output:
+
+   ```text
+   abc
+     def
+   ghi
    ```
 
 3. If, after indentation removal, an embedded expression is the only content on
