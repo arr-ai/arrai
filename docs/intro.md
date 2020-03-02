@@ -508,7 +508,7 @@ grammars may then be used to parse other content.
 Example:
 
 ```bash
-$ arrai e '//.grammar.lang.wbnf{expr -> @:[-+] > @:[/*] > \d+;}{1+2*3}'
+$ arrai e '{://.grammar.lang.wbnf.grammar: expr -> @:[-+] > @:[/*] > \d+; :} -> {:.expr: 1+2*3 :}'
 ("": [+], @rule: expr, expr: [(expr: [("": 1)]), ("": [*], expr: [("": 2), ("": 3)])])
 ```
 
