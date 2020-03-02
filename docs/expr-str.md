@@ -10,9 +10,9 @@ arbitrarily deep structures required for code generation.
 
 Expression strings are like regular strings with three differences:
 
-1. Expression strings begin with a `$`. The regular string `"abc"` is equal to
-   the expression string `$"abc"`. The same applies to single-quoted and
-   backquoted strings.
+1. Expression strings begin with a `$`. The regular string `"abc"` equals the
+   expression string `$"abc"`. The same applies to single-quoted and backquoted
+   strings.
 2. Expression strings treat whitespace differently than regular strings do.
 3. Expressions may be embedded within an expression string, allowing for dynamic
    content. The expression string `$"id = :{i}:;"` evaluates to `"id = 42;"` if
@@ -26,7 +26,7 @@ Expression strings apply the following rules to handle whitespace:
    applies for literal newlines in the source. The `\n` escaped form will be
    retained.
 
-   **Example:** The following string is equal to `"abc"`.
+   **Example:** The following string equals `"abc"`.
 
    ```text
    $"
@@ -55,9 +55,10 @@ Expression strings apply the following rules to handle whitespace:
    ghi
    ```
 
-3. If, after indentation removal, an embedded expression is the only content on
-   a line and the formatted result is empty, then the entire line is omitted
-   from the final output.
+3. If, after indentation removal, an embedded expression is the only remaining
+   content on a line, and the formatted result is empty, then the entire line,
+   including any newline at the end, is omitted from the final expression
+   string.
 
    **Example:** The following expression equals `"abc\ndef"`:
 
@@ -68,7 +69,7 @@ Expression strings apply the following rules to handle whitespace:
        def"
    ```
 
-   The following expression, in contrast equals `"abc\n123\ndef"` (note the
+   In contrast, the following expression equals `"abc\n123\ndef"` (note the
    extra `\n` in the result):
 
    ```text
@@ -113,8 +114,9 @@ The elements are as follows:
    2. `$":{ [1, 2, 3] where .>10 :::=}:"` equals `""`
 
 5. The *sep* and *extra* modifiers allow the usual character escapes plus one
-   special escape, `\i`, which expands to the value of any leading whitespace
-   immediately preceding the embedded expression.
+   special escape, `\i`, which expands to `"\n" ++ indent`, where `indent`
+   equals the leading whitespace immediately preceding the embedded expression,
+   back to the beginning of the line.
 
    **Example:** The following:
 
