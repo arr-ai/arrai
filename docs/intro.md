@@ -2,7 +2,7 @@
 
 | Status: **INCOMPLETE DRAFT** |
 |-|
-| Features marked **(⛔ NYI)** are not yet implemented. |
+| Features marked **(⛔NYI)** are not yet implemented. |
 
 Arr.ai is many things, but it is first and foremost a data representation and
 transformation language. This tutorial-style introduction will guide you through
@@ -40,7 +40,7 @@ worth covering upfront to aid comprehension below.
    12 and the remaining characters occupy positions 13&ndash;16. This is known
    as an offset-string or a string with holes.
 
-   **(⛔ NYI)** While this syntax is allowed in arr.ai, `▸` isn't
+   **(⛔NYI)** While this syntax is allowed in arr.ai, `▸` isn't
    available on most keyboards, so the syntax `"12\>hello"` represents the same
    offset-string. When printing such strings, arr.ai will normally use the more
    compact representation with `▸`. This form may also be used to represent
@@ -81,7 +81,7 @@ seem. You can in fact represent:
 6. Packages:
    1. `//.math.sin(1)`
    2. `//./myutil/work(42)`
-   3. * **(⛔ NYI)** `//github.com/foo/bar`
+   3. * **(⛔NYI)** `//github.com/foo/bar`
 
 All of the above forms are syntactic sugar for specific combinations of numbers,
 tuples and sets. For example, the string `"hello"` is a shorthand for the
@@ -149,10 +149,10 @@ The core syntax for literals can expresses numbers, tuples and sets.
    The parts may be written in the following forms:
 
    * Decimal: `123`
-   * **(⛔ NYI)** Use spaces to break up long numbers: `12 345 678`
-   * **(⛔ NYI)** Hexadecimal: `0x7b`
-   * **(⛔ NYI)** Octal: `0o173`
-   * **(⛔ NYI)** Binary: `0b 111 1011`
+   * **(⛔NYI)** Use spaces to break up long numbers: `12 345 678`
+   * **(⛔NYI)** Hexadecimal: `0x7b`
+   * **(⛔NYI)** Octal: `0o173`
+   * **(⛔NYI)** Binary: `0b 111 1011`
 
 2. Tuples: `()`, `(a:1)`, `('t.m.o.l.': 42)`, `(x: (a: (), b: 2), y: -3i)`
 
@@ -420,9 +420,9 @@ External libraries may be accessed via package references.
 2. **`//./path`** provides access to other arrai files relative to the current
    arrai file's parent directory (current working directory for expressions such
    as the `arrai eval` source that aren't associated with a file).
-3. **`///path`** provides access to other arrai files relative to the root of
+3. **`///path`** **(⛔NYI)** provides access to other arrai files relative to the root of
    the current module. <!-- TODO: explain modules -->
-4. **`//hostname/path`** provides access to arrai files in remote packages,
+4. **`//hostname/path`** **(⛔NYI)** provides access to arrai files in remote packages,
    e.g.: `//github.com/foo/bar`.
 
 ### Tuples vs Maps
