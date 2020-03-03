@@ -81,7 +81,9 @@ seem. You can in fact represent:
 6. Packages:
    1. `//.math.sin(1)`
    2. `//./myutil/work(42)`
-   3. * **(⛔ NYI)** `//github.com/foo/bar`
+   3. * **(⛔ NYI)** `///path/to/root/file`
+   4. * **(⛔ NYI)** `//./'myfile.yaml'`
+   5. * **(⛔ NYI)** `//github.com/org/external/file`
 
 All of the above forms are syntactic sugar for specific combinations of numbers,
 tuples and sets. For example, the string `"hello"` is a shorthand for the
