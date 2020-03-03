@@ -512,6 +512,9 @@ $ arrai e '//.grammar.lang.wbnf{expr -> @:[-+] > @:[/*] > \d+;}{1+2*3}'
 ("": [+], @rule: expr, expr: [(expr: [("": 1)]), ("": [*], expr: [("": 2), ("": 3)])])
 ```
 
+(Above syntax **⛔ NYI**. Current syntax is
+`{://.grammar.lang.wbnf.grammar: expr -> @:[-+] > @:[/*] > \d+; :} -> {:.expr:1+2*3:}`.
+
 The primary use of grammars is in the macro system. However, grammars are
 themselves data structures, and can be transformed as such, allowing interesting
 additions such as compositing, subsetting and otherwise transforming grammars.
