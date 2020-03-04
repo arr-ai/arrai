@@ -36,6 +36,10 @@ func TestPackagePi(t *testing.T) {
 // 	AssertCodesEvalToSameValue(t, `3`, `//http://github.com/'arr-ai'/arrai/examples/'xml.wbnf'`)
 // }
 
+func TestPackageExternalImportModule(t *testing.T) {
+	AssertCodesEvalToSameValue(t, `3`, `//github.com/ChloePlanet/'arrai-examples'/add`)
+}
+
 // func TestPackageExternalImport(t *testing.T) {
 // 	AssertCodesEvalToSameValue(t, `3`, `//http://github.com/'arr-ai'/arrai/examples/'xml.wbnf'`)
 // }

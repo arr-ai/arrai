@@ -12,10 +12,10 @@ import (
 	"github.com/arr-ai/arrai/tools/module"
 )
 
+// go run ./cmd/arrai e "//./examples/jsfuncs/jsfuncs"
 var importLocalFileOnce sync.Once
 var importLocalFileVar rel.Value
 
-// go run ./cmd/arrai e "//./examples/jsfuncs/jsfuncs"
 func importLocalFile() rel.Value {
 	importLocalFileOnce.Do(func() {
 		importLocalFileVar = rel.NewNativeFunction("//./", func(v rel.Value) rel.Value {
@@ -23,47 +23,81 @@ func importLocalFile() rel.Value {
 			if path.Ext(filename) == "" {
 				filename += ".arrai"
 			}
-			return fileValue(filename)
+			data, err := ioutil.ReadFile(filename)
+			if err != nil {
+				panic(err)
+			}
+			return bytesValue(filename, data)
 		})
 	})
 	return importLocalFileVar
 }
 
-// go run ./cmd/arrai e "//github.com/'arr-ai'/arrai/examples/grpc/grpc"
-var importModule = rel.NewNativeFunction("//", func(v rel.Value) rel.Value {
-	importpath := v.String()
+// go run ./cmd/arrai e "//github.com/ChloePlanet/'arrai-examples'/add"
+var importModuleFileOnce sync.Once
+var importModuleFileVar rel.Value
 
-	var mod module.Module
-	mod = module.NewGoModule()
+func importModuleFile() rel.Value {
+	importModuleFileOnce.Do(func() {
+		importModuleFileVar = rel.NewNativeFunction("//", func(v rel.Value) rel.Value {
+			importpath := v.String()
 
-	m, err := mod.Get(importpath)
-	if err != nil {
-		panic(err)
-	}
+			var mod module.Module
+			mod = module.NewGoModule()
 
-	relname, err := filepath.Rel(m.Name, importpath)
-	if err != nil {
-		panic(err)
-	}
+			m, err := mod.Get(importpath)
+			if err != nil {
+				panic(err)
+			}
 
-	filename := filepath.Join(m.Dir, relname)
-	if path.Ext(filename) == "" {
-		filename += ".arrai"
-	}
+			relname, err := filepath.Rel(m.Name, importpath)
+			if err != nil {
+				panic(err)
+			}
 
-	data, err := ioutil.ReadFile(filename)
-	if err != nil {
-		panic(err)
-	}
-	// return fileValue(filepath.Join(m.Dir, relname))
-	return rel.NewString([]rune(string(data)))
-})
+			filename := filepath.Join(m.Dir, relname)
+			if path.Ext(filename) == "" {
+				filename += ".arrai"
+			}
 
-func fileValue(filename string) rel.Value {
-	data, err := ioutil.ReadFile(filename)
-	if err != nil {
-		panic(err)
-	}
+			data, err := ioutil.ReadFile(filename)
+			if err != nil {
+				panic(err)
+			}
+			return bytesValue(filename, data)
+		})
+	})
+	return importModuleFileVar
+}
+
+// go run ./cmd/arrai e "//jsonplaceholder.typicode.com/todos/'1'/userId"
+var importURLOnce sync.Once
+var importURLVar rel.Value
+
+func importURL() rel.Value {
+	importURLOnce.Do(func() {
+		importURLVar = rel.NewNativeFunction("//", func(v rel.Value) rel.Value {
+			url := v.String()
+			if !strings.HasPrefix(url, "http://") && !strings.HasPrefix(url, "https://") {
+				// TBD: always https?
+				url = "https://" + url
+			}
+			resp, err := http.Get(url) //nolint:gosec
+			if err != nil {
+				panic(err)
+			}
+			defer resp.Body.Close()
+			data, err := ioutil.ReadAll(resp.Body)
+			if err != nil {
+				panic(err)
+			}
+			return bytesValue("", data)
+		})
+	})
+	return importModuleFileVar
+}
+
+func bytesValue(filename string, data []byte) rel.Value {
 	expr, err := Compile(filename, string(data))
 	if err != nil {
 		panic(err)
@@ -75,24 +109,3 @@ func fileValue(filename string) rel.Value {
 
 	return value
 }
-
-// go run ./cmd/arrai e "//jsonplaceholder.typicode.com/todos/'1'/userId"
-// var importURLOnce sync.Once
-var importURL = rel.NewNativeFunction("//", func(v rel.Value) rel.Value {
-	url := v.String()
-	if !strings.HasPrefix(url, "http://") && !strings.HasPrefix(url, "https://") {
-		// TBD: always https?
-		url = "https://" + url
-	}
-	resp, err := http.Get(url) //nolint:gosec
-	if err != nil {
-		panic(err)
-	}
-	defer resp.Body.Close()
-	data, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		panic(err)
-	}
-	// ...
-	return rel.NewString([]rune(string(data)))
-})

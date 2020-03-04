@@ -97,7 +97,7 @@ func goGetByFilepath(filename string) error {
 }
 
 func goGet(args ...string) error {
-	if err := runGo(context.Background(), logrus.StandardLogger().Out, append([]string{"get"}, args...)...); err != nil {
+	if err := runGo(context.Background(), logrus.StandardLogger().Out, append([]string{"get", "-u"}, args...)...); err != nil {
 		return errors.Wrapf(err, "failed to get %q", args)
 	}
 	return nil

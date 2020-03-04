@@ -346,6 +346,7 @@ func (pc ParseContext) CompileExpr(b wbnf.Branch) rel.Expr {
 				}
 			}
 			return rel.NewCallExpr(NewPackageExpr(importURL), rel.NewString([]rune(sb.String())))
+			return rel.NewCallExpr(NewPackageExpr(importModuleFile()), rel.NewString([]rune(sb.String())))
 		} else {
 			return NewPackageExpr(rel.DotIdent)
 		}
