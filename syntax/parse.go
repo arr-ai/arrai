@@ -302,7 +302,7 @@ func (pc ParseContext) CompileExpr(b ast.Branch) rel.Expr {
 		}
 		return rel.NewArray()
 	case "embed":
-		return rel.ASTNodeToValue(b.One("embed").One("subgrammar").One("").One("@node"))
+		return rel.ASTNodeToValue(b.One("embed").One("subgrammar").One("ast"))
 	case "fn":
 		ident := b.One("IDENT")
 		expr := pc.CompileExpr(b.One("expr").(ast.Branch))
@@ -601,9 +601,14 @@ func (pc ParseContext) Parse(s *parser.Scanner) (ast.Branch, error) {
 				},
 			})
 			if err != nil {
-				return nil, err
+				if unconsumed, ok := err.(parser.UnconsumedInputError); ok {
+					childast = unconsumed.Result()
+					input = unconsumed.Residue()
+				} else {
+					return nil, err
+				}
 			}
-			return childast, nil
+			return ast.NewExtRefTreeElement(parsers.Grammar(), childast), nil
 		},
 	})
 	// log.Printf("Parse: v = %v", v)
