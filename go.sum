@@ -11,6 +11,8 @@ github.com/arr-ai/wbnf v0.10.1-0.20200223185707-909efa7c1b30 h1:xL3n7nVdFDeJRpkV
 github.com/arr-ai/wbnf v0.10.1-0.20200223185707-909efa7c1b30/go.mod h1:zA1XT0TvNR4hwBEd1yU3XFVKfQLgstSG+JMM1Za+zZM=
 github.com/arr-ai/wbnf v0.12.3-0.20200301054558-c25f4d33ebe3 h1:DVL6hWJ9bmndLoW783r22nrDMNMfusWsJzXRk1tDj5U=
 github.com/arr-ai/wbnf v0.12.3-0.20200301054558-c25f4d33ebe3/go.mod h1:WRCWNNBAGJU3JwitK7FwbOA68f0/yr4m/Iq64/wyqCo=
+github.com/arr-ai/wbnf v0.13.0 h1:JpGH1KGdaVibBZJtR84p64P8OiM6yi6BhaWEN90DH3Q=
+github.com/arr-ai/wbnf v0.13.0/go.mod h1:WRCWNNBAGJU3JwitK7FwbOA68f0/yr4m/Iq64/wyqCo=
 github.com/census-instrumentation/opencensus-proto v0.2.1/go.mod h1:f6KPmirojxKA12rnyqOA5BBL4O983OfeGPqjHWSTneU=
 github.com/client9/misspell v0.3.4/go.mod h1:qj6jICC3Q7zFZvVWo7KLAzC3yx5G7kyvSDkc90ppPyw=
 github.com/coreos/etcd v3.3.10+incompatible/go.mod h1:uF7uidLiAD3TWHmW31ZFd/JWoc32PjwdhPthX9715RE=
