@@ -1,0 +1,29 @@
+---
+name: Bug report
+about: Let us know about an unexpected error, a crash, or an incorrect behavior.
+
+---
+
+Please **do not post any internal, closed source snippets** on this public issue tracker!
+
+### Description
+
+
+### Steps to Reproduce
+1. 
+2. 
+3. 
+
+**Expected behavior:**
+
+**Actual behavior:**
+
+* Debug&Crash Output
+
+
+### Your Environments
+```sh
+$ go version
+
+
+```
