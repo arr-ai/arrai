@@ -331,7 +331,7 @@ func (pc ParseContext) CompileExpr(b wbnf.Branch) rel.Expr {
 		} else if fqdn := pkg["fqdn"]; fqdn != nil {
 			var sb strings.Builder
 			if http := pkg["http"]; http != nil {
-				sb.WriteString(http.(wbnf.One).Node.(wbnf.Leaf).Scanner().String())
+				sb.WriteString(http.(wbnf.One).Node.Scanner().String())
 			}
 			for i, part := range fqdn.(wbnf.Many) {
 				if i > 0 {
