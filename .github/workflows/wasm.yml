@@ -27,6 +27,7 @@ jobs:
       run: GOOS=js GOARCH=wasm go build -o arrai.wasm ./cmd/arrai
 
     - name: get wasm_exec.js
+      # Get the tagged version of wasm_exec.js from the github repo for go
       run: curl -O https://raw.githubusercontent.com/golang/go/46f9aea80197bfdf4c024c3f5a71be51a2facf59/misc/wasm/wasm_exec.js
 
     - name: Set up Node
@@ -35,7 +36,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Run tests
-      run: node wasm_exec.js arrai.wasm
+      run: node wasm_exec.js arrai.wasm eval 1 + 5
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         NPM_AUTH_TOKEN: "SOME-RANDOM-KEY"
