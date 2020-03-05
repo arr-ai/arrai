@@ -30,16 +30,15 @@ jobs:
     name: Test
     strategy:
       matrix:
-        go-version: [1.12.x, 1.13.x]
         platform: [ubuntu-latest, macos-latest, windows-latest]
     runs-on: ${{ matrix.platform }}
     steps:
 
-    - name: Set up Go
+    - name: Set up Go 1.13
       if: success()
       uses: actions/setup-go@v1
       with:
-        go-version: ${{ matrix.go-version }}
+        go-version: 1.13
 
     - name: Check out code into the Go module directory
       uses: actions/checkout@v1
