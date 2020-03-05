@@ -63,7 +63,7 @@ jobs:
     - name: Calc coverage 
       run: |
         export PATH=$PATH:$(go env GOPATH)/bin   
-        go test -v -covermode=atomic -coverprofile=coverage.out
+        go test -v -covermode=atomic -coverprofile=coverage.out -race ./...
 
     - name: Convert coverage to lcov
       uses: jandelgado/gcov2lcov-action@v1.0.0
