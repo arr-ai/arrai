@@ -1,8 +1,9 @@
 package syntax
 
 import (
-	log "github.com/sirupsen/logrus"
 	"testing"
+
+	log "github.com/sirupsen/logrus"
 
 	"github.com/arr-ai/arrai/rel"
 	"github.com/arr-ai/wbnf/parser"

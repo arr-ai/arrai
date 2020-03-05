@@ -2,6 +2,7 @@ package rel
 
 import (
 	"fmt"
+
 	"github.com/arr-ai/wbnf/ast"
 	"github.com/arr-ai/wbnf/wbnf"
 
