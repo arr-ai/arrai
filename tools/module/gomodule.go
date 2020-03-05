@@ -9,7 +9,6 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"regexp"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -81,16 +80,19 @@ func (m *GoModule) Get(filename string) (*Mod, error) {
 }
 
 func goGetByFilepath(filename string) error {
-	dir := filepath.Dir(filename)
-	re := regexp.MustCompile(`^\.|\.\.|/$`)
+	names := strings.Split(string(filename), string(os.PathSeparator))
+	if len(names) > 0 {
+		gogetPath := names[0]
 
-	for !re.MatchString(dir) {
-		err := goGet(dir)
-		if err == nil {
-			return nil
+		for i := 1; i < len(names); i++ {
+			err := goGet(gogetPath)
+			if err == nil {
+				return nil
+			}
+			logrus.Debugf("go get %s error: %s\n", gogetPath, err.Error())
+
+			gogetPath = filepath.Join(gogetPath, names[i])
 		}
-		logrus.Debugf("go get %s error: %s\n", dir, err.Error())
-		dir = filepath.Dir(dir)
 	}
 
 	return errors.New("No such module")

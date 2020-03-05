@@ -40,6 +40,10 @@ func TestPackageExternalImportModule(t *testing.T) {
 	AssertCodesEvalToSameValue(t, `3`, `//github.com/ChloePlanet/'arrai-examples'/add`)
 }
 
+func TestPackageExternalImportModuleWithExt(t *testing.T) {
+	AssertCodesEvalToSameValue(t, `3`, `//github.com/ChloePlanet/'arrai-examples'/'add.arrai'`)
+}
+
 func TestPackageExternalImportModuleJson(t *testing.T) {
 	AssertCodesEvalToSameValue(t, `{}`, `//github.com/ChloePlanet/'arrai-examples'/'empty.json'`)
 }
