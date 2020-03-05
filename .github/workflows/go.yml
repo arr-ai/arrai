@@ -18,8 +18,7 @@ jobs:
       uses: actions/checkout@v1
 
     - name: Install golangci-lint
-      run: |
-        go get github.com/golangci/golangci-lint/cmd/golangci-lint
+      run: go get github.com/golangci/golangci-lint/cmd/golangci-lint
 
     - name: Run linters
       run: |
