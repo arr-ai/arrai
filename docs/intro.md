@@ -420,7 +420,7 @@ External libraries may be accessed via package references.
 2. **`//./path`** provides access to other arrai files relative to the current
    arrai file's parent directory (current working directory for expressions such
    as the `arrai eval` source that aren't associated with a file).
-3. **`///path`** **(⛔NYI)** provides access to other arrai files relative to the root of
+3. **`///path`** provides access to other arrai files relative to the root of
    the current module. <!-- TODO: explain modules -->
 4. **`//hostname/path`** **(⛔NYI)** provides access to arrai files in remote packages,
    e.g.: `//github.com/foo/bar`.
