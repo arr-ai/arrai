@@ -18,7 +18,11 @@ var evalCommand = &cli.Command{
 }
 
 func evalImpl(source string, w io.Writer) error {
-	expr, err := syntax.Compile(".", source)
+	return evalExpr(".", source, w)
+}
+
+func evalExpr(path, source string, w io.Writer) error {
+	expr, err := syntax.Compile(path, source)
 	if err != nil {
 		return err
 	}
