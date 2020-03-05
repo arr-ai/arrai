@@ -38,14 +38,14 @@ func importExternalContent() rel.Value {
 		importExternalContentVar = rel.NewNativeFunction("//", func(v rel.Value) rel.Value {
 			importpath := v.String()
 
-			var moduleErr string
+			var moduleErr error
 
 			if !strings.HasPrefix(importpath, "http://") && !strings.HasPrefix(importpath, "https://") {
 				v, err := importModuleFile(importpath)
 				if err == nil {
 					return v
 				}
-				moduleErr = err.Error()
+				moduleErr = err
 
 				// TBD: always https?
 				importpath = "https://" + importpath
@@ -53,11 +53,15 @@ func importExternalContent() rel.Value {
 
 			v, err := importURL(importpath)
 			if err != nil {
-				if moduleErr != "" {
-					panic(fmt.Errorf("Fail to import module %s and get url content %s", moduleErr, err.Error()))
+				if moduleErr != nil {
+					panic(fmt.Errorf("Failed to import %s - %s, and %s", importpath, moduleErr.Error(), err.Error()))
 				}
 				panic(err)
 			}
+			if moduleErr != nil {
+				panic(moduleErr)
+			}
+
 			return v
 		})
 	})
@@ -88,12 +92,15 @@ func importURL(url string) (rel.Value, error) {
 	}
 	defer resp.Body.Close()
 
-	data, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
-	}
+	if resp.StatusCode == http.StatusOK {
+		data, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			return nil, err
+		}
 
-	return bytesValue("", data), nil
+		return bytesValue("", data), nil
+	}
+	return nil, fmt.Errorf("request %s failed: %s", url, resp.Status)
 }
 
 func fileValue(filename string) (rel.Value, error) {
