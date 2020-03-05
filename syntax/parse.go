@@ -133,7 +133,6 @@ func MustCompile(filepath, source string) rel.Expr {
 }
 
 func (pc ParseContext) CompileExpr(b wbnf.Branch) rel.Expr {
-	// fmt.Println(b)
 	name, c := which(b,
 		"amp", "arrow", "let", "unop", "binop", "rbinop",
 		"if", "call", "count", "touch", "get",
@@ -345,8 +344,7 @@ func (pc ParseContext) CompileExpr(b wbnf.Branch) rel.Expr {
 					sb.WriteString(strings.Trim(parseName(part.One("name").(wbnf.Branch)), "'"))
 				}
 			}
-			return rel.NewCallExpr(NewPackageExpr(importURL), rel.NewString([]rune(sb.String())))
-			return rel.NewCallExpr(NewPackageExpr(importModuleFile()), rel.NewString([]rune(sb.String())))
+			return rel.NewCallExpr(NewPackageExpr(importExternalContent()), rel.NewString([]rune(sb.String())))
 		} else {
 			return NewPackageExpr(rel.DotIdent)
 		}

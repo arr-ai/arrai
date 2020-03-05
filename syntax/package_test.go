@@ -40,6 +40,26 @@ func TestPackageExternalImportModule(t *testing.T) {
 	AssertCodesEvalToSameValue(t, `3`, `//github.com/ChloePlanet/'arrai-examples'/add`)
 }
 
+func TestPackageExternalImportModuleJson(t *testing.T) {
+	AssertCodesEvalToSameValue(t, `{}`, `//github.com/ChloePlanet/'arrai-examples'/'empty.json'`)
+}
+
+func TestPackageExternalImportURLArrai(t *testing.T) {
+	AssertCodesEvalToSameValue(t, `3`, `//https://raw.githubusercontent.com/ChloePlanet/'arrai-examples'/master/'add.arrai'`)
+}
+
+func TestPackageExternalImportURLArraiWithoutHTTPS(t *testing.T) {
+	AssertCodesEvalToSameValue(t, `3`, `//raw.githubusercontent.com/ChloePlanet/'arrai-examples'/master/'add.arrai'`)
+}
+
+func TestPackageExternalImportURLJson(t *testing.T) {
+	AssertCodesEvalToSameValue(t, `{}`, `//https://jsonplaceholder.typicode.com/todos/'1'/userId`)
+}
+
+func TestPackageExternalImportURLJsonWithoutHTTPS(t *testing.T) {
+	AssertCodesEvalToSameValue(t, `{}`, `//jsonplaceholder.typicode.com/todos/'1'/userId`)
+}
+
 // func TestPackageExternalImport(t *testing.T) {
 // 	AssertCodesEvalToSameValue(t, `3`, `//http://github.com/'arr-ai'/arrai/examples/'xml.wbnf'`)
 // }

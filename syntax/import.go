@@ -1,6 +1,7 @@
 package syntax
 
 import (
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"path"
@@ -12,89 +13,99 @@ import (
 	"github.com/arr-ai/arrai/tools/module"
 )
 
-// go run ./cmd/arrai e "//./examples/jsfuncs/jsfuncs"
 var importLocalFileOnce sync.Once
 var importLocalFileVar rel.Value
 
 func importLocalFile() rel.Value {
 	importLocalFileOnce.Do(func() {
 		importLocalFileVar = rel.NewNativeFunction("//./", func(v rel.Value) rel.Value {
-			filename := v.String()
-			if path.Ext(filename) == "" {
-				filename += ".arrai"
-			}
-			data, err := ioutil.ReadFile(filename)
+			v, err := fileValue(v.String())
 			if err != nil {
 				panic(err)
 			}
-			return bytesValue(filename, data)
+
+			return v
 		})
 	})
 	return importLocalFileVar
 }
 
-// go run ./cmd/arrai e "//github.com/ChloePlanet/'arrai-examples'/add"
-var importModuleFileOnce sync.Once
-var importModuleFileVar rel.Value
+var importExternalContentOnce sync.Once
+var importExternalContentVar rel.Value
 
-func importModuleFile() rel.Value {
-	importModuleFileOnce.Do(func() {
-		importModuleFileVar = rel.NewNativeFunction("//", func(v rel.Value) rel.Value {
+func importExternalContent() rel.Value {
+	importExternalContentOnce.Do(func() {
+		importExternalContentVar = rel.NewNativeFunction("//", func(v rel.Value) rel.Value {
 			importpath := v.String()
 
-			var mod module.Module
-			mod = module.NewGoModule()
+			var moduleErr string
 
-			m, err := mod.Get(importpath)
+			if !strings.HasPrefix(importpath, "http://") && !strings.HasPrefix(importpath, "https://") {
+				v, err := importModuleFile(importpath)
+				if err == nil {
+					return v
+				}
+				moduleErr = err.Error()
+
+				// TBD: always https?
+				importpath = "https://" + importpath
+			}
+
+			v, err := importURL(importpath)
 			if err != nil {
+				if moduleErr != "" {
+					panic(fmt.Errorf("Fail to import module %s and get url content %s", moduleErr, err.Error()))
+				}
 				panic(err)
 			}
-
-			relname, err := filepath.Rel(m.Name, importpath)
-			if err != nil {
-				panic(err)
-			}
-
-			filename := filepath.Join(m.Dir, relname)
-			if path.Ext(filename) == "" {
-				filename += ".arrai"
-			}
-
-			data, err := ioutil.ReadFile(filename)
-			if err != nil {
-				panic(err)
-			}
-			return bytesValue(filename, data)
+			return v
 		})
 	})
-	return importModuleFileVar
+	return importExternalContentVar
 }
 
-// go run ./cmd/arrai e "//jsonplaceholder.typicode.com/todos/'1'/userId"
-var importURLOnce sync.Once
-var importURLVar rel.Value
+func importModuleFile(importpath string) (rel.Value, error) {
+	var mod module.Module
+	mod = module.NewGoModule()
 
-func importURL() rel.Value {
-	importURLOnce.Do(func() {
-		importURLVar = rel.NewNativeFunction("//", func(v rel.Value) rel.Value {
-			url := v.String()
-			if !strings.HasPrefix(url, "http://") && !strings.HasPrefix(url, "https://") {
-				// TBD: always https?
-				url = "https://" + url
-			}
-			resp, err := http.Get(url) //nolint:gosec
-			if err != nil {
-				panic(err)
-			}
-			defer resp.Body.Close()
-			data, err := ioutil.ReadAll(resp.Body)
-			if err != nil {
-				panic(err)
-			}
-			return bytesValue("", data)
-		})
-	})
-	return importModuleFileVar
+	m, err := mod.Get(importpath)
+	if err != nil {
+		return nil, err
+	}
+
+	relname, err := filepath.Rel(m.Name, importpath)
+	if err != nil {
+		panic(err)
+	}
+
+	return fileValue(filepath.Join(m.Dir, relname))
+}
+
+func importURL(url string) (rel.Value, error) {
+	resp, err := http.Get(url) //nolint:gosec
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	data, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	return bytesValue("", data), nil
+}
+
+func fileValue(filename string) (rel.Value, error) {
+	if path.Ext(filename) == "" {
+		filename += ".arrai"
+	}
+
+	data, err := ioutil.ReadFile(filename)
+	if err != nil {
+		return nil, err
+	}
+	return bytesValue(filename, data), nil
 }
 
 func bytesValue(filename string, data []byte) rel.Value {
