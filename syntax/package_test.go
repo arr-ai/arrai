@@ -57,11 +57,11 @@ func TestPackageExternalImportURLArraiWithoutHTTPS(t *testing.T) {
 }
 
 func TestPackageExternalImportURLJson(t *testing.T) {
-	AssertCodesEvalToSameValue(t, `{}`, `//https://jsonplaceholder.typicode.com/todos/'1'/userId`)
+	AssertCodesEvalToSameValue(t, `{}`, `//https://raw.githubusercontent.com/ChloePlanet/'arrai-examples'/master/'empty.json'`)
 }
 
 func TestPackageExternalImportURLJsonWithoutHTTPS(t *testing.T) {
-	AssertCodesEvalToSameValue(t, `{}`, `//jsonplaceholder.typicode.com/todos/'1'/userId`)
+	AssertCodesEvalToSameValue(t, `{}`, `//raw.githubusercontent.com/ChloePlanet/'arrai-examples'/master/'empty.json'`)
 }
 
 // func TestPackageExternalImport(t *testing.T) {

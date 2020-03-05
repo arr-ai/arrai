@@ -58,9 +58,6 @@ func importExternalContent() rel.Value {
 				}
 				panic(err)
 			}
-			if moduleErr != nil {
-				panic(moduleErr)
-			}
 
 			return v
 		})
