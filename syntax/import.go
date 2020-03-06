@@ -18,7 +18,6 @@ var importLocalFileVar rel.Value
 func importLocalFile(fromRoot bool) rel.Value {
 	importLocalFileOnce.Do(func() {
 		importLocalFileVar = rel.NewNativeFunction("//./", func(v rel.Value) rel.Value {
-
 			filepath := v.String()
 			if fromRoot {
 				pwd, err := os.Getwd()
@@ -72,7 +71,6 @@ func findProjectRootDir(currentDir string) (string, error) {
 	currentDir = strings.Join(ss, "/")
 
 	return findProjectRootDir(currentDir)
-
 }
 
 var importURL = rel.NewNativeFunction("//", func(v rel.Value) rel.Value {
