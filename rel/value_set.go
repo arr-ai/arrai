@@ -92,7 +92,7 @@ func (s *genericSet) String() string {
 	switch s.flavor {
 	case setFlavorNormal:
 		// {} == none
-		if !s.Bool() {
+		if !s.IsTrue() {
 			return "{}"
 		}
 
@@ -100,7 +100,7 @@ func (s *genericSet) String() string {
 		if s.Count() == 1 {
 			e := s.Enumerator()
 			e.MoveNext()
-			if tuple, ok := e.Current().(Tuple); ok && !tuple.Bool() {
+			if tuple, ok := e.Current().(Tuple); ok && !tuple.IsTrue() {
 				return "true"
 			}
 		}
@@ -178,7 +178,7 @@ func (s *genericSet) Kind() int {
 }
 
 // Bool returns true iff the tuple has attributes.
-func (s *genericSet) Bool() bool {
+func (s *genericSet) IsTrue() bool {
 	return s.Count() > 0
 }
 
@@ -210,7 +210,7 @@ func (s *genericSet) Less(v Value) bool {
 
 // Negate returns {(negateTag): s}.
 func (s *genericSet) Negate() Value {
-	if !s.Bool() {
+	if !s.IsTrue() {
 		return s
 	}
 	return NewTuple(NewAttr(negateTag, s))
@@ -264,9 +264,9 @@ func (s *genericSet) With(value Value) Set {
 		}
 	}
 	flavor := setFlavorNormal
-	if (s.flavor == setFlavorArray || !s.Bool()) && isArrayAttr {
+	if (s.flavor == setFlavorArray || !s.IsTrue()) && isArrayAttr {
 		flavor = setFlavorArray
-	} else if (s.flavor == setFlavorString || !s.Bool()) && isStringAttr {
+	} else if (s.flavor == setFlavorString || !s.IsTrue()) && isStringAttr {
 		flavor = setFlavorString
 	}
 

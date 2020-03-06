@@ -36,12 +36,12 @@ func TestNumberHash(t *testing.T) {
 
 func TestNumberBool(t *testing.T) {
 	t.Parallel()
-	assert.False(t, NewNumber(0).Bool())
-	assert.False(t, NewNumber(0.0).Bool())
-	assert.False(t, NewNumber(-0.0).Bool())
-	assert.True(t, NewNumber(-1).Bool())
-	assert.True(t, NewNumber(0.5).Bool())
-	assert.True(t, NewNumber(-0.05).Bool())
+	assert.False(t, NewNumber(0).IsTrue())
+	assert.False(t, NewNumber(0.0).IsTrue())
+	assert.False(t, NewNumber(-0.0).IsTrue())
+	assert.True(t, NewNumber(-1).IsTrue())
+	assert.True(t, NewNumber(0.5).IsTrue())
+	assert.True(t, NewNumber(-0.05).IsTrue())
 }
 
 func TestNumberLess(t *testing.T) {

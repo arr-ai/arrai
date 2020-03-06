@@ -80,7 +80,7 @@ func (f *Function) Kind() int {
 }
 
 // Bool returns true iff the tuple has attributes.
-func (f *Function) Bool() bool {
+func (f *Function) IsTrue() bool {
 	return true
 }
 

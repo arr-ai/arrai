@@ -27,7 +27,7 @@ type Value interface {
 	Kind() int
 
 	// Bool returns true iff the Value is non-zero or non-empty.
-	Bool() bool
+	IsTrue() bool
 
 	// Less return true iff the Value is less than v. Number < Tuple < Set.
 	Less(v Value) bool

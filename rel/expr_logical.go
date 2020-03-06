@@ -19,7 +19,7 @@ func (e AndExpr) Eval(local Scope) (Value, error) {
 	if err != nil {
 		return nil, err
 	}
-	if !a.Bool() {
+	if !a.IsTrue() {
 		return a, nil
 	}
 
@@ -48,7 +48,7 @@ func (e OrExpr) Eval(local Scope) (Value, error) {
 	if err != nil {
 		return nil, err
 	}
-	if a.Bool() {
+	if a.IsTrue() {
 		return a, nil
 	}
 
