@@ -54,7 +54,7 @@ func importExternalContent() rel.Value {
 			v, err := importURL(importpath)
 			if err != nil {
 				if moduleErr != nil {
-					panic(fmt.Errorf("Failed to import %s - %s, and %s", importpath, moduleErr.Error(), err.Error()))
+					panic(fmt.Errorf("failed to import %s - %s, and %s", importpath, moduleErr.Error(), err.Error()))
 				}
 				panic(err)
 			}

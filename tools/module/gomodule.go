@@ -80,7 +80,7 @@ func (m *GoModule) Get(filename string) (*Mod, error) {
 }
 
 func goGetByFilepath(filename string) error {
-	names := strings.Split(string(filename), string(os.PathSeparator))
+	names := strings.Split(filename, string(os.PathSeparator))
 	if len(names) > 0 {
 		gogetPath := names[0]
 
@@ -95,11 +95,11 @@ func goGetByFilepath(filename string) error {
 		}
 	}
 
-	return errors.New("No such module")
+	return errors.New("no such module")
 }
 
 func goGet(args ...string) error {
-	if err := runGo(context.Background(), logrus.StandardLogger().Out, append([]string{"get", "-u"}, args...)...); err != nil {
+	if err := runGo(context.Background(), logrus.StandardLogger().Out, append([]string{"get", "-u"}, args...)...); err != nil { // nolint:lll
 		return errors.Wrapf(err, "failed to get %q", args)
 	}
 	return nil

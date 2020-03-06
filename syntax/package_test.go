@@ -49,7 +49,7 @@ func TestPackageExternalImportModuleJson(t *testing.T) {
 }
 
 func TestPackageExternalImportURLArrai(t *testing.T) {
-	AssertCodesEvalToSameValue(t, `3`, `//https://raw.githubusercontent.com/ChloePlanet/'arrai-examples'/master/'add.arrai'`)
+	AssertCodesEvalToSameValue(t, `3`, `//https://raw.githubusercontent.com/ChloePlanet/'arrai-examples'/master/'add.arrai'`) // nolint:lll
 }
 
 func TestPackageExternalImportURLArraiWithoutHTTPS(t *testing.T) {
@@ -57,7 +57,7 @@ func TestPackageExternalImportURLArraiWithoutHTTPS(t *testing.T) {
 }
 
 func TestPackageExternalImportURLJson(t *testing.T) {
-	AssertCodesEvalToSameValue(t, `{}`, `//https://raw.githubusercontent.com/ChloePlanet/'arrai-examples'/master/'empty.json'`)
+	AssertCodesEvalToSameValue(t, `{}`, `//https://raw.githubusercontent.com/ChloePlanet/'arrai-examples'/master/'empty.json'`) // nolint:lll
 }
 
 func TestPackageExternalImportURLJsonWithoutHTTPS(t *testing.T) {
