@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"path"
 	"path/filepath"
 	"strings"
 	"sync"
@@ -95,7 +94,7 @@ func importURL(url string) (rel.Value, error) {
 }
 
 func fileValue(filename string) (rel.Value, error) {
-	if path.Ext(filename) == "" {
+	if filepath.Ext(filename) == "" {
 		filename += ".arrai"
 	}
 

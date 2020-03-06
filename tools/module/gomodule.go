@@ -84,7 +84,7 @@ func (m *GoModule) Get(filename string) (*Mod, error) {
 }
 
 func goGetByPackagePath(filename string) error {
-	names := strings.Split(filename, string(os.PathSeparator))
+	names := strings.Split(filename, "/")
 	if len(names) > 0 {
 		gogetPath := names[0]
 
