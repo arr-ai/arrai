@@ -60,7 +60,6 @@ func findProjectRootDir(currentDir string) (string, error) {
 	for _, f := range files {
 		if f.Name() == "go.mod" {
 			return currentDir, nil
-			break
 		}
 	}
 	if currentDir == "" {
