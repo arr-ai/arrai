@@ -53,6 +53,7 @@ func importLocalFile(fromRoot bool) rel.Value {
 }
 
 func findProjectRootDir(currentDir string) (string, error) {
+	currentDir = strings.TrimRight(currentDir, "/")
 	files, err := ioutil.ReadDir(currentDir)
 	if err != nil {
 		panic(err)
@@ -69,7 +70,6 @@ func findProjectRootDir(currentDir string) (string, error) {
 	ss := strings.Split(currentDir, "/")
 	ss[len(ss)-1] = ""
 	currentDir = strings.Join(ss, "/")
-	currentDir = strings.TrimRight(currentDir, "/")
 
 	return findProjectRootDir(currentDir)
 
