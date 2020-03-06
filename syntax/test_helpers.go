@@ -3,6 +3,8 @@ package syntax
 import (
 	"testing"
 
+	log "github.com/sirupsen/logrus"
+
 	"github.com/arr-ai/arrai/rel"
 	"github.com/arr-ai/wbnf/parser"
 	"github.com/stretchr/testify/assert"
@@ -23,7 +25,7 @@ func AssertCodesEvalToSameValue(t *testing.T, expected, code string) bool {
 		return false
 	}
 	codeExpr := pc.CompileExpr(ast)
-	// log.Printf("code=%v, codeExpr=%v", code, codeExpr)
+	log.Printf("code=%v, codeExpr=%v", code, codeExpr)
 	if !rel.AssertExprsEvalToSameValue(t, expectedExpr, codeExpr) {
 		t.Logf("\nexpected: %s\ncode:     %s", expected, code)
 		return false
