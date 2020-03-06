@@ -8,7 +8,7 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
-	"path/filepath"
+	"path"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -91,7 +91,7 @@ func goGetByFilepath(filename string) error {
 			}
 			logrus.Debugf("go get %s error: %s\n", gogetPath, err.Error())
 
-			gogetPath = filepath.Join(gogetPath, names[i])
+			gogetPath = path.Join(gogetPath, names[i])
 		}
 	}
 

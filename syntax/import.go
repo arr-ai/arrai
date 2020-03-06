@@ -47,7 +47,7 @@ func importExternalContent() rel.Value {
 				}
 				moduleErr = err
 
-				// TBD: always https?
+				// Since an explicit schema is allowed, it's OK to assume https as the default.
 				importpath = "https://" + importpath
 			}
 
@@ -66,20 +66,14 @@ func importExternalContent() rel.Value {
 }
 
 func importModuleFile(importpath string) (rel.Value, error) {
-	var mod module.Module
-	mod = module.NewGoModule()
+	var mod module.Module = module.NewGoModule()
 
 	m, err := mod.Get(importpath)
 	if err != nil {
 		return nil, err
 	}
 
-	relname, err := filepath.Rel(m.Name, importpath)
-	if err != nil {
-		panic(err)
-	}
-
-	return fileValue(filepath.Join(m.Dir, relname))
+	return fileValue(filepath.Join(m.Dir, strings.TrimPrefix(importpath, m.Name)))
 }
 
 func importURL(url string) (rel.Value, error) {
