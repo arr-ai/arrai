@@ -1,8 +1,10 @@
 package syntax
 
 import (
+	"errors"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"path"
 	"strings"
 	"sync"
@@ -13,10 +15,22 @@ import (
 var importLocalFileOnce sync.Once
 var importLocalFileVar rel.Value
 
-func importLocalFile() rel.Value {
+func importLocalFile(fromRoot bool) rel.Value {
 	importLocalFileOnce.Do(func() {
 		importLocalFileVar = rel.NewNativeFunction("//./", func(v rel.Value) rel.Value {
+
 			filepath := v.String()
+			if fromRoot {
+				pwd, err := os.Getwd()
+				if err != nil {
+					panic(err)
+				}
+				rootPath, err := findProjectRootDir(pwd)
+				if err != nil {
+					panic(err)
+				}
+				filepath = rootPath + "/" + filepath
+			}
 			if path.Ext(filepath) == "" {
 				filepath += ".arrai"
 			}
@@ -36,6 +50,30 @@ func importLocalFile() rel.Value {
 		})
 	})
 	return importLocalFileVar
+}
+
+func findProjectRootDir(currentDir string) (string, error) {
+	files, err := ioutil.ReadDir(currentDir)
+	if err != nil {
+		panic(err)
+	}
+	for _, f := range files {
+		if f.Name() == "go.mod" {
+			return currentDir, nil
+			break
+		}
+	}
+	if currentDir == "" {
+		return "", errors.New("cannot find root")
+	}
+
+	ss := strings.Split(currentDir, "/")
+	ss[len(ss)-1] = ""
+	currentDir = strings.Join(ss, "/")
+	currentDir = strings.TrimRight(currentDir, "/")
+
+	return findProjectRootDir(currentDir)
+
 }
 
 var importURL = rel.NewNativeFunction("//", func(v rel.Value) rel.Value {

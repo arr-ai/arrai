@@ -325,7 +325,7 @@ func (pc ParseContext) CompileExpr(b wbnf.Branch) rel.Expr {
 				panic(fmt.Errorf("local import %q invalid; no local context", filepath))
 			}
 			return rel.NewCallExpr(
-				NewPackageExpr(importLocalFile()),
+				NewPackageExpr(importLocalFile(pkg["dot"] == nil)),
 				rel.NewString([]rune(path.Join(pc.SourceDir, filepath))),
 			)
 		} else if fqdn := pkg["fqdn"]; fqdn != nil {
