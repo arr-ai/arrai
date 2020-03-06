@@ -57,6 +57,7 @@ func stdScope() rel.Scope {
 				stdReflect(),
 				stdRel(),
 				stdStr(),
+				stdStrconv(),
 			))
 	})
 	return stdScopeVar
