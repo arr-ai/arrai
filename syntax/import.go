@@ -10,14 +10,12 @@ import (
 	"sync"
 
 	"github.com/arr-ai/arrai/rel"
-	"github.com/spf13/afero"
 )
 
 const arraiRootMarker = "go.mod"
 
 var importLocalFileOnce sync.Once
 var importLocalFileVar rel.Value
-var fs = afero.NewOsFs()
 
 func importLocalFile(fromRoot bool) rel.Value {
 	importLocalFileOnce.Do(func() {
@@ -28,7 +26,7 @@ func importLocalFile(fromRoot bool) rel.Value {
 				if err != nil {
 					panic(err)
 				}
-				rootPath, err := findRootFromModule(pwd, fs)
+				rootPath, err := findRootFromModule(pwd)
 				if err != nil {
 					panic(err)
 				}
@@ -55,7 +53,7 @@ func importLocalFile(fromRoot bool) rel.Value {
 	return importLocalFileVar
 }
 
-func findRootFromModule(modulePath string, fs afero.Fs) (string, error) {
+func findRootFromModule(modulePath string) (string, error) {
 	currentPath, err := filepath.Abs(modulePath)
 	if err != nil {
 		return "", err
@@ -68,7 +66,7 @@ func findRootFromModule(modulePath string, fs afero.Fs) (string, error) {
 
 	// Keep walking up the directories to find nearest root marker
 	for {
-		exists, err := afero.Exists(fs, filepath.Join(currentPath, arraiRootMarker))
+		exists := fileExists(filepath.Join(currentPath, arraiRootMarker))
 		reachedRoot := currentPath == systemRoot || (err != nil && os.IsPermission(err))
 		switch {
 		case exists:
@@ -80,6 +78,14 @@ func findRootFromModule(modulePath string, fs afero.Fs) (string, error) {
 		}
 		currentPath = filepath.Dir(currentPath)
 	}
+}
+
+func fileExists(filename string) bool {
+	info, err := os.Stat(filename)
+	if os.IsNotExist(err) {
+		return false
+	}
+	return !info.IsDir()
 }
 
 var importURL = rel.NewNativeFunction("//", func(v rel.Value) rel.Value {
