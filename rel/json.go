@@ -116,59 +116,20 @@ func jsonEscape(value Expr) interface{} {
 			result[name] = jsonEscape(value)
 		}
 		return result
-	case *genericSet:
-		switch x.flavor {
-		case setFlavorNormal:
-			if x.Equal(False) {
-				return false
-			}
-			if x.Equal(True) {
-				return true
-			}
-			array := make([]interface{}, x.Count())
-			i := 0
-			for e := x.Enumerator(); e.MoveNext(); {
-				array[i] = jsonEscape(e.Current())
-				i++
-			}
-			return map[string]interface{}{"{||}": array}
-		case setFlavorArray:
-			array := make([]interface{}, x.Count())
-			for i, tuple := range x.OrderedValues() {
-				if tuple, ok := tuple.(Tuple); ok {
-					if value, found := tuple.Get(ArrayItemAttr); found {
-						array[i] = jsonEscape(value)
-					} else {
-						panic("Array item tuple must have @item attr")
-					}
-				} else {
-					panic("Array item must be a Tuple")
-				}
-			}
-			return array
-		case setFlavorString:
-			runes := make([]rune, x.Count())
-			for i, tuple := range x.OrderedValues() {
-				if tuple, ok := tuple.(Tuple); ok {
-					if value, found := tuple.Get(CharAttr); found {
-						if n, ok := value.(Number); ok {
-							runes[i] = rune(n.Float64())
-						} else {
-							panic("String tuple " + CharAttr +
-								" attr must be a number")
-						}
-					} else {
-						panic("String char tuple must have a " + CharAttr +
-							" attr")
-					}
-				} else {
-					panic("String char must be a Tuple")
-				}
-			}
-			return string(runes)
-		default:
-			panic("Unhandled set flavor")
+	case genericSet:
+		if x.Equal(False) {
+			return false
 		}
+		if x.Equal(True) {
+			return true
+		}
+		array := make([]interface{}, x.Count())
+		i := 0
+		for e := x.Enumerator(); e.MoveNext(); {
+			array[i] = jsonEscape(e.Current())
+			i++
+		}
+		return map[string]interface{}{"{||}": array}
 	case String:
 		return string(x.s)
 	case Expr:

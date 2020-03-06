@@ -86,7 +86,7 @@ func ASTBranchFromValue(b Tuple) ast.Branch {
 		var children ast.Children
 		switch name {
 		case "@choice":
-			values := value.(*genericSet).OrderedValues()
+			values := value.(genericSet).OrderedValues()
 			ints := make(ast.Many, 0, len(values))
 			for _, v := range values {
 				ints = append(ints, ast.Extra{Data: parser.Choice(v.(Tuple).MustGet(ArrayItemAttr).(Number).Float64())})
@@ -102,7 +102,7 @@ func ASTBranchFromValue(b Tuple) ast.Branch {
 				children = ast.One{Node: ASTBranchFromValue(value)}
 			case String:
 				children = ast.One{Node: ASTLeafFromValue(value)}
-			case *genericSet:
+			case genericSet:
 				c := make(ast.Many, 0, value.Count())
 				for _, v := range value.OrderedValues() {
 					c = append(c, ASTNodeFromValue(v.(Tuple).MustGet(ArrayItemAttr)))

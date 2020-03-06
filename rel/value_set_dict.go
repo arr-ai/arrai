@@ -171,7 +171,7 @@ func (d Dict) Map(m func(Value) Value) Set {
 	for e := d.Enumerator(); e.MoveNext(); {
 		sb.Add(m(e.Current()))
 	}
-	return &genericSet{set: sb.Finish()}
+	return genericSet{set: sb.Finish()}
 }
 
 func (d Dict) Where(pred func(Value) bool) Set {
