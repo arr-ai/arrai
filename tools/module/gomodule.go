@@ -67,7 +67,7 @@ type goMod struct {
 }
 
 func (m *GoModule) Get(filename string) (*Mod, error) {
-	err := goGetByFilepath(filename)
+	err := goGetByPackagePath(filename)
 	if err != nil {
 		return nil, err
 	}
@@ -79,7 +79,7 @@ func (m *GoModule) Get(filename string) (*Mod, error) {
 	return m.BaseModule.Get(filename)
 }
 
-func goGetByFilepath(filename string) error {
+func goGetByPackagePath(filename string) error {
 	names := strings.Split(filename, string(os.PathSeparator))
 	if len(names) > 0 {
 		gogetPath := names[0]

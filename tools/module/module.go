@@ -2,7 +2,6 @@ package module
 
 import (
 	"path"
-	"path/filepath"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -44,5 +43,5 @@ func hasPathPrefix(prefix, s string) bool {
 	prefix = path.Clean(prefix)
 	s = path.Clean(s)
 
-	return strings.HasPrefix(s, prefix+string(filepath.Separator)) || s == prefix
+	return strings.HasPrefix(s, prefix+"/") || s == prefix
 }
