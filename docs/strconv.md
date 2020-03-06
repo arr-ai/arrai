@@ -6,10 +6,11 @@ Both takes a string of an arrai expression and returns an arrai value which is e
 
 However, `eval` is only supported to evaluate simple values e.g. numbers, tuples, sets, arrays, strings etc.
 
-`unsafe_eval` can evaluate more complex operations and return the value e.g. math operations, functions.
+`unsafe_eval` can evaluate more complex operations and return the value e.g. math operations, function calls.
 
 ## Example
 
 Evaluating `//.strconv.eval("'true'")` will return `true`
 Evaluating `//.strconv.eval("(test: 'test', number:123)")` will return `(test: 'test', number:123)`
 Evaluating `//.strconv.unsafe_eval("6 * 7")` will return `42`
+Evaluating `//.strconv.unsafe_eval("(\\x x + 1)(10)")` will return `11`
