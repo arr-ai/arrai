@@ -49,7 +49,7 @@ func TestParseTuple(t *testing.T) {
 	), `("a":1, "b": 2)`)
 }
 
-func TestParseSet(t *testing.T) {
+func TestParseSet(t *testing.T) { // nolint:dupl
 	t.Parallel()
 	assertParse(t, rel.NewSet(), `{}`)
 	assertParse(t, rel.NewSet(), `false`)
@@ -62,7 +62,7 @@ func TestParseSet(t *testing.T) {
 	), `{1, {3, 4}, 2}`)
 }
 
-func TestParseArray(t *testing.T) {
+func TestParseArray(t *testing.T) { // nolint:dupl
 	t.Parallel()
 	assertParse(t, rel.NewArray(), `[]`)
 	assertParse(t, rel.NewArray(), `false`)
