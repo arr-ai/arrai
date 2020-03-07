@@ -9,8 +9,8 @@ import (
 func stdOs() rel.Attr {
 	return rel.NewAttr("os", rel.NewTuple(
 		rel.NewAttr("args", getArgs()),
-		rel.NewAttr("pathSeparator", pathSeparator()),
-		rel.NewAttr("pathListSeparator", pathListSeparator()),
+		rel.NewAttr("path_separator", pathSeparator()),
+		rel.NewAttr("path_list_separator", pathListSeparator()),
 		rel.NewAttr("cwd", cwd()),
 		rel.NewNativeFunctionAttr("file", func(value rel.Value) rel.Value {
 			f, err := ioutil.ReadFile(value.(rel.String).String())
@@ -19,6 +19,6 @@ func stdOs() rel.Attr {
 			}
 			return rel.NewBytes(f)
 		}),
-		rel.NewNativeFunctionAttr("getenv", getEnv),
+		rel.NewNativeFunctionAttr("get_env", getEnv),
 	))
 }
