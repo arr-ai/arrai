@@ -25,3 +25,7 @@ func pathListSeparator() rel.Value {
 func cwd() rel.Value {
 	return rel.NewSet()
 }
+
+func file(rel.Value) rel.Value {
+	return rel.NewBytes([]byte{})
+}
