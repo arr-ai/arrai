@@ -15,7 +15,7 @@ Expression strings are like regular strings with three differences:
    strings.
 2. Expression strings treat whitespace differently than regular strings do.
 3. Expressions may be embedded within an expression string, allowing for dynamic
-   content. The expression string `$"id = :{i}:;"` evaluates to `"id = 42;"` if
+   content. The expression string `$"id = ${i};"` evaluates to `"id = 42;"` if
    `i` equals 42.
 
 ## Whitespace rules
@@ -65,7 +65,7 @@ Expression strings apply the following rules to handle whitespace:
    ```text
    let s = "" in $"
        abc
-       :{s}:
+       ${s}
        def"
    ```
 
@@ -75,7 +75,7 @@ Expression strings apply the following rules to handle whitespace:
    ```text
    let s = "123" in $"
        abc
-       :{s}:
+       ${s}
        def"
    ```
 
@@ -84,7 +84,7 @@ Expression strings apply the following rules to handle whitespace:
 Embedded expressions are evaluated and formatted to provide content for the
 expression strings containing them. Their general form is as follows:
 
-* `:{` *expr* (`:` *format* (`:` *sep* (`:` *extra*)<sub>*opt*</sub>)<sub>*opt*</sub>)<sub>*opt*</sub> `}:`
+* `${` *expr* (`:` *format* (`:` *sep* (`:` *extra*)<sub>*opt*</sub>)<sub>*opt*</sub>)<sub>*opt*</sub> `}`
 
 The elements are as follows:
 
@@ -92,26 +92,26 @@ The elements are as follows:
    for the containing expression string are also in scope for its embedded
    expressions.
 
-   **Example:** `$"=:{6*7}:="` equals `"=42="`.
+   **Example:** `$"=${6*7}="` equals `"=42="`.
 
 2. If present, *format* controls the way expr is formatted. It is a printf-style
    formatting string. If sep is omitted, *format* is applied to *expr* directly.
    If absence, `%v` is assumed.
 
-   **Example:** `$"=:{//.math.pi:06.3f}:="` equals `"=03.142="`.
+   **Example:** `$"=${//.math.pi:06.3f}="` equals `"=03.142="`.
 
 3. If *sep* is present, *expr* is treated as an array, and *format* is applied
    to each element. The formatted results are concatenated, with *sep* used as a
    separator between each pair of results.
 
-   **Example:** `$":{[1, 2, 3, 4]>>.^2:02d:--}:"` equals `"01--04--09--16"`.
+   **Example:** `$"${[1, 2, 3, 4]>>.^2:02d:--}"` equals `"01--04--09--16"`.
 
 4. If *extra* is present, it is appended to the formatted result, but only if
    the result is not empty.
 
    **Examples:**
-   1. `$":{ [1, 2, 3] :::=}:"` equals `"123="`
-   2. `$":{ [1, 2, 3] where .>10 :::=}:"` equals `""`
+   1. `$"${ [1, 2, 3] :::=}"` equals `"123="`
+   2. `$"${ [1, 2, 3] where .>10 :::=}"` equals `""`
 
 5. The *sep* and *extra* modifiers allow the usual character escapes plus one
    special escape, `\i`, which expands to `"\n" ++ indent`, where `indent`
@@ -123,7 +123,7 @@ The elements are as follows:
    ```text
    let arr = [1, 2, 3, 4] in $"
        numbers:
-           :{arr::\i}:
+           ${arr::\i}
    "
    ```
 

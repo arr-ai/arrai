@@ -4,8 +4,8 @@ let lib = (
       (name: "sum", params: ["x", "y"], expr: "x + y"),
    ]
 ) in
-$`:{lib.functions >> $`
-   function :{.name}:(:{.params::, }:) {
-      return :{.expr}:
+$`${lib.functions >> $`
+   function ${.name}(${.params::, }) {
+      return ${.expr}
    }
-`::\i:\n}:`
+`::\i:\n}`
