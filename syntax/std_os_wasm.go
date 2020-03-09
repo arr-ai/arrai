@@ -7,21 +7,25 @@ import (
 )
 
 func getArgs() rel.Value {
-	return rel.NewSet()
+	panic("not implemented")
 }
 
 func getEnv(value rel.Value) rel.Value {
-	return rel.NewSet()
+	panic("not implemented")
 }
 
 func pathSeparator() rel.Value {
-	return rel.NewSet()
+	panic("not implemented")
 }
 
 func pathListSeparator() rel.Value {
-	return rel.NewSet()
+	panic("not implemented")
 }
 
 func cwd() rel.Value {
-	return rel.NewSet()
+	panic("not implemented")
+}
+
+func file(rel.Value) rel.Value {
+	panic("not implemented")
 }

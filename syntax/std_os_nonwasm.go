@@ -3,6 +3,7 @@
 package syntax
 
 import (
+	"io/ioutil"
 	"os"
 
 	"github.com/arr-ai/arrai/rel"
@@ -30,4 +31,12 @@ func cwd() rel.Value {
 		panic(err)
 	}
 	return rel.NewString([]rune(wd))
+}
+
+func file(v rel.Value) rel.Value {
+	f, err := ioutil.ReadFile(v.(rel.String).String())
+	if err != nil {
+		panic(err)
+	}
+	return rel.NewBytes(f)
 }
