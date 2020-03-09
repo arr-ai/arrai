@@ -78,13 +78,13 @@ touch  -> C* ("->*" ("&"? IDENT | STR))+ "(" expr:"," ","? ")" C*;
 get    -> C* dot="." ("&"? IDENT | STR | "*") C*;
 names  -> C* "|" C* IDENT:"," C* "|" C*;
 name   -> C* IDENT C* | C* STR C*;
-xstr   -> C* quote=/{\$"\s*} part=( sexpr | fragment=/{(?: \\. | :[^{"] | [^\\":] )+} )* '"' C*
-        | C* quote=/{\$'\s*} part=( sexpr | fragment=/{(?: \\. | :[^{'] | [^\\':] )+} )* "'" C*
-        | C* quote=/{\$‵\s*} part=( sexpr | fragment=/{(?: ‵‵  | :[^{‵] | [^‵  :] )+} )* "‵" C*;
-sexpr  -> ":{"
+xstr   -> C* quote=/{\$"\s*} part=( sexpr | fragment=/{(?: \\. | \$[^{"] | [^\\"$] )+} )* '"' C*
+        | C* quote=/{\$'\s*} part=( sexpr | fragment=/{(?: \\. | \$[^{'] | [^\\'$] )+} )* "'" C*
+        | C* quote=/{\$‵\s*} part=( sexpr | fragment=/{(?: ‵‵  | \$[^{‵] | [^‵  $] )+} )* "‵" C*;
+sexpr  -> "${"
           C* expr C*
           control=/{ (?: : [-+#*\.\_0-9a-z]* (?: : (?: \\. | [^\\:}] )* ){0,2} )? }
-          close=/{\}:\s*};
+          close=/{\}\s*};
 
 ARROW  -> /{:>|=>|>>|orderby|order|where|sum|max|mean|median|min};
 IDENT  -> /{ \. | [$@A-Za-z_][0-9$@A-Za-z_]* };
@@ -407,7 +407,7 @@ func (pc ParseContext) CompileExpr(b ast.Branch) rel.Expr {
 						trimIndent("")
 					}
 					sexpr := part.(ast.One).Node.(ast.Branch)
-					ws = sexpr.One("close").One("").(ast.Leaf).Scanner().String()[2:]
+					ws = sexpr.One("close").One("").(ast.Leaf).Scanner().String()[1:]
 					parts = append(parts, sexpr)
 				case "fragment":
 					s := part.(ast.One).Node.One("").Scanner().String()

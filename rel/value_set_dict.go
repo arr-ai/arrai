@@ -35,7 +35,7 @@ func AsDict(s Set) (Dict, bool) {
 	if d, ok := s.(Dict); ok {
 		return d, true
 	}
-	if !s.Bool() {
+	if !s.IsTrue() {
 		return Dict{}, true
 	}
 	var mb frozen.MapBuilder
@@ -65,7 +65,7 @@ func (d Dict) Equal(v interface{}) bool {
 	case Dict:
 		return d.m.Equal(v.m)
 	case Set:
-		if d.Bool() != v.Bool() || d.Count() != v.Count() {
+		if d.IsTrue() != v.IsTrue() || d.Count() != v.Count() {
 			return false
 		}
 		match := DictTupleMatcher()
@@ -107,7 +107,7 @@ func (d Dict) Kind() int {
 	return dictKind
 }
 
-func (d Dict) Bool() bool {
+func (d Dict) IsTrue() bool {
 	return !d.m.IsEmpty()
 }
 

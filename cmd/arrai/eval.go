@@ -5,7 +5,6 @@ import (
 	"io"
 	"os"
 
-	"github.com/arr-ai/arrai/rel"
 	"github.com/arr-ai/arrai/syntax"
 	"github.com/urfave/cli/v2"
 )
@@ -22,12 +21,7 @@ func evalImpl(source string, w io.Writer) error {
 }
 
 func evalExpr(path, source string, w io.Writer) error {
-	expr, err := syntax.Compile(path, source)
-	if err != nil {
-		return err
-	}
-
-	value, err := expr.Eval(rel.Scope{})
+	value, err := syntax.EvaluateExpr(path, source)
 	if err != nil {
 		return err
 	}

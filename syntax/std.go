@@ -7,9 +7,8 @@ import (
 	"strconv"
 	"sync"
 
-	"github.com/arr-ai/wbnf/ast"
-
 	"github.com/arr-ai/arrai/rel"
+	"github.com/arr-ai/wbnf/ast"
 	"github.com/arr-ai/wbnf/parser"
 	"github.com/arr-ai/wbnf/wbnf"
 )
@@ -57,6 +56,8 @@ func stdScope() rel.Scope {
 				stdReflect(),
 				stdRel(),
 				stdStr(),
+				stdEval(),
+				stdOs(),
 			))
 	})
 	return stdScopeVar

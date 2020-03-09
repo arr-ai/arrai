@@ -116,8 +116,8 @@ func (vl Float64InterfaceList) Swap(i, j int) {
 
 func TestSetBool(t *testing.T) {
 	t.Parallel()
-	assert.False(t, intSet().Bool())
-	assert.True(t, intSet(42).Bool())
+	assert.False(t, intSet().IsTrue())
+	assert.True(t, intSet(42).IsTrue())
 }
 
 func TestSetLess(t *testing.T) {

@@ -114,8 +114,8 @@ func TestTupleEqual(t *testing.T) {
 
 func TestTupleBool(t *testing.T) {
 	t.Parallel()
-	assert.False(t, EmptyTuple.Bool())
-	assert.True(t, NewTuple(Attr{"a", NewNumber(42)}).Bool())
+	assert.False(t, EmptyTuple.IsTrue())
+	assert.True(t, NewTuple(Attr{"a", NewNumber(42)}).IsTrue())
 }
 
 func TestTupleLess(t *testing.T) {

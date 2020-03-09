@@ -54,7 +54,7 @@ func (c ExprClosure) Kind() int {
 }
 
 // Bool returns true iff the tuple has attributes.
-func (c ExprClosure) Bool() bool {
+func (c ExprClosure) IsTrue() bool {
 	return true
 }
 

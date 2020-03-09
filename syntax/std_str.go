@@ -12,7 +12,7 @@ func formatValue(format string, value rel.Value) string {
 	v := value.Export()
 	switch format[len(format)-1] {
 	case 't':
-		v = value.Bool()
+		v = value.IsTrue()
 	case 'c', 'd', 'o', 'O', 'x', 'X', 'U':
 		v = int(value.Export().(float64))
 	case 'q':
