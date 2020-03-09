@@ -1,19 +1,18 @@
 package syntax
 
-import (
-	"github.com/arr-ai/arrai/rel"
-)
+import "github.com/arr-ai/arrai/rel"
 
-func stdStrconv() rel.Attr {
-	return rel.NewAttr("strconv", rel.NewTuple(
+func stdEval() rel.Attr {
+	return rel.NewAttr("eval", rel.NewTuple(
 		//TODO: eval needs to be changed to only evaluate simple expression
 		// e.g. no functions, no math operations etc only simple values
-		rel.NewNativeFunctionAttr("eval", unsafeEval),
-		rel.NewNativeFunctionAttr("unsafe_eval", unsafeEval),
+		rel.NewNativeFunctionAttr("value", evalExpr),
+
+		//TODO: eval.expr
 	))
 }
 
-func unsafeEval(v rel.Value) rel.Value {
+func evalExpr(v rel.Value) rel.Value {
 	evaluated, err := EvaluateExpr(".", v.(rel.String).String())
 	if err != nil {
 		panic(err)
