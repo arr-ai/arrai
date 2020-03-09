@@ -40,7 +40,7 @@ func (e *IfElseExpr) Eval(local Scope) (Value, error) {
 	if err != nil {
 		return nil, err
 	}
-	if cond.Bool() {
+	if cond.IsTrue() {
 		return e.ifTrue.Eval(local)
 	}
 	return e.ifFalse.Eval(local)

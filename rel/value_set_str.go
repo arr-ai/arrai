@@ -116,7 +116,7 @@ func (s String) Kind() int {
 }
 
 // Bool returns true iff the tuple has attributes.
-func (s String) Bool() bool {
+func (s String) IsTrue() bool {
 	if len(s.s) == 0 {
 		panic("Empty string not allowed (should be == None)")
 	}
@@ -301,7 +301,7 @@ func (e *stringEnumerator) Current() Value {
 // 	if s, ok := s.(String); ok {
 // 		return s
 // 	}
-// 	if !s.Bool() {
+// 	if !s.IsTrue() {
 // 		return s
 // 	}
 

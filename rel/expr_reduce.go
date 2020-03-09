@@ -53,7 +53,7 @@ func NewMaxExpr(a, b Expr) Expr {
 	return NewReduceExpr(
 		a, ExprAsFunction(b), "%s max ???",
 		func(s Set) (interface{}, error) {
-			if s.Bool() {
+			if s.IsTrue() {
 				return nil, nil
 			}
 			return nil, errors.Errorf("Empty set has no max")
@@ -109,7 +109,7 @@ func NewMinExpr(a, b Expr) Expr {
 	return NewReduceExpr(
 		a, ExprAsFunction(b), "%s min ???",
 		func(s Set) (interface{}, error) {
-			if s.Bool() {
+			if s.IsTrue() {
 				return nil, nil
 			}
 			return nil, errors.Errorf("Empty set has no min")

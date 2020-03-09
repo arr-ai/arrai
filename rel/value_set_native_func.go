@@ -69,7 +69,7 @@ func (f *NativeFunction) Kind() int {
 }
 
 // Bool always returns true.
-func (f *NativeFunction) Bool() bool {
+func (f *NativeFunction) IsTrue() bool {
 	return true
 }
 

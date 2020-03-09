@@ -182,7 +182,7 @@ func (t *GenericTuple) Kind() int {
 }
 
 // Bool returns true iff the tuple has attributes.
-func (t *GenericTuple) Bool() bool {
+func (t *GenericTuple) IsTrue() bool {
 	return t.Count() > 0
 }
 
@@ -235,7 +235,7 @@ func (t *GenericTuple) Negate() Value {
 			return x
 		}
 	}
-	if !t.Bool() {
+	if !t.IsTrue() {
 		return t
 	}
 	return NewTuple(NewAttr(negateTag, t))

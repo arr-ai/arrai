@@ -60,7 +60,7 @@ func (x *DotExpr) Eval(local Scope) (Value, error) {
 	case Tuple:
 		return get(t)
 	case Set:
-		if !t.Bool() {
+		if !t.IsTrue() {
 			return nil, errors.Errorf("Cannot get attr %q from empty set", x.attr)
 		}
 		e := t.Enumerator()
