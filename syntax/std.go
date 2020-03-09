@@ -56,6 +56,7 @@ func stdScope() rel.Scope {
 				stdReflect(),
 				stdRel(),
 				stdStr(),
+				stdEval(),
 				stdOs(),
 			))
 	})
