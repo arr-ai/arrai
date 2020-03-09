@@ -18,7 +18,11 @@ var importLocalFileVar rel.Value
 func importLocalFile() rel.Value {
 	importLocalFileOnce.Do(func() {
 		importLocalFileVar = rel.NewNativeFunction("//./", func(v rel.Value) rel.Value {
-			v, err := fileValue(v.String())
+			s, ok := rel.AsString(v.(rel.Set))
+			if !ok {
+				panic(fmt.Errorf("cannot convert %#v to string", v))
+			}
+			v, err := fileValue(s.String())
 			if err != nil {
 				panic(err)
 			}
@@ -35,7 +39,11 @@ var importExternalContentVar rel.Value
 func importExternalContent() rel.Value {
 	importExternalContentOnce.Do(func() {
 		importExternalContentVar = rel.NewNativeFunction("//", func(v rel.Value) rel.Value {
-			importpath := v.String()
+			s, ok := rel.AsString(v.(rel.Set))
+			if !ok {
+				panic(fmt.Errorf("cannot convert %#v to string", v))
+			}
+			importpath := s.String()
 
 			var moduleErr error
 
