@@ -170,7 +170,7 @@ func NewWhereExpr(a, pred Expr) Expr {
 						if err != nil {
 							panic(err)
 						}
-						return match.Bool()
+						return match.IsTrue()
 					}), nil
 				}
 				return nil, errors.Errorf("'where' rhs must be a Fn, not %T", a)
@@ -224,7 +224,7 @@ func NewOrderExpr(a, key Expr) Expr {
 							if err != nil {
 								panic(err)
 							}
-							return result.Bool()
+							return result.IsTrue()
 						})
 					if err != nil {
 						return nil, err

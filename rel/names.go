@@ -22,7 +22,7 @@ func NewNames(names ...string) Names {
 }
 
 // Bool returns true iff there are names in the set.
-func (n Names) Bool() bool {
+func (n Names) IsTrue() bool {
 	return n.Count() != 0
 }
 

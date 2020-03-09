@@ -70,7 +70,7 @@ func (n Number) Kind() int {
 }
 
 // Bool returns true iff the tuple has attributes.
-func (n Number) Bool() bool {
+func (n Number) IsTrue() bool {
 	return n != 0
 }
 
@@ -84,7 +84,7 @@ func (n Number) Less(v Value) bool {
 
 // Negate returns -n.
 func (n Number) Negate() Value {
-	if !n.Bool() {
+	if !n.IsTrue() {
 		return n
 	}
 	return NewNumber(-float64(n))

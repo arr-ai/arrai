@@ -49,7 +49,7 @@ func NewPowerSetExpr(a Expr) Expr {
 // NewNotExpr evaluates to !a.
 func NewNotExpr(a Expr) Expr {
 	return newUnaryExpr(a, "!", "(!%s)",
-		func(a Value, _ Scope) (Value, error) { return NewBool(!a.Bool()), nil })
+		func(a Value, _ Scope) (Value, error) { return NewBool(!a.IsTrue()), nil })
 }
 
 // NewEvalExpr evaluates to *a, given a set lhs.

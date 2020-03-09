@@ -75,7 +75,7 @@ func (b Bytes) Kind() int {
 }
 
 // Bool returns true iff the tuple has attributes.
-func (b Bytes) Bool() bool {
+func (b Bytes) IsTrue() bool {
 	if len(b.b) == 0 {
 		panic("Empty string not allowed (should be == None)")
 	}
@@ -269,7 +269,7 @@ func (e *bytesEnumerator) Current() Value {
 // 	if b, ok := b.(Bytes); ok {
 // 		return b
 // 	}
-// 	if !b.Bool() {
+// 	if !b.IsTrue() {
 // 		return b
 // 	}
 
