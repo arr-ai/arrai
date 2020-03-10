@@ -107,10 +107,10 @@ func stdStr() rel.Attr {
 		createNestedFuncAttr("contains", 2, func(args ...rel.Value) rel.Value {
 			return rel.NewBool(strings.Contains(mustAsString(args[0]), mustAsString(args[1])))
 		}),
-		createNestedFuncAttr("hasPrefix", 2, func(args ...rel.Value) rel.Value {
+		createNestedFuncAttr("has_prefix", 2, func(args ...rel.Value) rel.Value {
 			return rel.NewBool(strings.HasPrefix(mustAsString(args[0]), mustAsString(args[1])))
 		}),
-		createNestedFuncAttr("hasSuffix", 2, func(args ...rel.Value) rel.Value {
+		createNestedFuncAttr("has_suffix", 2, func(args ...rel.Value) rel.Value {
 			return rel.NewBool(strings.HasPrefix(mustAsString(args[0]), mustAsString(args[1])))
 		}),
 		createNestedFuncAttr("join", 2, func(args ...rel.Value) rel.Value {
