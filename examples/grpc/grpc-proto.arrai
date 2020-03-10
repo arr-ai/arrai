@@ -30,8 +30,8 @@ let endpoints = app.endpoints where !//.str.hasPrefix(.@item.name, "enum ") in
             service ${app.name} {
                 ${endpoints >> (proto.endpointInfo(.)).rpcMethod::\i}
             }
-            ${app.endpoints &~ endpoints >> $`
-                enum ${//.re.sub(.name, `^\S*\s`, "")} {
+            ${//.log.print(app.endpoints &~ endpoints) >> $`
+                enum ${//.rex.sub(.name, `^\S*\s`, "")} {
                     ${.stmts >> $`${.action};`::\i}
                 }`:::\n}
             ${endpoints if wrap >>

@@ -42,31 +42,6 @@ func NewRelationExpr(names []string, tuples ...[]Expr) (Expr, error) {
 	return NewSetExpr(elements...), nil
 }
 
-// NewArrayExpr returns a new TupleExpr.
-func NewArrayExpr(elements ...Expr) Expr {
-	values := make([]Value, 0, len(elements))
-	for _, expr := range elements {
-		if value, ok := expr.(Value); ok {
-			values = append(values, value)
-			continue
-		}
-		tuples := make([]Expr, 0, len(elements))
-		for i, elt := range elements {
-			posAttr, err := NewAttrExpr("@", NewNumber(float64(i)))
-			if err != nil {
-				return nil
-			}
-			valAttr, err := NewAttrExpr(ArrayItemAttr, elt)
-			if err != nil {
-				return nil
-			}
-			tuples = append(tuples, NewTupleExpr(posAttr, valAttr))
-		}
-		return NewSetExpr(tuples...)
-	}
-	return NewArray(values...)
-}
-
 // NewDictExpr returns a new MapExpr from pairs.
 func NewDictExpr(keyvals ...[2]Expr) Expr {
 	values := make([]Value, 0, len(keyvals))

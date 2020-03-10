@@ -2,6 +2,7 @@ package syntax
 
 import (
 	"fmt"
+	"log"
 	"strings"
 
 	"github.com/arr-ai/arrai/rel"
@@ -114,6 +115,7 @@ func stdStr() rel.Attr {
 }
 
 func mustAsString(v rel.Value) string {
+	log.Print(v)
 	if s, ok := rel.AsString(v.(rel.Set)); ok {
 		return s.String()
 	}

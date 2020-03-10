@@ -79,6 +79,13 @@ type ValueEnumerator interface {
 	Current() Value
 }
 
+type OffsetValueEnumerator interface {
+	ValueEnumerator
+	Offset() int
+}
+
+type Less func(a, b Value) bool
+
 // Set represents a Set of Values.
 type Set interface {
 	Value
@@ -95,7 +102,7 @@ type Set interface {
 	Where(func(Value) bool) Set
 	Call(arg Value) Value
 
-	ArrayEnumerator() (ValueEnumerator, bool)
+	ArrayEnumerator() (OffsetValueEnumerator, bool)
 }
 
 // NewValue constructs a new value from a Go value.

@@ -80,6 +80,34 @@ func OrderBy(s Set, key func(v Value) (Value, error), less func(a, b Value) bool
 	return o.values, nil
 }
 
+func OrderedValueEnumerator(e ValueEnumerator, less Less) ValueEnumerator {
+	if less == nil {
+		return e
+	}
+	var values []Value
+	for e.MoveNext() {
+		values = append(values, e.Current())
+	}
+	return &valueSliceEnumerator{values: values, i: -1}
+}
+
+type valueSliceEnumerator struct {
+	values []Value
+	i      int
+}
+
+func (e *valueSliceEnumerator) MoveNext() bool {
+	if e.i >= len(e.values)-1 {
+		return false
+	}
+	e.i++
+	return true
+}
+
+func (e *valueSliceEnumerator) Current() Value {
+	return e.values[e.i]
+}
+
 type orderer struct {
 	values []Value
 	keys   []Value

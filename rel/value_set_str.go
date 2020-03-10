@@ -15,10 +15,15 @@ type String struct {
 
 // NewString constructs an array as a relation.
 func NewString(s []rune) Set {
+	return NewOffsetString(s, 0)
+}
+
+// NewString constructs an array as a relation.
+func NewOffsetString(s []rune, offset int) Set {
 	if len(s) == 0 {
 		return None
 	}
-	return String{s: s}
+	return String{s: s, offset: offset}
 }
 
 func AsString(s Set) (String, bool) {
@@ -26,7 +31,7 @@ func AsString(s Set) (String, bool) {
 		return s, true
 	}
 	if i := s.Enumerator(); i.MoveNext() {
-		match := stringTupleMatcher()
+		match := stringCharTupleMatcher()
 		tupleOffset, str, isStrTuple := match(i.Current())
 		if !isStrTuple {
 			return String{}, false
@@ -59,14 +64,6 @@ func AsString(s Set) (String, bool) {
 		return NewOffsetString(strs[lowestIndex:highestIndex+1], minOffset).(String), true
 	}
 	return String{}, true
-}
-
-// NewString constructs an array as a relation.
-func NewOffsetString(s []rune, offset int) Set {
-	if len(s) == 0 {
-		return None
-	}
-	return String{s: s, offset: offset}
 }
 
 // Hash computes a hash for a String.
@@ -150,7 +147,7 @@ func (s String) Count() int {
 
 // Has returns true iff the given Value is in the String.
 func (s String) Has(value Value) bool {
-	match := stringTupleMatcher()
+	match := stringCharTupleMatcher()
 	if pos, char, ok := match(value); ok {
 		if s.offset <= pos && pos < s.offset+len(s.s) {
 			return char == s.s[pos-s.offset]
@@ -174,7 +171,7 @@ func (s String) with(index int, char rune) Set {
 // With returns the original String with given value added. Iff the value was
 // already present, the original String is returned.
 func (s String) With(value Value) Set {
-	match := stringTupleMatcher()
+	match := stringCharTupleMatcher()
 	if index, char, ok := match(value); ok {
 		return s.with(index, char)
 	}
@@ -184,7 +181,7 @@ func (s String) With(value Value) Set {
 // Without returns the original String without the given value. Iff the value
 // was already absent, the original String is returned.
 func (s String) Without(value Value) Set {
-	match := stringTupleMatcher()
+	match := stringCharTupleMatcher()
 	if pos, char, ok := match(value); ok {
 		if i := s.index(pos); i >= 0 && char == s.s[i] {
 			if pos == s.offset+i {
@@ -253,8 +250,8 @@ func (s String) Enumerator() ValueEnumerator {
 	return &StringEnumerator{s.s, -1}
 }
 
-func (s String) ArrayEnumerator() (ValueEnumerator, bool) {
-	return &stringEnumerator{s.s, -1}, true
+func (s String) ArrayEnumerator() (OffsetValueEnumerator, bool) {
+	return &stringEnumerator{s: s, i: -1}, true
 }
 
 func newStringTuple(index int, char rune) Tuple {
@@ -264,29 +261,13 @@ func newStringTuple(index int, char rune) Tuple {
 	)
 }
 
-func stringTupleMatcher() func(v Value) (index int, char rune, matches bool) {
-	var index int
-	var char rune
-	m := NewTupleMatcher(
-		map[string]Matcher{
-			"@":      MatchInt(func(i int) { index = i }),
-			CharAttr: MatchInt(func(i int) { char = rune(i) }),
-		},
-		Lit(EmptyTuple),
-	)
-	return func(v Value) (int, rune, bool) {
-		matches := m.Match(v)
-		return index, char, matches
-	}
-}
-
 type stringEnumerator struct {
-	s []rune
+	s String
 	i int
 }
 
 func (e *stringEnumerator) MoveNext() bool {
-	if e.i >= len(e.s)-1 {
+	if e.i >= len(e.s.s)-1 {
 		return false
 	}
 	e.i++
@@ -294,7 +275,11 @@ func (e *stringEnumerator) MoveNext() bool {
 }
 
 func (e *stringEnumerator) Current() Value {
-	return NewNumber(float64(e.s[e.i]))
+	return NewNumber(float64(e.s.s[e.i]))
+}
+
+func (e *stringEnumerator) Offset() int {
+	return e.s.offset + e.i
 }
 
 // func stringSet(s Set) Set {

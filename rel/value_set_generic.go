@@ -283,10 +283,12 @@ func (s genericSet) Any() Value {
 	panic("Any(): empty set")
 }
 
-func (s genericSet) ArrayEnumerator() (ValueEnumerator, bool) {
-	return &arrayEnumerator{s.set.OrderedRange(func(a, b interface{}) bool {
-		return a.(Tuple).MustGet("@").(Number) < b.(Tuple).MustGet("@").(Number)
-	})}, true
+func (s genericSet) ArrayEnumerator() (OffsetValueEnumerator, bool) {
+	return &arrayEnumerator{
+		i: s.set.OrderedRange(func(a, b interface{}) bool {
+			return a.(Tuple).MustGet("@").(Number) < b.(Tuple).MustGet("@").(Number)
+		}),
+	}, true
 }
 
 // genericSetEnumerator represents an enumerator over a genericSet.

@@ -100,7 +100,7 @@ func (d Dict) Eval(local Scope) (Value, error) {
 	return d, nil
 }
 
-var dictKind = registerKind(208, reflect.TypeOf(String{}))
+var dictKind = registerKind(209, reflect.TypeOf(String{}))
 
 // Kind returns a number that is unique for each major kind of Value.
 func (d Dict) Kind() int {
@@ -191,7 +191,7 @@ func (d Dict) Call(arg Value) Value {
 	return d.m.MustGet(arg).(Value)
 }
 
-func (d Dict) ArrayEnumerator() (ValueEnumerator, bool) {
+func (d Dict) ArrayEnumerator() (OffsetValueEnumerator, bool) {
 	return nil, false
 }
 
