@@ -16,3 +16,11 @@ func assertEvalOutputs(t *testing.T, expected, source string) bool { //nolint:un
 func TestEvalNumberULP(t *testing.T) {
 	assertEvalOutputs(t, `0.3`, `0.1 + 0.1 + 0.1`)
 }
+
+func TestEvalDoubleQuoteTupleAccess(t *testing.T) {
+	assertEvalOutputs(t, `42`, `("😅":42)."😅"`)
+	assertEvalOutputs(t, `42`, `("😅":42).'😅'`)
+	assertEvalOutputs(t, `42`, "('😅':42).`😅`")
+	assertEvalOutputs(t, `42`, `(x:42)."x"`)
+	assertEvalOutputs(t, `42`, `("":42).""`)
+}
