@@ -256,20 +256,8 @@ func (pc ParseContext) CompileExpr(b ast.Branch) rel.Expr {
 			result = rel.DotIdent
 		}
 		for _, dot := range c.(ast.Many) {
-			var ident string
 			//TODO: handle get operation for "*", the grammar allows this
-			switch name, child := which(dot.(ast.Branch), "STR", "IDENT"); name {
-			case "STR":
-				ident = child.(ast.One).Node.One("").Scanner().String()
-				if ident != "\"\"" {
-					ident = ident[1 : len(ident)-1]
-				} else {
-					ident = ""
-				}
-			default:
-				ident = child.(ast.One).Node.One("").(ast.Leaf).Scanner().String()
-			}
-			result = rel.NewDotExpr(result, ident)
+			result = rel.NewDotExpr(result, parseName(dot.(ast.Branch)))
 		}
 		return result
 	case "rel":
