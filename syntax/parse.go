@@ -61,7 +61,7 @@ expr   -> C* amp="&"* @ C* arrow=(
         | C* "{:" C* embed=(grammar=@ ":" subgrammar=%%ast) ":}" C*
         | C* op="\\\\" @ C*
         | C* fn="\\" IDENT @ C*
-        | C* "//" pkg=( dot="." ("/" local=name)+
+		| C* "//" pkg=( dot="."? ("/" local=name)+
                    | "." std=IDENT?
                    | http=/{https?://}? fqdn=name:"." ("/" path=name)*
                    )
@@ -327,7 +327,7 @@ func (pc ParseContext) CompileExpr(b ast.Branch) rel.Expr {
 				panic(fmt.Errorf("local import %q invalid; no local context", filepath))
 			}
 			return rel.NewCallExpr(
-				NewPackageExpr(importLocalFile()),
+				NewPackageExpr(importLocalFile(pkg["dot"] == nil)),
 				rel.NewString([]rune(path.Join(pc.SourceDir, filepath))),
 			)
 		} else if fqdn := pkg["fqdn"]; fqdn != nil {
