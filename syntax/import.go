@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"path/filepath"
 	"strings"
 	"sync"
@@ -12,16 +13,31 @@ import (
 	"github.com/arr-ai/arrai/tools/module"
 )
 
+const arraiRootMarker = "go.mod"
+
 var importLocalFileOnce sync.Once
 var importLocalFileVar rel.Value
 
-func importLocalFile() rel.Value {
+func importLocalFile(fromRoot bool) rel.Value {
 	importLocalFileOnce.Do(func() {
 		importLocalFileVar = rel.NewNativeFunction("//./", func(v rel.Value) rel.Value {
 			s, ok := rel.AsString(v.(rel.Set))
 			if !ok {
 				panic(fmt.Errorf("cannot convert %#v to string", v))
+      }
+      
+      if fromRoot {
+				pwd, err := os.Getwd()
+				if err != nil {
+					panic(err)
+				}
+				rootPath, err := findRootFromModule(pwd)
+				if err != nil {
+					panic(err)
+				}
+				filepath = rootPath + "/" + filepath
 			}
+
 			v, err := fileValue(s.String())
 			if err != nil {
 				panic(err)
@@ -81,6 +97,41 @@ func importModuleFile(importpath string) (rel.Value, error) {
 	}
 
 	return fileValue(filepath.Join(m.Dir, strings.TrimPrefix(importpath, m.Name)))
+}
+
+func findRootFromModule(modulePath string) (string, error) {
+	currentPath, err := filepath.Abs(modulePath)
+	if err != nil {
+		return "", err
+	}
+
+	systemRoot, err := filepath.Abs(string(os.PathSeparator))
+	if err != nil {
+		return "", err
+	}
+
+	// Keep walking up the directories to find nearest root marker
+	for {
+		exists := fileExists(filepath.Join(currentPath, arraiRootMarker))
+		reachedRoot := currentPath == systemRoot || (err != nil && os.IsPermission(err))
+		switch {
+		case exists:
+			return currentPath, nil
+		case reachedRoot:
+			return "", nil
+		case err != nil:
+			return "", err
+		}
+		currentPath = filepath.Dir(currentPath)
+	}
+}
+
+func fileExists(filename string) bool {
+	info, err := os.Stat(filename)
+	if os.IsNotExist(err) {
+		return false
+	}
+	return !info.IsDir()
 }
 
 func importURL(url string) (rel.Value, error) {

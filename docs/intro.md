@@ -423,8 +423,8 @@ External libraries may be accessed via package references.
 2. **`//./path`** provides access to other arrai files relative to the current
    arrai file's parent directory (current working directory for expressions such
    as the `arrai eval` source that aren't associated with a file).
-3. **`///path`** **(⛔NYI)** provides access to other arrai files relative to the root of
-   the current module. <!-- TODO: explain modules -->
+3. **`///path`** provides access to other arrai files relative to the root of
+   the current module, looking for `go.mod` file backwards from the current directory.
 4. **`//hostname/path`** provides access to content from the internet
    1. **`//github.com/foo/bar/baz`:** access `baz.arrai` file in remote repository `github.com/foo/bar`
    2. **`//github.com/foo/bar/'a.json'`:** access `a.json` file in remote repository `github.com/foo/bar`
