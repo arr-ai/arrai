@@ -135,7 +135,6 @@ func MustCompile(filepath, source string) rel.Expr {
 }
 
 func (pc ParseContext) CompileExpr(b ast.Branch) rel.Expr {
-	// fmt.Println(b)
 	name, c := which(b,
 		"amp", "arrow", "let", "unop", "binop", "rbinop",
 		"if", "call", "count", "touch", "get",
@@ -333,7 +332,7 @@ func (pc ParseContext) CompileExpr(b ast.Branch) rel.Expr {
 		} else if fqdn := pkg["fqdn"]; fqdn != nil {
 			var sb strings.Builder
 			if http := pkg["http"]; http != nil {
-				sb.WriteString(http.(ast.One).Node.(ast.Leaf).Scanner().String())
+				sb.WriteString(http.(ast.One).Node.Scanner().String())
 			}
 			for i, part := range fqdn.(ast.Many) {
 				if i > 0 {
@@ -347,7 +346,7 @@ func (pc ParseContext) CompileExpr(b ast.Branch) rel.Expr {
 					sb.WriteString(strings.Trim(parseName(part.One("name").(ast.Branch)), "'"))
 				}
 			}
-			return rel.NewCallExpr(NewPackageExpr(importURL), rel.NewString([]rune(sb.String())))
+			return rel.NewCallExpr(NewPackageExpr(importExternalContent()), rel.NewString([]rune(sb.String())))
 		} else {
 			return NewPackageExpr(rel.DotIdent)
 		}

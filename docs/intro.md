@@ -81,7 +81,10 @@ seem. You can in fact represent:
 6. Packages:
    1. `//.math.sin(1)`
    2. `//./myutil/work(42)`
-   3. * **(⛔NYI)** `//github.com/foo/bar`
+   3. * **(⛔ NYI)** `///path/to/root/file`
+   4. * **(⛔ NYI)** `//./'myfile.yaml'`
+   5. `//github.com/org/external/file`
+   6. `//https://url/to/your/content`
 
 All of the above forms are syntactic sugar for specific combinations of numbers,
 tuples and sets. For example, the string `"hello"` is a shorthand for the
@@ -422,8 +425,11 @@ External libraries may be accessed via package references.
    as the `arrai eval` source that aren't associated with a file).
 3. **`///path`** provides access to other arrai files relative to the root of
    the current module, looking for `go.mod` file backwards from the current directory.
-4. **`//hostname/path`** **(⛔NYI)** provides access to arrai files in remote packages,
-   e.g.: `//github.com/foo/bar`.
+4. **`//hostname/path`** provides access to content from the internet
+   1. **`//github.com/foo/bar/baz`:** access `baz.arrai` file in remote repository `github.com/foo/bar`
+   2. **`//github.com/foo/bar/'a.json'`:** access `a.json` file in remote repository `github.com/foo/bar`
+   3. **`//foo.org/bar/'random.arrai'`/`//https://foo.org/bar/'random.arrai'`:** request content of `https://foo.org/bar/random.arrai` via HTTPS
+   3. **`//foo.org/bar/'some.json'`/`//https://foo.org/bar/'some.json'`:** request content of `https://foo.org/bar/some.json` via HTTPS
 
 ### Tuples vs Maps
 
