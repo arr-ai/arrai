@@ -24,9 +24,10 @@ func importLocalFile(fromRoot bool) rel.Value {
 			s, ok := rel.AsString(v.(rel.Set))
 			if !ok {
 				panic(fmt.Errorf("cannot convert %#v to string", v))
-      }
-      
-      if fromRoot {
+			}
+
+			filename := s.String()
+			if fromRoot {
 				pwd, err := os.Getwd()
 				if err != nil {
 					panic(err)
@@ -35,10 +36,10 @@ func importLocalFile(fromRoot bool) rel.Value {
 				if err != nil {
 					panic(err)
 				}
-				filepath = rootPath + "/" + filepath
+				filename = rootPath + "/" + filename
 			}
 
-			v, err := fileValue(s.String())
+			v, err := fileValue(filename)
 			if err != nil {
 				panic(err)
 			}
