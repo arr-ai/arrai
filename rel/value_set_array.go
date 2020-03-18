@@ -1,25 +1,11 @@
 package rel
 
 import (
-	"log"
 	"reflect"
 	"strings"
 
 	"github.com/arr-ai/frozen"
 )
-
-const ArrayItemAttr = "@item"
-
-// func isArrayTuple(v Value) (index int, item Value, is bool) {
-// 	is = NewTupleMatcher(
-// 		map[string]Matcher{
-// 			"@":           MatchInt(func(i int) { index = i }),
-// 			ArrayItemAttr: Bind(&item),
-// 		},
-// 		Lit(EmptyTuple),
-// 	).Match(v)
-// 	return
-// }
 
 // Array is an ordered collection of Values.
 type Array struct {
@@ -45,26 +31,25 @@ func AsArray(s Set) (Array, bool) {
 		return s, true
 	}
 	if i := s.Enumerator(); i.MoveNext() {
-		match := arrayTupleMatcher()
-		tupleOffset, item, is := match(i.Current())
+		t, is := i.Current().(ArrayItemTuple)
 		if !is {
 			return Array{}, false
 		}
 
 		middleIndex := s.Count()
 		items := make([]Value, 2*middleIndex)
-		items[middleIndex] = item
-		anchorOffset, minOffset := tupleOffset, tupleOffset
+		items[middleIndex] = t.item
+		anchorOffset, minOffset := t.at, t.at
 		lowestIndex, highestIndex := middleIndex, middleIndex
 		for i.MoveNext() {
-			if tupleOffset, item, is = match(i.Current()); !is {
+			if t, is = i.Current().(ArrayItemTuple); !is {
 				return Array{}, false
 			}
-			if tupleOffset < minOffset {
-				minOffset = tupleOffset
+			if t.at < minOffset {
+				minOffset = t.at
 			}
-			sliceIndex := middleIndex - (anchorOffset - tupleOffset)
-			items[sliceIndex] = item
+			sliceIndex := middleIndex - (anchorOffset - t.at)
+			items[sliceIndex] = t.item
 
 			if sliceIndex < lowestIndex {
 				lowestIndex = sliceIndex
@@ -189,11 +174,9 @@ func (a Array) Count() int {
 
 // Has returns true iff the given Value is in the Array.
 func (a Array) Has(value Value) bool {
-	match := arrayTupleMatcher()
-	log.Print(value)
-	if pos, item, ok := match(value); ok {
-		if a.offset <= pos && pos < a.offset+len(a.values) {
-			return item == a.values[pos-a.offset]
+	if t, ok := value.(ArrayItemTuple); ok {
+		if a.offset <= t.at && t.at < a.offset+len(a.values) {
+			return t.item == a.values[t.at-a.offset]
 		}
 	}
 	return false
@@ -208,15 +191,14 @@ func (a Array) with(index int, item Value) Set {
 			offset: a.offset - 1,
 		}
 	}
-	return newSetFromSet(a).With(newArrayTuple(index, item))
+	return newSetFromSet(a).With(NewArrayItemTuple(index, item))
 }
 
 // With returns the original Array with given value added. Iff the value was
 // already present, the original Array is returned.
 func (a Array) With(value Value) Set {
-	match := arrayTupleMatcher()
-	if index, item, ok := match(value); ok {
-		return a.with(index, item)
+	if t, ok := value.(ArrayItemTuple); ok {
+		return a.with(t.at, t.item)
 	}
 	return newSetFromSet(a).With(value)
 }
@@ -224,12 +206,12 @@ func (a Array) With(value Value) Set {
 // Without returns the original Array without the given value. Iff the value
 // was already absent, the original Array is returned.
 func (a Array) Without(value Value) Set {
-	if pos, item, ok := arrayTupleMatcher()(value); ok {
-		if i := a.index(pos); i >= 0 && item == a.values[i] {
-			if pos == a.offset {
+	if t, ok := value.(ArrayItemTuple); ok {
+		if i := a.index(t.at); i >= 0 && t.item == a.values[i] {
+			if t.at == a.offset {
 				return Array{values: a.values[1:], offset: a.offset + 1}
 			}
-			if pos == a.offset+i {
+			if t.at == a.offset+i {
 				return Array{values: a.values[:i], offset: a.offset}
 			}
 			return newSetFromSet(a).Without(value)
@@ -275,76 +257,45 @@ func (a Array) index(pos int) int {
 
 // Enumerator returns an enumerator over the Values in the Array.
 func (a Array) Enumerator() ValueEnumerator {
-	return &ArrayValueEnumerator{a: a, i: -1}
-}
-
-func (a Array) AsString() (String, bool) {
-	return String{}, false
+	return &arrayValueEnumerator{a: a, i: -1}
 }
 
 func (a Array) ArrayEnumerator() (OffsetValueEnumerator, bool) {
-	return &ArrayOffsetValueEnumerator{a: a, i: -1}, true
+	return &arrayOffsetValueEnumerator{arrayValueEnumerator{a: a, i: -1}}, true
 }
 
-func newArrayTuple(index int, v Value) Tuple {
-	return NewTuple(
-		NewAttr("@", NewNumber(float64(index))),
-		NewAttr(ArrayItemAttr, v),
-	)
+// arrayValueEnumerator represents an enumerator over a Array.
+type arrayValueEnumerator struct {
+	a Array
+	i int
 }
 
-func arrayTupleMatcher() func(v Value) (index int, item Value, matches bool) {
-	var index int
-	var item Value
-	m := NewTupleMatcher(
-		map[string]Matcher{
-			"@":           MatchInt(func(i int) { index = i }),
-			ArrayItemAttr: Let(func(v Value) { item = v }),
-		},
-		Lit(EmptyTuple),
-	)
-	return func(v Value) (int, Value, bool) {
-		matches := m.Match(v)
-		return index, item, matches
+// MoveNext moves the enumerator to the next Value.
+func (e *arrayValueEnumerator) MoveNext() bool {
+	if e.i >= len(e.a.values)-1 {
+		return false
 	}
-}
-
-// ArrayValueEnumerator represents an enumerator over a Array.
-type ArrayValueEnumerator struct {
-	a Array
-	i int
-}
-
-// MoveNext moves the enumerator to the next Value.
-func (e *ArrayValueEnumerator) MoveNext() bool {
 	e.i++
-	return e.i < len(e.a.values)
+	return true
 }
 
 // Current returns the enumerator's current Value.
-func (e *ArrayValueEnumerator) Current() Value {
-	return newArrayTuple(e.a.offset+e.i, e.a.values[e.i])
+func (e *arrayValueEnumerator) Current() Value {
+	return NewArrayItemTuple(e.a.offset+e.i, e.a.values[e.i])
 }
 
-// ArrayOffsetValueEnumerator represents an enumerator over a Array.
-type ArrayOffsetValueEnumerator struct {
-	a Array
-	i int
-}
-
-// MoveNext moves the enumerator to the next Value.
-func (e *ArrayOffsetValueEnumerator) MoveNext() bool {
-	e.i++
-	return e.i < len(e.a.values)
+// arrayOffsetValueEnumerator represents an enumerator over a Array.
+type arrayOffsetValueEnumerator struct {
+	arrayValueEnumerator
 }
 
 // Current returns the enumerator's current Value.
-func (e *ArrayOffsetValueEnumerator) Current() Value {
+func (e *arrayOffsetValueEnumerator) Current() Value {
 	return e.a.values[e.i]
 }
 
 // Current returns the offset of the enumerator's current Value.
-func (e *ArrayOffsetValueEnumerator) Offset() int {
+func (e *arrayOffsetValueEnumerator) Offset() int {
 	return e.a.offset + e.i
 }
 
@@ -368,34 +319,3 @@ func (e *arrayEnumerator) Current() Value {
 func (e *arrayEnumerator) Offset() int {
 	return int(e.t.MustGet("@").(Number).Float64())
 }
-
-// type arrayEnumerator struct {
-// 	values []Value
-// 	i      int
-// }
-
-// func (e *arrayEnumerator) MoveNext() bool {
-// 	if e.i >= len(e.values)-1 {
-// 		return false
-// 	}
-// 	e.i++
-// 	return true
-// }
-
-// func (e *arrayEnumerator) Current() Value {
-// 	return e.values[e.i]
-// }
-
-// func stringSet(b Set) Set {
-// 	if b, ok := b.(Array); ok {
-// 		return b
-// 	}
-// 	if !b.IsTrue() {
-// 		return b
-// 	}
-
-// 	var result Array
-// 	matcher := arrayTupleMatcher(func(index int, b Value) {
-// 		result = result.with(index, b)
-// 	})
-// }

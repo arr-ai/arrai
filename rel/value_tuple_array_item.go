@@ -7,6 +7,8 @@ import (
 	"github.com/arr-ai/hash"
 )
 
+const ArrayItemAttr = "@item"
+
 // ArrayItemTuple represents a tuple of the form (@: at, @item: item).
 type ArrayItemTuple struct {
 	at   int
@@ -19,7 +21,16 @@ func NewArrayItemTuple(at int, item Value) ArrayItemTuple {
 }
 
 func newArrayItemTupleFromTuple(t Tuple) (ArrayItemTuple, bool) {
-	if at, item, matches := arrayItemTupleMatcher()(t); matches {
+	var at int
+	var item Value
+	m := NewTupleMatcher(
+		map[string]Matcher{
+			"@":           MatchInt(func(i int) { at = i }),
+			ArrayItemAttr: Let(func(v Value) { item = v }),
+		},
+		Lit(EmptyTuple),
+	)
+	if m.Match(t) {
 		return NewArrayItemTuple(at, item), true
 	}
 	return ArrayItemTuple{}, false
@@ -30,22 +41,6 @@ func maybeNewArrayItemTupleFromTuple(t Tuple) Tuple {
 		return t
 	}
 	return t
-}
-
-func arrayItemTupleMatcher() func(v Value) (at int, item Value, matches bool) {
-	var at int
-	var item Value
-	m := NewTupleMatcher(
-		map[string]Matcher{
-			"@":           MatchInt(func(i int) { at = i }),
-			ArrayItemAttr: Let(func(v Value) { item = v }),
-		},
-		Lit(EmptyTuple),
-	)
-	return func(v Value) (int, Value, bool) {
-		matches := m.Match(v)
-		return at, item, matches
-	}
 }
 
 func (t ArrayItemTuple) asGenericTuple() Tuple {

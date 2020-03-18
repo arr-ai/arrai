@@ -209,10 +209,6 @@ func (b Bytes) Enumerator() ValueEnumerator {
 	return &BytesEnumerator{b.b, -1}
 }
 
-func (b Bytes) AsString() (String, bool) {
-	return String{}, false
-}
-
 func (b Bytes) ArrayEnumerator() (OffsetValueEnumerator, bool) {
 	return &bytesEnumerator{b: b.b, offset: b.offset, i: -1}, true
 }

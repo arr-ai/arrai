@@ -165,7 +165,7 @@ func (s String) with(index int, char rune) Set {
 			offset: s.offset - 1,
 		}
 	}
-	return newSetFromSet(s).With(newStringTuple(index, char))
+	return newSetFromSet(s).With(NewStringCharTuple(index, char))
 }
 
 // With returns the original String with given value added. Iff the value was
@@ -228,45 +228,23 @@ func (s String) index(pos int) int {
 	return -1
 }
 
-// StringEnumerator represents an enumerator over a String.
-type StringEnumerator struct {
-	s []rune
-	i int
-}
-
-// MoveNext moves the enumerator to the next Value.
-func (e *StringEnumerator) MoveNext() bool {
-	e.i++
-	return e.i < len(e.s)
-}
-
-// Current returns the enumerator's current Value.
-func (e *StringEnumerator) Current() Value {
-	return newStringTuple(e.i, e.s[e.i])
-}
-
 // Enumerator returns an enumerator over the Values in the String.
 func (s String) Enumerator() ValueEnumerator {
-	return &StringEnumerator{s.s, -1}
+	return &stringValueEnumerator{s: s, i: -1}
 }
 
 func (s String) ArrayEnumerator() (OffsetValueEnumerator, bool) {
-	return &stringEnumerator{s: s, i: -1}, true
+	return &stringOffsetValueEnumerator{stringValueEnumerator{s: s, i: -1}}, true
 }
 
-func newStringTuple(index int, char rune) Tuple {
-	return NewTuple(
-		NewAttr("@", NewNumber(float64(index))),
-		NewAttr(CharAttr, NewNumber(float64(char))),
-	)
-}
-
-type stringEnumerator struct {
+// StringEnumerator represents an enumerator over a String.
+type stringValueEnumerator struct {
 	s String
 	i int
 }
 
-func (e *stringEnumerator) MoveNext() bool {
+// MoveNext moves the enumerator to the next Value.
+func (e *stringValueEnumerator) MoveNext() bool {
 	if e.i >= len(e.s.s)-1 {
 		return false
 	}
@@ -274,24 +252,19 @@ func (e *stringEnumerator) MoveNext() bool {
 	return true
 }
 
-func (e *stringEnumerator) Current() Value {
+// Current returns the enumerator's current Value.
+func (e *stringValueEnumerator) Current() Value {
+	return NewStringCharTuple(e.i, e.s.s[e.i])
+}
+
+type stringOffsetValueEnumerator struct {
+	stringValueEnumerator
+}
+
+func (e *stringOffsetValueEnumerator) Current() Value {
 	return NewNumber(float64(e.s.s[e.i]))
 }
 
-func (e *stringEnumerator) Offset() int {
+func (e *stringOffsetValueEnumerator) Offset() int {
 	return e.s.offset + e.i
 }
-
-// func stringSet(s Set) Set {
-// 	if s, ok := s.(String); ok {
-// 		return s
-// 	}
-// 	if !s.IsTrue() {
-// 		return s
-// 	}
-
-// 	var result String
-// 	matcher := stringTupleMatcher(func(index int, char rune) {
-// 		result = result.with(index, char)
-// 	})
-// }
