@@ -107,7 +107,7 @@ func (t ArrayItemTuple) Negate() Value {
 func (t ArrayItemTuple) Export() interface{} {
 	return map[string]interface{}{
 		"@":           t.at,
-		ArrayItemAttr: t.item,
+		ArrayItemAttr: t.item.Export(),
 	}
 }
 
