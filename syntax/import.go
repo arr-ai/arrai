@@ -17,6 +17,7 @@ const arraiRootMarker = "go.mod"
 
 var importLocalFileOnce sync.Once
 var importLocalFileVar rel.Value
+var cache importCache = newCache()
 
 func importLocalFile(fromRoot bool) rel.Value {
 	importLocalFileOnce.Do(func() {
@@ -39,11 +40,14 @@ func importLocalFile(fromRoot bool) rel.Value {
 				filename = rootPath + "/" + filename
 			}
 
+			if exists, val := cache.exists(filename); exists {
+				return val
+			}
 			v, err := fileValue(filename)
 			if err != nil {
 				panic(err)
 			}
-
+			cache.add(filename, v)
 			return v
 		})
 	})
