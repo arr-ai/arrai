@@ -31,26 +31,25 @@ func AsString(s Set) (String, bool) {
 		return s, true
 	}
 	if i := s.Enumerator(); i.MoveNext() {
-		match := stringCharTupleMatcher()
-		tupleOffset, str, isStrTuple := match(i.Current())
-		if !isStrTuple {
+		t, is := i.Current().(StringCharTuple)
+		if !is {
 			return String{}, false
 		}
 
 		middleIndex := s.Count()
 		strs := make([]rune, 2*middleIndex)
-		strs[middleIndex] = str
-		anchorOffset, minOffset := tupleOffset, tupleOffset
+		strs[middleIndex] = t.char
+		anchorOffset, minOffset := t.at, t.at
 		lowestIndex, highestIndex := middleIndex, middleIndex
 		for i.MoveNext() {
-			if tupleOffset, str, isStrTuple = match(i.Current()); !isStrTuple {
+			if t, is = i.Current().(StringCharTuple); !is {
 				return String{}, false
 			}
-			if tupleOffset < minOffset {
-				minOffset = tupleOffset
+			if t.at < minOffset {
+				minOffset = t.at
 			}
-			sliceIndex := middleIndex - (anchorOffset - tupleOffset)
-			strs[sliceIndex] = str
+			sliceIndex := middleIndex - (anchorOffset - t.at)
+			strs[sliceIndex] = t.char
 
 			if sliceIndex < lowestIndex {
 				lowestIndex = sliceIndex
@@ -147,10 +146,9 @@ func (s String) Count() int {
 
 // Has returns true iff the given Value is in the String.
 func (s String) Has(value Value) bool {
-	match := stringCharTupleMatcher()
-	if pos, char, ok := match(value); ok {
-		if s.offset <= pos && pos < s.offset+len(s.s) {
-			return char == s.s[pos-s.offset]
+	if t, ok := value.(StringCharTuple); ok {
+		if s.offset <= t.at && t.at < s.offset+len(s.s) {
+			return t.char == s.s[t.at-s.offset]
 		}
 	}
 	return false
@@ -171,9 +169,8 @@ func (s String) with(index int, char rune) Set {
 // With returns the original String with given value added. Iff the value was
 // already present, the original String is returned.
 func (s String) With(value Value) Set {
-	match := stringCharTupleMatcher()
-	if index, char, ok := match(value); ok {
-		return s.with(index, char)
+	if t, ok := value.(StringCharTuple); ok {
+		return s.with(t.at, t.char)
 	}
 	return newSetFromSet(s).With(value)
 }
@@ -181,10 +178,9 @@ func (s String) With(value Value) Set {
 // Without returns the original String without the given value. Iff the value
 // was already absent, the original String is returned.
 func (s String) Without(value Value) Set {
-	match := stringCharTupleMatcher()
-	if pos, char, ok := match(value); ok {
-		if i := s.index(pos); i >= 0 && char == s.s[i] {
-			if pos == s.offset+i {
+	if t, ok := value.(StringCharTuple); ok {
+		if i := s.index(t.at); i >= 0 && t.char == s.s[i] {
+			if t.at == s.offset+i {
 				return String{s: s.s[:i], offset: s.offset}
 			}
 			return newSetFromSet(s).Without(value)

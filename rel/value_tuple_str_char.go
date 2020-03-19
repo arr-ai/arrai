@@ -19,7 +19,16 @@ func NewStringCharTuple(at int, char rune) StringCharTuple {
 }
 
 func newCharTupleFromTuple(t Tuple) (StringCharTuple, bool) {
-	if at, char, matches := stringCharTupleMatcher()(t); matches {
+	var at int
+	var char rune
+	m := NewTupleMatcher(
+		map[string]Matcher{
+			"@":      MatchInt(func(i int) { at = i }),
+			CharAttr: MatchInt(func(i int) { char = rune(i) }),
+		},
+		Lit(EmptyTuple),
+	)
+	if m.Match(t) {
 		return NewStringCharTuple(at, char), true
 	}
 	return StringCharTuple{}, false
@@ -30,22 +39,6 @@ func maybeNewCharTupleFromTuple(t Tuple) Tuple {
 		return t
 	}
 	return t
-}
-
-func stringCharTupleMatcher() func(v Value) (at int, char rune, matches bool) {
-	var at int
-	var char rune
-	m := NewTupleMatcher(
-		map[string]Matcher{
-			"@":      MatchInt(func(i int) { at = i }),
-			CharAttr: MatchInt(func(i int) { char = rune(i) }),
-		},
-		Lit(EmptyTuple),
-	)
-	return func(v Value) (int, rune, bool) {
-		matches := m.Match(v)
-		return at, char, matches
-	}
 }
 
 func (t StringCharTuple) asGenericTuple() Tuple {

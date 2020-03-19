@@ -204,6 +204,9 @@ func (s genericSet) Negate() Value {
 
 // Export exports a genericSet as an array of exported Values.
 func (s genericSet) Export() interface{} {
+	if s.set.IsEmpty() {
+		return []interface{}{}
+	}
 	if s, is := AsString(s); is {
 		return s.Export()
 	}

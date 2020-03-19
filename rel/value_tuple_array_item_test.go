@@ -164,7 +164,7 @@ func TestArrayItemTuple_Negate(t *testing.T) {
 
 func TestArrayItemTuple_Export(t *testing.T) {
 	t.Parallel()
-	assert.Equal(t, map[string]interface{}{"@": 1, "@item": None}, NewArrayItemTuple(1, None).Export())
+	assert.Equal(t, map[string]interface{}{"@": 1, "@item": []interface{}{}}, NewArrayItemTuple(1, None).Export())
 }
 
 func TestArrayItemTuple_Count(t *testing.T) {

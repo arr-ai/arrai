@@ -2,7 +2,6 @@ package syntax
 
 import (
 	"fmt"
-	"log"
 	"strings"
 
 	"github.com/arr-ai/arrai/rel"
@@ -10,7 +9,16 @@ import (
 
 // TODO: Make this more robust.
 func formatValue(format string, value rel.Value) string {
-	v := value.Export()
+	var v interface{}
+	if set, ok := value.(rel.Set); ok {
+		if s, is := rel.AsString(set); is {
+			v = s
+		} else {
+			v = set.Export()
+		}
+	} else {
+		v = value.Export()
+	}
 	switch format[len(format)-1] {
 	case 't':
 		v = value.IsTrue()
@@ -115,7 +123,7 @@ func stdStr() rel.Attr {
 }
 
 func mustAsString(v rel.Value) string {
-	log.Print(v)
+	// log.Print(v)
 	if s, ok := rel.AsString(v.(rel.Set)); ok {
 		return s.String()
 	}
