@@ -19,15 +19,15 @@ var leadingWSRE = regexp.MustCompile(`\A[\t ]*`)
 var trailingWSRE = regexp.MustCompile(`[\t ]*\z`)
 var expansionRE = regexp.MustCompile(`(?::([-+#*\.\_0-9a-z]*))(:(?:\\.|[^\\:}])*)?(?::((?:\\.|[^\\:}])*))?`)
 
-type noParseType struct{}
+// type noParseType struct{}
 
-type parseFunc func(v interface{}) (rel.Expr, error)
+// type parseFunc func(v interface{}) (rel.Expr, error)
 
-func (*noParseType) Error() string {
-	return "No parse"
-}
+// func (*noParseType) Error() string {
+// 	return "No parse"
+// }
 
-var noParse = &noParseType{}
+// var noParse = &noParseType{}
 
 func unfakeBackquote(s string) string {
 	return strings.ReplaceAll(s, "‵", "`")
@@ -696,7 +696,3 @@ func parseNest(lhs rel.Expr, branch ast.Branch) rel.Expr {
 
 type binOpFunc func(a, b rel.Expr) rel.Expr
 type unOpFunc func(e rel.Expr) rel.Expr
-
-func unimplementedBinOpFunc(_, _ rel.Expr) rel.Expr {
-	panic("unimplemented")
-}
