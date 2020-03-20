@@ -73,7 +73,7 @@ func NewTuple(attrs ...Attr) Tuple {
 		}
 		if attrs[0].Name == "@" && strings.HasPrefix(attrs[1].Name, "@") {
 			switch attrs[1].Name {
-			case CharAttr:
+			case StringCharAttr:
 				return NewStringCharTuple(
 					int(attrs[0].Value.(Number).Float64()),
 					rune(attrs[1].Value.(Number).Float64()),

@@ -23,8 +23,8 @@ func newCharTupleFromTuple(t Tuple) (StringCharTuple, bool) {
 	var char rune
 	m := NewTupleMatcher(
 		map[string]Matcher{
-			"@":      MatchInt(func(i int) { at = i }),
-			CharAttr: MatchInt(func(i int) { char = rune(i) }),
+			"@":            MatchInt(func(i int) { at = i }),
+			StringCharAttr: MatchInt(func(i int) { char = rune(i) }),
 		},
 		Lit(EmptyTuple),
 	)
@@ -44,7 +44,7 @@ func maybeNewCharTupleFromTuple(t Tuple) Tuple {
 func (t StringCharTuple) asGenericTuple() Tuple {
 	return newTuple(
 		NewAttr("@", NewNumber(float64(t.at))),
-		NewAttr(CharAttr, NewNumber(float64(t.char))),
+		NewAttr(StringCharAttr, NewNumber(float64(t.char))),
 	)
 }
 
@@ -64,7 +64,7 @@ func (t StringCharTuple) Equal(v interface{}) bool {
 
 // String returns a string representation of a Tuple.
 func (t StringCharTuple) String() string {
-	return fmt.Sprintf("(@: %d, %s: %d)", t.at, CharAttr, t.char)
+	return fmt.Sprintf("(@: %d, %s: %d)", t.at, StringCharAttr, t.char)
 }
 
 // Eval returns the tuple.
@@ -104,8 +104,8 @@ func (t StringCharTuple) Negate() Value {
 // Export exports a Tuple.
 func (t StringCharTuple) Export() interface{} {
 	return map[string]interface{}{
-		"@":      t.at,
-		CharAttr: t.char,
+		"@":            t.at,
+		StringCharAttr: t.char,
 	}
 }
 
@@ -119,7 +119,7 @@ func (t StringCharTuple) Get(name string) (Value, bool) {
 	switch name {
 	case "@":
 		return NewNumber(float64(t.at)), true
-	case CharAttr:
+	case StringCharAttr:
 		return NewNumber(float64(t.char)), true
 	}
 	return nil, false
@@ -142,7 +142,7 @@ func (t StringCharTuple) With(name string, value Value) Tuple {
 // Without returns a Tuple with all name/Value pairs in t exception the one of
 // the given name.
 func (t StringCharTuple) Without(name string) Tuple {
-	if name == "@" || name == CharAttr {
+	if name == "@" || name == StringCharAttr {
 		return t.asGenericTuple().Without(name)
 	}
 	return t
@@ -154,26 +154,26 @@ func (t StringCharTuple) Map(f func(Value) Value) Tuple {
 
 // HasName returns true iff the Tuple has an attribute with the given name.
 func (t StringCharTuple) HasName(name string) bool {
-	return name == "@" || name == CharAttr
+	return name == "@" || name == StringCharAttr
 }
 
 // Attributes returns attributes as a map.
 func (t StringCharTuple) Attributes() map[string]Value {
 	return map[string]Value{
-		"@":      NewNumber(float64(t.at)),
-		CharAttr: NewNumber(float64(t.char)),
+		"@":            NewNumber(float64(t.at)),
+		StringCharAttr: NewNumber(float64(t.char)),
 	}
 }
 
 // Names returns the attribute names.
 func (t StringCharTuple) Names() Names {
-	return NewNames("@", CharAttr)
+	return NewNames("@", StringCharAttr)
 }
 
 // Project returns a tuple with the given names from this tuple, or nil if any
 // name wasn't found.
 func (t StringCharTuple) Project(names Names) Tuple {
-	if names.Has("@") && names.Has(CharAttr) {
+	if names.Has("@") && names.Has(StringCharAttr) {
 		return t
 	}
 	return t.asGenericTuple().Project(names)
@@ -201,7 +201,7 @@ func (e *stringCharTupleEnumerator) MoveNext() bool {
 		e.name = "@"
 		e.value = NewNumber(float64(e.t.at))
 	case 1:
-		e.name = CharAttr
+		e.name = StringCharAttr
 		e.value = NewNumber(float64(e.t.char))
 	}
 	return true

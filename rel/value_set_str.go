@@ -4,8 +4,8 @@ import (
 	"reflect"
 )
 
-// CharAttr is the standard name for the value-attr of a character tuple.
-const CharAttr = "@char"
+// StringCharAttr is the standard name for the value-attr of a character tuple.
+const StringCharAttr = "@char"
 
 // String is a set of Values.
 type String struct {
