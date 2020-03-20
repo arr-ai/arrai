@@ -172,7 +172,6 @@ func fileValue(filename string) (rel.Value, error) {
 }
 
 func bytesValue(filename string, data []byte) rel.Value {
-	// maybe filename is "", so add check first
 	if filename != NoPath {
 		if exists, val := cache.exists(filename); exists {
 			return val
@@ -188,7 +187,6 @@ func bytesValue(filename string, data []byte) rel.Value {
 		panic(err)
 	}
 
-	// maybe filename is "", so add check first
 	if filename != NoPath {
 		cache.add(filename, value)
 	}
