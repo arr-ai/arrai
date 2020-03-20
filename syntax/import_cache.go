@@ -2,6 +2,7 @@ package syntax
 
 import "github.com/arr-ai/arrai/rel"
 
+// it is a simple cache component used by import behavior, and it can make cache code simple
 type importCache struct {
 	cache map[string]rel.Value
 }

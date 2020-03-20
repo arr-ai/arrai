@@ -40,14 +40,11 @@ func importLocalFile(fromRoot bool) rel.Value {
 				filename = rootPath + "/" + filename
 			}
 
-			if exists, val := cache.exists(filename); exists {
-				return val
-			}
 			v, err := fileValue(filename)
 			if err != nil {
 				panic(err)
 			}
-			cache.add(filename, v)
+
 			return v
 		})
 	})
@@ -151,8 +148,13 @@ func importURL(url string) (rel.Value, error) {
 		if err != nil {
 			return nil, err
 		}
-
-		return bytesValue("", data), nil
+		if exists, val := cache.exists(url); exists {
+			return val, nil
+		}
+		// Pass space as file path as it is remote url and can't be found in local env
+		val := bytesValue("", data)
+		cache.add(url, val)
+		return val, nil
 	}
 	return nil, fmt.Errorf("request %s failed: %s", url, resp.Status)
 }
@@ -170,6 +172,13 @@ func fileValue(filename string) (rel.Value, error) {
 }
 
 func bytesValue(filename string, data []byte) rel.Value {
+	// maybe filename is "", so add check first
+	if len(strings.TrimSpace(filename)) > 0 {
+		if exists, val := cache.exists(filename); exists {
+			return val
+		}
+	}
+
 	expr, err := Compile(filename, string(data))
 	if err != nil {
 		panic(err)
@@ -179,5 +188,9 @@ func bytesValue(filename string, data []byte) rel.Value {
 		panic(err)
 	}
 
+	// maybe filename is "", so add check first
+	if len(strings.TrimSpace(filename)) > 0 {
+		cache.add(filename, value)
+	}
 	return value
 }
