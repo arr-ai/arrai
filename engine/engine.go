@@ -24,7 +24,7 @@ var globals = map[string]func(rel.Value) rel.Value{
 
 // Engine holds a database variable, allowing updates and publishing changes.
 type Engine struct {
-	updateDb      chan updateRequest
+	updateDB      chan updateRequest
 	addWatcher    chan *watcher
 	removeWatcher chan uint64
 	stop          chan struct{}
@@ -72,7 +72,7 @@ func Start() *Engine {
 				logrus.Info("Remove watcher")
 				watchers[id].close()
 				delete(watchers, id)
-			case req := <-e.updateDb:
+			case req := <-e.updateDB:
 				logrus.Info("Update DB")
 				logrus.Infof("-> %#v", req.expr)
 				logrus.Infof("-> %s", req.expr)
@@ -113,7 +113,7 @@ func (e *Engine) Hangup() {
 // Update updates the database variable to equal the given expression.
 func (e *Engine) Update(expr rel.Expr) error {
 	failed := make(chan error)
-	e.updateDb <- updateRequest{expr, failed}
+	e.updateDB <- updateRequest{expr, failed}
 	return <-failed
 }
 
