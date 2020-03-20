@@ -152,7 +152,7 @@ func importURL(url string) (rel.Value, error) {
 			return val, nil
 		}
 		// Pass space as file path as it is remote url and can't be found in local env
-		val := bytesValue("", data)
+		val := bytesValue(NoPath, data)
 		cache.add(url, val)
 		return val, nil
 	}
@@ -173,7 +173,7 @@ func fileValue(filename string) (rel.Value, error) {
 
 func bytesValue(filename string, data []byte) rel.Value {
 	// maybe filename is "", so add check first
-	if len(strings.TrimSpace(filename)) > 0 {
+	if filename != NoPath {
 		if exists, val := cache.exists(filename); exists {
 			return val
 		}
@@ -189,7 +189,7 @@ func bytesValue(filename string, data []byte) rel.Value {
 	}
 
 	// maybe filename is "", so add check first
-	if len(strings.TrimSpace(filename)) > 0 {
+	if filename != NoPath {
 		cache.add(filename, value)
 	}
 	return value
