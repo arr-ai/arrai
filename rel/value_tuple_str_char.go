@@ -43,8 +43,8 @@ func maybeNewCharTupleFromTuple(t Tuple) Tuple {
 
 func (t StringCharTuple) asGenericTuple() Tuple {
 	return newTuple(
-		NewAttr("@", NewNumber(float64(t.at))),
-		NewAttr(StringCharAttr, NewNumber(float64(t.char))),
+		NewIntAttr("@", t.at),
+		NewIntAttr(StringCharAttr, int(t.char)),
 	)
 }
 

@@ -215,8 +215,8 @@ func (b Bytes) ArrayEnumerator() (OffsetValueEnumerator, bool) {
 
 func newBytesTuple(index int, b byte) Tuple {
 	return NewTuple(
-		NewAttr("@", NewNumber(float64(index))),
-		NewAttr(ByteAttr, NewNumber(float64(b))),
+		NewIntAttr("@", index),
+		NewIntAttr(ByteAttr, int(b)),
 	)
 }
 

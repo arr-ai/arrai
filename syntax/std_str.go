@@ -71,7 +71,7 @@ var (
 )
 
 func stdStr() rel.Attr {
-	return rel.NewAttr("str", rel.NewTuple(
+	return rel.NewTupleAttr("str",
 		createNestedFuncAttr("sub", 3, func(args ...rel.Value) rel.Value {
 			return rel.NewString(
 				[]rune(
@@ -119,7 +119,7 @@ func stdStr() rel.Attr {
 		}),
 		rel.NewAttr("concat", libStrConcat),
 		rel.NewAttr("expand", libStrExpand),
-	))
+	)
 }
 
 func mustAsString(v rel.Value) string {

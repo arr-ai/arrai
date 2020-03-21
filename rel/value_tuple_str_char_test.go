@@ -47,27 +47,27 @@ func Test_newCharTupleFromTuple(t *testing.T) {
 		{name: "0@0",
 			want: NewStringCharTuple(0, 0),
 			ok:   true,
-			args: args{t: NewTuple(NewAttr("@", NewNumber(0)), NewAttr(StringCharAttr, NewNumber(0)))},
+			args: args{t: NewTuple(NewIntAttr("@", 0), NewIntAttr(StringCharAttr, 0))},
 		},
 		{name: "a@0",
 			want: NewStringCharTuple(0, 'a'),
 			ok:   true,
-			args: args{t: NewTuple(NewAttr("@", NewNumber(0)), NewAttr(StringCharAttr, NewNumber('a')))},
+			args: args{t: NewTuple(NewIntAttr("@", 0), NewIntAttr(StringCharAttr, 'a'))},
 		},
 		{name: "a@42",
 			want: NewStringCharTuple(42, 'a'),
 			ok:   true,
-			args: args{t: NewTuple(NewAttr("@", NewNumber(42)), NewAttr(StringCharAttr, NewNumber('a')))},
+			args: args{t: NewTuple(NewIntAttr("@", 42), NewIntAttr(StringCharAttr, 'a'))},
 		},
 		{name: "no-@",
 			want: StringCharTuple{},
 			ok:   false,
-			args: args{t: NewTuple(NewAttr("at", NewNumber(0)), NewAttr(StringCharAttr, NewNumber('a')))},
+			args: args{t: NewTuple(NewIntAttr("at", 0), NewIntAttr(StringCharAttr, 'a'))},
 		},
 		{name: "no-CharAttr",
 			want: StringCharTuple{},
 			ok:   false,
-			args: args{t: NewTuple(NewAttr("@", NewNumber(0)), NewAttr("char", NewNumber('a')))},
+			args: args{t: NewTuple(NewIntAttr("@", 0), NewIntAttr("char", 'a'))},
 		},
 	}
 	for _, test := range tests { //nolint:dupl
@@ -204,16 +204,16 @@ func TestStringCharTuple_With(t *testing.T) {
 	AssertEqualValues(t, NewStringCharTuple(42, 'a'), NewStringCharTuple(1, 'a').With("@", NewNumber(42)))
 	AssertEqualValues(t, NewStringCharTuple(1, 'b'), NewStringCharTuple(1, 'a').With("@char", NewNumber('b')))
 	AssertEqualValues(t, NewTuple(
-		NewAttr("@", NewNumber(1)),
-		NewAttr("@char", NewNumber('a')),
-		NewAttr("x", NewNumber('b')),
+		NewIntAttr("@", 1),
+		NewIntAttr("@char", 'a'),
+		NewIntAttr("x", 'b'),
 	), NewStringCharTuple(1, 'a').With("x", NewNumber('b')))
 }
 
 func TestStringCharTuple_Without(t *testing.T) {
 	t.Parallel()
-	AssertEqualValues(t, NewTuple(NewAttr("@char", NewNumber('a'))), NewStringCharTuple(1, 'a').Without("@"))
-	AssertEqualValues(t, NewTuple(NewAttr("@", NewNumber(1))), NewStringCharTuple(1, 'a').Without("@char"))
+	AssertEqualValues(t, NewTuple(NewIntAttr("@char", 'a')), NewStringCharTuple(1, 'a').Without("@"))
+	AssertEqualValues(t, NewTuple(NewIntAttr("@", 1)), NewStringCharTuple(1, 'a').Without("@char"))
 	AssertEqualValues(t, NewStringCharTuple(1, 'a'), NewStringCharTuple(1, 'a').Without("x"))
 }
 
@@ -249,10 +249,10 @@ func TestStringCharTuple_Names(t *testing.T) {
 func TestStringCharTuple_Project(t *testing.T) {
 	t.Parallel()
 	AssertEqualValues(t,
-		NewTuple(NewAttr("@", NewNumber(1))),
+		NewTuple(NewIntAttr("@", 1)),
 		NewStringCharTuple(1, 'a').Project(NewNames("@")))
 	AssertEqualValues(t,
-		NewTuple(NewAttr("@char", NewNumber('a'))),
+		NewTuple(NewIntAttr("@char", 'a')),
 		NewStringCharTuple(1, 'a').Project(NewNames("@char")))
 	assert.Nil(t, NewStringCharTuple(1, 'a').Project(NewNames("x")))
 }

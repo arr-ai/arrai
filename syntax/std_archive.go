@@ -12,8 +12,8 @@ import (
 )
 
 func stdArchive() rel.Attr {
-	return rel.NewAttr("archive", rel.NewTuple(
-		rel.NewAttr("tar", rel.NewTuple(
+	return rel.NewTupleAttr("archive",
+		rel.NewTupleAttr("tar",
 			rel.NewNativeFunctionAttr("tar", func(v rel.Value) rel.Value {
 				return createArchive(v, func(w io.Writer) (io.Closer, func(string, []byte) (io.Writer, error)) {
 					aw := tar.NewWriter(w)
@@ -26,8 +26,8 @@ func stdArchive() rel.Attr {
 					}
 				})
 			}),
-		)),
-		rel.NewAttr("zip", rel.NewTuple(
+		),
+		rel.NewTupleAttr("zip",
 			rel.NewNativeFunctionAttr("zip", func(v rel.Value) rel.Value {
 				return createArchive(v, func(w io.Writer) (io.Closer, func(string, []byte) (io.Writer, error)) {
 					aw := zip.NewWriter(w)
@@ -36,8 +36,8 @@ func stdArchive() rel.Attr {
 					}
 				})
 			}),
-		)),
-	))
+		),
+	)
 }
 
 func createArchive(v rel.Value, creator func(io.Writer) (io.Closer, func(string, []byte) (io.Writer, error))) rel.Set {

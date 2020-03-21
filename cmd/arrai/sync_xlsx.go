@@ -17,7 +17,7 @@ func handleXlsx(data []byte) ([]byte, error) {
 		log.Printf("  Sheet %q", sheet.Name)
 		cells := rel.None
 		for r, row := range sheet.Rows {
-			rowAttr := rel.NewAttr("row", rel.NewNumber(float64(r)))
+			rowAttr := rel.NewIntAttr("row", r)
 			for c, cell := range row.Cells {
 				var value rel.Value
 				switch cell.Type() {
@@ -46,7 +46,7 @@ func handleXlsx(data []byte) ([]byte, error) {
 					hour, minute, second := t.Clock()
 					nanosecond := t.Nanosecond()
 					value = rel.NewTuple(
-						rel.NewAttr("@time", rel.NewTuple(
+						rel.NewTupleAttr("@time",
 							rel.NewIntAttr("year", year),
 							rel.NewIntAttr("month", int(month)),
 							rel.NewIntAttr("day", day),
@@ -54,7 +54,7 @@ func handleXlsx(data []byte) ([]byte, error) {
 							rel.NewIntAttr("minute", minute),
 							rel.NewIntAttr("second", second),
 							rel.NewIntAttr("nanosecond", nanosecond),
-						)),
+						),
 					)
 				case xlsx.CellTypeError:
 					s := cell.String()

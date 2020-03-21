@@ -47,27 +47,27 @@ func Test_newArrayItemTupleFromTuple(t *testing.T) {
 		{name: "0@0",
 			want: NewArrayItemTuple(0, NewNumber(0)),
 			ok:   true,
-			args: args{t: NewTuple(NewAttr("@", NewNumber(0)), NewAttr(ArrayItemAttr, NewNumber(0)))},
+			args: args{t: NewTuple(NewIntAttr("@", 0), NewIntAttr(ArrayItemAttr, 0))},
 		},
 		{name: "{}@0",
 			want: NewArrayItemTuple(0, None),
 			ok:   true,
-			args: args{t: NewTuple(NewAttr("@", NewNumber(0)), NewAttr(ArrayItemAttr, None))},
+			args: args{t: NewTuple(NewIntAttr("@", 0), NewAttr(ArrayItemAttr, None))},
 		},
 		{name: "{}@42",
 			want: NewArrayItemTuple(42, None),
 			ok:   true,
-			args: args{t: NewTuple(NewAttr("@", NewNumber(42)), NewAttr(ArrayItemAttr, None))},
+			args: args{t: NewTuple(NewIntAttr("@", 42), NewAttr(ArrayItemAttr, None))},
 		},
 		{name: "no-@",
 			want: ArrayItemTuple{},
 			ok:   false,
-			args: args{t: NewTuple(NewAttr("at", NewNumber(0)), NewAttr(ArrayItemAttr, None))},
+			args: args{t: NewTuple(NewIntAttr("at", 0), NewAttr(ArrayItemAttr, None))},
 		},
 		{name: "no-ArrayItemAttr",
 			want: ArrayItemTuple{},
 			ok:   false,
-			args: args{t: NewTuple(NewAttr("@", NewNumber(0)), NewAttr("item", NewNumber(0)))},
+			args: args{t: NewTuple(NewIntAttr("@", 0), NewIntAttr("item", 0))},
 		},
 	}
 	for _, test := range tests { //nolint:dupl
@@ -204,16 +204,16 @@ func TestArrayItemTuple_With(t *testing.T) {
 	assert.True(t, NewArrayItemTuple(1, None).With("@", NewNumber(42)).Equal(NewArrayItemTuple(42, None)))
 	assert.True(t, NewArrayItemTuple(1, None).With("@item", NewNumber(2)).Equal(NewArrayItemTuple(1, NewNumber(2))))
 	assert.True(t, NewArrayItemTuple(1, None).With("x", NewNumber(2)).Equal(NewTuple(
-		NewAttr("@", NewNumber(1)),
+		NewIntAttr("@", 1),
 		NewAttr("@item", None),
-		NewAttr("x", NewNumber(2)),
+		NewIntAttr("x", 2),
 	)))
 }
 
 func TestArrayItemTuple_Without(t *testing.T) {
 	t.Parallel()
 	assert.True(t, NewArrayItemTuple(1, None).Without("@").Equal(NewTuple(NewAttr("@item", None))))
-	assert.True(t, NewArrayItemTuple(1, None).Without("@item").Equal(NewTuple(NewAttr("@", NewNumber(1)))))
+	assert.True(t, NewArrayItemTuple(1, None).Without("@item").Equal(NewTuple(NewIntAttr("@", 1))))
 	assert.True(t, NewArrayItemTuple(1, None).Without("x").Equal(NewArrayItemTuple(1, None)))
 }
 
@@ -245,7 +245,7 @@ func TestArrayItemTuple_Names(t *testing.T) {
 
 func TestArrayItemTuple_Project(t *testing.T) {
 	t.Parallel()
-	assert.True(t, NewArrayItemTuple(1, None).Project(NewNames("@")).Equal(NewTuple(NewAttr("@", NewNumber(1)))))
+	assert.True(t, NewArrayItemTuple(1, None).Project(NewNames("@")).Equal(NewTuple(NewIntAttr("@", 1))))
 	assert.True(t, NewArrayItemTuple(1, None).Project(NewNames("@item")).Equal(NewTuple(NewAttr("@item", None))))
 	assert.Nil(t, NewArrayItemTuple(1, None).Project(NewNames("x")))
 }

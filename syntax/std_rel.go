@@ -5,7 +5,7 @@ import (
 )
 
 func stdRel() rel.Attr {
-	return rel.NewAttr("rel", rel.NewTuple(
+	return rel.NewTupleAttr("rel",
 		rel.NewNativeFunctionAttr("union", func(v rel.Value) rel.Value {
 			s := v.(rel.Set)
 			sets := make([]rel.Set, 0, s.Count())
@@ -14,5 +14,5 @@ func stdRel() rel.Attr {
 			}
 			return rel.NUnion(sets...)
 		}),
-	))
+	)
 }
