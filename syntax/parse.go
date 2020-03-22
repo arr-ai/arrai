@@ -285,17 +285,17 @@ func (pc ParseContext) CompileExpr(b ast.Branch) rel.Expr {
 				keyExprs := pc.parseExprs(keys.(ast.Many)...)
 				valueExprs := pc.parseExprs(values.(ast.Many)...)
 				if len(keyExprs) == len(valueExprs) {
-					pairs := make([][2]rel.Expr, 0, len(keyExprs))
+					entryExprs := make([]rel.DictEntryTupleExpr, 0, len(keyExprs))
 					for i, keyExpr := range keyExprs {
 						valueExpr := valueExprs[i]
-						pairs = append(pairs, [2]rel.Expr{keyExpr, valueExpr})
+						entryExprs = append(entryExprs, rel.NewDictEntryTupleExpr(keyExpr, valueExpr))
 					}
-					return rel.NewDictExpr(pairs...)
+					return rel.NewDictExpr(false, entryExprs...)
 				}
 			}
 			panic("mismatch between dict keys and values")
 		}
-		return rel.NewDict()
+		return rel.NewDict(false)
 	case "array":
 		if items := c.(ast.One).Node.(ast.Branch)["item"]; items != nil {
 			return rel.NewArrayExpr(pc.parseExprs(items.(ast.Many)...)...)

@@ -43,7 +43,7 @@ func stdArchive() rel.Attr {
 func createArchive(v rel.Value, creator func(io.Writer) (io.Closer, func(string, []byte) (io.Writer, error))) rel.Set {
 	var b bytes.Buffer
 	closer, create := creator(&b)
-	d, ok := rel.AsDict(v.(rel.Set))
+	d, ok := v.(rel.Dict)
 	if !ok {
 		panic(fmt.Errorf("//.archive.zip.zip arg not a dict: %v", v))
 	}
@@ -75,7 +75,7 @@ func writeDictToArchive(d rel.Dict, w func(string, []byte) (io.Writer, error), p
 				if _, err = fw.Write(data); err != nil {
 					return err
 				}
-			} else if d, ok := rel.AsDict(v); ok {
+			} else if d, ok := v.(rel.Dict); ok {
 				if err := writeDictToArchive(d, w, subpath); err != nil {
 					return err
 				}
