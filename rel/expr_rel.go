@@ -18,7 +18,7 @@ func NewJoinExpr(a, b Expr) Expr {
 		})
 }
 
-// NewUnionExpr evaluates a <&> b.
+// NewUnionExpr evaluates a | b.
 func NewUnionExpr(a, b Expr) Expr {
 	return newBinExpr(a, b, "|", "(%s | %s)",
 		func(a, b Value, _ Scope) (Value, error) {
@@ -32,7 +32,7 @@ func NewUnionExpr(a, b Expr) Expr {
 		})
 }
 
-// NewDiffExpr evaluates a <&> b.
+// NewDiffExpr evaluates a &~ b.
 func NewDiffExpr(a, b Expr) Expr {
 	return newBinExpr(a, b, "&~", "(%s &~ %s)",
 		func(a, b Value, _ Scope) (Value, error) {
@@ -46,30 +46,30 @@ func NewDiffExpr(a, b Expr) Expr {
 		})
 }
 
-// NewSymmDiffExpr evaluates a <&> b.
+// NewSymmDiffExpr evaluates a ~~ b.
 func NewSymmDiffExpr(a, b Expr) Expr {
-	return newBinExpr(a, b, "(-)", "(%s (-) %s)",
+	return newBinExpr(a, b, "~~", "(%s ~~ %s)",
 		func(a, b Value, _ Scope) (Value, error) {
 			if x, ok := a.(Set); ok {
 				if y, ok := b.(Set); ok {
 					return SymmetricDifference(x, y), nil
 				}
-				return nil, errors.Errorf("(-) rhs must be a Set, not %T", b)
+				return nil, errors.Errorf("~~ rhs must be a Set, not %T", b)
 			}
-			return nil, errors.Errorf("(-) lhs must be a Set, not %T", a)
+			return nil, errors.Errorf("~~ lhs must be a Set, not %T", a)
 		})
 }
 
-// NewConcatExpr evaluates a <&> b.
+// NewConcatExpr evaluates a ++ b.
 func NewConcatExpr(a, b Expr) Expr {
-	return newBinExpr(a, b, "|", "(%s | %s)",
+	return newBinExpr(a, b, "++", "(%s ++ %s)",
 		func(a, b Value, _ Scope) (Value, error) {
 			if x, ok := a.(Set); ok {
 				if y, ok := b.(Set); ok {
 					return Concatenate(x, y)
 				}
-				return nil, errors.Errorf("(-) rhs must be a Set, not %T", b)
+				return nil, errors.Errorf("++ rhs must be a Set, not %T", b)
 			}
-			return nil, errors.Errorf("(-) lhs must be a Set, not %T", a)
+			return nil, errors.Errorf("++ lhs must be a Set, not %T", a)
 		})
 }
