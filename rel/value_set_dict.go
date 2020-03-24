@@ -10,10 +10,6 @@ import (
 
 const DictValueAttr = "@value"
 
-func NewDictTuple(key, value Value) Tuple {
-	return NewTuple(NewAttr("@", key), NewAttr(DictValueAttr, value))
-}
-
 type multipleValues frozen.Set
 
 // Dict is a map from keys to values.
@@ -226,11 +222,11 @@ func (a *dictEnumerator) MoveNext() bool {
 			}
 		default:
 			a.j = frozen.Set{}.Range()
-			a.v = NewDictTuple(a.i.Key().(Value), entry.(Value))
+			a.v = NewDictEntryTuple(a.i.Key().(Value), entry.(Value))
 			return true
 		}
 	}
-	a.v = NewDictTuple(a.i.Key().(Value), a.j.Value().(Value))
+	a.v = NewDictEntryTuple(a.i.Key().(Value), a.j.Value().(Value))
 	return true
 }
 

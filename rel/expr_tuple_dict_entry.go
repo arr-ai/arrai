@@ -2,7 +2,7 @@ package rel
 
 import "fmt"
 
-// dictEntryTupleExpr represents a single name:expr in a dictEntryTupleExpr.
+// DictEntryTupleExpr represents a single name:expr in a dictEntryTupleExpr.
 type DictEntryTupleExpr struct {
 	at    Expr
 	value Expr
@@ -34,5 +34,5 @@ func (e DictEntryTupleExpr) Eval(local Scope) (Value, error) {
 	if err != nil {
 		return nil, err
 	}
-	return NewDictTuple(at, value), nil
+	return NewDictEntryTuple(at, value), nil
 }
