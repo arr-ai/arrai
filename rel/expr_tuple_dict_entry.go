@@ -21,7 +21,7 @@ func NewDictEntryTupleExpr(at, value Expr) DictEntryTupleExpr {
 
 // String returns a string representation of the expression.
 func (e DictEntryTupleExpr) String() string {
-	return fmt.Sprintf("(@: %v, %s: %v)", e.at, DictEntryAttr, e.value)
+	return fmt.Sprintf("(@: %v, %s: %v)", e.at, DictValueAttr, e.value)
 }
 
 // Eval returns the subject

@@ -5,7 +5,7 @@ import (
 	"reflect"
 )
 
-const DictEntryAttr = "@value"
+const DictValueAttr = "@value"
 
 // DictEntryTuple represents a tuple of the form (@: at, @value: item).
 type DictEntryTuple struct {
@@ -24,7 +24,7 @@ func newDictEntryTupleFromTuple(t Tuple) (DictEntryTuple, bool) {
 	m := NewTupleMatcher(
 		map[string]Matcher{
 			"@":           Let(func(i Value) { at = i }),
-			DictEntryAttr: Let(func(v Value) { item = v }),
+			DictValueAttr: Let(func(v Value) { item = v }),
 		},
 		Lit(EmptyTuple),
 	)
@@ -44,7 +44,7 @@ func maybeNewDictEntryTupleFromTuple(t Tuple) Tuple {
 func (t DictEntryTuple) asGenericTuple() Tuple {
 	return newTuple(
 		NewAttr("@", t.at),
-		NewAttr(DictEntryAttr, t.value),
+		NewAttr(DictValueAttr, t.value),
 	)
 }
 
@@ -63,7 +63,7 @@ func (t DictEntryTuple) Equal(v interface{}) bool {
 
 // String returns a string representation of a Tuple.
 func (t DictEntryTuple) String() string {
-	return fmt.Sprintf("(@: %d, %s: %v)", t.at, DictEntryAttr, t.value)
+	return fmt.Sprintf("(@: %d, %s: %v)", t.at, DictValueAttr, t.value)
 }
 
 // Eval returns the tuple.
@@ -104,7 +104,7 @@ func (t DictEntryTuple) Negate() Value {
 func (t DictEntryTuple) Export() interface{} {
 	return map[string]interface{}{
 		"@":           t.at.Export(),
-		DictEntryAttr: t.value.Export(),
+		DictValueAttr: t.value.Export(),
 	}
 }
 
@@ -118,7 +118,7 @@ func (t DictEntryTuple) Get(name string) (Value, bool) {
 	switch name {
 	case "@":
 		return t.at, true
-	case DictEntryAttr:
+	case DictValueAttr:
 		return t.value, true
 	}
 	return nil, false
@@ -141,7 +141,7 @@ func (t DictEntryTuple) With(name string, value Value) Tuple {
 // Without returns a Tuple with all name/Value pairs in t exception the one of
 // the given name.
 func (t DictEntryTuple) Without(name string) Tuple {
-	if name == "@" || name == DictEntryAttr {
+	if name == "@" || name == DictValueAttr {
 		return t.asGenericTuple().Without(name)
 	}
 	return t
@@ -153,26 +153,26 @@ func (t DictEntryTuple) Map(f func(Value) Value) Tuple {
 
 // HasName returns true iff the Tuple has an attribute with the given name.
 func (t DictEntryTuple) HasName(name string) bool {
-	return name == "@" || name == DictEntryAttr
+	return name == "@" || name == DictValueAttr
 }
 
 // Attributes returns attributes as a map.
 func (t DictEntryTuple) Attributes() map[string]Value {
 	return map[string]Value{
 		"@":           t.at,
-		DictEntryAttr: t.value,
+		DictValueAttr: t.value,
 	}
 }
 
 // Names returns the attribute names.
 func (t DictEntryTuple) Names() Names {
-	return NewNames("@", DictEntryAttr)
+	return NewNames("@", DictValueAttr)
 }
 
 // Project returns a tuple with the given names from this tuple, or nil if any
 // name wasn't found.
 func (t DictEntryTuple) Project(names Names) Tuple {
-	if names.Has("@") && names.Has(DictEntryAttr) {
+	if names.Has("@") && names.Has(DictValueAttr) {
 		return t
 	}
 	return t.asGenericTuple().Project(names)
@@ -200,7 +200,7 @@ func (e *dictEntryTupleEnumerator) MoveNext() bool {
 		e.name = "@"
 		e.value = e.t.at
 	case 1:
-		e.name = DictEntryAttr
+		e.name = DictValueAttr
 		e.value = e.t.value
 	}
 	return true

@@ -8,8 +8,6 @@ import (
 	"github.com/arr-ai/frozen"
 )
 
-const DictValueAttr = "@value"
-
 type multipleValues frozen.Set
 
 // Dict is a map from keys to values.
