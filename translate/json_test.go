@@ -42,14 +42,14 @@ func TestJSONObjectToArrai(t *testing.T) {
 	AssertExpectedJSONTranslation(t, `{}`, `{}`)
 
 	// different value types
-	AssertExpectedJSONTranslation(t, `{|@,@value| ("key","val")}`, `{"key":"val"}`)
-	AssertExpectedJSONTranslation(t, `{|@,@value| ("key",123)}`, `{"key":123}`)
-	AssertExpectedJSONTranslation(t, `{|@,@value| ("key",{|@,@value| ("foo","bar")})}`, `{"key":{"foo":"bar"}}`)
-	AssertExpectedJSONTranslation(t, `{|@,@value| ("key",[1, 2, 3])}`, `{"key":[1, 2, 3]}`)
-	AssertExpectedJSONTranslation(t, `{|@,@value| ("key",{})}`, `{"key":null}`)
+	AssertExpectedJSONTranslation(t, `{"key": "val"}`, `{"key":"val"}`)
+	AssertExpectedJSONTranslation(t, `{"key": 123}`, `{"key":123}`)
+	AssertExpectedJSONTranslation(t, `{"key": {"foo": "bar"}}`, `{"key":{"foo":"bar"}}`)
+	AssertExpectedJSONTranslation(t, `{"key": [1, 2, 3]}`, `{"key":[1, 2, 3]}`)
+	AssertExpectedJSONTranslation(t, `{"key": {}}`, `{"key":null}`)
 
 	// Multiple key-val pairs
-	AssertExpectedJSONTranslation(t, `{|@,@value| ("key","val"), ("foo",123)}`, `{"key":"val", "foo":123}`)
+	AssertExpectedJSONTranslation(t, `{"key": "val", "foo": 123}`, `{"key":"val", "foo":123}`)
 }
 
 func TestJSONArrayToArrai(t *testing.T) {
@@ -61,7 +61,7 @@ func TestJSONArrayToArrai(t *testing.T) {
 	// Different value types
 	AssertExpectedJSONTranslation(t, `[1]`, `[1]`)
 	AssertExpectedJSONTranslation(t, `["hello"]`, `["hello"]`)
-	AssertExpectedJSONTranslation(t, `[{|@,@value| ("foo","bar")}]`, `[{"foo":"bar"}]`)
+	AssertExpectedJSONTranslation(t, `[{"foo": "bar"}]`, `[{"foo":"bar"}]`)
 	AssertExpectedJSONTranslation(t, `[[1, 2, 3]]`, `[[1, 2, 3]]`)
 	AssertExpectedJSONTranslation(t, `[{}]`, `[null]`)
 
