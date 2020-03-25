@@ -313,7 +313,7 @@ Arr.ai supports operations on numbers.
 
 ### Structure access expressions
 
-1. Tuple attribute: `tuple.attr`
+1. Tuple attribute: `tuple.attr` (string syntax is allowed, e.g.: `('👋': 42)."👋"`))
 2. Dot variable attribute: `.attr` (shorthand for `(.).attr`)
 3. Function call:
    1. `[2, 4, 6, 8](2) = 6`, `"hello"(1) = 101`
