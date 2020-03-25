@@ -44,6 +44,21 @@ func RequireCodesEvalToSameValue(t *testing.T, expected string, code string) {
 	rel.AssertExprsEvalToSameValue(t, expectedExpr, codeExpr)
 }
 
+// AssertCodeEvalsToType asserts that the exprs evaluate to the same value.
+func AssertCodeEvalsToType(t *testing.T, expected interface{}, code string) bool {
+	pc := ParseContext{SourceDir: ".."}
+	ast, err := pc.Parse(parser.NewScanner(code))
+	if !assert.NoError(t, err, "parsing code: %s", code) {
+		return false
+	}
+	codeExpr := pc.CompileExpr(ast)
+	if !rel.AssertExprEvalsToType(t, expected, codeExpr) {
+		t.Logf("\nexpected: %s\ncode:     %s", expected, code)
+		return false
+	}
+	return true
+}
+
 // AssertScan asserts that a lexer's next produced token is as expected.
 func AssertScan(t *testing.T, l *Lexer, tok Token, intf interface{}, lexeme string) bool {
 	if !assert.True(t, l.Scan()) {

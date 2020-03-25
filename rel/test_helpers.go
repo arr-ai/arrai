@@ -27,9 +27,7 @@ func requireEqualValues(t *testing.T, expected, actual Value) {
 }
 
 // AssertExprsEvalToSameValue asserts that the exprs evaluate to the same value.
-func AssertExprsEvalToSameValue(
-	t *testing.T, expected, expr Expr,
-) bool {
+func AssertExprsEvalToSameValue(t *testing.T, expected, expr Expr) bool {
 	expectedValue, err := expected.Eval(EmptyScope)
 	if !assert.NoError(t, err, "evaluating expected: %s", expected) {
 		return false
@@ -55,4 +53,17 @@ func RequireExprsEvalToSameValue(
 	value, err := expr.Eval(EmptyScope)
 	require.NoError(t, err)
 	requireEqualValues(t, expectedValue, value)
+}
+
+// AssertExprEvalsToType asserts that the exprs evaluate to the same value.
+func AssertExprEvalsToType(t *testing.T, expected interface{}, expr Expr) bool {
+	value, err := expr.Eval(EmptyScope)
+	if !assert.NoError(t, err, "evaluating expr: %s", expr) {
+		return false
+	}
+	if !assert.IsType(t, expected, value) {
+		t.Logf("\nexpected:%v\nexpr:     %v", expected, expr)
+		return false
+	}
+	return true
 }

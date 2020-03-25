@@ -18,13 +18,54 @@ var (
 	None  = Set(genericSet{frozen.Set{}})
 	False = None
 	True  = None.With(EmptyTuple)
+
+	stringCharTupleType = reflect.TypeOf(StringCharTuple{})
+	arrayItemTupleType  = reflect.TypeOf(ArrayItemTuple{})
+	dictEntryTupleType  = reflect.TypeOf(DictEntryTuple{})
 )
 
 // NewSet constructs a genericSet from a set of Values.
 func NewSet(values ...Value) Set {
 	set := None
-	for _, value := range values {
-		set = set.With(value)
+	if len(values) > 0 {
+		typ := reflect.TypeOf(values[0])
+		for _, value := range values[1:] {
+			if reflect.TypeOf(value) != typ {
+				typ = nil
+				break
+			}
+		}
+		if typ != nil {
+			switch typ {
+			case stringCharTupleType:
+				for _, value := range values {
+					set = set.With(value)
+				}
+				s, is := AsString(set)
+				if !is {
+					panic("unsupported array expr")
+				}
+				return s
+			case arrayItemTupleType:
+				for _, value := range values {
+					set = set.With(value)
+				}
+				array, is := AsArray(set)
+				if !is {
+					panic("unsupported array expr")
+				}
+				return array
+			case dictEntryTupleType:
+				tuples := make([]DictEntryTuple, 0, len(values))
+				for _, value := range values {
+					tuples = append(tuples, value.(DictEntryTuple))
+				}
+				return NewDict(true, tuples...)
+			}
+		}
+		for _, value := range values {
+			set = set.With(value)
+		}
 	}
 	return set
 }

@@ -78,6 +78,10 @@ func NewTuple(attrs ...Attr) Tuple {
 					int(attrs[0].Value.(Number).Float64()),
 					rune(attrs[1].Value.(Number).Float64()),
 				)
+			case ArrayItemAttr:
+				return NewArrayItemTuple(int(attrs[0].Value.(Number).Float64()), attrs[1].Value)
+			case DictValueAttr:
+				return NewDictEntryTuple(attrs[0].Value, attrs[1].Value)
 			}
 		}
 	}

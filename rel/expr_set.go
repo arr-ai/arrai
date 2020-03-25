@@ -46,15 +46,15 @@ func (e *SetExpr) String() string {
 
 // Eval returns the subject
 func (e *SetExpr) Eval(local Scope) (Value, error) {
-	set := NewSet()
+	values := make([]Value, 0, len(e.elements))
 	for _, expr := range e.elements {
 		value, err := expr.Eval(local)
 		if err != nil {
 			return nil, err
 		}
-		set = set.With(value)
+		values = append(values, value)
 	}
-	return set, nil
+	return NewSet(values...), nil
 }
 
 // NewIntersectExpr evaluates a <&> b.

@@ -9,6 +9,8 @@ import (
 // NewRelationExpr returns a new relation for the given data.
 func NewRelationExpr(names []string, tuples ...[]Expr) (Expr, error) {
 	elements := make([]Expr, len(tuples))
+	stringCharTuples := 0
+	arrayItemTuples := 0
 	dictEntryTuples := 0
 	for i, tuple := range tuples {
 		if len(tuple) != len(names) {
@@ -25,6 +27,12 @@ func NewRelationExpr(names []string, tuples ...[]Expr) (Expr, error) {
 			}
 			if attrs[0].name == "@" && strings.HasPrefix(attrs[1].name, "@") {
 				switch attrs[1].name {
+				case StringCharAttr:
+					elements[i] = NewStringCharTupleExpr(attrs[0].expr, attrs[1].expr)
+					stringCharTuples++
+				case ArrayItemAttr:
+					elements[i] = NewArrayItemTupleExpr(attrs[0].expr, attrs[1].expr)
+					arrayItemTuples++
 				case DictValueAttr:
 					elements[i] = NewDictEntryTupleExpr(attrs[0].expr, attrs[1].expr)
 					dictEntryTuples++
@@ -36,7 +44,22 @@ func NewRelationExpr(names []string, tuples ...[]Expr) (Expr, error) {
 		}
 		elements[i] = NewTupleExpr(attrs...)
 	}
-	if dictEntryTuples == len(elements) {
+	switch len(elements) {
+	case stringCharTuples:
+		charExprs := make([]Expr, 0, len(elements))
+		for _, e := range elements {
+			charExprs = append(charExprs, e.(StringCharTupleExpr))
+		}
+		// TODO: Implement NewStringCharSetExpr.
+		return NewSetExpr(charExprs...), nil
+	case arrayItemTuples:
+		entryExprs := make([]Expr, 0, len(elements))
+		for _, e := range elements {
+			entryExprs = append(entryExprs, e.(ArrayItemTupleExpr))
+		}
+		// TODO: Implement NewArrayItemSetExpr.
+		return NewSetExpr(entryExprs...), nil
+	case dictEntryTuples:
 		entryExprs := make([]DictEntryTupleExpr, 0, len(elements))
 		for _, e := range elements {
 			entryExprs = append(entryExprs, e.(DictEntryTupleExpr))

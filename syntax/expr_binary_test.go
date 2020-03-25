@@ -13,6 +13,6 @@ func TestWhereExpr(t *testing.T) {
 
 func TestRelationCall(t *testing.T) {
 	t.Parallel()
-	s := `{|@,@item| ("key","val")}("key")`
+	s := `{|@,@value| ("key","val")}("key")`
 	AssertCodesEvalToSameValue(t, `"val"`, s)
 }

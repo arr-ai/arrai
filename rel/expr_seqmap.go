@@ -38,8 +38,9 @@ func (e *SequenceMapExpr) Eval(local Scope) (Value, error) {
 	if err != nil {
 		return nil, err
 	}
+	// TODO: implement directly for String, Array and Dict.
 	if set, ok := value.(Set); ok {
-		result := NewSet()
+		values := []Value{}
 		for i := set.Enumerator(); i.MoveNext(); {
 			t := i.Current().(Tuple)
 			pos, _ := t.Get("@")
@@ -49,9 +50,9 @@ func (e *SequenceMapExpr) Eval(local Scope) (Value, error) {
 			if err != nil {
 				return nil, err
 			}
-			result = result.With(NewTuple(Attr{"@", pos}, Attr{attr, v}))
+			values = append(values, NewTuple(Attr{"@", pos}, Attr{attr, v}))
 		}
-		return result, nil
+		return NewSet(values...), nil
 	}
 	return nil, errors.Errorf("=> not applicable to %T", value)
 }
