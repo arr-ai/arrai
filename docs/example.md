@@ -85,22 +85,22 @@ relation nest |attr1,attr2,...|key
 #### Examples
 
 ```bash
-$ arrai eval '{ |a,b| (1,2), (1,3), (2,4) } nest |b|nested-b'
+$ arrai eval '{|a,b| (1,2), (1,3), (2,4) } nest |b|nested-b'
 {(a: 1, nested-b:{(b: 2), (b: 3)}), (a: 2, nested-b: {(b: 4)})}
 ```
 
 ```bash
-$ arrai eval '{ |a,b| (1,2), (2,3) } nest |b|nestb'
+$ arrai eval '{|a,b| (1,2), (2,3) } nest |b|nestb'
 {(a: 1, nestb:{(b: 2)}), (a: 2, nestb:{(b: 3)})}
 ```
 
 ```bash
-$ arrai eval '{ |a,b,c| (1,2,3), (1,3,3), (1,2,2) } nest |b|nestb'
+$ arrai eval '{|a,b,c| (1,2,3), (1,3,3), (1,2,2) } nest |b|nestb'
 {(a: 1, c: 3, nestb: {(b: 2), (b: 3)}), (a: 1, c: 2, nestb: {(b: 2)})}
 ```
 
 ```bash
-$ arrai eval '{ |a,b,c| (1,2,3), (1,3,3), (1,2,2) } nest |b,c|nestbc'
+$ arrai eval '{|a,b,c| (1,2,3), (1,3,3), (1,2,2) } nest |b,c|nestbc'
 {(a: 1, nestbc: {(b: 2, c: 3), (b: 3, c: 3), (b: 2, c: 2)})}
 ```
 
@@ -113,21 +113,21 @@ Join takes two relations and joins them by matching tuples on common attribute n
 #### Examples
 
 ```bash
-$ arrai eval '{ |a,b| (1,2), (2,2) } <&> { |a,c| (1,2), (1,3) }'
+$ arrai eval '{|a,b| (1,2), (2,2) } <&> {|a,c| (1,2), (1,3) }'
 {(a: 1, b: 2, c: 2), (a: 1, b: 2, c: 3)}
 ```
 
 ```bash
-$ arrai eval '{ |a,b| (1,2), (2,2) } <&> { |a,c| (1,2), (1,3), (2,3) }'
+$ arrai eval '{|a,b| (1,2), (2,2) } <&> {|a,c| (1,2), (1,3), (2,3) }'
 {(a: 1, b: 2, c: 2), (a: 1, b: 2, c: 3), (a: 2, b: 2, c: 3)}
 ```
 
 ```bash
-$ arrai eval '{ |a,b| (1,2), (1,3) } <&> { |a,c| (1,2), (1,3) }'   
-{(a: 1, b: 2, c: 2), (a: 1, b: 2, c: 3), (a: 1, b: 3, c: 2), (a: 1, b: 3, c: 3)}   
+$ arrai eval '{|a,b| (1,2), (1,3) } <&> {|a,c| (1,2), (1,3) }'
+{(a: 1, b: 2, c: 2), (a: 1, b: 2, c: 3), (a: 1, b: 3, c: 2), (a: 1, b: 3, c: 3)}
 ```
 
 ```bash
-$ arrai eval '{ |a,b,c| (1,2,2), (1,2,3) } <&> { |b,c,d| (2,3,4), (1,3,4) }'
+$ arrai eval '{|a,b,c| (1,2,2), (1,2,3) } <&> {|b,c,d| (2,3,4), (1,3,4) }'
 {(a: 1, b: 2, c: 3, d: 4)}
 ```

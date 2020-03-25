@@ -98,5 +98,5 @@ func TestParseRelationShortcut(t *testing.T) {
 			rel.Attr{Name: "a", Value: rel.NewNumber(3)},
 			rel.Attr{Name: "b", Value: rel.NewNumber(4)},
 		),
-	), `{ |a,b| (1, 2), (3, 4) }`)
+	), `{|a,b| (1, 2), (3, 4) }`)
 }
