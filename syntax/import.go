@@ -17,6 +17,7 @@ const arraiRootMarker = "go.mod"
 
 var importLocalFileOnce sync.Once
 var importLocalFileVar rel.Value
+var cache importCache = newCache()
 
 func importLocalFile(fromRoot bool) rel.Value {
 	importLocalFileOnce.Do(func() {
@@ -147,8 +148,13 @@ func importURL(url string) (rel.Value, error) {
 		if err != nil {
 			return nil, err
 		}
-
-		return bytesValue("", data), nil
+		if exists, val := cache.exists(url); exists {
+			return val, nil
+		}
+		// Pass space as file path as it is remote url and can't be found in local env
+		val := bytesValue(NoPath, data)
+		cache.add(url, val)
+		return val, nil
 	}
 	return nil, fmt.Errorf("request %s failed: %s", url, resp.Status)
 }
@@ -166,6 +172,12 @@ func fileValue(filename string) (rel.Value, error) {
 }
 
 func bytesValue(filename string, data []byte) rel.Value {
+	if filename != NoPath {
+		if exists, val := cache.exists(filename); exists {
+			return val
+		}
+	}
+
 	expr, err := Compile(filename, string(data))
 	if err != nil {
 		panic(err)
@@ -175,5 +187,8 @@ func bytesValue(filename string, data []byte) rel.Value {
 		panic(err)
 	}
 
+	if filename != NoPath {
+		cache.add(filename, value)
+	}
 	return value
 }
