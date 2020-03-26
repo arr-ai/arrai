@@ -33,13 +33,11 @@ func (e ArrayExpr) Elements() []Expr {
 func (e ArrayExpr) String() string {
 	var b bytes.Buffer
 	b.WriteByte('[')
-	i := 0
-	for _, expr := range e.elements {
+	for i, expr := range e.elements {
 		if i > 0 {
 			b.WriteString(", ")
 		}
 		b.WriteString(expr.String())
-		i++
 	}
 	b.WriteByte(']')
 	return b.String()
