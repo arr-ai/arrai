@@ -20,6 +20,8 @@ func TestStringType(t *testing.T) {
 	AssertCodeEvalsToType(t, rel.String{}, `{(@: 0, @char: 97), (@: 1, @char: 98)}`)
 	AssertCodeEvalsToType(t, rel.String{}, `{(@: 0, @char: 97), (@: 0, @char: 98)}`)
 	AssertCodeEvalsToType(t, rel.String{}, `"abc" >> .`)
+	AssertCodeEvalsToType(t, rel.String{}, `"abc" >> .`)
+	AssertCodeEvalsToType(t, rel.String{}, `"abc" ++ "def"`)
 }
 
 func TestArray(t *testing.T) {
