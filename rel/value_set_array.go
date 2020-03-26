@@ -122,7 +122,7 @@ func (a Array) Kind() int {
 // Bool returns true iff the tuple has attributes.
 func (a Array) IsTrue() bool {
 	if len(a.values) == 0 {
-		panic("Empty string not allowed (should be == None)")
+		panic("Empty array not allowed (should be == None)")
 	}
 	return true
 }
@@ -153,7 +153,7 @@ func (a Array) Less(v Value) bool {
 	return len(a.values) < len(b.values)
 }
 
-// Negate returns {@neg: b}.
+// Negate returns {@neg: a}.
 func (a Array) Negate() Value {
 	return NewTuple(NewAttr(negateTag, a))
 }

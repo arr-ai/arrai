@@ -123,11 +123,9 @@ func jsonEscape(value Expr) interface{} {
 		if x.Equal(True) {
 			return true
 		}
-		array := make([]interface{}, x.Count())
-		i := 0
+		array := make([]interface{}, 0, x.Count())
 		for e := x.Enumerator(); e.MoveNext(); {
-			array[i] = jsonEscape(e.Current())
-			i++
+			array = append(array, jsonEscape(e.Current()))
 		}
 		return map[string]interface{}{"{||}": array}
 	case String:
