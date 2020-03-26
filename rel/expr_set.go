@@ -27,7 +27,9 @@ func NewSetExpr(elements ...Expr) Expr {
 
 // Elements returns a Set's elements.
 func (e *SetExpr) Elements() []Expr {
-	return e.elements
+	elements := make([]Expr, len(e.elements))
+	copy(elements, e.elements)
+	return elements
 }
 
 // String returns a string representation of the expression.

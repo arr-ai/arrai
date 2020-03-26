@@ -24,7 +24,9 @@ func NewArrayExpr(elements ...Expr) Expr {
 
 // Elements returns a Set's elements.
 func (e ArrayExpr) Elements() []Expr {
-	panic("unfinished")
+	elements := make([]Expr, len(e.elements))
+	copy(elements, e.elements)
+	return elements
 }
 
 // String returns a string representation of the expression.
