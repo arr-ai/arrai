@@ -2,10 +2,9 @@ package rel
 
 import "fmt"
 
-// StringCharTupleExpr represents a single name:expr in a dictEntryTupleExpr.
+// StringCharTupleExpr represents an expr that evaluates to a StringCharTuple.
 type StringCharTupleExpr struct {
-	at   Expr
-	char Expr
+	at, char Expr
 }
 
 // NewStringCharTupleExpr returns a new dictEntryTupleExpr.

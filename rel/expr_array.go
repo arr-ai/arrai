@@ -4,7 +4,7 @@ import (
 	"bytes"
 )
 
-// ArrayExpr...
+// ArrayExpr represents an expr that evaluates to an Array.
 type ArrayExpr struct {
 	elements []Expr
 }
@@ -43,7 +43,7 @@ func (e ArrayExpr) String() string {
 	return b.String()
 }
 
-// Eval returns the subject
+// Eval returns the subject.
 func (e ArrayExpr) Eval(local Scope) (Value, error) {
 	values := make([]Value, 0, len(e.elements))
 	for _, expr := range e.elements {

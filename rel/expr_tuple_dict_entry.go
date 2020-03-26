@@ -2,10 +2,9 @@ package rel
 
 import "fmt"
 
-// DictEntryTupleExpr represents a single name:expr in a dictEntryTupleExpr.
+// DictEntryTupleExpr represents an expr that evaluates to a DictEntryTuple.
 type DictEntryTupleExpr struct {
-	at    Expr
-	value Expr
+	at, value Expr
 }
 
 // NewDictEntryTupleExpr returns a new dictEntryTupleExpr.
