@@ -21,6 +21,15 @@ func (n Number) Float64() float64 {
 	return float64(n)
 }
 
+func (n Number) Int() (int, bool) {
+	f := n.Float64()
+	i := int(f)
+	if float64(i) == f {
+		return i, true
+	}
+	return 0, false
+}
+
 // Hash computes a hash for a Number.
 func (n Number) Hash(seed uintptr) uintptr {
 	return hash.Float64(float64(n), seed)

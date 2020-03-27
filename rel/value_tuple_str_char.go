@@ -149,7 +149,18 @@ func (t StringCharTuple) Without(name string) Tuple {
 }
 
 func (t StringCharTuple) Map(f func(Value) Value) Tuple {
-	return maybeNewCharTupleFromTuple(t.asGenericTuple().Map(f))
+	at := f(NewNumber(float64(t.at)))
+	char := f(NewNumber(float64(t.char)))
+	if at, ok := at.(Number); ok {
+		if at, is := at.Int(); is {
+			if char, ok := char.(Number); ok {
+				if char, is := char.Int(); is {
+					return NewStringCharTuple(at, rune(char))
+				}
+			}
+		}
+	}
+	return t.asGenericTuple().Map(f)
 }
 
 // HasName returns true iff the Tuple has an attribute with the given name.

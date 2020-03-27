@@ -148,7 +148,7 @@ func (t DictEntryTuple) Without(name string) Tuple {
 }
 
 func (t DictEntryTuple) Map(f func(Value) Value) Tuple {
-	return maybeNewDictEntryTupleFromTuple(t.asGenericTuple().Map(f))
+	return NewDictEntryTuple(f(t.at), f(t.value))
 }
 
 // HasName returns true iff the Tuple has an attribute with the given name.

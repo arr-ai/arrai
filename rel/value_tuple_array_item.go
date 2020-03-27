@@ -151,7 +151,14 @@ func (t ArrayItemTuple) Without(name string) Tuple {
 }
 
 func (t ArrayItemTuple) Map(f func(Value) Value) Tuple {
-	return maybeNewArrayItemTupleFromTuple(t.asGenericTuple().Map(f))
+	at := f(NewNumber(float64(t.at)))
+	item := f(t.item)
+	if at, ok := at.(Number); ok {
+		if at, is := at.Int(); is {
+			return NewArrayItemTuple(at, item)
+		}
+	}
+	return t.asGenericTuple().Map(f)
 }
 
 // HasName returns true iff the Tuple has an attribute with the given name.

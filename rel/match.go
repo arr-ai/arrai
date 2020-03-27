@@ -103,9 +103,8 @@ type MatchInt func(i int)
 
 func (m MatchInt) Match(v Value) bool {
 	if n, ok := v.(Number); ok {
-		f := n.Float64()
-		if f == float64(int(f)) {
-			m(int(f))
+		if i, is := n.Int(); is {
+			m(i)
 			return true
 		}
 	}
