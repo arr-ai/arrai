@@ -255,8 +255,13 @@ func (pc ParseContext) CompileExpr(b ast.Branch) rel.Expr {
 			result = rel.DotIdent
 		}
 		for _, dot := range c.(ast.Many) {
-			ident := dot.One("IDENT").One("").(ast.Leaf).Scanner().String()
-			result = rel.NewDotExpr(result, ident)
+			if ident := dot.One("IDENT"); ident != nil {
+				result = rel.NewDotExpr(result, ident.One("").(ast.Leaf).Scanner().String())
+			}
+			if str := dot.One("STR"); str != nil {
+				s := str.One("").Scanner().String()
+				result = rel.NewDotExpr(result, parseArraiString(s))
+			}
 		}
 		return result
 	case "rel":
