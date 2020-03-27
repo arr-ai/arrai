@@ -215,8 +215,8 @@ func (a Array) Without(value Value) Set {
 			if t.at == a.offset {
 				return Array{values: a.values[1:], offset: a.offset + 1}
 			}
-			if t.at == a.offset+i {
-				return Array{values: a.values[:i], offset: a.offset}
+			if t.at == a.offset+len(a.values)-1 {
+				return Array{values: a.values[:len(a.values)-1], offset: a.offset}
 			}
 			return newSetFromSet(a).Without(value)
 		}
