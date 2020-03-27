@@ -70,5 +70,5 @@ func AssertExprEvalsToType(t *testing.T, expected interface{}, expr Expr) bool {
 
 // AssertExprPanics asserts that the expr panics when evaluates.
 func AssertExprPanics(t *testing.T, expr Expr) bool {
-	return assert.Panics(t, func() { expr.Eval(EmptyScope) })
+	return assert.Panics(t, func() { expr.Eval(EmptyScope) }) //nolint:errcheck
 }
