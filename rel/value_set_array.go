@@ -1,6 +1,7 @@
 package rel
 
 import (
+	"fmt"
 	"reflect"
 	"strings"
 
@@ -96,6 +97,9 @@ func (a Array) Equal(v interface{}) bool {
 // String returns a string representation of an Array.
 func (a Array) String() string {
 	var sb strings.Builder
+	if a.offset != 0 {
+		fmt.Fprintf(&sb, `%d\`, a.offset)
+	}
 	sb.WriteRune('[')
 	for i, v := range a.values {
 		if i > 0 {
