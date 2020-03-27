@@ -29,5 +29,5 @@ filepath in the form of an array of bytes.
 
 ## get_env
 
-`//.os.get_eng()` is a function that returns the environment variable that
+`//.os.get_env()` is a function that returns the environment variable that
 corresponds to the provided key in the form of a string.
