@@ -19,15 +19,15 @@ var leadingWSRE = regexp.MustCompile(`\A[\t ]*`)
 var trailingWSRE = regexp.MustCompile(`[\t ]*\z`)
 var expansionRE = regexp.MustCompile(`(?::([-+#*\.\_0-9a-z]*))(:(?:\\.|[^\\:}])*)?(?::((?:\\.|[^\\:}])*))?`)
 
-type noParseType struct{}
+// type noParseType struct{}
 
-type parseFunc func(v interface{}) (rel.Expr, error)
+// type parseFunc func(v interface{}) (rel.Expr, error)
 
-func (*noParseType) Error() string {
-	return "No parse"
-}
+// func (*noParseType) Error() string {
+// 	return "No parse"
+// }
 
-var noParse = &noParseType{}
+// var noParse = &noParseType{}
 
 func unfakeBackquote(s string) string {
 	return strings.ReplaceAll(s, "‵", "`")
@@ -47,7 +47,7 @@ expr   -> C* amp="&"* @ C* arrow=(
         > C* @:binop=/{!?(?:<:|<>?=?|>=?|=)} C*
         > C* @ if=("if" t=expr ("else" f=expr)?)* C*
         > C* @:binop=/{\+\+|[+|]|-%?} C*
-        > C* @:binop=/{&~|&|~|[-<][-&][->]} C*
+        > C* @:binop=/{&~|&|~~?|[-<][-&][->]} C*
         > C* @:binop=/{//|[*/%]} C*
         > C* @:rbinop="^" C*
         > C* unop=/{:>|=>|>>|[-+!*^]}* @ C*
@@ -285,17 +285,17 @@ func (pc ParseContext) CompileExpr(b ast.Branch) rel.Expr {
 				keyExprs := pc.parseExprs(keys.(ast.Many)...)
 				valueExprs := pc.parseExprs(values.(ast.Many)...)
 				if len(keyExprs) == len(valueExprs) {
-					pairs := make([][2]rel.Expr, 0, len(keyExprs))
+					entryExprs := make([]rel.DictEntryTupleExpr, 0, len(keyExprs))
 					for i, keyExpr := range keyExprs {
 						valueExpr := valueExprs[i]
-						pairs = append(pairs, [2]rel.Expr{keyExpr, valueExpr})
+						entryExprs = append(entryExprs, rel.NewDictEntryTupleExpr(keyExpr, valueExpr))
 					}
-					return rel.NewDictExpr(pairs...)
+					return rel.NewDictExpr(false, entryExprs...)
 				}
 			}
 			panic("mismatch between dict keys and values")
 		}
-		return rel.NewDict()
+		return rel.NewDict(false)
 	case "array":
 		if items := c.(ast.One).Node.(ast.Branch)["item"]; items != nil {
 			return rel.NewArrayExpr(pc.parseExprs(items.(ast.Many)...)...)
@@ -671,7 +671,7 @@ var binops = map[string]binOpFunc{
 	"-":       rel.NewSubExpr,
 	"++":      rel.NewConcatExpr,
 	"&~":      rel.NewDiffExpr,
-	"~":       rel.NewSymmDiffExpr,
+	"~~":      rel.NewSymmDiffExpr,
 	"&":       rel.NewIntersectExpr,
 	"|":       rel.NewUnionExpr,
 	"<&>":     rel.NewJoinExpr,
@@ -696,7 +696,3 @@ func parseNest(lhs rel.Expr, branch ast.Branch) rel.Expr {
 
 type binOpFunc func(a, b rel.Expr) rel.Expr
 type unOpFunc func(e rel.Expr) rel.Expr
-
-func unimplementedBinOpFunc(_, _ rel.Expr) rel.Expr {
-	panic("unimplemented")
-}

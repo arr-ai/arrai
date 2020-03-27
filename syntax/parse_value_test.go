@@ -14,11 +14,11 @@ func assertParse(t *testing.T, expected rel.Value, input string) bool { //nolint
 		assert.True(t, expected.Equal(value), "%s == \n%s", expected, value)
 }
 
-func assertParseError(t *testing.T, input string) bool {
-	value, err := Compile(NoPath, input)
-	return !assert.Error(t, err) &&
-		assert.Fail(t, "expected error, got value", "%s", value)
-}
+// func assertParseError(t *testing.T, input string) bool {
+// 	value, err := Compile(NoPath, input)
+// 	return !assert.Error(t, err) &&
+// 		assert.Fail(t, "expected error, got value", "%s", value)
+// }
 
 func TestParseNumber(t *testing.T) {
 	t.Parallel()
@@ -98,5 +98,5 @@ func TestParseRelationShortcut(t *testing.T) {
 			rel.Attr{Name: "a", Value: rel.NewNumber(3)},
 			rel.Attr{Name: "b", Value: rel.NewNumber(4)},
 		),
-	), `{ |a,b| (1, 2), (3, 4) }`)
+	), `{|a,b| (1, 2), (3, 4) }`)
 }

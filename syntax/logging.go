@@ -1,46 +1,38 @@
 package syntax
 
-import (
-	"reflect"
-	"strings"
-	"sync/atomic"
+// var depth int64
 
-	"github.com/sirupsen/logrus"
-)
+// func indentf(format string, args ...interface{}) {
+// 	logrus.Tracef(strings.Repeat("    ", int(atomic.LoadInt64(&depth)))+format, args...)
+// }
 
-var depth int64
+// type enterexit struct{}
 
-func indentf(format string, args ...interface{}) {
-	logrus.Tracef(strings.Repeat("    ", int(atomic.LoadInt64(&depth)))+format, args...)
-}
+// func enterf(format string, args ...interface{}) enterexit { //nolint:unparam
+// 	indentf("--> "+format, args...)
+// 	atomic.AddInt64(&depth, 1)
+// 	return enterexit{}
+// }
 
-type enterexit struct{}
+// func (enterexit) exitf(format string, ptrs ...interface{}) { //nolint:unparam
+// 	atomic.AddInt64(&depth, -1)
+// 	args := make([]interface{}, 0, len(ptrs))
+// 	for _, ptr := range ptrs {
+// 		args = append(args, reflect.ValueOf(ptr).Elem().Interface())
+// 	}
+// 	indentf("<-- "+format, args...)
+// }
 
-func enterf(format string, args ...interface{}) enterexit { //nolint:unparam
-	indentf("--> "+format, args...)
-	atomic.AddInt64(&depth, 1)
-	return enterexit{}
-}
+// type tracing struct {
+// 	oldLevel logrus.Level
+// }
 
-func (enterexit) exitf(format string, ptrs ...interface{}) { //nolint:unparam
-	atomic.AddInt64(&depth, -1)
-	args := make([]interface{}, 0, len(ptrs))
-	for _, ptr := range ptrs {
-		args = append(args, reflect.ValueOf(ptr).Elem().Interface())
-	}
-	indentf("<-- "+format, args...)
-}
+// func trace() tracing {
+// 	t := tracing{oldLevel: logrus.GetLevel()}
+// 	logrus.SetLevel(logrus.TraceLevel)
+// 	return t
+// }
 
-type tracing struct {
-	oldLevel logrus.Level
-}
-
-func trace() tracing {
-	t := tracing{oldLevel: logrus.GetLevel()}
-	logrus.SetLevel(logrus.TraceLevel)
-	return t
-}
-
-func (t tracing) revert() {
-	logrus.SetLevel(t.oldLevel)
-}
+// func (t tracing) revert() {
+// 	logrus.SetLevel(t.oldLevel)
+// }

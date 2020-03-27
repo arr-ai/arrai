@@ -237,20 +237,24 @@ func GenericJoin(
 // E.g., [1, 2] + [3] = [1, 2, 3]; "hell" + "o" = "hello"
 func Concatenate(a, b Set) (Set, error) {
 	offset := a.Count()
+	values := make([]Value, 0, a.Count()+b.Count())
+	for e := a.Enumerator(); e.MoveNext(); {
+		values = append(values, e.Current())
+	}
 	for e := b.Enumerator(); e.MoveNext(); {
 		elt := e.Current()
 		if t, ok := elt.(Tuple); ok {
 			if pos, found := t.Get("@"); found {
 				if n, ok := pos.(Number); ok {
 					t = t.With("@", NewNumber(float64(offset)+n.Float64()))
-					a = a.With(t)
+					values = append(values, t)
 					continue
 				}
 			}
 		}
 		return nil, errors.Errorf("Mismatched elt in set + set: %v", elt)
 	}
-	return a, nil
+	return NewSet(values...), nil
 }
 
 func NConcatenate(a Set, bs ...Set) (Set, error) {

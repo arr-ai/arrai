@@ -67,6 +67,28 @@ func NewTupleAttr(name string, attrs ...Attr) Attr {
 
 // NewTuple constructs a Tuple from attrs. Passes each Val to NewValue().
 func NewTuple(attrs ...Attr) Tuple {
+	if len(attrs) == 2 {
+		if attrs[1].Name == "@" {
+			attrs[0], attrs[1] = attrs[1], attrs[0]
+		}
+		if attrs[0].Name == "@" && strings.HasPrefix(attrs[1].Name, "@") {
+			switch attrs[1].Name {
+			case StringCharAttr:
+				return NewStringCharTuple(
+					int(attrs[0].Value.(Number).Float64()),
+					rune(attrs[1].Value.(Number).Float64()),
+				)
+			case ArrayItemAttr:
+				return NewArrayItemTuple(int(attrs[0].Value.(Number).Float64()), attrs[1].Value)
+			case DictValueAttr:
+				return NewDictEntryTuple(attrs[0].Value, attrs[1].Value)
+			}
+		}
+	}
+	return newTuple(attrs...)
+}
+
+func newTuple(attrs ...Attr) Tuple {
 	var b TupleBuilder
 	for _, kv := range attrs {
 		b.Put(kv.Name, kv.Value)

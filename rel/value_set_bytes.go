@@ -209,18 +209,14 @@ func (b Bytes) Enumerator() ValueEnumerator {
 	return &BytesEnumerator{b.b, -1}
 }
 
-func (b Bytes) AsString() (String, bool) {
-	return String{}, false
-}
-
-func (b Bytes) ArrayEnumerator() (ValueEnumerator, bool) {
-	return &bytesEnumerator{b.b, -1}, true
+func (b Bytes) ArrayEnumerator() (OffsetValueEnumerator, bool) {
+	return &bytesEnumerator{b: b.b, offset: b.offset, i: -1}, true
 }
 
 func newBytesTuple(index int, b byte) Tuple {
 	return NewTuple(
-		NewAttr("@", NewNumber(float64(index))),
-		NewAttr(ByteAttr, NewNumber(float64(b))),
+		NewIntAttr("@", index),
+		NewIntAttr(ByteAttr, int(b)),
 	)
 }
 
@@ -249,8 +245,9 @@ func bytesTupleMatcher(match func(index int, b byte)) TupleMatcher {
 }
 
 type bytesEnumerator struct {
-	b []byte
-	i int
+	b      []byte
+	offset int
+	i      int
 }
 
 func (e *bytesEnumerator) MoveNext() bool {
@@ -263,6 +260,10 @@ func (e *bytesEnumerator) MoveNext() bool {
 
 func (e *bytesEnumerator) Current() Value {
 	return NewNumber(float64(e.b[e.i]))
+}
+
+func (e *bytesEnumerator) Offset() int {
+	return e.offset + e.i
 }
 
 // func stringSet(b Set) Set {

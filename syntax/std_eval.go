@@ -3,13 +3,13 @@ package syntax
 import "github.com/arr-ai/arrai/rel"
 
 func stdEval() rel.Attr {
-	return rel.NewAttr("eval", rel.NewTuple(
+	return rel.NewTupleAttr("eval",
 		//TODO: eval needs to be changed to only evaluate simple expression
 		// e.g. no functions, no math operations etc only simple values
 		rel.NewNativeFunctionAttr("value", evalExpr),
 
 		//TODO: eval.expr
-	))
+	)
 }
 
 func evalExpr(v rel.Value) rel.Value {

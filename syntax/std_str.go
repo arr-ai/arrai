@@ -9,7 +9,16 @@ import (
 
 // TODO: Make this more robust.
 func formatValue(format string, value rel.Value) string {
-	v := value.Export()
+	var v interface{}
+	if set, ok := value.(rel.Set); ok {
+		if s, is := rel.AsString(set); is {
+			v = s
+		} else {
+			v = set.Export()
+		}
+	} else {
+		v = value.Export()
+	}
 	switch format[len(format)-1] {
 	case 't':
 		v = value.IsTrue()
@@ -62,7 +71,7 @@ var (
 )
 
 func stdStr() rel.Attr {
-	return rel.NewAttr("str", rel.NewTuple(
+	return rel.NewTupleAttr("str",
 		createNestedFuncAttr("sub", 3, func(args ...rel.Value) rel.Value {
 			return rel.NewString(
 				[]rune(
@@ -110,10 +119,11 @@ func stdStr() rel.Attr {
 		}),
 		rel.NewAttr("concat", libStrConcat),
 		rel.NewAttr("expand", libStrExpand),
-	))
+	)
 }
 
 func mustAsString(v rel.Value) string {
+	// log.Print(v)
 	if s, ok := rel.AsString(v.(rel.Set)); ok {
 		return s.String()
 	}

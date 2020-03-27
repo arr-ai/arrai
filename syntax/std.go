@@ -20,24 +20,24 @@ func stdScope() rel.Scope {
 	stdScopeOnce.Do(func() {
 		stdScopeVar = rel.EmptyScope.
 			With(".", rel.NewTuple(
-				rel.NewAttr("math", rel.NewTuple(
-					rel.NewAttr("pi", rel.NewNumber(math.Pi)),
-					rel.NewAttr("e", rel.NewNumber(math.E)),
+				rel.NewTupleAttr("math",
+					rel.NewFloatAttr("pi", math.Pi),
+					rel.NewFloatAttr("e", math.E),
 					newFloatFuncAttr("sin", math.Sin),
 					newFloatFuncAttr("cos", math.Cos),
-				)),
-				rel.NewAttr("grammar", rel.NewTuple(
+				),
+				rel.NewTupleAttr("grammar",
 					rel.NewNativeFunctionAttr("parse", parseGrammar),
-					rel.NewAttr("lang", rel.NewTuple(
+					rel.NewTupleAttr("lang",
 						rel.NewAttr("arrai", rel.ASTNodeToValue(arraiParsers.Node().(ast.Node))),
 						rel.NewAttr("wbnf", rel.ASTNodeToValue(wbnf.Core().Node().(ast.Node))),
-					)),
-				)),
-				rel.NewAttr("fn", rel.NewTuple(
+					),
+				),
+				rel.NewTupleAttr("fn",
 					rel.NewAttr("fix", parseLit(`(\f f(f))(\f \g \n g(f(f)(g))(n))`)),
 					rel.NewAttr("fixt", parseLit(`(\f f(f))(\f \t t :> \g \n g(f(f)(t))(n))`)),
-				)),
-				rel.NewAttr("log", rel.NewTuple(
+				),
+				rel.NewTupleAttr("log",
 					rel.NewNativeFunctionAttr("print", func(value rel.Value) rel.Value {
 						log.Print(value)
 						return value
@@ -51,7 +51,7 @@ func stdScope() rel.Scope {
 						log.Printf(format, strs...)
 						return args[1]
 					}),
-				)),
+				),
 				stdArchive(),
 				stdReflect(),
 				stdRel(),

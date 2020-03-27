@@ -8,47 +8,34 @@ import (
 	"github.com/arr-ai/frozen"
 )
 
-const DictValueAttr = "@value"
-
-func NewDictTuple(key, value Value) Tuple {
-	return NewTuple(NewAttr("@", key), NewAttr(DictValueAttr, value))
-}
+type multipleValues frozen.Set
 
 // Dict is a map from keys to values.
 type Dict struct {
 	m frozen.Map
 }
 
-// NewDict constructs a dict as a relation.
-func NewDict(kvs ...[2]Value) Set {
-	if len(kvs) == 0 {
+// NewDict constructs a dict as a relation {|@, @value|...}.
+func NewDict(allowDupKeys bool, entries ...DictEntryTuple) Set {
+	if len(entries) == 0 {
 		return None
 	}
 	var mb frozen.MapBuilder
-	for _, kv := range kvs {
-		mb.Put(kv[0], kv[1])
+	for _, entry := range entries {
+		if v, has := mb.Get(entry.at); has {
+			if !allowDupKeys {
+				panic(fmt.Errorf("duplicate key: %v", entry.at))
+			}
+			switch v := v.(type) {
+			case multipleValues:
+				mb.Put(entry.at, multipleValues(frozen.Set(v).With(entry.value)))
+			default:
+				mb.Put(entry.at, multipleValues(frozen.NewSet(v, entry.value)))
+			}
+		}
+		mb.Put(entry.at, entry.value)
 	}
 	return Dict{m: mb.Finish()}
-}
-
-func AsDict(s Set) (Dict, bool) {
-	if d, ok := s.(Dict); ok {
-		return d, true
-	}
-	if !s.IsTrue() {
-		return Dict{}, true
-	}
-	var mb frozen.MapBuilder
-	match := DictTupleMatcher()
-	for i := s.Enumerator(); i.MoveNext(); {
-		key, value, matched := match(i.Current())
-		if !matched {
-			return Dict{}, false
-		}
-		mb.Put(key, value)
-	}
-
-	return Dict{m: mb.Finish()}, true
 }
 
 func (d Dict) Hash(seed uintptr) uintptr {
@@ -100,7 +87,7 @@ func (d Dict) Eval(local Scope) (Value, error) {
 	return d, nil
 }
 
-var dictKind = registerKind(208, reflect.TypeOf(String{}))
+var dictKind = registerKind(209, reflect.TypeOf(String{}))
 
 // Kind returns a number that is unique for each major kind of Value.
 func (d Dict) Kind() int {
@@ -145,7 +132,7 @@ func (d Dict) Has(v Value) bool {
 }
 
 func (d Dict) Enumerator() ValueEnumerator {
-	return &dictEnumerator{i: d.m.Range()}
+	return &dictEnumerator{i: d.m.Range(), j: frozen.Set{}.Range()}
 }
 
 func (d Dict) With(v Value) Set {
@@ -171,7 +158,7 @@ func (d Dict) Map(m func(Value) Value) Set {
 	for e := d.Enumerator(); e.MoveNext(); {
 		sb.Add(m(e.Current()))
 	}
-	return &genericSet{set: sb.Finish()}
+	return genericSet{set: sb.Finish()}
 }
 
 func (d Dict) Where(pred func(Value) bool) Set {
@@ -191,7 +178,7 @@ func (d Dict) Call(arg Value) Value {
 	return d.m.MustGet(arg).(Value)
 }
 
-func (d Dict) ArrayEnumerator() (ValueEnumerator, bool) {
+func (d Dict) ArrayEnumerator() (OffsetValueEnumerator, bool) {
 	return nil, false
 }
 
@@ -216,14 +203,33 @@ func DictTupleMatcher() func(v Value) (key, value Value, matches bool) {
 
 type dictEnumerator struct {
 	i *frozen.MapIterator
+	j frozen.Iterator
+	v Value
 }
 
 func (a *dictEnumerator) MoveNext() bool {
-	return a.i.Next()
+	if !a.j.Next() {
+		if !a.i.Next() {
+			return false
+		}
+		switch entry := a.i.Value().(type) {
+		case multipleValues:
+			a.j = frozen.Set(entry).Range()
+			if !a.j.Next() {
+				return false
+			}
+		default:
+			a.j = frozen.Set{}.Range()
+			a.v = NewDictEntryTuple(a.i.Key().(Value), entry.(Value))
+			return true
+		}
+	}
+	a.v = NewDictEntryTuple(a.i.Key().(Value), a.j.Value().(Value))
+	return true
 }
 
 func (a *dictEnumerator) Current() Value {
-	return NewDictTuple(a.i.Key().(Value), a.i.Value().(Value))
+	return a.v
 }
 
 type DictEnumerator struct {

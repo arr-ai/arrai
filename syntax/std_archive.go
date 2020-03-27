@@ -12,8 +12,8 @@ import (
 )
 
 func stdArchive() rel.Attr {
-	return rel.NewAttr("archive", rel.NewTuple(
-		rel.NewAttr("tar", rel.NewTuple(
+	return rel.NewTupleAttr("archive",
+		rel.NewTupleAttr("tar",
 			rel.NewNativeFunctionAttr("tar", func(v rel.Value) rel.Value {
 				return createArchive(v, func(w io.Writer) (io.Closer, func(string, []byte) (io.Writer, error)) {
 					aw := tar.NewWriter(w)
@@ -26,8 +26,8 @@ func stdArchive() rel.Attr {
 					}
 				})
 			}),
-		)),
-		rel.NewAttr("zip", rel.NewTuple(
+		),
+		rel.NewTupleAttr("zip",
 			rel.NewNativeFunctionAttr("zip", func(v rel.Value) rel.Value {
 				return createArchive(v, func(w io.Writer) (io.Closer, func(string, []byte) (io.Writer, error)) {
 					aw := zip.NewWriter(w)
@@ -36,14 +36,14 @@ func stdArchive() rel.Attr {
 					}
 				})
 			}),
-		)),
-	))
+		),
+	)
 }
 
 func createArchive(v rel.Value, creator func(io.Writer) (io.Closer, func(string, []byte) (io.Writer, error))) rel.Set {
 	var b bytes.Buffer
 	closer, create := creator(&b)
-	d, ok := rel.AsDict(v.(rel.Set))
+	d, ok := v.(rel.Dict)
 	if !ok {
 		panic(fmt.Errorf("//.archive.zip.zip arg not a dict: %v", v))
 	}
@@ -75,7 +75,7 @@ func writeDictToArchive(d rel.Dict, w func(string, []byte) (io.Writer, error), p
 				if _, err = fw.Write(data); err != nil {
 					return err
 				}
-			} else if d, ok := rel.AsDict(v); ok {
+			} else if d, ok := v.(rel.Dict); ok {
 				if err := writeDictToArchive(d, w, subpath); err != nil {
 					return err
 				}
