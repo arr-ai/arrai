@@ -20,6 +20,36 @@ func stdScope() rel.Scope {
 	stdScopeOnce.Do(func() {
 		stdScopeVar = rel.EmptyScope.
 			With(".", rel.NewTuple(
+				rel.NewNativeFunctionAttr("dict", func(value rel.Value) rel.Value {
+					if t, ok := value.(rel.Tuple); ok {
+						if !t.IsTrue() {
+							return rel.None
+						}
+						entries := make([]rel.DictEntryTuple, 0, t.Count())
+						for e := t.Enumerator(); e.MoveNext(); {
+							name, value := e.Current()
+							entries = append(entries, rel.NewDictEntryTuple(rel.NewString([]rune(name)), value))
+						}
+						return rel.NewDict(false, entries...)
+					}
+					panic("dict(): not a tuple")
+				}),
+				rel.NewNativeFunctionAttr("tuple", func(value rel.Value) rel.Value {
+					switch t := value.(type) {
+					case rel.Dict:
+						attrs := make([]rel.Attr, 0, t.Count())
+						for e := t.DictEnumerator(); e.MoveNext(); {
+							key, value := e.Current()
+							attrs = append(attrs, rel.NewAttr(key.(rel.String).String(), value))
+						}
+						return rel.NewTuple(attrs...)
+					case rel.Set:
+						if !t.IsTrue() {
+							return rel.NewTuple()
+						}
+					}
+					panic("tuple(): not a dict")
+				}),
 				rel.NewTupleAttr("math",
 					rel.NewFloatAttr("pi", math.Pi),
 					rel.NewFloatAttr("e", math.E),

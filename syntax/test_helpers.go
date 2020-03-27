@@ -59,6 +59,21 @@ func AssertCodeEvalsToType(t *testing.T, expected interface{}, code string) bool
 	return true
 }
 
+// AssertCodePanics asserts that the code panics when executed.
+func AssertCodePanics(t *testing.T, code string) bool {
+	pc := ParseContext{SourceDir: ".."}
+	ast, err := pc.Parse(parser.NewScanner(code))
+	if !assert.NoError(t, err, "parsing code: %s", code) {
+		return false
+	}
+	codeExpr := pc.CompileExpr(ast)
+	if !rel.AssertExprPanics(t, codeExpr) {
+		t.Logf("code:     %s", code)
+		return false
+	}
+	return true
+}
+
 // AssertScan asserts that a lexer's next produced token is as expected.
 func AssertScan(t *testing.T, l *Lexer, tok Token, intf interface{}, lexeme string) bool {
 	if !assert.True(t, l.Scan()) {
