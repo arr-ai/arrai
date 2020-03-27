@@ -44,27 +44,32 @@ func Test_newArrayItemTupleFromTuple(t *testing.T) {
 		want ArrayItemTuple
 		ok   bool
 	}{
-		{name: "0@0",
+		{
+			name: "0@0",
 			want: NewArrayItemTuple(0, NewNumber(0)),
 			ok:   true,
 			args: args{t: NewTuple(NewIntAttr("@", 0), NewIntAttr(ArrayItemAttr, 0))},
 		},
-		{name: "{}@0",
+		{
+			name: "{}@0",
 			want: NewArrayItemTuple(0, None),
 			ok:   true,
 			args: args{t: NewTuple(NewIntAttr("@", 0), NewAttr(ArrayItemAttr, None))},
 		},
-		{name: "{}@42",
+		{
+			name: "{}@42",
 			want: NewArrayItemTuple(42, None),
 			ok:   true,
 			args: args{t: NewTuple(NewIntAttr("@", 42), NewAttr(ArrayItemAttr, None))},
 		},
-		{name: "no-@",
+		{
+			name: "no-@",
 			want: ArrayItemTuple{},
 			ok:   false,
 			args: args{t: NewTuple(NewIntAttr("at", 0), NewAttr(ArrayItemAttr, None))},
 		},
-		{name: "no-ArrayItemAttr",
+		{
+			name: "no-ArrayItemAttr",
 			want: ArrayItemTuple{},
 			ok:   false,
 			args: args{t: NewTuple(NewIntAttr("@", 0), NewIntAttr("item", 0))},
