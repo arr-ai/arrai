@@ -75,7 +75,7 @@ expr   -> C* amp="&"* @ C* arrow=(
 nest   -> C* "nest" names IDENT C*;
 unnest -> C* "unnest" IDENT C*;
 touch  -> C* ("->*" ("&"? IDENT | STR))+ "(" expr:"," ","? ")" C*;
-get    -> C* dot="." ("&"? IDENT | STR | "*") C*;
+get    -> C* dot="." ("&"? IDENT | STR ) C*;
 names  -> C* "|" C* IDENT:"," C* "|" C*;
 name   -> C* IDENT C* | C* STR C*;
 xstr   -> C* quote=/{\$"\s*} part=( sexpr | fragment=/{(?: \\. | \$[^{"] | [^\\"$] )+} )* '"' C*
