@@ -159,7 +159,7 @@ func reprValue(v Value, w io.Writer) {
 	case Number:
 		reprNumber(v, w)
 	default:
-		panic(fmt.Errorf("Repr(): unexpected Value type %T: %[1]v", v))
+		panic(fmt.Errorf("Repr(): unexpected Value type %T: %[1]v", v)) //nolint:golint
 	}
 }
 
