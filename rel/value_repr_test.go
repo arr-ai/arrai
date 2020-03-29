@@ -21,4 +21,10 @@ func TestRepr(t *testing.T) {
 		NewDictEntryTuple(NewNumber(1), NewNumber(2)),
 		NewDictEntryTuple(NewSet(NewString([]rune("a")), NewNumber(42)), NewNumber(43)),
 	)))
+
+	assert.Equal(t, `(a: (b: 'foo'), c: ['bar'], d: {})`, Repr(NewTuple(
+		NewAttr("a", NewTuple(NewAttr("b", NewString([]rune("foo"))))),
+		NewAttr("c", NewArray(NewString([]rune("bar")))),
+		NewAttr("d", None),
+	)))
 }
