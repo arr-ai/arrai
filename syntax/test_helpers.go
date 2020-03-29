@@ -59,19 +59,16 @@ func AssertCodeEvalsToType(t *testing.T, expected interface{}, code string) bool
 	return true
 }
 
-// AssertCodePanics asserts that the code panics when executed.
+// AssertCodePanics asserts that the exprs evaluate to the same value.
 func AssertCodePanics(t *testing.T, code string) bool {
-	pc := ParseContext{SourceDir: ".."}
-	ast, err := pc.Parse(parser.NewScanner(code))
-	if !assert.NoError(t, err, "parsing code: %s", code) {
-		return false
-	}
-	codeExpr := pc.CompileExpr(ast)
-	if !rel.AssertExprPanics(t, codeExpr) {
-		t.Logf("code:     %s", code)
-		return false
-	}
-	return true
+	return assert.Panics(t, func() {
+		pc := ParseContext{SourceDir: ".."}
+		ast, err := pc.Parse(parser.NewScanner(code))
+		if assert.NoError(t, err, "parsing code: %s", code) {
+			codeExpr := pc.CompileExpr(ast)
+			codeExpr.Eval(rel.EmptyScope) //nolint:errcheck
+		}
+	})
 }
 
 // AssertScan asserts that a lexer's next produced token is as expected.
