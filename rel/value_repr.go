@@ -6,12 +6,9 @@ import (
 	"strings"
 )
 
-var reprEscapes = map[byte][]byte{
-	'\'': escapesWithDelim('\''),
-	'"':  escapesWithDelim('"'),
-}
+var reprEscapes = escapesWithDelim()
 
-func escapesWithDelim(delim byte) []byte {
+func escapesWithDelim() []byte {
 	escapes := make([]byte, 32)
 	escapes['\a'] = 'a'
 	escapes['\b'] = 'b'
@@ -41,7 +38,6 @@ func reprOffset(offset int, w io.Writer) {
 }
 
 func reprEscape(s string, delim byte, w io.Writer) {
-	escapes := reprEscapes[delim]
 	fmt.Fprintf(w, "%c", delim)
 	// TODO: optimise by handling non-special characters in groups.
 	for _, c := range s {
@@ -49,7 +45,7 @@ func reprEscape(s string, delim byte, w io.Writer) {
 			fmt.Fprintf(w, `\%c`, c)
 		} else if c >= 32 {
 			fmt.Fprintf(w, "%c", c)
-		} else if escape := escapes[c]; escape != 0 {
+		} else if escape := reprEscapes[c]; escape != 0 {
 			fmt.Fprintf(w, `\%c`, escape)
 		} else {
 			fmt.Fprintf(w, `\x%02x`, c)
