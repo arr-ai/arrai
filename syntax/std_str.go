@@ -132,5 +132,5 @@ func mustAsString(v rel.Value) string {
 	if s, ok := rel.AsString(v.(rel.Set)); ok {
 		return s.String()
 	}
-	panic("can not be a string")
+	panic("value is not a string")
 }

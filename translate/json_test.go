@@ -42,46 +42,46 @@ func TestJSONObjectToArrai(t *testing.T) {
 	AssertExpectedJSONTranslation(t, `{}`, `{}`)
 
 	// different value types
-	AssertExpectedJSONTranslation(t, `{"key": "val"}`, `{"key":"val"}`)
-	AssertExpectedJSONTranslation(t, `{"key": 123}`, `{"key":123}`)
-	AssertExpectedJSONTranslation(t, `{"key": {"foo": "bar"}}`, `{"key":{"foo":"bar"}}`)
-	AssertExpectedJSONTranslation(t, `{"key": [1, 2, 3]}`, `{"key":[1, 2, 3]}`)
-	AssertExpectedJSONTranslation(t, `{"key": {}}`, `{"key":null}`)
+	AssertExpectedJSONTranslation(t, `{"key": 123}           `, `{"key":123}          `)
+	AssertExpectedJSONTranslation(t, `{"key": (null: {})}    `, `{"key":null}         `)
+	AssertExpectedJSONTranslation(t, `{"key": (s: "val")}    `, `{"key":"val"}        `)
+	AssertExpectedJSONTranslation(t, `{"key": (a: [1, 2, 3])}`, `{"key":[1, 2, 3]}    `)
+	AssertExpectedJSONTranslation(t, `{"key": {"foo": (s: "bar")}}`, `{"key":{"foo":"bar"}}`)
 
 	// Multiple key-val pairs
-	AssertExpectedJSONTranslation(t, `{"key": "val", "foo": 123}`, `{"key":"val", "foo":123}`)
+	AssertExpectedJSONTranslation(t, `{"key": (s: "val"), "foo": 123}`, `{"key":"val", "foo":123}`)
 }
 
 func TestJSONArrayToArrai(t *testing.T) {
 	t.Parallel()
 
 	// Empty
-	AssertExpectedJSONTranslation(t, `[]`, `[]`)
+	AssertExpectedJSONTranslation(t, `(a: [])`, `[]`)
 
 	// Different value types
-	AssertExpectedJSONTranslation(t, `[1]`, `[1]`)
-	AssertExpectedJSONTranslation(t, `["hello"]`, `["hello"]`)
-	AssertExpectedJSONTranslation(t, `[{"foo": "bar"}]`, `[{"foo":"bar"}]`)
-	AssertExpectedJSONTranslation(t, `[[1, 2, 3]]`, `[[1, 2, 3]]`)
-	AssertExpectedJSONTranslation(t, `[{}]`, `[null]`)
+	AssertExpectedJSONTranslation(t, `(a: [1])                  `, `[1]            `)
+	AssertExpectedJSONTranslation(t, `(a: [(null: {})])         `, `[null]         `)
+	AssertExpectedJSONTranslation(t, `(a: [(s: "hello")])       `, `["hello"]      `)
+	AssertExpectedJSONTranslation(t, `(a: [(a: [1, 2, 3])])     `, `[[1, 2, 3]]    `)
+	AssertExpectedJSONTranslation(t, `(a: [{"foo": (s: "bar")}])`, `[{"foo":"bar"}]`)
 
 	// Multiple values with different types
-	AssertExpectedJSONTranslation(t, `[1, "Hello", {}]`, `[1, "Hello", null]`)
+	AssertExpectedJSONTranslation(t, `(a: [1, (s: "Hello"), (null: {})])`, `[1, "Hello", null]`)
 }
 
 func TestJSONNullToNone(t *testing.T) {
 	t.Parallel()
-	AssertExpectedJSONTranslation(t, `{}`, `null`)
+	AssertExpectedJSONTranslation(t, `(null: {})`, `null`)
 }
 
 func TestJSONStringToArrai(t *testing.T) {
 	t.Parallel()
-	AssertExpectedJSONTranslation(t, `""`, `""`)
-	AssertExpectedJSONTranslation(t, `"Hello World"`, `"Hello World"`)
+	AssertExpectedJSONTranslation(t, `(s: {})           `, `""           `)
+	AssertExpectedJSONTranslation(t, `(s: "Hello World")`, `"Hello World"`)
 }
 
 func TestJSONNumericToArrai(t *testing.T) {
 	t.Parallel()
-	AssertExpectedJSONTranslation(t, `123`, `123`)
+	AssertExpectedJSONTranslation(t, `123 `, `123 `)
 	AssertExpectedJSONTranslation(t, `1.23`, `1.23`)
 }
