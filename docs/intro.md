@@ -132,7 +132,7 @@ $ arrai e '{
    (@: 4, @char: 111),
    (@: 2, @char: 108),
 }'
-"hello"
+hello
 ```
 
 The last example underscores the point made earlier that strings are in fact
