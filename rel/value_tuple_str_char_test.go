@@ -44,27 +44,32 @@ func Test_newCharTupleFromTuple(t *testing.T) {
 		want StringCharTuple
 		ok   bool
 	}{
-		{name: "0@0",
+		{
+			name: "0@0",
 			want: NewStringCharTuple(0, 0),
 			ok:   true,
 			args: args{t: NewTuple(NewIntAttr("@", 0), NewIntAttr(StringCharAttr, 0))},
 		},
-		{name: "a@0",
+		{
+			name: "a@0",
 			want: NewStringCharTuple(0, 'a'),
 			ok:   true,
 			args: args{t: NewTuple(NewIntAttr("@", 0), NewIntAttr(StringCharAttr, 'a'))},
 		},
-		{name: "a@42",
+		{
+			name: "a@42",
 			want: NewStringCharTuple(42, 'a'),
 			ok:   true,
 			args: args{t: NewTuple(NewIntAttr("@", 42), NewIntAttr(StringCharAttr, 'a'))},
 		},
-		{name: "no-@",
+		{
+			name: "no-@",
 			want: StringCharTuple{},
 			ok:   false,
 			args: args{t: NewTuple(NewIntAttr("at", 0), NewIntAttr(StringCharAttr, 'a'))},
 		},
-		{name: "no-CharAttr",
+		{
+			name: "no-CharAttr",
 			want: StringCharTuple{},
 			ok:   false,
 			args: args{t: NewTuple(NewIntAttr("@", 0), NewIntAttr("char", 'a'))},
