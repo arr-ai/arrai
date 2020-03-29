@@ -16,12 +16,20 @@ func JSONToArrai(data interface{}) (rel.Value, error) {
 		return jsonObjToArrai(v)
 	case []interface{}:
 		return jsonArrToArrai(v)
-	case string: // rel.NewValue cannot produce strings
-		return rel.NewString([]rune(v)), nil
+	case string:
+		return rel.NewTuple(rel.NewAttr("s", rel.NewString([]rune(v)))), nil
+	case float64:
+		return rel.NewNumber(v), nil
+	case bool:
+		return rel.NewTuple(rel.NewAttr("b", rel.NewBool(v))), nil
 	case nil:
-		return rel.None, nil
+		return rel.NewTuple(rel.NewAttr("null", rel.None)), nil
 	default:
-		return rel.NewValue(v)
+		t, err := rel.NewValue(v)
+		if err != nil {
+			return nil, err
+		}
+		return rel.NewTuple(rel.NewAttr("v", t)), nil
 	}
 }
 
@@ -52,5 +60,5 @@ func jsonArrToArrai(data []interface{}) (rel.Value, error) {
 		}
 		elts[i] = elt
 	}
-	return rel.NewArray(elts...), nil
+	return rel.NewTuple(rel.NewAttr("a", rel.NewArray(elts...))), nil
 }
