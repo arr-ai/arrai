@@ -31,7 +31,7 @@ func AssertCodesEvalToSameValue(t *testing.T, expected, code string) bool {
 	return true
 }
 
-// RequireCodesEvalToSameValue requires that code evaluate to the same value as
+// RequireCodesEvalToSameValue requires that code evaluates to the same value as
 // expected.
 func RequireCodesEvalToSameValue(t *testing.T, expected string, code string) {
 	pc := ParseContext{SourceDir: ".."}
@@ -44,7 +44,7 @@ func RequireCodesEvalToSameValue(t *testing.T, expected string, code string) {
 	rel.AssertExprsEvalToSameValue(t, expectedExpr, codeExpr)
 }
 
-// AssertCodeEvalsToType asserts that the exprs evaluate to the same value.
+// AssertCodeEvalsToType asserts that code evaluates to the same type as expected.
 func AssertCodeEvalsToType(t *testing.T, expected interface{}, code string) bool {
 	pc := ParseContext{SourceDir: ".."}
 	ast, err := pc.Parse(parser.NewScanner(code))
