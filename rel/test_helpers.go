@@ -37,7 +37,7 @@ func AssertExprsEvalToSameValue(t *testing.T, expected, expr Expr) bool {
 		return false
 	}
 	if !AssertEqualValues(t, expectedValue, value) {
-		t.Logf("\nexpected:%v\nexpr:     %v", expected, expr)
+		t.Logf("\nexpected: %v\nexpr:     %v", expected, expr)
 		return false
 	}
 	return true
@@ -62,7 +62,7 @@ func AssertExprEvalsToType(t *testing.T, expected interface{}, expr Expr) bool {
 		return false
 	}
 	if !assert.IsType(t, expected, value) {
-		t.Logf("\nexpected:%v\nexpr:     %v", expected, expr)
+		t.Logf("\nexpected: %T\nexpr:     %v", expected, expr)
 		return false
 	}
 	return true

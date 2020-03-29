@@ -69,6 +69,11 @@ func reprString(str String, w io.Writer) {
 	}
 }
 
+func reprBytes(b Bytes, w io.Writer) {
+	reprOffset(b.offset, w)
+	fmt.Fprint(w, b.String())
+}
+
 func reprArray(a Array, w io.Writer) {
 	reprOffset(a.offset, w)
 	fmt.Fprint(w, "[")
@@ -132,13 +137,15 @@ func reprTuple(t *GenericTuple, w io.Writer) {
 }
 
 func reprNumber(n Number, w io.Writer) {
-	fmt.Fprint(w, n.Float64())
+	fmt.Fprint(w, n.String())
 }
 
 func reprValue(v Value, w io.Writer) {
 	switch v := v.(type) {
 	case String:
 		reprString(v, w)
+	case Bytes:
+		reprBytes(v, w)
 	case Array:
 		reprArray(v, w)
 	case Dict:

@@ -122,6 +122,15 @@ func NewXML(tag []rune, attrs []Attr, children ...Value) Tuple {
 	return EmptyTuple.With("@xml", b.Finish())
 }
 
+func (t *GenericTuple) Canonical() Tuple {
+	attrs := make([]Attr, 0, t.Count())
+	for e := t.Enumerator(); e.MoveNext(); {
+		name, value := e.Current()
+		attrs = append(attrs, NewAttr(name, value))
+	}
+	return NewTuple(attrs...)
+}
+
 // Hash computes a hash for a GenericTuple.
 func (t *GenericTuple) Hash(seed uintptr) uintptr {
 	return t.tuple.Hash(seed)
@@ -160,13 +169,12 @@ var identRE = regexp.MustCompile(`\A` + LexerNamePat + `\z`)
 func TupleNameRepr(name string) string {
 	if identRE.Match([]byte(name)) {
 		return name
-	} else {
-		data, err := json.Marshal(name)
-		if err != nil {
-			panic(err)
-		}
-		return string(data)
 	}
+	data, err := json.Marshal(name)
+	if err != nil {
+		panic(err)
+	}
+	return string(data)
 }
 
 // String returns a string representation of a Tuple.

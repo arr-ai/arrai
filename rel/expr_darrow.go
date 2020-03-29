@@ -39,15 +39,15 @@ func (e *DArrowExpr) Eval(local Scope) (Value, error) {
 		return nil, err
 	}
 	if set, ok := value.(Set); ok {
-		result := NewSet()
+		values := []Value{}
 		for i := set.Enumerator(); i.MoveNext(); {
 			v, err := e.fn.body.Eval(local.With(e.fn.arg, i.Current()))
 			if err != nil {
 				return nil, err
 			}
-			result = result.With(v)
+			values = append(values, v)
 		}
-		return result, nil
+		return NewSet(values...), nil
 	}
 	return nil, errors.Errorf("=> not applicable to %T", value)
 }

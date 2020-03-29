@@ -124,7 +124,7 @@ $ arrai e '"hello"(3)'                 # So are strings.
 $ arrai e '"hello" => (@:.@, @item:.@char)'
 [104, 101, 108, 108, 111]
 $ arrai e '[104, 101, 108, 108, 111] => (@:.@, @char:.@item)'
-"hello"
+hello
 $ arrai e '{
    (@: 1, @char: 101),
    (@: 3, @char: 108),

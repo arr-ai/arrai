@@ -53,7 +53,7 @@ func AssertCodeEvalsToType(t *testing.T, expected interface{}, code string) bool
 	}
 	codeExpr := pc.CompileExpr(ast)
 	if !rel.AssertExprEvalsToType(t, expected, codeExpr) {
-		t.Logf("\nexpected: %s\ncode:     %s", expected, code)
+		t.Logf("\nexpected: %T\ncode:     %s", expected, code)
 		return false
 	}
 	return true

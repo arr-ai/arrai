@@ -159,7 +159,8 @@ func (e *TupleExpr) Eval(local Scope) (Value, error) {
 			return nil, err
 		}
 	}
-	return tuple, nil
+	// TODO: Construct new tuple directly
+	return tuple.(*GenericTuple).Canonical(), nil
 }
 
 // Get returns the Expr for the given name or nil if not found.
