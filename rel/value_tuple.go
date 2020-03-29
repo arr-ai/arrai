@@ -157,30 +157,27 @@ var LexerNamePat = `([$@A-Za-z_][0-9$@A-Za-z_]*)`
 
 var identRE = regexp.MustCompile(`\A` + LexerNamePat + `\z`)
 
+func TupleNameRepr(name string) string {
+	if identRE.Match([]byte(name)) {
+		return name
+	} else {
+		data, err := json.Marshal(name)
+		if err != nil {
+			panic(err)
+		}
+		return string(data)
+	}
+}
+
 // String returns a string representation of a Tuple.
 func (t *GenericTuple) String() string {
 	var buf bytes.Buffer
 	buf.WriteRune('(')
-	for i, name := range tupleOrderedNames(t) {
+	for i, name := range TupleOrderedNames(t) {
 		if i != 0 {
 			buf.WriteString(", ")
 		}
-		if identRE.Match([]byte(name)) {
-			buf.WriteString(name)
-		} else {
-			data, err := json.Marshal(name)
-			if err != nil {
-				panic(err)
-			}
-			buf.Write(data)
-		}
-		buf.WriteString(": ")
-		value, found := t.Get(name)
-		if !found {
-			panic(fmt.Sprintf(
-				"walk() produced name, %v, which fails lookup", name))
-		}
-		buf.WriteString(value.String())
+		fmt.Fprintf(&buf, "%s: %s", TupleNameRepr(name), t.MustGet(name).String())
 	}
 	buf.WriteRune(')')
 	return buf.String()
@@ -228,8 +225,8 @@ func (t *GenericTuple) Less(v Value) bool {
 	}
 
 	x := v.(*GenericTuple)
-	a := tupleOrderedNames(t)
-	b := tupleOrderedNames(x)
+	a := TupleOrderedNames(t)
+	b := TupleOrderedNames(x)
 	n := len(a)
 	if n > len(b) {
 		n = len(b)
@@ -383,8 +380,8 @@ func (t *GenericTuple) Enumerator() AttrEnumerator {
 	return &GenericTupleEnumerator{i: t.tuple.Range()}
 }
 
-// orderedNames returns the names of this tuple in sorted order.
-func tupleOrderedNames(t *GenericTuple) []string {
+// TupleOrderedNames returns the names of this tuple in sorted order.
+func TupleOrderedNames(t *GenericTuple) []string {
 	if len(t.names) == 0 {
 		for e := t.Enumerator(); e.MoveNext(); {
 			name, _ := e.Current()

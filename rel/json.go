@@ -116,7 +116,7 @@ func jsonEscape(value Expr) interface{} {
 			result[name] = jsonEscape(value)
 		}
 		return result
-	case genericSet:
+	case GenericSet:
 		if x.Equal(False) {
 			return false
 		}

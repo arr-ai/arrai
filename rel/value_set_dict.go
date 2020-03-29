@@ -3,6 +3,7 @@ package rel
 import (
 	"fmt"
 	"reflect"
+	"sort"
 	"strings"
 
 	"github.com/arr-ai/frozen"
@@ -83,6 +84,15 @@ func (d Dict) String() string {
 	return sb.String()
 }
 
+func (d Dict) OrderedEntries() []DictEntryTuple {
+	result := make(dictEntryTupleSort, 0, d.Count())
+	for e := d.Enumerator(); e.MoveNext(); {
+		result = append(result, e.Current().(DictEntryTuple))
+	}
+	sort.Sort(result)
+	return result
+}
+
 func (d Dict) Eval(local Scope) (Value, error) {
 	return d, nil
 }
@@ -158,7 +168,7 @@ func (d Dict) Map(m func(Value) Value) Set {
 	for e := d.Enumerator(); e.MoveNext(); {
 		sb.Add(m(e.Current()))
 	}
-	return genericSet{set: sb.Finish()}
+	return GenericSet{set: sb.Finish()}
 }
 
 func (d Dict) Where(pred func(Value) bool) Set {
@@ -242,4 +252,23 @@ func (a *DictEnumerator) MoveNext() bool {
 
 func (a *DictEnumerator) Current() (key, value Value) {
 	return a.i.Key().(Value), a.i.Value().(Value)
+}
+
+type dictEntryTupleSort []DictEntryTuple
+
+func (s dictEntryTupleSort) Len() int {
+	return len(s)
+}
+
+func (s dictEntryTupleSort) Less(a, b int) bool {
+	x := s[a]
+	y := s[b]
+	if x.at != y.at {
+		return x.at.Less(y.at)
+	}
+	return x.value.Less(y.value)
+}
+
+func (s dictEntryTupleSort) Swap(a, b int) {
+	s[a], s[b] = s[b], s[a]
 }
