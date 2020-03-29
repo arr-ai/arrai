@@ -70,6 +70,17 @@ func NewSet(values ...Value) Set {
 	return set
 }
 
+func CanonicalSet(s Set) Set {
+	if s, ok := s.(GenericSet); ok {
+		values := make([]Value, 0, s.Count())
+		for e := s.Enumerator(); e.MoveNext(); {
+			values = append(values, e.Current())
+		}
+		return NewSet(values...)
+	}
+	return s
+}
+
 // NewSetFrom constructs a genericSet from interfaces.
 func NewSetFrom(intfs ...interface{}) (Set, error) {
 	set := None
