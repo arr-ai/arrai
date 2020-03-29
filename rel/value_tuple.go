@@ -2,7 +2,6 @@ package rel
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
 	"reflect"
 	"regexp"
@@ -170,11 +169,14 @@ func TupleNameRepr(name string) string {
 	if identRE.Match([]byte(name)) {
 		return name
 	}
-	data, err := json.Marshal(name)
-	if err != nil {
-		panic(err)
+	var sb strings.Builder
+	switch {
+	case !strings.Contains(name, "'"):
+		reprEscape(name, '\'', &sb)
+	default:
+		reprEscape(name, '"', &sb)
 	}
-	return string(data)
+	return sb.String()
 }
 
 // String returns a string representation of a Tuple.
