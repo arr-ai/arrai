@@ -200,14 +200,14 @@ func (s String) Map(f func(v Value) Value) Set {
 
 // Where returns a new String with all the Values satisfying predicate p.
 func (s String) Where(p func(v Value) bool) Set {
-	result := Set(s)
+	values := make([]Value, 0, s.Count())
 	for e := s.Enumerator(); e.MoveNext(); {
 		value := e.Current()
-		if !p(value) {
-			result = result.Without(value)
+		if p(value) {
+			values = append(values, value)
 		}
 	}
-	return result
+	return NewSet(values...)
 }
 
 // Call ...
@@ -250,7 +250,7 @@ func (e *stringValueEnumerator) MoveNext() bool {
 
 // Current returns the enumerator's current Value.
 func (e *stringValueEnumerator) Current() Value {
-	return NewStringCharTuple(e.i, e.s.s[e.i])
+	return NewStringCharTuple(e.s.offset+e.i, e.s.s[e.i])
 }
 
 type stringOffsetValueEnumerator struct {

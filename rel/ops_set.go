@@ -27,13 +27,13 @@ func NIntersect(a Set, bs ...Set) Set {
 func Union(a, b Set) Set {
 	if ga, ok := a.(GenericSet); ok {
 		if gb, ok := b.(GenericSet); ok {
-			return GenericSet{set: ga.set.Union(gb.set)}
+			return CanonicalSet(GenericSet{set: ga.set.Union(gb.set)})
 		}
 	}
 	for e := b.Enumerator(); e.MoveNext(); {
 		a = a.With(e.Current())
 	}
-	return a
+	return CanonicalSet(a)
 }
 
 func NUnion(sets ...Set) Set {
