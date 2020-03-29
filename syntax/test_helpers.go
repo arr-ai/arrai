@@ -59,7 +59,7 @@ func AssertCodeEvalsToType(t *testing.T, expected interface{}, code string) bool
 	return true
 }
 
-// AssertCodePanics asserts that the exprs evaluate to the same value.
+// AssertCodePanics asserts that code panics when executed.
 func AssertCodePanics(t *testing.T, code string) bool {
 	return assert.Panics(t, func() {
 		pc := ParseContext{SourceDir: ".."}
