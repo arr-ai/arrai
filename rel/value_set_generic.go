@@ -8,14 +8,14 @@ import (
 	"github.com/arr-ai/frozen"
 )
 
-// genericSet is a set of Values.
-type genericSet struct {
+// GenericSet is a set of Values.
+type GenericSet struct {
 	set frozen.Set
 }
 
 // genericSet equivalents for Boolean true and false
 var (
-	None  = Set(genericSet{frozen.Set{}})
+	None  = Set(GenericSet{frozen.Set{}})
 	False = None
 	True  = None.With(EmptyTuple)
 
@@ -70,6 +70,17 @@ func NewSet(values ...Value) Set {
 	return set
 }
 
+func CanonicalSet(s Set) Set {
+	if s, ok := s.(GenericSet); ok {
+		values := make([]Value, 0, s.Count())
+		for e := s.Enumerator(); e.MoveNext(); {
+			values = append(values, e.Current())
+		}
+		return NewSet(values...)
+	}
+	return s
+}
+
 // NewSetFrom constructs a genericSet from interfaces.
 func NewSetFrom(intfs ...interface{}) (Set, error) {
 	set := None
@@ -100,7 +111,7 @@ func NewBool(b bool) Set {
 }
 
 // Hash computes a hash for a genericSet.
-func (s genericSet) Hash(seed uintptr) uintptr {
+func (s GenericSet) Hash(seed uintptr) uintptr {
 	h := seed
 	for e := s.Enumerator(); e.MoveNext(); {
 		h ^= e.Current().Hash(0)
@@ -109,15 +120,15 @@ func (s genericSet) Hash(seed uintptr) uintptr {
 }
 
 // Equal tests two Sets for equality. Any other type returns false.
-func (s genericSet) Equal(v interface{}) bool {
-	if t, ok := v.(genericSet); ok {
+func (s GenericSet) Equal(v interface{}) bool {
+	if t, ok := v.(GenericSet); ok {
 		return s.set.Equal(t.set)
 	}
 	return false
 }
 
 // String returns a string representation of a genericSet.
-func (s genericSet) String() string {
+func (s GenericSet) String() string {
 	// {} == none
 	if !s.IsTrue() {
 		return "{}"
@@ -193,31 +204,31 @@ func (s genericSet) String() string {
 }
 
 // Eval returns the set.
-func (s genericSet) Eval(local Scope) (Value, error) {
+func (s GenericSet) Eval(local Scope) (Value, error) {
 	return s, nil
 }
 
 var genericSetKind = registerKind(200, reflect.TypeOf(Function{}))
 
 // Kind returns a number that is unique for each major kind of Value.
-func (s genericSet) Kind() int {
+func (s GenericSet) Kind() int {
 	return genericSetKind
 }
 
 // Bool returns true iff the tuple has attributes.
-func (s genericSet) IsTrue() bool {
+func (s GenericSet) IsTrue() bool {
 	return s.Count() > 0
 }
 
 // Less returns true iff v.Kind() < genericSet.Kind() or v is a
 // genericSet and t precedes v in a lexicographical comparison of their
 // sorted values.
-func (s genericSet) Less(v Value) bool {
+func (s GenericSet) Less(v Value) bool {
 	if s.Kind() != v.Kind() {
 		return s.Kind() < v.Kind()
 	}
 
-	x := v.(genericSet)
+	x := v.(GenericSet)
 	a := s.OrderedValues()
 	b := x.OrderedValues()
 	n := len(a)
@@ -236,7 +247,7 @@ func (s genericSet) Less(v Value) bool {
 }
 
 // Negate returns {(negateTag): s}.
-func (s genericSet) Negate() Value {
+func (s GenericSet) Negate() Value {
 	if !s.IsTrue() {
 		return s
 	}
@@ -244,7 +255,7 @@ func (s genericSet) Negate() Value {
 }
 
 // Export exports a genericSet as an array of exported Values.
-func (s genericSet) Export() interface{} {
+func (s GenericSet) Export() interface{} {
 	if s.set.IsEmpty() {
 		return []interface{}{}
 	}
@@ -259,33 +270,33 @@ func (s genericSet) Export() interface{} {
 }
 
 // Count returns the number of elements in the genericSet.
-func (s genericSet) Count() int {
+func (s GenericSet) Count() int {
 	return s.set.Count()
 }
 
 // Has returns true iff the given Value is in the genericSet.
-func (s genericSet) Has(value Value) bool {
+func (s GenericSet) Has(value Value) bool {
 	return s.set.Has(value)
 }
 
 // With returns the original genericSet with given value added. Iff the value was
 // already present, the original genericSet is returned.
-func (s genericSet) With(value Value) Set {
-	return genericSet{s.set.With(value)}
+func (s GenericSet) With(value Value) Set {
+	return GenericSet{s.set.With(value)}
 }
 
 // Without returns the original genericSet without the given value. Iff the value was
 // already absent, the original genericSet is returned.
-func (s genericSet) Without(value Value) Set {
+func (s GenericSet) Without(value Value) Set {
 	set := s.set.Without(value)
 	if set == s.set {
 		return s
 	}
-	return genericSet{set}
+	return GenericSet{set}
 }
 
 // Map maps values per f.
-func (s genericSet) Map(f func(v Value) Value) Set {
+func (s GenericSet) Map(f func(v Value) Value) Set {
 	result := NewSet()
 	for e := s.Enumerator(); e.MoveNext(); {
 		result = result.With(f(e.Current()))
@@ -294,13 +305,13 @@ func (s genericSet) Map(f func(v Value) Value) Set {
 }
 
 // Where returns a new genericSet with all the Values satisfying predicate p.
-func (s genericSet) Where(p func(v Value) bool) Set {
+func (s GenericSet) Where(p func(v Value) bool) Set {
 	s.set = s.set.Where(func(elem interface{}) bool { return p(elem.(Value)) })
 	return s
 }
 
 // Call ...
-func (s genericSet) Call(arg Value) Value {
+func (s GenericSet) Call(arg Value) Value {
 	for e := s.Enumerator(); e.MoveNext(); {
 		var at Value
 		var t Tuple
@@ -315,19 +326,19 @@ func (s genericSet) Call(arg Value) Value {
 }
 
 // Enumerator returns an enumerator over the Values in the genericSet.
-func (s genericSet) Enumerator() ValueEnumerator {
+func (s GenericSet) Enumerator() ValueEnumerator {
 	return &genericSetEnumerator{s.set.Range()}
 }
 
 // Any return any value from the set.
-func (s genericSet) Any() Value {
+func (s GenericSet) Any() Value {
 	for e := s.Enumerator(); e.MoveNext(); {
 		return e.Current()
 	}
 	panic("Any(): empty set")
 }
 
-func (s genericSet) ArrayEnumerator() (OffsetValueEnumerator, bool) {
+func (s GenericSet) ArrayEnumerator() (OffsetValueEnumerator, bool) {
 	return &arrayEnumerator{
 		i: s.set.OrderedRange(func(a, b interface{}) bool {
 			return a.(Tuple).MustGet("@").(Number) < b.(Tuple).MustGet("@").(Number)
@@ -366,7 +377,7 @@ func (vl ValueList) Swap(i, j int) {
 }
 
 // OrderedValues returns Values in a canonical ordering.
-func (s genericSet) OrderedValues() []Value {
+func (s GenericSet) OrderedValues() []Value {
 	a := make([]Value, s.Count())
 	i := 0
 	for e := s.Enumerator(); e.MoveNext(); {

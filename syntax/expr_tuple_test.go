@@ -10,7 +10,12 @@ func TestTupleType(t *testing.T) {
 	t.Parallel()
 
 	AssertCodeEvalsToType(t, rel.StringCharTuple{}, `(@: 1, @char: 65)`)
+	AssertCodePanics(t, `(@: 1, @char: "x")`)
+	AssertCodePanics(t, `(@: {}, @char: 65)`)
+
 	AssertCodeEvalsToType(t, rel.ArrayItemTuple{}, `(@: 1, @item: 2)`)
+	AssertCodePanics(t, `(@: {}, @item: 2)`)
+
 	AssertCodeEvalsToType(t, rel.DictEntryTuple{}, `(@: {1, 2}, @value: 2)`)
 }
 

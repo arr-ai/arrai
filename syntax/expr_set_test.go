@@ -24,6 +24,15 @@ func TestStringType(t *testing.T) {
 	AssertCodeEvalsToType(t, rel.String{}, `"abc" ++ "def"`)
 }
 
+func TestArrayToString(t *testing.T) {
+	AssertCodesEvalToSameValue(t, `"hello"`, `[104, 101, 108, 108, 111] => (@:.@, @char:.@item)`)
+	AssertCodeEvalsToType(t, rel.String{}, `[104, 101, 108, 108, 111] => (@:.@, @char:.@item)`)
+}
+
+func TestStringManipulation(t *testing.T) {
+	AssertCodesEvalToSameValue(t, `"Foo"`, `(\s //.str.upper(s where .@=0) | (s where .@>0))("foo")`)
+}
+
 func TestArray(t *testing.T) {
 	t.Parallel()
 	AssertCodesEvalToSameValue(t, `{|@,@item| (0, 1), (1, 2), (2, 3)}`, `[1, 2, 3]`)

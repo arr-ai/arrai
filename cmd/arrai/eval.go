@@ -4,7 +4,9 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strings"
 
+	"github.com/arr-ai/arrai/rel"
 	"github.com/arr-ai/arrai/syntax"
 	"github.com/urfave/cli/v2"
 )
@@ -26,9 +28,21 @@ func evalExpr(path, source string, w io.Writer) error {
 		return err
 	}
 
-	s := value.String()
+	var s string
+	switch v := value.(type) {
+	case rel.String:
+		s = v.String()
+	case rel.Set:
+		if !v.IsTrue() {
+			s = ""
+		} else {
+			s = rel.Repr(v)
+		}
+	default:
+		s = rel.Repr(v)
+	}
 	fmt.Fprintf(w, "%s", s)
-	if s[len(s)-1] != '\n' {
+	if s != "" && !strings.HasSuffix(s, "\n") {
 		if _, err := w.Write([]byte{'\n'}); err != nil {
 			return err
 		}

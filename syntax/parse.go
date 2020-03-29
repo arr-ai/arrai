@@ -464,7 +464,7 @@ func (pc ParseContext) CompileExpr(b ast.Branch) rel.Expr {
 					}
 					next = ""
 				}
-				exprs[i] = rel.NewCallExprCurry(libStrExpand,
+				exprs[i] = rel.NewCallExprCurry(stdStrExpand,
 					rel.NewString([]rune(format)),
 					pc.CompileExpr(expr),
 					rel.NewString([]rune(delim)),
@@ -479,7 +479,7 @@ func (pc ParseContext) CompileExpr(b ast.Branch) rel.Expr {
 				exprs[i] = rel.NewString([]rune(s))
 			}
 		}
-		return rel.NewCallExpr(libStrConcat, rel.NewArrayExpr(exprs...))
+		return rel.NewCallExpr(stdStrConcat, rel.NewArrayExpr(exprs...))
 	case "NUM":
 		s := c.(ast.One).Node.One("").Scanner().String()
 		n, err := strconv.ParseFloat(s, 64)

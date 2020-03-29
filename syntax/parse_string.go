@@ -40,6 +40,8 @@ func parseArraiStringFragment(s string, validEscapes string, indent string) stri
 				sb.WriteByte('\a')
 			case 'b':
 				sb.WriteByte('\b')
+			case 'e':
+				sb.WriteByte('\x1b')
 			case 'f':
 				sb.WriteByte('\f')
 			case 'n':
@@ -54,6 +56,8 @@ func parseArraiStringFragment(s string, validEscapes string, indent string) stri
 				sb.WriteByte('\\')
 			case '\'':
 				sb.WriteByte('\'')
+			case '"':
+				sb.WriteByte('"')
 			case 'i':
 				sb.WriteString(indent)
 			default:

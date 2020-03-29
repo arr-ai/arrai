@@ -33,7 +33,7 @@ func formatValue(format string, value rel.Value) string {
 }
 
 var (
-	libStrConcat = createNestedFunc("concat", 1, func(args ...rel.Value) rel.Value {
+	stdStrConcat = createNestedFunc("concat", 1, func(args ...rel.Value) rel.Value {
 		var sb strings.Builder
 		for i, ok := args[0].(rel.Set).ArrayEnumerator(); ok && i.MoveNext(); {
 			sb.WriteString(mustAsString(i.Current()))
@@ -41,7 +41,7 @@ var (
 		return rel.NewString([]rune(sb.String()))
 	})
 
-	libStrExpand = createNestedFunc("expand", 4, func(args ...rel.Value) rel.Value {
+	stdStrExpand = createNestedFunc("expand", 4, func(args ...rel.Value) rel.Value {
 		format := mustAsString(args[0])
 		if format != "" {
 			format = "%" + format
@@ -67,6 +67,10 @@ var (
 			s += mustAsString(args[3])
 		}
 		return rel.NewString([]rune(s))
+	})
+
+	stdStrRepr = rel.NewNativeFunction("repr", func(value rel.Value) rel.Value {
+		return rel.NewString([]rune(rel.Repr(value)))
 	})
 )
 
@@ -117,8 +121,9 @@ func stdStr() rel.Attr {
 			}
 			return rel.NewString([]rune(strings.Join(toJoin, mustAsString(args[1]))))
 		}),
-		rel.NewAttr("concat", libStrConcat),
-		rel.NewAttr("expand", libStrExpand),
+		rel.NewAttr("concat", stdStrConcat),
+		rel.NewAttr("expand", stdStrExpand),
+		rel.NewAttr("repr", stdStrRepr),
 	)
 }
 
