@@ -5,7 +5,7 @@ str library contains functions that are used for string manipulations.
 ## concat
 
 `//.str.concat(strings)` concatenates a list of strings. It takes one argument which is
-a list string. It returns a string.
+a list of strings. It returns a string.
 
 
 ### examples
