@@ -35,7 +35,7 @@ true
 
 ## sub
 
-`//.str.sub` returns a string whose occurences of `old` string are replaced
+`//.str.sub(s, old, new)` returns a string whose occurrences of `old` string are replaced
 with the `new` string based on the provided `s` string. It takes three arguments
 , `s` is the base string, `old` is string you would like to replace, and `new`
 is the string that you want to replace `old` with. It returns the converted
