@@ -63,7 +63,7 @@ Expression strings apply the following rules to handle whitespace:
    **Example:** The following expression equals `"abc\ndef"`:
 
    ```text
-   let s = "" in $"
+   let s = ""; $"
        abc
        ${s}
        def"
@@ -73,7 +73,7 @@ Expression strings apply the following rules to handle whitespace:
    extra `\n` in the result):
 
    ```text
-   let s = "123" in $"
+   let s = "123"; $"
        abc
        ${s}
        def"
@@ -121,7 +121,7 @@ The elements are as follows:
    **Example:** The following:
 
    ```text
-   let arr = [1, 2, 3, 4] in $"
+   let arr = [1, 2, 3, 4]; $"
        numbers:
            ${arr::\i}
    "

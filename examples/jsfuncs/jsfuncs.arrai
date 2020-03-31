@@ -3,7 +3,7 @@ let lib = (
       (name: "square", params: ["x"], expr: "x ^ 2"),
       (name: "sum", params: ["x", "y"], expr: "x + y"),
    ]
-) in
+);
 $`${lib.functions >> $`
    function ${.name}(${.params::, }) {
       return ${.expr}

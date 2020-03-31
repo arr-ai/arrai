@@ -67,7 +67,7 @@ expr   -> C* amp="&"* @ C* arrow=(
                    )
         | C* "(" tuple=(pairs=(name ":" v=@ | ":" vk=(@ "." k=IDENT)):",",?) ")" C*
         | C* "(" @ ")" C*
-        | C* let=("let" C* IDENT C* "=" C* @ %%bind C* "in"? C* @) C*
+        | C* let=("let" C* IDENT C* "=" C* @ %%bind C* ";" C* @) C*
         | C* xstr C*
         | C* IDENT C*
         | C* STR C*

@@ -1,4 +1,4 @@
-let grpc = //./grpc
+let grpc = //./grpc;
 
 \wrap (
     field: \. $`${grpc.type(.)} ${//.str.sub(.key, "-", "")} = ${.attrs.rpcId};`,
@@ -8,9 +8,9 @@ let grpc = //./grpc
             $`import "${//.str.sub(grpc.type(.), ".", "/")}.proto";`,
 
     endpointInfo: \ep
-        let method = //.str.sub(//.str.title(//.str.lower(ep.name)), "-", "")
-        let paramName = method + "Request" if wrap else $"${ep.params >> grpc.type(.)::, }"
-        let responseName = method + "Response" if wrap else ep.ret("ok")
+        let method = //.str.sub(//.str.title(//.str.lower(ep.name)), "-", "");
+        let paramName = method + "Request" if wrap else $"${ep.params >> grpc.type(.)::, }";
+        let responseName = method + "Response" if wrap else ep.ret("ok");
         (
             method:       method,
             paramName:    paramName,
