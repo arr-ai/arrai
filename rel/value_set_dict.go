@@ -33,8 +33,9 @@ func NewDict(allowDupKeys bool, entries ...DictEntryTuple) Set {
 			default:
 				mb.Put(entry.at, multipleValues(frozen.NewSet(v, entry.value)))
 			}
+		} else {
+			mb.Put(entry.at, entry.value)
 		}
-		mb.Put(entry.at, entry.value)
 	}
 	return Dict{m: mb.Finish()}
 }
@@ -265,7 +266,7 @@ func (s dictEntryTupleSort) Len() int {
 func (s dictEntryTupleSort) Less(a, b int) bool {
 	x := s[a]
 	y := s[b]
-	if x.at != y.at {
+	if !x.at.Equal(y.at) {
 		return x.at.Less(y.at)
 	}
 	return x.value.Less(y.value)
