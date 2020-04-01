@@ -24,6 +24,14 @@ func TestStringType(t *testing.T) {
 	AssertCodeEvalsToType(t, rel.String{}, `"abc" ++ "def"`)
 }
 
+func TestStringWhere(t *testing.T) {
+	AssertCodesEvalToSameValue(t, `"abc"`, `"abc" where .@ < 10`)
+	AssertCodesEvalToSameValue(t, `"abc"`, `"abc" where .@char < 100`)
+	AssertCodesEvalToSameValue(t, `"ab"`, `"abc" where .@ < 2`)
+	AssertCodesEvalToSameValue(t, `"ab"`, `"abc" where .@char < 99`)
+	// TODO: Test for offset strings and holey strings.
+}
+
 func TestArrayToString(t *testing.T) {
 	AssertCodesEvalToSameValue(t, `"hello"`, `[104, 101, 108, 108, 111] => (@:.@, @char:.@item)`)
 	AssertCodeEvalsToType(t, rel.String{}, `[104, 101, 108, 108, 111] => (@:.@, @char:.@item)`)
@@ -49,6 +57,14 @@ func TestArrayType(t *testing.T) {
 	AssertCodeEvalsToType(t, rel.Array{}, `[1, 2, 3] >> .`)
 }
 
+func TestArrayWhere(t *testing.T) {
+	AssertCodesEvalToSameValue(t, `[1, 2]`, `[1, 2] where .@ < 10`)
+	AssertCodesEvalToSameValue(t, `[1, 2]`, `[1, 2] where .@item < 10`)
+	AssertCodesEvalToSameValue(t, `[1]`, `[1, 2] where .@ < 1`)
+	AssertCodesEvalToSameValue(t, `[1]`, `[1, 2] where .@item < 2`)
+	// TODO: Test for offset arrays and holey arrays.
+}
+
 func TestDict(t *testing.T) {
 	t.Parallel()
 	AssertCodesEvalToSameValue(t, `{|@,@value| ("x", "y")}`, `{"x": "y"}`)
@@ -63,4 +79,9 @@ func TestDictType(t *testing.T) {
 	AssertCodeEvalsToType(t, rel.Dict{}, `{(@: 1, @value: 2), (@: 3, @value: 4)}`)
 	AssertCodeEvalsToType(t, rel.Dict{}, `{(@: 1, @value: 2), (@: 1, @value: 3)}`)
 	AssertCodeEvalsToType(t, rel.Dict{}, `{1:2} >> .`)
+}
+
+func TestDictWhere(t *testing.T) {
+	AssertCodesEvalToSameValue(t, `{"a": "b"}`, `{"a": "b"} where .@ = "a"`)
+	AssertCodesEvalToSameValue(t, `{}`, `{"a": "b"} where .@ = "b"`)
 }

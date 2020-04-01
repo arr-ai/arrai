@@ -173,15 +173,17 @@ func (d Dict) Map(m func(Value) Value) Set {
 
 func (d Dict) Where(pred func(Value) bool) Set {
 	var mb frozen.MapBuilder
-	for e := d.m.Range(); e.Next(); {
-		k, v := e.Entry()
-		key := k.(Value)
-		value := v.(Value)
-		if pred(value) {
-			mb.Put(key, value)
+	for e := d.Enumerator(); e.MoveNext(); {
+		t := e.Current().(DictEntryTuple)
+		if pred(t) {
+			mb.Put(t.at, t.value)
 		}
 	}
-	return Dict{m: mb.Finish()}
+	m := mb.Finish()
+	if m.IsEmpty() {
+		return None
+	}
+	return Dict{m: m}
 }
 
 func (d Dict) Call(arg Value) Value {
