@@ -4,11 +4,11 @@ import "github.com/arr-ai/arrai/rel"
 
 func stdOs() rel.Attr {
 	return rel.NewTupleAttr("os",
-		rel.NewAttr("args", getArgs()),
-		rel.NewAttr("path_separator", pathSeparator()),
-		rel.NewAttr("path_list_separator", pathListSeparator()),
-		rel.NewAttr("cwd", cwd()),
-		rel.NewNativeFunctionAttr("file", file),
-		rel.NewNativeFunctionAttr("get_env", getEnv),
+		rel.NewAttr("args", stdOsGetArgs()),
+		rel.NewAttr("path_separator", stdOsPathSeparator()),
+		rel.NewAttr("path_list_separator", stdOsPathListSeparator()),
+		rel.NewAttr("cwd", stdOsCwd()),
+		rel.NewNativeFunctionAttr("file", stdOsFile),
+		rel.NewNativeFunctionAttr("get_env", stdOsGetEnv),
 	)
 }
