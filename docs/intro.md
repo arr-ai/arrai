@@ -261,7 +261,7 @@ let lib = (
       (name: "square", params: ["x"], expr: "x ^ 2"),
       (name: "sum", params: ["x", "y"], expr: "x + y"),
    ]
-) in
+);
 $`${lib.functions >> $`
    function ${.name}(${.params::, }) {
       return ${.expr}
@@ -378,7 +378,7 @@ library:
    transform non-recursive functions into recursive ones, e.g.:
 
    ```arrai
-   let factorial = //.fn.fix \factorial \n 1 if n < 2 else n * factorial(n - 1)
+   let factorial = //.fn.fix \factorial \n 1 if n < 2 else n * factorial(n - 1);
    factorial(6)
    ```
 
@@ -389,7 +389,7 @@ library:
    let eo = //.fn.fixt((
       even: \t \n n == 0 || t.odd (n - 1),
       odd:  \t \n n != 0 && t.even(n - 1),
-   ))
+   ));
    eo.even(6)
    ```
 
@@ -397,14 +397,14 @@ In future, these functions will be available through syntactic sugar, something
 like:
 
 ```arrai
-let rec factorial = \n 1 if n < 2 else n * factorial(n - 1)
+let rec factorial = \n 1 if n < 2 else n * factorial(n - 1);
 ```
 
 ```arrai
 let rec (
    even = \n n == 0 || odd (n - 1),
    odd  = \n n != 0 && even(n - 1),
-)
+);
 even(6)
 ```
 
