@@ -261,7 +261,7 @@ let lib = (
       (name: "square", params: ["x"], expr: "x ^ 2"),
       (name: "sum", params: ["x", "y"], expr: "x + y"),
    ]
-) in
+);
 $`${lib.functions >> $`
    function ${.name}(${.params::, }) {
       return ${.expr}
@@ -327,7 +327,7 @@ Arr.ai supports operations on numbers.
 The following operators bind `name` to something related to `expr1` (details
 below) and evaluates expression `expr2` with `name` in scope.
 
-1. **`let name = expr1 expr2 in`** or **`expr1 -> \name expr2 in`**:
+1. **`let name = expr1; expr2`** or **`expr1 -> \name expr2`**:
    Evaluates `expr2` with `expr1` in scope as `name`.
 2. **`expr1 => \name expr2`**: Transforms each element of set `expr1` and
    evaluates to the set of results.
@@ -340,7 +340,7 @@ below) and evaluates expression `expr2` with `name` in scope.
    evaluates `expr2` and reassociates each result with the corresponding
    name, producing a new tuple.
 
-If `expr1` is omitted, `.` is assumed.
+If `expr1` is omitted in any of the arrow forms, `.` is assumed.
 
 If `\name` is omitted, `\.` is assumed.
 
@@ -378,7 +378,7 @@ library:
    transform non-recursive functions into recursive ones, e.g.:
 
    ```arrai
-   let factorial = //.fn.fix \factorial \n 1 if n < 2 else n * factorial(n - 1)
+   let factorial = //.fn.fix \factorial \n 1 if n < 2 else n * factorial(n - 1);
    factorial(6)
    ```
 
@@ -389,7 +389,7 @@ library:
    let eo = //.fn.fixt((
       even: \t \n n == 0 || t.odd (n - 1),
       odd:  \t \n n != 0 && t.even(n - 1),
-   ))
+   ));
    eo.even(6)
    ```
 
@@ -397,14 +397,14 @@ In future, these functions will be available through syntactic sugar, something
 like:
 
 ```arrai
-let rec factorial = \n 1 if n < 2 else n * factorial(n - 1)
+let rec factorial = \n 1 if n < 2 else n * factorial(n - 1);
 ```
 
 ```arrai
 let rec (
    even = \n n == 0 || odd (n - 1),
    odd  = \n n != 0 && even(n - 1),
-)
+);
 even(6)
 ```
 
@@ -428,8 +428,10 @@ External libraries may be accessed via package references.
 4. **`//hostname/path`** provides access to content from the internet
    1. **`//github.com/foo/bar/baz`:** access `baz.arrai` file in remote repository `github.com/foo/bar`
    2. **`//github.com/foo/bar/'a.json'`:** access `a.json` file in remote repository `github.com/foo/bar`
-   3. **`//foo.org/bar/'random.arrai'`/`//https://foo.org/bar/'random.arrai'`:** request content of `https://foo.org/bar/random.arrai` via HTTPS
-   3. **`//foo.org/bar/'some.json'`/`//https://foo.org/bar/'some.json'`:** request content of `https://foo.org/bar/some.json` via HTTPS
+   3. **`//foo.org/bar/'random.arrai'`/`//https://foo.org/bar/'random.arrai'`:**
+      request content of `https://foo.org/bar/random.arrai` via HTTPS
+   4. **`//foo.org/bar/'some.json'`/`//https://foo.org/bar/'some.json'`:**
+      request content of `https://foo.org/bar/some.json` via HTTPS
 
 ### Tuples vs Maps
 
