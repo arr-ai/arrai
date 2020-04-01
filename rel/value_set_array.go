@@ -235,14 +235,14 @@ func (a Array) Map(f func(v Value) Value) Set {
 
 // Where returns a new Array with all the Values satisfying predicate p.
 func (a Array) Where(p func(v Value) bool) Set {
-	result := Set(a)
+	values := make([]Value, 0, a.Count())
 	for e := a.Enumerator(); e.MoveNext(); {
 		value := e.Current()
-		if !p(value) {
-			result = result.Without(value)
+		if p(value) {
+			values = append(values, value)
 		}
 	}
-	return result
+	return NewSet(values...)
 }
 
 // Call ...
