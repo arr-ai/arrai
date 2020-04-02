@@ -1,28 +1,64 @@
 package syntax
 
-import "github.com/arr-ai/arrai/rel"
+import (
+	"sync"
+
+	"github.com/arr-ai/arrai/rel"
+)
 
 // it is a simple cache component used by import behavior, and it can make cache code simple
 type importCache struct {
+	mutex sync.Mutex
+	cond  *sync.Cond
 	cache map[string]rel.Value
 }
 
-func newCache() importCache {
-	return importCache{cache: make(map[string]rel.Value)}
+func newCache() *importCache {
+	c := &importCache{cache: map[string]rel.Value{}}
+	c.cond = sync.NewCond(&c.mutex)
+	return c
 }
 
-func (service *importCache) exists(key string) (bool, rel.Value) {
-	val := service.get(key)
-	if val != nil {
-		return true, val
+// getOrAdd tries to get the value for key. If not present, and another
+// goroutine is currently computing a value for key, this goroutine will wait
+// till it's ready.
+func (service *importCache) getOrAdd(key string, add func() rel.Value) rel.Value {
+	adding := false
+
+	service.mutex.Lock()
+	defer func() {
+		if adding {
+			// If panicked trying to add, remove the key from the cache so
+			// someone else can have a go.
+			service.mutex.Lock()
+			delete(service.cache, key)
+		}
+		service.mutex.Unlock()
+	}()
+
+	for {
+		if val, has := service.cache[key]; has {
+			if val != nil {
+				return val
+			}
+			// Another goroutine is adding an entry.
+			service.cond.Wait()
+		} else {
+			break
+		}
 	}
-	return false, nil
-}
 
-func (service *importCache) get(key string) rel.Value {
-	return service.cache[key]
-}
+	// Indicate that we'll add it.
+	service.cache[key] = nil
 
-func (service *importCache) add(key string, val rel.Value) {
+	// Free the lock while we work.
+	service.mutex.Unlock()
+	adding = true
+	val := add()
+	adding = false
+	service.mutex.Lock()
+
 	service.cache[key] = val
+	service.cond.Broadcast()
+	return val
 }
