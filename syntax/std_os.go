@@ -10,5 +10,6 @@ func stdOs() rel.Attr {
 		rel.NewAttr("cwd", stdOsCwd()),
 		rel.NewNativeFunctionAttr("file", stdOsFile),
 		rel.NewNativeFunctionAttr("get_env", stdOsGetEnv),
+		rel.NewNativeFunctionAttr("&stdin", stdOsStdin),
 	)
 }

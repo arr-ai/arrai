@@ -40,3 +40,11 @@ func stdOsFile(v rel.Value) rel.Value {
 	}
 	return rel.NewBytes(f)
 }
+
+func stdOsStdin(_ rel.Value) rel.Value {
+	f, err := ioutil.ReadAll(os.Stdin)
+	if err != nil {
+		panic(err)
+	}
+	return rel.NewBytes(f)
+}

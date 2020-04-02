@@ -29,3 +29,7 @@ func stdOsCwd() rel.Value {
 func stdOsFile(rel.Value) rel.Value {
 	panic("not implemented")
 }
+
+func stdOsStdin(_ rel.Value) rel.Value {
+	panic("not implemented")
+}
