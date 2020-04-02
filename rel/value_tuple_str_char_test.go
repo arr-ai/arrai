@@ -1,4 +1,4 @@
-package rel
+package rel //nolint:dupl
 
 import (
 	"testing"
@@ -111,7 +111,7 @@ func TestStringCharTuple_Equal(t *testing.T) {
 	}
 }
 
-func TestStringCharTuple_String(t *testing.T) {
+func TestStringCharTuple_String(t *testing.T) { //nolint:dupl
 	t.Parallel()
 	tests := []struct {
 		name  string
@@ -178,7 +178,7 @@ func TestStringCharTuple_Count(t *testing.T) {
 	assert.Equal(t, 2, NewStringCharTuple(1, 'a').Count())
 }
 
-func TestStringCharTuple_Get(t *testing.T) {
+func TestStringCharTuple_Get(t *testing.T) { //nolint:dupl
 	t.Parallel()
 
 	assertGet := func(tuple Tuple, attr string, value Value) {

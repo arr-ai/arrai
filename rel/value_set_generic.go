@@ -20,6 +20,7 @@ var (
 	True  = None.With(EmptyTuple)
 
 	stringCharTupleType = reflect.TypeOf(StringCharTuple{})
+	bytesByteTupleType  = reflect.TypeOf(BytesByteTuple{})
 	arrayItemTupleType  = reflect.TypeOf(ArrayItemTuple{})
 	dictEntryTupleType  = reflect.TypeOf(DictEntryTuple{})
 )
@@ -46,6 +47,15 @@ func NewSet(values ...Value) Set {
 					panic("unsupported array expr")
 				}
 				return s
+			case bytesByteTupleType:
+				for _, value := range values {
+					set = set.With(value)
+				}
+				b, is := AsBytes(set)
+				if !is {
+					panic("unsupported array expr")
+				}
+				return b
 			case arrayItemTupleType:
 				for _, value := range values {
 					set = set.With(value)
