@@ -164,6 +164,11 @@ func TestBytesByteTuple_Less(t *testing.T) {
 func TestBytesByteTuple_Negate(t *testing.T) {
 	t.Parallel()
 	assert.Equal(t, NewBytesByteTuple(0, 0), NewBytesByteTuple(0, 0).Negate())
+	assert.Equal(t, NewBytesByteTuple(-1, 0), NewBytesByteTuple(1, 0).Negate())
+	assert.Equal(t,
+		NewTuple(NewAttr("@", NewNumber(-1)), NewAttr("@byte", NewNumber(-1))),
+		NewBytesByteTuple(1, 1).Negate(),
+	)
 }
 
 func TestBytesByteTuple_Export(t *testing.T) {

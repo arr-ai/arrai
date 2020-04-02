@@ -98,7 +98,10 @@ func (t BytesByteTuple) Less(v Value) bool {
 }
 
 func (t BytesByteTuple) Negate() Value {
-	return BytesByteTuple{at: -t.at, byteval: -t.byteval}
+	return NewTuple(
+		NewAttr("@", NewNumber(-float64(t.at))),
+		NewAttr("@byte", NewNumber(-float64(t.byteval))),
+	)
 }
 
 // Export exports a Tuple.
