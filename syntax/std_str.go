@@ -76,37 +76,11 @@ var (
 
 func stdStr() rel.Attr {
 	return rel.NewTupleAttr("str",
-		createNestedFuncAttr("sub", 3, func(args ...rel.Value) rel.Value {
-			return rel.NewString(
-				[]rune(
-					strings.ReplaceAll(
-						mustAsString(args[0]),
-						mustAsString(args[1]),
-						mustAsString(args[2]),
-					),
-				),
-			)
-		}),
-		createNestedFuncAttr("split", 2, func(args ...rel.Value) rel.Value {
-			splitted := strings.Split(mustAsString(args[0]), mustAsString(args[1]))
-			vals := make([]rel.Value, 0, len(splitted))
-			for _, s := range splitted {
-				vals = append(vals, rel.NewString([]rune(s)))
-			}
-			return rel.NewArray(vals...)
-		}),
-		createNestedFuncAttr("lower", 1, func(args ...rel.Value) rel.Value {
-			return rel.NewString([]rune(strings.ToLower(mustAsString(args[0]))))
-		}),
-		createNestedFuncAttr("upper", 1, func(args ...rel.Value) rel.Value {
-			return rel.NewString([]rune(strings.ToUpper(mustAsString(args[0]))))
-		}),
-		createNestedFuncAttr("title", 1, func(args ...rel.Value) rel.Value {
-			return rel.NewString([]rune(strings.Title(mustAsString(args[0]))))
-		}),
+		rel.NewAttr("concat", stdStrConcat),
 		createNestedFuncAttr("contains", 2, func(args ...rel.Value) rel.Value {
 			return rel.NewBool(strings.Contains(mustAsString(args[0]), mustAsString(args[1])))
 		}),
+		rel.NewAttr("expand", stdStrExpand),
 		createNestedFuncAttr("has_prefix", 2, func(args ...rel.Value) rel.Value {
 			return rel.NewBool(strings.HasPrefix(mustAsString(args[0]), mustAsString(args[1])))
 		}),
@@ -121,9 +95,35 @@ func stdStr() rel.Attr {
 			}
 			return rel.NewString([]rune(strings.Join(toJoin, mustAsString(args[1]))))
 		}),
-		rel.NewAttr("concat", stdStrConcat),
-		rel.NewAttr("expand", stdStrExpand),
+		createNestedFuncAttr("lower", 1, func(args ...rel.Value) rel.Value {
+			return rel.NewString([]rune(strings.ToLower(mustAsString(args[0]))))
+		}),
 		rel.NewAttr("repr", stdStrRepr),
+		createNestedFuncAttr("split", 2, func(args ...rel.Value) rel.Value {
+			splitted := strings.Split(mustAsString(args[0]), mustAsString(args[1]))
+			vals := make([]rel.Value, 0, len(splitted))
+			for _, s := range splitted {
+				vals = append(vals, rel.NewString([]rune(s)))
+			}
+			return rel.NewArray(vals...)
+		}),
+		createNestedFuncAttr("sub", 3, func(args ...rel.Value) rel.Value {
+			return rel.NewString(
+				[]rune(
+					strings.ReplaceAll(
+						mustAsString(args[0]),
+						mustAsString(args[1]),
+						mustAsString(args[2]),
+					),
+				),
+			)
+		}),
+		createNestedFuncAttr("title", 1, func(args ...rel.Value) rel.Value {
+			return rel.NewString([]rune(strings.Title(mustAsString(args[0]))))
+		}),
+		createNestedFuncAttr("upper", 1, func(args ...rel.Value) rel.Value {
+			return rel.NewString([]rune(strings.ToUpper(mustAsString(args[0]))))
+		}),
 	)
 }
 
