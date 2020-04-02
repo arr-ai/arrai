@@ -50,7 +50,14 @@ func (x *DotExpr) Eval(local Scope) (Value, error) {
 		if x.attr[:1] != "&" {
 			if value, found := t.Get("&" + x.attr); found {
 				tupleScope := local.With("self", t)
-				return value.(*Function).Call(nil, tupleScope)
+				switch f := value.(type) {
+				case *Function:
+					return f.Call(nil, tupleScope)
+				case *NativeFunction:
+					return f.Call(nil, tupleScope)
+				default:
+					panic(fmt.Errorf("not a function: %v", f))
+				}
 			}
 		}
 		return nil, errors.Errorf("Missing attr %s", x.attr)

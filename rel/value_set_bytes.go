@@ -4,8 +4,8 @@ import (
 	"reflect"
 )
 
-// ByteAttr is the standard name for the value-attr of a character tuple.
-const ByteAttr = "@byte"
+// BytesByteAttr is the standard name for the value-attr of a character tuple.
+const BytesByteAttr = "@byte"
 
 // Bytes is a set of Values.
 type Bytes struct {
@@ -27,6 +27,50 @@ func NewOffsetBytes(b []byte, offset int) Set {
 		return None
 	}
 	return Bytes{b: b, offset: offset}
+}
+
+func AsBytes(s Set) (Bytes, bool) { //nolint:dupl
+	if b, ok := s.(Bytes); ok {
+		return b, true
+	}
+	if i := s.Enumerator(); i.MoveNext() {
+		t, is := i.Current().(BytesByteTuple)
+		if !is {
+			return Bytes{}, false
+		}
+
+		middleIndex := s.Count()
+		strs := make([]byte, 2*middleIndex)
+		strs[middleIndex] = t.byteval
+		anchorOffset, minOffset := t.at, t.at
+		lowestIndex, highestIndex := middleIndex, middleIndex
+		for i.MoveNext() {
+			if t, is = i.Current().(BytesByteTuple); !is {
+				return Bytes{}, false
+			}
+			if t.at < minOffset {
+				minOffset = t.at
+			}
+			sliceIndex := middleIndex - (anchorOffset - t.at)
+			strs[sliceIndex] = t.byteval
+
+			if sliceIndex < lowestIndex {
+				lowestIndex = sliceIndex
+			}
+
+			if sliceIndex > highestIndex {
+				highestIndex = sliceIndex
+			}
+		}
+
+		return NewOffsetBytes(strs[lowestIndex:highestIndex+1], minOffset).(Bytes), true
+	}
+	return Bytes{}, true
+}
+
+// Bytes returns the bytes of b. The caller must not modify the contents.
+func (b Bytes) Bytes() []byte {
+	return b.b
 }
 
 // Hash computes a hash for a Bytes.
@@ -216,7 +260,7 @@ func (b Bytes) ArrayEnumerator() (OffsetValueEnumerator, bool) {
 func newBytesTuple(index int, b byte) Tuple {
 	return NewTuple(
 		NewIntAttr("@", index),
-		NewIntAttr(ByteAttr, int(b)),
+		NewIntAttr(BytesByteAttr, int(b)),
 	)
 }
 
@@ -237,8 +281,8 @@ func bytesTupleMatcher(match func(index int, b byte)) TupleMatcher {
 	}
 	return NewTupleMatcher(
 		map[string]Matcher{
-			"@":      MatchInt(func(i int) { index = i; check() }),
-			ByteAttr: MatchInt(func(i int) { b = byte(i); check() }),
+			"@":           MatchInt(func(i int) { index = i; check() }),
+			BytesByteAttr: MatchInt(func(i int) { b = byte(i); check() }),
 		},
 		Lit(EmptyTuple),
 	)

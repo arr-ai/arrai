@@ -40,3 +40,5 @@ func stdOsFile(v rel.Value) rel.Value {
 	}
 	return rel.NewBytes(f)
 }
+
+var stdOsStdinVar = newStdOsStdin(os.Stdin)

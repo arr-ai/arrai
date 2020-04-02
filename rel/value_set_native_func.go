@@ -4,7 +4,6 @@ import (
 	"reflect"
 
 	"github.com/arr-ai/hash"
-	"github.com/go-errors/errors"
 )
 
 // NativeFunction represents a binary relation uniquely mapping inputs to outputs.
@@ -94,7 +93,7 @@ func (f *NativeFunction) Export() interface{} {
 // Call calls the NativeFunction with the given parameter.
 func (f *NativeFunction) Call(expr Expr, local Scope) (Value, error) {
 	if expr == nil {
-		return nil, errors.Errorf("missing function arg")
+		return f.fn(nil), nil
 	}
 	value, err := expr.Eval(local)
 	if err != nil {

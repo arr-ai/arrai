@@ -26,7 +26,7 @@ func NewOffsetString(s []rune, offset int) Set {
 	return String{s: s, offset: offset}
 }
 
-func AsString(s Set) (String, bool) {
+func AsString(s Set) (String, bool) { //nolint:dupl
 	if s, ok := s.(String); ok {
 		return s, true
 	}

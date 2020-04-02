@@ -29,3 +29,5 @@ func stdOsCwd() rel.Value {
 func stdOsFile(rel.Value) rel.Value {
 	panic("not implemented")
 }
+
+var stdOsStdinVar = newStdOsStdin(nil)
