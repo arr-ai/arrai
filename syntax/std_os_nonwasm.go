@@ -9,23 +9,23 @@ import (
 	"github.com/arr-ai/arrai/rel"
 )
 
-func getArgs() rel.Value {
+func stdOsGetArgs() rel.Value {
 	return strArrToRelArr(os.Args[2:])
 }
 
-func getEnv(value rel.Value) rel.Value {
+func stdOsGetEnv(value rel.Value) rel.Value {
 	return rel.NewString([]rune(os.Getenv(value.(rel.String).String())))
 }
 
-func pathSeparator() rel.Value {
+func stdOsPathSeparator() rel.Value {
 	return rel.NewString([]rune{os.PathSeparator})
 }
 
-func pathListSeparator() rel.Value {
+func stdOsPathListSeparator() rel.Value {
 	return rel.NewString([]rune{os.PathListSeparator})
 }
 
-func cwd() rel.Value {
+func stdOsCwd() rel.Value {
 	wd, err := os.Getwd()
 	if err != nil {
 		panic(err)
@@ -33,7 +33,7 @@ func cwd() rel.Value {
 	return rel.NewString([]rune(wd))
 }
 
-func file(v rel.Value) rel.Value {
+func stdOsFile(v rel.Value) rel.Value {
 	f, err := ioutil.ReadFile(v.(rel.String).String())
 	if err != nil {
 		panic(err)

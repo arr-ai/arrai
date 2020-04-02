@@ -6,26 +6,26 @@ import (
 	"github.com/arr-ai/arrai/rel"
 )
 
-func getArgs() rel.Value {
+func stdOsGetArgs() rel.Value {
 	panic("not implemented")
 }
 
-func getEnv(value rel.Value) rel.Value {
+func stdOsGetEnv(value rel.Value) rel.Value {
 	panic("not implemented")
 }
 
-func pathSeparator() rel.Value {
+func stdOsPathSeparator() rel.Value {
 	panic("not implemented")
 }
 
-func pathListSeparator() rel.Value {
+func stdOsPathListSeparator() rel.Value {
 	panic("not implemented")
 }
 
-func cwd() rel.Value {
+func stdOsCwd() rel.Value {
 	panic("not implemented")
 }
 
-func file(rel.Value) rel.Value {
+func stdOsFile(rel.Value) rel.Value {
 	panic("not implemented")
 }
