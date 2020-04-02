@@ -22,15 +22,15 @@ func TestImportCache(t *testing.T) {
 
 	cache := newCache()
 	var wg sync.WaitGroup
-	add := func(whenMs int, key string, value rel.Value, sleepMs int, format string, args ...interface{}) {
+	add := func(whenMs int, key string, value rel.Value, sleepMs int, descr string) {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
 			time.Sleep(time.Until(start.Add(time.Duration(whenMs) * time.Millisecond)))
 			actual := cache.getOrAdd(key, func() rel.Value {
-				log(">"+format, args...)
+				log("> %s", descr)
 				time.Sleep(time.Duration(sleepMs) * time.Millisecond)
-				log("<"+format, args...)
+				log("< %s", descr)
 				return value
 			})
 			rel.AssertEqualValues(t, actual, value)
@@ -48,16 +48,16 @@ func TestImportCache(t *testing.T) {
 
 	assert.Equal(t,
 		[]string{
-			"10 >a 1",
-			"30 >b",
-			"40 >c",
-			"50 >d 1",
-			"80 <b",
-			"90 <d 1",
-			"90 >d 2",
-			"110 <a 1",
-			"130 <d 2",
-			"140 <c",
+			"10 > a 1",
+			"30 > b",
+			"40 > c",
+			"50 > d 1",
+			"80 < b",
+			"90 < d 1",
+			"90 > d 2",
+			"110 < a 1",
+			"130 < d 2",
+			"140 < c",
 		},
 		msgs,
 	)
