@@ -58,7 +58,11 @@ func (service *importCache) getOrAdd(key string, add func() rel.Value) rel.Value
 	adding = false
 	service.mutex.Lock()
 
-	service.cache[key] = val
+	if val != nil {
+		service.cache[key] = val
+	} else {
+		delete(service.cache, key)
+	}
 	service.cond.Broadcast()
 	return val
 }
