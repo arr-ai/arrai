@@ -1,6 +1,12 @@
 package syntax
 
-import "github.com/arr-ai/arrai/rel"
+import (
+	"io"
+	"io/ioutil"
+	"sync"
+
+	"github.com/arr-ai/arrai/rel"
+)
 
 func stdOs() rel.Attr {
 	return rel.NewTupleAttr("os",
@@ -10,6 +16,37 @@ func stdOs() rel.Attr {
 		rel.NewAttr("cwd", stdOsCwd()),
 		rel.NewNativeFunctionAttr("file", stdOsFile),
 		rel.NewNativeFunctionAttr("get_env", stdOsGetEnv),
-		rel.NewNativeFunctionAttr("&stdin", stdOsStdin),
+		rel.NewNativeFunctionAttr("&stdin", stdOsStdinVar.read),
 	)
+}
+
+type stdOsStdin struct {
+	reader io.Reader
+	mutex  sync.Mutex
+	bytes  rel.Value
+}
+
+func newStdOsStdin(r io.Reader) *stdOsStdin {
+	return &stdOsStdin{reader: r}
+}
+
+func (d *stdOsStdin) reset(r io.Reader) {
+	d.mutex.Lock()
+	defer d.mutex.Unlock()
+	d.reader = r
+	d.bytes = nil
+}
+
+func (d *stdOsStdin) read(_ rel.Value) rel.Value {
+	d.mutex.Lock()
+	defer d.mutex.Unlock()
+	if d.bytes != nil {
+		return d.bytes
+	}
+	f, err := ioutil.ReadAll(stdOsStdinVar.reader)
+	if err != nil {
+		panic(err)
+	}
+	d.bytes = rel.NewBytes(f)
+	return d.bytes
 }
