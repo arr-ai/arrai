@@ -3,6 +3,7 @@
 package syntax
 
 import (
+	"io"
 	"io/ioutil"
 	"os"
 
@@ -41,8 +42,10 @@ func stdOsFile(v rel.Value) rel.Value {
 	return rel.NewBytes(f)
 }
 
+var stdOsStdinHandle io.Reader = os.Stdin
+
 func stdOsStdin(_ rel.Value) rel.Value {
-	f, err := ioutil.ReadAll(os.Stdin)
+	f, err := ioutil.ReadAll(stdOsStdinHandle)
 	if err != nil {
 		panic(err)
 	}
