@@ -1,3 +1,5 @@
+// +build timingsensitive
+
 package syntax
 
 import (
