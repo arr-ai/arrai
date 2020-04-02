@@ -18,7 +18,8 @@ func intSet(elts ...interface{}) Set {
 
 // AssertEqualValues asserts that the two values are Equal.
 func AssertEqualValues(t *testing.T, expected, actual Value) bool {
-	return assert.True(t, expected.Equal(actual), "expected: %s\nactual:   %s", expected, actual)
+	return assert.True(t, expected == nil && actual == nil || expected.Equal(actual),
+		"expected: %s\nactual:   %s", expected, actual)
 }
 
 // requireEqualValues requires that the two values are Equal.

@@ -17,7 +17,7 @@ const arraiRootMarker = "go.mod"
 
 var importLocalFileOnce sync.Once
 var importLocalFileVar rel.Value
-var cache importCache = newCache()
+var cache *importCache = newCache()
 
 func importLocalFile(fromRoot bool) rel.Value {
 	importLocalFileOnce.Do(func() {
@@ -148,12 +148,7 @@ func importURL(url string) (rel.Value, error) {
 		if err != nil {
 			return nil, err
 		}
-		if exists, val := cache.exists(url); exists {
-			return val, nil
-		}
-		// Pass space as file path as it is remote url and can't be found in local env
-		val := bytesValue(NoPath, data)
-		cache.add(url, val)
+		val := cache.getOrAdd(url, func() rel.Value { return bytesValue(NoPath, data) })
 		return val, nil
 	}
 	return nil, fmt.Errorf("request %s failed: %s", url, resp.Status)
@@ -172,23 +167,20 @@ func fileValue(filename string) (rel.Value, error) {
 }
 
 func bytesValue(filename string, data []byte) rel.Value {
-	if filename != NoPath {
-		if exists, val := cache.exists(filename); exists {
-			return val
+	eval := func() rel.Value {
+		expr, err := Compile(filename, string(data))
+		if err != nil {
+			panic(err)
 		}
+		value, err := expr.Eval(rel.EmptyScope)
+		if err != nil {
+			panic(err)
+		}
+		return value
 	}
-
-	expr, err := Compile(filename, string(data))
-	if err != nil {
-		panic(err)
-	}
-	value, err := expr.Eval(rel.EmptyScope)
-	if err != nil {
-		panic(err)
-	}
-
 	if filename != NoPath {
-		cache.add(filename, value)
+		return cache.getOrAdd(filename, eval)
 	}
-	return value
+
+	return eval()
 }
