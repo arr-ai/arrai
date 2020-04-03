@@ -10,6 +10,8 @@ The following standard packages are available:
   - [`//.encoding.json`](std-encoding-json.md)
 - [`//.eval`](std-eval.md)
 - [`//.os`](std-os.md)
+- `//.unicode`
+  - [`//.unicode.utf8`](std-unicode-utf8.md)
 
 ## Core functions
 
