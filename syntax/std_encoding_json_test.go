@@ -4,7 +4,7 @@ import "testing"
 
 func TestJSONDecode(t *testing.T) {
 	t.Parallel()
-	AssertCodePanics(t, `//.json.decode(123)`)
+	AssertCodePanics(t, `//.encoding.json.decode(123)`)
 	AssertCodesEvalToSameValue(t,
 		`{
 			"a": (s: "string"),
@@ -21,7 +21,7 @@ func TestJSONDecode(t *testing.T) {
 			"j": (a: [(b: {()}), (b: {})]),
 			"k": (s: {})
 		}`,
-		`//.json.decode(
+		`//.encoding.json.decode(
 			'{
 				"a": "string",
 				"b": 123,

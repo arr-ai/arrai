@@ -6,16 +6,18 @@ The arr.ai standard library is available via the `//.` syntax.
 
 The following standard packages are available:
 
-- [//.eval](std-eval.md)
-- [//.os](std-os.md)
+- `//.encoding`
+  - [`//.encoding.json`](std-encoding-json.md)
+- [`//.eval`](std-eval.md)
+- [`//.os`](std-os.md)
 
 ## Core functions
 
 The following functions are available at the root of the standard library.
 
-### dict
+### `//.dict`
 
-`//.dict` converts tuples to dictionaries.
+Converts tuples to dictionaries.
 
 - `//.dict(()) = {}`
 - `//.dict((a: 1, b: 2)) = {"a": 1, "b": 2}`

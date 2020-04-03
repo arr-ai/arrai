@@ -88,7 +88,7 @@ func stdScope() rel.Scope {
 				stdStr(),
 				stdEval(),
 				stdOs(),
-				stdJSON(),
+				stdEncoding(),
 			))
 	})
 	return stdScopeVar
