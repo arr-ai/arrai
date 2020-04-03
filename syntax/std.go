@@ -89,6 +89,7 @@ func stdScope() rel.Scope {
 				stdEval(),
 				stdOs(),
 				stdEncoding(),
+				stdUnicode(),
 			))
 	})
 	return stdScopeVar
