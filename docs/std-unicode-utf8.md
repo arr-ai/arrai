@@ -7,5 +7,5 @@ The utf8 library contains functions that are used with utf8-encoded data.
 Encodes a string as a UTF8 bytes sequence.
 
 | example |
-|:-|:-|:-|
+|:-|
 | `//.unicode.utf8.encode("abc")` |
