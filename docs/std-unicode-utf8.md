@@ -1,6 +1,6 @@
 # utf8 library
 
-utf8 library contains functions that are used with utf8-encoded data.
+The utf8 library contains functions that are used with utf8-encoded data.
 
 ## `//.unicode.utf8.encode(string)`
 
