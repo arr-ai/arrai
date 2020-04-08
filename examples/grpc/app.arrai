@@ -27,7 +27,16 @@
             params: [],
             ret: {
                 "ok": "sequence of Customer",
-            }
+            },
+            attrs: (stream: true),
+        ),
+        (
+            name: "GetCustomers",
+            params: [],
+            ret: {
+                "ok": "sequence of Customer",
+            },
+            attrs: (stream: false),
         ),
     ],
     alias: [],
