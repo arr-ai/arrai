@@ -113,7 +113,26 @@ func (d Dict) Less(v Value) bool {
 	if d.Kind() != v.Kind() {
 		return d.Kind() < v.Kind()
 	}
-	panic("unfinished")
+	dKeys := d.m.Keys().OrderedElements(intfValueLess)
+	vDict := v.(Dict)
+	vKeys := vDict.m.Keys().OrderedElements(intfValueLess)
+	n := len(dKeys)
+	if n > len(vKeys) {
+		n = len(vKeys)
+	}
+	for i, k := range dKeys[:n] {
+		dKey := k.(Value)
+		vKey := vKeys[i].(Value)
+		if !dKey.Equal(vKey) {
+			return dKey.Less(vKey)
+		}
+		dValue := d.Call(dKey)
+		vValue := vDict.Call(vKey)
+		if !dValue.Equal(vValue) {
+			return dValue.Less(vValue)
+		}
+	}
+	return len(dKeys) < len(vKeys)
 }
 
 func (d Dict) Negate() Value {
