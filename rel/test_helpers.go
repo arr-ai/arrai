@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 // intSet returns a new set from the given elements.
@@ -16,15 +15,23 @@ func intSet(elts ...interface{}) Set {
 	return result
 }
 
-// AssertEqualValues asserts that the two values are Equal.
-func AssertEqualValues(t *testing.T, expected, actual Value) bool {
-	return assert.True(t, expected == nil && actual == nil || expected.Equal(actual),
-		"expected: %s\nactual:   %s", expected, actual)
+func equalValues(expected, actual Value) bool {
+	return expected == nil && actual == nil || expected.Equal(actual)
 }
 
-// requireEqualValues requires that the two values are Equal.
-func requireEqualValues(t *testing.T, expected, actual Value) {
-	require.True(t, expected.Equal(actual), "%s ==\n%s", expected, actual)
+// AssertEqualValues asserts that the two values are Equal.
+func AssertEqualValues(t *testing.T, expected, actual Value) bool {
+	if !equalValues(expected, actual) {
+		return assert.Fail(t, "values not equal", "expected: %s\nactual:   %s", expected, actual)
+	}
+	return true
+}
+
+// RequireEqualValues requires that the two values are Equal.
+func RequireEqualValues(t *testing.T, expected, actual Value) {
+	if !AssertEqualValues(t, expected, actual) {
+		t.FailNow()
+	}
 }
 
 // AssertExprsEvalToSameValue asserts that the exprs evaluate to the same value.
@@ -37,23 +44,16 @@ func AssertExprsEvalToSameValue(t *testing.T, expected, expr Expr) bool {
 	if !assert.NoError(t, err, "evaluating expr: %s", expr) {
 		return false
 	}
-	if !AssertEqualValues(t, expectedValue, value) {
-		t.Logf("\nexpected: %v\nexpr:     %v", expected, expr)
-		return false
-	}
-	return true
+	return equalValues(expectedValue, value) ||
+		assert.Failf(t, "values not equal", "\nexpected: %v\nexpr:     %v", expected, expr)
 }
 
 // RequireExprsEvalToSameValue requires that the exprs evaluate to the same
 // value.
-func RequireExprsEvalToSameValue(
-	t *testing.T, expected, expr Expr,
-) {
-	expectedValue, err := expected.Eval(EmptyScope)
-	require.NoError(t, err)
-	value, err := expr.Eval(EmptyScope)
-	require.NoError(t, err)
-	requireEqualValues(t, expectedValue, value)
+func RequireExprsEvalToSameValue(t *testing.T, expected, expr Expr) {
+	if !AssertExprsEvalToSameValue(t, expected, expr) {
+		t.FailNow()
+	}
 }
 
 // AssertExprEvalsToType asserts that the exprs evaluate to the same value.

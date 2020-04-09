@@ -61,7 +61,7 @@ expr   -> C* amp="&"* @ C* arrow=(
         | C* "{:" C* embed=(grammar=@ ":" subgrammar=%%ast) ":}" C*
         | C* op="\\\\" @ C*
         | C* fn="\\" IDENT @ C*
-		| C* "//" pkg=( dot="."? ("/" local=name)+
+		| C* "//" pkg=( dot="."? ("/" local=pkgname)+
                    | "." std=IDENT?
                    | http=/{https?://}? fqdn=name:"." ("/" path=name)*
                    )
@@ -78,6 +78,7 @@ touch  -> C* ("->*" ("&"? IDENT | STR))+ "(" expr:"," ","? ")" C*;
 get    -> C* dot="." ("&"? IDENT | STR | "*") C*;
 names  -> C* "|" C* IDENT:"," C* "|" C*;
 name   -> C* IDENT C* | C* STR C*;
+pkgname -> C* PKG_PATH C* | C* STR C*;
 xstr   -> C* quote=/{\$"\s*} part=( sexpr | fragment=/{(?: \\. | \$[^{"] | [^\\"$] )+} )* '"' C*
         | C* quote=/{\$'\s*} part=( sexpr | fragment=/{(?: \\. | \$[^{'] | [^\\'$] )+} )* "'" C*
         | C* quote=/{\$‵\s*} part=( sexpr | fragment=/{(?: ‵‵  | \$[^{‵] | [^‵  $] )+} )* "‵" C*;
@@ -88,6 +89,10 @@ sexpr  -> "${"
 
 ARROW  -> /{:>|=>|>>|orderby|order|where|sum|max|mean|median|min};
 IDENT  -> /{ \. | [$@A-Za-z_][0-9$@A-Za-z_]* };
+PKG_PATH ->  \s* PATH {
+    PATH    -> /{[a-zA-Z0-9._]+}:"/";
+    .wrapRE -> /{()};
+};
 STR    -> /{ " (?: \\. | [^\\"] )* "
            | ' (?: \\. | [^\\'] )* '
            | ‵ (?: ‵‵  | [^‵  ] )* ‵
@@ -320,11 +325,23 @@ func (pc ParseContext) CompileExpr(b ast.Branch) rel.Expr {
 			return NewPackageExpr(rel.NewDotExpr(rel.DotIdent, pkgName))
 		} else if local := pkg["local"]; local != nil {
 			var sb strings.Builder
-			for i, part := range local.(ast.Many) {
+			var pkgPathList []ast.Node
+			localTree := local.(ast.Many)[0].(ast.Node)
+			pkgNode := ast.First(localTree, "pkgname")
+			pkgBranch := ast.First(pkgNode, "PKG_PATH")
+			if pkgBranch != nil {
+				pkgPath := ast.First(pkgBranch, "PATH")
+				pkgPathList = ast.All(pkgPath, "")
+			} else {
+				pkgSTR := ast.First(pkgNode, "STR")
+				pkgPathList = ast.All(pkgSTR, "")
+			}
+
+			for i, p := range pkgPathList {
 				if i > 0 {
 					sb.WriteRune('/')
 				}
-				sb.WriteString(strings.Trim(parseName(part.One("name").(ast.Branch)), "'"))
+				sb.WriteString(strings.Trim(p.Scanner().String(), "'"))
 			}
 			filepath := sb.String()
 			if pc.SourceDir == "" {
