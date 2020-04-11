@@ -1,6 +1,7 @@
 package rel
 
 import (
+	"reflect"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -64,8 +65,8 @@ func AssertExprEvalsToType(t *testing.T, expected interface{}, expr Expr) bool {
 	if !assert.NoError(t, err, "evaluating expr: %s", expr) {
 		return false
 	}
-	if !assert.IsType(t, expected, value) {
-		t.Logf("\nexpected: %T\nexpr:     %v", expected, expr)
+	if reflect.TypeOf(expected) != reflect.TypeOf(value) {
+		t.Logf("\nexpected: %T\nvalue:    %v\nexpr:     %v", expected, Repr(value), expr)
 		return false
 	}
 	return true

@@ -14,7 +14,7 @@ func formatValue(format string, value rel.Value) string {
 		if s, is := rel.AsString(set); is {
 			v = s
 		} else {
-			v = set.Export()
+			v = rel.Repr(set)
 		}
 	} else {
 		v = value.Export()

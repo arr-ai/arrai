@@ -85,3 +85,15 @@ func TestDictWhere(t *testing.T) {
 	AssertCodesEvalToSameValue(t, `{"a": "b"}`, `{"a": "b"} where .@ = "a"`)
 	AssertCodesEvalToSameValue(t, `{}`, `{"a": "b"} where .@ = "b"`)
 }
+
+func TestDictUnion(t *testing.T) {
+	AssertCodesEvalToSameValue(t,
+		`{"a": "a",    "b": "a"} | {"a": "b"}`,
+		`{"a": "a"} | {"b": "a",    "a": "b"}`)
+}
+
+func TestDictExpand(t *testing.T) {
+	AssertCodesEvalToSameValue(t,
+		`"{'a': 'a', 'a': 'b', 'b': 'a'}"`,
+		`//.str.expand("", {"b": "a", "a": "b"} | {"a": "a"}, "", "")`)
+}

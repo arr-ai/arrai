@@ -28,3 +28,8 @@ func TestTupleGet(t *testing.T) {
 	AssertCodesEvalToSameValue(t, `42`, `(a: 1, '👋': 42)."👋"`)
 	AssertCodesEvalToSameValue(t, `42`, `(a: 1, '': 42).""`)
 }
+
+func TestTupleCallGet(t *testing.T) {
+	AssertCodesEvalToSameValue(t, `2`, `(a: \x (b: x)).a(2).b`)
+	AssertCodesEvalToSameValue(t, `2`, `let t = (a: \x (b: x)); t.a(2).b`)
+}
