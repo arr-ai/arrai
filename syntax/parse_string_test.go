@@ -7,11 +7,11 @@ import (
 
 func TestXStringSimple(t *testing.T) {
 	t.Parallel()
-	// AssertCodesEvalToSameValue(t, `""               `, `$""`)
-	// AssertCodesEvalToSameValue(t, `"42"             `, `$"${6*7}"`)
-	// AssertCodesEvalToSameValue(t, `"a42z"           `, `$"a${6*7}z"`)
-	// AssertCodesEvalToSameValue(t, `"a00042z"        `, `$"a${6*7:05d}z"`)
-	// AssertCodesEvalToSameValue(t, `"a001, 002, 003z"`, `$"a${[1, 2, 3]:03d:, }z"`)
+	AssertCodesEvalToSameValue(t, `""               `, `$""`)
+	AssertCodesEvalToSameValue(t, `"42"             `, `$"${6*7}"`)
+	AssertCodesEvalToSameValue(t, `"a42z"           `, `$"a${6*7}z"`)
+	AssertCodesEvalToSameValue(t, `"a00042z"        `, `$"a${6*7:05d}z"`)
+	AssertCodesEvalToSameValue(t, `"a001, 002, 003z"`, `$"a${[1, 2, 3]:03d:, }z"`)
 	AssertCodesEvalToSameValue(t, `"a42k3.142z"     `, `$"a${6*7}k${//.math.pi:.3f}z"`)
 }
 
