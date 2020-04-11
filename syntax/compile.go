@@ -17,6 +17,10 @@ var leadingWSRE = regexp.MustCompile(`\A[\t ]*`)
 var trailingWSRE = regexp.MustCompile(`[\t ]*\z`)
 var expansionRE = regexp.MustCompile(`(?::([-+#*\.\_0-9a-z]*))(:(?:\\.|[^\\:}])*)?(?::((?:\\.|[^\\:}])*))?`)
 
+func FooBar() bool {
+	return true
+}
+
 // type noParseType struct{}
 
 // type parseFunc func(v interface{}) (rel.Expr, error)
