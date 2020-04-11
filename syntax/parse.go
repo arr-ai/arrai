@@ -52,8 +52,15 @@ expr   -> C* amp="&"* @ C* arrow=(
         > C* @:rbinop="^" C*
         > C* unop=/{:>|=>|>>|[-+!*^]}* @ C*
         > C* @ count="count"? C* touch? C*
-        > C* @ call=("(" arg=expr:",", ")")* C*
-        > C* get+ C* | C* @ get* C*
+        > C* (get | @) tail=(
+              get
+            | call=("("
+                  arg=(
+                      expr (":" end=expr? (":" step=expr)?)?
+                      |     ":" end=expr  (":" step=expr)?
+                  ):",",
+			  ")")
+          )* C*
         > C* "{" C* rel=(names tuple=("(" v=@:",", ")"):",",?) "}" C*
         | C* "{" C* set=(elt=@:",",?) "}" C*
         | C* "{" C* dict=((key=@ ":" value=@):",",?) "}" C*
@@ -142,7 +149,7 @@ func MustCompile(filepath, source string) rel.Expr {
 func (pc ParseContext) CompileExpr(b ast.Branch) rel.Expr {
 	name, c := which(b,
 		"amp", "arrow", "let", "unop", "binop", "rbinop",
-		"if", "call", "count", "touch", "get",
+		"if", "get", "tail", "count", "touch", "get",
 		"rel", "set", "dict", "array", "embed", "op", "fn", "pkg", "tuple",
 		"xstr", "IDENT", "STR", "NUM",
 		"expr",
@@ -233,14 +240,6 @@ func (pc ParseContext) CompileExpr(b ast.Branch) rel.Expr {
 			result = rel.NewIfElseExpr(result, t, f)
 		}
 		return result
-	case "call":
-		result := pc.CompileExpr(b.One("expr").(ast.Branch))
-		for _, call := range c.(ast.Many) {
-			for _, arg := range pc.parseExprs(call.Many("arg")...) {
-				result = rel.NewCallExpr(result, arg)
-			}
-		}
-		return result
 	case "count", "touch":
 		if _, has := b["touch"]; has {
 			panic("unfinished")
@@ -249,24 +248,40 @@ func (pc ParseContext) CompileExpr(b ast.Branch) rel.Expr {
 
 		// touch -> ("->*" ("&"? IDENT | STR))+ "(" expr:"," ","? ")";
 		// result := p.parseExpr(b.One("expr").(ast.Branch))
-	case "get":
+	case "get", "tail":
 		var result rel.Expr
+
+		get := func(get ast.Node) {
+			if get != nil {
+				if ident := get.One("IDENT"); ident != nil {
+					result = rel.NewDotExpr(result, ident.One("").(ast.Leaf).Scanner().String())
+				}
+				if str := get.One("STR"); str != nil {
+					s := str.One("").Scanner().String()
+					result = rel.NewDotExpr(result, parseArraiString(s))
+				}
+			}
+		}
+
 		if expr := b.One("expr"); expr != nil {
 			result = pc.CompileExpr(expr.(ast.Branch))
 		} else {
 			result = rel.DotIdent
+			get(b.One("get"))
 		}
-		if result == nil {
-			result = rel.DotIdent
-		}
-		for _, dot := range c.(ast.Many) {
-			if ident := dot.One("IDENT"); ident != nil {
-				result = rel.NewDotExpr(result, ident.One("").(ast.Leaf).Scanner().String())
+
+		for _, part := range b.Many("tail") {
+			if call := part.One("call"); call != nil {
+				args := call.Many("arg")
+				exprs := make([]ast.Node, 0, len(args))
+				for _, arg := range args {
+					exprs = append(exprs, arg.One("expr"))
+				}
+				for _, arg := range pc.parseExprs(exprs...) {
+					result = rel.NewCallExpr(result, arg)
+				}
 			}
-			if str := dot.One("STR"); str != nil {
-				s := str.One("").Scanner().String()
-				result = rel.NewDotExpr(result, parseArraiString(s))
-			}
+			get(part.One("get"))
 		}
 		return result
 	case "rel":
