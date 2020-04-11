@@ -126,10 +126,41 @@ func (d Dict) Less(v Value) bool {
 		if !dKey.Equal(vKey) {
 			return dKey.Less(vKey)
 		}
-		dValue := d.Call(dKey)
-		vValue := vDict.Call(vKey)
-		if !dValue.Equal(vValue) {
-			return dValue.Less(vValue)
+
+		// TODO: Implement Less directly in frozen.
+		var dValues []interface{}
+		switch dValue := d.m.MustGet(dKey).(type) {
+		case multipleValues:
+			dValues = frozen.Set(dValue).OrderedElements(intfValueLess)
+		case Value:
+			dValues = []interface{}{dValue}
+		default:
+			panic("wtf?")
+		}
+
+		var vValues []interface{}
+		switch dValue := vDict.m.MustGet(vKey).(type) {
+		case multipleValues:
+			vValues = frozen.Set(dValue).OrderedElements(intfValueLess)
+		case Value:
+			vValues = []interface{}{dValue}
+		default:
+			panic("wtf?")
+		}
+
+		n := len(dValues)
+		if n > len(vValues) {
+			n = len(vValues)
+		}
+		for i, dItem := range dValues[:n] {
+			dValue := dItem.(Value)
+			vValue := vValues[i].(Value)
+			if !dValue.Equal(vValue) {
+				return dValue.Less(vValue)
+			}
+		}
+		if len(dValues) != len(vValues) {
+			return len(dValues) < len(vValues)
 		}
 	}
 	return len(dKeys) < len(vKeys)
@@ -207,7 +238,14 @@ func (d Dict) Where(pred func(Value) bool) Set {
 }
 
 func (d Dict) Call(arg Value) Value {
-	return d.m.MustGet(arg).(Value)
+	switch v := d.m.MustGet(arg).(type) {
+	case Value:
+		return v
+	case multipleValues:
+		panic(fmt.Errorf("Dict.Call: too many return values for %v: %v", arg, frozen.Set(v))) //nolint:golint
+	default:
+		panic("wtf?")
+	}
 }
 
 func (d Dict) ArrayEnumerator() (OffsetValueEnumerator, bool) {

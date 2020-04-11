@@ -29,3 +29,25 @@ func TestDictEntryTupleOrdered(t *testing.T) {
 	AssertEqualValues(t, NewDictEntryTuple(NewString([]rune("b")), NewNumber(1)), entries[2])
 	AssertEqualValues(t, NewDictEntryTuple(NewString([]rune("b")), NewNumber(2)), entries[3])
 }
+
+func TestDictLess(t *testing.T) {
+	kv := func(k, v float64) DictEntryTuple {
+		return NewDictEntryTuple(NewNumber(k), NewNumber(v))
+	}
+	assertLess := func(a, b Set) {
+		assert.True(t, a.Less(b))
+		assert.False(t, b.Less(a))
+	}
+	assertLess(NewDict(true, kv(1, 42)), NewDict(true, kv(1, 43)))
+	assertLess(NewDict(true, kv(1, 42)), NewDict(true, kv(1, 43), kv(2, 44)))
+	assertLess(NewDict(true, kv(1, 42)), NewDict(true, kv(1, 42), kv(1, 44)))
+	assertLess(NewDict(true, kv(1, 41), kv(1, 42)), NewDict(true, kv(1, 42)))
+	assertLess(NewDict(true, kv(1, 42)), NewDict(true, kv(1, 43), kv(2, 42)))
+	assertLess(NewDict(true, kv(1, 42), kv(2, 43)), NewDict(true, kv(1, 42), kv(3, 43)))
+
+	assertSame := func(a, b Set) {
+		assert.False(t, a.Less(b))
+		assert.False(t, b.Less(a))
+	}
+	assertSame(NewDict(true, kv(1, 43), kv(2, 42)), NewDict(true, kv(1, 43), kv(2, 42)))
+}
