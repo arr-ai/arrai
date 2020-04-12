@@ -157,7 +157,8 @@ The core syntax for literals can expresses numbers, tuples and sets.
    * **(⛔NYI)** Octal: `0o173`
    * **(⛔NYI)** Binary: `0b 111 1011`
 
-2. Tuples: `()`, `(a:1)`, `('t.m.o.l.': 42)`, `(x: (a: (), b: 2), y: -3i)`
+2. Tuples: `()`, `(a:1)`, `('t.m.o.l.': 42)`, `(x: (a: (), b: 2), y: -3i)`,
+   `(:x, :y)`
 
    Like structs in the C family of languages, names are not values in their own
    right. They cannot be stored in variables or data structures and therefore
@@ -169,6 +170,10 @@ The core syntax for literals can expresses numbers, tuples and sets.
    tuples do not have to conform to definitions stipulating the available fields
    or the types of values they can hold. A tuple can have any fields and each
    fields can hold any value of any type.
+
+   As an extension to the normal `key: value` syntax, attributes may omit `key`
+   if `value` is an expression of the form `name` or `expr.name`. E.g.: `(:x,
+   :.y, :a.b.z) = (x: x, y: y, z: a.b.z)`.
 
 3. Sets: `{}`, `{1, 2, 3}`, `{(a:1, b:2), (a:4, b:7)}`, `{2, {}, (c:4)}`
 
