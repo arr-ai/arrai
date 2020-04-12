@@ -1,6 +1,7 @@
 package syntax
 
 import (
+	"fmt"
 	"log"
 	"strings"
 
@@ -64,7 +65,7 @@ expr   -> C* amp="&"* @ C* arrow=(
                    | "." std=IDENT?
                    | http=/{https?://}? fqdn=name:"." ("/" path=name)*
                    )
-        | C* "(" tuple=(pairs=(name ":" v=@ | ":" vk=(@ "." k=IDENT)):",",?) ")" C*
+        | C* "(" tuple=(pairs=(name? ":" v=@):",",?) ")" C*
         | C* "(" @ ")" C*
         | C* let=("let" C* IDENT C* "=" C* @ %%bind C* ";" C* @) C*
         | C* xstr C*
@@ -132,7 +133,7 @@ func parseName(name ast.Branch) string {
 		s := children.(ast.One).Node.One("").(ast.Leaf).Scanner().String()
 		return parseArraiString(s)
 	default:
-		panic("wat?")
+		panic(fmt.Errorf("unexpected name: %v", name))
 	}
 }
 

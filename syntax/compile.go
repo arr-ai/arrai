@@ -301,11 +301,23 @@ func (pc ParseContext) CompileExpr(b ast.Branch) rel.Expr {
 			return NewPackageExpr(rel.DotIdent)
 		}
 	case "tuple":
-		if entries := c.(ast.One).Node.Many("pairs"); entries != nil {
-			attrs := make([]rel.AttrExpr, 0, len(entries))
-			for _, entry := range entries {
-				k := parseName(entry.One("name").(ast.Branch))
-				v := pc.CompileExpr(entry.One("v").(ast.Branch))
+		if pairs := c.(ast.One).Node.Many("pairs"); pairs != nil {
+			attrs := make([]rel.AttrExpr, 0, len(pairs))
+			for _, pair := range pairs {
+				var k string
+				v := pc.CompileExpr(pair.One("v").(ast.Branch))
+				if name := pair.One("name"); name != nil {
+					k = parseName(name.(ast.Branch))
+				} else {
+					switch v := v.(type) {
+					case *rel.DotExpr:
+						k = v.Attr()
+					case rel.IdentExpr:
+						k = v.Ident()
+					default:
+						panic(fmt.Errorf("unnamed attr expression must be name or end in .name: %T(%[1]v)", v))
+					}
+				}
 				attr, err := rel.NewAttrExpr(k, v)
 				if err != nil {
 					panic(err)
