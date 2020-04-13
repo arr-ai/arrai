@@ -45,6 +45,29 @@ func TestXStringSuppressEmptyComputedLines(t *testing.T) {
 	AssertCodesEvalToSameValue(t, `"x\n2"`, "$'\n  x\n  ${''}\n  ${''}\n  ${2}'")
 }
 
+func TestXStringSuppressLastLineWS(t *testing.T) {
+	t.Parallel()
+	AssertCodesEvalToSameValue(t, `"xy"`, `$"x${ [] :::=}y"`)
+	AssertCodesEvalToSameValue(t, `"x123=y"`, `$"x${ [1, 2, 3] :::=}y"`)
+	AssertCodesEvalToSameValue(t, `"x\n1\n2\n3\n"`, "$'\n  x\n  ${''}\n  ${''}\n  ${[1, 2, 3]\n  ::\\i:\\n}\n  '")
+	AssertCodesEvalToSameValue(t, `"x\n"`, "$'\n  x\n  ${''}\n  ${''}\n  ${[]\n  ::\\i:\\n}\n  '")
+
+	AssertCodesEvalToSameValue(t, `"1\n.\n\n2\n.\n\n3\n.\n"`, `
+		$"
+			${[1, 2, 3] >> $"
+				${.}
+				.
+				"::\n}
+		"`)
+	AssertCodesEvalToSameValue(t, `"1\n.\n\n2\n.\n\n3\n.\n"`, `
+		$"
+			${[1, 2, 3] >> $"
+				${.}
+				.
+			"::\n}
+		"`)
+}
+
 func TestXStringArrays(t *testing.T) {
 	t.Parallel()
 	AssertCodesEvalToSameValue(t, `"x\n  1\n  2\n  3\ny"`, "$'x\n  ${[1, 2, 3]::\\i}\ny'")
