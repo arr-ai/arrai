@@ -7,13 +7,18 @@
 `//.net.http.get(url)` sends a GET request to the provided URl and returns
 a tuple that represents the response.
 
-The schema of the response is the following:
-| attribute | content |
-|:-|:-|
-| `status` | a string that represents the status of the response e.g. `200 OK` |
-| `status_code` | a number that represents the status code of the response e.g. `200` |
-| `header` | a tuple that represents the header of the response, the attributes are the header field and the values are array of strings e.g. `("Content-Type": ["application/json; charset=utf-8"])` |
-| `body` | an array of bytes that represents the body of the response |
+The schema of the response is a tuple, as follows:
+```
+(
+    status: "200 OK", # A string indicating the status of the response
+    status_code: 200, # A number indicating the status code of the response
+    header: (         # A tuple containing the response header
+        "Content-Type": ["application/json; charset=utf-8"],
+        ...,
+    ),
+    body: ...,        # The body of the response as a byte array
+)
+```
 
 #### example
 

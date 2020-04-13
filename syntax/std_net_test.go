@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/arr-ai/arrai/rel"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -33,15 +32,13 @@ wasm:
 	)
 	require.NoError(t, err)
 
-	assert.True(t, expectedBody.Equal(result.(rel.Tuple).MustGet("body")))
-	assert.True(t, expectedStatus.Equal(result.(rel.Tuple).MustGet("status")))
-	assert.True(t, expectedStatusCode.Equal(result.(rel.Tuple).MustGet("status_code")))
-	assert.True(t, rel.
-		NewArray(expectedContentType).
-		Equal(
-			result.(rel.Tuple).
-				MustGet("header").(rel.Tuple).
-				MustGet("Content-Type"),
-		),
+	rel.AssertEqualValues(t, expectedBody, result.(rel.Tuple).MustGet("body"))
+	rel.AssertEqualValues(t, expectedStatus, result.(rel.Tuple).MustGet("status"))
+	rel.AssertEqualValues(t, expectedStatusCode, result.(rel.Tuple).MustGet("status_code"))
+	rel.AssertEqualValues(t,
+		rel.NewArray(expectedContentType),
+		result.(rel.Tuple).
+			MustGet("header").(rel.Tuple).
+			MustGet("Content-Type"),
 	)
 }
