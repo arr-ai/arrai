@@ -3,7 +3,6 @@ package syntax
 import (
 	"fmt"
 	"path"
-	"regexp"
 	"strconv"
 	"strings"
 
@@ -12,10 +11,6 @@ import (
 	"github.com/arr-ai/arrai/rel"
 	"github.com/arr-ai/wbnf/parser"
 )
-
-var leadingWSRE = regexp.MustCompile(`\A[\t ]*`)
-var trailingWSRE = regexp.MustCompile(`[\t ]*\z`)
-var expansionRE = regexp.MustCompile(`(?::([-+#*\.\_0-9a-z]*))(:(?:\\.|[^\\:}])*)?(?::((?:\\.|[^\\:}])*))?`)
 
 // type noParseType struct{}
 
@@ -419,106 +414,6 @@ func (pc ParseContext) compileString(c ast.Children) rel.Expr {
 	return rel.NewString([]rune(parseArraiString(s)))
 }
 
-func (pc ParseContext) compileExpandableString(c ast.Children) rel.Expr {
-	quote := c.(ast.One).Node.One("quote").Scanner().String()
-	parts := []interface{}{}
-	{
-		ws := quote[2:]
-		trim := ""
-		trimIndent := func(s string) {
-			s = ws + s
-			ws = ""
-			if trim == "" {
-				s = strings.TrimPrefix(s, "\n")
-				i := leadingWSRE.FindStringIndex(s)
-				trim = "\n" + s[:i[1]]
-				s = s[i[1]:]
-			}
-			if trim != "\n" {
-				s = strings.ReplaceAll(s, trim, "\n")
-			}
-			if s != "" {
-				parts = append(parts, s)
-			}
-		}
-		for i, part := range c.(ast.One).Node.Many("part") {
-			p, part := which(part.(ast.Branch), "sexpr", "fragment")
-			switch p {
-			case "sexpr":
-				if i == 0 || ws != "" {
-					trimIndent("")
-				}
-				sexpr := part.(ast.One).Node.(ast.Branch)
-				ws = sexpr.One("close").One("").(ast.Leaf).Scanner().String()[1:]
-				parts = append(parts, sexpr)
-			case "fragment":
-				s := part.(ast.One).Node.One("").Scanner().String()
-				s = parseArraiStringFragment(s, quote[1:2]+":", "")
-				trimIndent(s)
-			}
-		}
-	}
-	next := ""
-	exprs := make([]rel.Expr, len(parts))
-	for i := len(parts) - 1; i >= 0; i-- {
-		part := parts[i]
-		switch part := part.(type) {
-		case ast.Branch:
-			indent := ""
-			if i > 0 {
-				if s, ok := parts[i-1].(string); ok {
-					indent = trailingWSRE.FindString(s)
-				}
-			}
-
-			format := ""
-			delim := ""
-			appendIfNotEmpty := ""
-			if control := part.One("control").One("").(ast.Leaf).Scanner().String(); control != "" {
-				m := expansionRE.FindStringSubmatchIndex(control)
-				if m[2] >= 0 {
-					format = control[m[2]:m[3]]
-				}
-				if m[4] >= 0 {
-					delim = parseArraiStringFragment(control[m[4]:m[5]], ":}", "\n"+indent)
-				}
-				if m[6] >= 0 {
-					appendIfNotEmpty = parseArraiStringFragment(control[m[6]:m[7]], ":}", "\n"+indent)
-				}
-			}
-			expr := part.One("expr").(ast.Branch)
-			if strings.HasPrefix(next, "\n") {
-				if i > 0 {
-					if s, ok := parts[i-1].(string); ok {
-						if strings.HasSuffix(s, "\n") {
-							appendIfNotEmpty += "\n"
-							parts[i+1] = next[1:]
-						}
-					}
-				} else {
-					appendIfNotEmpty += "\n"
-					parts[i+1] = next[1:]
-				}
-				next = ""
-			}
-			exprs[i] = rel.NewCallExprCurry(stdStrExpand,
-				rel.NewString([]rune(format)),
-				pc.CompileExpr(expr),
-				rel.NewString([]rune(delim)),
-				rel.NewString([]rune(appendIfNotEmpty)),
-			)
-		case string:
-			next = part
-		}
-	}
-	for i, part := range parts {
-		if s, ok := part.(string); ok {
-			exprs[i] = rel.NewString([]rune(s))
-		}
-	}
-	return rel.NewCallExpr(stdStrConcat, rel.NewArrayExpr(exprs...))
-}
-
 func (pc ParseContext) compileNumber(c ast.Children) rel.Expr {
 	s := c.(ast.One).Node.One("").Scanner().String()
 	n, err := strconv.ParseFloat(s, 64)
@@ -553,6 +448,8 @@ func which(b ast.Branch, names ...string) (string, ast.Children) {
 	return "", nil
 }
 
+type unOpFunc func(e rel.Expr) rel.Expr
+
 var unops = map[string]unOpFunc{
 	"+":  rel.NewPosExpr,
 	"-":  rel.NewNegExpr,
@@ -561,6 +458,8 @@ var unops = map[string]unOpFunc{
 	"*":  rel.NewEvalExpr,
 	"//": NewPackageExpr,
 }
+
+type binOpFunc func(a, b rel.Expr) rel.Expr
 
 var binops = map[string]binOpFunc{
 	"->":      rel.NewApplyExpr,
@@ -601,6 +500,3 @@ var binops = map[string]binOpFunc{
 	"^":       rel.NewPowExpr,
 	"<:":      rel.NewMemberExpr,
 }
-
-type binOpFunc func(a, b rel.Expr) rel.Expr
-type unOpFunc func(e rel.Expr) rel.Expr
