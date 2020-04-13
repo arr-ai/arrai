@@ -318,25 +318,14 @@ func (pc ParseContext) compilePackage(c ast.Children) rel.Expr {
 		pkgName := ident.(ast.Leaf).Scanner().String()
 		return NewPackageExpr(rel.NewDotExpr(rel.DotIdent, pkgName))
 	}
-	if local := pkg["local"]; local != nil {
+	if names := pkg.Many("name"); len(names) > 0 {
 		var sb strings.Builder
-		var pkgPathList []ast.Node
-		localTree := local.(ast.Many)[0].(ast.Node)
-		pkgNode := ast.First(localTree, "pkgname")
-		pkgBranch := ast.First(pkgNode, "PKG_PATH")
-		if pkgBranch != nil {
-			pkgPath := ast.First(pkgBranch, "PATH")
-			pkgPathList = ast.All(pkgPath, "")
-		} else {
-			pkgSTR := ast.First(pkgNode, "STR")
-			pkgPathList = ast.All(pkgSTR, "")
-		}
 
-		for i, p := range pkgPathList {
+		for i, name := range names {
 			if i > 0 {
 				sb.WriteRune('/')
 			}
-			sb.WriteString(strings.Trim(p.Scanner().String(), "'"))
+			sb.WriteString(parseName(name.(ast.Branch)))
 		}
 		filepath := sb.String()
 		if pc.SourceDir == "" {
