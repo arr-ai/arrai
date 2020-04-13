@@ -90,6 +90,7 @@ func stdScope() rel.Scope {
 				stdOs(),
 				stdEncoding(),
 				stdUnicode(),
+				stdNet(),
 			))
 	})
 	return stdScopeVar
