@@ -7,12 +7,10 @@ require (
 	github.com/arr-ai/frozen v0.13.0
 	github.com/arr-ai/hash v0.4.0
 	github.com/arr-ai/proto v0.0.0-20180422074755-2ffbedebee50
-	github.com/arr-ai/wbnf v0.13.0
+	github.com/arr-ai/wbnf v0.15.0
 	github.com/cpuguy83/go-md2man/v2 v2.0.0 // indirect
-	github.com/eknkc/amber v0.0.0-20171010120322-cdade1c07385 // indirect
 	github.com/go-errors/errors v1.0.1
 	github.com/gorilla/websocket v1.4.1
-	github.com/mediocregopher/seq v0.1.1-0.20170116151952-4c22a2e6eca9
 	github.com/pkg/errors v0.9.1
 	github.com/rjeczalik/notify v0.9.2
 	github.com/sirupsen/logrus v1.4.2

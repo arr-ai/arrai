@@ -19,7 +19,7 @@ var evalCommand = &cli.Command{
 }
 
 func evalImpl(source string, w io.Writer) error {
-	return evalExpr(".", source, w)
+	return evalExpr(syntax.NoPath, source, w)
 }
 
 func evalExpr(path, source string, w io.Writer) error {
