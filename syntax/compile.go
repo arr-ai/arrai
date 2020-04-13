@@ -64,7 +64,7 @@ func (pc ParseContext) CompileExpr(b ast.Branch) rel.Expr {
 		"amp", "arrow", "let", "unop", "binop", "rbinop", "if", "get",
 		"tail", "count", "touch", "get", "rel", "set", "dict", "array",
 		"embed", "op", "fn", "pkg", "tuple", "xstr", "IDENT", "STR", "NUM",
-		"expr",
+		"expr", "switch",
 	)
 	if c == nil {
 		panic(fmt.Errorf("misshapen node AST: %v", b))
@@ -83,6 +83,8 @@ func (pc ParseContext) CompileExpr(b ast.Branch) rel.Expr {
 		return pc.compileRbinop(b, c)
 	case "if":
 		return pc.compileIf(b, c)
+	case "switch":
+		return pc.compileSwitch(b, c)
 	case "count", "touch":
 		return pc.compileCountTouch(b)
 	case "get", "tail":
@@ -210,6 +212,11 @@ func (pc ParseContext) compileIf(b ast.Branch, c ast.Children) rel.Expr {
 		result = rel.NewIfElseExpr(result, t, f)
 	}
 	return result
+}
+
+func (pc ParseContext) compileSwitch(b ast.Branch, c ast.Children) rel.Expr {
+	// TODO: compile Switch expression and will call NewSwitchExpr()
+	return nil
 }
 
 func (pc ParseContext) compileCountTouch(b ast.Branch) rel.Expr {

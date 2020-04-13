@@ -38,7 +38,8 @@ expr   -> C* amp="&"* @ C* arrow=(
         > C* @:binop="||" C*
         > C* @:binop="&&" C*
         > C* @:binop=/{!?(?:<:|<>?=?|>=?|=)} C*
-        > C* @ if=("if" t=expr ("else" f=expr)?)* C*
+		> C* @ if=("if" t=expr ("else" f=expr)?)* C*
+		> C* @ switch=("switch(" (t=expr)* ("default" f=expr)? ")")? C*
         > C* @:binop=/{\+\+|[+|]|-%?} C*
         > C* @:binop=/{&~|&|~~?|[-<][-&][->]} C*
         > C* @:binop=/{//|[*/%]} C*
