@@ -15,23 +15,23 @@ at position 10 in `str` would produce the following match: `[10\"abc", 11\"b"]`,
 
 | example | equals |
 |:-|:-|
-| `//.re.compile(`.(\\d)`).match('a1b2c3')` | `[['a1', 1\'1'], [2\'b2', 3\'2'], [4\'c3', 5\'3']]` |
+| `//.re.compile('.(\\d)').match('a1b2c3')` | `[['a1', 1\'1'], [2\'b2', 3\'2'], [4\'c3', 5\'3']]` |
 
 ## sub
 
-`//.str.contains(string, substring)` checks whether a substring is contained in a string. It takes
-two arguments which are the string and the substring you check. It returns a
-boolean.
+`//.re.compile(re).sub(replace, str)` replaces all matches of `re` in `str` with
+`replace`. Within `replace`, any occurrences of `$n` will be replaced by
+capturing group `n` from the match.
 
 | example | equals |
 |:-|:-|
 | `//.re.compile('.(\\d)').sub('-$1', 'a1b2c3')` | `'-1-2-3'` |
+| `let nodigits = //.re.compile('\\d+').sub('');`<br/>`nodigits('a1b2c3')` | `'abc'` |
 
 ## subf
 
-`//.str.contains(string, substring)` checks whether a substring is contained in a string. It takes
-two arguments which are the string and the substring you check. It returns a
-boolean.
+`//.str.compile(re).subf(f, substring)` replaces all matches of `re` in `str` with
+the result of calling `f(match)`.
 
 | example | equals |
 |:-|:-|
