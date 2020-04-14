@@ -42,6 +42,11 @@ type Value interface {
 	Export() interface{}
 }
 
+// intfValueLess supports
+func intfValueLess(a, b interface{}) bool {
+	return a.(Value).Less(b.(Value))
+}
+
 // Attr is a name/Value pair used to construct a Tuple.
 type Attr struct {
 	Name  string

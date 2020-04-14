@@ -11,6 +11,19 @@ import (
 
 type multipleValues frozen.Set
 
+var _ frozen.Key = multipleValues(frozen.Set{})
+
+func (m multipleValues) Equal(n interface{}) bool {
+	if n, is := n.(multipleValues); is {
+		return frozen.Set(m).EqualSet(frozen.Set(n))
+	}
+	return frozen.Set(m).Equal(n)
+}
+
+func (m multipleValues) Hash(seed uintptr) uintptr {
+	return frozen.Set(m).Hash(seed)
+}
+
 // Dict is a map from keys to values.
 type Dict struct {
 	m frozen.Map
@@ -73,13 +86,13 @@ func (d Dict) Equal(v interface{}) bool {
 func (d Dict) String() string {
 	var sb strings.Builder
 	sb.WriteString("{")
-	for n, i := 0, d.m.Range(); i.Next(); n++ {
+	for n, i := 0, d.Enumerator(); i.MoveNext(); n++ {
 		format := ", %v: %v"
 		if n == 0 {
 			format = format[2:]
 		}
-		key, value := i.Entry()
-		fmt.Fprintf(&sb, format, key, value)
+		t := i.Current().(DictEntryTuple)
+		fmt.Fprintf(&sb, format, t.at, t.value)
 	}
 	sb.WriteString("}")
 	return sb.String()
@@ -113,7 +126,57 @@ func (d Dict) Less(v Value) bool {
 	if d.Kind() != v.Kind() {
 		return d.Kind() < v.Kind()
 	}
-	panic("unfinished")
+	dKeys := d.m.Keys().OrderedElements(intfValueLess)
+	vDict := v.(Dict)
+	vKeys := vDict.m.Keys().OrderedElements(intfValueLess)
+	n := len(dKeys)
+	if n > len(vKeys) {
+		n = len(vKeys)
+	}
+	for i, k := range dKeys[:n] {
+		dKey := k.(Value)
+		vKey := vKeys[i].(Value)
+		if !dKey.Equal(vKey) {
+			return dKey.Less(vKey)
+		}
+
+		// TODO: Implement Less directly in frozen.
+		var dValues []interface{}
+		switch dValue := d.m.MustGet(dKey).(type) {
+		case multipleValues:
+			dValues = frozen.Set(dValue).OrderedElements(intfValueLess)
+		case Value:
+			dValues = []interface{}{dValue}
+		default:
+			panic("wtf?")
+		}
+
+		var vValues []interface{}
+		switch dValue := vDict.m.MustGet(vKey).(type) {
+		case multipleValues:
+			vValues = frozen.Set(dValue).OrderedElements(intfValueLess)
+		case Value:
+			vValues = []interface{}{dValue}
+		default:
+			panic("wtf?")
+		}
+
+		n := len(dValues)
+		if n > len(vValues) {
+			n = len(vValues)
+		}
+		for i, dItem := range dValues[:n] {
+			dValue := dItem.(Value)
+			vValue := vValues[i].(Value)
+			if !dValue.Equal(vValue) {
+				return dValue.Less(vValue)
+			}
+		}
+		if len(dValues) != len(vValues) {
+			return len(dValues) < len(vValues)
+		}
+	}
+	return len(dKeys) < len(vKeys)
 }
 
 func (d Dict) Negate() Value {
@@ -147,8 +210,16 @@ func (d Dict) Enumerator() ValueEnumerator {
 }
 
 func (d Dict) With(v Value) Set {
-	if key, value, matched := DictTupleMatcher()(v); matched {
-		return Dict{m: d.m.With(key, value)}
+	if t, is := v.(DictEntryTuple); is {
+		if u, has := d.m.Get(t.at); has {
+			switch u := u.(type) {
+			case multipleValues:
+				return Dict{m: d.m.With(t.at, multipleValues(frozen.Set(u).With(t.value)))}
+			default:
+				return Dict{m: d.m.With(t.at, multipleValues(frozen.NewSet(u, t.value)))}
+			}
+		}
+		return Dict{m: d.m.With(t.at, t.value)}
 	}
 	return d
 }
@@ -188,7 +259,14 @@ func (d Dict) Where(pred func(Value) bool) Set {
 }
 
 func (d Dict) Call(arg Value) Value {
-	return d.m.MustGet(arg).(Value)
+	switch v := d.m.MustGet(arg).(type) {
+	case Value:
+		return v
+	case multipleValues:
+		panic(fmt.Errorf("Dict.Call: too many return values for %v: %v", arg, frozen.Set(v))) //nolint:golint
+	default:
+		panic("wtf?")
+	}
 }
 
 func (d Dict) ArrayEnumerator() (OffsetValueEnumerator, bool) {
