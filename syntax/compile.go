@@ -488,5 +488,5 @@ var binops = map[string]binOpFunc{
 	"//":      rel.NewIdivExpr,
 	"^":       rel.NewPowExpr,
 	"<:":      rel.NewMemberExpr,
-	"\\":	   rel.NewOffsetExpr,
+	"\\":      rel.NewOffsetExpr,
 }
