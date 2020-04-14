@@ -44,6 +44,7 @@ expr   -> C* amp="&"* @ C* arrow=(
         > C* @:binop=/{//|[*/%]|\\} C*
         > C* @:rbinop="^" C*
         > C* unop=/{:>|=>|>>|[-+!*^]}* @ C*
+		> C* @:binop=">>>" C*
         > C* @ count="count"? C* touch? C*
         > C* (get | @) tail=(
               get
