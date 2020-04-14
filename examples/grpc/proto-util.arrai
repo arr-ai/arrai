@@ -20,10 +20,10 @@ let grpc = //./grpc;
         ),
 
     wrapSequence: \ep
-        let wrapType = //.str.sub(ep.ret("ok"), "sequence of ", "") + "s";
-        let name = //.str.lower(//.str.sub(ep.ret("ok"), "sequence of ", "")) + "s";
         let type = //.str.sub(ep.ret("ok"), "sequence of ", "");
+        let wrapType = type + "s";
+        let name = //.str.lower(type) + "s";
         (
-            grpcType: $`message ${wrapType} { repeated ${type} ${name} = 1; }` if !ep.attrs.stream else $``,
+            grpcType: $`message ${wrapType} { repeated ${type} ${name} = 1; }` if !ep.attrs.stream,
         ),
 )
