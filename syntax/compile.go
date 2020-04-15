@@ -56,7 +56,7 @@ func MustCompile(filepath, source string) rel.Expr {
 
 func (pc ParseContext) CompileExpr(b ast.Branch) rel.Expr {
 	name, c := which(b,
-		"amp", "arrow", "let", "unop", "binop", "rbinop", "if", "get",
+		"amp", "arrow", "let", "unop", "binop", "compare", "rbinop", "if", "get",
 		"tail", "count", "touch", "get", "rel", "set", "dict", "array",
 		"embed", "op", "fn", "pkg", "tuple", "xstr", "IDENT", "STR", "NUM",
 		"expr",
@@ -74,6 +74,8 @@ func (pc ParseContext) CompileExpr(b ast.Branch) rel.Expr {
 		return pc.compileUnop(b, c)
 	case "binop":
 		return pc.compileBinop(b, c)
+	case "compare":
+		return pc.compileCompare(b, c)
 	case "rbinop":
 		return pc.compileRbinop(b, c)
 	case "if":
@@ -177,6 +179,26 @@ func (pc ParseContext) compileBinop(b ast.Branch, c ast.Children) rel.Expr {
 		result = f(result, pc.CompileExpr(arg.(ast.Branch)))
 	}
 	return result
+}
+
+func (pc ParseContext) compileCompare(b ast.Branch, c ast.Children) rel.Expr {
+	args := b.Many("expr")
+	argExprs := make([]rel.Expr, 0, len(args))
+	comps := make([]rel.CompareFunc, 0, len(args))
+
+	ops := c.(ast.Many)
+	opStrs := make([]string, 0, len(ops))
+
+	argExprs = append(argExprs, pc.CompileExpr(args[0].(ast.Branch)))
+	for i, arg := range args[1:] {
+		op := ops[i].One("").(ast.Leaf).Scanner().String()
+
+		argExprs = append(argExprs, pc.CompileExpr(arg.(ast.Branch)))
+		comps = append(comps, compareOps[op])
+
+		opStrs = append(opStrs, op)
+	}
+	return rel.NewCompareExpr(argExprs, comps, opStrs)
 }
 
 func (pc ParseContext) compileRbinop(b ast.Branch, c ast.Children) rel.Expr {
@@ -467,12 +489,6 @@ var binops = map[string]binOpFunc{
 	"without": rel.NewWithoutExpr,
 	"&&":      rel.NewAndExpr,
 	"||":      rel.NewOrExpr,
-	"=":       rel.MakeEqExpr("=", func(a, b rel.Value) bool { return a.Equal(b) }),
-	"<":       rel.MakeEqExpr("<", func(a, b rel.Value) bool { return a.Less(b) }),
-	">":       rel.MakeEqExpr(">", func(a, b rel.Value) bool { return b.Less(a) }),
-	"!=":      rel.MakeEqExpr("!=", func(a, b rel.Value) bool { return !a.Equal(b) }),
-	"<=":      rel.MakeEqExpr("<=", func(a, b rel.Value) bool { return !b.Less(a) }),
-	">=":      rel.MakeEqExpr(">=", func(a, b rel.Value) bool { return !a.Less(b) }),
 	"+":       rel.NewAddExpr,
 	"-":       rel.NewSubExpr,
 	"++":      rel.NewConcatExpr,
@@ -487,6 +503,15 @@ var binops = map[string]binOpFunc{
 	"-%":      rel.NewSubModExpr,
 	"//":      rel.NewIdivExpr,
 	"^":       rel.NewPowExpr,
-	"<:":      rel.NewMemberExpr,
 	"\\":      rel.NewOffsetExpr,
+}
+
+var compareOps = map[string]rel.CompareFunc{
+	"<:": func(a, b rel.Value) bool { return b.(rel.Set).Has(a) },
+	"=":  func(a, b rel.Value) bool { return a.Equal(b) },
+	"<":  func(a, b rel.Value) bool { return a.Less(b) },
+	">":  func(a, b rel.Value) bool { return b.Less(a) },
+	"!=": func(a, b rel.Value) bool { return !a.Equal(b) },
+	"<=": func(a, b rel.Value) bool { return !b.Less(a) },
+	">=": func(a, b rel.Value) bool { return !a.Less(b) },
 }
