@@ -237,46 +237,46 @@ func NewOrderExpr(a, key Expr) Expr {
 		})
 }
 
-// NewCallExpr evaluates a without b, given a set lhs.
-func NewCallExpr(a, b Expr) Expr {
-	return newBinExpr(a, b, "call", "«%s»(%s)",
-		func(a, b Value, local Scope) (Value, error) {
-			switch x := a.(type) {
-			case Closure:
-				return x.Call(b, local)
-			case *Function:
-				return x.Call(b, local)
-			case *NativeFunction:
-				return x.Call(b, local)
-			case Set:
-				var out Value
-				for e := x.Enumerator(); e.MoveNext(); {
-					if t, ok := e.Current().(Tuple); ok {
-						// log.Printf("%v %v %[2]T %v %[3]T", t, t.MustGet("@"), b)
-						if v, found := t.Get("@"); found && b.Equal(v) {
-							if out != nil {
-								return nil, errors.Errorf("Too many items found")
-							}
-							if t.Count() != 2 {
-								return nil, errors.Errorf("Too many outputs")
-							}
-							rest := t.Without("@")
-							for e := rest.Enumerator(); e.MoveNext(); {
-								_, value := e.Current()
-								out = value
-							}
-						}
+func Call(a, b Value, local Scope) (Value, error) {
+	switch x := a.(type) {
+	case Closure:
+		return x.Call(b, local)
+	case *Function:
+		return x.Call(b, local)
+	case *NativeFunction:
+		return x.Call(b, local)
+	case Set:
+		var out Value
+		for e := x.Enumerator(); e.MoveNext(); {
+			if t, ok := e.Current().(Tuple); ok {
+				// log.Printf("%v %v %[2]T %v %[3]T", t, t.MustGet("@"), b)
+				if v, found := t.Get("@"); found && b.Equal(v) {
+					if out != nil {
+						return nil, errors.Errorf("Too many items found")
+					}
+					if t.Count() != 2 {
+						return nil, errors.Errorf("Too many outputs")
+					}
+					rest := t.Without("@")
+					for e := rest.Enumerator(); e.MoveNext(); {
+						_, value := e.Current()
+						out = value
 					}
 				}
-				if out == nil {
-					return nil, errors.Errorf("No items found")
-				}
-				return out, nil
 			}
-			return nil, errors.Errorf(
-				"call lhs must be a function, not %T", a)
-		},
-	)
+		}
+		if out == nil {
+			return nil, errors.Errorf("No items found")
+		}
+		return out, nil
+	}
+	return nil, errors.Errorf(
+		"call lhs must be a function, not %T", a)
+}
+
+// NewCallExpr evaluates a without b, given a set lhs.
+func NewCallExpr(a, b Expr) Expr {
+	return newBinExpr(a, b, "call", "«%s»(%s)", Call)
 }
 
 func NewCallExprCurry(f Expr, args ...Expr) Expr {

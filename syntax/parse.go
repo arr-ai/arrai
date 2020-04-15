@@ -41,7 +41,7 @@ expr   -> C* amp="&"* @ C* arrow=(
         > C* @ if=("if" t=expr ("else" f=expr)?)* C*
         > C* @:binop=/{\+\+|[+|]|-%?} C*
         > C* @:binop=/{&~|&|~~?|[-<][-&][->]} C*
-        > C* @:binop=/{//|[*/%]} C*
+        > C* @:binop=/{//|[*/%]|\\} C*
         > C* @:rbinop="^" C*
         > C* unop=/{:>|=>|>>|[-+!*^]}* @ C*
         > C* @ count="count"? C* touch? C*
@@ -52,7 +52,7 @@ expr   -> C* amp="&"* @ C* arrow=(
                       expr (":" end=expr? (":" step=expr)?)?
                       |     ":" end=expr  (":" step=expr)?
                   ):",",
-			  ")")
+              ")")
           )* C*
         > C* "{" C* rel=(names tuple=("(" v=@:",", ")"):",",?) "}" C*
         | C* "{" C* set=(elt=@:",",?) "}" C*
@@ -61,10 +61,10 @@ expr   -> C* amp="&"* @ C* arrow=(
         | C* "{:" C* embed=(grammar=@ ":" subgrammar=%%ast) ":}" C*
         | C* op="\\\\" @ C*
         | C* fn="\\" IDENT @ C*
-		| C* "//" pkg=( dot="."? ("/" local=pkgname)+
-                   | "." std=IDENT?
-                   | http=/{https?://}? fqdn=name:"." ("/" path=name)*
-                   )
+        | C* "//" pkg=( dot="."? ("/" name)+
+                      | "." std=IDENT?
+                      | http=/{https?://}? fqdn=name:"." ("/" path=name)*
+                      )
         | C* "(" tuple=(pairs=(name? ":" v=@):",",?) ")" C*
         | C* "(" @ ")" C*
         | C* let=("let" C* IDENT C* "=" C* @ %%bind C* ";" C* @) C*
@@ -78,7 +78,6 @@ touch  -> C* ("->*" ("&"? IDENT | STR))+ "(" expr:"," ","? ")" C*;
 get    -> C* dot="." ("&"? IDENT | STR | "*") C*;
 names  -> C* "|" C* IDENT:"," C* "|" C*;
 name   -> C* IDENT C* | C* STR C*;
-pkgname -> C* PKG_PATH C* | C* STR C*;
 xstr   -> C* quote=/{\$"\s*} part=( sexpr | fragment=/{(?: \\. | \$[^{"] | [^\\"$] )+} )* '"' C*
         | C* quote=/{\$'\s*} part=( sexpr | fragment=/{(?: \\. | \$[^{'] | [^\\'$] )+} )* "'" C*
         | C* quote=/{\$‵\s*} part=( sexpr | fragment=/{(?: ‵‵  | \$[^{‵] | [^‵  $] )+} )* "‵" C*;
@@ -89,10 +88,6 @@ sexpr  -> "${"
 
 ARROW  -> /{:>|=>|>>|orderby|order|where|sum|max|mean|median|min};
 IDENT  -> /{ \. | [$@A-Za-z_][0-9$@A-Za-z_]* };
-PKG_PATH ->  \s* PATH {
-    PATH    -> /{[a-zA-Z0-9._]+}:"/";
-    .wrapRE -> /{()};
-};
 STR    -> /{ " (?: \\. | [^\\"] )* "
            | ' (?: \\. | [^\\'] )* '
            | ‵ (?: ‵‵  | [^‵  ] )* ‵

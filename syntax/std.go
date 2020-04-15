@@ -83,12 +83,14 @@ func stdScope() rel.Scope {
 					}),
 				),
 				stdArchive(),
+				stdEncoding(),
+				stdEval(),
+				stdOs(),
+				stdNet(),
+				stdRe(),
 				stdReflect(),
 				stdRel(),
 				stdStr(),
-				stdEval(),
-				stdOs(),
-				stdEncoding(),
 				stdUnicode(),
 			))
 	})
