@@ -34,21 +34,6 @@ func MakeBinValExpr(op string, eval valueEval) func(a, b Expr) Expr {
 	}
 }
 
-type eqEval func(a, b Value) bool
-
-// MakeEqExpr returns a function that creates a binExpr for the given operator.
-func MakeEqExpr(op string, eval eqEval) func(a, b Expr) Expr {
-	return func(a, b Expr) Expr {
-		return newBinExpr(a, b, op, "(%s "+op+" %s)",
-			func(a, b Value, _ Scope) (Value, error) {
-				if eval(a, b) {
-					return True, nil
-				}
-				return False, nil
-			})
-	}
-}
-
 type arithEval func(a, b float64) float64
 
 func newArithExpr(a, b Expr, op string, eval arithEval) Expr {
