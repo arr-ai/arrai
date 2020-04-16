@@ -476,6 +476,7 @@ var binops = map[string]binOpFunc{
 	"->":      rel.NewApplyExpr,
 	"=>":      rel.NewMapExpr,
 	">>":      rel.NewSequenceMapExpr,
+	">>>":     rel.NewIndexedSequenceMapExpr,
 	":>":      rel.NewTupleMapExpr,
 	"orderby": rel.NewOrderByExpr,
 	"order":   rel.NewOrderExpr,

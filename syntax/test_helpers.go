@@ -71,6 +71,19 @@ func AssertCodePanics(t *testing.T, code string) bool {
 	})
 }
 
+// AssertCodeErrors asserts that code fails with a certain
+// message when executed.
+func AssertCodeErrors(t *testing.T, code, errString string) bool {
+	pc := ParseContext{SourceDir: ".."}
+	ast, err := pc.Parse(parser.NewScanner(code))
+	if assert.NoError(t, err, "parsing code: %s", code) {
+		codeExpr := pc.CompileExpr(ast)
+		_, err := codeExpr.Eval(rel.EmptyScope)
+		assert.EqualError(t, err, errString)
+	}
+	return false
+}
+
 // AssertScan asserts that a lexer's next produced token is as expected.
 func AssertScan(t *testing.T, l *Lexer, tok Token, intf interface{}, lexeme string) bool {
 	if !assert.True(t, l.Scan()) {
