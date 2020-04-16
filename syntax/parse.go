@@ -38,7 +38,7 @@ expr   -> C* amp="&"* @ C* arrow=(
         > C* @:binop="||" C*
         > C* @:binop="&&" C*
         > C* @:binop=/{!?(?:<:|<>?=?|>=?|=)} C*
-        > C* @ if=("if" t=expr ("else" f=expr)?)* C*
+        > C* @ if=("if" t=expr ("else" f=expr)?)* C* | C* @ if=("if" t=expr ("else" f=expr)?)* C*
         > C* @:binop=/{\+\+|[+|]|-%?} C*
         > C* @:binop=/{&~|&|~~?|[-<][-&][->]} C*
         > C* @:binop=/{//|[*/%]|\\} C*
@@ -54,9 +54,10 @@ expr   -> C* amp="&"* @ C* arrow=(
                   ):",",
               ")")
           )* C*
+		> C* @ ("cond" "(" ((key=@ ":" value=@):",",?) ")")? C*
         > C* "{" C* rel=(names tuple=("(" v=@:",", ")"):",",?) "}" C*
         | C* "{" C* set=(elt=@:",",?) "}" C*
-        | C* "{" C* dict=((key=@ ":" value=@):",",?) "}" C*
+		| C* "{" C* dict=((key=@ ":" value=@):",",?) "}" C*
         | C* "[" C* array=(item=@:",",?) "]" C*
         | C* "{:" C* embed=(grammar=@ ":" subgrammar=%%ast) ":}" C*
         | C* op="\\\\" @ C*
@@ -71,7 +72,7 @@ expr   -> C* amp="&"* @ C* arrow=(
         | C* xstr C*
         | C* IDENT C*
         | C* STR C*
-        | C* NUM C*;
+		| C* NUM C*;
 nest   -> C* "nest" names IDENT C*;
 unnest -> C* "unnest" IDENT C*;
 touch  -> C* ("->*" ("&"? IDENT | STR))+ "(" expr:"," ","? ")" C*;
@@ -84,7 +85,9 @@ xstr   -> C* quote=/{\$"\s*} part=( sexpr | fragment=/{(?: \\. | \$[^{"] | [^\\"
 sexpr  -> "${"
           C* expr C*
           control=/{ (?: : [-+#*\.\_0-9a-z]* (?: : (?: \\. | [^\\:}] )* ){0,2} )? }
-          close=/{\}\s*};
+		  close=/{\}\s*};
+cond   -> "cond" "(" kvs ("*" f=expr)? ")";
+kvs    -> (key=@ ":" value=@):",",?;
 
 ARROW  -> /{:>|=>|>>|orderby|order|where|sum|max|mean|median|min};
 IDENT  -> /{ \. | [$@A-Za-z_][0-9$@A-Za-z_]* };
