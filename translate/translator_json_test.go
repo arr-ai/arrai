@@ -30,7 +30,7 @@ func AssertExpectedTranslation(t *testing.T, expected string, value rel.Value) b
 func AssertExpectedJSONTranslation(t *testing.T, expected, rawJSON string) {
 	var data interface{}
 	require.NoError(t, json.Unmarshal([]byte(rawJSON), &data))
-	trans, err := translate.JSONToArrai(data)
+	trans, err := translate.ToArrai(data)
 	require.NoError(t, err)
 	AssertExpectedTranslation(t, expected, trans)
 }

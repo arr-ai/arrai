@@ -439,6 +439,8 @@ External libraries may be accessed via package references.
       request content of `https://foo.org/bar/random.arrai` via HTTPS
    4. **`//foo.org/bar/'some.json'`/`//https://foo.org/bar/'some.json'`:**
       request content of `https://foo.org/bar/some.json` via HTTPS
+   5. **`//foo.org/bar/'some.yaml'`/`//https://foo.org/bar/'some.yml'`:**
+      request content of `https://foo.org/bar/some.yaml` via HTTPS, file extension can be `yml` or `yaml`
 
 ### Tuples vs Maps
 

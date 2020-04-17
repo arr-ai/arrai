@@ -11,6 +11,7 @@ import (
 
 	"github.com/arr-ai/arrai/rel"
 	"github.com/arr-ai/arrai/tools/module"
+	"github.com/arr-ai/arrai/translate"
 )
 
 const arraiRootMarker = "go.mod"
@@ -159,11 +160,17 @@ func fileValue(filename string) (rel.Value, error) {
 		filename += ".arrai"
 	}
 
-	data, err := ioutil.ReadFile(filename)
+	bytes, err := ioutil.ReadFile(filename)
 	if err != nil {
 		return nil, err
 	}
-	return bytesValue(filename, data), nil
+	switch filepath.Ext(filename) {
+	case ".json":
+		return bytesJSONToArrai(bytes), nil
+	case ".yml", ".yaml":
+		return translate.BytesYamlToArrai(bytes), nil
+	}
+	return bytesValue(filename, bytes), nil
 }
 
 func bytesValue(filename string, data []byte) rel.Value {

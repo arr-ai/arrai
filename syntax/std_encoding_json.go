@@ -18,15 +18,19 @@ func stdEncodingJSON() rel.Attr {
 			case rel.Bytes:
 				bytes = v.Bytes()
 			}
-			var data interface{}
-			var err error
-			if err = json.Unmarshal(bytes, &data); err == nil {
-				var d rel.Value
-				if d, err = translate.JSONToArrai(data); err == nil {
-					return d
-				}
-			}
-			panic(err)
+			return bytesJSONToArrai(bytes)
 		}),
 	)
+}
+
+func bytesJSONToArrai(bytes []byte) rel.Value {
+	var data interface{}
+	var err error
+	if err = json.Unmarshal(bytes, &data); err == nil {
+		var d rel.Value
+		if d, err = translate.ToArrai(data); err == nil {
+			return d
+		}
+	}
+	panic(err)
 }
