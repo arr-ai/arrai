@@ -72,7 +72,7 @@ expr   -> C* amp="&"* @ C* arrow=(
         | C* xstr C*
         | C* IDENT C*
         | C* STR C*
-        | C* NUM C*;
+		| C* NUM C*;
 nest   -> C* "nest" names IDENT C*;
 unnest -> C* "unnest" IDENT C*;
 touch  -> C* ("->*" ("&"? IDENT | STR))+ "(" expr:"," ","? ")" C*;
@@ -86,8 +86,6 @@ sexpr  -> "${"
           C* expr C*
           control=/{ (?: : [-+#*\.\_0-9a-z]* (?: : (?: \\. | [^\\:}] )* ){0,2} )? }
           close=/{\}\s*};
-cond1   -> "cond" "(" kvs ("*" f=expr)? ")";
-kvs    -> (key=@ ":" value=@):",",?;
 
 ARROW  -> /{:>|=>|>>|orderby|order|where|sum|max|mean|median|min};
 IDENT  -> /{ \. | [$@A-Za-z_][0-9$@A-Za-z_]* };
