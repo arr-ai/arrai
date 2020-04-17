@@ -11,7 +11,7 @@ type ArrowExpr struct {
 }
 
 // NewArrowExpr returns a new ArrowExpr.
-func NewApplyExpr(lhs, fn Expr) Expr {
+func NewArrowExpr(lhs, fn Expr) Expr {
 	return &ArrowExpr{lhs, ExprAsFunction(fn)}
 }
 

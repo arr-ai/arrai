@@ -53,7 +53,7 @@ func MustCompile(filepath, source string) rel.Expr {
 		}
 	}
 	pc := ParseContext{SourceDir: dirpath}
-	ast, err := pc.Parse(parser.NewScanner(source))
+	ast, err := pc.Parse(parser.NewScannerWithFilename(source, dirpath))
 	if err != nil {
 		panic(err)
 	}
@@ -70,7 +70,6 @@ func (pc ParseContext) CompileExpr(b ast.Branch) rel.Expr {
 	if c == nil {
 		panic(fmt.Errorf("misshapen node AST: %v", b))
 	}
-	// log.Println(name, "\n", b)
 	switch name {
 	case "amp", "arrow":
 		return pc.compileArrow(b, name, c)
@@ -481,7 +480,7 @@ var unops = map[string]unOpFunc{
 type binOpFunc func(a, b rel.Expr) rel.Expr
 
 var binops = map[string]binOpFunc{
-	"->":      rel.NewApplyExpr,
+	"->":      rel.NewArrowExpr,
 	"=>":      rel.NewMapExpr,
 	">>":      rel.NewSequenceMapExpr,
 	">>>":     rel.NewIndexedSequenceMapExpr,
