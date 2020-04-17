@@ -72,7 +72,7 @@ expr   -> C* amp="&"* @ C* arrow=(
         | C* xstr C*
         | C* IDENT C*
         | C* STR C*
-		| C* NUM C*;
+        | C* NUM C*;
 nest   -> C* "nest" names IDENT C*;
 unnest -> C* "unnest" IDENT C*;
 touch  -> C* ("->*" ("&"? IDENT | STR))+ "(" expr:"," ","? ")" C*;
