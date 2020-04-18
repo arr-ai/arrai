@@ -2,19 +2,6 @@
 
 str library contains functions that are used for string manipulations.
 
-## concat
-
-`//.str.concat(strings)` concatenates a list of strings. It takes one argument which is
-a list of strings. It returns a string.
-
-
-#### examples
-
-| expression | equals |
-|:-|:-|
-| `//.str.concat(["ba", "na", "na"])` | `"banana"` |
-
-
 ## contains
 
 `//.str.contains(string, substring)` checks whether a substring is contained in a string. It takes
