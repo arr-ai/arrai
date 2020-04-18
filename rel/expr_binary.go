@@ -251,7 +251,7 @@ func Call(a, b Value, local Scope) (Value, error) {
 			}
 		}
 		if out == nil {
-			return nil, errors.Errorf("No items found")
+			return nil, errors.Errorf("No items found: %v", b)
 		}
 		return out, nil
 	}
