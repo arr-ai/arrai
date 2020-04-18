@@ -66,16 +66,6 @@ func TestStrContains(t *testing.T) {
 	assertExprPanics(t, `//.str.contains(123, 124)`)
 }
 
-func TestStrConcat(t *testing.T) {
-	t.Parallel()
-	AssertCodesEvalToSameValue(t, `""              `, `//.str.concat([])                            `)
-	AssertCodesEvalToSameValue(t, `""              `, `//.str.concat(["", "", "", ""])              `)
-	AssertCodesEvalToSameValue(t, `"hello"         `, `//.str.concat(["", "", "", "", "hello", ""]) `)
-	AssertCodesEvalToSameValue(t, `"this is a test"`, `//.str.concat(["this", " is", " a", " test"])`)
-	AssertCodesEvalToSameValue(t, `"this"          `, `//.str.concat(["this"])                      `)
-	assertExprPanics(t, `//.str.concat("this")`)
-}
-
 func TestStrJoin(t *testing.T) {
 	t.Parallel()
 	AssertCodesEvalToSameValue(t, `""                `, `//.str.join([], ",")                         `)
