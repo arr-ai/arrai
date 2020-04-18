@@ -4,8 +4,8 @@ seq library contains functions that are used for string manipulations.
 
 ## concat
 
-`//.seq.concat(strings)` concatenates a list of strings. It takes one argument which is
-a list of strings. It returns a string.
+`//.seq.concat(strings)` takes a list of strings and returns a string that is
+the concatenation of the strings in the list.
 
 | example | returns |
 |:-|:-|
@@ -13,7 +13,7 @@ a list of strings. It returns a string.
 
 ## repeat
 
-`//.seq.repeat(n, seq)` return a sequence that contains seq repeated n times.
+`//.seq.repeat(n, seq)` returns a sequence that contains seq repeated n times.
 
 | example | returns |
 |:-|:-|
