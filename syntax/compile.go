@@ -211,8 +211,15 @@ func (pc ParseContext) compileIf(b ast.Branch, c ast.Children) rel.Expr {
 
 func (pc ParseContext) compileCond(b ast.Branch, c ast.Children) rel.Expr {
 	// TODO: compile Switch expression and will call NewSwitchExpr()
+	// arrai eval 'cond (1 > 0:1, 2 > 3:2)'
 	fmt.Println("Execute compileCond ...")
-	return nil
+	result := pc.compileDict(c)
+	switch result := result.(type) {
+	case rel.DictExpr:
+		return rel.NewCondExpr(result, "the cond expr")
+	default:
+		return nil
+	}
 }
 
 func (pc ParseContext) compileCountTouch(b ast.Branch) rel.Expr {
