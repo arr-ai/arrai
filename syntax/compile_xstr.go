@@ -121,5 +121,5 @@ func (pc ParseContext) compileExpandableString(c ast.Children) rel.Expr {
 			exprs[i] = rel.NewString([]rune(s))
 		}
 	}
-	return rel.NewCallExpr(stdStrConcat, rel.NewArrayExpr(exprs...))
+	return rel.NewCallExpr(stdSeqConcat, rel.NewArrayExpr(exprs...))
 }
