@@ -121,5 +121,6 @@ func (pc ParseContext) compileExpandableString(c ast.Children) rel.Expr {
 			exprs[i] = rel.NewString([]rune(s))
 		}
 	}
-	return rel.NewCallExpr(stdStrConcat, rel.NewArrayExpr(exprs...))
+	// TODO: Use a more direct approach to invoke concat implementation.
+	return rel.NewCallExpr(rel.NewNativeFunction("concat", stdSeqConcat), rel.NewArrayExpr(exprs...))
 }

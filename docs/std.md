@@ -11,6 +11,8 @@ The following standard packages are available:
 - [`//.eval`](std-eval.md): Evaluate strings holding arr.ai code
 - [`//.os`](std-os.md): OS support
 - [`//.re`](std-re.md): Regular expressions
+- [`//.seq`](std-seq.md): Sequence utilities
+- [`//.str`](std-str.md): String utilities
 - `//.unicode`
   - [`//.unicode.utf8`](std-unicode-utf8.md): Interoperate with UTF-8 encoding
 
