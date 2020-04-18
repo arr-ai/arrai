@@ -4,12 +4,13 @@ seq library contains functions that are used for string manipulations.
 
 ## concat
 
-`//.seq.concat(strings)` takes a list of strings and returns a string that is
-the concatenation of the strings in the list.
+`//.seq.concat(seqs)` takes an array of sequences and returns a sequence that is
+the concatenation of the sequences in the array.
 
 | example | returns |
 |:-|:-|
 | `//.seq.concat(["ba", "na", "na"])` | `"banana"` |
+| `//.seq.concat([[1, 2], [3, 4, 5]])` | `[1, 2, 3, 4, 5]` |
 
 ## repeat
 
