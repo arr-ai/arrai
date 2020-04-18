@@ -7,13 +7,36 @@ import (
 	"github.com/arr-ai/arrai/rel"
 )
 
-var stdSeqConcat = createNestedFunc("concat", 1, func(args ...rel.Value) rel.Value {
-	var sb strings.Builder
-	for i, ok := args[0].(rel.Set).ArrayEnumerator(); ok && i.MoveNext(); {
-		sb.WriteString(mustAsString(i.Current()))
+func stdSeqConcat(arg rel.Value) rel.Value {
+	if set, is := arg.(rel.Set); is {
+		if !set.IsTrue() {
+			return rel.None
+		}
 	}
-	return rel.NewString([]rune(sb.String()))
-})
+	values := arg.(rel.Array).Values()
+	if len(values) == 0 {
+		return rel.None
+	}
+	switch v0 := values[0].(type) {
+	case rel.String:
+		var sb strings.Builder
+		for _, value := range values {
+			sb.WriteString(mustAsString(value))
+		}
+		return rel.NewString([]rune(sb.String()))
+	case rel.Set:
+		result := v0
+		for _, value := range values[1:] {
+			var err error
+			result, err = rel.Concatenate(result, value.(rel.Set))
+			if err != nil {
+				panic(err)
+			}
+		}
+		return result
+	}
+	panic(fmt.Errorf("concat: incompatible value: %v", values[0]))
+}
 
 func stdSeqRepeat(arg rel.Value) rel.Value {
 	n := int(arg.(rel.Number))
@@ -39,7 +62,7 @@ func stdSeqRepeat(arg rel.Value) rel.Value {
 
 func stdSeq() rel.Attr {
 	return rel.NewTupleAttr("seq",
-		rel.NewAttr("concat", stdSeqConcat),
+		rel.NewNativeFunctionAttr("concat", stdSeqConcat),
 		rel.NewNativeFunctionAttr("repeat", stdSeqRepeat),
 	)
 }

@@ -11,6 +11,14 @@ func TestSeqConcat(t *testing.T) {
 	AssertCodesEvalToSameValue(t, `"this is a test"`, `//.seq.concat(["this", " is", " a", " test"])`)
 	AssertCodesEvalToSameValue(t, `"this"          `, `//.seq.concat(["this"])                      `)
 	assertExprPanics(t, `//.seq.concat("this")`)
+
+	AssertCodesEvalToSameValue(t, `[]`, `//.seq.concat([[]])`)
+	AssertCodesEvalToSameValue(t, `[]`, `//.seq.concat([[], []])`)
+	AssertCodesEvalToSameValue(t, `[1, 2, 3]`, `//.seq.concat([[1, 2, 3]])`)
+	AssertCodesEvalToSameValue(t, `[1, 2, 3]`, `//.seq.concat([[1, 2, 3], []])`)
+	AssertCodesEvalToSameValue(t, `[4, 5, 6]`, `//.seq.concat([[], [4, 5, 6]])`)
+	AssertCodesEvalToSameValue(t, `[1, 2, 3, 4, 5, 6]`, `//.seq.concat([[1, 2, 3], [4, 5, 6]])`)
+	AssertCodePanics(t, `//.seq.concat(42)`)
 }
 
 func TestSeqRepeat(t *testing.T) {
