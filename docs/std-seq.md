@@ -13,7 +13,8 @@ the concatenation of the strings in the list.
 
 ## repeat
 
-`//.seq.repeat(n, seq)` returns a sequence that contains seq repeated n times.
+`//.seq.repeat(n, seq)` returns a sequence that contains `seq` repeated `n`
+times.
 
 | example | returns |
 |:-|:-|
