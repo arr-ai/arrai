@@ -7,11 +7,14 @@ The arr.ai standard library is available via the `//.` syntax.
 The following standard packages are available:
 
 - `//.encoding`
-  - [`//.encoding.json`](std-encoding-json.md)
-- [`//.eval`](std-eval.md)
-- [`//.os`](std-os.md)
+  - [`//.encoding.json`](std-encoding-json.md): Decode JSON
+- [`//.eval`](std-eval.md): Evaluate strings holding arr.ai code
+- [`//.os`](std-os.md): OS support
+- [`//.re`](std-re.md): Regular expressions
+- [`//.seq`](std-seq.md): Sequence utilities
+- [`//.str`](std-str.md): String utilities
 - `//.unicode`
-  - [`//.unicode.utf8`](std-unicode-utf8.md)
+  - [`//.unicode.utf8`](std-unicode-utf8.md): Interoperate with UTF-8 encoding
 
 ## Core functions
 

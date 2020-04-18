@@ -41,11 +41,15 @@ func TestPackageImportFromRoot(t *testing.T) {
 }
 
 func TestJsonPackageImportFromModuleRoot(t *testing.T) {
-	AssertCodesEvalToSameValue(t, `{'location': 'Melbourne', 'name': 'foo'}`, `///examples/json/foo.json`)
+	AssertCodesEvalToSameValue(t, `{'location': (s: 'Melbourne'), 'name': (s: 'foo')}`, `///examples/json/'foo.json'`)
 }
 
 func TestJsonPackageImport(t *testing.T) {
-	AssertCodesEvalToSameValue(t, `{'location': 'Melbourne', 'name': 'foo'}`, `//./examples/json/foo.json`)
+	AssertCodesEvalToSameValue(t, `{'location': (s: 'Melbourne'), 'name': (s: 'foo')}`, `//./examples/json/'foo.json'`)
+}
+
+func TestJsonPackageImportNotExists(t *testing.T) {
+	AssertCodePanics(t, `//./examples/json/'fooooo.json'`)
 }
 
 // func TestPackageExternalImport(t *testing.T) {

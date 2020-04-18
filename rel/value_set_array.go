@@ -66,6 +66,11 @@ func AsArray(s Set) (Array, bool) {
 	return Array{}, true
 }
 
+// Values returns the slice of values in the array.
+func (a Array) Values() []Value {
+	return a.values
+}
+
 // Hash computes a hash for a Array.
 func (a Array) Hash(seed uintptr) uintptr {
 	h := seed

@@ -56,7 +56,7 @@ func MustCompile(filepath, source string) rel.Expr {
 
 func (pc ParseContext) CompileExpr(b ast.Branch) rel.Expr {
 	name, c := which(b,
-		"amp", "arrow", "let", "unop", "binop", "rbinop", "if", "get",
+		"amp", "arrow", "let", "unop", "binop", "compare", "rbinop", "if", "get",
 		"tail", "count", "touch", "get", "rel", "set", "dict", "array",
 		"embed", "op", "fn", "pkg", "tuple", "xstr", "IDENT", "STR", "NUM",
 		"expr",
@@ -74,6 +74,8 @@ func (pc ParseContext) CompileExpr(b ast.Branch) rel.Expr {
 		return pc.compileUnop(b, c)
 	case "binop":
 		return pc.compileBinop(b, c)
+	case "compare":
+		return pc.compileCompare(b, c)
 	case "rbinop":
 		return pc.compileRbinop(b, c)
 	case "if":
@@ -177,6 +179,26 @@ func (pc ParseContext) compileBinop(b ast.Branch, c ast.Children) rel.Expr {
 		result = f(result, pc.CompileExpr(arg.(ast.Branch)))
 	}
 	return result
+}
+
+func (pc ParseContext) compileCompare(b ast.Branch, c ast.Children) rel.Expr {
+	args := b.Many("expr")
+	argExprs := make([]rel.Expr, 0, len(args))
+	comps := make([]rel.CompareFunc, 0, len(args))
+
+	ops := c.(ast.Many)
+	opStrs := make([]string, 0, len(ops))
+
+	argExprs = append(argExprs, pc.CompileExpr(args[0].(ast.Branch)))
+	for i, arg := range args[1:] {
+		op := ops[i].One("").(ast.Leaf).Scanner().String()
+
+		argExprs = append(argExprs, pc.CompileExpr(arg.(ast.Branch)))
+		comps = append(comps, compareOps[op])
+
+		opStrs = append(opStrs, op)
+	}
+	return rel.NewCompareExpr(argExprs, comps, opStrs)
 }
 
 func (pc ParseContext) compileRbinop(b ast.Branch, c ast.Children) rel.Expr {
@@ -318,25 +340,14 @@ func (pc ParseContext) compilePackage(c ast.Children) rel.Expr {
 		pkgName := ident.(ast.Leaf).Scanner().String()
 		return NewPackageExpr(rel.NewDotExpr(rel.DotIdent, pkgName))
 	}
-	if local := pkg["local"]; local != nil {
+	if names := pkg.Many("name"); len(names) > 0 {
 		var sb strings.Builder
-		var pkgPathList []ast.Node
-		localTree := local.(ast.Many)[0].(ast.Node)
-		pkgNode := ast.First(localTree, "pkgname")
-		pkgBranch := ast.First(pkgNode, "PKG_PATH")
-		if pkgBranch != nil {
-			pkgPath := ast.First(pkgBranch, "PATH")
-			pkgPathList = ast.All(pkgPath, "")
-		} else {
-			pkgSTR := ast.First(pkgNode, "STR")
-			pkgPathList = ast.All(pkgSTR, "")
-		}
 
-		for i, p := range pkgPathList {
+		for i, name := range names {
 			if i > 0 {
 				sb.WriteRune('/')
 			}
-			sb.WriteString(strings.Trim(p.Scanner().String(), "'"))
+			sb.WriteString(parseName(name.(ast.Branch)))
 		}
 		filepath := sb.String()
 		if pc.SourceDir == "" {
@@ -465,6 +476,7 @@ var binops = map[string]binOpFunc{
 	"->":      rel.NewApplyExpr,
 	"=>":      rel.NewMapExpr,
 	">>":      rel.NewSequenceMapExpr,
+	">>>":     rel.NewIndexedSequenceMapExpr,
 	":>":      rel.NewTupleMapExpr,
 	"orderby": rel.NewOrderByExpr,
 	"order":   rel.NewOrderExpr,
@@ -478,12 +490,6 @@ var binops = map[string]binOpFunc{
 	"without": rel.NewWithoutExpr,
 	"&&":      rel.NewAndExpr,
 	"||":      rel.NewOrExpr,
-	"=":       rel.MakeEqExpr("=", func(a, b rel.Value) bool { return a.Equal(b) }),
-	"<":       rel.MakeEqExpr("<", func(a, b rel.Value) bool { return a.Less(b) }),
-	">":       rel.MakeEqExpr(">", func(a, b rel.Value) bool { return b.Less(a) }),
-	"!=":      rel.MakeEqExpr("!=", func(a, b rel.Value) bool { return !a.Equal(b) }),
-	"<=":      rel.MakeEqExpr("<=", func(a, b rel.Value) bool { return !b.Less(a) }),
-	">=":      rel.MakeEqExpr(">=", func(a, b rel.Value) bool { return !a.Less(b) }),
 	"+":       rel.NewAddExpr,
 	"-":       rel.NewSubExpr,
 	"++":      rel.NewConcatExpr,
@@ -498,5 +504,15 @@ var binops = map[string]binOpFunc{
 	"-%":      rel.NewSubModExpr,
 	"//":      rel.NewIdivExpr,
 	"^":       rel.NewPowExpr,
-	"<:":      rel.NewMemberExpr,
+	"\\":      rel.NewOffsetExpr,
+}
+
+var compareOps = map[string]rel.CompareFunc{
+	"<:": func(a, b rel.Value) bool { return b.(rel.Set).Has(a) },
+	"=":  func(a, b rel.Value) bool { return a.Equal(b) },
+	"<":  func(a, b rel.Value) bool { return a.Less(b) },
+	">":  func(a, b rel.Value) bool { return b.Less(a) },
+	"!=": func(a, b rel.Value) bool { return !a.Equal(b) },
+	"<=": func(a, b rel.Value) bool { return !b.Less(a) },
+	">=": func(a, b rel.Value) bool { return !a.Less(b) },
 }

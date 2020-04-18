@@ -83,14 +83,16 @@ func stdScope() rel.Scope {
 					}),
 				),
 				stdArchive(),
-				stdReflect(),
-				stdRel(),
-				stdStr(),
+				stdEncoding(),
 				stdEval(),
 				stdOs(),
-				stdEncoding(),
-				stdUnicode(),
 				stdNet(),
+				stdRe(),
+				stdReflect(),
+				stdRel(),
+				stdSeq(),
+				stdStr(),
+				stdUnicode(),
 			))
 	})
 	return stdScopeVar
