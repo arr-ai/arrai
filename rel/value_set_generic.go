@@ -2,6 +2,7 @@ package rel
 
 import (
 	"bytes"
+	"fmt"
 	"reflect"
 	"sort"
 
@@ -333,6 +334,49 @@ func (s GenericSet) Call(arg Value) Value {
 		}
 	}
 	return nil
+}
+
+func (s GenericSet) CallSlice(start, end Value, step int, inclusive bool) Set {
+	if s.set.Count() == 0 {
+		return None
+	}
+	i := s.Enumerator()
+	i.MoveNext()
+	typ := reflect.TypeOf(i.Current())
+	for i.MoveNext() {
+		if reflect.TypeOf(i.Current()) != typ {
+			typ = nil
+		}
+	}
+	if typ != nil {
+		switch typ {
+		case stringCharTupleType:
+			g, is := AsString(s)
+			if !is {
+				panic("unsupported array expr")
+			}
+			return g.CallSlice(start, end, step, inclusive)
+		case bytesByteTupleType:
+			b, is := AsBytes(s)
+			if !is {
+				panic("unsupported array expr")
+			}
+			return b.CallSlice(start, end, step, inclusive)
+		case arrayItemTupleType:
+			array, is := asArray(s)
+			if !is {
+				panic("unsupported array expr")
+			}
+			return array.CallSlice(start, end, step, inclusive)
+		case dictEntryTupleType:
+			tuples := make([]DictEntryTuple, 0, s.set.Count())
+			for i := s.Enumerator(); i.MoveNext(); {
+				tuples = append(tuples, i.Current().(DictEntryTuple))
+			}
+			return NewDict(true, tuples...).CallSlice(start, end, step, inclusive)
+		}
+	}
+	panic(fmt.Sprintf("Set %s is not indexed", s))
 }
 
 // Enumerator returns an enumerator over the Values in the genericSet.

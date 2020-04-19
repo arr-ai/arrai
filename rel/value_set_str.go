@@ -216,6 +216,15 @@ func (s String) Call(arg Value) Value {
 	return NewNumber(float64(string(s.s)[i-s.offset]))
 }
 
+func (s String) CallSlice(start, end Value, step int, inclusive bool) Set {
+	indexes := resolveArrayIndexes(start, end, step, s.offset, len(s.s), inclusive)
+	slice := make([]rune, 0, len(indexes))
+	for _, i := range indexes {
+		slice = append(slice, s.s[i-s.offset])
+	}
+	return NewOffsetString(slice, s.offset)
+}
+
 func (s String) index(pos int) int {
 	pos -= s.offset
 	if 0 <= pos && pos <= len(s.s) {

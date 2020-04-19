@@ -293,12 +293,12 @@ func (pc ParseContext) compileCallGet(b ast.Branch) rel.Expr {
 	for _, part := range b.Many("tail") {
 		if call := part.One("call"); call != nil {
 			args := call.Many("arg")
-			exprs := make([]ast.Node, 0, len(args))
 			for _, arg := range args {
-				exprs = append(exprs, arg.One("expr"))
-			}
-			for _, arg := range pc.parseExprs(exprs...) {
-				result = rel.NewCallExpr(result, arg)
+				if expr := arg.One("expr"); expr != nil {
+					result = rel.NewCallExpr(result, pc.CompileExpr(expr.(ast.Branch)))
+					continue
+				}
+				result = pc.compileRange(result, arg.One("range").(ast.Branch))
 			}
 		}
 		get(part.One("get"))
@@ -461,6 +461,32 @@ func (pc ParseContext) compileNumber(c ast.Children) rel.Expr {
 		panic("Wat?")
 	}
 	return rel.NewNumber(n)
+}
+
+func (pc ParseContext) compileRange(set rel.Expr, c ast.Branch) rel.Expr {
+	var start, end, step rel.Expr
+	if startNode := c.One("start"); startNode != nil {
+		start = pc.CompileExpr(startNode.(ast.Branch))
+	}
+
+	if endNode := c.One("end"); endNode != nil {
+		end = pc.CompileExpr(endNode.(ast.Branch))
+	}
+
+	if stepNode := c.One("step"); stepNode != nil {
+		step = pc.CompileExpr(stepNode.(ast.Branch))
+	}
+
+	// TODO: decide on syntax to allow inclusivity
+	inclusive := false
+	// switch option := c.One("option").String(); option {
+	// case "=":
+	// 	inclusive = true
+	// case ">":
+	// 	step = rel.NewNumber(-1)
+	// }
+
+	return rel.NewSliceExpr(set, start, end, step, inclusive)
 }
 
 func (pc ParseContext) compileExpr(c ast.Children) rel.Expr {

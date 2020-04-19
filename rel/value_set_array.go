@@ -263,6 +263,15 @@ func (a Array) Call(arg Value) Value {
 	return a.values[i-a.offset]
 }
 
+func (a Array) CallSlice(start, end Value, step int, inclusive bool) Set {
+	indexes := resolveArrayIndexes(start, end, step, a.offset, len(a.values), inclusive)
+	slice := make([]Value, 0, len(indexes))
+	for _, i := range indexes {
+		slice = append(slice, a.values[i-a.offset])
+	}
+	return NewOffsetArray(a.offset, slice...)
+}
+
 func (a Array) index(pos int) int {
 	pos -= a.offset
 	if 0 <= pos && pos <= len(a.values) {

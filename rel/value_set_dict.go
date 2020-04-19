@@ -269,6 +269,92 @@ func (d Dict) Call(arg Value) Value {
 	}
 }
 
+func (d Dict) CallSlice(start, end Value, step int, inclusive bool) Set {
+	allKeys := d.m.Keys().OrderedElements(
+		func(a, b interface{}) bool {
+			return a.(Value).Less(b.(Value))
+		},
+	)
+
+	keys := []int{}
+	for _, k := range allKeys {
+		if f, isFloat := k.(Number); isFloat {
+			keys = append(keys, int(f))
+		}
+	}
+
+	if len(keys) == 0 {
+		return None
+	}
+
+	// TODO: apply inclusivity to the undefined end index
+	startIndex, endIndex := keys[0], keys[len(keys)-1]+1
+
+	if step < 0 {
+		startIndex, endIndex = endIndex, startIndex
+	}
+	if start != nil {
+		startIndex = int(start.(Number))
+	}
+	if end != nil {
+		endIndex = int(end.(Number))
+	}
+
+	if startIndex == endIndex {
+		if inclusive {
+			val, exists := d.m.Get(Number(startIndex))
+			if !exists {
+				return None
+			}
+			return NewArray(NewArrayItemTuple(0, val.(Value)))
+		}
+		return None
+	}
+
+	indexes := getIndexes(startIndex, endIndex, step, inclusive)
+	if len(indexes) == 0 {
+		return None
+	}
+
+	array := Array{[]Value{}, 0}
+	for _, i := range indexes {
+		val, exists := d.m.Get(Number(i))
+		if !exists {
+			continue
+		}
+
+		array = arrayFromDictEntry(val, array)
+	}
+	return array
+}
+
+func arrayFromDictEntry(val interface{}, array Array) Array {
+	switch v := val.(type) {
+	case Value:
+		if len(array.values) == 0 {
+			return NewArray(v).(Array)
+		}
+		return array.With(
+			NewArrayItemTuple(array.offset+len(array.values), v),
+		).(Array)
+	case multipleValues:
+		values := make([]Value, 0, frozen.Set(v).Count())
+		for s := frozen.Set(v).Range(); s.Next(); {
+			values = append(values, s.Value().(Value))
+		}
+		if len(array.values) == 0 {
+			return NewArray(values...).(Array)
+		}
+		return array.With(
+			NewArrayItemTuple(
+				array.offset+len(array.values),
+				NewArray(values...),
+			),
+		).(Array)
+	}
+	return array
+}
+
 func (d Dict) ArrayEnumerator() (OffsetValueEnumerator, bool) {
 	return nil, false
 }
