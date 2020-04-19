@@ -129,9 +129,9 @@ func TestOffsetExprEvalFail(t *testing.T) {
 
 	// None in LHS instead of a Number
 	_, err := NewOffsetExpr(None, None).Eval(EmptyScope)
-	assert.EqualError(t, err, errors.Errorf("=> not applicable to %T", None).Error())
+	assert.EqualError(t, err, errors.Errorf("\\ not applicable to %T", None).Error())
 
 	// Randomg set in RHS instead of an Array
 	_, err = NewOffsetExpr(Number(float64(0)), NewSet(Number(float64(0)))).Eval(EmptyScope)
-	assert.EqualError(t, err, errors.Errorf("=> not applicable to %T", NewSet(Number(float64(0)))).Error())
+	assert.EqualError(t, err, errors.Errorf("\\ not applicable to %T", NewSet(Number(float64(0)))).Error())
 }

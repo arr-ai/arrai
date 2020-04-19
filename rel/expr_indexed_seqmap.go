@@ -32,7 +32,7 @@ func (is *IndexedSequenceMapExpr) Eval(local Scope) (Value, error) {
 			t := i.Current().(Tuple)
 			pos, isIndexed := t.Get("@")
 			if !isIndexed {
-				return nil, errors.Errorf("=> not applicable to unindexed type %v", value)
+				return nil, errors.Errorf(">>> not applicable to unindexed type %v", value)
 			}
 			attr := t.Names().Without("@").Any()
 			item, _ := t.Get(attr)
@@ -45,7 +45,7 @@ func (is *IndexedSequenceMapExpr) Eval(local Scope) (Value, error) {
 		}
 		return NewSet(values...), nil
 	}
-	return nil, errors.Errorf("=> not applicable to %T", value)
+	return nil, errors.Errorf(">>> not applicable to %T", value)
 }
 
 // String returns a string representation of the expression.
