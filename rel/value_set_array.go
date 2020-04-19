@@ -28,9 +28,16 @@ func NewOffsetArray(offset int, values ...Value) Set {
 }
 
 func AsArray(s Set) (Array, bool) {
-	if s, ok := s.(Array); ok {
+	switch s := s.(type) {
+	case Array:
 		return s, true
+	case Set:
+		return Array{}, !s.IsTrue()
 	}
+	return Array{}, false
+}
+
+func asArray(s Set) (Array, bool) {
 	if i := s.Enumerator(); i.MoveNext() {
 		t, is := i.Current().(ArrayItemTuple)
 		if !is {
