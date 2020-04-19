@@ -54,8 +54,8 @@ func (e *CondExpr) Eval(local Scope) (Value, error) {
 				if trueCond == nil {
 					trueCond = &tempExpr
 				} else {
-					panic("it expects only one condition is true, but there are more thant 1 conditions are true in 'cond' expression:" +
-						e.expr)
+					panic("it expects only one true condition in addition to statement '*':valueExpression, " +
+						"but actually there are more than 1 true conditions in expression: " + e.expr)
 				}
 			}
 		}
@@ -67,7 +67,7 @@ func (e *CondExpr) Eval(local Scope) (Value, error) {
 		finalCond = defaultCond
 	} else {
 		// trueCond == nil && defaultCond == nil
-		panic("it expects only one condition is true, but there is not any condition is true in 'cond' expression:" +
+		panic("it expects only one true condition, but actually there is not any true condition in expression: " +
 			e.expr)
 	}
 
