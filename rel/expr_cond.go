@@ -40,20 +40,21 @@ func (e *CondExpr) Eval(local Scope) (Value, error) {
 	// Evaluates the valid condition, only one condition whose isTrue() == true can be valid.
 	// If there is not any valida condition, the condtion whose String() == '*' will work.
 	for _, expr := range e.dicExpr.entryExprs {
-		cond, err := expr.at.Eval(local)
+		tempExpr := expr
+		cond, err := tempExpr.at.Eval(local)
 		if err != nil {
 			return nil, err
 		}
 		switch cond.(type) {
 		case String:
 			// Condition is "*", means matching anything
-			defaultCond = &expr
+			defaultCond = &tempExpr
 		default:
 			if cond.IsTrue() {
 				if trueCond == nil {
-					trueCond = &expr
+					trueCond = &tempExpr
 				} else {
-					panic("it expects only one condition is true, but there are 2 conditions are true in 'cond' expression:" +
+					panic("it expects only one condition is true, but there are more thant 1 conditions are true in 'cond' expression:" +
 						e.expr)
 				}
 			}
@@ -65,7 +66,9 @@ func (e *CondExpr) Eval(local Scope) (Value, error) {
 	} else if trueCond == nil && defaultCond != nil {
 		finalCond = defaultCond
 	} else {
-		// TODO: trueCond == nil && defaultCond == nil
+		// trueCond == nil && defaultCond == nil
+		panic("it expects only one condition is true, but there is not any condition is true in 'cond' expression:" +
+			e.expr)
 	}
 
 	value, err := finalCond.value.Eval(local)
