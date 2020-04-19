@@ -16,6 +16,6 @@ func TestExprIndexedSequenceMap(t *testing.T) {
 	)
 	AssertCodeErrors(t,
 		`{("a": "z"), ("b": "y")} >>> \i \n (i ++ n)`,
-		`=> not applicable to unindexed type {(a: z), (b: y)}`,
+		`>>> not applicable to unindexed type {(a: z), (b: y)}`,
 	)
 }
