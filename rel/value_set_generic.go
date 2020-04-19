@@ -60,7 +60,7 @@ func NewSet(values ...Value) Set {
 				for _, value := range values {
 					set = set.With(value)
 				}
-				array, is := AsArray(set)
+				array, is := asArray(set)
 				if !is {
 					panic("unsupported array expr")
 				}
