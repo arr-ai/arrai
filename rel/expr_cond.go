@@ -2,6 +2,7 @@ package rel
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 )
 
@@ -25,14 +26,17 @@ func (e *CondExpr) String() string {
 	b.WriteByte('{')
 	var i int = -1
 	var expr DictEntryTupleExpr
-	for i, expr = range e.dicExpr.(DictExpr).entryExprs {
-		if i > 0 {
-			b.WriteString(", ")
+	switch c := e.dicExpr.(type) {
+	case DictExpr:
+		for i, expr = range c.entryExprs {
+			if i > 0 {
+				b.WriteString(", ")
+			}
+			fmt.Fprintf(&b, "%v: %v", expr.at.String(), expr.value.String())
 		}
-		fmt.Fprintf(&b, "%v: %v", expr.at.String(), expr.value.String())
 	}
 	if e.defaultExpr != nil {
-		if i == 0 {
+		if i >= 0 {
 			b.WriteString(", ")
 		}
 		fmt.Fprintf(&b, "%v: %v", "*", e.defaultExpr.String())
@@ -46,19 +50,22 @@ func (e *CondExpr) Eval(local Scope) (Value, error) {
 	var trueCond *DictEntryTupleExpr
 	// Evaluates the valid condition, only one condition whose isTrue() == true can be valid.
 	// If there is not any valid condition, the condtion defaultExpr will work.
-	for _, expr := range e.dicExpr.(DictExpr).entryExprs {
-		tempExpr := expr
-		cond, err := tempExpr.at.Eval(local)
-		if err != nil {
-			return nil, err
-		}
+	switch c := e.dicExpr.(type) {
+	case DictExpr:
+		for _, expr := range c.entryExprs {
+			tempExpr := expr
+			cond, err := tempExpr.at.Eval(local)
+			if err != nil {
+				return nil, err
+			}
 
-		if cond.IsTrue() {
-			if trueCond == nil {
-				trueCond = &tempExpr
-			} else {
-				panic("it expects only one true condition in addition to statement '*':valueExpression, " +
-					"but actually there are more than 1 true conditions in cond expression")
+			if cond.IsTrue() {
+				if trueCond == nil {
+					trueCond = &tempExpr
+				} else {
+					return nil, errors.New("it expects only one true condition in addition to statement '*':valueExpression, " +
+						"but actually there are more than 1 true conditions in cond expression")
+				}
 			}
 		}
 	}
@@ -70,7 +77,7 @@ func (e *CondExpr) Eval(local Scope) (Value, error) {
 		finalCond = e.defaultExpr
 	} else {
 		// trueCond == nil && e.defaultCond == nil
-		panic("it expects only one true condition or default condition '*':valueExpression, " +
+		return nil, errors.New("it expects only one true condition or default condition '*':valueExpression, " +
 			"but actually there is not any true condition or default condition '*':valueExpression in cond expression")
 	}
 

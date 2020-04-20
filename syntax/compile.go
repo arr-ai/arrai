@@ -213,11 +213,12 @@ func (pc ParseContext) compileCond(b ast.Branch, c ast.Children) rel.Expr {
 	// arrai eval 'cond (1 > 0:1, 2 > 3:2, *:10)'
 	result := pc.compileDict(c)
 
+	// TODO: pass arrai src expression to NewCondExpr, and include it in error messages which can help end user more.
 	if fNode := c.(ast.One).Node.One("f"); fNode != nil {
 		f := pc.CompileExpr(fNode.(ast.Branch))
-		// TODO: pass arrai src expression to NewCondExpr, and include it in error messages which can help end user more.
-		result = rel.NewCondExpr(result.(rel.DictExpr), f)
-		fmt.Println(result)
+		result = rel.NewCondExpr(result, f)
+	} else {
+		result = rel.NewCondExpr(result, nil)
 	}
 
 	return result
