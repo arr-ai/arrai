@@ -81,7 +81,7 @@ func writeDictToArchive(d rel.Dict, w func(string, []byte) (io.Writer, error), p
 				}
 			}
 		default:
-			return fmt.Errorf("unsupported entry %q: %v", subpath, v)
+			return fmt.Errorf("unsupported entry %q: %T %[2]v", subpath, v)
 		}
 	}
 	return nil

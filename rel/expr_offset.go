@@ -24,7 +24,7 @@ func (o *OffsetExpr) Eval(local Scope) (Value, error) {
 	}
 	_, isNumber := offset.(Number)
 	if !isNumber {
-		return nil, errors.Errorf("=> not applicable to %T", offset)
+		return nil, errors.Errorf("\\ not applicable to %T", offset)
 	}
 
 	array, err := o.array.Eval(local)
@@ -39,7 +39,7 @@ func (o *OffsetExpr) Eval(local Scope) (Value, error) {
 	case String:
 		return NewOffsetString(a.s, a.offset+int(offset.(Number))), nil
 	}
-	return nil, errors.Errorf("=> not applicable to %T", array)
+	return nil, errors.Errorf("\\ not applicable to %T", array)
 }
 
 func (o *OffsetExpr) String() string {

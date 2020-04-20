@@ -49,5 +49,5 @@ func (e *DArrowExpr) Eval(local Scope) (Value, error) {
 		}
 		return NewSet(values...), nil
 	}
-	return nil, errors.Errorf("=> not applicable to %T", value)
+	return nil, errors.Errorf("=> not applicable to %T: %[1]v", value)
 }

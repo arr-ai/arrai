@@ -47,5 +47,5 @@ func (e *NestExpr) Eval(local Scope) (Value, error) {
 	if set, ok := value.(Set); ok {
 		return Nest(set, e.attrs, e.attr), nil
 	}
-	return nil, errors.Errorf("=> not applicable to %T", value)
+	return nil, errors.Errorf("nest not applicable to %T", value)
 }

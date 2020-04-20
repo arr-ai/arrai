@@ -1,6 +1,8 @@
 package rel
 
 import (
+	"fmt"
+
 	"github.com/arr-ai/frozen"
 	"github.com/go-errors/errors"
 )
@@ -23,12 +25,15 @@ func RelationAttrs(a Set) (Names, bool) {
 
 // Nest groups the given attributes into nested relations.
 func Nest(a Set, attrs Names, attr string) Set {
+	if !a.IsTrue() {
+		return a
+	}
 	names, ok := RelationAttrs(a)
 	if !ok {
 		panic("Tuple names mismatch in nest lhs")
 	}
 	if !attrs.IsSubsetOf(names) {
-		panic("Nest attrs not a subset of relation attrs")
+		panic(fmt.Errorf("nest attrs (%v) not a subset of relation attrs (%v)", attrs, names))
 	}
 	key := names.Minus(attrs)
 	return Reduce(
