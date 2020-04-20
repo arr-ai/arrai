@@ -5,11 +5,13 @@ import (
 )
 
 // IfElseExpr returns the tuple applied to a function.
+// Deprecated: IfElseExpr will be removed, it should use CondExpr instead.
 type IfElseExpr struct {
 	ifTrue, cond, ifFalse Expr
 }
 
 // NewIfElseExpr returns a new IfElseExpr.
+// Deprecated: NewIfElseExpr will be removed, it should use NewCondExpr instead.
 func NewIfElseExpr(ifTrue, cond, ifFalse Expr) Expr {
 	return &IfElseExpr{ifTrue, cond, ifFalse}
 }
