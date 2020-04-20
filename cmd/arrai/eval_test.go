@@ -18,7 +18,7 @@ func assertEvalExprString(t *testing.T, expected, source string) bool { //nolint
 	expr, err := syntax.Compile(".", source)
 	return assert.True(t, err == nil) &&
 		assert.True(t, expr != nil) &&
-		assert.Equal(t, expected, expr.String())
+		assert.Equal(t, expected, strings.Replace(expr.String(), ` `, ``, -1))
 }
 
 func TestEvalNumberULP(t *testing.T) {
@@ -54,12 +54,11 @@ func TestEvalCond(t *testing.T) {
 	assert.Error(t, evalImpl(`cond ()`, &sb))
 }
 
-// EvalCondExpr is used in local env only.
-func EvalCondExpr(t *testing.T) {
+func TestEvalCondExpr(t *testing.T) {
 	t.Parallel()
-	assertEvalExprString(t, "{(1 > 0): 1, (2 > 3): 2, *: (1 + 2)}", "cond (1 > 0 : 1, 2 > 3: 2, *:1 + 2)")
-	assertEvalExprString(t, "{(1 < 2): 1}", "cond (1 < 2 : 1)")
-	assertEvalExprString(t, "{(1 > 2): 1, (2 < 3): 2}", "cond (1 > 2 : 1, 2 < 3: 2)")
-	assertEvalExprString(t, "{*: (1 + 2)}", "cond (*: 1 + 2)")
-	assertEvalExprString(t, "{(1 < 2): 1, *: (1 + 2)}", "cond (1 < 2: 1, * : 1 + 2)")
+	assertEvalExprString(t, "{(1>0):1,(2>3):2,*:(1+2)}", "cond (1 > 0 : 1, 2 > 3: 2, *:1 + 2)")
+	assertEvalExprString(t, "{(1<2):1}", "cond (1 < 2 : 1)")
+	assertEvalExprString(t, "{(1>2):1,(2<3):2}", "cond (1 > 2 : 1, 2 < 3: 2)")
+	assertEvalExprString(t, "{*:(1+2)}", "cond (*: 1 + 2)")
+	assertEvalExprString(t, "{(1<2):1,*:(1+2)}", "cond (1 < 2: 1, * : 1 + 2)")
 }
