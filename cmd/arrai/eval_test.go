@@ -46,13 +46,16 @@ func TestEvalCond(t *testing.T) {
 	assertEvalOutputs(t, `3`, `cond (* : 1 + 2)`)
 	assertEvalOutputs(t, `1`, `cond (1 < 2: 1, * : 1 + 2)`)
 	assertEvalOutputs(t, `3`, `cond (1 > 2: 1, * : 1 + 2)`)
+	assertEvalOutputs(t, `3`, `let a = cond (1 > 2: 1, * : 1 + 2);a`)
+	assertEvalOutputs(t, `1`, `let a = cond (1 < 2: 1, * : 1 + 2);a * 1`)
 
 	var sb strings.Builder
 	assert.Error(t, evalImpl(`cond (1 > 0 : 1, 2 < 3: 2, *:1 + 2)`, &sb))
 	assert.Error(t, evalImpl(`cond ()`, &sb))
 }
 
-func TestEvalCondExpr(t *testing.T) {
+// EvalCondExpr is used in local env only.
+func EvalCondExpr(t *testing.T) {
 	t.Parallel()
 	assertEvalExprString(t, "{(1 > 0): 1, (2 > 3): 2, *: (1 + 2)}", "cond (1 > 0 : 1, 2 > 3: 2, *:1 + 2)")
 	assertEvalExprString(t, "{(1 < 2): 1}", "cond (1 < 2 : 1)")
