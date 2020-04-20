@@ -10,11 +10,20 @@ let grpc = //./grpc;
     endpointInfo: \ep
         let method = //.str.sub(//.str.title(//.str.lower(ep.name)), "-", "");
         let paramName = method + "Request" if wrap else $"${ep.params >> grpc.type(.)::, }";
-        let responseName = method + "Response" if wrap else ep.ret("ok");
+        let streamRes = //.str.sub(ep.ret("ok"), "sequence of", "stream") if ep.attrs.stream else //.str.sub(ep.ret("ok"), "sequence of ", "") + "s";
+        let responseName = method + "Response" if wrap else streamRes;
         (
             method:       method,
             paramName:    paramName,
             responseName: responseName,
             rpcMethod:    $`rpc ${method}(${paramName}) returns (${responseName}) {}`,
+        ),
+
+    wrapSequence: \ep
+        let type = //.str.sub(ep.ret("ok"), "sequence of ", "");
+        let wrapType = type + "s";
+        let name = //.str.lower(type) + "s";
+        (
+            grpcType: $`message ${wrapType} { repeated ${type} ${name} = 1; }` if !ep.attrs.stream,
         ),
 )

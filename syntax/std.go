@@ -90,6 +90,7 @@ func stdScope() rel.Scope {
 				stdRe(),
 				stdReflect(),
 				stdRel(),
+				stdSeq(),
 				stdStr(),
 				stdUnicode(),
 			))

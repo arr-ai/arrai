@@ -41,5 +41,5 @@ func (e *UnnestExpr) Eval(local Scope) (Value, error) {
 	if set, ok := value.(Set); ok {
 		return Unnest(set, e.attr), nil
 	}
-	return nil, errors.Errorf("=> not applicable to %T", value)
+	return nil, errors.Errorf("unnest not applicable to %T", value)
 }

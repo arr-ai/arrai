@@ -37,13 +37,14 @@ expr   -> C* amp="&"* @ C* arrow=(
         > C* @:binop=("with" | "without") C*
         > C* @:binop="||" C*
         > C* @:binop="&&" C*
-        > C* @:binop=/{!?(?:<:|<>?=?|>=?|=)} C*
+        > C* @:compare=/{!?(?:<:|<>?=?|>=?|=)} C*
         > C* @ if=("if" t=expr ("else" f=expr)?)* C*
         > C* @:binop=/{\+\+|[+|]|-%?} C*
         > C* @:binop=/{&~|&|~~?|[-<][-&][->]} C*
         > C* @:binop=/{//|[*/%]|\\} C*
         > C* @:rbinop="^" C*
         > C* unop=/{:>|=>|>>|[-+!*^]}* @ C*
+        > C* @:binop=">>>" C*
         > C* @ count="count"? C* touch? C*
         > C* (get | @) tail=(
               get

@@ -34,9 +34,10 @@ let endpoints = app.endpoints where !//.str.has_prefix(.@item.name, "enum ");
                 enum ${//.rex.sub(.name, `^\S*\s`, "")} {
                     ${.stmts >> $`${.action};`::\i}
                 }`:::\n}
+            ${endpoints >> proto.wrapSequence(.).grpcType::\i}
             ${endpoints if wrap >>
                 let retTokens = //.str.split(ep.ret("ok"), " ");
-                let retName = //.str.sub(//.str.concat(retTokens -- {"sequence", "of"}), ".", "");
+                let retName = //.str.sub(//.seq.concat(retTokens -- {"sequence", "of"}), ".", "");
                 let attr = ep.attrs(retName + "_rpcId");
                 let epi = proto.endpointInfo(ep);
                 $`

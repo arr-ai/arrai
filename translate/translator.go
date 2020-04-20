@@ -1,8 +1,12 @@
 package translate
 
-import "github.com/arr-ai/arrai/rel"
+import (
+	"fmt"
 
-// JSONToArrai translates an object unmarshalled from json into an array value
+	"github.com/arr-ai/arrai/rel"
+)
+
+// ToArrai translates an object unmarshalled from json/yaml into an array value
 //
 // translation follows the rules
 //
@@ -10,16 +14,28 @@ import "github.com/arr-ai/arrai/rel"
 //     array  -> array
 //     null   -> none
 //     other  -> value (bools, numerics, strings)
-func JSONToArrai(data interface{}) (rel.Value, error) {
+func ToArrai(data interface{}) (rel.Value, error) {
 	switch v := data.(type) {
+	case map[interface{}]interface{}:
+		{
+			mapString := make(map[string]interface{})
+
+			for key, value := range v {
+				strKey := fmt.Sprintf("%v", key)
+				mapString[strKey] = value
+			}
+			return objToArrai(mapString)
+		}
 	case map[string]interface{}:
-		return jsonObjToArrai(v)
+		return objToArrai(v)
 	case []interface{}:
-		return jsonArrToArrai(v)
+		return arrToArrai(v)
 	case string:
 		return rel.NewTuple(rel.NewAttr("s", rel.NewString([]rune(v)))), nil
 	case float64:
 		return rel.NewNumber(v), nil
+	case int:
+		return rel.NewNumber(float64(v)), nil
 	case bool:
 		return rel.NewTuple(rel.NewAttr("b", rel.NewBool(v))), nil
 	case nil:
@@ -33,13 +49,13 @@ func JSONToArrai(data interface{}) (rel.Value, error) {
 	}
 }
 
-// Converts a json object to a binary relation {|@,@item|, |key,val|, ...}
-func jsonObjToArrai(data map[string]interface{}) (rel.Value, error) {
+// Converts a object to a binary relation {|@,@item|, |key,val|, ...}
+func objToArrai(data map[string]interface{}) (rel.Value, error) {
 	tuples := make([]rel.Value, len(data))
 	i := 0
 	for key, val := range data {
 		// Recursively apply ToArrai to all values
-		item, err := JSONToArrai(val)
+		item, err := ToArrai(val)
 		if err != nil {
 			return nil, err
 		}
@@ -49,12 +65,12 @@ func jsonObjToArrai(data map[string]interface{}) (rel.Value, error) {
 	return rel.NewSet(tuples...), nil
 }
 
-// Converts a json array to an arrai array
-func jsonArrToArrai(data []interface{}) (rel.Value, error) {
+// Converts an array to an arrai array
+func arrToArrai(data []interface{}) (rel.Value, error) {
 	elts := make([]rel.Value, len(data))
 	for i, val := range data {
 		// Recursively apply ToArrai to all elements
-		elt, err := JSONToArrai(val)
+		elt, err := ToArrai(val)
 		if err != nil {
 			return nil, err
 		}

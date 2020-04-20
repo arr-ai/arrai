@@ -33,14 +33,6 @@ func formatValue(format string, value rel.Value) string {
 }
 
 var (
-	stdStrConcat = createNestedFunc("concat", 1, func(args ...rel.Value) rel.Value {
-		var sb strings.Builder
-		for i, ok := args[0].(rel.Set).ArrayEnumerator(); ok && i.MoveNext(); {
-			sb.WriteString(mustAsString(i.Current()))
-		}
-		return rel.NewString([]rune(sb.String()))
-	})
-
 	stdStrExpand = createNestedFunc("expand", 4, func(args ...rel.Value) rel.Value {
 		format := mustAsString(args[0])
 		if format != "" {
@@ -51,15 +43,18 @@ var (
 
 		var s string
 		if delim := mustAsString(args[2]); strings.HasPrefix(delim, ":") {
-			var sb strings.Builder
-			n := 0
-			for i, ok := args[1].(rel.Set).ArrayEnumerator(); ok && i.MoveNext(); n++ {
-				if n > 0 {
-					sb.WriteString(delim[1:])
+			if array, is := rel.AsArray(args[1].(rel.Set)); is {
+				var sb strings.Builder
+				for i, value := range array.Values() {
+					if i > 0 {
+						sb.WriteString(delim[1:])
+					}
+					sb.WriteString(formatValue(format, value))
 				}
-				sb.WriteString(formatValue(format, i.Current()))
+				s = sb.String()
+			} else {
+				panic(fmt.Errorf("arg not an array in ${arg::}: %v", args[1]))
 			}
-			s = sb.String()
 		} else {
 			s = formatValue(format, args[1])
 		}
@@ -76,7 +71,6 @@ var (
 
 func stdStr() rel.Attr {
 	return rel.NewTupleAttr("str",
-		rel.NewAttr("concat", stdStrConcat),
 		createNestedFuncAttr("contains", 2, func(args ...rel.Value) rel.Value {
 			return rel.NewBool(strings.Contains(mustAsString(args[0]), mustAsString(args[1])))
 		}),

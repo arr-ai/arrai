@@ -74,7 +74,7 @@ func (x *DotExpr) Eval(local Scope) (Value, error) {
 		e.MoveNext()
 		v := e.Current()
 		if e.MoveNext() {
-			return nil, errors.Errorf("Too many elts to get attr from set")
+			return nil, errors.Errorf("Too many elts to get attr %q from set", x.attr)
 		}
 		if t, ok := v.(Tuple); ok {
 			return get(t)
