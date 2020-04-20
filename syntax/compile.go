@@ -210,14 +210,17 @@ func (pc ParseContext) compileIf(b ast.Branch, c ast.Children) rel.Expr {
 }
 
 func (pc ParseContext) compileCond(b ast.Branch, c ast.Children) rel.Expr {
-	// arrai eval 'cond (1 > 0:1, 2 > 3:2)'
+	// arrai eval 'cond (1 > 0:1, 2 > 3:2, *:10)'
 	result := pc.compileDict(c)
-	switch result := result.(type) {
-	case rel.DictExpr:
-		return rel.NewCondExpr(result, "the cond expr")
-	default:
-		panic("it is not supported, please contact development team")
+
+	if fNode := c.(ast.One).Node.One("f"); fNode != nil {
+		f := pc.CompileExpr(fNode.(ast.Branch))
+		// TODO: pass arrai src expression to NewCondExpr, and include it in error messages which can help end user more.
+		result = rel.NewCondExpr(result.(rel.DictExpr), f)
+		fmt.Println(result)
 	}
+
+	return result
 }
 
 func (pc ParseContext) compileCountTouch(b ast.Branch) rel.Expr {
