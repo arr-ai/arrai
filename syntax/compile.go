@@ -219,6 +219,9 @@ func (pc ParseContext) compileRbinop(b ast.Branch, c ast.Children) rel.Expr {
 }
 
 func (pc ParseContext) compileIf(b ast.Branch, c ast.Children) rel.Expr {
+	// Print out warnning message - operator if is deprecated and will be removed soon, please use operator cond instead.
+	// Operator cond sample: let a = cond ( 2 > 1: 1, 2 > 3:2, * :3);
+
 	result := pc.CompileExpr(b.One("expr").(ast.Branch))
 	for _, ifelse := range c.(ast.Many) {
 		t := pc.CompileExpr(ifelse.One("t").(ast.Branch))
