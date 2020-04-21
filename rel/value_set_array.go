@@ -265,7 +265,7 @@ func (a Array) Call(arg Value) Value {
 
 func (a Array) index(pos int) int {
 	pos -= a.offset
-	if 0 <= pos && pos < len(a.values) {
+	if 0 <= pos && pos <= len(a.values) {
 		return pos
 	}
 	return -1

@@ -218,7 +218,7 @@ func (s String) Call(arg Value) Value {
 
 func (s String) index(pos int) int {
 	pos -= s.offset
-	if 0 <= pos && pos < len(s.s) {
+	if 0 <= pos && pos <= len(s.s) {
 		return pos
 	}
 	return -1

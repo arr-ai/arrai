@@ -225,7 +225,7 @@ func (b Bytes) Call(arg Value) Value {
 
 func (b Bytes) index(pos int) int {
 	pos -= b.offset
-	if 0 <= pos && pos < len(b.b) {
+	if 0 <= pos && pos <= len(b.b) {
 		return pos
 	}
 	return -1
