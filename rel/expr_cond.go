@@ -52,13 +52,14 @@ func (e *CondExpr) Eval(local Scope) (Value, error) {
 	switch c := e.dicExpr.(type) {
 	case DictExpr:
 		for _, expr := range c.entryExprs {
-			cond, err := expr.at.Eval(local)
+			tempExpr := expr
+			cond, err := tempExpr.at.Eval(local)
 			if err != nil {
 				return nil, err
 			}
 
 			if cond != nil && cond.IsTrue() {
-				trueCond = &expr
+				trueCond = &tempExpr
 				break
 			}
 		}
