@@ -36,15 +36,9 @@ worth covering upfront to aid comprehension below.
    Example: `# Comment on comments.`
 
 4. **Offset collections:** In the string `"hello"`, the first character, `h`, is
-   at position zero. In the alternate form `12▸"hello"`, the `h` is at position
+   at position zero. In the alternate form `12\"hello"`, the `h` is at position
    12 and the remaining characters occupy positions 13&ndash;16. This is known
-   as an offset-string or a string with holes.
-
-   **(⛔NYI)** While this syntax is allowed in arr.ai, `▸` isn't
-   available on most keyboards, so the syntax `"12\>hello"` represents the same
-   offset-string. When printing such strings, arr.ai will normally use the more
-   compact representation with `▸`. This form may also be used to represent
-   offset arrays: `[12\> 1, 2, 3]`.
+   as an offset-string. Likewise, `5\[1, 2, 3]` represents an offset array.
 
 ## Data
 
@@ -81,8 +75,8 @@ seem. You can in fact represent:
 6. Packages:
    1. `//.math.sin(1)`
    2. `//./myutil/work(42)`
-   3. * **(⛔ NYI)** `///path/to/root/file`
-   4. * **(⛔ NYI)** `//./'myfile.yaml'`
+   3. `///path/to/root/file`
+   4. `//./'myfile.yaml'`
    5. `//github.com/org/external/file`
    6. `//https://url/to/your/content`
 
@@ -490,11 +484,11 @@ $ arrai e '//.web.url{https://me@foo.com/bar?x=42}'
    source: "https://me@foo.com/bar?x=42",
    scheme: "https",
    authority: (
-      userinfo: [8▸"me"],
-      host: 11▸"foo.com",
+      userinfo: [8\"me"],
+      host: 11\"foo.com",
    ),
-   path: [19▸"bar"],
-   search: {23▸"x": [25▸"42"]},
+   path: [19\"bar"],
+   search: {23\"x": [25\"42"]},
 )
 ```
 
