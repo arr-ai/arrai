@@ -1,11 +1,15 @@
 package syntax
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"path"
 	"strconv"
 	"strings"
+	"sync"
 
+	"github.com/anz-bank/pkg/log"
 	"github.com/arr-ai/wbnf/ast"
 
 	"github.com/arr-ai/arrai/rel"
@@ -23,6 +27,8 @@ import (
 // var noParse = &noParseType{}
 
 const NoPath = "\000"
+
+var loggingOnce sync.Once
 
 func Compile(filepath, source string) (_ rel.Expr, err error) {
 	defer func() {
@@ -59,7 +65,7 @@ func (pc ParseContext) CompileExpr(b ast.Branch) rel.Expr {
 		"amp", "arrow", "let", "unop", "binop", "compare", "rbinop", "if", "get",
 		"tail", "count", "touch", "get", "rel", "set", "dict", "array",
 		"embed", "op", "fn", "pkg", "tuple", "xstr", "IDENT", "STR", "NUM",
-		"expr",
+		"expr", "cond",
 	)
 	if c == nil {
 		panic(fmt.Errorf("misshapen node AST: %v", b))
@@ -80,6 +86,8 @@ func (pc ParseContext) CompileExpr(b ast.Branch) rel.Expr {
 		return pc.compileRbinop(b, c)
 	case "if":
 		return pc.compileIf(b, c)
+	case "cond":
+		return pc.compileCond(b, c)
 	case "count", "touch":
 		return pc.compileCountTouch(b)
 	case "get", "tail":
@@ -217,6 +225,12 @@ func (pc ParseContext) compileRbinop(b ast.Branch, c ast.Children) rel.Expr {
 }
 
 func (pc ParseContext) compileIf(b ast.Branch, c ast.Children) rel.Expr {
+	loggingOnce.Do(func() {
+		log.Error(context.Background(),
+			errors.New("operator if is deprecated and will be removed soon, please use operator cond instead. "+
+				"Operator cond sample: let a = cond ( 2 > 1 : 1, 2 > 3 :2, * : 3)"))
+	})
+
 	result := pc.CompileExpr(b.One("expr").(ast.Branch))
 	for _, ifelse := range c.(ast.Many) {
 		t := pc.CompileExpr(ifelse.One("t").(ast.Branch))
@@ -226,6 +240,21 @@ func (pc ParseContext) compileIf(b ast.Branch, c ast.Children) rel.Expr {
 		}
 		result = rel.NewIfElseExpr(result, t, f)
 	}
+	return result
+}
+
+func (pc ParseContext) compileCond(b ast.Branch, c ast.Children) rel.Expr {
+	// arrai eval 'cond (1 > 0:1, 2 > 3:2, *:10)'
+	result := pc.compileDict(c)
+
+	// TODO: pass arrai src expression to NewCondExpr, and include it in error messages which can help end user more.
+	if fNode := c.(ast.One).Node.One("f"); fNode != nil {
+		f := pc.CompileExpr(fNode.(ast.Branch))
+		result = rel.NewCondExpr(result, f)
+	} else {
+		result = rel.NewCondExpr(result, nil)
+	}
+
 	return result
 }
 
