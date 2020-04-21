@@ -76,6 +76,17 @@ $ arrai eval 'let a = cond ( 2 > 1 : 1, 2 > 3 : 2, * : 3);a * 3'
 $ arrai eval 'let a = cond ( 2 < 1 : 1, 2 > 3 : 2, * : 3);a * 3'
 9
 ```
+
+```bash
+$ arrai eval 'let a = cond ( 1 < 2 : 1, 2 > 3 : 2, * : 3);a * 3'
+3
+```
+
+```bash
+$ arrai eval 'let a = cond ( 2 < 1 : 1, 2 < 3 : 2, * : 3);a * 3'
+6
+```
+
 <!-- TODO: Uncomment once this works again.
 ### Apply a transform to inbound data
 
