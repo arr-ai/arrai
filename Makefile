@@ -1,6 +1,5 @@
 all: test lint wasm
 
-# TODO: If this Makefile is ever used for CI, suppress timingsensitive there.
 test:
 	go test $(GOTESTFLAGS) -tags timingsensitive ./...
 
