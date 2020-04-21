@@ -48,24 +48,18 @@ func (e *CondExpr) String() string {
 // Eval returns the true condition. It must have only one true condition.
 func (e *CondExpr) Eval(local Scope) (Value, error) {
 	var trueCond *DictEntryTupleExpr
-	// Evaluates the valid condition, only one condition whose isTrue() == true can be valid.
 	// If there is not any valid condition, the condtion defaultExpr will work.
 	switch c := e.dicExpr.(type) {
 	case DictExpr:
 		for _, expr := range c.entryExprs {
-			tempExpr := expr
-			cond, err := tempExpr.at.Eval(local)
+			cond, err := expr.at.Eval(local)
 			if err != nil {
 				return nil, err
 			}
 
-			if cond.IsTrue() {
-				if trueCond == nil {
-					trueCond = &tempExpr
-				} else {
-					return nil, errors.New("it expects only one true condition in addition to statement '*':valueExpression, " +
-						"but actually there are more than 1 true conditions in cond expression")
-				}
+			if cond != nil && cond.IsTrue() {
+				trueCond = &expr
+				break
 			}
 		}
 	}
@@ -77,7 +71,7 @@ func (e *CondExpr) Eval(local Scope) (Value, error) {
 		finalCond = e.defaultExpr
 	} else {
 		// trueCond == nil && e.defaultCond == nil
-		return nil, errors.New("it expects only one true condition or default condition '*':valueExpression, " +
+		return nil, errors.New("it expects one true condition or default condition '*':valueExpression, " +
 			"but actually there is not any true condition or default condition '*':valueExpression in cond expression")
 	}
 

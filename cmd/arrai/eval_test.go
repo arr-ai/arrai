@@ -48,9 +48,14 @@ func TestEvalCond(t *testing.T) {
 	assertEvalOutputs(t, `3`, `cond (1 > 2: 1, * : 1 + 2)`)
 	assertEvalOutputs(t, `3`, `let a = cond (1 > 2: 1, * : 1 + 2);a`)
 	assertEvalOutputs(t, `1`, `let a = cond (1 < 2: 1, * : 1 + 2);a * 1`)
+	// Multiple true conditions
+	assertEvalOutputs(t, `1`, `cond (1 > 0 : 1, 2 < 3: 2, *:1 + 2)`)
+	assertEvalOutputs(t, `2`, `cond (1 > 2 : 1, 2 < 3: 2, *:1 + 2)`)
+	assertEvalOutputs(t, `3`, `cond (1 > 2 : 1, 2 > 3: 2, 3 < 4 :3, *:2 + 2)`)
 
 	var sb strings.Builder
-	assert.Error(t, evalImpl(`cond (1 > 0 : 1, 2 < 3: 2, *:1 + 2)`, &sb))
+	assert.Error(t, evalImpl(`cond (1 < 0 : 1, 2 > 3: 2)`, &sb))
+	assert.Error(t, evalImpl(`cond (1 < 0 : 1)`, &sb))
 	assert.Error(t, evalImpl(`cond ()`, &sb))
 }
 
