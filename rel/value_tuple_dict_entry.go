@@ -90,7 +90,7 @@ func (t DictEntryTuple) Less(v Value) bool {
 		return t.Kind() < v.Kind()
 	}
 	u := v.(DictEntryTuple)
-	if t.at != u.at {
+	if !t.at.Equal(u.at) {
 		return t.at.Less(u.at)
 	}
 	return t.value.Less(u.value)
