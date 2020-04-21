@@ -223,7 +223,7 @@ func (a Array) With(value Value) Set {
 // was already absent, the original Array is returned.
 func (a Array) Without(value Value) Set {
 	if t, ok := value.(ArrayItemTuple); ok {
-		if i := a.index(t.at); i >= 0 && t.item == a.values[i] {
+		if i := a.index(t.at); i >= 0 && i < len(a.values) && t.item == a.values[i] {
 			if t.at == a.offset {
 				return Array{values: a.values[1:], offset: a.offset + 1}
 			}
@@ -265,7 +265,7 @@ func (a Array) Call(arg Value) Value {
 
 func (a Array) index(pos int) int {
 	pos -= a.offset
-	if 0 <= pos && pos < len(a.values) {
+	if 0 <= pos && pos <= len(a.values) {
 		return pos
 	}
 	return -1
