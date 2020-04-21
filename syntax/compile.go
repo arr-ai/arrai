@@ -7,6 +7,7 @@ import (
 	"path"
 	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/anz-bank/pkg/log"
 	"github.com/arr-ai/wbnf/ast"
@@ -26,6 +27,8 @@ import (
 // var noParse = &noParseType{}
 
 const NoPath = "\000"
+
+var loggingOnce sync.Once
 
 func Compile(filepath, source string) (_ rel.Expr, err error) {
 	defer func() {
@@ -222,9 +225,11 @@ func (pc ParseContext) compileRbinop(b ast.Branch, c ast.Children) rel.Expr {
 }
 
 func (pc ParseContext) compileIf(b ast.Branch, c ast.Children) rel.Expr {
-	log.Error(context.Background(),
-		errors.New("operator if is deprecated and will be removed soon, please use operator cond instead. "+
-			"Operator cond sample: let a = cond ( 2 > 1 : 1, 2 > 3 :2, * : 3)"))
+	loggingOnce.Do(func() {
+		log.Error(context.Background(),
+			errors.New("operator if is deprecated and will be removed soon, please use operator cond instead. "+
+				"Operator cond sample: let a = cond ( 2 > 1 : 1, 2 > 3 :2, * : 3)"))
+	})
 
 	result := pc.CompileExpr(b.One("expr").(ast.Branch))
 	for _, ifelse := range c.(ast.Many) {
