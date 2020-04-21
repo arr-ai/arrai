@@ -2,6 +2,8 @@ package rel
 
 import (
 	"reflect"
+
+	"github.com/arr-ai/wbnf/parser"
 )
 
 // ExprClosure represents the closure of an expression over a scope.
@@ -44,6 +46,11 @@ func (c ExprClosure) String() string {
 // Eval returns the Value
 func (c ExprClosure) Eval(_ Scope) (Value, error) {
 	return c.e.Eval(c.scope)
+}
+
+// Scanner returns the scanner of ExprClosure.
+func (c ExprClosure) Scanner() parser.Scanner {
+	panic("not implemented")
 }
 
 var eclosureKind = registerKind(206, reflect.TypeOf(ExprClosure{}))

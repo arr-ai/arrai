@@ -3,6 +3,8 @@ package rel
 import (
 	"fmt"
 	"reflect"
+
+	"github.com/arr-ai/wbnf/parser"
 )
 
 const DictValueAttr = "@value"
@@ -69,6 +71,11 @@ func (t DictEntryTuple) String() string {
 // Eval returns the tuple.
 func (t DictEntryTuple) Eval(local Scope) (Value, error) {
 	return t, nil
+}
+
+// Scanner returns the scanner of DictEntryTuple.
+func (t DictEntryTuple) Scanner() parser.Scanner {
+	panic("not implemented")
 }
 
 var dictValueTupleKind = registerKind(303, reflect.TypeOf((*DictEntryTuple)(nil)))

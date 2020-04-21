@@ -2,6 +2,8 @@ package rel
 
 import (
 	"reflect"
+
+	"github.com/arr-ai/wbnf/parser"
 )
 
 // BytesByteAttr is the standard name for the value-attr of a character tuple.
@@ -109,6 +111,11 @@ func (b Bytes) String() string {
 // Eval returns the string.
 func (b Bytes) Eval(_ Scope) (Value, error) {
 	return b, nil
+}
+
+// Scanner returns the scanner of Bytes.
+func (b Bytes) Scanner() parser.Scanner {
+	panic("not implemented")
 }
 
 var bytesKind = registerKind(207, reflect.TypeOf(Bytes{}))

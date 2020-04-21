@@ -5,6 +5,7 @@ import (
 	"reflect"
 
 	"github.com/arr-ai/hash"
+	"github.com/arr-ai/wbnf/parser"
 )
 
 // StringCharTuple represents a tuple of the form (@: at, @char: char).
@@ -70,6 +71,11 @@ func (t StringCharTuple) String() string {
 // Eval returns the tuple.
 func (t StringCharTuple) Eval(local Scope) (Value, error) {
 	return t, nil
+}
+
+// Scanner returns the scanner of StringCharTuple.
+func (t StringCharTuple) Scanner() parser.Scanner {
+	panic("not implemented")
 }
 
 var stringCharTupleKind = registerKind(301, reflect.TypeOf((*StringCharTuple)(nil)))

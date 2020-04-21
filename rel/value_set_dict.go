@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/arr-ai/frozen"
+	"github.com/arr-ai/wbnf/parser"
 )
 
 type multipleValues frozen.Set
@@ -109,6 +110,11 @@ func (d Dict) OrderedEntries() []DictEntryTuple {
 
 func (d Dict) Eval(local Scope) (Value, error) {
 	return d, nil
+}
+
+// Scanner returns the scanner of Dict.
+func (d Dict) Scanner() parser.Scanner {
+	panic("not implemented")
 }
 
 var dictKind = registerKind(209, reflect.TypeOf(String{}))

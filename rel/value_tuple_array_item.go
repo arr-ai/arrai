@@ -5,6 +5,7 @@ import (
 	"reflect"
 
 	"github.com/arr-ai/hash"
+	"github.com/arr-ai/wbnf/parser"
 )
 
 const ArrayItemAttr = "@item"
@@ -72,6 +73,11 @@ func (t ArrayItemTuple) String() string {
 // Eval returns the tuple.
 func (t ArrayItemTuple) Eval(local Scope) (Value, error) {
 	return t, nil
+}
+
+// Scanner returns the scanner of ArrayItemTuple.
+func (t ArrayItemTuple) Scanner() parser.Scanner {
+	panic("not implemented")
 }
 
 var arrayItemTupleKind = registerKind(302, reflect.TypeOf((*ArrayItemTuple)(nil)))

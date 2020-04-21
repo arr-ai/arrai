@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/arr-ai/frozen"
+	"github.com/arr-ai/wbnf/parser"
 )
 
 // GenericTuple is the default implementation of Tuple.
@@ -201,6 +202,11 @@ func (t *GenericTuple) String() string {
 // Eval returns the tuple.
 func (t *GenericTuple) Eval(local Scope) (Value, error) {
 	return t, nil
+}
+
+// Scanner returns the scanner of GenericTuple.
+func (t *GenericTuple) Scanner() parser.Scanner {
+	panic("not implemented")
 }
 
 var genericTupleKind = registerKind(300, reflect.TypeOf((*GenericTuple)(nil)))

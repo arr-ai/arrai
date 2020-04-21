@@ -5,6 +5,7 @@ import (
 	"reflect"
 
 	"github.com/arr-ai/hash"
+	"github.com/arr-ai/wbnf/parser"
 	"github.com/go-errors/errors"
 )
 
@@ -70,6 +71,11 @@ func (f *Function) String() string {
 // Eval returns the Value
 func (f *Function) Eval(local Scope) (Value, error) {
 	return NewClosure(local, f), nil
+}
+
+// Scanner returns the scanner of Function.
+func (f *Function) Scanner() parser.Scanner {
+	panic("not implemented")
 }
 
 var functionKind = registerKind(202, reflect.TypeOf(Function{}))

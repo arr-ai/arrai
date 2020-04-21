@@ -3,6 +3,7 @@ package rel
 import (
 	"reflect"
 
+	"github.com/arr-ai/wbnf/parser"
 	"github.com/go-errors/errors"
 )
 
@@ -44,6 +45,11 @@ func (c Closure) String() string {
 // Eval returns the Value
 func (c Closure) Eval(local Scope) (Value, error) {
 	return c, nil
+}
+
+// Scanner returns the scanner of Closure.
+func (c Closure) Scanner() parser.Scanner {
+	panic("not implemented")
 }
 
 var closureKind = registerKind(205, reflect.TypeOf(Closure{}))

@@ -2,17 +2,20 @@ package rel
 
 import (
 	"fmt"
+
+	"github.com/arr-ai/wbnf/parser"
 )
 
 // ArrowExpr returns the tuple applied to a function.
 type ArrowExpr struct {
+	ExprScanner
 	lhs Expr
 	fn  *Function
 }
 
 // NewArrowExpr returns a new ArrowExpr.
-func NewArrowExpr(lhs, fn Expr) Expr {
-	return &ArrowExpr{lhs, ExprAsFunction(fn)}
+func NewArrowExpr(scanner parser.Scanner, lhs, fn Expr) Expr {
+	return &ArrowExpr{ExprScanner{scanner}, lhs, ExprAsFunction(fn)}
 }
 
 // LHS returns the LHS of the ArrowExpr.
@@ -37,7 +40,7 @@ func (e *ArrowExpr) String() string {
 func (e *ArrowExpr) Eval(local Scope) (Value, error) {
 	value, err := e.lhs.Eval(local)
 	if err != nil {
-		return nil, err
+		return nil, wrapContext(err, e)
 	}
 	return e.fn.body.Eval(local.With(e.fn.arg, value))
 }

@@ -2,22 +2,25 @@ package rel
 
 import (
 	"bytes"
+
+	"github.com/arr-ai/wbnf/parser"
 )
 
 // ArrayExpr represents an expr that evaluates to an Array.
 type ArrayExpr struct {
+	ExprScanner
 	elements []Expr
 }
 
 // NewArrayExpr returns a new Expr that constructs an Array.
-func NewArrayExpr(elements ...Expr) Expr {
+func NewArrayExpr(scanner parser.Scanner, elements ...Expr) Expr {
 	values := make([]Value, 0, len(elements))
 	for _, expr := range elements {
 		if value, ok := expr.(Value); ok {
 			values = append(values, value)
 			continue
 		}
-		return ArrayExpr{elements: elements}
+		return ArrayExpr{ExprScanner{scanner}, elements}
 	}
 	return NewArray(values...)
 }
@@ -49,7 +52,7 @@ func (e ArrayExpr) Eval(local Scope) (Value, error) {
 	for _, expr := range e.elements {
 		value, err := expr.Eval(local)
 		if err != nil {
-			return nil, err
+			return nil, wrapContext(err, e)
 		}
 		values = append(values, value)
 	}

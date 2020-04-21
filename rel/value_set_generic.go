@@ -6,6 +6,7 @@ import (
 	"sort"
 
 	"github.com/arr-ai/frozen"
+	"github.com/arr-ai/wbnf/parser"
 )
 
 // GenericSet is a set of Values.
@@ -216,6 +217,11 @@ func (s GenericSet) String() string {
 // Eval returns the set.
 func (s GenericSet) Eval(local Scope) (Value, error) {
 	return s, nil
+}
+
+// Scanner returns the scanner of GenericSet.
+func (s GenericSet) Scanner() parser.Scanner {
+	panic("not implemented")
 }
 
 var genericSetKind = registerKind(200, reflect.TypeOf(Function{}))

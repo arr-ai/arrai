@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/arr-ai/frozen"
+	"github.com/arr-ai/wbnf/parser"
 )
 
 // Array is an ordered collection of Values.
@@ -126,6 +127,11 @@ func (a Array) String() string {
 // Eval returns the string.
 func (a Array) Eval(_ Scope) (Value, error) {
 	return a, nil
+}
+
+// Scanner returns the scanner of Array.
+func (a Array) Scanner() parser.Scanner {
+	panic("not implemented")
 }
 
 var arrayKind = registerKind(208, reflect.TypeOf(Array{}))

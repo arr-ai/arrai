@@ -2,17 +2,20 @@ package rel
 
 import (
 	"fmt"
+
+	"github.com/arr-ai/wbnf/parser"
 )
 
 // TupleMapExpr returns the tuple applied to a function.
 type TupleMapExpr struct {
+	ExprScanner
 	lhs Expr
 	fn  *Function
 }
 
 // NewAngleArrowExpr returns a new AtArrowExpr.
-func NewTupleMapExpr(lhs Expr, fn Expr) Expr {
-	return &TupleMapExpr{lhs, ExprAsFunction(fn)}
+func NewTupleMapExpr(scanner parser.Scanner, lhs Expr, fn Expr) Expr {
+	return &TupleMapExpr{ExprScanner{scanner}, lhs, ExprAsFunction(fn)}
 }
 
 // LHS returns the LHS of the AtArrowExpr.
@@ -34,7 +37,7 @@ func (e *TupleMapExpr) String() string {
 func (e *TupleMapExpr) Eval(local Scope) (_ Value, err error) {
 	value, err := e.lhs.Eval(local)
 	if err != nil {
-		return nil, err
+		return nil, wrapContext(err, e)
 	}
 	defer func() {
 		if r := recover(); r != nil {

@@ -3,22 +3,24 @@ package rel
 import (
 	"bytes"
 
+	"github.com/arr-ai/wbnf/parser"
 	"github.com/go-errors/errors"
 )
 
 // SetExpr returns the tuple or set with a single field replaced by an
 // expression.
 type SetExpr struct {
+	ExprScanner
 	elements []Expr
 }
 
 // NewSetExpr returns a new TupleExpr.
-func NewSetExpr(elements ...Expr) Expr {
+func NewSetExpr(scanner parser.Scanner, elements ...Expr) Expr {
 	values := make([]Value, len(elements))
 	for i, expr := range elements {
 		value, ok := expr.(Value)
 		if !ok {
-			return &SetExpr{elements}
+			return &SetExpr{ExprScanner{scanner}, elements}
 		}
 		values[i] = value
 	}
@@ -52,7 +54,7 @@ func (e *SetExpr) Eval(local Scope) (Value, error) {
 	for _, expr := range e.elements {
 		value, err := expr.Eval(local)
 		if err != nil {
-			return nil, err
+			return nil, wrapContext(err, e)
 		}
 		values = append(values, value)
 	}
@@ -60,8 +62,8 @@ func (e *SetExpr) Eval(local Scope) (Value, error) {
 }
 
 // NewIntersectExpr evaluates a <&> b.
-func NewIntersectExpr(a, b Expr) Expr {
-	return newBinExpr(a, b, "<&>", "(%s <&> %s)",
+func NewIntersectExpr(scanner parser.Scanner, a, b Expr) Expr {
+	return newBinExpr(scanner, a, b, "<&>", "(%s <&> %s)",
 		func(a, b Value, _ Scope) (Value, error) {
 			if x, ok := a.(Set); ok {
 				if y, ok := b.(Set); ok {

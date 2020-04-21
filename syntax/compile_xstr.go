@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/arr-ai/wbnf/ast"
+	"github.com/arr-ai/wbnf/parser"
 
 	"github.com/arr-ai/arrai/rel"
 )
@@ -106,7 +107,7 @@ func (pc ParseContext) compileExpandableString(c ast.Children) rel.Expr {
 				}
 				next = ""
 			}
-			exprs[i] = rel.NewCallExprCurry(stdStrExpand,
+			exprs[i] = rel.NewCallExprCurry(*parser.NewScanner(""), stdStrExpand,
 				rel.NewString([]rune(format)),
 				pc.CompileExpr(part.One("expr").(ast.Branch)),
 				rel.NewString([]rune(delim)),
@@ -122,5 +123,8 @@ func (pc ParseContext) compileExpandableString(c ast.Children) rel.Expr {
 		}
 	}
 	// TODO: Use a more direct approach to invoke concat implementation.
-	return rel.NewCallExpr(rel.NewNativeFunction("concat", stdSeqConcat), rel.NewArrayExpr(exprs...))
+	return rel.NewCallExpr(
+		*parser.NewScanner(""),
+		rel.NewNativeFunction("concat", stdSeqConcat),
+		rel.NewArrayExpr(*parser.NewScanner(""), exprs...))
 }
