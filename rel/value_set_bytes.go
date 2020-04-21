@@ -186,7 +186,7 @@ func (b Bytes) With(value Value) Set {
 // was already absent, the original Bytes is returned.
 func (b Bytes) Without(value Value) Set {
 	if pos, byt, ok := isBytesTuple(value); ok {
-		if i := b.index(pos); i >= 0 && byt == b.b[i] {
+		if i := b.index(pos); i >= 0 && i < len(b.b) && byt == b.b[i] {
 			if pos == b.offset+i {
 				return Bytes{b: b.b[:i], offset: b.offset}
 			}

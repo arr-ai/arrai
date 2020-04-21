@@ -179,7 +179,7 @@ func (s String) With(value Value) Set {
 // was already absent, the original String is returned.
 func (s String) Without(value Value) Set {
 	if t, ok := value.(StringCharTuple); ok {
-		if i := s.index(t.at); i >= 0 && t.char == s.s[i] {
+		if i := s.index(t.at); i >= 0 && i < len(s.s) && t.char == s.s[i] {
 			if t.at == s.offset+i {
 				return String{s: s.s[:i], offset: s.offset}
 			}
