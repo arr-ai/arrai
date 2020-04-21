@@ -56,9 +56,9 @@ func TestEvalCond(t *testing.T) {
 
 func TestEvalCondExpr(t *testing.T) {
 	t.Parallel()
-	assertEvalExprString(t, "{(1>0):1,(2>3):2,*:(1+2)}", "cond (1 > 0 : 1, 2 > 3: 2, *:1 + 2)")
-	assertEvalExprString(t, "{(1<2):1}", "cond (1 < 2 : 1)")
-	assertEvalExprString(t, "{(1>2):1,(2<3):2}", "cond (1 > 2 : 1, 2 < 3: 2)")
-	assertEvalExprString(t, "{*:(1+2)}", "cond (*: 1 + 2)")
-	assertEvalExprString(t, "{(1<2):1,*:(1+2)}", "cond (1 < 2: 1, * : 1 + 2)")
+	assertEvalExprString(t, "((1>0):1,(2>3):2,*:(1+2))", "cond (1 > 0 : 1, 2 > 3: 2, *:1 + 2)")
+	assertEvalExprString(t, "((1<2):1)", "cond (1 < 2 : 1)")
+	assertEvalExprString(t, "((1>2):1,(2<3):2)", "cond (1 > 2 : 1, 2 < 3: 2)")
+	assertEvalExprString(t, "(*:(1+2))", "cond (*: 1 + 2)")
+	assertEvalExprString(t, "((1<2):1,*:(1+2))", "cond (1 < 2: 1, * : 1 + 2)")
 }
