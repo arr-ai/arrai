@@ -7,7 +7,7 @@ The slicing expression can be used by putting the expression as an argument to a
 The syntax of the slicing expression is as follows:
 
 ```text
-someSet(lowerBoundExpr;upperBoundExpr;optionalStepSizeExpr)
+someSet(optionalLowerBoundExpr;optionalUpperBoundExpr;optionalStepSizeExpr)
 ```
 
 As shown above, you can define a slice by defining a lower bound, an upper bound, both or none.
