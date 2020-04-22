@@ -38,7 +38,7 @@ func importLocalFile(fromRoot bool) rel.Value {
 				if err != nil {
 					panic(err)
 				}
-				filename = rootPath + "/" + filename
+				filename = rootPath + "/" + strings.Trim(filename, ".")
 			}
 
 			v, err := fileValue(filename)

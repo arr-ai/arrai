@@ -371,7 +371,6 @@ func (pc ParseContext) compilePackage(c ast.Children) rel.Expr {
 	}
 	if names := pkg.Many("name"); len(names) > 0 {
 		var sb strings.Builder
-
 		for i, name := range names {
 			if i > 0 {
 				sb.WriteRune('/')

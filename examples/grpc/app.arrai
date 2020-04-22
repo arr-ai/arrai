@@ -1,4 +1,4 @@
-//./'grpc-proto'((
+//{./'grpc-proto'}((
     name: "Foo",
     attrs: (
         package: "github.com/foo/foo",

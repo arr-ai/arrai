@@ -63,10 +63,10 @@ expr   -> C* amp="&"* @ C* arrow=(
         | C* "{:" C* embed=(grammar=@ ":" subgrammar=%%ast) ":}" C*
         | C* op="\\\\" @ C*
         | C* fn="\\" IDENT @ C*
-        | C* "//" pkg=( dot="."? ("/" name)+
-                      | "." std=IDENT?
-                      | http=/{https?://}? fqdn=name:"." ("/" path=name)*
-                      )
+        | C* "//" pkg=("{" http=/{https?://}? fqdn=name:"." ("/" path=name "/}") path=name:"/"
+					|"{" dot="."? ("/" name)+ "}"
+					| std=IDENT?
+					)
         | C* "(" tuple=(pairs=(name? ":" v=@):",",?) ")" C*
         | C* "(" @ ")" C*
         | C* let=("let" C* IDENT C* "=" C* @ %%bind C* ";" C* @) C*
@@ -90,9 +90,10 @@ sexpr  -> "${"
 
 ARROW  -> /{:>|=>|>>|orderby|order|where|sum|max|mean|median|min};
 IDENT  -> /{ \. | [$@A-Za-z_][0-9$@A-Za-z_]* };
+
 STR    -> /{ " (?: \\. | [^\\"] )* "
            | ' (?: \\. | [^\\'] )* '
-           | ‵ (?: ‵‵  | [^‵  ] )* ‵
+		   | ‵ (?: ‵‵  | [^‵  ] )* ‵
            };
 NUM    -> /{ (?: \d+(?:\.\d*)? | \.\d+ ) (?: [Ee][-+]?\d+ )? };
 C      -> /{ # .* $ };
