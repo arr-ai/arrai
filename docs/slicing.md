@@ -7,12 +7,12 @@ The slicing expression can be used by putting the expression as an argument to a
 The syntax of the slicing expression is as follows:
 
 ```text
-start=expr? ";" end=expr? (";" step=expr)?
+someSet(lowerBoundExpr;upperBoundExpr;optionalStepSizeExpr)
 ```
 
 As shown above, you can define a slice by defining a lower bound, an upper bound, both or none.
-You can also define a `step` that is used to define the increment of the numbers from the lower
-bound to the upper bound. When `step` is not defined, its value defaults to `1`.
+You can also define a `stepSize` that is used to define the increment of the numbers from the lower
+bound to the upper bound. When `stepSize` is not defined, its value defaults to `1`.
 
 ## Usages
 
@@ -22,9 +22,6 @@ Only certain types of sets can be used with the slicing expression. These sets a
 2. `String`
 3. `Byte Array`
 4. `Dictionary`
-
-Generic sets (i.e. unindexed sets) or any other expression that does not evaluates to the
-special types of sets will fail the expression.
 
 Example usages:
 
@@ -39,6 +36,16 @@ Example usages:
 | `[1, 2, 3, 4, 5](;1;-1)` | `[5, 4, 3]` |
 | `[1, 2, 3, 4, 5](3;;-1)` | `[4, 3, 2, 1]` |
 | `[1, 2, 3, 4, 5](;;-1)` | `[5, 4, 3, 2, 1]` |
+
+
+Generic sets (i.e. unindexed sets) or any other expression that does not evaluate to the
+special types of sets will fail the expression.
+
+An example of an unindexed sets is as follows:
+
+```text
+{1, 2, 3, "abc"}
+```
 
 Since the expression is also an argument, the following expression is also valid
 
@@ -55,22 +62,26 @@ this example, it will evaluate to `5`.
 
 Slice expression behaves differently when provided with different expressions.
 
+Lower bound and upper bound are always exclusive. As in it always includes values
+that corresponds to ranges of values from `start` to `end - 1`. This is true for
+all scenarios, whether `start` or `end` are defined or not.
+
 When the lower bound, the upper bound, and step are provided, the values will have
 to evaluate to a number as slicing can only be done with number expressions.
 Anything other than `Number`, the expression will fail.
 
-When `step` is not defined, its value defaults to `1`. If `step` evaluates to `0`,
-it will return an empty set. The value of `step` determines the default value of
+When `stepSize` is not defined, its value defaults to `1`. If `stepSize` evaluates to `0`,
+it will return an empty set. The value of `stepSize` determines the default value of
 `start` and `end`.
 
 When `start` or `end` are defined, the values will be used. However, when the range
 is invalid (i.e `start > end && step > 0` or `start < end && step < 0`), an empty
 set will be returned as the result of the slice expression.
 
-When `start` or `end` are not defined, the value of `step` will determine their
+When `start` or `end` are not defined, the value of `stepSize` will determine their
 values.
 
-If `step` is positive, `start` will have the lowest possible value. In
+If `stepSize` is positive, `start` will have the lowest possible value. In
 `Array` and `String`, the value of `start` defaults to the offset value. In
 `Dictionary`, `start` will defaults to the lowest numerical key.
 `end`, on the other hand, will have the highest value possible. In `Array` and
@@ -87,7 +98,7 @@ For example:
 | `2\"abcde"` | 2 |  7 |
 | `{1: 10, 2: 20, 3: 30}` | 1 | 4 |
 
-If `step` is negative, everything is inverted. `start` will have the highest
+If `stepSize` is negative, everything is inverted. `start` will have the highest
 possible value. In `Array` and `String`, the value of `start` defaults to
 `length + offset - 1`. In `Dictionary`, it defaults to the highest numerical key.
 For `end`, it defaults to the lowest value. In `Array` and `String`, it defaults
