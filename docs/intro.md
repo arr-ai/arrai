@@ -68,17 +68,17 @@ seem. You can in fact represent:
 4. Maps: `{}`, `{"a": 42}`, `{1: 34, 2: 45, 3: 56}`
 5. Functions:
    1. Functions are unary: `\x 1 / x`
-   2. Binary functions don't exist, but `\x \y //.math.sqrt(x^2 + y^2)` is a
+   2. Binary functions don't exist, but `\x \y //math.sqrt(x^2 + y^2)` is a
       unary function that takes a single parameter, `x`, and returns a unary
       function. The returned function takes a single parameter, `y`, and returns
       the hypotenuse of a right triangle with sides *x* and *y*.
 6. Packages:
-   1. `//.math.sin(1)`
-   2. `//./myutil/work(42)`
-   3. `///path/to/root/file`
-   4. `//./'myfile.yaml'`
-   5. `//github.com/org/external/file`
-   6. `//https://url/to/your/content`
+   1. `//math.sin(1)`
+   2. `//{./myutil/work}(42)`
+   3. `//{/path/to/root/file}`
+   4. `//{./'myfile.yaml'}`
+   5. `//{github.com/org/external/}file`
+   6. `//{https://url/to/your/content}`
 
 All of the above forms are syntactic sugar for specific combinations of numbers,
 tuples and sets. For example, the string `"hello"` is a shorthand for the
@@ -107,7 +107,7 @@ with `e` being a shortcut for `eval`, e.g.:
 ```bash
 $ arrai e 42
 42
-$ arrai e '//.math.pi'
+$ arrai e '//math.pi'
 3.141592653589793
 $ arrai e '[1, (a: 2), {3, 4, 5}]'
 [1, (a: 2), {3, 4, 5}]
@@ -375,19 +375,19 @@ name at the moment of assignment, this presents a challenge for implementing
 recursion. This problem is solved by a couple of functions in the standard
 library:
 
-1. **`//.fn.fix`** is a fixed-point combinator. It is typically used to
+1. **`//fn.fix`** is a fixed-point combinator. It is typically used to
    transform non-recursive functions into recursive ones, e.g.:
 
    ```arrai
-   let factorial = //.fn.fix \factorial \n 1 if n < 2 else n * factorial(n - 1);
+   let factorial = //fn.fix \factorial \n 1 if n < 2 else n * factorial(n - 1);
    factorial(6)
    ```
 
-2. **`//.fn.fixt`** is a variant of `fix` that operates on tuples of functions
+2. **`//fn.fixt`** is a variant of `fix` that operates on tuples of functions
    instead of a single function. This allows mutual recursion, e.g.:
 
    ```arrai
-   let eo = //.fn.fixt((
+   let eo = //fn.fixt((
       even: \t \n n == 0 || t.odd (n - 1),
       odd:  \t \n n != 0 && t.even(n - 1),
    ));
@@ -413,27 +413,27 @@ even(6)
 
 External libraries may be accessed via package references.
 
-1. **`//.`** Is the root of the standard library. It provides access to many
+1. **`//`** Is the root of the standard library. It provides access to many
    packages providing a wide range of useful capabilities. The following is a
    small sample of the full set:
-   1. **`//.math`:** math functions and constants such as `//.math.sin`
-      and `//.math.pi`.
-   2. **`//.str`:** string functions such as `//.str.upper` and
-      `//.str.join`.
-   3. **`//.fn`:** higher order functions such as `//.fn.fix` and `//.fn.fixt`.
-2. **`//./path`** provides access to other arrai files relative to the current
+   1. **`//math`:** math functions and constants such as `//math.sin`
+      and `//math.pi`.
+   2. **`//str`:** string functions such as `//str.upper` and
+      `//str.join`.
+   3. **`//fn`:** higher order functions such as `//fn.fix` and `//fn.fixt`.
+2. **`//{./path}`** provides access to other arrai files relative to the current
    arrai file's parent directory (current working directory for expressions such
    as the `arrai eval` source that aren't associated with a file).
-3. **`///path`** provides access to other arrai files relative to the root of
+3. **`//{/path}`** provides access to other arrai files relative to the root of
    the current module, looking for `go.mod` file backwards from the current directory.
-4. **`//hostname/path`** provides access to content from the internet
-   1. **`//github.com/foo/bar/baz`:** access `baz.arrai` file in remote repository `github.com/foo/bar`
-   2. **`//github.com/foo/bar/'a.json'`:** access `a.json` file in remote repository `github.com/foo/bar`
-   3. **`//foo.org/bar/'random.arrai'`/`//https://foo.org/bar/'random.arrai'`:**
+4. **`//{hostname/path}`** provides access to content from the internet
+   1. **`//{github.com/foo/}bar/baz`:** access `baz.arrai` file in remote repository `github.com/foo/bar`
+   2. **`//{github.com/foo/}bar/'a.json'`:** access `a.json` file in remote repository `github.com/foo/bar`
+   3. **`//{foo.org/bar/}'random.arrai'`/`//{https://foo.org/bar/}'random.arrai'`:**
       request content of `https://foo.org/bar/random.arrai` via HTTPS
-   4. **`//foo.org/bar/'some.json'`/`//https://foo.org/bar/'some.json'`:**
+   4. **`//{foo.org/bar/}'some.json'`/`//https://foo.org/bar/'some.json'`:**
       request content of `https://foo.org/bar/some.json` via HTTPS
-   5. **`//foo.org/bar/'some.yaml'`/`//https://foo.org/bar/'some.yml'`:**
+   5. **`//{foo.org/bar/}'some.yaml'`/`//{https://foo.org/bar/}'some.yml'`:**
       request content of `https://foo.org/bar/some.yaml` via HTTPS, file extension can be `yml` or `yaml`
 
 ### Tuples vs Maps
@@ -479,7 +479,7 @@ Arr.ai has a macro system. The following example expresses a
 URL as a strongly typed value:
 
 ```bash
-$ arrai e '//.web.url{https://me@foo.com/bar?x=42}'
+$ arrai e '//web.url{https://me@foo.com/bar?x=42}'
 (
    source: "https://me@foo.com/bar?x=42",
    scheme: "https",
@@ -495,7 +495,7 @@ $ arrai e '//.web.url{https://me@foo.com/bar?x=42}'
 Another example is representing JSON:
 
 ```bash
-$ arrai e '//.encoding.json{{"x": 1, "y": [2, 3], "z": null}}'
+$ arrai e '//encoding.json{{"x": 1, "y": [2, 3], "z": null}}'
 {
    "x": 1,
    "y": [2, 3],
@@ -519,12 +519,12 @@ grammars may then be used to parse other content.
 Example:
 
 ```bash
-$ arrai e '//.grammar.lang.wbnf{expr -> @:[-+] > @:[/*] > \d+;}{1+2*3}'
+$ arrai e '//grammar.lang.wbnf{expr -> @:[-+] > @:[/*] > \d+;}{1+2*3}'
 ("": [+], @rule: expr, expr: [(expr: [("": 1)]), ("": [*], expr: [("": 2), ("": 3)])])
 ```
 
 (Above syntax **⛔ NYI**. Current syntax is
-`{://.grammar.lang.wbnf.grammar: expr -> @:[-+] > @:[/*] > \d+; :} -> {:.expr:1+2*3:}`.)
+`{://grammar.lang.wbnf.grammar: expr -> @:[-+] > @:[/*] > \d+; :} -> {:.expr:1+2*3:}`.)
 
 The primary use of grammars is in the macro system. However, grammars are
 themselves data structures, and can be transformed as such, allowing interesting
