@@ -12,7 +12,9 @@ someSet(optionalLowerBoundExpr;optionalUpperBoundExpr;optionalStepSizeExpr)
 
 As shown above, you can define a slice by defining a lower bound, an upper bound, both or none.
 You can also define a `stepSize` that is used to define the increment of the numbers from the lower
-bound to the upper bound. When `stepSize` is not defined, its value defaults to `1`.
+bound to the upper bound. `stepSize` defaults to `1` when it is not defined.
+
+Lower bounds may be negative and upper bounds may be larger than the set size. In such cases, the index will wraparound. Refer to the example below.
 
 ## Usages
 
@@ -23,7 +25,7 @@ Only certain types of sets can be used with the slicing expression. These sets a
 3. `Byte Array`
 4. `Dictionary`
 
-Example usages:
+Example usage:
 
 | expression | equals |
 |:-|:-|
@@ -68,7 +70,9 @@ all scenarios, whether `start` or `end` are defined or not.
 
 When the lower bound, the upper bound, and step are provided, the values will have
 to evaluate to a number as slicing can only be done with number expressions.
-Anything other than `Number`, the expression will fail.
+Anything expression with a type other than `Number` will cause the expression
+evaluation to fail with an error message showing which expression does not compile
+to a `Number`.
 
 When `stepSize` is not defined, its value defaults to `1`. If `stepSize` evaluates to `0`,
 it will return an empty set. The value of `stepSize` determines the default value of
@@ -79,18 +83,18 @@ is invalid (i.e `start > end && step > 0` or `start < end && step < 0`), an empt
 set will be returned as the result of the slice expression.
 
 When `start` or `end` are not defined, the value of `stepSize` will determine their
-values.
+values. The table below shows what the values for `start` and `end` defaults to.
 
-If `stepSize` is positive, `start` will have the lowest possible value. In
-`Array` and `String`, the value of `start` defaults to the offset value. In
-`Dictionary`, `start` will defaults to the lowest numerical key.
-`end`, on the other hand, will have the highest value possible. In `Array` and
-`String`, the value of `end` defaults to the `offset + length of array`. In
-`Dictionary`, it will defaults to the `highest numerical key + 1`.
-`1` is added to account for inclusivity of the last value (`end` is not defined,
-so last value will be included).
+| step | type | start | end |
+|:-|:-|:-|:-|
+| positive number | `Array`/`String` | `offset` | `length + offset` |
+| positive number | `Dictionary` | `lowest numerical key` | `highest numerical key + 1` |
+| negative number | `Array`/`String` | `length + offset - 1` | `offset - 1` |
+| negative number | `Dictionary` | `highest numerical key` | `lowest numerical key - 1` |
 
-For example:
+In `end`, `1` is added or subtracted so that it includes the last value.
+
+For example, on `step > 0`:
 
 | expression | default start | default end |
 |:-|:-|:-|
@@ -98,14 +102,7 @@ For example:
 | `2\"abcde"` | 2 |  7 |
 | `{1: 10, 2: 20, 3: 30}` | 1 | 4 |
 
-If `stepSize` is negative, everything is inverted. `start` will have the highest
-possible value. In `Array` and `String`, the value of `start` defaults to
-`length + offset - 1`. In `Dictionary`, it defaults to the highest numerical key.
-For `end`, it defaults to the lowest value. In `Array` and `String`, it defaults
-to `offset - 1` to account for inclusivity of the last element. For `Dictionary`,
-it defaults to `lowest numberical key - 1`, also to account of the inclusivity.
-
-For example:
+For example, on `step < 0`:
 
 | expression | default start | default end |
 |:-|:-|:-|

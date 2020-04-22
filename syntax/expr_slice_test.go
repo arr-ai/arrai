@@ -181,3 +181,20 @@ func TestGenericSetSlice(t *testing.T) {
 
 	AssertCodePanics(t, `{1, 2, 3}(1;3)`)
 }
+
+func TestSliceFails(t *testing.T) {
+	t.Parallel()
+
+	AssertCodeErrors(t,
+		`{"a": 1, "b": 2, "c": 3}("a";)`,
+		`lower bound does not evaluate to a Number: a`,
+	)
+	AssertCodeErrors(t,
+		`{"a": 1, "b": 2, "c": 3}(;"c")`,
+		`upper bound does not evaluate to a Number: c`,
+	)
+	AssertCodeErrors(t,
+		`{"a": 1, "b": 2, "c": 3}(;;"b")`,
+		`step does not evaluate to a Number: b`,
+	)
+}

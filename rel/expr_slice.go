@@ -28,12 +28,18 @@ func (s SliceExpr) Eval(local Scope) (Value, error) {
 		if err != nil {
 			return nil, err
 		}
+		if _, isNumber := start.(Number); !isNumber {
+			return nil, errors.Errorf("lower bound does not evaluate to a Number: %s", start)
+		}
 	}
 
 	if s.end != nil {
 		end, err = s.end.Eval(local)
 		if err != nil {
 			return nil, err
+		}
+		if _, isNumber := end.(Number); !isNumber {
+			return nil, errors.Errorf("upper bound does not evaluate to a Number: %s", end)
 		}
 	}
 
@@ -43,7 +49,7 @@ func (s SliceExpr) Eval(local Scope) (Value, error) {
 			return nil, err
 		}
 		if _, isNumber := step.(Number); !isNumber {
-			return nil, errors.Errorf("step %s must be a number", step)
+			return nil, errors.Errorf("step does not evaluate to a Number: %s", step)
 		}
 	} else {
 		step = Number(1)
