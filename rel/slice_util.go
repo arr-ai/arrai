@@ -1,6 +1,82 @@
 package rel
 
-import "math"
+import (
+	"fmt"
+	"math"
+	"strings"
+
+	"github.com/go-errors/errors"
+)
+
+type RangeData struct {
+	start, end, step Expr
+	inclusive        bool
+}
+
+func NewRangeData(start, end, step Expr, inclusive bool) *RangeData {
+	return &RangeData{start, end, step, inclusive}
+}
+
+func (r *RangeData) eval(local Scope) ([]Value, error) {
+	var start, end, step Value
+	var err error
+
+	if r.start != nil {
+		start, err = r.start.Eval(local)
+		if err != nil {
+			return nil, err
+		}
+		if _, isNumber := start.(Number); !isNumber {
+			return nil, errors.Errorf("lower bound does not evaluate to a Number: %s", start)
+		}
+	}
+
+	if r.end != nil {
+		end, err = r.end.Eval(local)
+		if err != nil {
+			return nil, err
+		}
+		if _, isNumber := end.(Number); !isNumber {
+			return nil, errors.Errorf("upper bound does not evaluate to a Number: %s", end)
+		}
+	}
+
+	if r.step != nil {
+		step, err = r.step.Eval(local)
+		if err != nil {
+			return nil, err
+		}
+		if _, isNumber := step.(Number); !isNumber {
+			return nil, errors.Errorf("step does not evaluate to a Number: %s", step)
+		}
+	} else {
+		step = Number(1)
+	}
+
+	return []Value{start, end, step}, nil
+}
+
+func (r *RangeData) isInclusive() bool {
+	return r.inclusive
+}
+
+func (r *RangeData) string() string {
+	str := strings.Builder{}
+	switch {
+	case r.start == nil && r.end == nil:
+		str.WriteString(";")
+	case r.start != nil && r.end == nil:
+		str.WriteString(fmt.Sprintf("%s;", r.start))
+	case r.start == nil && r.end != nil:
+		str.WriteString(fmt.Sprintf(";%s", r.end))
+	default:
+		str.WriteString(fmt.Sprintf("%s;%s", r.start, r.end))
+	}
+	if r.step != nil {
+		str.WriteString(fmt.Sprintf(";%s", r.step))
+	}
+	return str.String()
+}
 
 // resolveArrayIndexes returns an array of indexes to get for array.
 func resolveArrayIndexes(start, end Value, step, offset, maxLen int, inclusive bool) []int {

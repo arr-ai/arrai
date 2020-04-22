@@ -298,7 +298,7 @@ func (pc ParseContext) compileCallGet(b ast.Branch) rel.Expr {
 					result = rel.NewCallExpr(result, pc.CompileExpr(expr.(ast.Branch)))
 					continue
 				}
-				result = pc.compileRange(result, arg.One("range").(ast.Branch))
+				result = rel.NewSliceExpr(result, pc.compileRangeData(arg.One("range").(ast.Branch)))
 			}
 		}
 		get(part.One("get"))
@@ -463,7 +463,7 @@ func (pc ParseContext) compileNumber(c ast.Children) rel.Expr {
 	return rel.NewNumber(n)
 }
 
-func (pc ParseContext) compileRange(set rel.Expr, c ast.Branch) rel.Expr {
+func (pc ParseContext) compileRangeData(c ast.Branch) *rel.RangeData {
 	var start, end, step rel.Expr
 	if startNode := c.One("start"); startNode != nil {
 		start = pc.CompileExpr(startNode.(ast.Branch))
@@ -486,7 +486,7 @@ func (pc ParseContext) compileRange(set rel.Expr, c ast.Branch) rel.Expr {
 	// 	step = rel.NewNumber(-1)
 	// }
 
-	return rel.NewSliceExpr(set, start, end, step, inclusive)
+	return rel.NewRangeData(start, end, step, inclusive)
 }
 
 func (pc ParseContext) compileExpr(c ast.Children) rel.Expr {
