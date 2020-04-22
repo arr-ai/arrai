@@ -65,6 +65,7 @@ func (s SliceExpr) Eval(local Scope) (Value, error) {
 
 func (s SliceExpr) String() string {
 	str := strings.Builder{}
+	str.WriteString(fmt.Sprintf("%s(", s.setToSlice))
 	switch {
 	case s.start == nil && s.end == nil:
 		str.WriteString(";")
@@ -78,5 +79,6 @@ func (s SliceExpr) String() string {
 	if s.step != nil {
 		str.WriteString(fmt.Sprintf(";%s", s.step))
 	}
+	str.WriteString(")")
 	return str.String()
 }
