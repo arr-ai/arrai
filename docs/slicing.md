@@ -55,7 +55,7 @@ Since the expression is also an argument, the following expression is also valid
 [1, 2, 3, 4, 5](;;-1, 0)
 ```
 
-this expression reverses the array and fetch the first value. In
+this expression reverses the array and fetches the first value. In
 this example, it will evaluate to `5`.
 
 ### Behaviour
