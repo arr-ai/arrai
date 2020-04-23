@@ -13,11 +13,16 @@ type RangeData struct {
 	inclusive        bool
 }
 
+type rangeDataValues struct {
+	start, end, step Value
+	inclusive        bool
+}
+
 func NewRangeData(start, end, step Expr, inclusive bool) *RangeData {
 	return &RangeData{start, end, step, inclusive}
 }
 
-func (r *RangeData) eval(local Scope) ([]Value, error) {
+func (r *RangeData) eval(local Scope) (*rangeDataValues, error) {
 	var start, end, step Value
 	var err error
 
@@ -53,11 +58,11 @@ func (r *RangeData) eval(local Scope) ([]Value, error) {
 		step = Number(1)
 	}
 
-	return []Value{start, end, step}, nil
+	return &rangeDataValues{start, end, step, r.inclusive}, nil
 }
 
-func (r *RangeData) isInclusive() bool {
-	return r.inclusive
+func (rd *rangeDataValues) isInclusive() bool {
+	return rd.inclusive
 }
 
 func (r *RangeData) string() string {

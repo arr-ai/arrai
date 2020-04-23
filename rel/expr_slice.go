@@ -22,14 +22,14 @@ func (s SliceExpr) Eval(local Scope) (Value, error) {
 	if err != nil {
 		return nil, err
 	}
-	start, end, step := data[0], data[1], data[2]
+	start, end, step := data.start, data.end, int(data.step.(Number))
 
 	set, err := s.setToSlice.Eval(local)
 	if err != nil {
 		return nil, err
 	}
 
-	return set.(Set).CallSlice(start, end, int(step.(Number)), s.dataRange.isInclusive()), nil
+	return set.(Set).CallSlice(start, end, step, data.isInclusive()), nil
 }
 
 func (s SliceExpr) String() string {
