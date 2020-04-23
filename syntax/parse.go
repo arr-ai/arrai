@@ -58,7 +58,7 @@ expr   -> C* amp="&"* @ C* arrow=(
         > C* "{" C* rel=(names tuple=("(" v=@:",", ")"):",",?) "}" C*
         | C* "{" C* set=(elt=@:",",?) "}" C*
         | C* "{" C* dict=((key=@ ":" value=@):",",?) "}" C*
-        | C* cond=(("(" var_cond=expr ")" | IDENT)? C* "cond" "(" (key=@ ":" value=@):",",? ("*" ":" f=expr)? ")") C*
+        | C* cond=(("(" control_var=expr ")" | IDENT)? C* "cond" "(" (key=@ ":" value=@):",",? ("*" ":" f=expr)? ")") C*
         | C* "[" C* array=(item=@:",",?) "]" C*
         | C* "{:" C* embed=(grammar=@ ":" subgrammar=%%ast) ":}" C*
         | C* op="\\\\" @ C*
