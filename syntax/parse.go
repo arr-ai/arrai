@@ -63,8 +63,7 @@ expr   -> C* amp="&"* @ C* arrow=(
         | C* "{:" C* embed=(grammar=@ ":" subgrammar=%%ast) ":}" C*
         | C* op="\\\\" @ C*
         | C* fn="\\" IDENT @ C*
-        | C* "//" pkg=("{" http=/{https?://}? fqdn=name:"." ("/" path=name "/}") path=name:"/"
-					|"{" dot="."? ("/" name)+ "}"
+        | C* "//" pkg=("{" STRING "}"
 					| std=IDENT?
 					)
         | C* "(" tuple=(pairs=(name? ":" v=@):",",?) ")" C*
@@ -90,7 +89,7 @@ sexpr  -> "${"
 
 ARROW  -> /{:>|=>|>>|orderby|order|where|sum|max|mean|median|min};
 IDENT  -> /{ \. | [$@A-Za-z_][0-9$@A-Za-z_]* };
-
+STRING -> /{ \} | [$@A-Za-z_./][0-9$@A-Za-z_:./-]* };
 STR    -> /{ " (?: \\. | [^\\"] )* "
            | ' (?: \\. | [^\\'] )* '
 		   | ‵ (?: ‵‵  | [^‵  ] )* ‵

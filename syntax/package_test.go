@@ -29,7 +29,7 @@ func TestPackagePi(t *testing.T) {
 // }
 
 func TestPackageImport(t *testing.T) {
-	AssertCodesEvalToSameValue(t, `{1, 4, 9, 16}`, `//{./examples/simple/simple}`)
+	AssertCodesEvalToSameValue(t, `3`, `//{./examples/simple/simple}`)
 }
 
 func TestPackageImportFromRoot(t *testing.T) {
@@ -37,15 +37,15 @@ func TestPackageImportFromRoot(t *testing.T) {
 }
 
 func TestJsonPackageImportFromModuleRoot(t *testing.T) {
-	AssertCodesEvalToSameValue(t, `{'location': (s: 'Melbourne'), 'name': (s: 'foo')}`, `//{/examples/json/'foo.json'}`)
+	AssertCodesEvalToSameValue(t, `{'location': (s: 'Melbourne'), 'name': (s: 'foo')}`, `//{/examples/json/foo.json}`)
 }
 
 func TestJsonPackageImport(t *testing.T) {
-	AssertCodesEvalToSameValue(t, `{'location': (s: 'Melbourne'), 'name': (s: 'foo')}`, `//{./examples/json/'foo.json'}`)
+	AssertCodesEvalToSameValue(t, `{'location': (s: 'Melbourne'), 'name': (s: 'foo')}`, `//{./examples/json/foo.json}`)
 }
 
 func TestJsonPackageImportNotExists(t *testing.T) {
-	AssertCodePanics(t, `//{./examples/json/'fooooo.json'}`)
+	AssertCodePanics(t, `//{./examples/json/fooooo.json}`)
 }
 
 // func TestPackageExternalImport(t *testing.T) {
@@ -58,37 +58,37 @@ func TestJsonPackageImportNotExists(t *testing.T) {
 
 func TestPackageExternalImportModule(t *testing.T) {
 	t.Parallel()
-	AssertCodesEvalToSameValue(t, `3`, `//{github.com/ChloePlanet/}'arrai-examples'/add`)
+	AssertCodesEvalToSameValue(t, `3`, `//{github.com/ChloePlanet/arrai-examples/add}`)
 }
 
 func TestPackageExternalImportModuleWithExt(t *testing.T) {
 	t.Parallel()
-	AssertCodesEvalToSameValue(t, `3`, `//{github.com/ChloePlanet/}'arrai-examples'/'add.arrai'`)
+	AssertCodesEvalToSameValue(t, `3`, `//{github.com/ChloePlanet/arrai-examples/add.arrai}`)
 }
 
 func TestPackageExternalImportModuleJson(t *testing.T) {
 	t.Parallel()
-	AssertCodesEvalToSameValue(t, `{}`, `//{github.com/ChloePlanet/}'arrai-examples'/'empty.json'`)
+	AssertCodesEvalToSameValue(t, `{}`, `//{github.com/ChloePlanet/arrai-examples/empty.json}`)
 }
 
 func TestPackageExternalImportURLArrai(t *testing.T) {
 	t.Parallel()
-	AssertCodesEvalToSameValue(t, `3`, `//{https://raw.githubusercontent.com/ChloePlanet/}'arrai-examples'/master/'add.arrai'`) // nolint:lll
+	AssertCodesEvalToSameValue(t, `3`, `//{https://raw.githubusercontent.com/ChloePlanet/arrai-examples/master/add.arrai}`) // nolint:lll
 }
 
 func TestPackageExternalImportURLArraiWithoutHTTPS(t *testing.T) {
 	t.Parallel()
-	AssertCodesEvalToSameValue(t, `3`, `//{raw.githubusercontent.com/ChloePlanet/}'arrai-examples'/master/'add.arrai'`)
+	AssertCodesEvalToSameValue(t, `3`, `//{raw.githubusercontent.com/ChloePlanet/arrai-examples/master/add.arrai}`)
 }
 
 func TestPackageExternalImportURLJson(t *testing.T) {
 	t.Parallel()
-	AssertCodesEvalToSameValue(t, `{}`, `//{https://raw.githubusercontent.com/ChloePlanet/}'arrai-examples'/master/'empty.json'`) // nolint:lll
+	AssertCodesEvalToSameValue(t, `{}`, `//{https://raw.githubusercontent.com/ChloePlanet/arrai-examples/master/empty.json}`) // nolint:lll
 }
 
 func TestPackageExternalImportURLJsonWithoutHTTPS(t *testing.T) {
 	t.Parallel()
-	AssertCodesEvalToSameValue(t, `{}`, `//{raw.githubusercontent.com/ChloePlanet/}'arrai-examples'/master/'empty.json'`)
+	AssertCodesEvalToSameValue(t, `{}`, `//{raw.githubusercontent.com/ChloePlanet/arrai-examples/master/empty.json}`)
 }
 
 // func TestPackageExternalImport(t *testing.T) {

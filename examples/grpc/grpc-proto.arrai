@@ -1,7 +1,7 @@
 \app
 let grpc = //{./grpc};
 let wrap = "wrap" <: app.attrs.patterns;
-let proto = //{./'proto-util'}(wrap);
+let proto = //{./proto-util}(wrap);
 let endpoints = app.endpoints where !//str.has_prefix(.@item.name, "enum ");
 //archive.tar.tar({
     app.name + ".proto": $`
