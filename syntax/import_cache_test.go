@@ -19,7 +19,7 @@ func TestImportCache(t *testing.T) {
 	log := func(format string, args ...interface{}) {
 		m.Lock()
 		defer m.Unlock()
-		msgs = append(msgs, fmt.Sprintf("%d ", int(time.Since(start).Milliseconds()))+fmt.Sprintf(format, args...))
+		msgs = append(msgs, fmt.Sprintf(format, args...))
 	}
 
 	cache := newCache()
@@ -50,16 +50,16 @@ func TestImportCache(t *testing.T) {
 
 	assert.Equal(t,
 		[]string{
-			"10 > a 1",
-			"30 > b",
-			"40 > c",
-			"50 > d 1",
-			"80 < b",
-			"90 < d 1",
-			"90 > d 2",
-			"110 < a 1",
-			"130 < d 2",
-			"140 < c",
+			"> a 1",
+			"> b",
+			"> c",
+			"> d 1",
+			"< b",
+			"< d 1",
+			"> d 2",
+			"< a 1",
+			"< d 2",
+			"< c",
 		},
 		msgs,
 	)
