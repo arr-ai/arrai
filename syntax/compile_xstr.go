@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	"github.com/arr-ai/wbnf/ast"
-	"github.com/arr-ai/wbnf/parser"
 
 	"github.com/arr-ai/arrai/rel"
 )
@@ -16,7 +15,8 @@ var lastWSRE = regexp.MustCompile(`\n[\t ]+\z`)
 var expansionRE = regexp.MustCompile(`(?::([-+#*\.\_0-9a-z]*))(:(?:\\.|[^\\:}])*)?(?::((?:\\.|[^\\:}])*))?`)
 
 func (pc ParseContext) compileExpandableString(c ast.Children) rel.Expr {
-	quote := c.(ast.One).Node.One("quote").Scanner().String()
+	scanner := c.(ast.One).Node.One("quote").Scanner()
+	quote := scanner.String()
 	parts := []interface{}{}
 	{
 		ws := quote[2:]
@@ -107,7 +107,7 @@ func (pc ParseContext) compileExpandableString(c ast.Children) rel.Expr {
 				}
 				next = ""
 			}
-			exprs[i] = rel.NewCallExprCurry(*parser.NewScanner(""), stdStrExpand,
+			exprs[i] = rel.NewCallExprCurry(part.Scanner(), stdStrExpand,
 				rel.NewString([]rune(format)),
 				pc.CompileExpr(part.One("expr").(ast.Branch)),
 				rel.NewString([]rune(delim)),
@@ -123,8 +123,7 @@ func (pc ParseContext) compileExpandableString(c ast.Children) rel.Expr {
 		}
 	}
 	// TODO: Use a more direct approach to invoke concat implementation.
-	return rel.NewCallExpr(
-		*parser.NewScanner(""),
+	return rel.NewCallExpr(scanner,
 		rel.NewNativeFunction("concat", stdSeqConcat),
-		rel.NewArrayExpr(*parser.NewScanner(""), exprs...))
+		rel.NewArrayExpr(scanner, exprs...))
 }

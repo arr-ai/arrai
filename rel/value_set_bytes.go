@@ -115,7 +115,7 @@ func (b Bytes) Eval(_ Scope) (Value, error) {
 
 // Scanner returns the scanner of Bytes.
 func (b Bytes) Scanner() parser.Scanner {
-	panic("not implemented")
+	return *parser.NewScanner("")
 }
 
 var bytesKind = registerKind(207, reflect.TypeOf(Bytes{}))

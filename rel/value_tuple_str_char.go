@@ -75,7 +75,7 @@ func (t StringCharTuple) Eval(local Scope) (Value, error) {
 
 // Scanner returns the scanner of StringCharTuple.
 func (t StringCharTuple) Scanner() parser.Scanner {
-	panic("not implemented")
+	return *parser.NewScanner("")
 }
 
 var stringCharTupleKind = registerKind(301, reflect.TypeOf((*StringCharTuple)(nil)))

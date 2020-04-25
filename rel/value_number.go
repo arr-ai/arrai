@@ -74,7 +74,7 @@ func (n Number) Eval(_ Scope) (Value, error) {
 
 // Scanner returns the scanner of Number.
 func (n Number) Scanner() parser.Scanner {
-	panic("not implemented")
+	return *parser.NewScanner("")
 }
 
 var numberKind = registerKind(100, reflect.TypeOf(Number(0)))

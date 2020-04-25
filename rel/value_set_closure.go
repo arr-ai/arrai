@@ -49,7 +49,7 @@ func (c Closure) Eval(local Scope) (Value, error) {
 
 // Scanner returns the scanner of Closure.
 func (c Closure) Scanner() parser.Scanner {
-	panic("not implemented")
+	return *parser.NewScanner("")
 }
 
 var closureKind = registerKind(205, reflect.TypeOf(Closure{}))

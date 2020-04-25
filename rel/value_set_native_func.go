@@ -63,7 +63,7 @@ func (f *NativeFunction) Eval(local Scope) (Value, error) {
 
 // Scanner returns the scanner of NativeFunction.
 func (f *NativeFunction) Scanner() parser.Scanner {
-	panic("not implemented")
+	return *parser.NewScanner("")
 }
 
 var nativeFunctionKind = registerKind(203, reflect.TypeOf(NativeFunction{}))

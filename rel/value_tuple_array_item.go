@@ -77,7 +77,7 @@ func (t ArrayItemTuple) Eval(local Scope) (Value, error) {
 
 // Scanner returns the scanner of ArrayItemTuple.
 func (t ArrayItemTuple) Scanner() parser.Scanner {
-	panic("not implemented")
+	return *parser.NewScanner("")
 }
 
 var arrayItemTupleKind = registerKind(302, reflect.TypeOf((*ArrayItemTuple)(nil)))

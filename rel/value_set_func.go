@@ -75,7 +75,7 @@ func (f *Function) Eval(local Scope) (Value, error) {
 
 // Scanner returns the scanner of Function.
 func (f *Function) Scanner() parser.Scanner {
-	panic("not implemented")
+	return *parser.NewScanner("")
 }
 
 var functionKind = registerKind(202, reflect.TypeOf(Function{}))

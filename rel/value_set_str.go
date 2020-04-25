@@ -108,7 +108,7 @@ func (s String) Eval(_ Scope) (Value, error) {
 
 // Scanner returns the scanner of String.
 func (s String) Scanner() parser.Scanner {
-	panic("not implemented")
+	return *parser.NewScanner("")
 }
 
 var stringKind = registerKind(204, reflect.TypeOf(String{}))

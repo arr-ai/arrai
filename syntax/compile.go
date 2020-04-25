@@ -32,11 +32,11 @@ var loggingOnce sync.Once
 
 func Compile(filepath, source string) (_ rel.Expr, err error) {
 	defer func() {
-		if e := recover(); e != nil {
-			if e, ok := e.(error); ok {
+		if r := recover(); r != nil {
+			if e, ok := r.(error); ok {
 				err = e
 			} else {
-				err = fmt.Errorf("error compiling %q: %v", filepath, e)
+				err = fmt.Errorf("error compiling %q: %v", filepath, r)
 			}
 		}
 	}()
@@ -140,7 +140,7 @@ func (pc ParseContext) compileArrow(b ast.Branch, name string, c ast.Children) r
 				expr = f(op, expr, pc.CompileExpr(arrow.(ast.Branch)["expr"].(ast.One).Node.(ast.Branch)))
 			case "binding":
 				rhs := pc.CompileExpr(arrow.(ast.Branch)["expr"].(ast.One).Node.(ast.Branch))
-				scanner := *parser.NewScanner("->")
+				scanner := rhs.Scanner()
 				if ident := arrow.One("IDENT"); ident != nil {
 					rhs = rel.NewFunction(ident.Scanner().String(), rhs)
 					scanner = ident.Scanner()
@@ -161,10 +161,13 @@ func (pc ParseContext) compileLet(c ast.Children) rel.Expr {
 	exprs := c.(ast.One).Node.Many("expr")
 	expr := pc.CompileExpr(exprs[0].(ast.Branch))
 	rhs := pc.CompileExpr(exprs[1].(ast.Branch))
-	scanner := *parser.NewScanner("->")
+	scanner := expr.Scanner()
 	if ident := c.(ast.One).Node.One("IDENT"); ident != nil {
 		rhs = rel.NewFunction(ident.Scanner().String(), rhs)
-		scanner = ident.Scanner()
+		s, err := parser.MergeScanners(ident.Scanner(), scanner)
+		if err == nil {
+			scanner = s
+		}
 	}
 	expr = binops["->"](scanner, expr, rhs)
 	return expr
@@ -236,14 +239,14 @@ func (pc ParseContext) compileIf(b ast.Branch, c ast.Children) rel.Expr {
 	})
 
 	result := pc.CompileExpr(b.One("expr").(ast.Branch))
+	scanner := result.Scanner()
 	for _, ifelse := range c.(ast.Many) {
 		t := pc.CompileExpr(ifelse.One("t").(ast.Branch))
 		var f rel.Expr = rel.None
 		if fNode := ifelse.One("f"); fNode != nil {
 			f = pc.CompileExpr(fNode.(ast.Branch))
 		}
-		// FIXME
-		result = rel.NewIfElseExpr(*parser.NewScanner(""), result, t, f)
+		result = rel.NewIfElseExpr(scanner, result, t, f)
 	}
 	return result
 }
@@ -267,7 +270,7 @@ func (pc ParseContext) compileCountTouch(b ast.Branch) rel.Expr {
 	if _, has := b["touch"]; has {
 		panic("unfinished")
 	}
-	return rel.NewCountExpr(*parser.NewScanner(""), pc.CompileExpr(b.One("expr").(ast.Branch)))
+	return rel.NewCountExpr(b.Scanner(), pc.CompileExpr(b.One("expr").(ast.Branch)))
 
 	// touch -> ("->*" ("&"? IDENT | STR))+ "(" expr:"," ","? ")";
 	// result := p.parseExpr(b.One("expr").(ast.Branch))
@@ -304,7 +307,7 @@ func (pc ParseContext) compileCallGet(b ast.Branch) rel.Expr {
 				exprs = append(exprs, arg.One("expr"))
 			}
 			for _, arg := range pc.parseExprs(exprs...) {
-				result = rel.NewCallExpr(*parser.NewScanner(""), result, arg)
+				result = rel.NewCallExpr(call.Scanner(), result, arg)
 			}
 		}
 		get(part.One("get"))
@@ -319,7 +322,7 @@ func (pc ParseContext) compileRelation(c ast.Children) rel.Expr {
 	for _, tuple := range tuples {
 		tupleExprs = append(tupleExprs, pc.parseExprs(tuple.(ast.Branch)["v"].(ast.Many)...))
 	}
-	result, err := rel.NewRelationExpr(*parser.NewScanner(""), names, tupleExprs...)
+	result, err := rel.NewRelationExpr(c.(ast.One).Node.(ast.Branch)["names"].(ast.One).Node.(ast.Branch).Scanner(), names, tupleExprs...)
 	if err != nil {
 		panic(err)
 	}
@@ -328,9 +331,9 @@ func (pc ParseContext) compileRelation(c ast.Children) rel.Expr {
 
 func (pc ParseContext) compileSet(c ast.Children) rel.Expr {
 	if elts := c.(ast.One).Node.(ast.Branch)["elt"]; elts != nil {
-		return rel.NewSetExpr(*parser.NewScanner(""), pc.parseExprs(elts.(ast.Many)...)...)
+		return rel.NewSetExpr(elts.(ast.Many).Scanner(), pc.parseExprs(elts.(ast.Many)...)...)
 	}
-	return rel.NewSetExpr(*parser.NewScanner(""))
+	return rel.NewSetExpr(c.(ast.One).Node.Scanner())
 }
 
 func (pc ParseContext) compileDict(c ast.Children) rel.Expr {
@@ -345,9 +348,9 @@ func (pc ParseContext) compileDict(c ast.Children) rel.Expr {
 				entryExprs := make([]rel.DictEntryTupleExpr, 0, len(keyExprs))
 				for i, keyExpr := range keyExprs {
 					valueExpr := valueExprs[i]
-					entryExprs = append(entryExprs, rel.NewDictEntryTupleExpr(*parser.NewScanner(""), keyExpr, valueExpr))
+					entryExprs = append(entryExprs, rel.NewDictEntryTupleExpr(keys.Scanner(), keyExpr, valueExpr))
 				}
-				return rel.NewDictExpr(*parser.NewScanner(""), false, entryExprs...)
+				return rel.NewDictExpr(values.Scanner(), false, entryExprs...)
 			}
 		}
 		panic("mismatch between dict keys and values")
@@ -357,7 +360,7 @@ func (pc ParseContext) compileDict(c ast.Children) rel.Expr {
 
 func (pc ParseContext) compileArray(c ast.Children) rel.Expr {
 	if items := c.(ast.One).Node.(ast.Branch)["item"]; items != nil {
-		return rel.NewArrayExpr(*parser.NewScanner(""), pc.parseExprs(items.(ast.Many)...)...)
+		return rel.NewArrayExpr(items.Scanner(), pc.parseExprs(items.(ast.Many)...)...)
 	}
 	return rel.NewArray()
 }
@@ -413,13 +416,13 @@ func (pc ParseContext) compileTuple(c ast.Children) rel.Expr {
 					panic(fmt.Errorf("unnamed attr expression must be name or end in .name: %T(%[1]v)", v))
 				}
 			}
-			attr, err := rel.NewAttrExpr(*parser.NewScanner(""), k, v)
+			attr, err := rel.NewAttrExpr(pair.One("v").(ast.Branch).Scanner(), k, v)
 			if err != nil {
 				panic(err)
 			}
 			attrs = append(attrs, attr)
 		}
-		return rel.NewTupleExpr(*parser.NewScanner(""), attrs...)
+		return rel.NewTupleExpr(c.(ast.One).Node.Scanner(), attrs...)
 	}
 	return rel.EmptyTuple
 }

@@ -206,7 +206,7 @@ func (t *GenericTuple) Eval(local Scope) (Value, error) {
 
 // Scanner returns the scanner of GenericTuple.
 func (t *GenericTuple) Scanner() parser.Scanner {
-	panic("not implemented")
+	return *parser.NewScanner("")
 }
 
 var genericTupleKind = registerKind(300, reflect.TypeOf((*GenericTuple)(nil)))

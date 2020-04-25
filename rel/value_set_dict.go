@@ -114,7 +114,7 @@ func (d Dict) Eval(local Scope) (Value, error) {
 
 // Scanner returns the scanner of Dict.
 func (d Dict) Scanner() parser.Scanner {
-	panic("not implemented")
+	return *parser.NewScanner("")
 }
 
 var dictKind = registerKind(209, reflect.TypeOf(String{}))

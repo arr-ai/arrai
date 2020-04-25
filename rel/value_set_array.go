@@ -131,7 +131,7 @@ func (a Array) Eval(_ Scope) (Value, error) {
 
 // Scanner returns the scanner of Array.
 func (a Array) Scanner() parser.Scanner {
-	panic("not implemented")
+	return *parser.NewScanner("")
 }
 
 var arrayKind = registerKind(208, reflect.TypeOf(Array{}))

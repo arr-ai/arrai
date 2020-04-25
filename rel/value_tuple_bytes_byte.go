@@ -75,7 +75,7 @@ func (t BytesByteTuple) Eval(local Scope) (Value, error) {
 
 // Scanner returns the scanner of BytesByteTuple.
 func (t BytesByteTuple) Scanner() parser.Scanner {
-	panic("not implemented")
+	return *parser.NewScanner("")
 }
 
 var bytesByteTupleKind = registerKind(304, reflect.TypeOf((*BytesByteTuple)(nil)))

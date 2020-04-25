@@ -221,7 +221,7 @@ func (s GenericSet) Eval(local Scope) (Value, error) {
 
 // Scanner returns the scanner of GenericSet.
 func (s GenericSet) Scanner() parser.Scanner {
-	panic("not implemented")
+	return *parser.NewScanner("")
 }
 
 var genericSetKind = registerKind(200, reflect.TypeOf(Function{}))

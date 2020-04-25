@@ -75,7 +75,7 @@ func (t DictEntryTuple) Eval(local Scope) (Value, error) {
 
 // Scanner returns the scanner of DictEntryTuple.
 func (t DictEntryTuple) Scanner() parser.Scanner {
-	panic("not implemented")
+	return *parser.NewScanner("")
 }
 
 var dictValueTupleKind = registerKind(303, reflect.TypeOf((*DictEntryTuple)(nil)))

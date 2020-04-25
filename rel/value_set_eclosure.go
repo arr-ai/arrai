@@ -50,7 +50,7 @@ func (c ExprClosure) Eval(_ Scope) (Value, error) {
 
 // Scanner returns the scanner of ExprClosure.
 func (c ExprClosure) Scanner() parser.Scanner {
-	panic("not implemented")
+	return *parser.NewScanner("")
 }
 
 var eclosureKind = registerKind(206, reflect.TypeOf(ExprClosure{}))
