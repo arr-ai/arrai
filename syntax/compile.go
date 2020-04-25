@@ -87,7 +87,7 @@ func (pc ParseContext) CompileExpr(b ast.Branch) rel.Expr {
 	case "if":
 		return pc.compileIf(b, c)
 	case "cond":
-		return pc.compileCond(b, c)
+		return pc.compileCond(c)
 	case "count", "touch":
 		return pc.compileCountTouch(b)
 	case "get", "tail":
@@ -243,7 +243,7 @@ func (pc ParseContext) compileIf(b ast.Branch, c ast.Children) rel.Expr {
 	return result
 }
 
-func (pc ParseContext) compileCond(b ast.Branch, c ast.Children) rel.Expr {
+func (pc ParseContext) compileCond(c ast.Children) rel.Expr {
 	// arrai eval 'cond (1 > 0:1, 2 > 3:2, *:10)'
 	result := pc.compileDict(c)
 
