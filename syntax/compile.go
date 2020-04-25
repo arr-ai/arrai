@@ -246,13 +246,23 @@ func (pc ParseContext) compileIf(b ast.Branch, c ast.Children) rel.Expr {
 func (pc ParseContext) compileCond(b ast.Branch, c ast.Children) rel.Expr {
 	// arrai eval 'cond (1 > 0:1, 2 > 3:2, *:10)'
 	result := pc.compileDict(c)
-
 	// TODO: pass arrai src expression to NewCondExpr, and include it in error messages which can help end user more.
+	var identExpr, fExpr rel.Expr
+
+	if cNode := c.(ast.One).Node; cNode != nil {
+		if children, has := cNode.(ast.Branch)["IDENT"]; has {
+			identExpr = pc.compileIdent(children)
+		}
+	}
+
 	if fNode := c.(ast.One).Node.One("f"); fNode != nil {
-		f := pc.CompileExpr(fNode.(ast.Branch))
-		result = rel.NewCondExpr(result, f)
+		fExpr = pc.CompileExpr(fNode.(ast.Branch))
+	}
+
+	if identExpr != nil {
+		result = rel.NewCondControlVarExpr(identExpr, result, fExpr)
 	} else {
-		result = rel.NewCondExpr(result, nil)
+		result = rel.NewCondExpr(result, fExpr)
 	}
 
 	return result
