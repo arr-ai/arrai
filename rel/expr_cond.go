@@ -13,11 +13,14 @@ import (
 // and avoids accidental comparisons with the switch statement in other languages.
 type CondExpr struct {
 	dicExpr, defaultExpr Expr
+	validValidation      func(condition Value, local Scope) bool // Valid condition validation.
 }
 
 // NewCondExpr returns a new CondExpr.
 func NewCondExpr(dict Expr, defaultExpr Expr) Expr {
-	return &CondExpr{dict, defaultExpr}
+	return &CondExpr{dict, defaultExpr, func(condition Value, local Scope) bool {
+		return condition.IsTrue()
+	}}
 }
 
 // String returns a string representation of the expression.
@@ -58,7 +61,7 @@ func (e *CondExpr) Eval(local Scope) (Value, error) {
 				return nil, err
 			}
 
-			if cond != nil && cond.IsTrue() {
+			if cond != nil && e.validValidation(cond, local) {
 				trueCond = &tempExpr
 				break
 			}
@@ -72,8 +75,8 @@ func (e *CondExpr) Eval(local Scope) (Value, error) {
 		finalCond = e.defaultExpr
 	} else {
 		// trueCond == nil && e.defaultCond == nil
-		return nil, errors.New("it expects one true condition or default condition '*':valueExpression, " +
-			"but actually there is not any true condition or default condition '*':valueExpression in cond expression")
+		return nil, errors.New("it expects one valid condition or default condition '*':valueExpression, " +
+			"but actually there is not any valid condition or default condition '*':valueExpression in cond expression")
 	}
 
 	value, err := finalCond.Eval(local)

@@ -64,7 +64,7 @@ func NewRelationExpr(names []string, tuples ...[]Expr) (Expr, error) {
 		for _, e := range elements {
 			entryExprs = append(entryExprs, e.(DictEntryTupleExpr))
 		}
-		return NewDictExpr(true, entryExprs...), nil
+		return NewDictExpr(true, false, entryExprs...), nil
 	}
 	return NewSetExpr(elements...), nil
 }

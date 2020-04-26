@@ -245,13 +245,23 @@ func (pc ParseContext) compileIf(b ast.Branch, c ast.Children) rel.Expr {
 
 func (pc ParseContext) compileCond(b ast.Branch, c ast.Children) rel.Expr {
 	// arrai eval 'cond (1 > 0:1, 2 > 3:2, *:10)'
-	result := pc.compileDict(c)
+	var result rel.Expr
+	entryExprs := pc.compileDictEntryExprs(c)
+	if entryExprs != nil {
+		result = rel.NewDictExpr(false, true, entryExprs...)
+	} else {
+		result = rel.NewDict(false)
+	}
+
 	// TODO: pass arrai src expression to NewCondExpr, and include it in error messages which can help end user more.
-	var identExpr, fExpr rel.Expr
+	var controlVarExpr, fExpr rel.Expr
 
 	if cNode := c.(ast.One).Node; cNode != nil {
 		if children, has := cNode.(ast.Branch)["IDENT"]; has {
-			identExpr = pc.compileIdent(children)
+			controlVarExpr = pc.compileIdent(children)
+		}
+		if children, has := cNode.(ast.Branch)["control_var"]; has {
+			controlVarExpr = pc.compileExpr(children)
 		}
 	}
 
@@ -259,8 +269,8 @@ func (pc ParseContext) compileCond(b ast.Branch, c ast.Children) rel.Expr {
 		fExpr = pc.CompileExpr(fNode.(ast.Branch))
 	}
 
-	if identExpr != nil {
-		result = rel.NewCondControlVarExpr(identExpr, result, fExpr)
+	if controlVarExpr != nil {
+		result = rel.NewCondControlVarExpr(controlVarExpr, result, fExpr)
 	} else {
 		result = rel.NewCondExpr(result, fExpr)
 	}
@@ -338,6 +348,15 @@ func (pc ParseContext) compileSet(c ast.Children) rel.Expr {
 }
 
 func (pc ParseContext) compileDict(c ast.Children) rel.Expr {
+	entryExprs := pc.compileDictEntryExprs(c)
+	if entryExprs != nil {
+		return rel.NewDictExpr(false, false, entryExprs...)
+	}
+
+	return rel.NewDict(false)
+}
+
+func (pc ParseContext) compileDictEntryExprs(c ast.Children) []rel.DictEntryTupleExpr {
 	// C* "{" C* dict=((key=@ ":" value=@):",",?) "}" C*
 	keys := c.(ast.One).Node.(ast.Branch)["key"]
 	values := c.(ast.One).Node.(ast.Branch)["value"]
@@ -351,12 +370,12 @@ func (pc ParseContext) compileDict(c ast.Children) rel.Expr {
 					valueExpr := valueExprs[i]
 					entryExprs = append(entryExprs, rel.NewDictEntryTupleExpr(keyExpr, valueExpr))
 				}
-				return rel.NewDictExpr(false, entryExprs...)
+				return entryExprs
 			}
 		}
 		panic("mismatch between dict keys and values")
 	}
-	return rel.NewDict(false)
+	return nil
 }
 
 func (pc ParseContext) compileArray(c ast.Children) rel.Expr {
