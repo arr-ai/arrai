@@ -136,10 +136,19 @@ special compositions of numbers, tuples and sets.
 {[1, 2]: 42, [3, 5]: 54}
 ```
 
-**Explore:** What does the following output?
+**Explore:** How would describe the following?
 
 ```text
 @> {{}: {}, (): ()}
+@> {{{(x:1): 42}: 54}}
+```
+
+**Food for thought:** Since tuples and dictionaries are both basically key/value
+collections, how would you characterise their differences and can you explain
+why both are available in arr.ai? The following idiomatic example might help.
+
+```text
+@> {"dog": (legs: 4, sound: "bark"), "cat": (legs: 4, sound: "meow")}
 ```
 
 ### Sequence types with offsets

@@ -1,10 +1,10 @@
-# arrai
+# Arr.ai
 
 ![Go build status](https://github.com/arr-ai/arrai/workflows/Go/badge.svg)
 
 The ultimate data engine.
 
-### Installation
+## Install
 
 [Install Go](https://golang.org/doc/install), then:
 
@@ -12,6 +12,27 @@ The ultimate data engine.
 go get -v -u github.com/arr-ai/arrai/cmd/arrai
 arrai -h
 ```
+
+On Unix-like platforms, you can also symlink a handy shortcut:
+
+```bash
+ln -s arrai $(dirname $(which arrai))/ai
+```
+
+## Learn
+
+Follow the [Arr.ai tutorial](docs/tutorial/tutorial.md) for a step by step guide
+into the world of arr.ai programming.
+
+See the [Introduction to Arr.ai](docs/intro.md) to learn more about the arr.ai
+language.
+
+### Arr.ai Examples
+
+1. [Snippets](docs/example.md)
+2. [More complete examples](examples)
+
+## Use
 
 ### Run the interactive shell
 
@@ -32,11 +53,9 @@ split      sub        title      upper
 
 Ctrl+D to exit.
 
-In a Unix-like environment, you can also (after arr.ai is installed somewhere on
-the path):
+On Unix-like platforms, you can use the `ai` shortcut:
 
 ```bash
-$ ln -s arrai $(dirname `which arrai`)/ai
 $ ai
 @> _
 ```
@@ -46,9 +65,6 @@ $ ai
 ```bash
 arrai eval '41 + 1'
 ```
-
-See the [Introduction to Arr.ai](docs/intro.md) to learn more about the arr.ai
-language.
 
 <!-- TODO: Uncomment once this works again.
 ### Transform a stream of values
@@ -82,8 +98,3 @@ arrai observe localhost '$'
 ```bash
 arrai update localhost '{a: {|1, 2, 3|}, b: "hello"}'
 ```
-
-#### Arrai Examples
-
-1. [Snippets](docs/example.md)
-2. [More complete examples](examples)

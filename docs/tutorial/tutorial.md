@@ -15,7 +15,8 @@ $ arrai i
 @> _
 ```
 
-or, if an appropriate symlink is set up (see ../../README.md for instructions):
+or, if an appropriate symlink is set up (see the main [README](../../README.md)
+for instructions):
 
 ```bash
 $ ai
