@@ -136,7 +136,7 @@ special compositions of numbers, tuples and sets.
 {[1, 2]: 42, [3, 5]: 54}
 ```
 
-**Explore:** How would describe the following?
+**Explore:** How would you describe the following values?
 
 ```text
 @> {{}: {}, (): ()}
