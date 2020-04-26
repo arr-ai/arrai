@@ -77,7 +77,7 @@ seem. You can in fact represent:
    2. `//{./myutil/work}(42)`
    3. `//{/path/to/root/file}`
    4. `//{./'myfile.yaml'}`
-   5. `//{github.com/org/external/}file`
+   5. `//{github.com/org/external/file}`
    6. `//{https://url/to/your/content}`
 
 All of the above forms are syntactic sugar for specific combinations of numbers,
@@ -427,13 +427,13 @@ External libraries may be accessed via package references.
 3. **`//{/path}`** provides access to other arrai files relative to the root of
    the current module, looking for `go.mod` file backwards from the current directory.
 4. **`//{hostname/path}`** provides access to content from the internet
-   1. **`//{github.com/foo/}bar/baz`:** access `baz.arrai` file in remote repository `github.com/foo/bar`
-   2. **`//{github.com/foo/}bar/'a.json'`:** access `a.json` file in remote repository `github.com/foo/bar`
-   3. **`//{foo.org/bar/}'random.arrai'`/`//{https://foo.org/bar/}'random.arrai'`:**
+   1. **`//{github.com/foo/bar/baz}`:** access `baz.arrai` file in remote repository `github.com/foo/bar`
+   2. **`//{github.com/foo/bar/a.json}`:** access `a.json` file in remote repository `github.com/foo/bar`
+   3. **`//{foo.org/bar/}'random.arrai'`/`//{https://foo.org/bar/random.arrai}`:**
       request content of `https://foo.org/bar/random.arrai` via HTTPS
-   4. **`//{foo.org/bar/}'some.json'`/`//https://foo.org/bar/'some.json'`:**
+   4. **`//{foo.org/bar/some.json}`/`//{https://foo.org/bar/some.json}`:**
       request content of `https://foo.org/bar/some.json` via HTTPS
-   5. **`//{foo.org/bar/}'some.yaml'`/`//{https://foo.org/bar/}'some.yml'`:**
+   5. **`//{foo.org/bar/some.yaml}`/`//{https://foo.org/bar/some.yml}`:**
       request content of `https://foo.org/bar/some.yaml` via HTTPS, file extension can be `yml` or `yaml`
 
 ### Tuples vs Maps
