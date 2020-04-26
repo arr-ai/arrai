@@ -63,9 +63,9 @@ expr   -> C* amp="&"* @ C* arrow=(
         | C* "{:" C* embed=(grammar=@ ":" subgrammar=%%ast) ":}" C*
         | C* op="\\\\" @ C*
         | C* fn="\\" IDENT @ C*
-        | C* "//" pkg=("{" STRING "}"
-					| std=IDENT?
-					)
+		| C* "//" pkg=( "{" dot="."? STRING "}"
+				| std=IDENT?
+		)
         | C* "(" tuple=(pairs=(name? ":" v=@):",",?) ")" C*
         | C* "(" @ ")" C*
         | C* let=("let" C* IDENT C* "=" C* @ %%bind C* ";" C* @) C*
@@ -89,7 +89,7 @@ sexpr  -> "${"
 
 ARROW  -> /{:>|=>|>>|orderby|order|where|sum|max|mean|median|min};
 IDENT  -> /{ \. | [$@A-Za-z_][0-9$@A-Za-z_]* };
-STRING -> /{ \} | [$@A-Za-z_./][0-9$@A-Za-z_:./-]* };
+STRING -> /{ [$@A-Za-z_/][0-9$@A-Za-z_:.\/-]* };
 STR    -> /{ " (?: \\. | [^\\"] )* "
            | ' (?: \\. | [^\\'] )* '
 		   | ‵ (?: ‵‵  | [^‵  ] )* ‵

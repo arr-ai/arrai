@@ -29,7 +29,7 @@ func TestPackagePi(t *testing.T) {
 // }
 
 func TestPackageImport(t *testing.T) {
-	AssertCodesEvalToSameValue(t, `3`, `//{./examples/simple/simple}`)
+	AssertCodesEvalToSameValue(t, `{1, 4, 9, 16}`, `//{./examples/simple/simple}`)
 }
 
 func TestPackageImportFromRoot(t *testing.T) {

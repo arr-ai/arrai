@@ -372,11 +372,11 @@ func (pc ParseContext) compilePackage(c ast.Children) rel.Expr {
 
 	if str := pkg.One("STRING"); str != nil {
 		name := str.One("").(ast.Leaf).Scanner().String()
-		if strings.HasPrefix(name, ".") || strings.HasPrefix(name, "/") {
-			filepath := strings.Trim(strings.Trim(name, "."), "/")
-			fromRoot := strings.HasPrefix(name, "/")
+		if strings.HasPrefix(name, "/") {
+			filepath := strings.Trim(name, "/")
+			fromRoot := pkg["dot"] == nil
 			if pc.SourceDir == "" {
-				panic(fmt.Errorf("local import %q invalid; no local context", filepath))
+				panic(fmt.Errorf("local import %q invalid; no local context", name))
 			}
 			return rel.NewCallExpr(
 				NewPackageExpr(importLocalFile(fromRoot)),
