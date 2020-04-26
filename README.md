@@ -16,7 +16,7 @@ arrai -h
 ### Run the interactive shell
 
 ```text
-arrai i
+$ arrai i
 @> 6 * 7
 42
 @> //.<tab>
@@ -28,10 +28,18 @@ contains   expand     has_prefix has_suffix join       lower      repr
 split      sub        title      upper
 @> //.str.upper("hello")
 'HELLO'
-@>
 ```
 
 Ctrl+D to exit.
+
+In a Unix-like environment, you can also (after arr.ai is installed somewhere on
+the path):
+
+```bash
+$ ln -s arrai $(dirname `which arrai`)/ai
+$ ai
+@> _
+```
 
 ### Evaluate an expression
 
