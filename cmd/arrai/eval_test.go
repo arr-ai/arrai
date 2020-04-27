@@ -97,7 +97,10 @@ func TestEvalCondWithControlVar(t *testing.T) {
 
 func TestEvalCondWithControlVarExpr(t *testing.T) {
 	t.Parallel()
-	assertEvalExprString(t, "(1->(\\a((control_var:a),((1+2):1,*:(1+2)))))", "let a = 1; a cond (1 + 2: 1, * : 1 + 2)")
-	assertEvalExprString(t, "(2->(\\a(((control_var:a),((1+2):1,*:(1+2)))->(\\b(b*1)))))", "let a = 2; let b = a cond (1 + 2: 1, * : 1 + 2); b * 1")
-	assertEvalExprString(t, "(3->(\\a((control_var:(a+2)),((1+2):1,*:(1+2)))))", "let a = 3; (a + 2) cond (1 + 2: 1, * : 1 + 2)")
+	assertEvalExprString(t, "(1->(\\a((control_var:a),((1+2):1,*:(1+2)))))",
+		"let a = 1; a cond (1 + 2: 1, * : 1 + 2)")
+	assertEvalExprString(t, "(2->(\\a(((control_var:a),((1+2):1,*:(1+2)))->(\\b(b*1)))))",
+		"let a = 2; let b = a cond (1 + 2: 1, * : 1 + 2); b * 1")
+	assertEvalExprString(t, "(3->(\\a((control_var:(a+2)),((1+2):1,*:(1+2)))))",
+		"let a = 3; (a + 2) cond (1 + 2: 1, * : 1 + 2)")
 }
