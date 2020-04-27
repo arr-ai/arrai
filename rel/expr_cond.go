@@ -48,7 +48,7 @@ func (e *CondExpr) String() string {
 	return b.String()
 }
 
-// Eval returns the true condition. It must have only one true condition.
+// Eval returns the value of true condition, or default condition value.
 func (e *CondExpr) Eval(local Scope) (Value, error) {
 	var trueCond *DictEntryTupleExpr
 	// If there is not any valid condition, the condtion defaultExpr will work.
