@@ -29,13 +29,11 @@ func (e *CondControlVarExpr) String() string {
 	var b bytes.Buffer
 	b.WriteByte('(')
 	fmt.Fprintf(&b, "(control_var: %v)", e.controlVarExpr.String())
-	fmt.Printf(b.String())
 	standardExprStr := e.standardExpr.String()
 	if len(standardExprStr) != 0 {
 		b.WriteString("," + standardExprStr)
 	}
 	b.WriteByte(')')
-	fmt.Printf(b.String())
 	return b.String()
 }
 
