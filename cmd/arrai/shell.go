@@ -101,6 +101,7 @@ func shell(c *cli.Context) error {
 		panic(err)
 	}
 	defer l.Close()
+	collector := newLineCollector()
 	for {
 		line, err := l.Readline()
 		if err != nil {
@@ -112,13 +113,135 @@ func shell(c *cli.Context) error {
 			}
 			panic(err)
 		}
+		line = strings.TrimSpace(line)
 		if line != "" {
-			value, err := tryEval(line)
+			collector.appendLine(line)
+		}
+		if len(collector.lines) != 0 && collector.isBalanced() {
+			value, err := tryEval(strings.Join(collector.lines, "\n"))
 			if err != nil {
 				log.Error(ctx, err)
 			} else {
-				fmt.Fprintf(os.Stdout, "%s\n", rel.Repr(value))
+				cleaned := strings.Split(rel.Repr(value), "\\n")
+				fmt.Fprintf(os.Stdout, "%s\n", strings.Join(cleaned, "\n"))
+			}
+			l.SetPrompt("@> ")
+			collector.reset()
+		}
+		if len(collector.lines) != 0 {
+			l.SetPrompt("@: ")
+		}
+	}
+}
+
+type lineCollector struct {
+	lines        []string
+	stack        []*closer
+	opener       map[string]*closer
+	maxOpenerLen int
+}
+
+type closer struct {
+	char               string
+	recursive          bool
+	contextBasedOpener map[string]*closer
+}
+
+func (l *lineCollector) pop() {
+	if len(l.stack) == 0 {
+		return
+	}
+	l.stack = l.stack[:len(l.stack)-1]
+}
+
+func (l *lineCollector) push(close *closer) {
+	l.stack = append(l.stack, close)
+}
+
+func (l *lineCollector) peek() *closer {
+	if len(l.stack) == 0 {
+		return nil
+	}
+	return l.stack[len(l.stack)-1]
+}
+
+func newLineCollector() *lineCollector {
+	templateContext := map[string]*closer{"${": {"}", true, nil}}
+	return &lineCollector{
+		[]string{},
+		[]*closer{},
+		map[string]*closer{
+			"{":   {"}", true, nil},
+			"(":   {")", true, nil},
+			"[":   {"]", true, nil},
+			"$\"": {"\"", true, templateContext},
+			"$'":  {"'", true, templateContext},
+			"$`":  {"`", true, templateContext},
+			"\"":  {"\"", false, nil},
+			"'":   {"'", false, nil},
+			"`":   {"`", false, nil},
+		},
+		2, //TODO: automate finding max length
+	}
+}
+
+func (l *lineCollector) appendLine(line string) {
+	increment := 1
+	for i := 0; i < len(line); i += increment {
+		if line[i] == '\\' {
+			increment = 2
+		} else if nextCloser := l.peek(); nextCloser != nil && strings.HasPrefix(line[i:], nextCloser.char) {
+			l.pop()
+			increment = len(nextCloser.char)
+		} else {
+			if nextCloser != nil && !nextCloser.recursive {
+				continue
+			}
+			openers := l.opener
+			if nextCloser != nil && nextCloser.contextBasedOpener != nil {
+				openers = nextCloser.contextBasedOpener
+			}
+			possibleOpener := make([]string, 0, l.maxOpenerLen)
+			for j := 0; j < l.maxOpenerLen && i+j < len(line); j++ {
+				possibleOpener = append(possibleOpener, line[i:i+j+1])
+			}
+			for _, p := range possibleOpener {
+				if close, isOpener := openers[p]; isOpener {
+					l.push(close)
+					increment = len(p)
+					break
+				} else {
+					increment = 1
+				}
 			}
 		}
 	}
+	l.lines = append(l.lines, line)
+}
+
+func (l *lineCollector) isBalanced() bool {
+	if nextClosure := l.peek(); nextClosure != nil && !nextClosure.recursive {
+		return false
+	}
+
+	if len(l.lines) == 0 {
+		return true
+	}
+
+	lastLine := l.lines[len(l.lines)-1]
+	if strings.HasSuffix(lastLine, ";") || strings.HasSuffix(lastLine, ":") {
+		return false
+	}
+
+	// check for function argument
+	if regexp.MustCompile(`\\.+$`).Match([]byte(lastLine)) {
+		return false
+	}
+
+	return len(l.stack) == 0
+}
+
+func (l *lineCollector) reset() {
+	l.lines = []string{}
+	l.stack = []*closer{}
 }
