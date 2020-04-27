@@ -370,7 +370,7 @@ func (pc ParseContext) compilePackage(c ast.Children) rel.Expr {
 		return NewPackageExpr(rel.NewDotExpr(rel.DotIdent, pkgName))
 	}
 
-	if str := pkg.One("STRING"); str != nil {
+	if str := pkg.One("PKGPATH"); str != nil {
 		name := str.One("").(ast.Leaf).Scanner().String()
 		if strings.HasPrefix(name, "/") {
 			filepath := strings.Trim(name, "/")

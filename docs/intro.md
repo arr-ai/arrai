@@ -76,7 +76,7 @@ seem. You can in fact represent:
    1. `//math.sin(1)`
    2. `//{./myutil/work}(42)`
    3. `//{/path/to/root/file}`
-   4. `//{./'myfile.yaml'}`
+   4. `//{./myfile.yaml}`
    5. `//{github.com/org/external/file}`
    6. `//{https://url/to/your/content}`
 
