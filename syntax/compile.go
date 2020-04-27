@@ -258,9 +258,9 @@ func (pc ParseContext) compileCond(c ast.Children) rel.Expr {
 	// TODO: pass arrai src expression to NewCondExpr, and include it in error messages which can help end user more.
 	if fNode := c.(ast.One).Node.One("f"); fNode != nil {
 		f := pc.CompileExpr(fNode.(ast.Branch))
-		result = rel.NewCondExpr(result, f)
+		result = rel.NewCondExpr(fNode.(ast.Branch).Scanner(), result, f)
 	} else {
-		result = rel.NewCondExpr(result, nil)
+		result = rel.NewCondExpr(c.(ast.One).Node.Scanner(), result, nil)
 	}
 
 	return result
@@ -322,7 +322,11 @@ func (pc ParseContext) compileRelation(c ast.Children) rel.Expr {
 	for _, tuple := range tuples {
 		tupleExprs = append(tupleExprs, pc.parseExprs(tuple.(ast.Branch)["v"].(ast.Many)...))
 	}
-	result, err := rel.NewRelationExpr(c.(ast.One).Node.(ast.Branch)["names"].(ast.One).Node.(ast.Branch).Scanner(), names, tupleExprs...)
+	result, err := rel.NewRelationExpr(
+		c.(ast.One).Node.(ast.Branch)["names"].(ast.One).Node.(ast.Branch).Scanner(),
+		names,
+		tupleExprs...,
+	)
 	if err != nil {
 		panic(err)
 	}
@@ -389,11 +393,11 @@ func (pc ParseContext) compilePackage(c ast.Children) rel.Expr {
 				panic(fmt.Errorf("local import %q invalid; no local context", name))
 			}
 			return rel.NewCallExpr(scanner,
-				NewPackageExpr(importLocalFile(fromRoot)),
+				NewPackageExpr(scanner, importLocalFile(fromRoot)),
 				rel.NewString([]rune(path.Join(pc.SourceDir, filepath))),
 			)
 		}
-		return rel.NewCallExpr(scanner, NewPackageExpr(importExternalContent()), rel.NewString([]rune(name)))
+		return rel.NewCallExpr(scanner, NewPackageExpr(scanner, importExternalContent()), rel.NewString([]rune(name)))
 	}
 	return NewPackageExpr(pkg.Scanner(), rel.DotIdent)
 }
