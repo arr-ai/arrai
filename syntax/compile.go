@@ -248,6 +248,7 @@ func (pc ParseContext) compileCond(c ast.Children) rel.Expr {
 	var result rel.Expr
 	entryExprs := pc.compileDictEntryExprs(c)
 	if entryExprs != nil {
+		// Generates type DictExpr always to make sure it is easy to do Eval, only process type DictExpr.
 		result = rel.NewDictExpr(false, true, entryExprs...)
 	} else {
 		result = rel.NewDict(false)
@@ -257,6 +258,7 @@ func (pc ParseContext) compileCond(c ast.Children) rel.Expr {
 	var controlVarExpr, fExpr rel.Expr
 
 	if cNode := c.(ast.One).Node; cNode != nil {
+		// Only get IDENT or control_var as current grammar
 		if children, has := cNode.(ast.Branch)["IDENT"]; has {
 			controlVarExpr = pc.compileIdent(children)
 		}

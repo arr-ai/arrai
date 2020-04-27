@@ -13,7 +13,7 @@ type CondControlVarExpr struct {
 	standardExpr   CondExpr
 }
 
-// NewCondControlVarExpr returns a new normal CondExpr.
+// NewCondControlVarExpr returns a new CondControlVarExpr.
 func NewCondControlVarExpr(controlVar Expr, dictExpr Expr, defaultExpr Expr) Expr {
 	return &CondControlVarExpr{controlVar, CondExpr{dictExpr, defaultExpr, func(condition Value, local Scope) bool {
 		controlVarVal, has := local.Get("controlVarVal")
