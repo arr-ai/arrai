@@ -95,4 +95,3 @@ func TestIsBalanced(t *testing.T) {
 	c.appendLine("\"")
 	assert.True(t, c.isBalanced())
 }
-
