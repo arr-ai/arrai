@@ -28,5 +28,5 @@ func (e PackageExpr) String() string {
 
 // Eval returns the subject
 func (e PackageExpr) Eval(_ rel.Scope) (rel.Value, error) {
-	return e.a.Eval(stdScope())
+	return e.a.Eval(StdScope())
 }

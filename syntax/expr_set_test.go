@@ -38,7 +38,7 @@ func TestArrayToString(t *testing.T) {
 }
 
 func TestStringManipulation(t *testing.T) {
-	AssertCodesEvalToSameValue(t, `"Foo"`, `(\s //.str.upper(s where .@=0) | (s where .@>0))("foo")`)
+	AssertCodesEvalToSameValue(t, `"Foo"`, `(\s //str.upper(s where .@=0) | (s where .@>0))("foo")`)
 }
 
 func TestArray(t *testing.T) {
@@ -95,5 +95,5 @@ func TestDictUnion(t *testing.T) {
 func TestDictExpand(t *testing.T) {
 	AssertCodesEvalToSameValue(t,
 		`"{'a': 'a', 'a': 'b', 'b': 'a'}"`,
-		`//.str.expand("", {"b": "a", "a": "b"} | {"a": "a"}, "", "")`)
+		`//str.expand("", {"b": "a", "a": "b"} | {"a": "a"}, "", "")`)
 }

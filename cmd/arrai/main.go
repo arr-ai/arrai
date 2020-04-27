@@ -14,15 +14,21 @@ func main() {
 
 	app.EnableBashCompletion = true
 
-	if path.Base(os.Args[0]) == "ax" {
+	switch path.Base(os.Args[0]) {
+	case "ai":
+		app.Name = "ai"
+		app.Usage = "arr.ai interactive shell"
+		app.Action = shell
+	case "ax":
 		app.Name = "ax"
 		app.Usage = "the ultimate data transformer"
 		app.Action = transform
-	} else {
+	default:
 		app.Name = "arrai"
 		app.Usage = "the ultimate data engine"
 
 		app.Commands = []*cli.Command{
+			shellCommand,
 			runCommand,
 			evalCommand,
 			jsonCommand,

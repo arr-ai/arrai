@@ -1,5 +1,5 @@
 (
-    type: //.fn.fix(\type \t
+    type: //fn.fix(\type \t
         {
             'DECIMAL':  'double',
             'INT':      'int64',
@@ -14,6 +14,6 @@
         else 'repeated ' + type(t.sequence)
             if t.type = 'sequence'
         else
-            //.str.sub(t.type_ref, "-", ".") if //.str.contains(t.type_ref, "google-protobuf") else t.type_ref
+            //str.sub(t.type_ref, "-", ".") if //str.contains(t.type_ref, "google-protobuf") else t.type_ref
     ),
 )

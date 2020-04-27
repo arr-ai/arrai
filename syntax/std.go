@@ -16,7 +16,7 @@ import (
 var stdScopeOnce sync.Once
 var stdScopeVar rel.Scope
 
-func stdScope() rel.Scope {
+func StdScope() rel.Scope {
 	stdScopeOnce.Do(func() {
 		stdScopeVar = rel.EmptyScope.
 			With(".", rel.NewTuple(

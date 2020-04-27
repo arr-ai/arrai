@@ -10,7 +10,14 @@ import (
 )
 
 func stdOsGetArgs() rel.Value {
-	return strArrToRelArr(os.Args[2:])
+	var offset int
+	switch os.Args[0] {
+	case "ai", "ax":
+		offset = 1
+	default:
+		offset = 2
+	}
+	return strArrToRelArr(os.Args[offset:])
 }
 
 func stdOsGetEnv(value rel.Value) rel.Value {

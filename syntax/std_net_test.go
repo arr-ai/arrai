@@ -28,7 +28,7 @@ wasm:
 
 	result, err := EvaluateExpr(
 		"",
-		`//.net.http.get("https://raw.githubusercontent.com/arr-ai/arrai/cf1326f7b61178e3e98aff30540e10cb73449445/Makefile")`,
+		`//net.http.get("https://raw.githubusercontent.com/arr-ai/arrai/cf1326f7b61178e3e98aff30540e10cb73449445/Makefile")`,
 	)
 	require.NoError(t, err)
 
