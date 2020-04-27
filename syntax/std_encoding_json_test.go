@@ -4,7 +4,7 @@ import "testing"
 
 func TestJSONDecode(t *testing.T) {
 	t.Parallel()
-	AssertCodePanics(t, `//.encoding.json.decode(123)`)
+	AssertCodePanics(t, `//encoding.json.decode(123)`)
 
 	expected := `{
 		"a": (s: "string"),
@@ -39,7 +39,7 @@ func TestJSONDecode(t *testing.T) {
 	}'`
 
 	// String
-	AssertCodesEvalToSameValue(t, expected, `//.encoding.json.decode(`+encoding+`)`)
+	AssertCodesEvalToSameValue(t, expected, `//encoding.json.decode(`+encoding+`)`)
 	// Bytes
-	AssertCodesEvalToSameValue(t, expected, `//.encoding.json.decode(//.unicode.utf8.encode(`+encoding+`))`)
+	AssertCodesEvalToSameValue(t, expected, `//encoding.json.decode(//unicode.utf8.encode(`+encoding+`))`)
 }
