@@ -13,6 +13,34 @@ go get -v -u github.com/arr-ai/arrai/cmd/arrai
 arrai -h
 ```
 
+### Run the interactive shell
+
+```text
+$ arrai i
+@> 6 * 7
+42
+@> //.<tab>
+archive  dict     encoding eval     fn       grammar  log      math
+net      os       re       reflect  rel      seq      str      tuple
+unicode
+@> //.str.<tab>
+contains   expand     has_prefix has_suffix join       lower      repr
+split      sub        title      upper
+@> //.str.upper("hello")
+'HELLO'
+```
+
+Ctrl+D to exit.
+
+In a Unix-like environment, you can also (after arr.ai is installed somewhere on
+the path):
+
+```bash
+$ ln -s arrai $(dirname `which arrai`)/ai
+$ ai
+@> _
+```
+
 ### Evaluate an expression
 
 ```bash

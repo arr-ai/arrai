@@ -2,6 +2,7 @@ package rel
 
 import (
 	"bytes"
+	"sort"
 
 	"github.com/arr-ai/frozen"
 )
@@ -19,6 +20,22 @@ func NewNames(names ...string) Names {
 		s = s.With(name)
 	}
 	return Names(s)
+}
+
+// Names returns a slice of the names in the set.
+func (n Names) Names() []string {
+	names := make([]string, 0, n.Count())
+	for e := n.Enumerator(); e.MoveNext(); {
+		names = append(names, e.Current())
+	}
+	return names
+}
+
+// Names returns a sorted slice of the names in the set.
+func (n Names) OrderedNames() []string {
+	names := n.Names()
+	sort.Strings(names)
+	return names
 }
 
 // Bool returns true iff there are names in the set.
