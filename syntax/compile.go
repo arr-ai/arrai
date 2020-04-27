@@ -369,42 +369,21 @@ func (pc ParseContext) compilePackage(c ast.Children) rel.Expr {
 		pkgName := ident.(ast.Leaf).Scanner().String()
 		return NewPackageExpr(rel.NewDotExpr(rel.DotIdent, pkgName))
 	}
-	if names := pkg.Many("name"); len(names) > 0 {
-		var sb strings.Builder
 
-		for i, name := range names {
-			if i > 0 {
-				sb.WriteRune('/')
+	if str := pkg.One("PKGPATH"); str != nil {
+		name := str.One("").(ast.Leaf).Scanner().String()
+		if strings.HasPrefix(name, "/") {
+			filepath := strings.Trim(name, "/")
+			fromRoot := pkg["dot"] == nil
+			if pc.SourceDir == "" {
+				panic(fmt.Errorf("local import %q invalid; no local context", name))
 			}
-			sb.WriteString(parseName(name.(ast.Branch)))
+			return rel.NewCallExpr(
+				NewPackageExpr(importLocalFile(fromRoot)),
+				rel.NewString([]rune(path.Join(pc.SourceDir, filepath))),
+			)
 		}
-		filepath := sb.String()
-		if pc.SourceDir == "" {
-			panic(fmt.Errorf("local import %q invalid; no local context", filepath))
-		}
-		return rel.NewCallExpr(
-			NewPackageExpr(importLocalFile(pkg["dot"] == nil)),
-			rel.NewString([]rune(path.Join(pc.SourceDir, filepath))),
-		)
-	}
-	if fqdn := pkg["fqdn"]; fqdn != nil {
-		var sb strings.Builder
-		if http := pkg["http"]; http != nil {
-			sb.WriteString(http.(ast.One).Node.Scanner().String())
-		}
-		for i, part := range fqdn.(ast.Many) {
-			if i > 0 {
-				sb.WriteRune('.')
-			}
-			sb.WriteString(strings.Trim(parseName(part.One("name").(ast.Branch)), "'"))
-		}
-		if path := pkg["path"]; path != nil {
-			for _, part := range path.(ast.Many) {
-				sb.WriteRune('/')
-				sb.WriteString(strings.Trim(parseName(part.One("name").(ast.Branch)), "'"))
-			}
-		}
-		return rel.NewCallExpr(NewPackageExpr(importExternalContent()), rel.NewString([]rune(sb.String())))
+		return rel.NewCallExpr(NewPackageExpr(importExternalContent()), rel.NewString([]rune(name)))
 	}
 	return NewPackageExpr(rel.DotIdent)
 }
