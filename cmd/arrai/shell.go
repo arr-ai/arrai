@@ -122,8 +122,7 @@ func shell(c *cli.Context) error {
 			if err != nil {
 				log.Error(ctx, err)
 			} else {
-				cleaned := strings.Split(rel.Repr(value), "\\n")
-				fmt.Fprintf(os.Stdout, "%s\n", strings.Join(cleaned, "\n"))
+				fmt.Fprintf(os.Stdout, "%s\n", rel.Repr(value))
 			}
 			l.SetPrompt("@> ")
 			collector.reset()
