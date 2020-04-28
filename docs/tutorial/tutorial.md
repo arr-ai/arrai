@@ -35,3 +35,16 @@ chapters.
 7. (TODO) [Templating with expression strings](templating.md)
 8. (TODO) [Grammars](grammars.md)
 9. (TODO) [Macros](macros.md)
+
+## Arr.ai command line
+
+In addition to the interactive shell, arr.ai provides a range of additional
+commands to run programs, start an arr.ai server or client, etc.
+
+1. (TODO) run, r: evaluate an arrai file
+2. (TODO) eval, e: evaluate an arrai expression
+3. (TODO) observe, o: observe an expression on a server
+4. (TODO) serve, s: start arrai as a gRPC server
+5. (TODO) sync, s: sync local files to a server
+6. (TODO) transform, x: transform a stream of input data with an expression
+7. (TODO) update, u: update a server with an expression
