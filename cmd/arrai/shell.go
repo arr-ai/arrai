@@ -233,7 +233,7 @@ func (l *lineCollector) isBalanced() bool {
 	}
 
 	// check for function argument
-	if regexp.MustCompile(`\\.+$`).Match([]byte(lastLine)) {
+	if regexp.MustCompile(`\\[^ \t\n]+$`).Match([]byte(lastLine)) {
 		return false
 	}
 
