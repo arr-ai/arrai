@@ -3,19 +3,22 @@ package rel
 import (
 	"bytes"
 	"fmt"
+
+	"github.com/arr-ai/wbnf/parser"
 )
 
 // CondControlVarExpr returns the tuple applied to a function, the expression looks like:
 // let a = 1 + 1; a cond (1 : 2 + 1, 2 : 5, *: 10)
 // let a = 1 + 1; let b = a cond (1 : 2 + 1, 2 : 5, *: 10); b
 type CondControlVarExpr struct {
+	ExprScanner
 	controlVarExpr Expr
 	standardExpr   CondExpr
 }
 
 // NewCondControlVarExpr returns a new CondControlVarExpr.
-func NewCondControlVarExpr(controlVar Expr, dictExpr Expr, defaultExpr Expr) Expr {
-	return &CondControlVarExpr{controlVar, CondExpr{dictExpr, defaultExpr, func(condition Value, local Scope) bool {
+func NewCondControlVarExpr(scanner parser.Scanner, controlVar Expr, dictExpr Expr, defaultExpr Expr) Expr {
+	return &CondControlVarExpr{ExprScanner{scanner}, controlVar, CondExpr{ExprScanner{scanner}, dictExpr, defaultExpr, func(condition Value, local Scope) bool {
 		controlVarVal, has := local.Get("controlVarVal")
 		if !has {
 			return false

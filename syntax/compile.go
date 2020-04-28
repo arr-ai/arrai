@@ -257,7 +257,7 @@ func (pc ParseContext) compileCond(c ast.Children) rel.Expr {
 	entryExprs := pc.compileDictEntryExprs(c)
 	if entryExprs != nil {
 		// Generates type DictExpr always to make sure it is easy to do Eval, only process type DictExpr.
-		result = rel.NewDictExpr(false, true, entryExprs...)
+		result = rel.NewDictExpr(c.(ast.One).Node.Scanner(), false, true, entryExprs...)
 	} else {
 		result = rel.NewDict(false)
 	}
@@ -276,20 +276,13 @@ func (pc ParseContext) compileCond(c ast.Children) rel.Expr {
 	}
 
 	if fNode := c.(ast.One).Node.One("f"); fNode != nil {
-<<<<<<< HEAD
 		fExpr = pc.CompileExpr(fNode.(ast.Branch))
 	}
 
 	if controlVarExpr != nil {
-		result = rel.NewCondControlVarExpr(controlVarExpr, result, fExpr)
+		result = rel.NewCondControlVarExpr(c.(ast.One).Node.Scanner(), controlVarExpr, result, fExpr)
 	} else {
-		result = rel.NewCondExpr(result, fExpr)
-=======
-		f := pc.CompileExpr(fNode.(ast.Branch))
-		result = rel.NewCondExpr(fNode.(ast.Branch).Scanner(), result, f)
-	} else {
-		result = rel.NewCondExpr(c.(ast.One).Node.Scanner(), result, nil)
->>>>>>> master
+		result = rel.NewCondExpr(c.(ast.One).Node.Scanner(), result, fExpr)
 	}
 
 	return result
@@ -372,7 +365,7 @@ func (pc ParseContext) compileSet(c ast.Children) rel.Expr {
 func (pc ParseContext) compileDict(c ast.Children) rel.Expr {
 	entryExprs := pc.compileDictEntryExprs(c)
 	if entryExprs != nil {
-		return rel.NewDictExpr(false, false, entryExprs...)
+		return rel.NewDictExpr(c.(ast.One).Node.Scanner(), false, false, entryExprs...)
 	}
 
 	return rel.NewDict(false)
@@ -392,11 +385,7 @@ func (pc ParseContext) compileDictEntryExprs(c ast.Children) []rel.DictEntryTupl
 					valueExpr := valueExprs[i]
 					entryExprs = append(entryExprs, rel.NewDictEntryTupleExpr(keys.Scanner(), keyExpr, valueExpr))
 				}
-<<<<<<< HEAD
 				return entryExprs
-=======
-				return rel.NewDictExpr(values.Scanner(), false, entryExprs...)
->>>>>>> master
 			}
 		}
 		panic("mismatch between dict keys and values")

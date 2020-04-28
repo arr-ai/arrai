@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+
+	"github.com/arr-ai/wbnf/parser"
 )
 
 // CondExpr returns the tuple applied to a function, the expression looks like:
@@ -18,7 +20,7 @@ type CondExpr struct {
 }
 
 // NewCondExpr returns a new CondExpr.
-func NewCondExpr(dict Expr, defaultExpr Expr) Expr {
+func NewCondExpr(scanner parser.Scanner, dict Expr, defaultExpr Expr) Expr {
 	return &CondExpr{ExprScanner{scanner}, dict, defaultExpr, func(condition Value, local Scope) bool {
 		return condition.IsTrue()
 	}}
