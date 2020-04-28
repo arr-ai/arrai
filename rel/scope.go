@@ -84,6 +84,12 @@ func (s Scope) With(name string, expr Expr) Scope {
 	return Scope{s.m.With(name, expr)}
 }
 
+// Without returns a new scope with with all the old bindings except the ones
+// that correspond to the provided names.
+func (s Scope) Without(name ...string) Scope {
+	return Scope{s.m.Without(frozen.NewSetFromStrings(name...))}
+}
+
 func (s Scope) Update(t Scope) Scope {
 	return Scope{m: s.m.Update(t.m)}
 }
