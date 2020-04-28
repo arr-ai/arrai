@@ -144,7 +144,7 @@ func (s *shellInstance) parseCmd(line string, l *readline.Instance) error {
 		}
 	}
 	if len(s.collector.lines) != 0 {
-		l.SetPrompt("@: ")
+		l.SetPrompt(" > ")
 	}
 	return nil
 }
