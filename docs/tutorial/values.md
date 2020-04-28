@@ -151,6 +151,14 @@ why both are available in arr.ai? The following idiomatic example might help.
 @> {"dog": (legs: 4, sound: "bark"), "cat": (legs: 4, sound: "meow")}
 ```
 
+A good way to think about the distinction is that the attributes of a tuple are
+typically known at the time the code is written, while the keys of a dictionary
+are not. Tuples represent structures with a known shape, while dictionaries hold
+collections keyed by some value.
+
+Dictionaries are actually functions. The keys are the allowable input parameters
+and the value for each key is what the function returns when passed that key.
+
 ### Sequence types with offsets
 
 Since strings, array, etc., are simply sets of tuples, what happens if they
