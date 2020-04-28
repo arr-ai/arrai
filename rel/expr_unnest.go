@@ -3,18 +3,20 @@ package rel
 import (
 	"fmt"
 
+	"github.com/arr-ai/wbnf/parser"
 	"github.com/go-errors/errors"
 )
 
 // UnnestExpr returns the relation with names grouped into a nested relation.
 type UnnestExpr struct {
+	ExprScanner
 	lhs  Expr
 	attr string
 }
 
 // NewUnnestExpr returns a new UnnestExpr.
-func NewUnnestExpr(lhs Expr, attr string) Expr {
-	return &UnnestExpr{lhs, attr}
+func NewUnnestExpr(scanner parser.Scanner, lhs Expr, attr string) Expr {
+	return &UnnestExpr{ExprScanner{scanner}, lhs, attr}
 }
 
 // LHS returns the LHS of the UnnestExpr.
@@ -36,10 +38,10 @@ func (e *UnnestExpr) String() string {
 func (e *UnnestExpr) Eval(local Scope) (Value, error) {
 	value, err := e.lhs.Eval(local)
 	if err != nil {
-		return nil, err
+		return nil, wrapContext(err, e)
 	}
 	if set, ok := value.(Set); ok {
 		return Unnest(set, e.attr), nil
 	}
-	return nil, errors.Errorf("unnest not applicable to %T", value)
+	return nil, wrapContext(errors.Errorf("unnest not applicable to %T", value), e)
 }

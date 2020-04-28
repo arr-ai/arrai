@@ -12,13 +12,14 @@ import (
 // The keyword cond is more unusual, therefore less likely to be chosen as a regular name,
 // and avoids accidental comparisons with the switch statement in other languages.
 type CondExpr struct {
+	ExprScanner
 	dicExpr, defaultExpr Expr
 	validValidation      func(condition Value, local Scope) bool // Valid condition validation.
 }
 
 // NewCondExpr returns a new CondExpr.
 func NewCondExpr(dict Expr, defaultExpr Expr) Expr {
-	return &CondExpr{dict, defaultExpr, func(condition Value, local Scope) bool {
+	return &CondExpr{ExprScanner{scanner}, dict, defaultExpr, func(condition Value, local Scope) bool {
 		return condition.IsTrue()
 	}}
 }
@@ -58,7 +59,7 @@ func (e *CondExpr) Eval(local Scope) (Value, error) {
 			tempExpr := expr
 			cond, err := tempExpr.at.Eval(local)
 			if err != nil {
-				return nil, err
+				return nil, wrapContext(err, e)
 			}
 
 			if cond != nil && e.validValidation(cond, local) {
@@ -75,13 +76,13 @@ func (e *CondExpr) Eval(local Scope) (Value, error) {
 		finalCond = e.defaultExpr
 	} else {
 		// trueCond == nil && e.defaultCond == nil
-		return nil, errors.New("it expects one valid condition or default condition '*':valueExpression, " +
-			"but actually there is not any valid condition or default condition '*':valueExpression in cond expression")
+		return nil, wrapContext(errors.New("it expects one valid condition or default condition '*':valueExpression, "+
+			"but actually there is not any valid condition or default condition '*':valueExpression in cond expression"), e)
 	}
 
 	value, err := finalCond.Eval(local)
 	if err != nil {
-		return nil, err
+		return nil, wrapContext(err, e)
 	}
 	return value, nil
 }

@@ -5,6 +5,7 @@ import (
 	"reflect"
 
 	"github.com/arr-ai/hash"
+	"github.com/arr-ai/wbnf/parser"
 )
 
 // BytesByteTuple represents a tuple of the form (@: at, @byte: byteval).
@@ -70,6 +71,11 @@ func (t BytesByteTuple) String() string {
 // Eval returns the tuple.
 func (t BytesByteTuple) Eval(local Scope) (Value, error) {
 	return t, nil
+}
+
+// Scanner returns the scanner of BytesByteTuple.
+func (t BytesByteTuple) Scanner() parser.Scanner {
+	return *parser.NewScanner("")
 }
 
 var bytesByteTupleKind = registerKind(304, reflect.TypeOf((*BytesByteTuple)(nil)))

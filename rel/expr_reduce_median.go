@@ -3,6 +3,7 @@ package rel
 import (
 	"container/heap"
 
+	"github.com/arr-ai/wbnf/parser"
 	"github.com/pkg/errors"
 )
 
@@ -24,13 +25,13 @@ func (h *float64Heap) Pop() interface{} {
 }
 
 // NewMedianExpr evaluates to the median of expr over all elements in a.
-func NewMedianExpr(a, b Expr) Expr {
+func NewMedianExpr(scanner parser.Scanner, a, b Expr) Expr {
 	type Agg struct {
 		h float64Heap
 		n int
 	}
 	return NewReduceExpr(
-		a, ExprAsFunction(b), "%s min ???",
+		scanner, a, ExprAsFunction(b), "%s min ???",
 		func(s Set) (interface{}, error) {
 			if n := s.Count(); n > 0 {
 				return Agg{h: make(float64Heap, 0, n/2+2), n: n}, nil

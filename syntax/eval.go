@@ -1,6 +1,8 @@
 package syntax
 
-import "github.com/arr-ai/arrai/rel"
+import (
+	"github.com/arr-ai/arrai/rel"
+)
 
 func EvaluateExpr(path, source string) (rel.Value, error) {
 	expr, err := Compile(path, source)

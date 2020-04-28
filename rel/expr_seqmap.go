@@ -3,18 +3,20 @@ package rel
 import (
 	"fmt"
 
+	"github.com/arr-ai/wbnf/parser"
 	"github.com/go-errors/errors"
 )
 
 // SequenceMapExpr returns the tuple applied to a function.
 type SequenceMapExpr struct {
+	ExprScanner
 	lhs Expr
 	fn  *Function
 }
 
 // NewAngleArrowExpr returns a new AtArrowExpr.
-func NewSequenceMapExpr(lhs Expr, fn Expr) Expr {
-	return &SequenceMapExpr{lhs, ExprAsFunction(fn)}
+func NewSequenceMapExpr(scanner parser.Scanner, lhs Expr, fn Expr) Expr {
+	return &SequenceMapExpr{ExprScanner{scanner}, lhs, ExprAsFunction(fn)}
 }
 
 // LHS returns the LHS of the AtArrowExpr.
@@ -36,7 +38,7 @@ func (e *SequenceMapExpr) String() string {
 func (e *SequenceMapExpr) Eval(local Scope) (Value, error) {
 	value, err := e.lhs.Eval(local)
 	if err != nil {
-		return nil, err
+		return nil, wrapContext(err, e)
 	}
 	// TODO: implement directly for String, Array and Dict.
 	if set, ok := value.(Set); ok {
@@ -48,11 +50,11 @@ func (e *SequenceMapExpr) Eval(local Scope) (Value, error) {
 			item, _ := t.Get(attr)
 			v, err := e.fn.body.Eval(local.With(e.fn.arg, item))
 			if err != nil {
-				return nil, err
+				return nil, wrapContext(err, e)
 			}
 			values = append(values, NewTuple(Attr{"@", pos}, Attr{attr, v}))
 		}
 		return NewSet(values...), nil
 	}
-	return nil, errors.Errorf(">> not applicable to %T", value)
+	return nil, wrapContext(errors.Errorf(">> not applicable to %T", value), e)
 }

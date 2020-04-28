@@ -3,11 +3,13 @@ package rel
 import (
 	"fmt"
 
+	"github.com/arr-ai/wbnf/parser"
 	"github.com/pkg/errors"
 )
 
 // ReduceExpr represents a range of operators.
 type ReduceExpr struct {
+	ExprScanner
 	a      Expr
 	f      *Function
 	format string
@@ -17,7 +19,7 @@ type ReduceExpr struct {
 }
 
 // NewReduceExpr evaluates a reduce f, given a set lhs.
-func NewReduceExpr(
+func NewReduceExpr(scanner parser.Scanner,
 	a Expr,
 	f *Function,
 	format string,
@@ -25,13 +27,13 @@ func NewReduceExpr(
 	reduce func(acc interface{}, v Value) (interface{}, error),
 	output func(acc interface{}) (Value, error),
 ) Expr {
-	return &ReduceExpr{a, f, format, init, reduce, output}
+	return &ReduceExpr{ExprScanner{scanner}, a, f, format, init, reduce, output}
 }
 
 // NewSumExpr evaluates to the sum of expr over all elements in a.
-func NewSumExpr(a, b Expr) Expr {
+func NewSumExpr(scanner parser.Scanner, a, b Expr) Expr {
 	return NewReduceExpr(
-		a, ExprAsFunction(b), "%s sum ???",
+		scanner, a, ExprAsFunction(b), "%s sum ???",
 		func(s Set) (interface{}, error) {
 			return 0.0, nil
 		},
@@ -49,9 +51,9 @@ func NewSumExpr(a, b Expr) Expr {
 }
 
 // NewMaxExpr evaluates to the max of expr over all elements in a.
-func NewMaxExpr(a, b Expr) Expr {
+func NewMaxExpr(scanner parser.Scanner, a, b Expr) Expr {
 	return NewReduceExpr(
-		a, ExprAsFunction(b), "%s max ???",
+		scanner, a, ExprAsFunction(b), "%s max ???",
 		func(s Set) (interface{}, error) {
 			if s.IsTrue() {
 				return nil, nil
@@ -74,13 +76,13 @@ func NewMaxExpr(a, b Expr) Expr {
 }
 
 // NewMeanExpr evaluates to the mean of expr over all elements in a.
-func NewMeanExpr(a, b Expr) Expr {
+func NewMeanExpr(scanner parser.Scanner, a, b Expr) Expr {
 	type Agg struct {
 		sum float64
 		n   int
 	}
 	return NewReduceExpr(
-		a, ExprAsFunction(b), "%s mean ???",
+		scanner, a, ExprAsFunction(b), "%s mean ???",
 		func(s Set) (interface{}, error) {
 			if n := s.Count(); n > 0 {
 				return Agg{n: n}, nil
@@ -105,9 +107,9 @@ func NewMeanExpr(a, b Expr) Expr {
 }
 
 // NewMinExpr evaluates to the min of expr over all elements in a.
-func NewMinExpr(a, b Expr) Expr {
+func NewMinExpr(scanner parser.Scanner, a, b Expr) Expr {
 	return NewReduceExpr(
-		a, ExprAsFunction(b), "%s min ???",
+		scanner, a, ExprAsFunction(b), "%s min ???",
 		func(s Set) (interface{}, error) {
 			if s.IsTrue() {
 				return nil, nil
@@ -138,21 +140,21 @@ func (e *ReduceExpr) String() string {
 func (e *ReduceExpr) Eval(local Scope) (Value, error) {
 	a, err := e.a.Eval(local)
 	if err != nil {
-		return nil, err
+		return nil, wrapContext(err, e)
 	}
 	if s, ok := a.(Set); ok {
 		acc, err := e.init(s)
 		if err != nil {
-			return nil, err
+			return nil, wrapContext(err, e)
 		}
 		for i := s.Enumerator(); i.MoveNext(); {
 			b, err := e.f.Call(i.Current(), local)
 			if err != nil {
-				return nil, err
+				return nil, wrapContext(err, e)
 			}
 			acc, err = e.reduce(acc, b)
 			if err != nil {
-				return nil, err
+				return nil, wrapContext(err, e)
 			}
 		}
 		return e.output(acc)

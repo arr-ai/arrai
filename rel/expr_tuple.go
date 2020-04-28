@@ -3,17 +3,19 @@ package rel
 import (
 	"bytes"
 
+	"github.com/arr-ai/wbnf/parser"
 	"github.com/go-errors/errors"
 )
 
 // AttrExpr represents a single name:expr in a TupleExpr.
 type AttrExpr struct {
+	ExprScanner
 	name string
 	expr Expr
 }
 
 // NewAttrExpr constructs a new AttrExpr from the given arguments.
-func NewAttrExpr(name string, expr Expr) (AttrExpr, error) {
+func NewAttrExpr(scanner parser.Scanner, name string, expr Expr) (AttrExpr, error) {
 	isWildcard := false
 	if dot, ok := expr.(*DotExpr); ok {
 		if dot.Attr() == "*" {
@@ -24,11 +26,11 @@ func NewAttrExpr(name string, expr Expr) (AttrExpr, error) {
 	if isWildcard != (name == "*") {
 		return AttrExpr{}, errors.Errorf("Wildcard attr cannot have a name")
 	}
-	return AttrExpr{name, expr}, nil
+	return AttrExpr{ExprScanner{scanner}, name, expr}, nil
 }
 
-func MustNewAttrExpr(name string, expr Expr) AttrExpr {
-	attrExpr, err := NewAttrExpr(name, expr)
+func MustNewAttrExpr(scanner parser.Scanner, name string, expr Expr) AttrExpr {
+	attrExpr, err := NewAttrExpr(scanner, name, expr)
 	if err != nil {
 		panic(err)
 	}
@@ -36,8 +38,8 @@ func MustNewAttrExpr(name string, expr Expr) AttrExpr {
 }
 
 // NewWildcardExpr constructs a new wildcard AttrExpr.
-func NewWildcardExpr(lhs Expr) AttrExpr {
-	return AttrExpr{"*", lhs}
+func NewWildcardExpr(scanner parser.Scanner, lhs Expr) AttrExpr {
+	return AttrExpr{ExprScanner{scanner}, "*", lhs}
 }
 
 // IsWildcard returns true iff the AttrExpr is a wildcard expression.
@@ -79,12 +81,13 @@ func (e *AttrExpr) Apply(
 
 // TupleExpr returns a set from a slice of Exprs.
 type TupleExpr struct {
+	ExprScanner
 	attrs   []AttrExpr
 	attrMap map[string]Expr
 }
 
 // NewTupleExpr returns a new TupleExpr.
-func NewTupleExpr(attrs ...AttrExpr) Expr {
+func NewTupleExpr(scanner parser.Scanner, attrs ...AttrExpr) Expr {
 	attrValues := make([]Attr, len(attrs))
 	for i, attr := range attrs {
 		if value, ok := attr.expr.(Value); ok {
@@ -94,14 +97,14 @@ func NewTupleExpr(attrs ...AttrExpr) Expr {
 			for _, attr := range attrs {
 				attrMap[attr.name] = attr.expr
 			}
-			return &TupleExpr{attrs, attrMap}
+			return &TupleExpr{ExprScanner{scanner}, attrs, attrMap}
 		}
 	}
 	return NewTuple(attrValues...)
 }
 
 // NewTupleExprFromMap returns a new TupleExpr from a map[string]Expr.
-func NewTupleExprFromMap(attrMap map[string]Expr) Expr {
+func NewTupleExprFromMap(scanner parser.Scanner, attrMap map[string]Expr) Expr {
 	attrValues := make([]Attr, len(attrMap))
 	i := 0
 	for name, expr := range attrMap {
@@ -112,10 +115,10 @@ func NewTupleExprFromMap(attrMap map[string]Expr) Expr {
 			attrs := make([]AttrExpr, len(attrMap))
 			i := 0
 			for name, expr := range attrMap {
-				attrs[i] = AttrExpr{name, expr}
+				attrs[i] = AttrExpr{ExprScanner{scanner}, name, expr}
 				i++
 			}
-			return &TupleExpr{attrs, attrMap}
+			return &TupleExpr{ExprScanner{scanner}, attrs, attrMap}
 		}
 	}
 	return NewTuple(attrValues...)
@@ -152,11 +155,11 @@ func (e *TupleExpr) String() string {
 // Eval returns the subject
 func (e *TupleExpr) Eval(local Scope) (Value, error) {
 	tuple := EmptyTuple
+	var err error
 	for _, attr := range e.attrs {
-		var err error
 		tuple, err = attr.Apply(local, tuple)
 		if err != nil {
-			return nil, err
+			return nil, wrapContext(err, e)
 		}
 	}
 	// TODO: Construct new tuple directly
