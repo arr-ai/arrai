@@ -94,4 +94,13 @@ func TestIsBalanced(t *testing.T) {
 
 	c.appendLine("\"")
 	assert.True(t, c.isBalanced())
+	c.reset()
+
+	c.appendLine(`let f = \x \y x + y; f(3, 4)`)
+	assert.True(t, c.isBalanced())
+	c.reset()
+
+	c.appendLine(`let f = \x \y`)
+	assert.False(t, c.isBalanced())
+	c.reset()
 }
