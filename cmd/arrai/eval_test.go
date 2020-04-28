@@ -74,6 +74,7 @@ func TestEvalCondExpr(t *testing.T) {
 func TestEvalCondWithControlVar(t *testing.T) {
 	t.Parallel()
 	// Control var conditions
+	assertEvalOutputs(t, `1`, `let a = 1; a cond (1 :1, 2 :2)`)
 	assertEvalOutputs(t, `1`, `let a = 1; a cond (1 :1, 2 :2, *:1 + 2)`)
 	assertEvalOutputs(t, `11`, `let a = 1; a cond (1 :1 + 10, 2 : 2, *:1 + 2)`)
 	assertEvalOutputs(t, `3`, `let a = 1; a cond (2 :2, *:1 + 2)`)
