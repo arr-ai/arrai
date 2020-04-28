@@ -130,8 +130,7 @@ func newShellInstance(c *lineCollector, initialScope rel.Scope) *shellInstance {
 }
 
 func (s *shellInstance) parseCmd(line string, l *readline.Instance) error {
-	line = strings.TrimSpace(line)
-	if line != "" {
+	if line = strings.TrimSpace(line); line != "" {
 		s.collector.appendLine(line)
 	}
 	if len(s.collector.lines) != 0 && s.collector.isBalanced() {
