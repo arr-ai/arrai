@@ -2,18 +2,21 @@ package rel
 
 import (
 	"fmt"
+
+	"github.com/arr-ai/wbnf/parser"
 )
 
 // IfElseExpr returns the tuple applied to a function.
 // Deprecated: IfElseExpr will be removed, it should use CondExpr instead.
 type IfElseExpr struct {
+	ExprScanner
 	ifTrue, cond, ifFalse Expr
 }
 
 // NewIfElseExpr returns a new IfElseExpr.
 // Deprecated: NewIfElseExpr will be removed, it should use NewCondExpr instead.
-func NewIfElseExpr(ifTrue, cond, ifFalse Expr) Expr {
-	return &IfElseExpr{ifTrue, cond, ifFalse}
+func NewIfElseExpr(scanner parser.Scanner, ifTrue, cond, ifFalse Expr) Expr {
+	return &IfElseExpr{ExprScanner{scanner}, ifTrue, cond, ifFalse}
 }
 
 // LHS returns the LHS of the IfElseExpr.
@@ -40,7 +43,7 @@ func (e *IfElseExpr) String() string {
 func (e *IfElseExpr) Eval(local Scope) (Value, error) {
 	cond, err := e.cond.Eval(local)
 	if err != nil {
-		return nil, err
+		return nil, wrapContext(err, e)
 	}
 	if cond.IsTrue() {
 		return e.ifTrue.Eval(local)

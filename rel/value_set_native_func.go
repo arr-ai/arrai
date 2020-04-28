@@ -4,6 +4,7 @@ import (
 	"reflect"
 
 	"github.com/arr-ai/hash"
+	"github.com/arr-ai/wbnf/parser"
 )
 
 // NativeFunction represents a binary relation uniquely mapping inputs to outputs.
@@ -58,6 +59,11 @@ func (f *NativeFunction) String() string {
 // Eval returns the Value
 func (f *NativeFunction) Eval(local Scope) (Value, error) {
 	return f, nil
+}
+
+// Scanner returns the scanner of NativeFunction.
+func (f *NativeFunction) Scanner() parser.Scanner {
+	return *parser.NewScanner("")
 }
 
 var nativeFunctionKind = registerKind(203, reflect.TypeOf(NativeFunction{}))

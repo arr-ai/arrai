@@ -3,33 +3,35 @@ package rel
 import (
 	"fmt"
 
+	"github.com/arr-ai/wbnf/parser"
 	"github.com/go-errors/errors"
 )
 
 // OffsetExpr is an expression which offsets the provided array by the
 // provided offset
 type OffsetExpr struct {
+	ExprScanner
 	offset, array Expr
 }
 
 // NewOffsetExpr returns a new OffsetExpr
-func NewOffsetExpr(n, s Expr) Expr {
-	return &OffsetExpr{n, s}
+func NewOffsetExpr(scanner parser.Scanner, n, s Expr) Expr {
+	return &OffsetExpr{ExprScanner{scanner}, n, s}
 }
 
 func (o *OffsetExpr) Eval(local Scope) (Value, error) {
 	offset, err := o.offset.Eval(local)
 	if err != nil {
-		return nil, err
+		return nil, wrapContext(err, o)
 	}
 	_, isNumber := offset.(Number)
 	if !isNumber {
-		return nil, errors.Errorf("\\ not applicable to %T", offset)
+		return nil, wrapContext(errors.Errorf("\\ not applicable to %T", offset), o)
 	}
 
 	array, err := o.array.Eval(local)
 	if err != nil {
-		return nil, err
+		return nil, wrapContext(err, o)
 	}
 	switch a := array.(type) {
 	case Array:
@@ -39,7 +41,7 @@ func (o *OffsetExpr) Eval(local Scope) (Value, error) {
 	case String:
 		return NewOffsetString(a.s, a.offset+int(offset.(Number))), nil
 	}
-	return nil, errors.Errorf("\\ not applicable to %T", array)
+	return nil, wrapContext(errors.Errorf("\\ not applicable to %T", array), o)
 }
 
 func (o *OffsetExpr) String() string {

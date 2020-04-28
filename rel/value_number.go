@@ -6,6 +6,7 @@ import (
 	"unsafe"
 
 	"github.com/arr-ai/hash"
+	"github.com/arr-ai/wbnf/parser"
 )
 
 // Number is a number.
@@ -69,6 +70,11 @@ func (n Number) String() string {
 // Eval returns the number.
 func (n Number) Eval(_ Scope) (Value, error) {
 	return n, nil
+}
+
+// Scanner returns the scanner of Number.
+func (n Number) Scanner() parser.Scanner {
+	return *parser.NewScanner("")
 }
 
 var numberKind = registerKind(100, reflect.TypeOf(Number(0)))

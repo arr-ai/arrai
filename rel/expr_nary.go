@@ -3,18 +3,21 @@ package rel
 import (
 	"fmt"
 	"strings"
+
+	"github.com/arr-ai/wbnf/parser"
 )
 
 type CompareFunc func(a, b Value) bool
 
 // CompareExpr represents a range of operators.
 type CompareExpr struct {
+	ExprScanner
 	args  []Expr
 	comps []CompareFunc
 	ops   []string
 }
 
-func NewCompareExpr(args []Expr, comps []CompareFunc, ops []string) CompareExpr {
+func NewCompareExpr(scanner parser.Scanner, args []Expr, comps []CompareFunc, ops []string) CompareExpr {
 	return CompareExpr{args: args, comps: comps, ops: ops}
 }
 
@@ -33,12 +36,12 @@ func (e CompareExpr) String() string {
 func (e CompareExpr) Eval(local Scope) (Value, error) {
 	lhs, err := e.args[0].Eval(local)
 	if err != nil {
-		return nil, err
+		return nil, wrapContext(err, e)
 	}
 	for i, arg := range e.args[1:] {
 		rhs, err := arg.Eval(local)
 		if err != nil {
-			return nil, err
+			return nil, wrapContext(err, e)
 		}
 		if !e.comps[i](lhs, rhs) {
 			return False, nil
