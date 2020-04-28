@@ -24,7 +24,7 @@ var shellCommand = &cli.Command{
 	Action:  shell,
 }
 
-func tryEval(line string) (_ rel.Value, err error) {
+func tryEval(line string, scope rel.Scope) (_ rel.Value, err error) {
 	defer func() {
 		if i := recover(); i != nil {
 			if i, is := i.(error); is {
@@ -34,7 +34,7 @@ func tryEval(line string) (_ rel.Value, err error) {
 			}
 		}
 	}()
-	return syntax.EvaluateExpr("", line)
+	return syntax.EvalWithScope("", line, scope)
 }
 
 type autoCompleter struct {
@@ -101,7 +101,7 @@ func shell(c *cli.Context) error {
 		panic(err)
 	}
 	defer l.Close()
-	collector := newLineCollector()
+	sh := newShellInstance(newLineCollector(), rel.EmptyScope)
 	for {
 		line, err := l.Readline()
 		if err != nil {
@@ -113,24 +113,49 @@ func shell(c *cli.Context) error {
 			}
 			panic(err)
 		}
-		line = strings.TrimSpace(line)
-		if line != "" {
-			collector.appendLine(line)
-		}
-		if len(collector.lines) != 0 && collector.isBalanced() {
-			value, err := tryEval(strings.Join(collector.lines, "\n"))
-			if err != nil {
-				log.Error(ctx, err)
-			} else {
-				fmt.Fprintf(os.Stdout, "%s\n", rel.Repr(value))
-			}
-			l.SetPrompt("@> ")
-			collector.reset()
-		}
-		if len(collector.lines) != 0 {
-			l.SetPrompt("@: ")
+		if err = sh.parseCmd(line, l); err != nil {
+			log.Error(ctx, err)
 		}
 	}
+}
+
+type shellInstance struct {
+	collector *lineCollector
+	scope     rel.Scope
+	cmds      map[string]shellCmd
+}
+
+func newShellInstance(c *lineCollector, initialScope rel.Scope) *shellInstance {
+	return &shellInstance{c, initialScope, initCommands()}
+}
+
+func (s *shellInstance) parseCmd(line string, l *readline.Instance) error {
+	if line = strings.TrimSpace(line); line != "" {
+		s.collector.appendLine(line)
+	}
+	if len(s.collector.lines) != 0 && s.collector.isBalanced() {
+		l.SetPrompt("@> ")
+		lines := strings.Join(s.collector.lines, "\n")
+		s.collector.reset()
+		if isCommand(lines) {
+			return tryRunCommand(lines, s)
+		} else if _, err := shellEval(lines, s.scope); err != nil {
+			return err
+		}
+	}
+	if len(s.collector.lines) != 0 {
+		l.SetPrompt("@: ")
+	}
+	return nil
+}
+
+func shellEval(lines string, scope rel.Scope) (rel.Value, error) {
+	value, err := tryEval(lines, scope)
+	if err != nil {
+		return nil, err
+	}
+	fmt.Fprintf(os.Stdout, "%s\n", rel.Repr(value))
+	return value, nil
 }
 
 type lineCollector struct {
