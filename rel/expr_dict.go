@@ -15,13 +15,16 @@ type DictExpr struct {
 }
 
 // NewDictExpr returns a new DictExpr from pairs.
-func NewDictExpr(scanner parser.Scanner, allowDupKeys bool, entryExprs ...DictEntryTupleExpr) Expr {
+func NewDictExpr(scanner parser.Scanner,
+	allowDupKeys bool, dictExprAlways bool, entryExprs ...DictEntryTupleExpr) Expr {
 	entries := make([]DictEntryTuple, 0, len(entryExprs))
 	for _, expr := range entryExprs {
-		if at, ok := expr.at.(Value); ok {
-			if value, ok := expr.value.(Value); ok {
-				entries = append(entries, NewDictEntryTuple(at, value))
-				continue
+		if !dictExprAlways {
+			if at, ok := expr.at.(Value); ok {
+				if value, ok := expr.value.(Value); ok {
+					entries = append(entries, NewDictEntryTuple(at, value))
+					continue
+				}
 			}
 		}
 		return DictExpr{entryExprs: entryExprs, allowDupKeys: allowDupKeys}

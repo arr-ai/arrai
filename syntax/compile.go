@@ -30,6 +30,7 @@ const NoPath = "\000"
 
 var loggingOnce sync.Once
 
+// Compile compiles source string.
 func Compile(filepath, source string) (_ rel.Expr, err error) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -253,14 +254,35 @@ func (pc ParseContext) compileIf(b ast.Branch, c ast.Children) rel.Expr {
 
 func (pc ParseContext) compileCond(c ast.Children) rel.Expr {
 	// arrai eval 'cond (1 > 0:1, 2 > 3:2, *:10)'
-	result := pc.compileDict(c)
-
-	// TODO: pass arrai src expression to NewCondExpr, and include it in error messages which can help end user more.
-	if fNode := c.(ast.One).Node.One("f"); fNode != nil {
-		f := pc.CompileExpr(fNode.(ast.Branch))
-		result = rel.NewCondExpr(fNode.(ast.Branch).Scanner(), result, f)
+	var result rel.Expr
+	entryExprs := pc.compileDictEntryExprs(c)
+	if entryExprs != nil {
+		// Generates type DictExpr always to make sure it is easy to do Eval, only process type DictExpr.
+		result = rel.NewDictExpr(c.(ast.One).Node.Scanner(), false, true, entryExprs...)
 	} else {
-		result = rel.NewCondExpr(c.(ast.One).Node.Scanner(), result, nil)
+		result = rel.NewDict(false)
+	}
+
+	var controlVarExpr, fExpr rel.Expr
+
+	if cNode := c.(ast.One).Node; cNode != nil {
+		// Only get IDENT or control_var as current grammar
+		if children, has := cNode.(ast.Branch)["IDENT"]; has {
+			controlVarExpr = pc.compileIdent(children)
+		}
+		if children, has := cNode.(ast.Branch)["control_var"]; has {
+			controlVarExpr = pc.compileExpr(children)
+		}
+	}
+
+	if fNode := c.(ast.One).Node.One("f"); fNode != nil {
+		fExpr = pc.CompileExpr(fNode.(ast.Branch))
+	}
+
+	if controlVarExpr != nil {
+		result = rel.NewCondControlVarExpr(c.(ast.One).Node.Scanner(), controlVarExpr, result, fExpr)
+	} else {
+		result = rel.NewCondExpr(c.(ast.One).Node.Scanner(), result, fExpr)
 	}
 
 	return result
@@ -341,6 +363,15 @@ func (pc ParseContext) compileSet(c ast.Children) rel.Expr {
 }
 
 func (pc ParseContext) compileDict(c ast.Children) rel.Expr {
+	entryExprs := pc.compileDictEntryExprs(c)
+	if entryExprs != nil {
+		return rel.NewDictExpr(c.(ast.One).Node.Scanner(), false, false, entryExprs...)
+	}
+
+	return rel.NewDict(false)
+}
+
+func (pc ParseContext) compileDictEntryExprs(c ast.Children) []rel.DictEntryTupleExpr {
 	// C* "{" C* dict=((key=@ ":" value=@):",",?) "}" C*
 	keys := c.(ast.One).Node.(ast.Branch)["key"]
 	values := c.(ast.One).Node.(ast.Branch)["value"]
@@ -354,12 +385,12 @@ func (pc ParseContext) compileDict(c ast.Children) rel.Expr {
 					valueExpr := valueExprs[i]
 					entryExprs = append(entryExprs, rel.NewDictEntryTupleExpr(keys.Scanner(), keyExpr, valueExpr))
 				}
-				return rel.NewDictExpr(values.Scanner(), false, entryExprs...)
+				return entryExprs
 			}
 		}
 		panic("mismatch between dict keys and values")
 	}
-	return rel.NewDict(false)
+	return nil
 }
 
 func (pc ParseContext) compileArray(c ast.Children) rel.Expr {

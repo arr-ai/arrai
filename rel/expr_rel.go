@@ -65,7 +65,7 @@ func NewRelationExpr(scanner parser.Scanner, names []string, tuples ...[]Expr) (
 		for _, e := range elements {
 			entryExprs = append(entryExprs, e.(DictEntryTupleExpr))
 		}
-		return NewDictExpr(scanner, true, entryExprs...), nil
+		return NewDictExpr(scanner, true, false, entryExprs...), nil
 	}
 	return NewSetExpr(scanner, elements...), nil
 }
