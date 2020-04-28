@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math"
 
+	"github.com/arr-ai/wbnf/parser"
 	"github.com/go-errors/errors"
 )
 
@@ -11,23 +12,24 @@ type binEval func(a, b Value, local Scope) (Value, error)
 
 // BinExpr represents a range of operators.
 type BinExpr struct {
+	ExprScanner
 	a, b   Expr
 	op     string
 	format string
 	eval   binEval
 }
 
-func newBinExpr(a, b Expr, op, format string, eval binEval) Expr {
-	return &BinExpr{a, b, op, format, eval}
+func newBinExpr(scanner parser.Scanner, a, b Expr, op, format string, eval binEval) Expr {
+	return &BinExpr{ExprScanner{scanner}, a, b, op, format, eval}
 }
 
 type valueEval func(a, b Value) Value
 
 // MakeBinValExpr returns a function that creates a binExpr for the given
 // logical operator.
-func MakeBinValExpr(op string, eval valueEval) func(a, b Expr) Expr {
-	return func(a, b Expr) Expr {
-		return newBinExpr(a, b, op, "(%s "+op+" %s)",
+func MakeBinValExpr(op string, eval valueEval) func(scanner parser.Scanner, a, b Expr) Expr {
+	return func(scanner parser.Scanner, a, b Expr) Expr {
+		return newBinExpr(scanner, a, b, op, "(%s "+op+" %s)",
 			func(a, b Value, _ Scope) (Value, error) {
 				return eval(a, b), nil
 			})
@@ -36,8 +38,8 @@ func MakeBinValExpr(op string, eval valueEval) func(a, b Expr) Expr {
 
 type arithEval func(a, b float64) float64
 
-func newArithExpr(a, b Expr, op string, eval arithEval) Expr {
-	return newBinExpr(a, b, op, "(%s "+op+" %s)",
+func newArithExpr(scanner parser.Scanner, a, b Expr, op string, eval arithEval) Expr {
+	return newBinExpr(scanner, a, b, op, "(%s "+op+" %s)",
 		func(a, b Value, _ Scope) (Value, error) {
 			if a, ok := a.(Number); ok {
 				if b, ok := b.(Number); ok {
@@ -71,59 +73,59 @@ func addValues(a, b Value) (Value, error) {
 }
 
 // NewAddExpr evaluates a + b, given two Numbers.
-func NewAddExpr(a, b Expr) Expr {
-	return newBinExpr(a, b, "+", "(%s + %s)",
+func NewAddExpr(scanner parser.Scanner, a, b Expr) Expr {
+	return newBinExpr(scanner, a, b, "+", "(%s + %s)",
 		func(a, b Value, _ Scope) (Value, error) {
 			return addValues(a, b)
 		})
 }
 
 // NewSubExpr evaluates a - b, given two Numbers.
-func NewSubExpr(a, b Expr) Expr {
-	return newArithExpr(a, b, "-", func(a, b float64) float64 { return a - b })
+func NewSubExpr(scanner parser.Scanner, a, b Expr) Expr {
+	return newArithExpr(scanner, a, b, "-", func(a, b float64) float64 { return a - b })
 }
 
 // NewMulExpr evaluates a * b, given two Numbers.
-func NewMulExpr(a, b Expr) Expr {
-	return newArithExpr(a, b, "*", func(a, b float64) float64 { return a * b })
+func NewMulExpr(scanner parser.Scanner, a, b Expr) Expr {
+	return newArithExpr(scanner, a, b, "*", func(a, b float64) float64 { return a * b })
 }
 
 // NewDivExpr evaluates a / b, given two Numbers.
-func NewDivExpr(a, b Expr) Expr {
-	return newArithExpr(a, b, "/", func(a, b float64) float64 { return a / b })
+func NewDivExpr(scanner parser.Scanner, a, b Expr) Expr {
+	return newArithExpr(scanner, a, b, "/", func(a, b float64) float64 { return a / b })
 }
 
 // NewIdivExpr evaluates ⎣a / b⎦, given two Numbers.
-func NewIdivExpr(a, b Expr) Expr {
-	return newArithExpr(a, b, "/", func(a, b float64) float64 {
+func NewIdivExpr(scanner parser.Scanner, a, b Expr) Expr {
+	return newArithExpr(scanner, a, b, "/", func(a, b float64) float64 {
 		return math.Floor(a / b)
 	})
 }
 
 // NewModExpr evaluates a % b, given two Numbers.
-func NewModExpr(a, b Expr) Expr {
-	return newArithExpr(a, b, "%%", func(a, b float64) float64 {
+func NewModExpr(scanner parser.Scanner, a, b Expr) Expr {
+	return newArithExpr(scanner, a, b, "%%", func(a, b float64) float64 {
 		return math.Mod(a, b)
 	})
 }
 
 // NewSubModExpr evaluates a % b, given two Numbers.
-func NewSubModExpr(a, b Expr) Expr {
-	return newArithExpr(a, b, "-%", func(a, b float64) float64 {
+func NewSubModExpr(scanner parser.Scanner, a, b Expr) Expr {
+	return newArithExpr(scanner, a, b, "-%", func(a, b float64) float64 {
 		return a - math.Mod(a, b)
 	})
 }
 
 // NewPowExpr evaluates a to the power of b, given two Numbers.
-func NewPowExpr(a, b Expr) Expr {
-	return newArithExpr(a, b, "^", func(a, b float64) float64 {
+func NewPowExpr(scanner parser.Scanner, a, b Expr) Expr {
+	return newArithExpr(scanner, a, b, "^", func(a, b float64) float64 {
 		return math.Pow(a, b)
 	})
 }
 
 // NewWithExpr evaluates a with b, given a set lhs.
-func NewWithExpr(a, b Expr) Expr {
-	return newBinExpr(a, b, "with", "(%s with %s)",
+func NewWithExpr(scanner parser.Scanner, a, b Expr) Expr {
+	return newBinExpr(scanner, a, b, "with", "(%s with %s)",
 		func(a, b Value, _ Scope) (Value, error) {
 			if x, ok := a.(Set); ok {
 				return x.With(b), nil
@@ -133,8 +135,8 @@ func NewWithExpr(a, b Expr) Expr {
 }
 
 // NewWithoutExpr evaluates a without b, given a set lhs.
-func NewWithoutExpr(a, b Expr) Expr {
-	return newBinExpr(a, b, "without", "(%s without %s)",
+func NewWithoutExpr(scanner parser.Scanner, a, b Expr) Expr {
+	return newBinExpr(scanner, a, b, "without", "(%s without %s)",
 		func(a, b Value, _ Scope) (Value, error) {
 			if x, ok := a.(Set); ok {
 				return x.Without(b), nil
@@ -144,9 +146,9 @@ func NewWithoutExpr(a, b Expr) Expr {
 }
 
 // NewWhereExpr evaluates a where pred, given a set lhs.
-func NewWhereExpr(a, pred Expr) Expr {
+func NewWhereExpr(scanner parser.Scanner, a, pred Expr) Expr {
 	pred = ExprAsFunction(pred)
-	return newBinExpr(a, pred, "where", "(%s where %s)",
+	return newBinExpr(scanner, a, pred, "where", "(%s where %s)",
 		func(a, pred Value, local Scope) (Value, error) {
 			if x, ok := a.(Set); ok {
 				if p, ok := pred.(Closure); ok {
@@ -165,9 +167,9 @@ func NewWhereExpr(a, pred Expr) Expr {
 }
 
 // NewOrderByExpr evaluates a orderby key, given a set lhs, returning an array.
-func NewOrderByExpr(a, key Expr) Expr {
+func NewOrderByExpr(scanner parser.Scanner, a, key Expr) Expr {
 	key = ExprAsFunction(key)
-	return newBinExpr(a, key, "order", "(%s order %s)",
+	return newBinExpr(scanner, a, key, "order", "(%s order %s)",
 		func(a, key Value, local Scope) (Value, error) {
 			if x, ok := a.(Set); ok {
 				if k, ok := key.(Closure); ok {
@@ -190,9 +192,9 @@ func NewOrderByExpr(a, key Expr) Expr {
 }
 
 // NewOrderExpr evaluates a order less, given a set lhs, returning an array.
-func NewOrderExpr(a, key Expr) Expr {
+func NewOrderExpr(scanner parser.Scanner, a, key Expr) Expr {
 	key = ExprAsFunction(key)
-	return newBinExpr(a, key, "order", "(%s order %s)",
+	return newBinExpr(scanner, a, key, "order", "(%s order %s)",
 		func(a, less Value, local Scope) (Value, error) {
 			if x, ok := a.(Set); ok {
 				if l, ok := less.(Closure); ok {
@@ -260,13 +262,13 @@ func Call(a, b Value, local Scope) (Value, error) {
 }
 
 // NewCallExpr evaluates a without b, given a set lhs.
-func NewCallExpr(a, b Expr) Expr {
-	return newBinExpr(a, b, "call", "«%s»(%s)", Call)
+func NewCallExpr(scanner parser.Scanner, a, b Expr) Expr {
+	return newBinExpr(scanner, a, b, "call", "«%s»(%s)", Call)
 }
 
-func NewCallExprCurry(f Expr, args ...Expr) Expr {
+func NewCallExprCurry(scanner parser.Scanner, f Expr, args ...Expr) Expr {
 	for _, arg := range args {
-		f = NewCallExpr(f, arg)
+		f = NewCallExpr(scanner, f, arg)
 	}
 	return f
 }
@@ -290,12 +292,12 @@ func (e *BinExpr) String() string {
 func (e *BinExpr) Eval(local Scope) (Value, error) {
 	a, err := e.a.Eval(local)
 	if err != nil {
-		return nil, err
+		return nil, wrapContext(err, e)
 	}
 
 	b, err := e.b.Eval(local)
 	if err != nil {
-		return nil, err
+		return nil, wrapContext(err, e)
 	}
 
 	return e.eval(a, b, local)

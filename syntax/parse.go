@@ -60,10 +60,8 @@ expr   -> C* amp="&"* @ C* arrow=(
         | C* "{:" C* embed=(grammar=@ ":" subgrammar=%%ast) ":}" C*
         | C* op="\\\\" @ C*
         | C* fn="\\" IDENT @ C*
-        | C* "//" pkg=( dot="."? ("/" name)+
-                      | "." std=IDENT?
-                      | http=/{https?://}? fqdn=name:"." ("/" path=name)*
-                      )
+		| C* "//" pkg=( "{" dot="."? PKGPATH "}" | std=IDENT?
+		)
         | C* "(" tuple=(pairs=(name? ":" v=@):",",?) ")" C*
         | C* "(" @ ")" C*
         | C* let=("let" C* IDENT C* "=" C* @ %%bind C* ";" C* @) C*
@@ -88,6 +86,7 @@ sexpr  -> "${"
 
 ARROW  -> /{:>|=>|>>|orderby|order|where|sum|max|mean|median|min};
 IDENT  -> /{ \. | [$@A-Za-z_][0-9$@A-Za-z_]* };
+PKGPATH -> /{ (?: \\ | [^\\}] )* };
 STR    -> /{ " (?: \\. | [^\\"] )* "
            | ' (?: \\. | [^\\'] )* '
            | ‵ (?: ‵‵  | [^‵  ] )* ‵
@@ -230,11 +229,11 @@ func (pc ParseContext) Parse(s *parser.Scanner) (ast.Branch, error) {
 }
 
 func parseNest(lhs rel.Expr, branch ast.Branch) rel.Expr {
-	attr := branch.One("IDENT").One("").Scanner().String()
+	attr := branch.One("IDENT").One("").Scanner()
 	names := branch["names"].(ast.One).Node.(ast.Branch)["IDENT"].(ast.Many)
 	namestrings := make([]string, len(names))
 	for i, name := range names {
 		namestrings[i] = name.One("").Scanner().String()
 	}
-	return rel.NewNestExpr(lhs, rel.NewNames(namestrings...), attr)
+	return rel.NewNestExpr(attr, lhs, rel.NewNames(namestrings...), attr.String())
 }

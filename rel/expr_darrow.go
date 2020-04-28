@@ -3,18 +3,20 @@ package rel
 import (
 	"fmt"
 
+	"github.com/arr-ai/wbnf/parser"
 	"github.com/go-errors/errors"
 )
 
 // DArrowExpr returns the set applied elementwise to a function.
 type DArrowExpr struct {
+	ExprScanner
 	lhs Expr
 	fn  *Function
 }
 
 // NewDArrowExpr returns a new DArrowExpr.
-func NewMapExpr(lhs Expr, fn Expr) Expr {
-	return &DArrowExpr{lhs, ExprAsFunction(fn)}
+func NewMapExpr(scanner parser.Scanner, lhs Expr, fn Expr) Expr {
+	return &DArrowExpr{ExprScanner{scanner}, lhs, ExprAsFunction(fn)}
 }
 
 // LHS returns the LHS of the DArrowExpr.
@@ -36,18 +38,18 @@ func (e *DArrowExpr) String() string {
 func (e *DArrowExpr) Eval(local Scope) (Value, error) {
 	value, err := e.lhs.Eval(local)
 	if err != nil {
-		return nil, err
+		return nil, wrapContext(err, e)
 	}
 	if set, ok := value.(Set); ok {
 		values := []Value{}
 		for i := set.Enumerator(); i.MoveNext(); {
 			v, err := e.fn.body.Eval(local.With(e.fn.arg, i.Current()))
 			if err != nil {
-				return nil, err
+				return nil, wrapContext(err, e)
 			}
 			values = append(values, v)
 		}
 		return NewSet(values...), nil
 	}
-	return nil, errors.Errorf("=> not applicable to %T: %[1]v", value)
+	return nil, wrapContext(errors.Errorf("=> not applicable to %T: %[1]v", value), e)
 }

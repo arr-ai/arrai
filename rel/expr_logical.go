@@ -1,12 +1,17 @@
 package rel
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/arr-ai/wbnf/parser"
+)
 
 type AndExpr struct {
+	ExprScanner
 	a, b Expr
 }
 
-func NewAndExpr(a, b Expr) Expr {
+func NewAndExpr(scanner parser.Scanner, a, b Expr) Expr {
 	return AndExpr{a: a, b: b}
 }
 
@@ -17,7 +22,7 @@ func (e AndExpr) String() string {
 func (e AndExpr) Eval(local Scope) (Value, error) {
 	a, err := e.a.Eval(local)
 	if err != nil {
-		return nil, err
+		return nil, wrapContext(err, e)
 	}
 	if !a.IsTrue() {
 		return a, nil
@@ -25,17 +30,18 @@ func (e AndExpr) Eval(local Scope) (Value, error) {
 
 	b, err := e.b.Eval(local)
 	if err != nil {
-		return nil, err
+		return nil, wrapContext(err, e)
 	}
 
 	return b, nil
 }
 
 type OrExpr struct {
+	ExprScanner
 	a, b Expr
 }
 
-func NewOrExpr(a, b Expr) Expr {
+func NewOrExpr(scanner parser.Scanner, a, b Expr) Expr {
 	return OrExpr{a: a, b: b}
 }
 

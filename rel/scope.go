@@ -2,6 +2,7 @@ package rel
 
 import (
 	"bytes"
+	"fmt"
 	"sort"
 
 	"github.com/arr-ai/frozen"
@@ -19,7 +20,7 @@ type Scope struct {
 func (s Scope) String() string {
 	var buf bytes.Buffer
 	buf.WriteRune('{')
-	for i, name := range s.orderedNames() {
+	for i, name := range s.OrderedNames() {
 		if i != 0 {
 			buf.WriteString(", ")
 		}
@@ -69,10 +70,24 @@ func (s Scope) Get(name string) (Expr, bool) {
 	return nil, false
 }
 
+// MustGet returns the Expr for the given name or panics if not found.
+func (s Scope) MustGet(name string) Expr {
+	if expr, has := s.Get(name); has {
+		return expr
+	}
+	panic(fmt.Errorf("name not found: %q", name))
+}
+
 // With returns a new scope with all the old bindings and a new or replacement
 // binding for the given name to the given Expr.
 func (s Scope) With(name string, expr Expr) Scope {
 	return Scope{s.m.With(name, expr)}
+}
+
+// Without returns a new scope with with all the old bindings except the ones
+// that correspond to the provided names.
+func (s Scope) Without(name ...string) Scope {
+	return Scope{s.m.Without(frozen.NewSetFromStrings(name...))}
 }
 
 func (s Scope) Update(t Scope) Scope {
@@ -110,8 +125,8 @@ func (s Scope) Enumerator() *ScopeEnumerator {
 	return &ScopeEnumerator{i: s.m.Range()}
 }
 
-// orderedNames returns the names of this tuple in sorted order.
-func (s Scope) orderedNames() []string {
+// OrderedNames returns the names of this tuple in sorted order.
+func (s Scope) OrderedNames() []string {
 	names := s.Names()
 	sort.Strings(names)
 	return names
