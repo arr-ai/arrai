@@ -30,6 +30,7 @@ const NoPath = "\000"
 
 var loggingOnce sync.Once
 
+// Compile compiles source string.
 func Compile(filepath, source string) (_ rel.Expr, err error) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -262,7 +263,6 @@ func (pc ParseContext) compileCond(c ast.Children) rel.Expr {
 		result = rel.NewDict(false)
 	}
 
-	// TODO: pass arrai src expression to NewCondExpr, and include it in error messages which can help end user more.
 	var controlVarExpr, fExpr rel.Expr
 
 	if cNode := c.(ast.One).Node; cNode != nil {
