@@ -230,13 +230,16 @@ func (b Bytes) Call(arg Value) Value {
 	return NewNumber(float64(string(b.b)[i-b.offset]))
 }
 
-func (b Bytes) CallSlice(start, end Value, step int, inclusive bool) Set {
-	indexes := resolveArrayIndexes(start, end, step, b.offset, len(b.b), inclusive)
+func (b Bytes) CallSlice(start, end Value, step int, inclusive bool) (Set, error) {
+	indexes, err := resolveArrayIndexes(start, end, step, b.offset, len(b.b), inclusive)
+	if err != nil {
+		return nil, err
+	}
 	slice := make([]byte, 0, len(indexes))
 	for _, i := range indexes {
 		slice = append(slice, b.b[i-b.offset])
 	}
-	return NewOffsetBytes(slice, b.offset)
+	return NewOffsetBytes(slice, b.offset), nil
 }
 
 func (b Bytes) index(pos int) int {

@@ -49,7 +49,7 @@ expr   -> C* amp="&"* @ C* arrow=(
         > C* (get | @) tail=(
               get
             | call=("("
-                  arg=( range | expr ):",",
+                  arg=( slice | expr ):",",
               ")")
           )* C*
         > C* "{" C* rel=(names tuple=("(" v=@:",", ")"):",",?) "}" C*
@@ -70,7 +70,7 @@ expr   -> C* amp="&"* @ C* arrow=(
         | C* STR C*
         | C* NUM C*;
 nest   -> C* "nest" names IDENT C*;
-range  -> start=expr? ";" end=expr? (";" step=expr)?;
+slice  -> start=expr? ";" end=expr? (";" step=expr)?;
 unnest -> C* "unnest" IDENT C*;
 touch  -> C* ("->*" ("&"? IDENT | STR))+ "(" expr:"," ","? ")" C*;
 get    -> C* dot="." ("&"? IDENT | STR | "*") C*;

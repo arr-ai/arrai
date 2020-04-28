@@ -109,7 +109,7 @@ type Set interface {
 	Map(func(Value) Value) Set
 	Where(func(Value) bool) Set
 	Call(arg Value) Value
-	CallSlice(start, end Value, step int, inclusive bool) Set
+	CallSlice(start, end Value, step int, inclusive bool) (Set, error)
 
 	ArrayEnumerator() (OffsetValueEnumerator, bool)
 }

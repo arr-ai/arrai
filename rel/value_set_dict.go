@@ -8,6 +8,7 @@ import (
 
 	"github.com/arr-ai/frozen"
 	"github.com/arr-ai/wbnf/parser"
+	"github.com/go-errors/errors"
 )
 
 type multipleValues frozen.Set
@@ -275,7 +276,7 @@ func (d Dict) Call(arg Value) Value {
 	}
 }
 
-func (d Dict) CallSlice(start, end Value, step int, inclusive bool) Set {
+func (d Dict) CallSlice(start, end Value, step int, inclusive bool) (Set, error) {
 	allKeys := d.m.Keys().OrderedElements(
 		func(a, b interface{}) bool {
 			return a.(Value).Less(b.(Value))
@@ -290,11 +291,12 @@ func (d Dict) CallSlice(start, end Value, step int, inclusive bool) Set {
 	}
 
 	if len(keys) == 0 {
-		return None
+		return nil, errors.New("dictionary cannot be sliced, it has no numerical keys")
 	}
 
+	min, max := keys[0], keys[len(keys)-1]+1
 	// TODO: apply inclusivity to the undefined end index
-	startIndex, endIndex := keys[0], keys[len(keys)-1]+1
+	startIndex, endIndex := min, max
 
 	if step < 0 {
 		startIndex, endIndex = endIndex, startIndex
@@ -310,28 +312,27 @@ func (d Dict) CallSlice(start, end Value, step int, inclusive bool) Set {
 		if inclusive {
 			val, exists := d.m.Get(Number(startIndex))
 			if !exists {
-				return None
+				return None, nil
 			}
-			return NewArray(NewArrayItemTuple(0, val.(Value)))
+			return NewArray(NewArrayItemTuple(0, val.(Value))), nil
 		}
-		return None
+		return None, nil
 	}
 
 	indexes := getIndexes(startIndex, endIndex, step, inclusive)
 	if len(indexes) == 0 {
-		return None
+		return None, nil
 	}
 
 	array := Array{[]Value{}, 0}
 	for _, i := range indexes {
 		val, exists := d.m.Get(Number(i))
 		if !exists {
-			continue
+			return nil, errors.Errorf("index %d does not exist", i)
 		}
-
 		array = arrayFromDictEntry(val, array)
 	}
-	return array
+	return array, nil
 }
 
 func arrayFromDictEntry(val interface{}, array Array) Array {

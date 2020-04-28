@@ -84,28 +84,30 @@ func (r *RangeData) string() string {
 }
 
 // resolveArrayIndexes returns an array of indexes to get for array.
-func resolveArrayIndexes(start, end Value, step, offset, maxLen int, inclusive bool) []int {
+func resolveArrayIndexes(start, end Value, step, offset, maxLen int, inclusive bool) ([]int, error) {
 	if maxLen == 0 {
-		return []int{}
+		return []int{}, errors.New("set is empty")
 	}
-	startIndex, endIndex := initDefaultArrayIndex(start, end, offset, maxLen+offset, step)
-
+	startIndex, endIndex, err := initDefaultArrayIndex(start, end, offset, maxLen+offset, step)
+	if err != nil {
+		return []int{}, err
+	}
 	if startIndex == endIndex {
 		if inclusive {
-			return []int{startIndex}
+			return []int{startIndex}, nil
 		}
-		return []int{}
+		return []int{}, nil
 	}
 
-	return getIndexes(startIndex, endIndex, step, inclusive)
+	return getIndexes(startIndex, endIndex, step, inclusive), nil
 }
 
 // initDefaultArrayIndex initialize the start and end values for arrays.
-func initDefaultArrayIndex(start, end Value, minLen, maxLen, step int) (startIndex int, endIndex int) {
+func initDefaultArrayIndex(start, end Value, minLen, maxLen, step int) (startIndex int, endIndex int, err error) {
 	if start != nil {
-		startIndex = resolveIndex(int(start.(Number)), minLen, maxLen)
-		if startIndex == maxLen {
-			startIndex--
+		startIndex = int(start.(Number))
+		if startIndex < minLen || startIndex > maxLen-1 {
+			return 0, 0, outOfRangeError(startIndex)
 		}
 	} else {
 		if step > 0 {
@@ -116,7 +118,10 @@ func initDefaultArrayIndex(start, end Value, minLen, maxLen, step int) (startInd
 	}
 
 	if end != nil {
-		endIndex = resolveIndex(int(end.(Number)), minLen, maxLen)
+		endIndex = int(end.(Number))
+		if endIndex < minLen || endIndex > maxLen-1 {
+			return 0, 0, outOfRangeError(endIndex)
+		}
 	} else {
 		// TODO: apply inclusivity to the undefined end index
 		if step > 0 {
@@ -126,19 +131,6 @@ func initDefaultArrayIndex(start, end Value, minLen, maxLen, step int) (startInd
 		}
 	}
 	return
-}
-
-// resolveIndex solves the edge cases of index values.
-func resolveIndex(i, minVal, maxVal int) int {
-	if i > maxVal {
-		return maxVal
-	} else if i < 0 {
-		if -i > maxVal {
-			return minVal
-		}
-		return maxVal + i
-	}
-	return i
 }
 
 // getIndexes returns a range of numbers between start and end with the provided step.
@@ -170,4 +162,8 @@ func getIndexes(start, end, step int, inclusive bool) []int {
 // isValidRange checks whether start, end, and step are valid values.
 func isValidRange(start, end, step int) bool {
 	return step != 0 && ((start > end && step < 0) || (start < end && step > 0))
+}
+
+func outOfRangeError(i int) error {
+	return errors.Errorf("%d is out of range", i)
 }

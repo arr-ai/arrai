@@ -307,7 +307,7 @@ func (pc ParseContext) compileCallGet(b ast.Branch) rel.Expr {
 					result = rel.NewCallExpr(call.Scanner(), result, pc.CompileExpr(expr.(ast.Branch)))
 					continue
 				}
-				result = rel.NewSliceExpr(result, pc.compileRangeData(arg.One("range").(ast.Branch)))
+				result = rel.NewSliceExpr(call.Scanner(), result, pc.compileRangeData(arg.One("slice").(ast.Branch)))
 			}
 		}
 		get(part.One("get"))

@@ -1,10 +1,6 @@
 # Slicing
 
-Most sets in arrai can be sliced with the slice expression.
-
-The slicing expression can be used by putting the expression as an argument to a call.
-
-The syntax of the slicing expression is as follows:
+Functions (which includes strings, arrays, etc.) can be called using slice syntax, The syntax is as follows:
 
 ```text
 someSet(optionalLowerBoundExpr;optionalUpperBoundExpr;optionalStepSizeExpr)

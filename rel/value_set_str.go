@@ -223,13 +223,16 @@ func (s String) Call(arg Value) Value {
 	return NewNumber(float64(string(s.s)[i-s.offset]))
 }
 
-func (s String) CallSlice(start, end Value, step int, inclusive bool) Set {
-	indexes := resolveArrayIndexes(start, end, step, s.offset, len(s.s), inclusive)
+func (s String) CallSlice(start, end Value, step int, inclusive bool) (Set, error) {
+	indexes, err := resolveArrayIndexes(start, end, step, s.offset, len(s.s), inclusive)
+	if err != nil {
+		return nil, err
+	}
 	slice := make([]rune, 0, len(indexes))
 	for _, i := range indexes {
 		slice = append(slice, s.s[i-s.offset])
 	}
-	return NewOffsetString(slice, s.offset)
+	return NewOffsetString(slice, s.offset), nil
 }
 
 func (s String) index(pos int) int {

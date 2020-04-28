@@ -2,6 +2,7 @@ package rel
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"reflect"
 	"sort"
@@ -342,9 +343,10 @@ func (s GenericSet) Call(arg Value) Value {
 	return nil
 }
 
-func (s GenericSet) CallSlice(start, end Value, step int, inclusive bool) Set {
+func (s GenericSet) CallSlice(start, end Value, step int, inclusive bool) (Set, error) {
+	// TODO: error
 	if s.set.Count() == 0 {
-		return None
+		return None, errors.New("set is empty")
 	}
 	i := s.Enumerator()
 	i.MoveNext()

@@ -3,17 +3,21 @@ package rel
 import (
 	"fmt"
 	"strings"
+
+	"github.com/arr-ai/wbnf/parser"
+	"github.com/go-errors/errors"
 )
 
 // SliceExpr is an expression that evaluates to a slice of the setToSlice.
 type SliceExpr struct {
+	ExprScanner
 	setToSlice Expr
 	dataRange  *RangeData
 }
 
 // NewSliceExpr returns a SliceExpr
-func NewSliceExpr(setToSlice Expr, dataRange *RangeData) SliceExpr {
-	return SliceExpr{setToSlice, dataRange}
+func NewSliceExpr(scanner parser.Scanner, setToSlice Expr, dataRange *RangeData) SliceExpr {
+	return SliceExpr{ExprScanner{scanner}, setToSlice, dataRange}
 }
 
 // Eval evaluates SliceExpr to the slice of the set.
@@ -23,13 +27,16 @@ func (s SliceExpr) Eval(local Scope) (Value, error) {
 		return nil, err
 	}
 	start, end, step := data.start, data.end, int(data.step.(Number))
+	if step == 0 {
+		return nil, errors.New("step cannot be 0")
+	}
 
 	set, err := s.setToSlice.Eval(local)
 	if err != nil {
 		return nil, err
 	}
 
-	return set.(Set).CallSlice(start, end, step, data.isInclusive()), nil
+	return set.(Set).CallSlice(start, end, step, data.isInclusive())
 }
 
 func (s SliceExpr) String() string {
