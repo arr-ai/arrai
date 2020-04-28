@@ -65,7 +65,7 @@ $ ai
 ```bash
 arrai eval '41 + 1'
 ```
-
+Run `arrai help` or `arrai help <command>` for more information.
 <!-- TODO: Uncomment once this works again.
 ### Transform a stream of values
 
