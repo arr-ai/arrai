@@ -102,5 +102,4 @@ func TestIsBalanced(t *testing.T) {
 
 	c.appendLine(`let f = \x \y`)
 	assert.False(t, c.isBalanced())
-	c.reset()
 }
