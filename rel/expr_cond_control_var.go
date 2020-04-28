@@ -18,13 +18,14 @@ type CondControlVarExpr struct {
 
 // NewCondControlVarExpr returns a new CondControlVarExpr.
 func NewCondControlVarExpr(scanner parser.Scanner, controlVar Expr, dictExpr Expr, defaultExpr Expr) Expr {
-	return &CondControlVarExpr{ExprScanner{scanner}, controlVar, CondExpr{ExprScanner{scanner}, dictExpr, defaultExpr, func(condition Value, local Scope) bool {
-		controlVarVal, has := local.Get("controlVarVal")
-		if !has {
-			return false
-		}
-		return condition.Equal(controlVarVal)
-	}}}
+	return &CondControlVarExpr{ExprScanner{scanner}, controlVar,
+		CondExpr{ExprScanner{scanner}, dictExpr, defaultExpr, func(condition Value, local Scope) bool {
+			controlVarVal, has := local.Get("controlVarVal")
+			if !has {
+				return false
+			}
+			return condition.Equal(controlVarVal)
+		}}}
 }
 
 // String returns a string representation of the expression.
