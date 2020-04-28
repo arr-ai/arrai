@@ -2,6 +2,8 @@ package rel
 
 import (
 	"reflect"
+
+	"github.com/arr-ai/wbnf/parser"
 )
 
 // StringCharAttr is the standard name for the value-attr of a character tuple.
@@ -102,6 +104,11 @@ func (s String) String() string {
 // Eval returns the string.
 func (s String) Eval(_ Scope) (Value, error) {
 	return s, nil
+}
+
+// Scanner returns the scanner of String.
+func (s String) Scanner() parser.Scanner {
+	return *parser.NewScanner("")
 }
 
 var stringKind = registerKind(204, reflect.TypeOf(String{}))

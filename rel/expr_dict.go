@@ -3,16 +3,19 @@ package rel
 import (
 	"bytes"
 	"fmt"
+
+	"github.com/arr-ai/wbnf/parser"
 )
 
 // DictExpr represents an expression that yields a dict.
 type DictExpr struct {
+	ExprScanner
 	entryExprs   []DictEntryTupleExpr
 	allowDupKeys bool
 }
 
 // NewDictExpr returns a new DictExpr from pairs.
-func NewDictExpr(allowDupKeys bool, entryExprs ...DictEntryTupleExpr) Expr {
+func NewDictExpr(scanner parser.Scanner, allowDupKeys bool, entryExprs ...DictEntryTupleExpr) Expr {
 	entries := make([]DictEntryTuple, 0, len(entryExprs))
 	for _, expr := range entryExprs {
 		if at, ok := expr.at.(Value); ok {
@@ -46,11 +49,11 @@ func (e DictExpr) Eval(local Scope) (Value, error) {
 	for _, expr := range e.entryExprs {
 		at, err := expr.at.Eval(local)
 		if err != nil {
-			return nil, err
+			return nil, wrapContext(err, e)
 		}
 		value, err := expr.value.Eval(local)
 		if err != nil {
-			return nil, err
+			return nil, wrapContext(err, e)
 		}
 		entryExprs = append(entryExprs, NewDictEntryTuple(at, value))
 	}

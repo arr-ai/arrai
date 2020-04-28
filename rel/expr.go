@@ -1,5 +1,11 @@
 package rel
 
+import (
+	"fmt"
+
+	"github.com/arr-ai/wbnf/parser"
+)
+
 // LHSExpr represents any Expr that has a LHS component.
 type LHSExpr interface {
 	LHS() Expr
@@ -15,4 +21,17 @@ func GetStringValue(expr Expr) (string, bool) {
 		}
 	}
 	return "", false
+}
+
+type ExprScanner struct {
+	Src parser.Scanner
+}
+
+// Scanner returns the scanner
+func (e ExprScanner) Scanner() parser.Scanner {
+	return e.Src
+}
+
+func wrapContext(err error, expr Expr) error {
+	return fmt.Errorf("%s\n%s", err.Error(), expr.Scanner().Context(parser.DefaultLimit))
 }

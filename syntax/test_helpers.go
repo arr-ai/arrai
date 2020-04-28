@@ -1,6 +1,7 @@
 package syntax
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/arr-ai/arrai/rel"
@@ -79,7 +80,7 @@ func AssertCodeErrors(t *testing.T, code, errString string) bool {
 	if assert.NoError(t, err, "parsing code: %s", code) {
 		codeExpr := pc.CompileExpr(ast)
 		_, err := codeExpr.Eval(rel.EmptyScope)
-		assert.EqualError(t, err, errString)
+		assert.EqualError(t, errors.New(err.Error()[:len(errString)]), errString)
 	}
 	return false
 }

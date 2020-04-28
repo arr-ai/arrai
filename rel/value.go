@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/arr-ai/frozen"
+	"github.com/arr-ai/wbnf/parser"
 	"github.com/go-errors/errors"
 )
 
@@ -14,6 +15,8 @@ type Expr interface {
 
 	// Eval evaluates the expr in a given scope.
 	Eval(local Scope) (Value, error)
+
+	Scanner() parser.Scanner
 }
 
 // Value represents any arr.ai value.

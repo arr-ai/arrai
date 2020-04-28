@@ -3,6 +3,7 @@ package rel
 import (
 	"testing"
 
+	"github.com/arr-ai/wbnf/parser"
 	"github.com/go-errors/errors"
 	"github.com/stretchr/testify/assert"
 )
@@ -18,6 +19,7 @@ func TestOffsetExprArray(t *testing.T) {
 			NewNumber(float64(3)),
 		),
 		NewOffsetExpr(
+			*parser.NewScanner(""),
 			NewNumber(float64(5)),
 			NewArray(
 				NewNumber(float64(1)),
@@ -35,6 +37,7 @@ func TestOffsetExprArray(t *testing.T) {
 			NewNumber(float64(3)),
 		),
 		NewOffsetExpr(
+			*parser.NewScanner(""),
 			NewNumber(float64(-5)),
 			NewOffsetArray(
 				2,
@@ -52,6 +55,7 @@ func TestOffsetExprArray(t *testing.T) {
 			NewNumber(float64(3)),
 		),
 		NewOffsetExpr(
+			*parser.NewScanner(""),
 			NewNumber(float64(0)),
 			NewArray(
 				NewNumber(float64(1)),
@@ -71,6 +75,7 @@ func TestOffsetExprBytes(t *testing.T) {
 			10,
 		),
 		NewOffsetExpr(
+			*parser.NewScanner(""),
 			NewNumber(float64(10)),
 			NewBytes([]byte("random string")),
 		),
@@ -79,6 +84,7 @@ func TestOffsetExprBytes(t *testing.T) {
 	AssertExprsEvalToSameValue(t,
 		NewOffsetBytes([]byte("random string"), -12),
 		NewOffsetExpr(
+			*parser.NewScanner(""),
 			NewNumber(float64(-6)),
 			NewOffsetBytes([]byte("random string"), -6),
 		),
@@ -87,6 +93,7 @@ func TestOffsetExprBytes(t *testing.T) {
 	AssertExprsEvalToSameValue(t,
 		NewOffsetBytes([]byte("random string"), 2),
 		NewOffsetExpr(
+			*parser.NewScanner(""),
 			NewNumber(float64(0)),
 			NewOffsetBytes([]byte("random string"), 2),
 		),
@@ -102,6 +109,7 @@ func TestOffsetExprString(t *testing.T) {
 			3,
 		),
 		NewOffsetExpr(
+			*parser.NewScanner(""),
 			NewNumber(float64(3)),
 			NewString([]rune("random string")),
 		),
@@ -110,6 +118,7 @@ func TestOffsetExprString(t *testing.T) {
 	AssertExprsEvalToSameValue(t,
 		NewOffsetString([]rune("random string"), -10),
 		NewOffsetExpr(
+			*parser.NewScanner(""),
 			NewNumber(float64(-10)),
 			NewString([]rune("random string")),
 		),
@@ -118,6 +127,7 @@ func TestOffsetExprString(t *testing.T) {
 	AssertExprsEvalToSameValue(t,
 		NewOffsetString([]rune("random string"), -2),
 		NewOffsetExpr(
+			*parser.NewScanner(""),
 			NewNumber(float64(0)),
 			NewOffsetString([]rune("random string"), -2),
 		),
@@ -128,10 +138,14 @@ func TestOffsetExprEvalFail(t *testing.T) {
 	t.Parallel()
 
 	// None in LHS instead of a Number
-	_, err := NewOffsetExpr(None, None).Eval(EmptyScope)
-	assert.EqualError(t, err, errors.Errorf("\\ not applicable to %T", None).Error())
+	_, err := NewOffsetExpr(
+		*parser.NewScanner(""), None, None).Eval(EmptyScope)
+	expected := errors.Errorf("\\ not applicable to %T", None).Error()
+	assert.EqualError(t, errors.New(err.Error()[:len(expected)]), expected)
 
 	// Randomg set in RHS instead of an Array
-	_, err = NewOffsetExpr(Number(float64(0)), NewSet(Number(float64(0)))).Eval(EmptyScope)
-	assert.EqualError(t, err, errors.Errorf("\\ not applicable to %T", NewSet(Number(float64(0)))).Error())
+	_, err = NewOffsetExpr(
+		*parser.NewScanner(""), Number(float64(0)), NewSet(Number(float64(0)))).Eval(EmptyScope)
+	expected = errors.Errorf("\\ not applicable to %T", NewSet(Number(float64(0)))).Error()
+	assert.EqualError(t, errors.New(err.Error()[:len(expected)]), expected)
 }
