@@ -379,7 +379,7 @@ library:
    transform non-recursive functions into recursive ones, e.g.:
 
    ```arrai
-   let factorial = //fn.fix \factorial \n 1 if n < 2 else n * factorial(n - 1);
+   let factorial = //fn.fix(\factorial (\n (1 if n < 2 else n * factorial(n - 1))));
    factorial(6)
    ```
 
