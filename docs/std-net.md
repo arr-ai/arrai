@@ -1,11 +1,11 @@
 # net library
 
-## http
+## net.http
 
-### get
+### `net.http.get(url <: string) <: tuple`
 
-`//.net.http.get(url)` sends a GET request to the provided URl and returns
-a tuple that represents the response.
+Sends a GET request to the provided `url` and returns a tuple that represents
+the response.
 
 The schema of the response is a tuple, as follows:
 ```
@@ -20,11 +20,11 @@ The schema of the response is a tuple, as follows:
 )
 ```
 
-#### example
+Usage:
 
 Expression:
 ```
-//.net.http.get("https://raw.githubusercontent.com/arr-ai/arrai/cf1326f7b61178e3e98aff30540e10cb73449445/Makefile")
+//net.http.get("https://raw.githubusercontent.com/arr-ai/arrai/cf1326f7b61178e3e98aff30540e10cb73449445/Makefile")
 ```
 
 Result:

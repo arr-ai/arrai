@@ -1,12 +1,18 @@
-# strconv library
+# eval
 
-`eval` has one function which is `value` which takes a string respresenting an
-expression and returns an arrai value.
+`eval` contains functions that converts raw string into a built-in arrai values.
+
+## `eval.value(s <: string) <: any`
+
+It takes in a string `s` which represents an arrai value and converts them to
+arrai values.
 
 However, `eval` is only supported to evaluate simple values e.g. numbers,
 tuples, sets, arrays, strings etc.
 
-## Example
+Usage:
 
-- `//.eval.value("'true'") = true`
-- `//.eval.value("(test: 'test', number:123)") = (test: 'test', number:123)`
+| example | equals |
+|:-|:-|
+|`//eval.value("'true'")` | `true` |
+|`//eval.value("(test: 'test', number:123)")` | `(test: 'test', number:123)` |

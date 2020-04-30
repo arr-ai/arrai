@@ -1,38 +1,71 @@
-# //.os library
+# os
 
-## args
+`os` contains functions that are related to the operating system.
 
-`//.os.args` returns an array of strings representing the arguments provided on
-the command line when running an arrai program. `//.os.args(0)` is the path of
+## `os.args <: array_of_strings`
+
+`//os.args` returns an array of strings representing the arguments provided on
+the command line when running an arrai program. `//os.args(0)` is the path of
 the arr.ai program that was invoked from the command line.
 
-## cwd
+Usage:
 
-`//.os.cwd` returns a string representing the current user directory.
+| example | equals |
+|:-|:-|
+|`//os.args` | `["arg0", "arg1", "arg2", ...]` |
 
-## file
+## `os.cwd <: string`
 
-`//.os.file()` is a function that returns the content of a file represented by a
-filepath in the form of an array of bytes.
+`//os.cwd` returns a string representing the current user directory.
 
-## get_env
+## `os.file(filepath <: string) <: array_of_bytes`
 
-`//.os.get_env()` is a function that returns the environment variable that
-corresponds to the provided key in the form of a string.
+Returns the content of a file located at `filepath` in the form of an array of bytes.
 
-## path_separator
+Usage:
 
-`//.os.path_separator` returns the path separator of the current operating
-system. `/` for UNIX-like machine and `\` for Windows machine. It returns a
-string.
+| example | equals |
+|:-|:-|
+|`//os.file("path/to/file")` | `{ |@, @byte| ... }` |
+|`//os.file("/absolute/path/to/file")` | `{ |@, @byte| ... }` |
 
-## path_list_separator
+## `os.get_env(key <: string) <: string`
 
-`//.os.path_list_separator` returns the path list separator of the current
-operating system. `:` for UNIX-like machine and `;` for Windows machine. It
-returns a string.
+Returns the environment variable that corresponds to `key` in the form of a `string`.
 
-## stdin
+Usage:
 
-`//.os.stdin` holds all the bytes read from stdin. The bytes are read when
-`//.os.stdin` is accessed for the first time.
+| example | equals |
+|:-|:-|
+| `//os.get_env("KEY")` | `"string_value"` |
+
+## `os.path_separator <: string`
+
+Returns the path separator of the current operating system.
+`/` for UNIX-like machine and `\` for Windows machine. It returns a string.
+
+Usage:
+
+| example | equals |
+|:-|:-|
+| `//os.path_separator` | `"/"` or `"\"` |
+
+## `os.path_list_separator <: string`
+
+Returns the path list separator of the current operating system.
+`:` for UNIX-like machine and `;` for Windows machine. It returns a string.
+
+Usage:
+
+| example | equals |
+|:-|:-|
+| `//os.path_list_separator` | `":"` or `";"` |
+
+## `os.stdin <: array_of_bytes`
+
+`//os.stdin` holds all the bytes read from stdin. The bytes are read when
+`//os.stdin` is accessed for the first time.
+
+| example | equals |
+|:-|:-|
+| `//os.stdin` | `{ |@, @byte| ... }` |
