@@ -7,9 +7,9 @@
 Due to the current implementation of arrai, recursive functions cannot be created
 without the helper function `fix`. It takes the function recursive `f` and returns
 `f` whose recursive nature can now be utilized. For more information, please read
-the [intro](intro.md) in the functions section.
+the functions section in [intro](intro.md).
 
-This function uses the concept of [fixed-point combinator](https://en.wikipedia.org/wiki/Fixed-point_combinator).
+This function uses the concept of a [fixed-point combinator](https://en.wikipedia.org/wiki/Fixed-point_combinator).
 
 Usage:
 
@@ -19,7 +19,7 @@ Usage:
 
 ## `fixt(f <: tuple_of_functions) <: tuple_of_function`
 
-`fixt` is a variant of fix. This allows mutual recursion. For more information, please read the [intro](intro.md) in the functions section.
+`fixt` is a variant of fix. This allows mutual recursion. For more information, please read the functions section in [intro](intro.md).
 
 Usage:
 

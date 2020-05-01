@@ -11,10 +11,9 @@ attributes are the following:
 ### `tar(data <: dict) <: array_of_bytes`
 
 It takes the dictionary `data` and returns an array of bytes representing `data`
-which has been compressed to the `tar` format.
+which have been compressed using the `tar` format.
 
-**Important note**: `data` itself has to be a dictionary whose keys are all
-`string`.
+**Important note**: `data` **must** be a dictionary with all keys of type `string`
 
 Usage:
 
@@ -30,10 +29,9 @@ attributes are the following:
 ### `zip(data <: dict) <: array_of_bytes`
 
 It takes the dictionary `data` and returns an array of bytes representing `data`
-which has been compressed to the `zip` format.
+which have been compressed using the `zip` format.
 
-**Important note**: `data` itself has to be a dictionary whose keys are all
-`string`.
+**Important note**: `data` **must** be a dictionary with all keys of type `string`
 
 Usage:
 
