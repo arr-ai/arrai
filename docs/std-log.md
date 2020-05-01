@@ -1,6 +1,6 @@
 # log
 
-The `log` library contains function for printing values to the
+The `log` library contains functions for printing values to the
 standard output.
 
 ## `print(v <: any) <: any`
