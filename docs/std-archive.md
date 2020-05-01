@@ -1,6 +1,6 @@
 # archive
 
-`archive` library contains helper functions that related to outputting data into
+The `archive` library contains helper functions that related to outputting data into
 certain formats of archive.
 
 ## `tar <: tuple`
