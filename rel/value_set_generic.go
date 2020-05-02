@@ -344,7 +344,6 @@ func (s GenericSet) Call(arg Value) Value {
 }
 
 func (s GenericSet) CallSlice(start, end Value, step int, inclusive bool) (Set, error) {
-	// TODO: error
 	if s.set.Count() == 0 {
 		return None, errors.New("set is empty")
 	}
