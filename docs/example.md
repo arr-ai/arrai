@@ -50,7 +50,9 @@ $ arrai eval '{(a:1, b:2), (a:2, b:3), (a:2, b:4)} where .a!=2'
 {(a:1, b:2)}
 ```
 
-### Conditional operator 
+### Conditional operator
+
+#### Standard Cases
 
 ```bash
 $ arrai eval 'cond ( 2 > 1 : 1, 2 > 3 : 2)'
@@ -85,6 +87,31 @@ $ arrai eval 'let a = cond ( 1 < 2 : 1, 2 > 3 : 2, * : 3);a * 3'
 ```bash
 $ arrai eval 'let a = cond ( 2 < 1 : 1, 2 < 3 : 2, * : 3);a * 3'
 6
+```
+#### Control Var Cases
+```bash
+$ arrai eval 'let a = 1; a cond (1 :1, 2 :2, *:1 + 2)'
+1
+```
+
+```bash
+$ arrai eval 'let a = 1; a cond (1 :1 + 10, 2 : 2, *:1 + 2)'
+11
+```
+
+```bash
+$ arrai eval 'let a = 1; a cond (2 :2, *:1 + 2)'
+3
+```
+
+```bash
+$ arrai eval 'let a = 1; let b = a cond (1 :1, 2 :2, *:1 + 2); b * 100'
+100
+```
+
+```bash
+$ arrai eval 'let a = 1; (a + 1) cond (1 :1, 2 :2, *:1 + 2)'
+2
 ```
 
 <!-- TODO: Uncomment once this works again.

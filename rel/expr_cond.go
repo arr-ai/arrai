@@ -16,11 +16,14 @@ import (
 type CondExpr struct {
 	ExprScanner
 	dicExpr, defaultExpr Expr
+	validValidation      func(condition Value, local Scope) bool // Valid condition validation.
 }
 
 // NewCondExpr returns a new CondExpr.
 func NewCondExpr(scanner parser.Scanner, dict Expr, defaultExpr Expr) Expr {
-	return &CondExpr{ExprScanner{scanner}, dict, defaultExpr}
+	return &CondExpr{ExprScanner{scanner}, dict, defaultExpr, func(condition Value, local Scope) bool {
+		return condition.IsTrue()
+	}}
 }
 
 // String returns a string representation of the expression.
@@ -48,7 +51,7 @@ func (e *CondExpr) String() string {
 	return b.String()
 }
 
-// Eval returns the true condition. It must have only one true condition.
+// Eval returns the value of true condition, or default condition value.
 func (e *CondExpr) Eval(local Scope) (Value, error) {
 	var trueCond *DictEntryTupleExpr
 	// If there is not any valid condition, the condtion defaultExpr will work.
@@ -61,7 +64,7 @@ func (e *CondExpr) Eval(local Scope) (Value, error) {
 				return nil, wrapContext(err, e)
 			}
 
-			if cond != nil && cond.IsTrue() {
+			if cond != nil && e.validValidation(cond, local) {
 				trueCond = &tempExpr
 				break
 			}
@@ -75,8 +78,8 @@ func (e *CondExpr) Eval(local Scope) (Value, error) {
 		finalCond = e.defaultExpr
 	} else {
 		// trueCond == nil && e.defaultCond == nil
-		return nil, wrapContext(errors.New("it expects one true condition or default condition '*':valueExpression, "+
-			"but actually there is not any true condition or default condition '*':valueExpression in cond expression"), e)
+		return nil, wrapContext(errors.New("it expects one valid condition or default condition '*':valueExpression, "+
+			"but actually there is not any valid condition or default condition '*':valueExpression in cond expression"), e)
 	}
 
 	value, err := finalCond.Eval(local)
