@@ -36,7 +36,11 @@ func (s SliceExpr) Eval(local Scope) (Value, error) {
 		return nil, err
 	}
 
-	return set.(Set).CallSlice(start, end, step, data.isInclusive())
+	slice, err := set.(Set).CallSlice(start, end, step, data.isInclusive())
+	if err != nil {
+		return nil, wrapContext(err, s)
+	}
+	return slice, nil
 }
 
 func (s SliceExpr) String() string {

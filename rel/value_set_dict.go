@@ -303,9 +303,15 @@ func (d Dict) CallSlice(start, end Value, step int, inclusive bool) (Set, error)
 	}
 	if start != nil {
 		startIndex = int(start.(Number))
+		if startIndex < min || startIndex > max-1 {
+			return nil, outOfRangeError(startIndex)
+		}
 	}
 	if end != nil {
 		endIndex = int(end.(Number))
+		if endIndex > max || endIndex < min-1 {
+			return nil, outOfRangeError(endIndex)
+		}
 	}
 
 	if startIndex == endIndex {
@@ -328,9 +334,12 @@ func (d Dict) CallSlice(start, end Value, step int, inclusive bool) (Set, error)
 	for _, i := range indexes {
 		val, exists := d.m.Get(Number(i))
 		if !exists {
-			return nil, errors.Errorf("index %d does not exist", i)
+			break
 		}
 		array = arrayFromDictEntry(val, array)
+	}
+	if len(array.values) == 0 {
+		return None, nil
 	}
 	return array, nil
 }

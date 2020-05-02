@@ -10,11 +10,9 @@ As shown above, you can define a slice by defining a lower bound, an upper bound
 You can also define a `stepSize` that is used to define the increment of the numbers from the lower
 bound to the upper bound. `stepSize` defaults to `1` when it is not defined.
 
-Lower bounds may be negative and upper bounds may be larger than the set size. In such cases, the index will wraparound. Refer to the example below.
-
 ## Usages
 
-Only certain types of sets can be used with the slicing expression. These sets are:
+Only certain types of sets can be sliced. These sets are:
 
 1. `Array`
 2. `String`
@@ -35,7 +33,6 @@ Example usage:
 | `[1, 2, 3, 4, 5](3;;-1)` | `[4, 3, 2, 1]` |
 | `[1, 2, 3, 4, 5](;;-1)` | `[5, 4, 3, 2, 1]` |
 
-
 Generic sets (i.e. unindexed sets) or any other expression that does not evaluate to the
 special types of sets will fail the expression.
 
@@ -45,7 +42,7 @@ An example of an unindexed sets is as follows:
 {1, 2, 3, "abc"}
 ```
 
-Since the expression is also an argument, the following expression is also valid
+Since slice is also an argument, the following expression is also valid
 
 ```text
 [1, 2, 3, 4, 5](;;-1, 0)
@@ -58,25 +55,28 @@ this example, it will evaluate to `5`.
 
 #### Default values
 
-Slice expression behaves differently when provided with different expressions.
+Slice operation behaves differently when provided with different expressions.
 
-Lower bound and upper bound are always exclusive. As in it always includes values
-that corresponds to ranges of values from `start` to `end - 1`. This is true for
-all scenarios, whether `start` or `end` are defined or not.
+Lower bound is always inclusive while upper bound is always exclusive. As in it
+always includes values that corresponds to ranges of values from `start` to
+`end - 1`. This is true for all scenarios, whether `start` or `end` are defined or not.
+However, when `end` is not provided, the last element is always included. This is not
+a special case as default value of `end` will include the last element. Refer to the
+explanations below.
 
 When the lower bound, the upper bound, and step are provided, the values will have
 to evaluate to a number as slicing can only be done with number expressions.
-Anything expression with a type other than `Number` will cause the expression
+Any expression with a type other than `Number` will cause the expression
 evaluation to fail with an error message showing which expression does not compile
 to a `Number`.
 
 When `stepSize` is not defined, its value defaults to `1`. If `stepSize` evaluates to `0`,
-it will return an empty set. The value of `stepSize` determines the default value of
+the expression will **fail**. The value of `stepSize` determines the default value of
 `start` and `end`.
 
 When `start` or `end` are defined, the values will be used. However, when the range
 is invalid (i.e `start > end && step > 0` or `start < end && step < 0`), an empty
-set will be returned as the result of the slice expression.
+set will be returned.
 
 When `start` or `end` are not defined, the value of `stepSize` will determine their
 values. The table below shows what the values for `start` and `end` defaults to.
@@ -95,7 +95,7 @@ For example, on `step > 0`:
 | expression | default start | default end |
 |:-|:-|:-|
 | `[1, 2, 3, 4, 5]` | 0 |  5 |
-| `2\"abcde"` | 2 |  7 |
+| `-2\"abcde"` | -2 |  3 |
 | `{1: 10, 2: 20, 3: 30}` | 1 | 4 |
 
 For example, on `step < 0`:
@@ -103,45 +103,43 @@ For example, on `step < 0`:
 | expression | default start | default end |
 |:-|:-|:-|
 | `[1, 2, 3, 4, 5]` | 4 |  -1 |
-| `2\"abcde"` | 6 |  1 |
+| `-2\"abcde"` | 2 |  -3 |
 | `{1: 10, 2: 20, 3: 30}` | 3 | 0 |
 
-#### Negative Index
+#### Out of Range Slices
 
-Slicing in arrai supports slicing to negative index. This can be used in both
-`start` and `end`. `-1` means the last value, `-2` means the second last value,
-`-3` means the third last value, and so on.
+Sometimes the provided slice can contain indexes that are out of range. For
+`Array` or `String`, an invalid slice can contain any indexes that are less than
+the offset or more than the `offset + length`. For `Dictionary`, invalid slice
+can contain any indexes that are less than the smallest key or larger than the
+maximum index. If an invalid slice is being evaluated, the operation will **fail**.
+The following table will show you the allowed range of values for `start` and
+`end`.
 
-For example:
-| expression | equals |
-|:-|:-|
-| `[1, 2, 3, 4, 5](1;-1)` | `[2, 3, 4]` |
-| `[1, 2, 3, 4, 5](-3;-1)` | `[3, 4]` |
-
-#### Invalid Index
-
-Sometimes the provided indexes can be invalid. For `Array` or `String`, an invalid
-index can be any values that are less than the offset or more than the
-`offset + length`. For Dictionary, invalid index simply means index that doesn't
-exist as a key.
-
-Arrai slicing is quite forgiving. In `Array` and `String`, any values less than
-offset are ignored and replaced to the offset value. Any value larger than
-`offset + length` are given the same treatment and replaced to `offset + length`.
-In `Dictionary`, indexes that do not exist in the `Dictionary` will just be ignored.
+| type | allowed start | allowed end |
+|:-|:-|:-|
+| `Array`/`String` | `offset <= start < length + offset` | `offset - 1 <= end <= length + offset` |
+| `Dictionary` | `smallest key <= start <= largest key` | `smallest key - 1 <= end <= largest key + 1` |
 
 #### Dictionary
 
 Slicing in `Dictionary` is quite unique. Slicing in dictionary will always return
-an array of values. However, if the range is invalid or it results in empty values,
-slicing will return an empty `Set`. Also, since slicing only works with numerical
-values (for `start` and `end`), any non-numerical keys will be ignored.
+an array of values. However, if the slice is out of range (like the above) or
+it results in empty values, slicing will return an empty `Set`. Also, since
+slicing only works with numerical values (for `start` and `end`), any
+non-numerical keys will be ignored.
+
+Another important thing to note is that unlike `Array` or `String` it's possible
+for `Dictionary` to have gaps in index (e.g. `keys = [1, 2, 5]`). To handle this
+arrai will only collect the values whose keys are contiguous and ignore the rest.
 
 For example
 
 | expression | equals |
 |:-|:-|
 | `{1: 1, 2: 2, "c": 3, 4: 4}(1;)` | `[1, 2, 4]` |
+| `{1: 1, 2: 2, 4: 4}(1;)` | `[1, 2]` |
+| `{1: 1, 2: 2, 4: 4}(;)` | `[1, 2]` |
 | `{"a": 1, "b": 2, "c": 3, "d": 4}(1;)` | `{}` |
 
 ## Inclusivity **(⛔ NYI)**

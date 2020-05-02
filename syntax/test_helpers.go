@@ -1,7 +1,7 @@
 package syntax
 
 import (
-	"errors"
+	"strings"
 	"testing"
 
 	"github.com/arr-ai/arrai/rel"
@@ -80,7 +80,10 @@ func AssertCodeErrors(t *testing.T, code, errString string) bool {
 	if assert.NoError(t, err, "parsing code: %s", code) {
 		codeExpr := pc.CompileExpr(ast)
 		_, err := codeExpr.Eval(rel.EmptyScope)
-		assert.EqualError(t, errors.New(err.Error()[:len(errString)]), errString)
+		//TODO: quick fix to check error against source context, will need
+		// have proper solution by wrapping everything in context and compare but
+		// there will be a lot of changes
+		assert.True(t, strings.HasPrefix(err.Error(), errString))
 	}
 	return false
 }

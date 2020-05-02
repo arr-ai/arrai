@@ -319,9 +319,9 @@ Arr.ai supports operations on numbers.
 3. Function call:
    1. `[2, 4, 6, 8](2) = 6`, `"hello"(1) = 101`
    2. `{"red": 0.3, "green": 0.5, "blue", 0.2}("green") = 0.5`
-4. Function slice:
-   1. `[1, 1, 2, 3, 5, 8](2:5) = [2, 3, 5]`
-   2. `[1, 2, 3, 4, 5, 6](1:5:2) = [2, 4]`
+4. Function slice (details can be found [here](slicing.md)):
+   1. `[1, 1, 2, 3, 5, 8](2;5) = [2, 3, 5]`
+   2. `[1, 2, 3, 4, 5, 6](1;5;2) = [2, 4]`
 
 ### Binding expressions
 

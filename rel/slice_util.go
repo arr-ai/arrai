@@ -119,7 +119,7 @@ func initDefaultArrayIndex(start, end Value, minLen, maxLen, step int) (startInd
 
 	if end != nil {
 		endIndex = int(end.(Number))
-		if endIndex < minLen || endIndex > maxLen-1 {
+		if endIndex < minLen-1 || endIndex > maxLen {
 			return 0, 0, outOfRangeError(endIndex)
 		}
 	} else {

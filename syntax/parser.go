@@ -34,10 +34,7 @@ expr   -> C* amp="&"* @ C* arrow=(
         > C* (get | @) tail=(
               get
             | call=("("
-                  arg=(
-                      expr (":" end=expr? (":" step=expr)?)?
-                      |     ":" end=expr  (":" step=expr)?
-                  ):",",
+                  arg=( slice | expr ):",",
               ")")
           )* C*
         > C* "{" C* rel=(names tuple=("(" v=@:",", ")"):",",?) "}" C*
@@ -61,6 +58,7 @@ nest   -> C* "nest" names IDENT C*;
 unnest -> C* "unnest" IDENT C*;
 touch  -> C* ("->*" ("&"? IDENT | STR))+ "(" expr:"," ","? ")" C*;
 get    -> C* dot="." ("&"? IDENT | STR | "*") C*;
+slice  -> start=expr? ";" end=expr? (";" step=expr)?;
 names  -> C* "|" C* IDENT:"," C* "|" C*;
 name   -> C* IDENT C* | C* STR C*;
 xstr   -> C* quote=/{\$"\s*} part=( sexpr | fragment=/{(?: \\. | \$[^{"] | [^\\"$] )+} )* '"' C*
@@ -82,4 +80,5 @@ NUM    -> /{ (?: \d+(?:\.\d*)? | \.\d+ ) (?: [Ee][-+]?\d+ )? };
 C      -> /{ # .* $ };
 
 .wrapRE -> /{\s*()\s*};
+
 `), nil)
