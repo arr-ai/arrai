@@ -3,9 +3,9 @@
 The `encoding` library provides functions convert a JSON value into a built-in arrai values.
 The following functions are available by accessing the `//encoding` attribute.
 
-## `encoding.json.decode(json <: string|bytes) <: set`
+## `//encoding.json.decode(json <: string|bytes) <: set`
 
-It takes either a raw `string` or `bytes` that represents a JSON object. `json`
+`decode` takes either a `string` or `bytes` that represents a JSON object. `json`
 is then converted to a built-in arrai value.
 
 Because empty sets are indistinguishable to `""`, `false`, and `[]`, `decode`

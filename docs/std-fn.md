@@ -2,10 +2,10 @@
 
 The `fn` library contains helper functions that are related to arrai `functions`.
 
-## `fix(f <: function) <: function`
+## `//fn.fix(f <: function) <: function`
 
 Due to the current implementation of arrai, recursive functions cannot be created
-without the helper function `fix`. It takes the function recursive `f` and returns
+without the helper function `fix`. `fix` takes the function recursive `f` and returns
 `f` whose recursive nature can now be utilized. For more information, please read
 the functions section in [intro](intro.md).
 
@@ -17,7 +17,7 @@ Usage:
 |:-|:-|
 | `let fib = //fn.fix(\fib (\n (cond (n = 0: 0, n = 1: 1, n > 0: fib(n-1) + fib(n-2), *: 0)))); fib(10)` | `55` |
 
-## `fixt(f <: tuple_of_functions) <: tuple_of_function`
+## `//fn.fixt(f <: tuple_of_functions) <: tuple_of_function`
 
 `fixt` is a variant of fix. This allows mutual recursion. For more information, please read the functions section in [intro](intro.md).
 

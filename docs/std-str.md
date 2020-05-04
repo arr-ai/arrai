@@ -2,9 +2,9 @@
 
 The `str` library contains functions that are used for string manipulations.
 
-## `contains(str <: string, substr <: string) <: bool`
+## `//str.contains(str <: string, substr <: string) <: bool`
 
-Checks whether `substr` is contained in `str`. It returns a
+`contains` checks whether `substr` is contained in `str`. It returns a
 boolean.
 
 Usage:
@@ -14,9 +14,9 @@ Usage:
 | `//str.contains("the full string which has substring", "substring")` | `true` |
 | `//str.contains("just some random sentence", "microwave")` | `{}` which is equal to `false` |
 
-## `sub(s <: string, old <: string, new <: string) <: string`
+## `//str.sub(s <: string, old <: string, new <: string) <: string`
 
-Replaces occurrences of `old` in `s`  with `new`. It returns the modified string.
+`sub` replaces occurrences of `old` in `s`  with `new`. It returns the modified string.
 
 Usage:
 
@@ -25,9 +25,9 @@ Usage:
 | `//str.sub("this is the old string", "old string", "new sentence")` | `"this is the new sentence"` |
 | `//str.sub("just another sentence", "string", "stuff")` | `"just another sentence"` |
 
-## `split(s <: string, delimiter <: string) <: array of string`
+## `//str.split(s <: string, delimiter <: string) <: array of string`
 
-Split the string `s` based on the provided `delimiter`. It returns an array of strings
+`split` splits the string `s` based on the provided `delimiter`. It returns an array of strings
 which are split from the string `s`.
 
 Usage:
@@ -37,9 +37,9 @@ Usage:
 | `//str.split("deliberately adding spaces to demonstrate the split function", " ")` | `["deliberately", "adding", "spaces", "to", "demonstrate", "the", "split", "function"]` |
 | `//str.split("this is just a random sentence", "random stuff")` | `["this is just a random sentence"]` |
 
-## `lower(s <: string) <: string`
+## `//str.lower(s <: string) <: string`
 
-Returns the string `s` with all of the character converted to lowercase.
+`lower` returns the string `s` with all of the character converted to lowercase.
 
 Usage:
 
@@ -49,9 +49,9 @@ Usage:
 | `//str.lower("GENERAL KENOBI WHAT A SURPRISE")` | `"general kenobi what a surprise"` |
 | `//str.lower("123")` | `"123"` |
 
-## `upper(s <: string) <: string`
+## `//str.upper(s <: string) <: string`
 
-Returns the string `s` with all of the character converted to uppercase.
+`upper` returns the string `s` with all of the character converted to uppercase.
 
 Usage:
 
@@ -61,9 +61,9 @@ Usage:
 | `//str.upper("did you ever hear the tragedy of darth plagueis the wise")` | `"DID YOU EVER HEAR THE TRAGEDY OF DARTH PLAGUEIS THE WISE"` |
 | `//str.upper("321")` | `"321"` |
 
-## `title(s: string) <: string`
+## `//str.title(s: string) <: string`
 
-Returns the string `s` with all the first letter of each word delimited by
+`title` returns the string `s` with all the first letter of each word delimited by
 a white space capitalised.
 
 Usage:
@@ -73,9 +73,9 @@ Usage:
 | `//str.title("laser noises pew pew pew")` | `"Laser Noises Pew Pew Pew"` |
 | `//str.title("pew")` | `"Pew"` |
 
-## `has_prefix(s <: string, prefix <: string) <: bool`
+## `//str.has_prefix(s <: string, prefix <: string) <: bool`
 
-Checks whether the string `s` is prefixed by `prefix`. It returns a boolean.
+`has_prefix` checks whether the string `s` is prefixed by `prefix`. It returns a boolean.
 
 Usage:
 
@@ -84,9 +84,9 @@ Usage:
 | `//str.has_prefix("I'm running out of stuff to write", "I'm")` | `true` |
 | `//str.has_prefix("I'm running out of stuff to write", "to write")` | `{}` which is equal to `false` |
 
-## `has_suffix(s <: string, suffix <: string) <: bool`
+## `//str.has_suffix(s <: string, suffix <: string) <: bool`
 
-Checks whether the string `s` is suffixed by `suffix`. It returns a boolean.
+`has_suffix` checks whether the string `s` is suffixed by `suffix`. It returns a boolean.
 
 Usage:
 
@@ -95,9 +95,9 @@ Usage:
 | `//str.has_suffix("I'm running out of stuff to write", "I'm")` | `{}` which is equal to `false` |
 | `//str.has_suffix("I'm running out of stuff to write", "to write")` | `true` |
 
-## `join(s <: array_of_string, delimiter <: string) <: string`
+## `//str.join(s <: array_of_string, delimiter <: string) <: string`
 
-It returns a concatenated string with each member of `s` delimited by `delimiter`
+`join` returns a concatenated string with each member of `s` delimited by `delimiter`
 
 Usage:
 

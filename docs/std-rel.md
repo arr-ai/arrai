@@ -1,10 +1,10 @@
 # rel
 
-The `rel` contains functions for relational operations.
+The `rel` library contains functions for relational operations.
 
-## `union(s <: array_of_sets) <: set`
+## `//rel.union(s <: array_of_sets) <: set`
 
-It takes an array of sets `s` and does a union operation on each member of `s`. It
+`union` takes an array of sets `s` and does a union operation on each member of `s`. It
 returns the unioned sets.
 
 | example | equals |

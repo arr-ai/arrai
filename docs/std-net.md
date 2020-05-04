@@ -4,9 +4,9 @@ The `net` library provides functions for performing network operations.
 
 ## net.http
 
-### `net.http.get(url <: string) <: tuple`
+### `//net.http.get(url <: string) <: tuple`
 
-Sends a GET request to the provided `url` and returns a tuple that represents
+`get` sends a GET request to the provided `url` and returns a tuple that represents
 the response.
 
 The schema of the response is a tuple, as follows:

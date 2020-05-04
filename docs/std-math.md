@@ -3,25 +3,25 @@
 The `math` library contains functions that are used for mathematical
 operations. The library can be accessed by the expression `//math`
 
-## `pi <: number`
+## `//math.pi <: number`
 
-Returns the number pi $\pi$.
+`pi` is the number pi, _π_.
 
 Usage:
 
 `//math.pi`
 
-## `e <: number`
+## `//math.e <: number`
 
-Returns the euler number.
+`e` is the euler number.
 
 Usage:
 
 `//math.e`
 
-## `sin(n <: number) <: number`
+## `//math.sin(n <: number) <: number`
 
-Calculates the sine of the radian `n`.
+`sin` calculates the sine of `n`, which is an angle measured in radians.
 
 Usage:
 
@@ -30,9 +30,9 @@ Usage:
 | `//math.sin(1)` | `0.8414709848078965` |
 | `//math.sin(0)` | `0` |
 
-## `cos(n <: number) <: number`
+## `//math.cos(n <: number) <: number`
 
-Calculates the cosine of the radian `n`.
+`cos` calculates the cosine of `n`, which is an angle measured in radians.
 
 Usage:
 
