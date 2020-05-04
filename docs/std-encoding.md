@@ -1,7 +1,7 @@
 # encoding
 
+The `encoding` library provides functions convert a JSON value into a built-in arrai values.
 The following functions are available by accessing the `//encoding` attribute.
-It contains a function that decodes a JSON value into a built-in arrai values.
 
 ## `encoding.json.decode(json <: string|bytes) <: set`
 

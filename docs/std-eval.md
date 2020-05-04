@@ -1,6 +1,6 @@
 # eval
 
-`eval` contains functions which converts raw string into a built-in arrai values.
+The `eval` contains functions which converts raw string into a built-in arrai values.
 
 ## `eval.value(s <: string) <: any`
 

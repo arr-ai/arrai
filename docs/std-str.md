@@ -1,6 +1,6 @@
 # str
 
-`str` library contains functions that are used for string manipulations.
+The `str` library contains functions that are used for string manipulations.
 
 ## `contains(str <: string, substr <: string) <: bool`
 
@@ -27,8 +27,8 @@ Usage:
 
 ## `split(s <: string, delimiter <: string) <: array of string`
 
-Split the string `s` based on the provided `delimiter`. It returns an array of string
-which are splitted from the string `s`.
+Split the string `s` based on the provided `delimiter`. It returns an array of strings
+which are split from the string `s`.
 
 Usage:
 
@@ -39,7 +39,7 @@ Usage:
 
 ## `lower(s <: string) <: string`
 
-Returns the string `s` except all of the character is converted to its lowercase form.
+Returns the string `s` with all of the character converted to lowercase.
 
 Usage:
 
@@ -51,7 +51,7 @@ Usage:
 
 ## `upper(s <: string) <: string`
 
-Returns the string `s` except all of the character is converted to its uppercase form.
+Returns the string `s` with all of the character converted to uppercase.
 
 Usage:
 
@@ -63,8 +63,8 @@ Usage:
 
 ## `title(s: string) <: string`
 
-Returns the string `s` except all the first letters of each words delimited by
-a white space are capitalized.
+Returns the string `s` with all the first letter of each word delimited by
+a white space capitalised.
 
 Usage:
 
@@ -97,8 +97,7 @@ Usage:
 
 ## `join(s <: array_of_string, delimiter <: string) <: string`
 
-It returns a string which is a concatenated string of each member of `s` delimited
-by the `delimiter`
+It returns a concatenated string with each member of `s` delimited by `delimiter`
 
 Usage:
 

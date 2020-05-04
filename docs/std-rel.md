@@ -1,6 +1,6 @@
 # rel
 
-`rel` contains functions for relational operations.
+The `rel` contains functions for relational operations.
 
 ## `union(s <: array_of_sets) <: set`
 

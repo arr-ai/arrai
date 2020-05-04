@@ -30,7 +30,7 @@ The following functions are available at the root of the standard library.
 
 ### `dict(t <: tuple) -> dict`
 
-Converts the tuple `t` to dictionaries.
+Converts the tuple `t` to a dictionary.
 
 Usage:
 
@@ -41,7 +41,7 @@ Usage:
 
 ### `tuple(d <: dict) -> tuple`
 
-Converts the dictionary `d` to tuples. All keys must be strings. The
+Converts the dictionary `d` to a tuple. All keys must be strings. The
 operation is shallow, so dictionary-structured values won't be converted.
 
 Usage:

@@ -1,5 +1,7 @@
 # net library
 
+The `net` library provides functions for performing network operations.
+
 ## net.http
 
 ### `net.http.get(url <: string) <: tuple`

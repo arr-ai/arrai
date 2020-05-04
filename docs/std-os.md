@@ -1,6 +1,6 @@
 # os
 
-`os` contains functions that are related to the operating system.
+The `os` contains functions that are related to the operating system.
 
 ## `os.args <: array_of_strings`
 
@@ -53,7 +53,7 @@ Usage:
 ## `os.path_list_separator <: string`
 
 Returns the path list separator of the current operating system.
-`:` for UNIX-like machine and `;` for Windows machine. It returns a string.
+`:` for UNIX-like machines and `;` for Windows machines. It returns a string.
 
 Usage:
 

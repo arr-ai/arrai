@@ -1,6 +1,6 @@
 # fn
 
-`fn` library contains helper functions that are related to arrai `functions`.
+The `fn` library contains helper functions that are related to arrai `functions`.
 
 ## `fix(f <: function) <: function`
 
