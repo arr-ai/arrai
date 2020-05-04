@@ -5,7 +5,7 @@ interactive shell.
 
 ## Starting the shell
 
-There are two ways to start the interactive. The first is to use the `arrai i`
+There are two ways to start the interactive shell. The first is to use the `arrai i`
 command.
 
 ```bash
@@ -60,7 +60,7 @@ the following expressions. They will make sense later in the tutorial.)
 ```
 
 Observe that the prompt changes from `@>` to `>` to indicate that it's awaiting
-further input. Here's a more cmomplex example.
+further input. Here's a more complex example.
 
 ```arrai
 @> let v = (x: 1, y: 2, z: 3);
@@ -105,12 +105,12 @@ You may also remove names from the global namespace with `/unset`.
 ```
 
 You may have noticed above that arr.ai has something looking like an assignment
-statement: `let NAME = EXPR;`. You might then be wondering why we even need
+statement: `let NAME = EXPR;`. You may then be wondering why we even need
 `/set`.
 
 This form is known as a let-binding and it is *not* in fact a statement. The
-full form is actually `let NAME = EXPR1; EXPR2` and what it does is associates
-the name `NAME` with the value of `EXPR1` and evaluates `EXPR2` with this
+full form is actually `let NAME = EXPR1; EXPR2`. What it does is associate
+the name `NAME` with the value of `EXPR1` and evaluate `EXPR2` with this
 name-binding in effect. For example, in the following expression:
 
 ```arrai
