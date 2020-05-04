@@ -21,8 +21,7 @@ Usage:
 
 ## `//archive.zip <: tuple`
 
-`zip` returns a tuple that contains functions related to the format `zip`. The
-attributes are the following:
+`zip` is a tuple of functions related to the `zip` format.
 
 ### `//archive.zip.zip(data <: dict) <: array_of_bytes`
 
