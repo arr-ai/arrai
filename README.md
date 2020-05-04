@@ -51,7 +51,11 @@ split      sub        title      upper
 'HELLO'
 ```
 
-Ctrl+D to exit.
+Ctrl+D to exit. or use the `exit` command.
+
+```bash
+@> /exit
+```
 
 On Unix-like platforms, you can use the `ai` shortcut:
 
@@ -132,6 +136,17 @@ from the global scope.
 .:1:1:
 pew INFO
 ```
+
+#### exit
+
+Usage:
+
+```bash
+@> /exit
+```
+
+The `exit` command exits the interactive shell. Alternatively, you can press
+Ctrl+D.
 
 ### Evaluate an expression
 
