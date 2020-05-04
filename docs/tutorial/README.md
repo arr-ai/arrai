@@ -3,7 +3,7 @@
 This tutorial will take you step by step through the arr.ai language. It will be
 light on theory, focusing more on learning by doing. If you want a more
 theoretical introduction to the features of the language, [Introduction to
-Arr.ai](../intro.md) is a good place to start.
+Arr.ai](../README.md) is a good place to start.
 
 The following chapters start with the basics of the language, and develop
 steadily towards the more advanced features.
