@@ -26,15 +26,19 @@ $ ai
 Once you see the `@>` prompt, you can try the code examples in the following
 chapters.
 
+0. [Arr.ai shell basics](shell.md)
 1. [Values](values.md)
-2. (TODO) [Basic arithmetic](arithmetic.md)
-3. (TODO) [Standard library](stdlib.md)
-4. (TODO) [Importing external code and data](import.md)
+2. (TODO) [Name bindings](binding.md)
+3. (TODO) [Basic arithmetic](arithmetic.md)
+4. (TODO) [Functions and function calls](function.md)
 5. (TODO) [Transforms](transforms.md)
-6. (TODO) [Expression strings](exprstr.md)
-7. (TODO) [Templating with expression strings](templating.md)
-8. (TODO) [Grammars](grammars.md)
-9. (TODO) [Macros](macros.md)
+6. (TODO) [Standard library](stdlib.md)
+7. (TODO) [Importing external code and data](import.md)
+8. (TODO) [Transforms](transforms.md)
+9. (TODO) [Expression strings](exprstr.md)
+10. (TODO) [Templating with expression strings](templating.md)
+11. (TODO) [Grammars](grammars.md)
+12. (TODO) [Macros](macros.md)
 
 ## Arr.ai command line
 
