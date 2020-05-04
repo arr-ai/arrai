@@ -60,7 +60,10 @@ $ arrai eval 'cond ( 2 > 1 : 1, 2 > 3 : 2)'
 ```
 Note: Trailing comma is allowed
 ```bash
-$ arrai eval 'cond ( 2 > 1 : 1, 2 > 3 : 2,)'
+$ arrai eval 'cond (
+    2 > 1 : 1,
+    2 > 3 : 2,
+)'
 1
 ```
 
