@@ -37,71 +37,19 @@ func tryEval(line string, scope rel.Scope) (_ rel.Value, err error) {
 	return syntax.EvalWithScope("", line, scope)
 }
 
-type autoCompleter struct {
-	std rel.Tuple
-}
-
-var matchStdPrefixRE = regexp.MustCompile(`//((?:\.\w+)*)(\.?)$`)
-
-func newAutoCompleter() *autoCompleter {
-	return &autoCompleter{
-		std: syntax.StdScope().MustGet(".").(rel.Tuple),
-	}
-}
-
-func (c *autoCompleter) Do(line []rune, pos int) (newLine [][]rune, length int) {
-	s := string(line[:pos])
-	switch {
-	case strings.HasSuffix(s, "///"):
-		return [][]rune{line}, len(line)
-	case strings.HasSuffix(s, "//"):
-		return [][]rune{[]rune("."), []rune("{")}, 0
-	}
-	if m := matchStdPrefixRE.FindStringSubmatch(s); m != nil {
-		t := c.std
-		lastName := ""
-		if m[1] != "" {
-			names := strings.Split(m[1][1:], ".")
-			allNamesButLast := names
-			if m[2] != "." {
-				allNamesButLast = names[:len(names)-1]
-				lastName = names[len(names)-1]
-			}
-			for _, name := range allNamesButLast {
-				if value, has := t.Get(name); has {
-					if u, is := value.(rel.Tuple); is {
-						t = u
-					} else {
-						return
-					}
-				} else {
-					return
-				}
-			}
-		}
-		length = len(lastName)
-		for _, name := range t.Names().OrderedNames() {
-			if strings.HasPrefix(name, lastName) {
-				newLine = append(newLine, []rune(name[length:]))
-			}
-		}
-	}
-	return newLine, length
-}
-
 func shell(c *cli.Context) error {
 	ctx := log.WithConfigs(log.SetVerboseMode(true)).Onto(context.Background())
+	sh := newShellInstance(newLineCollector(), syntax.StdScope())
 	l, err := readline.NewEx(&readline.Config{
 		Prompt:       "@> ",
 		HistoryFile:  os.ExpandEnv("${HOME}/.arrai_history"),
-		AutoComplete: newAutoCompleter(),
+		AutoComplete: sh,
 		EOFPrompt:    "exit",
 	})
 	if err != nil {
 		panic(err)
 	}
 	defer l.Close()
-	sh := newShellInstance(newLineCollector(), rel.EmptyScope)
 	for {
 		line, err := l.Readline()
 		if err != nil {
@@ -147,6 +95,45 @@ func (s *shellInstance) parseCmd(line string, l *readline.Instance) error {
 		l.SetPrompt(" > ")
 	}
 	return nil
+}
+
+func (s *shellInstance) Do(line []rune, pos int) (newLine [][]rune, length int) {
+	l := string(line[:pos])
+	switch {
+	case strings.HasSuffix(l, "///"):
+		return [][]rune{line}, len(line)
+	case strings.HasPrefix(l, "//"):
+		var names []string
+		var lastName string
+		if l == "//" {
+			newLine = append(newLine, []rune("{"))
+			lastName, names = "", []string{}
+		} else {
+			names = strings.Split(l[2:], ".")
+			lastName, names = names[len(names)-1], names[:len(names)-1]
+		}
+
+		t := s.scope.MustGet(".").(rel.Tuple)
+		for _, name := range names {
+			if value, has := t.Get(name); has {
+				if u, is := value.(rel.Tuple); is {
+					t = u
+				} else {
+					return
+				}
+			} else {
+				return
+			}
+		}
+
+		length = len(lastName)
+		for _, name := range t.Names().OrderedNames() {
+			if strings.HasPrefix(name, lastName) {
+				newLine = append(newLine, []rune(name[length:]))
+			}
+		}
+	}
+	return newLine, length
 }
 
 func shellEval(lines string, scope rel.Scope) (rel.Value, error) {
