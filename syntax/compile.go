@@ -169,8 +169,14 @@ func (pc ParseContext) compileLet(c ast.Children) rel.Expr {
 		if err == nil {
 			scanner = s
 		}
+		expr = binops["->"](scanner, expr, rhs)
 	}
-	expr = binops["->"](scanner, expr, rhs)
+	if num := c.(ast.One).Node.One("NUM"); num != nil {
+		if !rhs.(rel.Number).Equal(expr) {
+			panic(fmt.Sprintf("%s doesn't equal to %s", rhs, expr))
+		}
+	}
+
 	return expr
 }
 

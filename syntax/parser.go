@@ -52,7 +52,7 @@ expr   -> C* amp="&"* @ C* arrow=(
         | C* "//" pkg=( "{" dot="."? PKGPATH "}" | std=IDENT?)
         | C* "(" tuple=(pairs=(name? ":" v=@):",",?) ")" C*
         | C* "(" @ ")" C*
-        | C* let=("let" C* IDENT C* "=" C* @ %%bind C* ";" C* @) C*
+        | C* let=("let" C* (NUM | IDENT) C* "=" C* @ %%bind C* ";" C* @) C*
         | C* xstr C*
         | C* IDENT C*
         | C* STR C*
