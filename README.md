@@ -21,7 +21,7 @@ ln -s arrai $(dirname $(which arrai))/ai
 
 ## Learn
 
-Follow the [Arr.ai tutorial](docs/tutorial/tutorial.md) for a step by step guide
+Follow the [Arr.ai tutorial](docs/tutorial/README.md) for a step by step guide
 into the world of arr.ai programming.
 
 See the [Introduction to Arr.ai](docs/intro.md) to learn more about the arr.ai
