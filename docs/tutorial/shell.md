@@ -104,7 +104,7 @@ You may also remove names from the global namespace with `/unset`.
 0.018518518518518517
 ```
 
-You may have noticed above that arr.ai has something looking like an assignment
+You may have noticed above that arr.ai has something that looks like an assignment
 statement: `let NAME = EXPR;`. You may then be wondering why we even need
 `/set`.
 
