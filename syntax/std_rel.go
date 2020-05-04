@@ -9,7 +9,7 @@ func stdRel() rel.Attr {
 		rel.NewNativeFunctionAttr("union", func(v rel.Value) rel.Value {
 			s := v.(rel.Set)
 			sets := make([]rel.Set, 0, s.Count())
-			for e, ok := s.ArrayEnumerator(); ok && e.MoveNext(); {
+			for e := s.Enumerator(); e.MoveNext(); {
 				sets = append(sets, e.Current().(rel.Set))
 			}
 			return rel.NUnion(sets...)
