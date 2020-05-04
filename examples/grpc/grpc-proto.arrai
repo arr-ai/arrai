@@ -16,17 +16,17 @@ let endpoints = app.endpoints where !//str.has_prefix(.@item.name, "enum ");
             message ${.key} {
                 ${.fields >> proto.field(.)::\i}
             }`::\n\i:\n}
-        ${//rel.union(app.types >> proto.imports(.fields))::\i:\n}
+        ${//rel.union((app.types >> proto.imports(.fields)) => .@item)::\i:\n}
         ${app.alias >> $`
             message ${.key} {
                 string alias${.type} = 1;
             }`::}
         ${$`
-            ${//rel.union(endpoints >> (.params >> $`
+            ${//rel.union((endpoints >> (.params >> $`
                 import "${//str.sub(grpc.type(.), ".", "/")}.proto";`
                     if //str.contains(grpc.type(.), "google.protobuf")
                 => .@item
-            ))::\i:\n}
+            )) => .@item)::\i:\n}
             service ${app.name} {
                 ${endpoints >> (proto.endpointInfo(.)).rpcMethod::\i}
             }
