@@ -118,12 +118,10 @@ func (s *shellInstance) Do(line []rune, pos int) (newLine [][]rune, length int) 
 			if value, has := t.Get(name); has {
 				if u, is := value.(rel.Tuple); is {
 					t = u
-				} else {
-					return
+					continue
 				}
-			} else {
-				return
 			}
+			return
 		}
 
 		length = len(lastName)
