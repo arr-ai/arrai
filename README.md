@@ -75,7 +75,7 @@ these commands using the following syntax.
 
 Below are the currently provided commands.
 
-#### set
+#### `/set`
 
 Usage:
 
@@ -113,7 +113,7 @@ Example:
 'pew pew pew'
 ```
 
-#### unset
+#### `/unset`
 
 Usage:
 
@@ -137,7 +137,7 @@ from the global scope.
 pew INFO
 ```
 
-#### exit
+#### `/exit`
 
 Usage:
 

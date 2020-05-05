@@ -3,7 +3,6 @@
 package main
 
 import (
-	"os"
 	"regexp"
 	"strings"
 
@@ -72,6 +71,12 @@ func (uc *unsetCmd) process(line string, shellData *shellInstance) error {
 	return nil
 }
 
+type exitError struct{}
+
+func (exitError) Error() string {
+	return "exiting interactive shell"
+}
+
 type exitCommand struct{}
 
 func (*exitCommand) name() string {
@@ -79,8 +84,7 @@ func (*exitCommand) name() string {
 }
 
 func (ec *exitCommand) process(_ string, _ *shellInstance) error {
-	os.Exit(0)
-	return nil
+	return exitError{}
 }
 
 func initCommands() map[string]shellCmd {

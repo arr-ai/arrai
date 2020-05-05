@@ -61,7 +61,12 @@ func shell(c *cli.Context) error {
 			}
 			panic(err)
 		}
-		if err = sh.parseCmd(line, l); err != nil {
+
+		err = sh.parseCmd(line, l)
+		switch err {
+		case exitError{}:
+			return nil
+		default:
 			log.Error(ctx, err)
 		}
 	}
