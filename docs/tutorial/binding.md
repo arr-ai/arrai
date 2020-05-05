@@ -86,8 +86,8 @@ explore how this special name is normally used.
 
 Functions are defined to take some unknown value and evaluate an expression that
 incorporates that value. The parameter name of a function constitutes the second
-way to bind names. In this case, the reason for the name is necessity. It is how
-the function refers to the argument passed in.
+way to bind names. In this case, the reason for the name (`v` in the example
+below) is necessity. It is how the function refers to the argument passed in.
 
 ```arrai
 @> let length = \v (v.x^2 + v.y^2 + v.z^2)^0.5;
@@ -138,7 +138,7 @@ the potential benefits a bit clearer:
  >     marital_status: "M",
  >     salary: 100000,
  > )
-@> (customer.name, customer.dob, customer.address)
+@> (:customer.name, :customer.dob, :customer.address)
 @> customer -> \. (:.name, :.dob, :.address)
 ```
 
