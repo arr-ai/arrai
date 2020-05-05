@@ -58,6 +58,14 @@ $ arrai eval '{(a:1, b:2), (a:2, b:3), (a:2, b:4)} where .a!=2'
 $ arrai eval 'cond ( 2 > 1 : 1, 2 > 3 : 2)'
 1
 ```
+Note: Trailing comma is allowed
+```bash
+$ arrai eval 'cond (
+    2 > 1 : 1,
+    2 > 3 : 2,
+)'
+1
+```
 
 ```bash
 $ arrai eval 'cond ( 2 > 1 : 1, 2 > 3 : 2, * : 3)'

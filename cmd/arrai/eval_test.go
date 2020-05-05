@@ -38,15 +38,18 @@ func TestEvalComplex(t *testing.T) {
 
 func TestEvalCond(t *testing.T) {
 	t.Parallel()
+	assertEvalOutputs(t, `1`, `cond (1 > 0 : 1, 2 > 3: 2, *:1 + 2,)`)
 	assertEvalOutputs(t, `1`, `cond (1 > 0 : 1, 2 > 3: 2, *:1 + 2)`)
 	assertEvalOutputs(t, `2`, `cond (1 > 2 : 1, 2 < 3: 2, *:1 + 2)`)
 	assertEvalOutputs(t, `3`, `cond (1 > 2 : 1, 2 > 3: 2, *:1 + 2)`)
+	assertEvalOutputs(t, `1`, `cond (1 < 2 : 1,)`)
 	assertEvalOutputs(t, `1`, `cond (1 < 2 : 1)`)
 	assertEvalOutputs(t, `2`, `cond (1 > 2 : 1, 2 < 3: 2)`)
 	assertEvalOutputs(t, `3`, `cond (* : 1 + 2)`)
 	assertEvalOutputs(t, `1`, `cond (1 < 2: 1, * : 1 + 2)`)
 	assertEvalOutputs(t, `3`, `cond (1 > 2: 1, * : 1 + 2)`)
 	assertEvalOutputs(t, `3`, `let a = cond (1 > 2: 1, * : 1 + 2);a`)
+	assertEvalOutputs(t, `3`, `let a = cond (1 > 2: 1, * : 1 + 2,);a`)
 	assertEvalOutputs(t, `1`, `let a = cond (1 < 2: 1, * : 1 + 2);a * 1`)
 	// Multiple true conditions
 	assertEvalOutputs(t, `1`, `cond (1 > 0 : 1, 2 < 3: 2, *:1 + 2)`)
@@ -64,6 +67,7 @@ func TestEvalCond(t *testing.T) {
 
 func TestEvalCondExpr(t *testing.T) {
 	t.Parallel()
+	assertEvalExprString(t, "((1>0):1,(2>3):2,*:(1+2))", "cond (1 > 0 : 1, 2 > 3: 2, *:1 + 2,)")
 	assertEvalExprString(t, "((1>0):1,(2>3):2,*:(1+2))", "cond (1 > 0 : 1, 2 > 3: 2, *:1 + 2)")
 	assertEvalExprString(t, "((1<2):1)", "cond (1 < 2 : 1)")
 	assertEvalExprString(t, "((1>2):1,(2<3):2)", "cond (1 > 2 : 1, 2 < 3: 2)")
@@ -100,8 +104,11 @@ func TestEvalCondWithControlVar(t *testing.T) {
 func TestEvalCondWithControlVarExpr(t *testing.T) {
 	t.Parallel()
 	assertEvalExprString(t, "((control_var:1),(1:1))", "(1) cond (1 : 1)")
+	assertEvalExprString(t, "((control_var:1),(1:1))", "(1) cond (1 : 1,)")
 	assertEvalExprString(t, "((control_var:1),(1:1,(2+1):3))", "(1) cond (1 : 1, 2 + 1 : 3)")
+	assertEvalExprString(t, "((control_var:1),(1:1,(2+1):3))", "(1) cond (1 : 1, 2 + 1 : 3,)")
 	assertEvalExprString(t, "((control_var:1),(1:1,(2+1):3,*:4))", "(1) cond (1 : 1, 2 + 1 : 3, * : 4)")
+	assertEvalExprString(t, "((control_var:1),(1:1,(2+1):3,*:4))", "(1) cond (1 : 1, 2 + 1 : 3, * : 4,)")
 
 	assertEvalExprString(t, "(1->(\\a((control_var:a),(1:1))))",
 		"let a = 1; a cond (1 : 1)")
