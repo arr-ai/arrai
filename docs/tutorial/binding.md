@@ -15,7 +15,7 @@ parameters.
 
 Let-bindings exist for two main reasons. The first is to allocate a name to an
 expression that will be used multiple times in subsequent code. The second is to
-give a meaningful to an expression whose purpose might need clarification.
+give a meaningful name to an expression whose purpose might need clarification.
 
 Try out the following examples to see the first main reason for let-bindings:
 
