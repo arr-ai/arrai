@@ -72,7 +72,7 @@ The name `.` can be used as a regular name, with some qualifiers:
 
 ```arrai
 @> /set cell = (row: 1, col: 1, value: 0.5)
-@> cell.row
+@> cell.row   # OK
 @> let . = cell; ..row    # FAIL
 @> let . = cell; (.).row  # OK
 @> let . = cell; .row     # OK
