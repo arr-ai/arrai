@@ -65,7 +65,7 @@ func TestEvalCond(t *testing.T) {
 	assert.Error(t, evalImpl(`cond ()`, &sb))
 }
 
-func TestEvalCondExpr(t *testing.T) {
+func TestEvalCondStr(t *testing.T) {
 	t.Parallel()
 	assertEvalExprString(t, "((1>0):1,(2>3):2,*:(1+2))", "cond (1 > 0 : 1, 2 > 3: 2, *:1 + 2,)")
 	assertEvalExprString(t, "((1>0):1,(2>3):2,*:(1+2))", "cond (1 > 0 : 1, 2 > 3: 2, *:1 + 2)")
@@ -73,6 +73,30 @@ func TestEvalCondExpr(t *testing.T) {
 	assertEvalExprString(t, "((1>2):1,(2<3):2)", "cond (1 > 2 : 1, 2 < 3: 2)")
 	assertEvalExprString(t, "(*:(1+2))", "cond (*: 1 + 2)")
 	assertEvalExprString(t, "((1<2):1,*:(1+2))", "cond (1 < 2: 1, * : 1 + 2)")
+}
+
+// TestEvalCondMulti executes the cases whose condition has multiple expressions.
+func TestEvalCondMulti(t *testing.T) {
+	t.Parallel()
+	assertEvalOutputs(t, `1`, `cond (1 > 0 && 3 > 2: 1, 2 > 3: 2, *:1 + 2,)`)
+	assertEvalOutputs(t, `1`, `cond ((1 > 0 && 3 > 2): 1, (2 > 3) || (1 < 0): 2, *:1 + 2,)`)
+	assertEvalOutputs(t, `3`, `let a = cond (1 > 2 && 2 > 1: 1, * : 1 + 2);a`)
+	// Multiple true conditions
+	assertEvalOutputs(t, `1`, `cond (1 > 0 && 3 > 2: 1, 2 > 1: 2, *:1 + 2,)`)
+	assertEvalOutputs(t, `2`, `cond ((1 > 0 && 3 < 2): 1, (2 > 1) || (1 > 0): 2, *:1 + 2,)`)
+	assertEvalOutputs(t, `2`, `let a = cond (1 > 2 && 2 > 1: 1, (2 > 1) : 2, * : 1 + 2);a`)
+
+	var sb strings.Builder
+	assert.Error(t, evalImpl(`cond (1 < 0 || 2 > 3 : 1, 2 > 3: 2)`, &sb))
+	assert.Error(t, evalImpl(`cond (1 < 0 || 3 > 4 : 1)`, &sb))
+}
+
+// TestEvalCondMultiStr executes the cases whose condition has multiple expressions.
+func TestEvalCondMultiStr(t *testing.T) {
+	t.Parallel()
+	assertEvalExprString(t, "((control_var:1),(((1>0))&&((2>1)):1))", "(1) cond (1 > 0 && 2 > 1 : 1)")
+	assertEvalExprString(t, "((control_var:1),(((1>0))||((2>1)):1))", "(1) cond (1 > 0 || 2 > 1 : 1)")
+	assertEvalExprString(t, "((control_var:1),(((1>0))||((2>1)):1))", "(1) cond ((1 > 0)||(2 > 1) : 1)")
 }
 
 func TestEvalCondWithControlVar(t *testing.T) {
@@ -101,7 +125,7 @@ func TestEvalCondWithControlVar(t *testing.T) {
 	assert.Error(t, evalImpl(`let a = 3; let b = (a + 10) cond (1 :1, 2 :2 + 1); b`, &sb))
 }
 
-func TestEvalCondWithControlVarExpr(t *testing.T) {
+func TestEvalCondWithControlVarStr(t *testing.T) {
 	t.Parallel()
 	assertEvalExprString(t, "((control_var:1),(1:1))", "(1) cond (1 : 1)")
 	assertEvalExprString(t, "((control_var:1),(1:1))", "(1) cond (1 : 1,)")
