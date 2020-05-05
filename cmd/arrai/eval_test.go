@@ -78,6 +78,9 @@ func TestEvalCondStr(t *testing.T) {
 // TestEvalCondMulti executes the cases whose condition has multiple expressions.
 func TestEvalCondMulti(t *testing.T) {
 	t.Parallel()
+	assertEvalOutputs(t, `1`, `cond (1 > 0 || 3 > 2: 1, 2 > 3: 2, *:1 + 2,)`)
+	assertEvalOutputs(t, `1`, `cond (0 > 1 || 3 > 2: 1, 2 > 3: 2, *:1 + 2,)`)
+	assertEvalOutputs(t, `3`, `cond (0 > 1 || 3 > 4: 1, 2 > 3: 2, *:1 + 2,)`)
 	assertEvalOutputs(t, `1`, `cond (1 > 0 && 3 > 2: 1, 2 > 3: 2, *:1 + 2,)`)
 	assertEvalOutputs(t, `1`, `cond ((1 > 0 && 3 > 2): 1, (2 > 3) || (1 < 0): 2, *:1 + 2,)`)
 	assertEvalOutputs(t, `3`, `let a = cond (1 > 2 && 2 > 1: 1, * : 1 + 2);a`)
