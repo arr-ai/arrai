@@ -51,7 +51,7 @@ split      sub        title      upper
 'HELLO'
 ```
 
-Ctrl+D to exit. or use the `exit` command.
+Ctrl+D to exit. or use the `/exit` command.
 
 ```bash
 @> /exit
