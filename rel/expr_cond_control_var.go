@@ -18,7 +18,7 @@ type CondControlVarExpr struct {
 
 // NewCondControlVarExpr returns a new CondControlVarExpr.
 func NewCondControlVarExpr(scanner parser.Scanner, controlVar Expr, dictExpr Expr, defaultExpr Expr) Expr {
-	controlVarExpr := &CondControlVarExpr{ExprScanner{scanner}, controlVar,
+	return &CondControlVarExpr{ExprScanner{scanner}, controlVar,
 		CondExpr{ExprScanner{scanner}, dictExpr, defaultExpr, func(condition Value, local Scope) (bool, error) {
 			controlVarVal, has := local.Get("controlVarVal")
 			if !has {
@@ -46,7 +46,6 @@ func NewCondControlVarExpr(scanner parser.Scanner, controlVar Expr, dictExpr Exp
 
 			return condition.Equal(controlVarVal), nil
 		}}}
-	return controlVarExpr
 }
 
 // String returns a string representation of the expression.
