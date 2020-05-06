@@ -22,7 +22,7 @@ func NewCondControlVarExpr(scanner parser.Scanner, controlVar Expr, dictExpr Exp
 		CondExpr{ExprScanner{scanner}, dictExpr, defaultExpr, func(condition Value, local Scope) (bool, error) {
 			controlVarVal, has := local.Get("controlVarVal")
 			if !has {
-				return false, nil
+				return false, fmt.Errorf("couldn't get 'controlVarVal' in Scope, and it is expected")
 			}
 
 			// process "(1,2):11" in case arrai e "(2) cond ((1,2):11,2:12,*:13)"
