@@ -8,9 +8,10 @@ import (
 
 func isExecCommand(arg string, cmds []*cli.Command) bool {
 	for _, cmd := range cmds {
-		names := append(make([]string, 0, 1+len(cmd.Aliases)), cmd.Name)
-		names = append(names, cmd.Aliases...)
-		for _, name := range names {
+		if arg == cmd.Name {
+			return true
+		}
+		for _, name := range cmd.Aliases {
 			if arg == name {
 				return true
 			}
