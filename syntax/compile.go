@@ -495,7 +495,13 @@ func (pc ParseContext) compileExpr(c ast.Children) rel.Expr {
 		if len(c) == 1 {
 			return pc.CompileExpr(c[0].(ast.Branch))
 		}
-		panic("too many expr children")
+
+		var elements []rel.Expr
+		for _, e := range c {
+			expr := pc.CompileExpr(e.(ast.Branch))
+			elements = append(elements, expr)
+		}
+		return rel.NewArrayExpr(c.Scanner(), elements...)
 	}
 	return nil
 }

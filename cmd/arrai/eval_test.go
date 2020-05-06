@@ -146,3 +146,22 @@ func TestEvalCondWithControlVarStr(t *testing.T) {
 	assertEvalExprString(t, "(3->(\\a((control_var:(a+2)),((1+2):1,*:(1+2)))))",
 		"let a = 3; (a + 2) cond (1 + 2: 1, * : 1 + 2)")
 }
+
+func TestEvalCondWithControlVarMulti(t *testing.T) {
+	assertEvalOutputs(t, `1`, `let a = 1; a cond ((1,2) :1)`)
+	assertEvalOutputs(t, `1`, `let a = 2; a cond ((1,2,3) :1, 2 :2)`)
+	assertEvalOutputs(t, `1`, `let a = 3; a cond ((1,2,3) :1, 2 :2, *:1 + 2)`)
+	assertEvalOutputs(t, `2`, `let a = 2; a cond (1 :1 + 10, (2,3) : 2, *:1 + 2)`)
+
+	assertEvalOutputs(t, `med`, `let a = 2;
+	a cond (
+		1:"lo",
+		(2,3): "med",
+		*: "hi")`)
+}
+
+func TestEvalCondWithControlVarMultiStr(t *testing.T) {
+	t.Parallel()
+	assertEvalExprString(t, "((control_var:1),([1,2]:1))", "(1) cond ((1,2) :1)")
+	assertEvalExprString(t, "((control_var:2),(1:(1+10),[2,3]:2,*:(1+2)))", "(2) cond (1 :1 + 10, (2,3) : 2, *:1 + 2)")
+}
