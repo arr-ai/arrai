@@ -158,6 +158,10 @@ func TestEvalCondWithControlVarMulti(t *testing.T) {
 		1:"lo",
 		(2,3): "med",
 		*: "hi")`)
+
+	var sb strings.Builder
+	assert.Error(t, evalImpl(`let a = 1; a cond ((2,3)) : 2, 3: 3)`, &sb))
+	assert.Error(t, evalImpl(`let a = 1; a cond ((2,3)) : 2, (3,5): 3)`, &sb))
 }
 
 func TestEvalCondWithControlVarMultiStr(t *testing.T) {
