@@ -99,7 +99,7 @@ func TestEvalCondMultiStr(t *testing.T) {
 	t.Parallel()
 	assertEvalExprString(t, "((control_var:1),(((1>0))&&((2>1)):1))", "(1) cond (1 > 0 && 2 > 1 : 1)")
 	assertEvalExprString(t, "((control_var:1),(((1>0))||((2>1)):1))", "(1) cond (1 > 0 || 2 > 1 : 1)")
-	assertEvalExprString(t, "((control_var:1),(((1>0))||((2>1)):1))", "(1) cond ((1 > 0)||(2 > 1) : 1)")
+	assertEvalExprString(t, "((control_var:1),(((1>0))||((2>1)):1,*:11))", "(1) cond (1 > 0 || 2 > 1 : 1, * : 11)")
 }
 
 func TestEvalCondWithControlVar(t *testing.T) {
