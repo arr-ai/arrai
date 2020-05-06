@@ -88,6 +88,22 @@ echo {0..10} | ax '2^.'
 ```
 -->
 
+### Run an arrai file
+
+```bash
+arrai path/to/file.arrai
+```
+
+or use the `run` command
+
+```bash
+arrai run path/to/file.arrai
+```
+
+`arrai run` can be used to avoid ambiguity between filename and a command.
+For example, running an arrai file named `run` (`arrai run run`). Alternatively, include a
+subdirectory component in the filename (`arrai ./run`).
+
 ### Start a server
 
 ```bash
