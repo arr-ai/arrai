@@ -71,8 +71,24 @@ func (uc *unsetCmd) process(line string, shellData *shellInstance) error {
 	return nil
 }
 
+type exitError struct{}
+
+func (exitError) Error() string {
+	return "exiting interactive shell"
+}
+
+type exitCommand struct{}
+
+func (*exitCommand) name() string {
+	return "exit"
+}
+
+func (ec *exitCommand) process(_ string, _ *shellInstance) error {
+	return exitError{}
+}
+
 func initCommands() map[string]shellCmd {
-	cmds := []shellCmd{&setCmd{}, &unsetCmd{}}
+	cmds := []shellCmd{&setCmd{}, &unsetCmd{}, &exitCommand{}}
 	cmdMap := make(map[string]shellCmd)
 	for _, cmd := range cmds {
 		cmdMap[cmd.name()] = cmd

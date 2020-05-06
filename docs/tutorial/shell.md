@@ -129,3 +129,14 @@ the global namespace. In fact, it never was:
 @> x / y  # FAIL
 @> 1 / y  # FAIL
 ```
+
+## Exiting shell
+
+The `/exit` command exits the interactive shell. Alternatively, you can press
+Ctrl+D.
+
+Usage:
+
+```bash
+@> /exit
+```
