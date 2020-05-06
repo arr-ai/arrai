@@ -102,6 +102,11 @@ $ arrai eval 'let a = cond ( 2 < 1 || 1 > 0 : 1, 2 < 3 : 2, * : 3);a * 3'
 3
 ```
 
+```bash
+$ arrai eval 'let a = cond ( 2 < 1 || 1 > 2 : 1, 2 < 3 && 1 > 0 : 2, * : 3);a * 3'
+6
+```
+
 #### Control Var Cases
 ```bash
 $ arrai eval 'let a = 1; a cond (1 :1, 2 :2, *:1 + 2)'
