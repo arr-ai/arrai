@@ -28,7 +28,7 @@ chapters.
 
 0. [Arr.ai shell basics](shell.md)
 1. [Values](values.md)
-2. (TODO) [Name bindings](binding.md)
+2. [Name bindings](binding.md)
 3. (TODO) [Basic arithmetic](arithmetic.md)
 4. (TODO) [Functions and function calls](function.md)
 5. (TODO) [Transforms](transforms.md)
