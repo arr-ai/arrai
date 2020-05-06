@@ -145,7 +145,7 @@ Usage:
 @> /exit
 ```
 
-The `exit` command exits the interactive shell. Alternatively, you can press
+The `/exit` command exits the interactive shell. Alternatively, you can press
 Ctrl+D.
 
 ### Evaluate an expression
