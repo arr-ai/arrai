@@ -380,7 +380,8 @@ func (pc ParseContext) compileDict(c ast.Children) rel.Expr {
 	return rel.NewDict(false)
 }
 
-func (pc ParseContext) compileDictEntryExprs(c ast.Children, keyExprs []rel.Expr, valueExprs []rel.Expr) []rel.DictEntryTupleExpr {
+func (pc ParseContext) compileDictEntryExprs(c ast.Children, keyExprs []rel.Expr,
+	valueExprs []rel.Expr) []rel.DictEntryTupleExpr {
 	// C* "{" C* dict=((key=@ ":" value=@):",",?) "}" C*
 	keys := c.(ast.One).Node.(ast.Branch)["key"]
 	values := c.(ast.One).Node.(ast.Branch)["value"]
