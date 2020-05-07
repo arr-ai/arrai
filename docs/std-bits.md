@@ -4,7 +4,7 @@ The `bits` library contains functions related to bit operations.
 
 ## `//bits.set(n <: number) <: set`
 
-`set` takes in the bitmask `n` and returns a set of number representing `n`.
+`set` takes in the bitmask `n` and returns a set of integers representing `n`.
 The set itself contains the positions of 1-bits in the binary representation
 of `n`
 
