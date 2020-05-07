@@ -8,7 +8,7 @@ The `bits` library contains functions related to bit operations.
 The set itself contains the positions of 1-bits in the binary representation
 of `n`
 
-`n` must be non-negative number.
+`n` must be a non-negative number.
 
 Usage:
 
