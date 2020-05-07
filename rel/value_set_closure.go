@@ -85,20 +85,20 @@ func (c Closure) Export() interface{} {
 		}
 	}
 	return func(e Value, local Scope) (Value, error) {
-		return c.f.body.Eval(local.With(c.f.Arg(), e))
+		return c.f.body.Eval(c.f.arg.Bind(local, e))
 	}
 }
 
 // Call calls the Closure with the given parameter.
-func (c Closure) Call(expr Expr, local Scope) (Value, error) {
+func (c Closure) Call(val Value, local Scope) (Value, error) {
 	niladic := c.f.Arg() == "-"
-	noArg := expr == nil
+	noArg := val == nil
 	if niladic != noArg {
 		return nil, errors.Errorf(
-			"nullary-vs-unary function arg mismatch (%s vs %s)", c.f.Arg(), expr)
+			"nullary-vs-unary function arg mismatch (%s vs %s)", c.f.Arg(), val)
 	}
 	if niladic {
 		return c.f.body.Eval(local)
 	}
-	return c.f.body.Eval(c.scope.With(c.f.Arg(), expr))
+	return c.f.body.Eval(c.f.arg.Bind(c.scope, val))
 }

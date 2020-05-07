@@ -167,17 +167,20 @@ func (pc ParseContext) compileLet(c ast.Children) rel.Expr {
 	rhs := pc.CompileExpr(exprs[1].(ast.Branch))
 	scanner := c.(ast.One).Node.Scanner()
 
-	if ident := c.(ast.One).Node.One("IDENT"); ident != nil {
-		rhs = rel.NewFunction(rel.NewIdentPattern(ident.Scanner().String()), rhs)
-		expr = binops["->"](scanner, expr, rhs)
-	}
-	if num := c.(ast.One).Node.One("NUM"); num != nil {
-		if f, err := strconv.ParseFloat(num.Scanner().String(), 64); err != nil {
-			panic("NUM is not a float64")
-		} else {
-			rhs = rel.NewFunction(rel.NewNumPattern(f), rhs)
+	if ptn := c.(ast.One).Node.One("pattern"); ptn != nil {
+		if ident := ptn.One("IDENT"); ident != nil {
+			rhs = rel.NewFunction(rel.NewIdentPattern(ident.Scanner().String()), rhs)
 			expr = binops["->"](scanner, expr, rhs)
 		}
+		if num := ptn.One("NUM"); num != nil {
+			if f, err := strconv.ParseFloat(num.Scanner().String(), 64); err != nil {
+				panic("NUM is not a float64")
+			} else {
+				rhs = rel.NewFunction(rel.NewValuePattern(rel.NewNumber(f)), rhs)
+				expr = binops["->"](scanner, expr, rhs)
+			}
+		}
+
 	}
 
 	return expr
@@ -337,7 +340,7 @@ func (pc ParseContext) compileCallGet(b ast.Branch) rel.Expr {
 			for _, arg := range args {
 				exprs = append(exprs, arg.One("expr"))
 			}
-			for _, arg := range pc.parseExprs(exprs...) {
+			for _, arg := range pc.compileExprs(exprs...) {
 				result = rel.NewCallExpr(call.Scanner(), result, arg)
 			}
 		}
@@ -351,7 +354,7 @@ func (pc ParseContext) compileRelation(c ast.Children) rel.Expr {
 	tuples := c.(ast.One).Node.(ast.Branch)["tuple"].(ast.Many)
 	tupleExprs := make([][]rel.Expr, 0, len(tuples))
 	for _, tuple := range tuples {
-		tupleExprs = append(tupleExprs, pc.parseExprs(tuple.(ast.Branch)["v"].(ast.Many)...))
+		tupleExprs = append(tupleExprs, pc.compileExprs(tuple.(ast.Branch)["v"].(ast.Many)...))
 	}
 	result, err := rel.NewRelationExpr(
 		c.(ast.One).Node.(ast.Branch)["names"].(ast.One).Node.(ast.Branch).Scanner(),
@@ -366,7 +369,7 @@ func (pc ParseContext) compileRelation(c ast.Children) rel.Expr {
 
 func (pc ParseContext) compileSet(c ast.Children) rel.Expr {
 	if elts := c.(ast.One).Node.(ast.Branch)["elt"]; elts != nil {
-		return rel.NewSetExpr(elts.(ast.Many).Scanner(), pc.parseExprs(elts.(ast.Many)...)...)
+		return rel.NewSetExpr(elts.(ast.Many).Scanner(), pc.compileExprs(elts.(ast.Many)...)...)
 	}
 	return rel.NewSetExpr(c.(ast.One).Node.Scanner())
 }
@@ -386,8 +389,8 @@ func (pc ParseContext) compileDictEntryExprs(c ast.Children) []rel.DictEntryTupl
 	values := c.(ast.One).Node.(ast.Branch)["value"]
 	if (keys != nil) || (values != nil) {
 		if (keys != nil) && (values != nil) {
-			keyExprs := pc.parseExprs(keys.(ast.Many)...)
-			valueExprs := pc.parseExprs(values.(ast.Many)...)
+			keyExprs := pc.compileExprs(keys.(ast.Many)...)
+			valueExprs := pc.compileExprs(values.(ast.Many)...)
 			if len(keyExprs) == len(valueExprs) {
 				entryExprs := make([]rel.DictEntryTupleExpr, 0, len(keyExprs))
 				for i, keyExpr := range keyExprs {
@@ -404,7 +407,7 @@ func (pc ParseContext) compileDictEntryExprs(c ast.Children) []rel.DictEntryTupl
 
 func (pc ParseContext) compileArray(c ast.Children) rel.Expr {
 	if items := c.(ast.One).Node.(ast.Branch)["item"]; items != nil {
-		return rel.NewArrayExpr(items.Scanner(), pc.parseExprs(items.(ast.Many)...)...)
+		return rel.NewArrayExpr(items.Scanner(), pc.compileExprs(items.(ast.Many)...)...)
 	}
 	return rel.NewArray()
 }

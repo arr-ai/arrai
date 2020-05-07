@@ -25,7 +25,7 @@ type ParseContext struct {
 	SourceDir string
 }
 
-func (pc ParseContext) parseExprs(exprs ...ast.Node) []rel.Expr {
+func (pc ParseContext) compileExprs(exprs ...ast.Node) []rel.Expr {
 	result := make([]rel.Expr, 0, len(exprs))
 	for _, expr := range exprs {
 		result = append(result, pc.CompileExpr(expr.(ast.Branch)))
