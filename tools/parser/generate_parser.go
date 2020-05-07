@@ -7,7 +7,7 @@ import (
 )
 
 // Reads ../syntax/arrai.wbnf file
-// and encodes them as strings literals in ../syntax/parser.go
+// and encodes them as strings literals in ../syntax/parser.go.
 // Command sample: go run ./tools/parser/generate_parser.go ./syntax/arrai.wbnf ./syntax/parser.go
 func main() {
 	data, err := ioutil.ReadFile(os.Args[1])
