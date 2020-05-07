@@ -4,9 +4,9 @@ The `bits` library contains functions related to bit operations.
 
 ## `//bits.set(n <: number) <: set`
 
-`set` takes in the number `n` and returns a set representing the
-bitmask of `n`. The set itself contains positions of `1`-bits of
-the binary representation of `n`
+`set` takes in the bitmask `n` and returns a set of number representing `n`.
+The set itself contains the positions of 1-bits in the binary representation
+of `n`
 
 `n` must be non-negative number.
 
@@ -20,9 +20,8 @@ Usage:
 
 ## `//bits.mask(s <: set) <: number`
 
-`mask` does the opposite of set. It takes a bitmask in the form
-of a set of numbers `s` and returns a numerical value represented
-by the bitmask.
+`mask` is the inverse of `set`. It takes a set `s` which represents the position
+of 1-bits in a binary representation of a bitmask and returns the bitmask.
 
 `s` must be a set of numbers.
 
