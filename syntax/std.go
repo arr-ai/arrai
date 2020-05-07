@@ -93,6 +93,7 @@ func StdScope() rel.Scope {
 				stdSeq(),
 				stdStr(),
 				stdUnicode(),
+				stdBits(),
 			))
 	})
 	return stdScopeVar
