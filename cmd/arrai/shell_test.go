@@ -103,3 +103,16 @@ func TestIsBalanced(t *testing.T) {
 	c.appendLine(`let f = \x \y`)
 	assert.False(t, c.isBalanced())
 }
+
+func TestGetLastToken(t *testing.T) {
+	t.Parallel()
+
+	assert.Equal(t, "//str", getLastToken([]rune("//str")))
+	assert.Equal(t, "//", getLastToken([]rune("//")))
+	assert.Equal(t, "///", getLastToken([]rune("///")))
+	assert.Equal(t, "//", getLastToken([]rune("//str.contains(//")))
+	assert.Equal(t, "//arch", getLastToken([]rune("//str.contains(//arch")))
+	assert.Equal(t, "tuple.", getLastToken([]rune("//str.contains(tuple.")))
+	assert.Equal(t, "", getLastToken([]rune("//str.contains(")))
+	assert.Equal(t, "", getLastToken([]rune("")))
+}
