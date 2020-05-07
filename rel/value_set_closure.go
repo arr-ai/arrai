@@ -79,26 +79,26 @@ func (c Closure) Negate() Value {
 
 // Export exports a Closure.
 func (c Closure) Export() interface{} {
-	if c.f.arg == "-" {
+	if c.f.Arg() == "-" {
 		return func(_ Value, local Scope) (Value, error) {
 			return c.Call(None, local)
 		}
 	}
 	return func(e Value, local Scope) (Value, error) {
-		return c.f.body.Eval(local.With(c.f.arg, e))
+		return c.f.body.Eval(local.With(c.f.Arg(), e))
 	}
 }
 
 // Call calls the Closure with the given parameter.
 func (c Closure) Call(expr Expr, local Scope) (Value, error) {
-	niladic := c.f.arg == "-"
+	niladic := c.f.Arg() == "-"
 	noArg := expr == nil
 	if niladic != noArg {
 		return nil, errors.Errorf(
-			"nullary-vs-unary function arg mismatch (%s vs %s)", c.f.arg, expr)
+			"nullary-vs-unary function arg mismatch (%s vs %s)", c.f.Arg(), expr)
 	}
 	if niladic {
 		return c.f.body.Eval(local)
 	}
-	return c.f.body.Eval(c.scope.With(c.f.arg, expr))
+	return c.f.body.Eval(c.scope.With(c.f.Arg(), expr))
 }

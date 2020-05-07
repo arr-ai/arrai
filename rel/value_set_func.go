@@ -11,12 +11,12 @@ import (
 
 // Function represents a binary relation uniquely mapping inputs to outputs.
 type Function struct {
-	arg  string
+	arg  Pattern
 	body Expr
 }
 
 // NewFunction returns a new function.
-func NewFunction(arg string, body Expr) Expr {
+func NewFunction(arg Pattern, body Expr) Expr {
 	return &Function{arg, body}
 }
 
@@ -27,12 +27,12 @@ func ExprAsFunction(expr Expr) *Function {
 	if fn, ok := expr.(*Function); ok {
 		return fn
 	}
-	return NewFunction(".", expr).(*Function)
+	return NewFunction(NewIdentPattern("."), expr).(*Function)
 }
 
 // Arg returns a function's formal argument.
 func (f *Function) Arg() string {
-	return f.arg
+	return f.arg.String()
 }
 
 // Body returns a function's body.
@@ -62,7 +62,7 @@ func (f *Function) EqualFunction(g *Function) bool {
 
 // String returns a string representation of the expression.
 func (f *Function) String() string {
-	if f.arg == "-" {
+	if f.arg.String() == "-" {
 		return fmt.Sprintf("(&%s)", f.body)
 	}
 	return fmt.Sprintf("(\\%s %s)", f.arg, f.body)
@@ -105,19 +105,19 @@ func (f *Function) Negate() Value {
 
 // Export exports a Function.
 func (f *Function) Export() interface{} {
-	if f.arg == "-" {
+	if f.Arg() == "-" {
 		return func(local Scope) (Value, error) {
 			return f.Call(None, local)
 		}
 	}
 	return func(e Value, local Scope) (Value, error) {
-		return f.body.Eval(local.With(f.arg, e))
+		return f.body.Eval(local.With(f.Arg(), e))
 	}
 }
 
 // Call calls the Function with the given parameter.
 func (f *Function) Call(expr Expr, local Scope) (Value, error) {
-	niladic := f.arg == "-"
+	niladic := f.Arg() == "-"
 	noArg := expr == nil
 	if niladic != noArg {
 		return nil, errors.Errorf(
@@ -126,5 +126,5 @@ func (f *Function) Call(expr Expr, local Scope) (Value, error) {
 	if niladic {
 		return f.body.Eval(local)
 	}
-	return f.body.Eval(local.With(f.arg, expr))
+	return f.body.Eval(local.With(f.Arg(), expr))
 }

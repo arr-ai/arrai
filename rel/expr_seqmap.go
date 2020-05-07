@@ -48,7 +48,7 @@ func (e *SequenceMapExpr) Eval(local Scope) (Value, error) {
 			pos, _ := t.Get("@")
 			attr := t.Names().Without("@").Any()
 			item, _ := t.Get(attr)
-			v, err := e.fn.body.Eval(local.With(e.fn.arg, item))
+			v, err := e.fn.body.Eval(local.With(e.fn.Arg(), item))
 			if err != nil {
 				return nil, wrapContext(err, e)
 			}

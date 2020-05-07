@@ -47,7 +47,7 @@ func (e *TupleMapExpr) Eval(local Scope) (_ Value, err error) {
 		}
 	}()
 	return value.(Tuple).Map(func(v Value) Value {
-		v, err = e.fn.body.Eval(local.With(e.fn.arg, v))
+		v, err = e.fn.body.Eval(local.With(e.fn.Arg(), v))
 		if err != nil {
 			panic(err)
 		}

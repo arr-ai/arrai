@@ -143,7 +143,7 @@ func (pc ParseContext) compileArrow(b ast.Branch, name string, c ast.Children) r
 				rhs := pc.CompileExpr(arrow.(ast.Branch)["expr"].(ast.One).Node.(ast.Branch))
 				scanner := rhs.Scanner()
 				if ident := arrow.One("IDENT"); ident != nil {
-					rhs = rel.NewFunction(ident.Scanner().String(), rhs)
+					rhs = rel.NewFunction(rel.NewIdentPattern(ident.Scanner().String()), rhs)
 					scanner = ident.Scanner()
 				}
 				expr = binops["->"](scanner, expr, rhs)
@@ -152,29 +152,24 @@ func (pc ParseContext) compileArrow(b ast.Branch, name string, c ast.Children) r
 	}
 	if name == "amp" {
 		for range c.(ast.Many) {
-			expr = rel.NewFunction("-", expr)
+			expr = rel.NewFunction(rel.NewIdentPattern("-"), expr)
 		}
 	}
 	return expr
 }
 
+// let PATTERN                     = EXPR1; EXPR2
+// let c.(ast.One).Node.One("...") = expr;  rhs
+// EXPR1 -> \PATTERN EXPR2
 func (pc ParseContext) compileLet(c ast.Children) rel.Expr {
 	exprs := c.(ast.One).Node.Many("expr")
 	expr := pc.CompileExpr(exprs[0].(ast.Branch))
 	rhs := pc.CompileExpr(exprs[1].(ast.Branch))
-	scanner := expr.Scanner()
+	scanner := c.(ast.One).Node.Scanner()
+
 	if ident := c.(ast.One).Node.One("IDENT"); ident != nil {
-		rhs = rel.NewFunction(ident.Scanner().String(), rhs)
-		s, err := parser.MergeScanners(ident.Scanner(), scanner)
-		if err == nil {
-			scanner = s
-		}
+		rhs = rel.NewFunction(rel.NewIdentPattern(ident.Scanner().String()), rhs)
 		expr = binops["->"](scanner, expr, rhs)
-	}
-	if num := c.(ast.One).Node.One("NUM"); num != nil {
-		if !rhs.(rel.Number).Equal(expr) {
-			panic(fmt.Sprintf("%s doesn't equal to %s", rhs, expr))
-		}
 	}
 
 	return expr
@@ -409,7 +404,7 @@ func (pc ParseContext) compileArray(c ast.Children) rel.Expr {
 func (pc ParseContext) compileFunction(b ast.Branch) rel.Expr {
 	ident := b.One("IDENT")
 	expr := pc.CompileExpr(b.One("expr").(ast.Branch))
-	return rel.NewFunction(ident.One("").Scanner().String(), expr)
+	return rel.NewFunction(rel.NewIdentPattern(ident.One("").Scanner().String()), expr)
 }
 
 func (pc ParseContext) compilePackage(c ast.Children) rel.Expr {
