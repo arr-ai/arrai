@@ -171,6 +171,14 @@ func (pc ParseContext) compileLet(c ast.Children) rel.Expr {
 		rhs = rel.NewFunction(rel.NewIdentPattern(ident.Scanner().String()), rhs)
 		expr = binops["->"](scanner, expr, rhs)
 	}
+	if num := c.(ast.One).Node.One("NUM"); num != nil {
+		if f, err := strconv.ParseFloat(num.Scanner().String(), 64); err != nil {
+			panic("NUM is not a float64")
+		} else {
+			rhs = rel.NewFunction(rel.NewNumPattern(f), rhs)
+			expr = binops["->"](scanner, expr, rhs)
+		}
+	}
 
 	return expr
 }

@@ -16,3 +16,20 @@ func TestExprLetIdentPattern(t *testing.T) {
 		`let x = 1; [x, 2]`,
 	)
 }
+
+func TestExprLetNumPattern(t *testing.T) {
+	AssertCodesEvalToSameValue(t,
+		`42`,
+		`let 42 = 42; 42`,
+	)
+	AssertCodesEvalToSameValue(t,
+		`1`,
+		`let 42 = 42; 1`,
+	)
+	AssertCodePanics(t,
+		`let 42 = 1; 42`,
+	)
+	AssertCodePanics(t,
+		`let 42 = 1; 1`,
+	)
+}
