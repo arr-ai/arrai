@@ -33,7 +33,7 @@ func (pc ParseContext) parseExprs(exprs ...ast.Node) []rel.Expr {
 	return result
 }
 
-// parseExprs4Cond parses conditons/keys and values expressions.
+// parseExprs4Cond parses conditons/keys and values expressions for syntax `cond`.
 func (pc ParseContext) parseExprs4Cond(exprs ...ast.Node) []rel.Expr {
 	result := make([]rel.Expr, 0, len(exprs))
 	for _, expr := range exprs {
