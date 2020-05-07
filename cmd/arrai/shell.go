@@ -121,9 +121,8 @@ func (s *shellInstance) Do(line []rune, pos int) (newLine [][]rune, length int) 
 		if l == "//" {
 			newLine = append(newLine, []rune("{"))
 		}
-		return
 	}
-	return newLine, length
+	return
 }
 
 func getLastToken(line []rune) string {
