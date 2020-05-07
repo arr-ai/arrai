@@ -49,10 +49,6 @@ func (pc ParseContext) parseExprs4Cond(exprs ...ast.Node) []rel.Expr {
 			case ast.One:
 				exprResult = pc.CompileExpr(c.Node.(ast.Branch))
 			case ast.Many:
-				if len(c) == 1 {
-					exprResult = pc.CompileExpr(c[0].(ast.Branch))
-				}
-
 				var elements []rel.Expr
 				for _, e := range c {
 					expr := pc.CompileExpr(e.(ast.Branch))
