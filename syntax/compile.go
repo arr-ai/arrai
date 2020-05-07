@@ -255,7 +255,16 @@ func (pc ParseContext) compileIf(b ast.Branch, c ast.Children) rel.Expr {
 func (pc ParseContext) compileCond(c ast.Children) rel.Expr {
 	// arrai eval 'cond (1 > 0:1, 2 > 3:2, *:10)'
 	var result rel.Expr
-	entryExprs := pc.compileDictEntryExprs(c, nil, nil)
+
+	keys := c.(ast.One).Node.(ast.Branch)["key"]
+	values := c.(ast.One).Node.(ast.Branch)["value"]
+	var keyExprs, valueExprs []rel.Expr
+	if keys != nil && values != nil {
+		keyExprs = pc.parseExprs4Cond(keys.(ast.Many)...)
+		valueExprs = pc.parseExprs4Cond(values.(ast.Many)...)
+	}
+
+	entryExprs := pc.compileDictEntryExprs(c, keyExprs, valueExprs)
 	if entryExprs != nil {
 		// Generates type DictExpr always to make sure it is easy to do Eval, only process type DictExpr.
 		result = rel.NewDictExpr(c.(ast.One).Node.Scanner(), false, true, entryExprs...)
@@ -499,13 +508,7 @@ func (pc ParseContext) compileExpr(c ast.Children) rel.Expr {
 		if len(c) == 1 {
 			return pc.CompileExpr(c[0].(ast.Branch))
 		}
-
-		var elements []rel.Expr
-		for _, e := range c {
-			expr := pc.CompileExpr(e.(ast.Branch))
-			elements = append(elements, expr)
-		}
-		return rel.NewArrayExpr(c.Scanner(), elements...)
+		panic("too many expr children")
 	}
 	return nil
 }
