@@ -94,6 +94,10 @@ func reprDict(d Dict, w io.Writer) {
 }
 
 func reprSet(s GenericSet, w io.Writer) {
+	if s.Equal(True) {
+		fmt.Fprintf(w, "true")
+		return
+	}
 	fmt.Fprint(w, "{")
 	var sep reprCommaSep
 	for _, v := range s.OrderedValues() {
