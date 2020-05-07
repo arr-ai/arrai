@@ -255,7 +255,7 @@ func (pc ParseContext) compileIf(b ast.Branch, c ast.Children) rel.Expr {
 func (pc ParseContext) compileCond(c ast.Children) rel.Expr {
 	// arrai eval 'cond (1 > 0:1, 2 > 3:2, *:10)'
 	var result rel.Expr
-	entryExprs := pc.compileDictEntryExprs(c)
+	entryExprs := pc.compileDictEntryExprs(c, nil, nil)
 	if entryExprs != nil {
 		// Generates type DictExpr always to make sure it is easy to do Eval, only process type DictExpr.
 		result = rel.NewDictExpr(c.(ast.One).Node.Scanner(), false, true, entryExprs...)
@@ -363,7 +363,7 @@ func (pc ParseContext) compileSet(c ast.Children) rel.Expr {
 }
 
 func (pc ParseContext) compileDict(c ast.Children) rel.Expr {
-	entryExprs := pc.compileDictEntryExprs(c)
+	entryExprs := pc.compileDictEntryExprs(c, nil, nil)
 	if entryExprs != nil {
 		return rel.NewDictExpr(c.(ast.One).Node.Scanner(), false, false, entryExprs...)
 	}
@@ -371,14 +371,18 @@ func (pc ParseContext) compileDict(c ast.Children) rel.Expr {
 	return rel.NewDict(false)
 }
 
-func (pc ParseContext) compileDictEntryExprs(c ast.Children) []rel.DictEntryTupleExpr {
+func (pc ParseContext) compileDictEntryExprs(c ast.Children, keyExprs []rel.Expr, valueExprs []rel.Expr) []rel.DictEntryTupleExpr {
 	// C* "{" C* dict=((key=@ ":" value=@):",",?) "}" C*
 	keys := c.(ast.One).Node.(ast.Branch)["key"]
 	values := c.(ast.One).Node.(ast.Branch)["value"]
 	if (keys != nil) || (values != nil) {
 		if (keys != nil) && (values != nil) {
-			keyExprs := pc.parseExprs(keys.(ast.Many)...)
-			valueExprs := pc.parseExprs(values.(ast.Many)...)
+			if keyExprs == nil {
+				keyExprs = pc.parseExprs(keys.(ast.Many)...)
+			}
+			if valueExprs == nil {
+				valueExprs = pc.parseExprs(values.(ast.Many)...)
+			}
 			if len(keyExprs) == len(valueExprs) {
 				entryExprs := make([]rel.DictEntryTupleExpr, 0, len(keyExprs))
 				for i, keyExpr := range keyExprs {
