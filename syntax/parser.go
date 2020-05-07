@@ -2,13 +2,13 @@
 package syntax
 
 import (
-	"strings"
+  "strings"
 
-	"github.com/arr-ai/wbnf/wbnf"
+  "github.com/arr-ai/wbnf/wbnf"
 )
 
 func unfakeBackquote(s string) string {
-	return strings.ReplaceAll(s, "‵", "`")
+  return strings.ReplaceAll(s, "‵", "`")
 }
 
 var arraiParsers = wbnf.MustCompile(unfakeBackquote(`
