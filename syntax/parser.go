@@ -12,6 +12,12 @@ func unfakeBackquote(s string) string {
 }
 
 var arraiParsers = wbnf.MustCompile(unfakeBackquote(`
+.macro pattern() {
+    C* "{" C* rel=(names tuple=("(" v=@:",", ")"):",",?) "}" C*
+  | C* "{" C* set=(elt=@:",",?) "}" C*
+  | C* "{" C* dict=((key=@ ":" value=@):",",?) "}" C*
+  | C* "[" C* array=(item=@:",",?) C* "]" C*
+};
 expr   -> C* amp="&"* @ C* arrow=(
               nest |
               unnest |
@@ -40,19 +46,16 @@ expr   -> C* amp="&"* @ C* arrow=(
                   ):",",
               ")")
           )* C*
-        > C* "{" C* rel=(names tuple=("(" v=@:",", ")"):",",?) "}" C*
-        | C* "{" C* set=(elt=@:",",?) "}" C*
-        | C* "{" C* dict=((key=@ ":" value=@):",",?) "}" C*
+        > %!pattern()
         | C* cond=("cond" "(" (key=@ ":" value=@):",",? ("*" ":" f=expr ","?)? ")") C*
         | C* cond=(("(" control_var=expr ")" | IDENT)? C* "cond" "(" (key=@ ":" value=@):",",? ("*" ":" f=expr ","?)? ")") C*
-        | C* "[" C* array=(item=@:",",?) "]" C*
         | C* "{:" C* embed=(grammar=@ ":" subgrammar=%%ast) ":}" C*
         | C* op="\\\\" @ C*
         | C* fn="\\" IDENT @ C*
         | C* "//" pkg=( "{" dot="."? PKGPATH "}" | std=IDENT?)
         | C* "(" tuple=(pairs=(name? ":" v=@):",",?) ")" C*
         | C* "(" @ ")" C*
-        | C* let=("let" C* (NUM | IDENT) C* "=" C* @ %%bind C* ";" C* @) C*
+        | C* let=("let" C* (%!pattern() | NUM | IDENT) C* "=" C* @ %%bind C* ";" C* @) C*
         | C* xstr C*
         | C* IDENT C*
         | C* STR C*
@@ -82,5 +85,4 @@ NUM    -> /{ (?: \d+(?:\.\d*)? | \.\d+ ) (?: [Ee][-+]?\d+ )? };
 C      -> /{ # .* $ };
 
 .wrapRE -> /{\s*()\s*};
-
 `), nil)
