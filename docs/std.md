@@ -7,6 +7,7 @@ The arr.ai standard library is available via the `//` syntax.
 The following standard packages are available:
 
 - [`//archive`](std-archive.md): Archive format utilities
+- [`//bits`](std-bits.md): Bit utilities
 - [`//encoding`](std-encoding.md): Support for encoded data processing
 - [`//eval`](std-eval.md): Evaluate strings holding arr.ai code
 - [`//fn`](std-fn.md): Function manipulation utilities
