@@ -124,6 +124,40 @@ func (pc ParseContext) CompileExpr(b ast.Branch) rel.Expr {
 	panic(fmt.Errorf("unhandled node: %v", b))
 }
 
+func (pc ParseContext) compilePattern(b ast.Branch) rel.Pattern {
+	if ptn := b.One("pattern"); ptn != nil {
+		if ident := ptn.One("IDENT"); ident != nil {
+			return rel.NewIdentPattern(ident.Scanner().String())
+		}
+		if num := ptn.One("NUM"); num != nil {
+			f, err := strconv.ParseFloat(num.Scanner().String(), 64)
+			if err != nil {
+				panic("NUM is not a float64")
+			}
+			return rel.NewValuePattern(rel.NewNumber(f))
+		}
+		if arr := ptn.One("array"); arr != nil {
+			return pc.compileArrayPattern(arr.(ast.Branch))
+		}
+	}
+	return nil
+}
+
+func (pc ParseContext) compilePatterns(exprs ...ast.Node) []rel.Pattern {
+	result := make([]rel.Pattern, 0, len(exprs))
+	for _, expr := range exprs {
+		result = append(result, pc.compilePattern(expr.(ast.Branch)))
+	}
+	return result
+}
+
+func (pc ParseContext) compileArrayPattern(b ast.Branch) rel.Pattern {
+	if items := b["item"]; items != nil {
+		return rel.NewArrayPattern(pc.compilePatterns(items.(ast.Many)...)...)
+	}
+	panic("item not found")
+}
+
 func (pc ParseContext) compileArrow(b ast.Branch, name string, c ast.Children) rel.Expr {
 	expr := pc.CompileExpr(b["expr"].(ast.One).Node.(ast.Branch))
 	if arrows, has := b["arrow"]; has {
@@ -167,21 +201,9 @@ func (pc ParseContext) compileLet(c ast.Children) rel.Expr {
 	rhs := pc.CompileExpr(exprs[1].(ast.Branch))
 	scanner := c.(ast.One).Node.Scanner()
 
-	if ptn := c.(ast.One).Node.One("pattern"); ptn != nil {
-		if ident := ptn.One("IDENT"); ident != nil {
-			rhs = rel.NewFunction(rel.NewIdentPattern(ident.Scanner().String()), rhs)
-			expr = binops["->"](scanner, expr, rhs)
-		}
-		if num := ptn.One("NUM"); num != nil {
-			if f, err := strconv.ParseFloat(num.Scanner().String(), 64); err != nil {
-				panic("NUM is not a float64")
-			} else {
-				rhs = rel.NewFunction(rel.NewValuePattern(rel.NewNumber(f)), rhs)
-				expr = binops["->"](scanner, expr, rhs)
-			}
-		}
-
-	}
+	p := pc.compilePattern(c.(ast.One).Node.(ast.Branch))
+	rhs = rel.NewFunction(p, rhs)
+	expr = binops["->"](scanner, expr, rhs)
 
 	return expr
 }
@@ -410,6 +432,14 @@ func (pc ParseContext) compileArray(c ast.Children) rel.Expr {
 		return rel.NewArrayExpr(items.Scanner(), pc.compileExprs(items.(ast.Many)...)...)
 	}
 	return rel.NewArray()
+}
+
+func (pc ParseContext) compileExprs(exprs ...ast.Node) []rel.Expr {
+	result := make([]rel.Expr, 0, len(exprs))
+	for _, expr := range exprs {
+		result = append(result, pc.CompileExpr(expr.(ast.Branch)))
+	}
+	return result
 }
 
 func (pc ParseContext) compileFunction(b ast.Branch) rel.Expr {

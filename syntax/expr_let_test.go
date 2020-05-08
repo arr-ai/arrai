@@ -17,7 +17,7 @@ func TestExprLetIdentPattern(t *testing.T) {
 	)
 }
 
-func TestExprLetNumPattern(t *testing.T) {
+func TestExprLetValuePattern(t *testing.T) {
 	AssertCodesEvalToSameValue(t,
 		`42`,
 		`let 42 = 42; 42`,
@@ -31,5 +31,32 @@ func TestExprLetNumPattern(t *testing.T) {
 	)
 	AssertCodePanics(t,
 		`let 42 = 1; 1`,
+	)
+}
+
+func TestExprLetArrayPattern(t *testing.T) {
+	AssertCodesEvalToSameValue(t,
+		`9`,
+		`let [a, b, c] = [1, 2, 3]; 9`,
+	)
+	AssertCodesEvalToSameValue(t,
+		`[1, 2, 3]`,
+		`let [a, b, c] = [1, 2, 3]; [a, b, c]`,
+	)
+	AssertCodesEvalToSameValue(t,
+		`2`,
+		`let [a, b, c] = [1, 2, 3]; [a, b, c](1)`,
+	)
+	AssertCodesEvalToSameValue(t,
+		`2`,
+		`let [a, b, c] = [1, 2, 3]; b`,
+	)
+	AssertCodesEvalToSameValue(t,
+		`2`,
+		`let [a, b, c] = [1, 2, 3]; [c, b](1)`,
+	)
+	AssertCodesEvalToSameValue(t,
+		`2`,
+		`let arr = [1, 2]; let [a, b] = arr; b`,
 	)
 }
