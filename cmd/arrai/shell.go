@@ -117,7 +117,7 @@ func (s *shellInstance) Do(line []rune, pos int) (newLine [][]rune, length int) 
 			names = strings.Split(l[2:], ".")
 			lastName, names = names[len(names)-1], names[:len(names)-1]
 		}
-		newLine, length = s.getScopePredictions(names, lastName)
+		newLine, length = getScopePredictions(names, lastName, s.scope.MustGet(".").(rel.Tuple))
 		if l == "//" {
 			newLine = append(newLine, []rune("{"))
 		}
@@ -151,21 +151,20 @@ func isAlpha(l rune) bool {
 	return (l >= 'a' && l <= 'z') || (l >= 'A' && l <= 'Z')
 }
 
-func (s *shellInstance) getScopePredictions(tuplePath []string, name string) ([][]rune, int) {
+func getScopePredictions(tuplePath []string, name string, scope rel.Tuple) ([][]rune, int) {
 	var newLine [][]rune
 	length := len(name)
-	t := s.scope.MustGet(".").(rel.Tuple)
 	for _, attr := range tuplePath {
-		if value, has := t.Get(attr); has {
+		if value, has := scope.Get(attr); has {
 			if u, is := value.(rel.Tuple); is {
-				t = u
+				scope = u
 				continue
 			}
 		}
 		return nil, 0
 	}
 
-	for _, attr := range t.Names().OrderedNames() {
+	for _, attr := range scope.Names().OrderedNames() {
 		if strings.HasPrefix(attr, name) {
 			newLine = append(newLine, []rune(attr[length:]))
 		}
