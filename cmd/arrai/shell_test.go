@@ -1,8 +1,13 @@
+//nolint:unparam
 package main
 
 import (
+	"fmt"
+	"strings"
 	"testing"
 
+	"github.com/arr-ai/arrai/rel"
+	"github.com/arr-ai/arrai/syntax"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -115,4 +120,58 @@ func TestGetLastToken(t *testing.T) {
 	assert.Equal(t, "tuple.", getLastToken([]rune("//str.contains(tuple.")))
 	assert.Equal(t, "", getLastToken([]rune("//str.contains(")))
 	assert.Equal(t, "", getLastToken([]rune("")))
+}
+
+func TestTabCompletionStdlib(t *testing.T) {
+	t.Parallel()
+	stdlib := syntax.StdScope().MustGet(".").(rel.Tuple)
+	stdlibNames := stdlib.Names().OrderedNames()
+
+	assertTabCompletion(t, append(stdlibNames, "{"), 0, "//\t", nil)
+	assertTabCompletion(t, append(stdlibNames, "{"), 0, "//str.contains(//\t", nil)
+	prefix := "s"
+
+	assertTabCompletionWithPrefix(t, prefix, stdlibNames, "//%s\t", nil)
+	assertTabCompletionWithPrefix(t, prefix, stdlibNames, "x(//%s\t", nil)
+	assertTabCompletionWithPrefix(t, prefix, stdlibNames, "x(//%s\t + random)", nil)
+
+	lib := "str"
+	strlib := stdlib.MustGet(lib).(rel.Tuple).Names().OrderedNames()
+	assertTabCompletionWithPrefix(t, prefix, strlib, "//"+lib+".%s\t", nil)
+}
+
+func assertTabCompletionWithPrefix(
+	t *testing.T,
+	prefix string,
+	choices []string,
+	format string,
+	scopeValues map[string]rel.Expr,
+) {
+	var libWithPrefix []string
+	for _, c := range choices {
+		if strings.HasPrefix(c, prefix) {
+			libWithPrefix = append(libWithPrefix, strings.TrimPrefix(c, prefix))
+		}
+	}
+	assertTabCompletion(t, libWithPrefix, len(prefix), fmt.Sprintf(format, prefix), scopeValues)
+}
+
+func assertTabCompletion(t *testing.T,
+	expectedPredictions []string,
+	expectedLength int,
+	line string,
+	scopeValues map[string]rel.Expr,
+) {
+	scope := syntax.StdScope()
+	for name, expr := range scopeValues {
+		scope = scope.With(name, expr)
+	}
+	sh := newShellInstance(newLineCollector(), scope)
+	predictions, length := sh.Do([]rune(line), strings.Index(line, "\t"))
+	strPredictions := make([]string, 0, len(predictions))
+	for _, p := range predictions {
+		strPredictions = append(strPredictions, string(p))
+	}
+	assert.Equal(t, expectedPredictions, strPredictions)
+	assert.Equal(t, expectedLength, length)
 }
