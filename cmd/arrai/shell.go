@@ -104,7 +104,7 @@ func (s *shellInstance) parseCmd(line string, l *readline.Instance) error {
 }
 
 func (s *shellInstance) Do(line []rune, pos int) (newLine [][]rune, length int) {
-	l := string(line[:pos])
+	l := getLastToken(line[:pos])
 	switch {
 	case strings.HasSuffix(l, "///"):
 		return [][]rune{line}, len(line)
@@ -112,29 +112,61 @@ func (s *shellInstance) Do(line []rune, pos int) (newLine [][]rune, length int) 
 		var names []string
 		var lastName string
 		if l == "//" {
-			newLine = append(newLine, []rune("{"))
 			lastName, names = "", []string{}
 		} else {
 			names = strings.Split(l[2:], ".")
 			lastName, names = names[len(names)-1], names[:len(names)-1]
 		}
+		newLine, length = getScopePredictions(names, lastName, s.scope.MustGet(".").(rel.Tuple))
+		if l == "//" {
+			newLine = append(newLine, []rune("{"))
+		}
+	}
+	return
+}
 
-		t := s.scope.MustGet(".").(rel.Tuple)
-		for _, name := range names {
-			if value, has := t.Get(name); has {
-				if u, is := value.(rel.Tuple); is {
-					t = u
-					continue
+func getLastToken(line []rune) string {
+	i := len(line) - 1
+	for ; i > 0; i-- {
+		if !isAlpha(line[i]) && line[i] != '.' {
+			if line[i] == '/' {
+				switch {
+				case strings.HasSuffix(string(line[:i+1]), "///"):
+					i -= 3
+				case strings.HasSuffix(string(line[:i+1]), "//"):
+					i -= 2
 				}
 			}
-			return
+			break
 		}
+	}
+	// +1 so it starts at a valid character
+	if i+1 == len(line) {
+		return ""
+	}
+	return string(line[i+1:])
+}
 
-		length = len(lastName)
-		for _, name := range t.Names().OrderedNames() {
-			if strings.HasPrefix(name, lastName) {
-				newLine = append(newLine, []rune(name[length:]))
+func isAlpha(l rune) bool {
+	return (l >= 'a' && l <= 'z') || (l >= 'A' && l <= 'Z')
+}
+
+func getScopePredictions(tuplePath []string, name string, scope rel.Tuple) ([][]rune, int) {
+	var newLine [][]rune
+	length := len(name)
+	for _, attr := range tuplePath {
+		if value, has := scope.Get(attr); has {
+			if u, is := value.(rel.Tuple); is {
+				scope = u
+				continue
 			}
+		}
+		return nil, 0
+	}
+
+	for _, attr := range scope.Names().OrderedNames() {
+		if strings.HasPrefix(attr, name) {
+			newLine = append(newLine, []rune(attr[length:]))
 		}
 	}
 	return newLine, length
