@@ -182,7 +182,12 @@ func getScopePredictions(tuplePath []string, name string, scope rel.Tuple) ([][]
 	return newLine, length
 }
 
-func shellEval(lines string, scope rel.Scope) (rel.Value, error) {
+func shellEval(lines string, scope rel.Scope) (_ rel.Value, err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			err = fmt.Errorf("unexpected panic: %v", r)
+		}
+	}()
 	value, err := tryEval(lines, scope)
 	if err != nil {
 		return nil, err
