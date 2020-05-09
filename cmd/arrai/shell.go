@@ -17,6 +17,11 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
+const (
+	shellPrompt             = "@> "
+	shellContinuationPrompt = " > "
+)
+
 var shellCommand = &cli.Command{
 	Name:    "shell",
 	Aliases: []string{"i"},
@@ -50,7 +55,7 @@ func shell(c *cli.Context) error {
 	ctx := log.WithConfigs(log.SetVerboseMode(true)).Onto(context.Background())
 	sh := newShellInstance(newLineCollector(), syntax.StdScope())
 	l, err := readline.NewEx(&readline.Config{
-		Prompt:              "@> ",
+		Prompt:              shellPrompt,
 		HistoryFile:         os.ExpandEnv("${HOME}/.arrai_history"),
 		AutoComplete:        sh,
 		EOFPrompt:           "exit",
@@ -67,6 +72,8 @@ func shell(c *cli.Context) error {
 			case io.EOF:
 				return nil
 			case readline.ErrInterrupt:
+				sh.collector.reset()
+				l.SetPrompt(shellPrompt)
 				continue
 			}
 			panic(err)
@@ -98,7 +105,7 @@ func (s *shellInstance) parseCmd(line string, l *readline.Instance) error {
 		s.collector.appendLine(line)
 	}
 	if len(s.collector.lines) != 0 && s.collector.isBalanced() {
-		l.SetPrompt("@> ")
+		l.SetPrompt(shellPrompt)
 		lines := strings.Join(s.collector.lines, "\n")
 		s.collector.reset()
 		if isCommand(lines) {
@@ -108,7 +115,7 @@ func (s *shellInstance) parseCmd(line string, l *readline.Instance) error {
 		}
 	}
 	if len(s.collector.lines) != 0 {
-		l.SetPrompt(" > ")
+		l.SetPrompt(shellContinuationPrompt)
 	}
 	return nil
 }
