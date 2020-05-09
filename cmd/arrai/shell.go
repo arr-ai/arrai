@@ -37,14 +37,24 @@ func tryEval(line string, scope rel.Scope) (_ rel.Value, err error) {
 	return syntax.EvalWithScope("", line, scope)
 }
 
+func shellFilterInputRune(r rune) (rune, bool) {
+	switch r {
+	case '\x00' /*^@*/, '\x0f' /*^O*/, '\x11' /*^Q*/, '\x16' /*^V*/, '\x18' /*^X*/ :
+		// Suppress harmful control codes.
+		return 0, false
+	}
+	return r, true
+}
+
 func shell(c *cli.Context) error {
 	ctx := log.WithConfigs(log.SetVerboseMode(true)).Onto(context.Background())
 	sh := newShellInstance(newLineCollector(), syntax.StdScope())
 	l, err := readline.NewEx(&readline.Config{
-		Prompt:       "@> ",
-		HistoryFile:  os.ExpandEnv("${HOME}/.arrai_history"),
-		AutoComplete: sh,
-		EOFPrompt:    "exit",
+		Prompt:              "@> ",
+		HistoryFile:         os.ExpandEnv("${HOME}/.arrai_history"),
+		AutoComplete:        sh,
+		EOFPrompt:           "exit",
+		FuncFilterInputRune: shellFilterInputRune,
 	})
 	if err != nil {
 		panic(err)
