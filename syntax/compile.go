@@ -141,7 +141,7 @@ func (pc ParseContext) compileArrow(b ast.Branch, name string, c ast.Children) r
 				expr = f(op, expr, pc.CompileExpr(arrow.(ast.Branch)["expr"].(ast.One).Node.(ast.Branch)))
 			case "binding":
 				rhs := pc.CompileExpr(arrow.(ast.Branch)["expr"].(ast.One).Node.(ast.Branch))
-				scanner := rhs.Scanner()
+				scanner := rhs.Source()
 				if ident := arrow.One("IDENT"); ident != nil {
 					rhs = rel.NewFunction(ident.Scanner().String(), rhs)
 					scanner = ident.Scanner()
@@ -162,15 +162,15 @@ func (pc ParseContext) compileLet(c ast.Children) rel.Expr {
 	exprs := c.(ast.One).Node.Many("expr")
 	expr := pc.CompileExpr(exprs[0].(ast.Branch))
 	rhs := pc.CompileExpr(exprs[1].(ast.Branch))
-	scanner := expr.Scanner()
+	source := expr.Source()
 	if ident := c.(ast.One).Node.One("IDENT"); ident != nil {
 		rhs = rel.NewFunction(ident.Scanner().String(), rhs)
-		s, err := parser.MergeScanners(ident.Scanner(), scanner)
+		s, err := parser.MergeScanners(ident.Scanner(), source)
 		if err == nil {
-			scanner = s
+			source = s
 		}
 	}
-	expr = binops["->"](scanner, expr, rhs)
+	expr = binops["->"](source, expr, rhs)
 	return expr
 }
 
@@ -240,14 +240,14 @@ func (pc ParseContext) compileIf(b ast.Branch, c ast.Children) rel.Expr {
 	})
 
 	result := pc.CompileExpr(b.One("expr").(ast.Branch))
-	scanner := result.Scanner()
+	source := result.Source()
 	for _, ifelse := range c.(ast.Many) {
 		t := pc.CompileExpr(ifelse.One("t").(ast.Branch))
 		var f rel.Expr = rel.None
 		if fNode := ifelse.One("f"); fNode != nil {
 			f = pc.CompileExpr(fNode.(ast.Branch))
 		}
-		result = rel.NewIfElseExpr(scanner, result, t, f)
+		result = rel.NewIfElseExpr(source, result, t, f)
 	}
 	return result
 }

@@ -62,8 +62,9 @@ func (f *NativeFunction) Eval(local Scope) (Value, error) {
 	return f, nil
 }
 
-// Scanner returns the scanner of NativeFunction.
-func (f *NativeFunction) Scanner() parser.Scanner {
+// Source returns an empty scanner since NativeFunction doesn't have associated
+// source code.
+func (f *NativeFunction) Source() parser.Scanner {
 	return *parser.NewScanner("")
 }
 

@@ -61,8 +61,8 @@ func stdTest() rel.Attr {
 						_, err = elt.Eval(local)
 					}()
 					if err != nil {
-						filename = elt.Scanner().Filename()
-						line, _ := elt.Scanner().Position()
+						filename = elt.Source().Filename()
+						line, _ := elt.Source().Position()
 						errors = append(errors, fmt.Errorf("%d: %v", line, err))
 					}
 				}
@@ -82,5 +82,5 @@ func stdTest() rel.Attr {
 }
 
 func wrapContext(err error, expr rel.Expr) error {
-	return fmt.Errorf("%s\n%s", err.Error(), expr.Scanner().Context(parser.DefaultLimit))
+	return fmt.Errorf("%s\n%s", err.Error(), expr.Source().Context(parser.DefaultLimit))
 }

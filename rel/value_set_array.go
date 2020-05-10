@@ -129,8 +129,8 @@ func (a Array) Eval(_ Scope) (Value, error) {
 	return a, nil
 }
 
-// Scanner returns the scanner of Array.
-func (a Array) Scanner() parser.Scanner {
+// Source returns a scanner locating the Array's source code.
+func (a Array) Source() parser.Scanner {
 	return *parser.NewScanner("")
 }
 

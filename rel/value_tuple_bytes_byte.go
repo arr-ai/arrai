@@ -73,8 +73,8 @@ func (t BytesByteTuple) Eval(local Scope) (Value, error) {
 	return t, nil
 }
 
-// Scanner returns the scanner of BytesByteTuple.
-func (t BytesByteTuple) Scanner() parser.Scanner {
+// Source returns a scanner locating the BytesByteTuple's source code.
+func (t BytesByteTuple) Source() parser.Scanner {
 	return *parser.NewScanner("")
 }
 

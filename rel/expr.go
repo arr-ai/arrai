@@ -27,13 +27,13 @@ type ExprScanner struct {
 	Src parser.Scanner
 }
 
-// Scanner returns the scanner
-func (e ExprScanner) Scanner() parser.Scanner {
+// Source returns a scanner locating the expression's source code.
+func (e ExprScanner) Source() parser.Scanner {
 	return e.Src
 }
 
 func wrapContext(err error, expr Expr) error {
-	return fmt.Errorf("%s\n%s", err.Error(), expr.Scanner().Context(parser.DefaultLimit))
+	return fmt.Errorf("%s\n%s", err.Error(), expr.Source().Context(parser.DefaultLimit))
 }
 
 func EvalExpr(expr Expr, local Scope) (_ Value, err error) {
