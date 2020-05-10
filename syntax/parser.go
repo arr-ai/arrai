@@ -19,7 +19,7 @@ expr   -> C* amp="&"* @ C* arrow=(
               binding="->" C* "\\" C* IDENT C* %%bind C* @ |
               binding="->" C* %%bind @
           )* C*
-        > C* @:binop=("with" | "without") C*
+        > C* @:binop=("without" | "with") C*
         > C* @:binop="||" C*
         > C* @:binop="&&" C*
         > C* @:compare=/{!?(?:<:|<>?=?|>=?|=)} C*
