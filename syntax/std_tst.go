@@ -42,7 +42,7 @@ func stdTest() rel.Attr {
 		rel.NewNativeExprFunctionAttr("suite", func(expr rel.Expr, local rel.Scope) (rel.Value, error) {
 			switch expr := expr.(type) {
 			case rel.Value:
-				return expr, nil
+				return rel.None, nil
 			case *rel.SetExpr:
 				errors := []error{}
 				var filename string
@@ -73,10 +73,10 @@ func stdTest() rel.Attr {
 					}
 					return nil, fmt.Errorf("test failure(s) in %s:\n%s", filename, sb.String())
 				}
+				return rel.None, nil
 			default:
 				return nil, fmt.Errorf("//test.suite arg must be a set of tests")
 			}
-			return nil, fmt.Errorf("not a set expression: %v", expr)
 		}),
 	)
 }
