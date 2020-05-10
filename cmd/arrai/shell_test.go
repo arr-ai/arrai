@@ -85,7 +85,10 @@ func TestLineCollectorAppendLine(t *testing.T) {
 	c.reset()
 
 	// testing escape
-	c.appendLine("`\"`")
+	c.appendLine("'\\\"'")
+	c.appendLine("'\\\\'")
+	c.appendLine("'\\n'")
+	c.appendLine("`\\`")
 	assert.True(t, c.isBalanced())
 }
 
