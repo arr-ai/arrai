@@ -158,6 +158,11 @@ $ arrai eval 'let a = 1; a cond ( cond (2 > 1 : 1): "A", (2, 3): "B", *: "C")'
 A
 ```
 
+```bash
+$ arrai eval 'let a = 1; cond ( a cond (1 : 1) : "A", 2: "B", *: "C")'
+A
+```
+
 <!-- TODO: Uncomment once this works again.
 ### Apply a transform to inbound data
 
