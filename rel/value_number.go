@@ -72,8 +72,8 @@ func (n Number) Eval(_ Scope) (Value, error) {
 	return n, nil
 }
 
-// Scanner returns the scanner of Number.
-func (n Number) Scanner() parser.Scanner {
+// Source returns a scanner locating the Number's source code.
+func (n Number) Source() parser.Scanner {
 	return *parser.NewScanner("")
 }
 

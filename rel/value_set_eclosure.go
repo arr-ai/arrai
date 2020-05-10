@@ -48,8 +48,8 @@ func (c ExprClosure) Eval(_ Scope) (Value, error) {
 	return c.e.Eval(c.scope)
 }
 
-// Scanner returns the scanner of ExprClosure.
-func (c ExprClosure) Scanner() parser.Scanner {
+// Source returns a scanner locating the ExprClosure's source code.
+func (c ExprClosure) Source() parser.Scanner {
 	return *parser.NewScanner("")
 }
 

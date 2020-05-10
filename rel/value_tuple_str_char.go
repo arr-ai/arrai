@@ -73,8 +73,8 @@ func (t StringCharTuple) Eval(local Scope) (Value, error) {
 	return t, nil
 }
 
-// Scanner returns the scanner of StringCharTuple.
-func (t StringCharTuple) Scanner() parser.Scanner {
+// Source returns a scanner locating the StringCharTuple's source code.
+func (t StringCharTuple) Source() parser.Scanner {
 	return *parser.NewScanner("")
 }
 

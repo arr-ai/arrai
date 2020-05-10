@@ -75,8 +75,8 @@ func (t ArrayItemTuple) Eval(local Scope) (Value, error) {
 	return t, nil
 }
 
-// Scanner returns the scanner of ArrayItemTuple.
-func (t ArrayItemTuple) Scanner() parser.Scanner {
+// Source returns a scanner locating the ArrayItemTuple's source code.
+func (t ArrayItemTuple) Source() parser.Scanner {
 	return *parser.NewScanner("")
 }
 

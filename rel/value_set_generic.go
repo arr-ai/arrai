@@ -219,8 +219,8 @@ func (s GenericSet) Eval(local Scope) (Value, error) {
 	return s, nil
 }
 
-// Scanner returns the scanner of GenericSet.
-func (s GenericSet) Scanner() parser.Scanner {
+// Source returns a scanner locating the GenericSet's source code.
+func (s GenericSet) Source() parser.Scanner {
 	return *parser.NewScanner("")
 }
 
