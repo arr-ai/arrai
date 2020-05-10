@@ -2,8 +2,10 @@ package syntax
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/arr-ai/arrai/rel"
+	"github.com/arr-ai/wbnf/parser"
 )
 
 func createTestCompareFuncAttr(name string, ok func(a, b rel.Value) bool, message string) rel.Attr {
@@ -37,8 +39,48 @@ func stdTest() rel.Attr {
 			createTestCheckFuncAttr("false", func(v rel.Value) bool { return !v.IsTrue() }),
 			createTestCheckFuncAttr("true", func(v rel.Value) bool { return v.IsTrue() }),
 		),
-		rel.NewNativeFunctionAttr("suite", func(value rel.Value) rel.Value {
-			return nil
+		rel.NewNativeExprFunctionAttr("suite", func(expr rel.Expr, local rel.Scope) (rel.Value, error) {
+			switch expr := expr.(type) {
+			case rel.Value:
+				return rel.None, nil
+			case *rel.SetExpr:
+				errors := []error{}
+				var filename string
+				for _, elt := range expr.Elements() {
+					var err error
+					func() {
+						defer func() {
+							switch r := recover().(type) {
+							case nil:
+							case error:
+								err = wrapContext(r, elt)
+							default:
+								panic(wrapContext(fmt.Errorf("unexpected panic: %v", r), expr))
+							}
+						}()
+						_, err = elt.Eval(local)
+					}()
+					if err != nil {
+						filename = elt.Scanner().Filename()
+						line, _ := elt.Scanner().Position()
+						errors = append(errors, fmt.Errorf("%d: %v", line, err))
+					}
+				}
+				if len(errors) > 0 {
+					var sb strings.Builder
+					for _, err := range errors {
+						fmt.Fprintln(&sb, err.Error())
+					}
+					return nil, fmt.Errorf("test failure(s) in %s:\n%s", filename, sb.String())
+				}
+				return rel.None, nil
+			default:
+				return nil, fmt.Errorf("//test.suite arg must be a set of tests")
+			}
 		}),
 	)
+}
+
+func wrapContext(err error, expr rel.Expr) error {
+	return fmt.Errorf("%s\n%s", err.Error(), expr.Scanner().Context(parser.DefaultLimit))
 }
