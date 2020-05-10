@@ -42,7 +42,7 @@ func stdTest() rel.Attr {
 		rel.NewNativeExprFunctionAttr("suite", func(expr rel.Expr, local rel.Scope) (rel.Value, error) {
 			switch expr := expr.(type) {
 			case rel.Value:
-				return rel.None, nil
+				return expr, nil
 			case *rel.SetExpr:
 				errors := []error{}
 				var filename string
