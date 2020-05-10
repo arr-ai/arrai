@@ -260,6 +260,10 @@ func (l *lineCollector) appendLine(line string) {
 		if line[i] == '\\' {
 			increment = 2
 		} else if nextCloser := l.peek(); nextCloser != nil && strings.HasPrefix(line[i:], nextCloser.char) {
+			if nextCloser.char == "`" && strings.HasPrefix(line[i:], "``") {
+				increment = 2
+				continue
+			}
 			l.pop()
 			increment = len(nextCloser.char)
 		} else {
