@@ -16,7 +16,7 @@ type NativeFunction struct {
 
 // NewNativeFunction returns a new function.
 func NewNativeFunction(name string, fn func(Value) Value) Value {
-	return &NativeFunction{"⧼" + name + "⧽", fn}
+	return &NativeFunction{"⦑" + name + "⦒", fn}
 }
 
 // NewNativeLambda returns a nameless function.

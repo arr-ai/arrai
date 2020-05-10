@@ -224,13 +224,13 @@ func NewOrderExpr(scanner parser.Scanner, a, key Expr) Expr {
 		})
 }
 
+type Callable interface {
+	Call(Expr, Scope) (Value, error)
+}
+
 func Call(a, b Value, local Scope) (Value, error) {
 	switch x := a.(type) {
-	case Closure:
-		return x.Call(b, local)
-	case *Function:
-		return x.Call(b, local)
-	case *NativeFunction:
+	case Callable:
 		return x.Call(b, local)
 	case Set:
 		var out Value
