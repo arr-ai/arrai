@@ -16,13 +16,13 @@ func intSet(elts ...interface{}) Set {
 	return result
 }
 
-func equalValues(expected, actual Value) bool {
+func EqualValues(expected, actual Value) bool {
 	return expected == nil && actual == nil || expected.Equal(actual)
 }
 
 // AssertEqualValues asserts that the two values are Equal.
 func AssertEqualValues(t *testing.T, expected, actual Value) bool {
-	if !equalValues(expected, actual) {
+	if !EqualValues(expected, actual) {
 		return assert.Fail(t, "values not equal", "expected: %s\nactual:   %s", expected, actual)
 	}
 	return true
@@ -45,7 +45,7 @@ func AssertExprsEvalToSameValue(t *testing.T, expected, expr Expr) bool {
 	if !assert.NoError(t, err, "evaluating expr: %s", expr) {
 		return false
 	}
-	return equalValues(expectedValue, value) ||
+	return EqualValues(expectedValue, value) ||
 		assert.Failf(t, "values not equal",
 			"\nexpected: %v\nactual:   %v\nexpr:     %v",
 			Repr(expectedValue), Repr(value), expr)
