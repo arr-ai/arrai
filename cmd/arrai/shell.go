@@ -257,9 +257,13 @@ func newLineCollector() *lineCollector {
 func (l *lineCollector) appendLine(line string) {
 	increment := 1
 	for i := 0; i < len(line); i += increment {
-		if line[i] == '\\' {
+		if nextCloser := l.peek(); line[i] == '\\' && nextCloser != nil && nextCloser.char != "`" {
 			increment = 2
-		} else if nextCloser := l.peek(); nextCloser != nil && strings.HasPrefix(line[i:], nextCloser.char) {
+		} else if nextCloser != nil && strings.HasPrefix(line[i:], nextCloser.char) {
+			if nextCloser.char == "`" && strings.HasPrefix(line[i:], "``") {
+				increment = 2
+				continue
+			}
 			l.pop()
 			increment = len(nextCloser.char)
 		} else {
@@ -303,7 +307,7 @@ func (l *lineCollector) isBalanced() bool {
 	}
 
 	// check for function argument
-	if regexp.MustCompile(`\\[^ \t\n]+$`).Match([]byte(lastLine)) {
+	if regexp.MustCompile(`\\([$@A-Za-z_][0-9$@A-Za-z_]*|\.)$`).Match([]byte(lastLine)) {
 		return false
 	}
 

@@ -74,8 +74,21 @@ func TestLineCollectorAppendLine(t *testing.T) {
 	assert.True(t, c.isBalanced())
 	c.reset()
 
+	// testing `` escape
+	c.appendLine("`stuff``")
+	assert.Equal(t, []string{"`stuff``"}, c.lines)
+	assert.Equal(t, 1, len(c.stack))
+	assert.False(t, c.isBalanced())
+	c.appendLine("`")
+	assert.Equal(t, 0, len(c.stack))
+	assert.True(t, c.isBalanced())
+	c.reset()
+
 	// testing escape
-	c.appendLine("`\"`")
+	c.appendLine("'\\\"'")
+	c.appendLine("'\\\\'")
+	c.appendLine("'\\n'")
+	c.appendLine("`\\`")
 	assert.True(t, c.isBalanced())
 }
 
@@ -90,6 +103,12 @@ func TestIsBalanced(t *testing.T) {
 
 	c.appendLine("\\a \\b \\c")
 	assert.False(t, c.isBalanced())
+
+	c.appendLine("\\.")
+	assert.False(t, c.isBalanced())
+
+	c.appendLine("\\a random")
+	assert.True(t, c.isBalanced())
 
 	c.appendLine("c:")
 	assert.False(t, c.isBalanced())

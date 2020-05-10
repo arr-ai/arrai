@@ -35,3 +35,16 @@ func (e ExprScanner) Source() parser.Scanner {
 func wrapContext(err error, expr Expr) error {
 	return fmt.Errorf("%s\n%s", err.Error(), expr.Source().Context(parser.DefaultLimit))
 }
+
+func EvalExpr(expr Expr, local Scope) (_ Value, err error) {
+	defer func() {
+		switch r := recover().(type) {
+		case nil:
+		case error:
+			err = wrapContext(r, expr)
+		default:
+			err = wrapContext(fmt.Errorf("unexpected panic: %v", r), expr)
+		}
+	}()
+	return expr.Eval(local)
+}

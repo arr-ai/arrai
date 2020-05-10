@@ -52,7 +52,7 @@ func (e *SetExpr) String() string {
 func (e *SetExpr) Eval(local Scope) (Value, error) {
 	values := make([]Value, 0, len(e.elements))
 	for _, expr := range e.elements {
-		value, err := expr.Eval(local)
+		value, err := EvalExpr(expr, local)
 		if err != nil {
 			return nil, wrapContext(err, e)
 		}
