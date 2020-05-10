@@ -126,9 +126,10 @@ func TestEvalCondWithControlVar(t *testing.T) {
 	assertEvalOutputs(t, `3`, `let a = 1; (a + 10) cond (1 :1, 2 :2, *:1 + 2)`)
 	assertEvalOutputs(t, `2`, `let a = 1; let b = (a + 1) cond (1 :1, 2 :2, *:1 + 2); b`)
 	assertEvalOutputs(t, `300`, `let a = 1; let b = (a + 10) cond (1 :1, 2 :2, *:1 + 2); b * 100`)
-	// Nested
+	// Nested call
 	assertEvalOutputs(t, "B", `let a = 2; a cond ( a cond ((1,2) : 1): "A", (2, 3): "B", *: "C")`)
 	assertEvalOutputs(t, "A", `let a = 1; a cond ( cond (2 > 1 : 1): "A", (2, 3): "B", *: "C")`)
+	assertEvalOutputs(t, "A", `let a = 1; cond ( a cond (1 : 1) : "A", 2: "B", *: "C")`)
 
 	var sb strings.Builder
 	assert.Error(t, evalImpl(`let a = 3; a cond (1 :1, 2 :2 + 1)`, &sb))
