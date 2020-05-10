@@ -104,6 +104,12 @@ func TestIsBalanced(t *testing.T) {
 	c.appendLine("\\a \\b \\c")
 	assert.False(t, c.isBalanced())
 
+	c.appendLine("\\.")
+	assert.False(t, c.isBalanced())
+
+	c.appendLine("\\a random")
+	assert.True(t, c.isBalanced())
+
 	c.appendLine("c:")
 	assert.False(t, c.isBalanced())
 
