@@ -39,5 +39,4 @@ func TestSeqRepeat(t *testing.T) {
 
 func TestSeqContains(t *testing.T) {
 	t.Parallel()
-
 }
