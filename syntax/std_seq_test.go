@@ -36,3 +36,8 @@ func TestSeqRepeat(t *testing.T) {
 
 	AssertCodePanics(t, `//seq.repeat(2, 3.4)`)
 }
+
+func TestSeqContains(t *testing.T) {
+	t.Parallel()
+
+}
