@@ -85,7 +85,7 @@ func (c Closure) Export() interface{} {
 		}
 	}
 	return func(e Value, local Scope) (Value, error) {
-		return c.f.body.Eval(c.f.arg.Bind(local, e))
+		return c.f.body.Eval(c.f.arg.Bind(local, local, e))
 	}
 }
 
@@ -100,5 +100,10 @@ func (c Closure) Call(expr Expr, local Scope) (Value, error) {
 	if niladic {
 		return c.f.body.Eval(local)
 	}
-	return c.f.body.Eval(c.scope.With(c.f.Arg(), expr))
+
+	value, err := expr.Eval(local)
+	if err != nil {
+		return nil, err
+	}
+	return c.f.body.Eval(c.scope.Update(c.f.arg.Bind(local, EmptyScope, value)))
 }

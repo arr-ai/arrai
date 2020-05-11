@@ -9,7 +9,7 @@ type Pattern interface {
 	// Require a String() method.
 	fmt.Stringer
 
-	Bind(scope Scope, value Value) Scope
+	Bind(outer, inner Scope, value Value) Scope
 }
 
 type IdentPattern struct {
@@ -20,8 +20,8 @@ func NewIdentPattern(ident string) IdentPattern {
 	return IdentPattern{ident}
 }
 
-func (p IdentPattern) Bind(scope Scope, value Value) Scope {
-	return scope.With(p.ident, value)
+func (p IdentPattern) Bind(outer, inner Scope, value Value) Scope {
+	return inner.With(p.ident, value)
 }
 
 func (p IdentPattern) String() string {
@@ -36,7 +36,7 @@ func NewValuePattern(val Value) ValuePattern {
 	return ValuePattern{val}
 }
 
-func (p ValuePattern) Bind(scope Scope, value Value) Scope {
+func (p ValuePattern) Bind(outer, inner Scope, value Value) Scope {
 	switch v := p.value.(type) {
 	case Number:
 		if !v.Equal(value) {
@@ -44,7 +44,7 @@ func (p ValuePattern) Bind(scope Scope, value Value) Scope {
 		}
 	}
 
-	return scope.With(p.String(), value)
+	return inner
 }
 
 func (p ValuePattern) String() string {
@@ -59,7 +59,7 @@ func NewArrayPattern(elements ...Pattern) ArrayPattern {
 	return ArrayPattern{elements}
 }
 
-func (p ArrayPattern) Bind(scope Scope, value Value) Scope {
+func (p ArrayPattern) Bind(outer, inner Scope, value Value) Scope {
 	array, is := value.(Array)
 	if !is {
 		panic(fmt.Sprintf("value %s is not an array", value))
@@ -76,7 +76,7 @@ func (p ArrayPattern) Bind(scope Scope, value Value) Scope {
 			continue
 		}
 
-		if expr, exists := scope.Get(item.String()); exists {
+		if expr, exists := outer.Get(item.String()); exists {
 			if expr.String() != array.Values()[i].String() {
 				panic(fmt.Sprintf("%s is redefined differently", item))
 			}
@@ -93,10 +93,10 @@ func (p ArrayPattern) Bind(scope Scope, value Value) Scope {
 	}
 
 	for s, ptn := range patterns {
-		scope = ptn.Bind(scope, values[s])
+		inner = ptn.Bind(outer, inner, values[s])
 	}
 
-	return scope
+	return inner
 }
 
 func (p ArrayPattern) String() string {
