@@ -26,12 +26,8 @@ func TestExprLetValuePattern(t *testing.T) {
 		`1`,
 		`let 42 = 42; 1`,
 	)
-	AssertCodePanics(t,
-		`let 42 = 1; 42`,
-	)
-	AssertCodePanics(t,
-		`let 42 = 1; 1`,
-	)
+	AssertCodePanics(t, `let 42 = 1; 42`)
+	AssertCodePanics(t, `let 42 = 1; 1`)
 }
 
 func TestExprLetArrayPattern(t *testing.T) {
@@ -59,4 +55,43 @@ func TestExprLetArrayPattern(t *testing.T) {
 		`2`,
 		`let arr = [1, 2]; let [a, b] = arr; b`,
 	)
+	AssertCodesEvalToSameValue(t,
+		`[1, 2, 3]`,
+		`let [[x, y], z] = [[1, 2], 3]; [x, y, z]`,
+	)
+	AssertCodesEvalToSameValue(t,
+		`1`,
+		`let [x, x] = [1, 1]; x`,
+	)
+	AssertCodesEvalToSameValue(t,
+		`1`,
+		`let [x, _, _] = [1, 2, 3]; x`,
+	)
+	AssertCodesEvalToSameValue(t,
+		`2`,
+		`let [_, x, _] = [1, 2, 3]; x`,
+	)
+	AssertCodesEvalToSameValue(t,
+		`3`,
+		`let x = 3; let [(x)] = [3]; x`,
+	)
+	AssertCodesEvalToSameValue(t,
+		`2`,
+		`let x = 3; let [b, (x)] = [2, 3]; b`,
+	)
+	AssertCodesEvalToSameValue(t,
+		`2`,
+		`let x = 3; let [_, b, (x)] = [1, 2, 3]; b`,
+	)
+
+	AssertCodePanics(t, `let [x, y] = 1; x`)
+	AssertCodePanics(t, `let [x, x] = [1]; x`)
+	AssertCodePanics(t, `let [x, y] = [1]; x`)
+	AssertCodePanics(t, `let [x, x] = [1, 2]; x`)
+	AssertCodeErrors(t,
+		`let [_] = [1]; _`,
+		"Name \"_\" not found in {} \n\n\x1b[1;37m:1:16:\x1b[0m\nlet [_]",
+	)
+	AssertCodePanics(t, `let x = 3; let [(x)] = [2]; x`)
+	AssertCodePanics(t, `let x = 3; let [b, (x)] = [2, 1]; b`)
 }

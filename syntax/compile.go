@@ -140,6 +140,13 @@ func (pc ParseContext) compilePattern(b ast.Branch) rel.Pattern {
 			return pc.compileArrayPattern(arr.(ast.Branch))
 		}
 	}
+	if expr := b.One("expr"); expr != nil {
+		exp := pc.CompileExpr(expr.(ast.Branch))
+		switch t := exp.(type) {
+		case rel.IdentExpr:
+			return rel.NewIdentPattern(t.Ident())
+		}
+	}
 	return nil
 }
 

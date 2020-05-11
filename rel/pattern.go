@@ -60,9 +60,42 @@ func NewArrayPattern(elements ...Pattern) ArrayPattern {
 }
 
 func (p ArrayPattern) Bind(scope Scope, value Value) Scope {
-	for i, v := range value.(Array).Values() {
-		scope = p.items[i].Bind(scope, v)
+	array, is := value.(Array)
+	if !is {
+		panic(fmt.Sprintf("value %s is not an array", value))
 	}
+
+	values := make(map[string]Value)
+	patterns := make(map[string]Pattern)
+	for i, item := range p.items {
+		if len(array.Values()) < i+1 {
+			panic(fmt.Sprintf("length of value %s shorter than array pattern %s", array.Values(), p.items))
+		}
+		// `_` should never appear in scope
+		if item.String() == "_" {
+			continue
+		}
+
+		if expr, exists := scope.Get(item.String()); exists {
+			if expr.String() != array.Values()[i].String() {
+				panic(fmt.Sprintf("%s is redefined differently", item))
+			}
+		}
+
+		if v, ok := values[item.String()]; ok {
+			if v.Kind() == array.Values()[i].Kind() && v.String() == array.Values()[i].String() {
+				continue
+			}
+			panic(fmt.Sprintf("value %s does not equal to value %s", v, array.Values()[i]))
+		}
+		values[item.String()] = array.Values()[i]
+		patterns[item.String()] = item
+	}
+
+	for s, ptn := range patterns {
+		scope = ptn.Bind(scope, values[s])
+	}
+
 	return scope
 }
 
