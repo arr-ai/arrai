@@ -2,7 +2,6 @@ package rel
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
 
 	"github.com/arr-ai/wbnf/parser"
@@ -82,8 +81,7 @@ func (e *CondExpr) Eval(local Scope) (Value, error) {
 		finalCond = e.defaultExpr
 	} else {
 		// trueCond == nil && e.defaultCond == nil
-		return nil, wrapContext(errors.New("it expects one valid condition or default condition '*':valueExpression, "+
-			"but actually there is not any valid condition or default condition '*':valueExpression in cond expression"), e)
+		return None, nil
 	}
 
 	value, err := finalCond.Eval(local)
