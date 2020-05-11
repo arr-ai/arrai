@@ -24,8 +24,12 @@ func AssertCodesEvalToSameValue(t *testing.T, expected, code string) bool {
 		return false
 	}
 	codeExpr := pc.CompileExpr(ast)
+	value, err := codeExpr.Eval(rel.Scope{})
+	if !assert.NoError(t, err, "evaluating expected: %s", expected) {
+		return false
+	}
 	// log.Printf("code=%v, codeExpr=%v", code, codeExpr)
-	if !rel.AssertExprsEvalToSameValue(t, expectedExpr, codeExpr) {
+	if !rel.AssertExprsEvalToSameValue(t, expectedExpr, value) {
 		t.Logf("\nexpected: %s\ncode:     %s", expected, code)
 		return false
 	}

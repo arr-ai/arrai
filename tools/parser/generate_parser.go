@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"io/ioutil"
 	"os"
 )
@@ -23,5 +22,4 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println("arrai parser generated")
 }

@@ -125,6 +125,47 @@ func (pc ParseContext) CompileExpr(b ast.Branch) rel.Expr {
 	panic(fmt.Errorf("unhandled node: %v", b))
 }
 
+func (pc ParseContext) compilePattern(b ast.Branch) rel.Pattern {
+	if ptn := b.One("pattern"); ptn != nil {
+		if ident := ptn.One("IDENT"); ident != nil {
+			return rel.NewIdentPattern(ident.Scanner().String())
+		}
+		if num := ptn.One("NUM"); num != nil {
+			f, err := strconv.ParseFloat(num.Scanner().String(), 64)
+			if err != nil {
+				panic("NUM is not a float64")
+			}
+			return rel.NewValuePattern(rel.NewNumber(f))
+		}
+		if arr := ptn.One("array"); arr != nil {
+			return pc.compileArrayPattern(arr.(ast.Branch))
+		}
+	}
+	if expr := b.One("expr"); expr != nil {
+		exp := pc.CompileExpr(expr.(ast.Branch))
+		switch t := exp.(type) {
+		case rel.IdentExpr:
+			return rel.NewIdentPattern(t.Ident())
+		}
+	}
+	return nil
+}
+
+func (pc ParseContext) compilePatterns(exprs ...ast.Node) []rel.Pattern {
+	result := make([]rel.Pattern, 0, len(exprs))
+	for _, expr := range exprs {
+		result = append(result, pc.compilePattern(expr.(ast.Branch)))
+	}
+	return result
+}
+
+func (pc ParseContext) compileArrayPattern(b ast.Branch) rel.Pattern {
+	if items := b["item"]; items != nil {
+		return rel.NewArrayPattern(pc.compilePatterns(items.(ast.Many)...)...)
+	}
+	panic("item not found")
+}
+
 func (pc ParseContext) compileArrow(b ast.Branch, name string, c ast.Children) rel.Expr {
 	expr := pc.CompileExpr(b["expr"].(ast.One).Node.(ast.Branch))
 	if arrows, has := b["arrow"]; has {
@@ -144,7 +185,7 @@ func (pc ParseContext) compileArrow(b ast.Branch, name string, c ast.Children) r
 				rhs := pc.CompileExpr(arrow.(ast.Branch)["expr"].(ast.One).Node.(ast.Branch))
 				scanner := rhs.Source()
 				if ident := arrow.One("IDENT"); ident != nil {
-					rhs = rel.NewFunction(ident.Scanner().String(), rhs)
+					rhs = rel.NewFunction(rel.NewIdentPattern(ident.Scanner().String()), rhs)
 					scanner = ident.Scanner()
 				}
 				expr = binops["->"](scanner, expr, rhs)
@@ -153,24 +194,23 @@ func (pc ParseContext) compileArrow(b ast.Branch, name string, c ast.Children) r
 	}
 	if name == "amp" {
 		for range c.(ast.Many) {
-			expr = rel.NewFunction("-", expr)
+			expr = rel.NewFunction(rel.NewIdentPattern("-"), expr)
 		}
 	}
 	return expr
 }
 
+// let PATTERN                     = EXPR1; EXPR2
+// let c.(ast.One).Node.One("...") = expr;  rhs
+// EXPR1 -> \PATTERN EXPR2
 func (pc ParseContext) compileLet(c ast.Children) rel.Expr {
 	exprs := c.(ast.One).Node.Many("expr")
 	expr := pc.CompileExpr(exprs[0].(ast.Branch))
 	rhs := pc.CompileExpr(exprs[1].(ast.Branch))
-	source := expr.Source()
-	if ident := c.(ast.One).Node.One("IDENT"); ident != nil {
-		rhs = rel.NewFunction(ident.Scanner().String(), rhs)
-		s, err := parser.MergeScanners(ident.Scanner(), source)
-		if err == nil {
-			source = s
-		}
-	}
+	source := c.(ast.One).Node.Scanner()
+
+	p := pc.compilePattern(c.(ast.One).Node.(ast.Branch))
+	rhs = rel.NewFunction(p, rhs)
 	expr = binops["->"](source, expr, rhs)
 	return expr
 }
@@ -261,8 +301,8 @@ func (pc ParseContext) compileCond(b ast.Branch, c ast.Children) rel.Expr {
 	values := c.(ast.One).Node.(ast.Branch)["value"]
 	var keyExprs, valueExprs []rel.Expr
 	if keys != nil && values != nil {
-		keyExprs = pc.parseExprs4Cond(keys.(ast.Many)...)
-		valueExprs = pc.parseExprs4Cond(values.(ast.Many)...)
+		keyExprs = pc.compileExprs4Cond(keys.(ast.Many)...)
+		valueExprs = pc.compileExprs4Cond(values.(ast.Many)...)
 	}
 
 	entryExprs := pc.compileDictEntryExprs(c, keyExprs, valueExprs)
@@ -332,7 +372,7 @@ func (pc ParseContext) compileCallGet(b ast.Branch) rel.Expr {
 			for _, arg := range args {
 				exprs = append(exprs, arg.One("expr"))
 			}
-			for _, arg := range pc.parseExprs(exprs...) {
+			for _, arg := range pc.compileExprs(exprs...) {
 				result = rel.NewCallExpr(call.Scanner(), result, arg)
 			}
 		}
@@ -346,7 +386,7 @@ func (pc ParseContext) compileRelation(c ast.Children) rel.Expr {
 	tuples := c.(ast.One).Node.(ast.Branch)["tuple"].(ast.Many)
 	tupleExprs := make([][]rel.Expr, 0, len(tuples))
 	for _, tuple := range tuples {
-		tupleExprs = append(tupleExprs, pc.parseExprs(tuple.(ast.Branch)["v"].(ast.Many)...))
+		tupleExprs = append(tupleExprs, pc.compileExprs(tuple.(ast.Branch)["v"].(ast.Many)...))
 	}
 	result, err := rel.NewRelationExpr(
 		c.(ast.One).Node.(ast.Branch)["names"].(ast.One).Node.(ast.Branch).Scanner(),
@@ -361,7 +401,7 @@ func (pc ParseContext) compileRelation(c ast.Children) rel.Expr {
 
 func (pc ParseContext) compileSet(c ast.Children) rel.Expr {
 	if elts := c.(ast.One).Node.(ast.Branch)["elt"]; elts != nil {
-		return rel.NewSetExpr(elts.(ast.Many).Scanner(), pc.parseExprs(elts.(ast.Many)...)...)
+		return rel.NewSetExpr(elts.(ast.Many).Scanner(), pc.compileExprs(elts.(ast.Many)...)...)
 	}
 	return rel.NewSetExpr(c.(ast.One).Node.Scanner())
 }
@@ -383,10 +423,10 @@ func (pc ParseContext) compileDictEntryExprs(c ast.Children, keyExprs []rel.Expr
 	if (keys != nil) || (values != nil) {
 		if (keys != nil) && (values != nil) {
 			if keyExprs == nil {
-				keyExprs = pc.parseExprs(keys.(ast.Many)...)
+				keyExprs = pc.compileExprs(keys.(ast.Many)...)
 			}
 			if valueExprs == nil {
-				valueExprs = pc.parseExprs(values.(ast.Many)...)
+				valueExprs = pc.compileExprs(values.(ast.Many)...)
 			}
 			if len(keyExprs) == len(valueExprs) {
 				entryExprs := make([]rel.DictEntryTupleExpr, 0, len(keyExprs))
@@ -404,15 +444,59 @@ func (pc ParseContext) compileDictEntryExprs(c ast.Children, keyExprs []rel.Expr
 
 func (pc ParseContext) compileArray(c ast.Children) rel.Expr {
 	if items := c.(ast.One).Node.(ast.Branch)["item"]; items != nil {
-		return rel.NewArrayExpr(items.Scanner(), pc.parseExprs(items.(ast.Many)...)...)
+		return rel.NewArrayExpr(items.Scanner(), pc.compileExprs(items.(ast.Many)...)...)
 	}
 	return rel.NewArray()
+}
+
+func (pc ParseContext) compileExprs(exprs ...ast.Node) []rel.Expr {
+	result := make([]rel.Expr, 0, len(exprs))
+	for _, expr := range exprs {
+		result = append(result, pc.CompileExpr(expr.(ast.Branch)))
+	}
+	return result
+}
+
+// compileExprs4Cond parses conditons/keys and values expressions for syntax `cond`.
+func (pc ParseContext) compileExprs4Cond(exprs ...ast.Node) []rel.Expr {
+	result := make([]rel.Expr, 0, len(exprs))
+	for _, expr := range exprs {
+		var exprResult rel.Expr
+
+		name, c := which(expr.(ast.Branch), "expr")
+		if c == nil {
+			panic(fmt.Errorf("misshapen node AST: %v", expr.(ast.Branch)))
+		}
+
+		if name == "expr" {
+			switch c := c.(type) {
+			case ast.One:
+				exprResult = pc.CompileExpr(c.Node.(ast.Branch))
+			case ast.Many:
+				if len(c) == 1 {
+					exprResult = pc.CompileExpr(c[0].(ast.Branch))
+				} else {
+					var elements []rel.Expr
+					for _, e := range c {
+						expr := pc.CompileExpr(e.(ast.Branch))
+						elements = append(elements, expr)
+					}
+					exprResult = rel.NewArrayExpr(c.Scanner(), elements...)
+				}
+			}
+		}
+
+		if exprResult != nil {
+			result = append(result, exprResult)
+		}
+	}
+	return result
 }
 
 func (pc ParseContext) compileFunction(b ast.Branch) rel.Expr {
 	ident := b.One("IDENT")
 	expr := pc.CompileExpr(b.One("expr").(ast.Branch))
-	return rel.NewFunction(ident.One("").Scanner().String(), expr)
+	return rel.NewFunction(rel.NewIdentPattern(ident.One("").Scanner().String()), expr)
 }
 
 func (pc ParseContext) compilePackage(c ast.Children) rel.Expr {

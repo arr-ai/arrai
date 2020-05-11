@@ -2,13 +2,13 @@
 package syntax
 
 import (
-  "strings"
+	"strings"
 
-  "github.com/arr-ai/wbnf/wbnf"
+	"github.com/arr-ai/wbnf/wbnf"
 )
 
 func unfakeBackquote(s string) string {
-  return strings.ReplaceAll(s, "‵", "`")
+	return strings.ReplaceAll(s, "‵", "`")
 }
 
 var arraiParsers = wbnf.MustCompile(unfakeBackquote(`
@@ -41,18 +41,14 @@ expr   -> C* amp="&"* @ C* arrow=(
                   ):",",
               ")")
           )* C*
-        > C* "{" C* rel=(names tuple=("(" v=@:",", ")"):",",?) "}" C*
-        | C* "{" C* set=(elt=@:",",?) "}" C*
-        | C* "{" C* dict=((key=@ ":" value=@):",",?) "}" C*
+        > %!patternterms(expr)
         | C* cond=("cond" "(" (key=@ ":" value=@):",",? ("*" ":" f=expr ","?)? ")") C*
-        | C* "[" C* array=(item=@:",",?) "]" C*
         | C* "{:" C* embed=(grammar=@ ":" subgrammar=%%ast) ":}" C*
         | C* op="\\\\" @ C*
         | C* fn="\\" IDENT @ C*
         | C* "//" pkg=( "{" dot="."? PKGPATH "}" | std=IDENT?)
-        | C* "(" tuple=(pairs=(name? ":" v=@):",",?) ")" C*
         | C* "(" @ ")" C*
-        | C* let=("let" C* IDENT C* "=" C* @ %%bind C* ";" C* @) C*
+        | C* let=("let" C* pattern C* "=" C* @ %%bind C* ";" C* @) C*
         | C* xstr C*
         | C* IDENT C*
         | C* STR C*
@@ -70,6 +66,7 @@ sexpr  -> "${"
           C* expr C*
           control=/{ (?: : [-+#*\.\_0-9a-z]* (?: : (?: \\. | [^\\:}] )* ){0,2} )? }
           close=/{\}\s*};
+pattern -> %!patternterms(pattern|expr) | IDENT | NUM;
 
 ARROW  -> /{:>|=>|>>|orderby|order|where|sum|max|mean|median|min};
 IDENT  -> /{ \. | [$@A-Za-z_][0-9$@A-Za-z_]* };
@@ -82,5 +79,13 @@ NUM    -> /{ (?: \d+(?:\.\d*)? | \.\d+ ) (?: [Ee][-+]?\d+ )? };
 C      -> /{ # .* $ };
 
 .wrapRE -> /{\s*()\s*};
+
+.macro patternterms(top) {
+    C* "{" C* rel=(names tuple=("(" v=top:",", ")"):",",?) "}" C*
+  | C* "{" C* set=(elt=top:",",?) "}" C*
+  | C* "{" C* dict=((key=top ":" value=top):",",?) "}" C*
+  | C* "[" C* array=(item=top:",",?) C* "]" C*
+  | C* "(" tuple=(pairs=(name? ":" v=top):",",?) ")" C*
+};
 
 `), nil)
