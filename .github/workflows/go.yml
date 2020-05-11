@@ -17,6 +17,10 @@ jobs:
     - name: Check out code into the Go module directory
       uses: actions/checkout@v1
 
+    - uses: Logerfo/newline-action@0.0.2
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+
     - name: Install golangci-lint
       run: go get github.com/golangci/golangci-lint/cmd/golangci-lint
 
