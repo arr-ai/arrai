@@ -204,8 +204,8 @@ func (t *GenericTuple) Eval(local Scope) (Value, error) {
 	return t, nil
 }
 
-// Scanner returns the scanner of GenericTuple.
-func (t *GenericTuple) Scanner() parser.Scanner {
+// Source returns a scanner locating the GenericTuple's source code.
+func (t *GenericTuple) Source() parser.Scanner {
 	return *parser.NewScanner("")
 }
 

@@ -112,8 +112,8 @@ func (d Dict) Eval(local Scope) (Value, error) {
 	return d, nil
 }
 
-// Scanner returns the scanner of Dict.
-func (d Dict) Scanner() parser.Scanner {
+// Source returns a scanner locating the Dict's source code.
+func (d Dict) Source() parser.Scanner {
 	return *parser.NewScanner("")
 }
 
