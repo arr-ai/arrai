@@ -1,8 +1,6 @@
 # Introduction to Arr.ai
 
-| Status: **INCOMPLETE DRAFT** |
-|-|
-| Features marked **(⛔NYI)** are not yet implemented. |
+(Features marked **(⛔NYI)**, below, are not yet implemented.)
 
 Arr.ai is many things, but it is first and foremost a data representation and
 transformation language. This tutorial-style introduction will guide you through
@@ -421,6 +419,7 @@ External libraries may be accessed via package references.
    2. **`//str`:** string functions such as `//str.upper` and
       `//str.join`.
    3. **`//fn`:** higher order functions such as `//fn.fix` and `//fn.fixt`.
+   See the [standard library reference](std.md) for full documentation on all packages.
 2. **`//{./path}`** provides access to other arrai files relative to the current
    arrai file's parent directory (current working directory for expressions such
    as the `arrai eval` source that aren't associated with a file).

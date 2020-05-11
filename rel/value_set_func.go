@@ -73,8 +73,8 @@ func (f *Function) Eval(local Scope) (Value, error) {
 	return NewClosure(local, f), nil
 }
 
-// Scanner returns the scanner of Function.
-func (f *Function) Scanner() parser.Scanner {
+// Source returns a scanner locating the Function's source code.
+func (f *Function) Source() parser.Scanner {
 	return *parser.NewScanner("")
 }
 

@@ -73,8 +73,8 @@ func (t DictEntryTuple) Eval(local Scope) (Value, error) {
 	return t, nil
 }
 
-// Scanner returns the scanner of DictEntryTuple.
-func (t DictEntryTuple) Scanner() parser.Scanner {
+// Source returns a scanner locating the DictEntryTuple's source code.
+func (t DictEntryTuple) Source() parser.Scanner {
 	return *parser.NewScanner("")
 }
 

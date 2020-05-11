@@ -1,6 +1,7 @@
 package rel
 
 import (
+	"fmt"
 	"reflect"
 
 	"github.com/arr-ai/hash"
@@ -15,7 +16,7 @@ type NativeFunction struct {
 
 // NewNativeFunction returns a new function.
 func NewNativeFunction(name string, fn func(Value) Value) Value {
-	return &NativeFunction{"⧼" + name + "⧽", fn}
+	return &NativeFunction{"⦑" + name + "⦒", fn}
 }
 
 // NewNativeLambda returns a nameless function.
@@ -61,8 +62,9 @@ func (f *NativeFunction) Eval(local Scope) (Value, error) {
 	return f, nil
 }
 
-// Scanner returns the scanner of NativeFunction.
-func (f *NativeFunction) Scanner() parser.Scanner {
+// Source returns an empty scanner since NativeFunction doesn't have associated
+// source code.
+func (f *NativeFunction) Source() parser.Scanner {
 	return *parser.NewScanner("")
 }
 
@@ -97,7 +99,16 @@ func (f *NativeFunction) Export() interface{} {
 }
 
 // Call calls the NativeFunction with the given parameter.
-func (f *NativeFunction) Call(expr Expr, local Scope) (Value, error) {
+func (f *NativeFunction) Call(expr Expr, local Scope) (_ Value, err error) {
+	defer func() {
+		switch r := recover().(type) {
+		case nil:
+		case error:
+			panic(wrapContext(r, expr))
+		default:
+			panic(wrapContext(fmt.Errorf("unexpected panic calling %s: %v", f, r), expr))
+		}
+	}()
 	if expr == nil {
 		return f.fn(nil), nil
 	}

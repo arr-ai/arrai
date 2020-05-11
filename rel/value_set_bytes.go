@@ -113,8 +113,8 @@ func (b Bytes) Eval(_ Scope) (Value, error) {
 	return b, nil
 }
 
-// Scanner returns the scanner of Bytes.
-func (b Bytes) Scanner() parser.Scanner {
+// Source returns a scanner locating the Bytes's source code.
+func (b Bytes) Source() parser.Scanner {
 	return *parser.NewScanner("")
 }
 

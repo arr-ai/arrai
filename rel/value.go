@@ -16,7 +16,7 @@ type Expr interface {
 	// Eval evaluates the expr in a given scope.
 	Eval(local Scope) (Value, error)
 
-	Scanner() parser.Scanner
+	Source() parser.Scanner
 }
 
 // Value represents any arr.ai value.

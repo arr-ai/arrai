@@ -47,8 +47,8 @@ func (c Closure) Eval(local Scope) (Value, error) {
 	return c, nil
 }
 
-// Scanner returns the scanner of Closure.
-func (c Closure) Scanner() parser.Scanner {
+// Source returns a scanner locating the Closure's source code.
+func (c Closure) Source() parser.Scanner {
 	return *parser.NewScanner("")
 }
 

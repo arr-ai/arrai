@@ -17,6 +17,11 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
+const (
+	shellPrompt             = "@> "
+	shellContinuationPrompt = " > "
+)
+
 var shellCommand = &cli.Command{
 	Name:    "shell",
 	Aliases: []string{"i"},
@@ -37,14 +42,24 @@ func tryEval(line string, scope rel.Scope) (_ rel.Value, err error) {
 	return syntax.EvalWithScope("", line, scope)
 }
 
+func shellFilterInputRune(r rune) (rune, bool) {
+	switch r {
+	case '\x00' /*^@*/, '\x0f' /*^O*/, '\x11' /*^Q*/, '\x16' /*^V*/, '\x18' /*^X*/ :
+		// Suppress harmful control codes.
+		return 0, false
+	}
+	return r, true
+}
+
 func shell(c *cli.Context) error {
 	ctx := log.WithConfigs(log.SetVerboseMode(true)).Onto(context.Background())
 	sh := newShellInstance(newLineCollector(), syntax.StdScope())
 	l, err := readline.NewEx(&readline.Config{
-		Prompt:       "@> ",
-		HistoryFile:  os.ExpandEnv("${HOME}/.arrai_history"),
-		AutoComplete: sh,
-		EOFPrompt:    "exit",
+		Prompt:              shellPrompt,
+		HistoryFile:         os.ExpandEnv("${HOME}/.arrai_history"),
+		AutoComplete:        sh,
+		EOFPrompt:           "exit",
+		FuncFilterInputRune: shellFilterInputRune,
 	})
 	if err != nil {
 		panic(err)
@@ -57,6 +72,8 @@ func shell(c *cli.Context) error {
 			case io.EOF:
 				return nil
 			case readline.ErrInterrupt:
+				sh.collector.reset()
+				l.SetPrompt(shellPrompt)
 				continue
 			}
 			panic(err)
@@ -88,7 +105,7 @@ func (s *shellInstance) parseCmd(line string, l *readline.Instance) error {
 		s.collector.appendLine(line)
 	}
 	if len(s.collector.lines) != 0 && s.collector.isBalanced() {
-		l.SetPrompt("@> ")
+		l.SetPrompt(shellPrompt)
 		lines := strings.Join(s.collector.lines, "\n")
 		s.collector.reset()
 		if isCommand(lines) {
@@ -98,13 +115,13 @@ func (s *shellInstance) parseCmd(line string, l *readline.Instance) error {
 		}
 	}
 	if len(s.collector.lines) != 0 {
-		l.SetPrompt(" > ")
+		l.SetPrompt(shellContinuationPrompt)
 	}
 	return nil
 }
 
 func (s *shellInstance) Do(line []rune, pos int) (newLine [][]rune, length int) {
-	l := string(line[:pos])
+	l := getLastToken(line[:pos])
 	switch {
 	case strings.HasSuffix(l, "///"):
 		return [][]rune{line}, len(line)
@@ -112,35 +129,72 @@ func (s *shellInstance) Do(line []rune, pos int) (newLine [][]rune, length int) 
 		var names []string
 		var lastName string
 		if l == "//" {
-			newLine = append(newLine, []rune("{"))
 			lastName, names = "", []string{}
 		} else {
 			names = strings.Split(l[2:], ".")
 			lastName, names = names[len(names)-1], names[:len(names)-1]
 		}
+		newLine, length = getScopePredictions(names, lastName, s.scope.MustGet(".").(rel.Tuple))
+		if l == "//" {
+			newLine = append(newLine, []rune("{"))
+		}
+	}
+	return
+}
 
-		t := s.scope.MustGet(".").(rel.Tuple)
-		for _, name := range names {
-			if value, has := t.Get(name); has {
-				if u, is := value.(rel.Tuple); is {
-					t = u
-					continue
+func getLastToken(line []rune) string {
+	i := len(line) - 1
+	for ; i > 0; i-- {
+		if !isAlpha(line[i]) && line[i] != '.' {
+			if line[i] == '/' {
+				switch {
+				case strings.HasSuffix(string(line[:i+1]), "///"):
+					i -= 3
+				case strings.HasSuffix(string(line[:i+1]), "//"):
+					i -= 2
 				}
 			}
-			return
+			break
 		}
+	}
+	// +1 so it starts at a valid character
+	if i+1 == len(line) {
+		return ""
+	}
+	return string(line[i+1:])
+}
 
-		length = len(lastName)
-		for _, name := range t.Names().OrderedNames() {
-			if strings.HasPrefix(name, lastName) {
-				newLine = append(newLine, []rune(name[length:]))
+func isAlpha(l rune) bool {
+	return (l >= 'a' && l <= 'z') || (l >= 'A' && l <= 'Z')
+}
+
+func getScopePredictions(tuplePath []string, name string, scope rel.Tuple) ([][]rune, int) {
+	var newLine [][]rune
+	length := len(name)
+	for _, attr := range tuplePath {
+		if value, has := scope.Get(attr); has {
+			if u, is := value.(rel.Tuple); is {
+				scope = u
+				continue
 			}
+		}
+		return nil, 0
+	}
+
+	for _, attr := range scope.Names().OrderedNames() {
+		if strings.HasPrefix(attr, name) {
+			newLine = append(newLine, []rune(attr[length:]))
 		}
 	}
 	return newLine, length
 }
 
-func shellEval(lines string, scope rel.Scope) (rel.Value, error) {
+func shellEval(lines string, scope rel.Scope) (_ rel.Value, err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			err = fmt.Errorf("unexpected panic: %v", r)
+		}
+	}()
 	value, err := tryEval(lines, scope)
 	if err != nil {
 		return nil, err
@@ -203,9 +257,13 @@ func newLineCollector() *lineCollector {
 func (l *lineCollector) appendLine(line string) {
 	increment := 1
 	for i := 0; i < len(line); i += increment {
-		if line[i] == '\\' {
+		if nextCloser := l.peek(); line[i] == '\\' && nextCloser != nil && nextCloser.char != "`" {
 			increment = 2
-		} else if nextCloser := l.peek(); nextCloser != nil && strings.HasPrefix(line[i:], nextCloser.char) {
+		} else if nextCloser != nil && strings.HasPrefix(line[i:], nextCloser.char) {
+			if nextCloser.char == "`" && strings.HasPrefix(line[i:], "``") {
+				increment = 2
+				continue
+			}
 			l.pop()
 			increment = len(nextCloser.char)
 		} else {
@@ -249,7 +307,7 @@ func (l *lineCollector) isBalanced() bool {
 	}
 
 	// check for function argument
-	if regexp.MustCompile(`\\[^ \t\n]+$`).Match([]byte(lastLine)) {
+	if regexp.MustCompile(`\\([$@A-Za-z_][0-9$@A-Za-z_]*|\.)$`).Match([]byte(lastLine)) {
 		return false
 	}
 

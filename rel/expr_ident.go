@@ -16,7 +16,7 @@ func (e IdentLookupFailed) Error() string {
 	return fmt.Sprintf("Name %q not found in %v \n%s",
 		e.expr.ident,
 		e.scope.m.Keys(),
-		e.expr.Scanner().Context(parser.DefaultLimit))
+		e.expr.Source().Context(parser.DefaultLimit))
 }
 
 // IdentExpr returns the variable referenced by ident.

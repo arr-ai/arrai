@@ -5,11 +5,12 @@ expr   -> C* amp="&"* @ C* arrow=(
               binding="->" C* "\\" C* IDENT C* %%bind C* @ |
               binding="->" C* %%bind @
           )* C*
-        > C* @:binop=("with" | "without") C*
+        > C* @:binop=("without" | "with") C*
         > C* @:binop="||" C*
         > C* @:binop="&&" C*
         > C* @:compare=/{!?(?:<:|<>?=?|>=?|=)} C*
         > C* @ if=("if" t=expr ("else" f=expr)?)* C*
+        > C* @ cond=("cond" "(" (key=(("(" expr:",", ")") | expr) ":" value=expr):",",? ("*" ":" f=expr ","?)? ")")? C*
         > C* @:binop=/{\+\+|[+|]|-%?} C*
         > C* @:binop=/{&~|&|~~?|[-<][-&][->]} C*
         > C* @:binop=/{//|[*/%]|\\} C*
@@ -28,7 +29,6 @@ expr   -> C* amp="&"* @ C* arrow=(
           )* C*
         > %!patternterms(expr)
         | C* cond=("cond" "(" (key=@ ":" value=@):",",? ("*" ":" f=expr ","?)? ")") C*
-        | C* cond=(("(" control_var=expr ")" | IDENT)? C* "cond" "(" (key=@ ":" value=@):",",? ("*" ":" f=expr ","?)? ")") C*
         | C* "{:" C* embed=(grammar=@ ":" subgrammar=%%ast) ":}" C*
         | C* op="\\\\" @ C*
         | C* fn="\\" IDENT @ C*
