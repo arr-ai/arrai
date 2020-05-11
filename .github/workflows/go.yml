@@ -17,6 +17,10 @@ jobs:
     - name: Check out code into the Go module directory
       uses: actions/checkout@v1
 
+    - name: Linelint
+      uses: actions/linelint@master
+      id: linelint
+
     - name: Install golangci-lint
       run: go get github.com/golangci/golangci-lint/cmd/golangci-lint
 
