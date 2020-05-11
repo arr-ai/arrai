@@ -116,7 +116,7 @@ func (f *Function) Export() interface{} {
 }
 
 // Call calls the Function with the given parameter.
-func (f *Function) Call(expr Value, local Scope) (Value, error) {
+func (f *Function) Call(expr Expr, local Scope) (Value, error) {
 	niladic := f.Arg() == "-"
 	noArg := expr == nil
 	if niladic != noArg {
@@ -126,5 +126,5 @@ func (f *Function) Call(expr Value, local Scope) (Value, error) {
 	if niladic {
 		return f.body.Eval(local)
 	}
-	return f.body.Eval(f.arg.Bind(local, expr))
+	return f.body.Eval(local.With(f.Arg(), expr))
 }
