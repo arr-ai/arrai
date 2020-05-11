@@ -2,13 +2,13 @@
 package syntax
 
 import (
-	"strings"
+  "strings"
 
-	"github.com/arr-ai/wbnf/wbnf"
+  "github.com/arr-ai/wbnf/wbnf"
 )
 
 func unfakeBackquote(s string) string {
-	return strings.ReplaceAll(s, "‵", "`")
+  return strings.ReplaceAll(s, "‵", "`")
 }
 
 var arraiParsers = wbnf.MustCompile(unfakeBackquote(`
@@ -24,6 +24,7 @@ expr   -> C* amp="&"* @ C* arrow=(
         > C* @:binop="&&" C*
         > C* @:compare=/{!?(?:<:|<>?=?|>=?|=)} C*
         > C* @ if=("if" t=expr ("else" f=expr)?)* C*
+        > C* @ cond=("cond" "(" (key=(("(" expr:",", ")") | expr) ":" value=expr):",",? ("*" ":" f=expr ","?)? ")")? C*
         > C* @:binop=/{\+\+|[+|]|-%?} C*
         > C* @:binop=/{&~|&|~~?|[-<][-&][->]} C*
         > C* @:binop=/{//|[*/%]|\\} C*
@@ -44,7 +45,6 @@ expr   -> C* amp="&"* @ C* arrow=(
         | C* "{" C* set=(elt=@:",",?) "}" C*
         | C* "{" C* dict=((key=@ ":" value=@):",",?) "}" C*
         | C* cond=("cond" "(" (key=@ ":" value=@):",",? ("*" ":" f=expr ","?)? ")") C*
-        | C* cond=(("(" control_var=expr ")" | IDENT)? C* "cond" "(" (key=@ ":" value=@):",",? ("*" ":" f=expr ","?)? ")") C*
         | C* "[" C* array=(item=@:",",?) "]" C*
         | C* "{:" C* embed=(grammar=@ ":" subgrammar=%%ast) ":}" C*
         | C* op="\\\\" @ C*

@@ -62,11 +62,12 @@ func MustCompile(filepath, source string) rel.Expr {
 }
 
 func (pc ParseContext) CompileExpr(b ast.Branch) rel.Expr {
+	// Note: please make sure if it is necessary to add new syntax name before `expr`.
 	name, c := which(b,
 		"amp", "arrow", "let", "unop", "binop", "compare", "rbinop", "if", "get",
 		"tail", "count", "touch", "get", "rel", "set", "dict", "array",
-		"embed", "op", "fn", "pkg", "tuple", "xstr", "IDENT", "STR", "NUM",
-		"expr", "cond",
+		"embed", "op", "fn", "pkg", "tuple", "xstr", "IDENT", "STR", "NUM", "cond",
+		"expr",
 	)
 	if c == nil {
 		panic(fmt.Errorf("misshapen node AST: %v", b))
@@ -87,7 +88,7 @@ func (pc ParseContext) CompileExpr(b ast.Branch) rel.Expr {
 	case "if":
 		return pc.compileIf(b, c)
 	case "cond":
-		return pc.compileCond(c)
+		return pc.compileCond(b, c)
 	case "count", "touch":
 		return pc.compileCountTouch(b)
 	case "get", "tail":
@@ -252,10 +253,19 @@ func (pc ParseContext) compileIf(b ast.Branch, c ast.Children) rel.Expr {
 	return result
 }
 
-func (pc ParseContext) compileCond(c ast.Children) rel.Expr {
+func (pc ParseContext) compileCond(b ast.Branch, c ast.Children) rel.Expr {
 	// arrai eval 'cond (1 > 0:1, 2 > 3:2, *:10)'
 	var result rel.Expr
-	entryExprs := pc.compileDictEntryExprs(c)
+
+	keys := c.(ast.One).Node.(ast.Branch)["key"]
+	values := c.(ast.One).Node.(ast.Branch)["value"]
+	var keyExprs, valueExprs []rel.Expr
+	if keys != nil && values != nil {
+		keyExprs = pc.parseExprs4Cond(keys.(ast.Many)...)
+		valueExprs = pc.parseExprs4Cond(values.(ast.Many)...)
+	}
+
+	entryExprs := pc.compileDictEntryExprs(c, keyExprs, valueExprs)
 	if entryExprs != nil {
 		// Generates type DictExpr always to make sure it is easy to do Eval, only process type DictExpr.
 		result = rel.NewDictExpr(c.(ast.One).Node.Scanner(), false, true, entryExprs...)
@@ -265,14 +275,8 @@ func (pc ParseContext) compileCond(c ast.Children) rel.Expr {
 
 	var controlVarExpr, fExpr rel.Expr
 
-	if cNode := c.(ast.One).Node; cNode != nil {
-		// Only get IDENT or control_var as current grammar
-		if children, has := cNode.(ast.Branch)["IDENT"]; has {
-			controlVarExpr = pc.compileIdent(children)
-		}
-		if children, has := cNode.(ast.Branch)["control_var"]; has {
-			controlVarExpr = pc.compileExpr(children)
-		}
+	if controlVarNode := b.One("expr"); controlVarNode != nil {
+		controlVarExpr = pc.CompileExpr(b.One("expr").(ast.Branch))
 	}
 
 	if fNode := c.(ast.One).Node.One("f"); fNode != nil {
@@ -363,7 +367,7 @@ func (pc ParseContext) compileSet(c ast.Children) rel.Expr {
 }
 
 func (pc ParseContext) compileDict(c ast.Children) rel.Expr {
-	entryExprs := pc.compileDictEntryExprs(c)
+	entryExprs := pc.compileDictEntryExprs(c, nil, nil)
 	if entryExprs != nil {
 		return rel.NewDictExpr(c.(ast.One).Node.Scanner(), false, false, entryExprs...)
 	}
@@ -371,14 +375,19 @@ func (pc ParseContext) compileDict(c ast.Children) rel.Expr {
 	return rel.NewDict(false)
 }
 
-func (pc ParseContext) compileDictEntryExprs(c ast.Children) []rel.DictEntryTupleExpr {
+func (pc ParseContext) compileDictEntryExprs(c ast.Children, keyExprs []rel.Expr,
+	valueExprs []rel.Expr) []rel.DictEntryTupleExpr {
 	// C* "{" C* dict=((key=@ ":" value=@):",",?) "}" C*
 	keys := c.(ast.One).Node.(ast.Branch)["key"]
 	values := c.(ast.One).Node.(ast.Branch)["value"]
 	if (keys != nil) || (values != nil) {
 		if (keys != nil) && (values != nil) {
-			keyExprs := pc.parseExprs(keys.(ast.Many)...)
-			valueExprs := pc.parseExprs(values.(ast.Many)...)
+			if keyExprs == nil {
+				keyExprs = pc.parseExprs(keys.(ast.Many)...)
+			}
+			if valueExprs == nil {
+				valueExprs = pc.parseExprs(values.(ast.Many)...)
+			}
 			if len(keyExprs) == len(valueExprs) {
 				entryExprs := make([]rel.DictEntryTupleExpr, 0, len(keyExprs))
 				for i, keyExpr := range keyExprs {

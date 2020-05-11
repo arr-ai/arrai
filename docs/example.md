@@ -96,6 +96,27 @@ $ arrai eval 'let a = cond ( 1 < 2 : 1, 2 > 3 : 2, * : 3);a * 3'
 $ arrai eval 'let a = cond ( 2 < 1 : 1, 2 < 3 : 2, * : 3);a * 3'
 6
 ```
+
+```bash
+$ arrai eval 'let a = cond ( 2 < 1 || 1 > 0 : 1, 2 < 3 : 2, * : 3);a * 3'
+3
+```
+
+```bash
+$ arrai eval 'let a = cond ( 2 < 1 || 1 > 2 : 1, 2 < 3 && 1 > 0 : 2, * : 3);a * 3'
+6
+```
+
+```bash
+$ arrai eval 'cond (cond (1 > 0 : 1) > 0 : 1, 2 < 3: 2, *:1 + 2)'
+1
+```
+
+```bash
+$ arrai eval 'cond (cond (1 > 2 : 1, * : 11) < 2 : 1, 2 < 3: 2, *:1 + 2)'
+2
+```
+
 #### Control Var Cases
 ```bash
 $ arrai eval 'let a = 1; a cond (1 :1, 2 :2, *:1 + 2)'
@@ -120,6 +141,26 @@ $ arrai eval 'let a = 1; let b = a cond (1 :1, 2 :2, *:1 + 2); b * 100'
 ```bash
 $ arrai eval 'let a = 1; (a + 1) cond (1 :1, 2 :2, *:1 + 2)'
 2
+```
+
+```bash
+$ arrai eval 'let a = 2; a cond ( 1: "A", (2, 3): "B", *: "C")'
+B
+```
+
+```bash
+$ arrai eval 'let a = 2; a cond ( a cond ((1,2) : 1): "A", (2, 3): "B", *: "C")'
+B
+```
+
+```bash
+$ arrai eval 'let a = 1; a cond ( cond (2 > 1 : 1): "A", (2, 3): "B", *: "C")'
+A
+```
+
+```bash
+$ arrai eval 'let a = 1; cond ( a cond (1 : 1) : "A", 2: "B", *: "C")'
+A
 ```
 
 <!-- TODO: Uncomment once this works again.

@@ -33,6 +33,42 @@ func (pc ParseContext) parseExprs(exprs ...ast.Node) []rel.Expr {
 	return result
 }
 
+// parseExprs4Cond parses conditons/keys and values expressions for syntax `cond`.
+func (pc ParseContext) parseExprs4Cond(exprs ...ast.Node) []rel.Expr {
+	result := make([]rel.Expr, 0, len(exprs))
+	for _, expr := range exprs {
+		var exprResult rel.Expr
+
+		name, c := which(expr.(ast.Branch), "expr")
+		if c == nil {
+			panic(fmt.Errorf("misshapen node AST: %v", expr.(ast.Branch)))
+		}
+
+		if name == "expr" {
+			switch c := c.(type) {
+			case ast.One:
+				exprResult = pc.CompileExpr(c.Node.(ast.Branch))
+			case ast.Many:
+				if len(c) == 1 {
+					exprResult = pc.CompileExpr(c[0].(ast.Branch))
+				} else {
+					var elements []rel.Expr
+					for _, e := range c {
+						expr := pc.CompileExpr(e.(ast.Branch))
+						elements = append(elements, expr)
+					}
+					exprResult = rel.NewArrayExpr(c.Scanner(), elements...)
+				}
+			}
+		}
+
+		if exprResult != nil {
+			result = append(result, exprResult)
+		}
+	}
+	return result
+}
+
 func parseNames(names ast.Branch) []string {
 	idents := names["IDENT"].(ast.Many)
 	result := make([]string, 0, len(idents))
