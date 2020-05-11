@@ -18,7 +18,7 @@ type CompareExpr struct {
 }
 
 func NewCompareExpr(scanner parser.Scanner, args []Expr, comps []CompareFunc, ops []string) CompareExpr {
-	return CompareExpr{args: args, comps: comps, ops: ops}
+	return CompareExpr{ExprScanner: ExprScanner{Src: scanner}, args: args, comps: comps, ops: ops}
 }
 
 // String returns a string representation of the expression.

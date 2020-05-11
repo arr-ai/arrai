@@ -20,7 +20,7 @@ func NewArrayItemTupleExpr(scanner parser.Scanner, at, value Expr) ArrayItemTupl
 	// 		return NewDictTuple(at, value)
 	// 	}
 	// }
-	return ArrayItemTupleExpr{at: at, item: value}
+	return ArrayItemTupleExpr{ExprScanner: ExprScanner{Src: scanner}, at: at, item: value}
 }
 
 // String returns a string representation of the expression.
