@@ -176,6 +176,6 @@ var (
 )
 
 type typeMethod struct {
-	t   reflect.Type
-	api string
+	t       reflect.Type
+	apiName string
 }
