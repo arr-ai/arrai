@@ -96,7 +96,7 @@ var (
 	handlerMapping = map[typeMethod]func(...rel.Value) rel.Value{
 		// API contains
 		typeMethod{reflect.TypeOf(rel.String{}), "contains"}: func(args ...rel.Value) rel.Value {
-			return rel.NewBool(strings.HasPrefix(mustAsString(args[0]), mustAsString(args[1])))
+			return rel.NewBool(strings.Contains(mustAsString(args[0]), mustAsString(args[1])))
 		},
 		typeMethod{reflect.TypeOf(rel.Array{}), "contains"}: func(args ...rel.Value) rel.Value {
 			return nil
