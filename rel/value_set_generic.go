@@ -164,54 +164,6 @@ func (s GenericSet) String() string {
 	}
 	buf.WriteString("}")
 	return buf.String()
-
-	// case setFlavorArray:
-	// 	var buf bytes.Buffer
-	// 	buf.WriteString("[")
-	// 	for i, tuple := range s.OrderedValues() {
-	// 		if i > 0 {
-	// 			buf.WriteString(", ")
-	// 		}
-	// 		if tuple, ok := tuple.(Tuple); ok {
-	// 			if value, found := tuple.Get(ArrayItemAttr); found {
-	// 				buf.WriteString(value.String())
-	// 			} else {
-	// 				panic("Array item tuple must have @item attr")
-	// 			}
-	// 		} else {
-	// 			panic("Array item must be a Tuple")
-	// 		}
-	// 	}
-	// 	buf.WriteString("]")
-	// 	return buf.String()
-
-	// case setFlavorString:
-	// 	runes := make([]rune, s.Count())
-	// 	for i, tuple := range s.OrderedValues() {
-	// 		if tuple, ok := tuple.(Tuple); ok {
-	// 			if value, found := tuple.Get(CharAttr); found {
-	// 				if n, ok := value.(Number); ok {
-	// 					runes[i] = rune(n.Float64())
-	// 				} else {
-	// 					panic("String tuple " + CharAttr +
-	// 						" attr must be a number")
-	// 				}
-	// 			} else {
-	// 				panic("String char tuple must have a " + CharAttr +
-	// 					" attr")
-	// 			}
-	// 		} else {
-	// 			panic("String char must be a Tuple")
-	// 		}
-	// 	}
-	// 	j, err := json.Marshal(string(runes))
-	// 	if err != nil {
-	// 		panic(err)
-	// 	}
-	// 	return string(j)
-	// default:
-	// 	panic("Unhandled set flavor")
-	// }
 }
 
 // Eval returns the set.
