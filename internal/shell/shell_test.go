@@ -1,5 +1,5 @@
 //nolint:unparam
-package main
+package shell
 
 import (
 	"fmt"
