@@ -99,7 +99,22 @@ var (
 			return rel.NewBool(strings.Contains(mustAsString(args[0]), mustAsString(args[1])))
 		},
 		typeMethod{reflect.TypeOf(rel.Array{}), "contains"}: func(args ...rel.Value) rel.Value {
-			return nil
+			a := args[0].(rel.Array)
+			switch b := args[1].(type) {
+			case rel.Array:
+				return ContainsArray(a, b)
+			case rel.Value:
+				arrayEnum, _ := a.ArrayEnumerator()
+				if arrayEnum != nil {
+					for arrayEnum.MoveNext() {
+						if arrayEnum.Current().Equal(b) {
+							return rel.NewBool(true)
+						}
+					}
+				}
+
+			}
+			return rel.NewBool(false)
 		},
 		typeMethod{reflect.TypeOf(rel.Bytes{}), "contains"}: func(args ...rel.Value) rel.Value {
 			return nil
