@@ -60,11 +60,14 @@ func TestContains(t *testing.T) {
 	AssertCodesEvalToSameValue(t, `false`, `//seq.contains(['A','B','C','D','E'],['B','C','E'])`)
 	AssertCodesEvalToSameValue(t, `false`, `//seq.contains(['A','B','C','D','E'],['A','B','C','E'])`)
 	AssertCodesEvalToSameValue(t, `false`, `//seq.contains(['A','B','C','D','E'],['A','B','C','D','E','F'])`)
+	// bytes
+
 }
 
 ///////////////////
-func TestStrSub(t *testing.T) {
+func TestSub(t *testing.T) {
 	t.Parallel()
+	// string
 	AssertCodesEvalToSameValue(t,
 		`"this is a test"`,
 		`//seq.sub("this is not a test", "is not", "is")`)
@@ -75,6 +78,12 @@ func TestStrSub(t *testing.T) {
 		`"this is still a test"`,
 		`//seq.sub("this is still a test", "doesn't matter", "hello there")`)
 	assertExprPanics(t, `//seq.sub("hello there", "test", 1)`)
+	// array
+	// AssertCodesEvalToSameValue(t,
+	// 	`"this is a test"`,
+	// 	`//seq.sub(["this", "is", "not", "a", "test"], ["is", "not"], "is")`)
+	// bytes
+
 }
 
 func TestStrSplit(t *testing.T) {

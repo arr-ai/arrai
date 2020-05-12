@@ -98,24 +98,11 @@ var (
 		typeMethod{reflect.TypeOf(rel.String{}), "contains"}: func(args ...rel.Value) rel.Value {
 			return rel.NewBool(strings.Contains(mustAsString(args[0]), mustAsString(args[1])))
 		},
-		typeMethod{reflect.TypeOf(rel.Array{}), "contains"}: func(args ...rel.Value) rel.Value {
-			a := args[0].(rel.Array)
-			switch b := args[1].(type) {
-			case rel.Array:
-				return ContainsArray(a, b)
-			case rel.Value:
-				arrayEnum, _ := a.ArrayEnumerator()
-				if arrayEnum != nil {
-					for arrayEnum.MoveNext() {
-						if arrayEnum.Current().Equal(b) {
-							return rel.NewBool(true)
-						}
-					}
-				}
 
-			}
-			return rel.NewBool(false)
+		typeMethod{reflect.TypeOf(rel.Array{}), "contains"}: func(args ...rel.Value) rel.Value {
+			return ArrayContains(args[0].(rel.Array), args[1])
 		},
+
 		typeMethod{reflect.TypeOf(rel.Bytes{}), "contains"}: func(args ...rel.Value) rel.Value {
 			return nil
 		},
@@ -132,7 +119,7 @@ var (
 			)
 		},
 		typeMethod{reflect.TypeOf(rel.Array{}), "sub"}: func(args ...rel.Value) rel.Value {
-			return nil
+			return ArraySub(args[0].(rel.Array), args[1], args[2])
 		},
 		typeMethod{reflect.TypeOf(rel.Bytes{}), "sub"}: func(args ...rel.Value) rel.Value {
 			return nil
