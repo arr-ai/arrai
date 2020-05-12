@@ -46,6 +46,8 @@ func arrayContainsArray(a, b rel.Array) rel.Value {
 
 // ArraySub substitutes all b in a with c.
 func ArraySub(a rel.Array, b, c rel.Value) rel.Value {
+	// bArray := rel.NewArray(b)
+	// cArray := rel.NewArray(c)
 	// switch b := b.(type) {
 	// case rel.Array:
 	// 	return arrayContainsArray(a, b)
