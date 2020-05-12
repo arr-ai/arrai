@@ -21,7 +21,7 @@ func NewIdentPattern(ident string) IdentPattern {
 }
 
 func (p IdentPattern) Bind(scope Scope, value Value) Scope {
-	return scope.With(p.ident, value)
+	return EmptyScope.With(p.ident, value)
 }
 
 func (p IdentPattern) String() string {
@@ -44,7 +44,7 @@ func (p ValuePattern) Bind(scope Scope, value Value) Scope {
 		}
 	}
 
-	return scope.With(p.String(), value)
+	return EmptyScope
 }
 
 func (p ValuePattern) String() string {
@@ -92,11 +92,12 @@ func (p ArrayPattern) Bind(scope Scope, value Value) Scope {
 		patterns[item.String()] = item
 	}
 
+	result := EmptyScope
 	for s, ptn := range patterns {
-		scope = ptn.Bind(scope, values[s])
+		result = result.Update(ptn.Bind(scope, values[s]))
 	}
 
-	return scope
+	return result
 }
 
 func (p ArrayPattern) String() string {

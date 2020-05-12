@@ -1,19 +1,21 @@
 (
     type: //fn.fix(\type \t
-        {
-            'DECIMAL':  'double',
-            'INT':      'int64',
-            'FLOAT':    'double',
-            'STRING':   'string',
-            'STRING_8': 'string',
-            'BOOL':     'bool',
-            'DATE':     'string',
-            'DATETIME': 'string',
-        }(t.primitive)
-            if t.type = 'primitive'
-        else 'repeated ' + type(t.sequence)
-            if t.type = 'sequence'
-        else
-            //str.sub(t.type_ref, "-", ".") if //str.contains(t.type_ref, "google-protobuf") else t.type_ref
+        t.type cond (
+            'primitive': t.primitive cond (
+                'DECIMAL':  'double',
+                'INT':      'int64',
+                'FLOAT':    'double',
+                'STRING':   'string',
+                'STRING_8': 'string',
+                'BOOL':     'bool',
+                'DATE':     'string',
+                'DATETIME': 'string',
+            ),
+            'sequence': 'repeated ' + type(t.sequence)
+            *: cond (
+                //str.contains(t.type_ref, "google-protobuf"): //str.sub(t.type_ref, "-", "."),
+                *: t.type_ref,
+            ),
+        ),
     ),
 )
