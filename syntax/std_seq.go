@@ -2,6 +2,7 @@ package syntax
 
 import (
 	"fmt"
+	"reflect"
 	"strings"
 
 	"github.com/arr-ai/arrai/rel"
@@ -65,17 +66,46 @@ func stdSeq() rel.Attr {
 		rel.NewNativeFunctionAttr("concat", stdSeqConcat),
 		rel.NewNativeFunctionAttr("repeat", stdSeqRepeat),
 		createNestedFuncAttr("contains", 2, func(args ...rel.Value) rel.Value {
-			return rel.NewBool(strings.Contains(mustAsString(args[0]), mustAsString(args[1])))
+			return process("contains", args...)
 		}),
 		createNestedFuncAttr("split", 2, func(args ...rel.Value) rel.Value {
-			splitted := strings.Split(mustAsString(args[0]), mustAsString(args[1]))
-			vals := make([]rel.Value, 0, len(splitted))
-			for _, s := range splitted {
-				vals = append(vals, rel.NewString([]rune(s)))
-			}
-			return rel.NewArray(vals...)
+			return process("split", args...)
 		}),
 		createNestedFuncAttr("sub", 3, func(args ...rel.Value) rel.Value {
+			return process("sub", args...)
+		}),
+		createNestedFuncAttr("has_prefix", 2, func(args ...rel.Value) rel.Value {
+			return process("has_prefix", args...)
+		}),
+		createNestedFuncAttr("has_suffix", 2, func(args ...rel.Value) rel.Value {
+			return process("has_suffix", args...)
+		}),
+		createNestedFuncAttr("join", 2, func(args ...rel.Value) rel.Value {
+			return process("join", args...)
+		}),
+	)
+}
+
+func process(apiName string, args ...rel.Value) rel.Value {
+	handler := handlerMapping[typeMethod{reflect.TypeOf(args[0]), apiName}]
+	return handler(args...)
+}
+
+// This seq API handlders mapping, the key is API name + '_' + data type.
+var (
+	handlerMapping = map[typeMethod]func(...rel.Value) rel.Value{
+		// API contains
+		typeMethod{reflect.TypeOf(rel.String{}), "contains"}: func(args ...rel.Value) rel.Value {
+			return rel.NewBool(strings.HasPrefix(mustAsString(args[0]), mustAsString(args[1])))
+		},
+		typeMethod{reflect.TypeOf(rel.Array{}), "contains"}: func(args ...rel.Value) rel.Value {
+			return nil
+		},
+		typeMethod{reflect.TypeOf(rel.Bytes{}), "contains"}: func(args ...rel.Value) rel.Value {
+			return nil
+		},
+		// API sub
+		typeMethod{reflect.TypeOf(rel.String{}), "sub"}: func(args ...rel.Value) rel.Value {
 			return rel.NewString(
 				[]rune(
 					strings.ReplaceAll(
@@ -85,20 +115,67 @@ func stdSeq() rel.Attr {
 					),
 				),
 			)
-		}),
-		createNestedFuncAttr("has_prefix", 2, func(args ...rel.Value) rel.Value {
-			return rel.NewBool(strings.HasPrefix(mustAsString(args[0]), mustAsString(args[1])))
-		}),
-		createNestedFuncAttr("has_suffix", 2, func(args ...rel.Value) rel.Value {
-			return rel.NewBool(strings.HasPrefix(mustAsString(args[0]), mustAsString(args[1])))
-		}),
-		createNestedFuncAttr("join", 2, func(args ...rel.Value) rel.Value {
+		},
+		typeMethod{reflect.TypeOf(rel.Array{}), "sub"}: func(args ...rel.Value) rel.Value {
+			return nil
+		},
+		typeMethod{reflect.TypeOf(rel.Bytes{}), "sub"}: func(args ...rel.Value) rel.Value {
+			return nil
+		},
+		// API split
+		typeMethod{reflect.TypeOf(rel.String{}), "split"}: func(args ...rel.Value) rel.Value {
+			splitted := strings.Split(mustAsString(args[0]), mustAsString(args[1]))
+			vals := make([]rel.Value, 0, len(splitted))
+			for _, s := range splitted {
+				vals = append(vals, rel.NewString([]rune(s)))
+			}
+			return rel.NewArray(vals...)
+		},
+		typeMethod{reflect.TypeOf(rel.Array{}), "split"}: func(args ...rel.Value) rel.Value {
+			return nil
+		},
+		typeMethod{reflect.TypeOf(rel.Bytes{}), "split"}: func(args ...rel.Value) rel.Value {
+			return nil
+		},
+		// API join
+		typeMethod{reflect.TypeOf(rel.String{}), "join"}: func(args ...rel.Value) rel.Value {
 			strs := args[0].(rel.Set)
 			toJoin := make([]string, 0, strs.Count())
 			for i, ok := strs.(rel.Set).ArrayEnumerator(); ok && i.MoveNext(); {
 				toJoin = append(toJoin, mustAsString(i.Current()))
 			}
 			return rel.NewString([]rune(strings.Join(toJoin, mustAsString(args[1]))))
-		}),
-	)
+		},
+		typeMethod{reflect.TypeOf(rel.Array{}), "join"}: func(args ...rel.Value) rel.Value {
+			return nil
+		},
+		typeMethod{reflect.TypeOf(rel.Bytes{}), "join"}: func(args ...rel.Value) rel.Value {
+			return nil
+		},
+		// API has_prefix
+		typeMethod{reflect.TypeOf(rel.String{}), "has_prefix"}: func(args ...rel.Value) rel.Value {
+			return rel.NewBool(strings.HasPrefix(mustAsString(args[0]), mustAsString(args[1])))
+		},
+		typeMethod{reflect.TypeOf(rel.Array{}), "has_prefix"}: func(args ...rel.Value) rel.Value {
+			return nil
+		},
+		typeMethod{reflect.TypeOf(rel.Bytes{}), "has_prefix"}: func(args ...rel.Value) rel.Value {
+			return nil
+		},
+		// API has_suffix
+		typeMethod{reflect.TypeOf(rel.String{}), "has_suffix"}: func(args ...rel.Value) rel.Value {
+			return rel.NewBool(strings.HasSuffix(mustAsString(args[0]), mustAsString(args[1])))
+		},
+		typeMethod{reflect.TypeOf(rel.Array{}), "has_suffix"}: func(args ...rel.Value) rel.Value {
+			return nil
+		},
+		typeMethod{reflect.TypeOf(rel.Bytes{}), "has_suffix"}: func(args ...rel.Value) rel.Value {
+			return nil
+		},
+	}
+)
+
+type typeMethod struct {
+	t   reflect.Type
+	api string
 }
