@@ -27,6 +27,9 @@ into the world of arr.ai programming.
 See the [Introduction to Arr.ai](docs/README.md) to learn more about the arr.ai
 language.
 
+See the [Standard Library Reference](docs/std.md) to learn which are batteries
+are included in arr.ai.
+
 ### Arr.ai Examples
 
 1. [Snippets](docs/example.md)

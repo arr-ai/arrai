@@ -19,12 +19,32 @@ type CondControlVarExpr struct {
 // NewCondControlVarExpr returns a new CondControlVarExpr.
 func NewCondControlVarExpr(scanner parser.Scanner, controlVar Expr, dictExpr Expr, defaultExpr Expr) Expr {
 	return &CondControlVarExpr{ExprScanner{scanner}, controlVar,
-		CondExpr{ExprScanner{scanner}, dictExpr, defaultExpr, func(condition Value, local Scope) bool {
+		CondExpr{ExprScanner{scanner}, dictExpr, defaultExpr, func(condition Value, local Scope) (bool, error) {
 			controlVarVal, has := local.Get("controlVarVal")
 			if !has {
-				return false
+				return false, fmt.Errorf("couldn't get 'controlVarVal' in Scope, and it is expected")
 			}
-			return condition.Equal(controlVarVal)
+
+			// process "(1,2):11" in case arrai e "(2) cond ((1,2):11,2:12,*:13)"
+			switch condition := condition.(type) {
+			case Array:
+				varVal, err := controlVarVal.Eval(local)
+				if err != nil {
+					currentExpr, has := local.Get("currentExpr")
+					if !has {
+						return false, fmt.Errorf("%s", err.Error())
+					}
+					return false, wrapContext(err, currentExpr)
+				}
+				for _, exprVal := range condition.Values() {
+					if exprVal.Equal(varVal) {
+						return true, nil
+					}
+				}
+				return false, nil
+			}
+
+			return condition.Equal(controlVarVal), nil
 		}}}
 }
 
@@ -49,6 +69,6 @@ func (e *CondControlVarExpr) Eval(local Scope) (Value, error) {
 		return nil, err
 	}
 
-	local = local.With("controlVarVal", controlVarVal)
+	local = local.With("controlVarVal", controlVarVal).With("currentExpr", e)
 	return e.standardExpr.Eval(local)
 }

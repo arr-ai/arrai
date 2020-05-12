@@ -25,14 +25,6 @@ type ParseContext struct {
 	SourceDir string
 }
 
-func (pc ParseContext) parseExprs(exprs ...ast.Node) []rel.Expr {
-	result := make([]rel.Expr, 0, len(exprs))
-	for _, expr := range exprs {
-		result = append(result, pc.CompileExpr(expr.(ast.Branch)))
-	}
-	return result
-}
-
 func parseNames(names ast.Branch) []string {
 	idents := names["IDENT"].(ast.Many)
 	result := make([]string, 0, len(idents))

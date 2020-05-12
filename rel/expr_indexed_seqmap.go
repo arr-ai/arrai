@@ -39,7 +39,7 @@ func (is *IndexedSequenceMapExpr) Eval(local Scope) (Value, error) {
 			attr := t.Names().Without("@").Any()
 			item, _ := t.Get(attr)
 			itemFn := indexed.(Closure).f
-			v, err := itemFn.Body().Eval(local.With(itemFn.Arg(), item).With(is.fn.arg, pos))
+			v, err := itemFn.Body().Eval(local.With(itemFn.Arg(), item).With(is.fn.Arg(), pos))
 			if err != nil {
 				return nil, err
 			}

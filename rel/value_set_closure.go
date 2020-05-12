@@ -47,8 +47,8 @@ func (c Closure) Eval(local Scope) (Value, error) {
 	return c, nil
 }
 
-// Scanner returns the scanner of Closure.
-func (c Closure) Scanner() parser.Scanner {
+// Source returns a scanner locating the Closure's source code.
+func (c Closure) Source() parser.Scanner {
 	return *parser.NewScanner("")
 }
 
@@ -79,26 +79,31 @@ func (c Closure) Negate() Value {
 
 // Export exports a Closure.
 func (c Closure) Export() interface{} {
-	if c.f.arg == "-" {
+	if c.f.Arg() == "-" {
 		return func(_ Value, local Scope) (Value, error) {
 			return c.Call(None, local)
 		}
 	}
 	return func(e Value, local Scope) (Value, error) {
-		return c.f.body.Eval(local.With(c.f.arg, e))
+		return c.f.body.Eval(local.Update(c.f.arg.Bind(local, e)))
 	}
 }
 
 // Call calls the Closure with the given parameter.
 func (c Closure) Call(expr Expr, local Scope) (Value, error) {
-	niladic := c.f.arg == "-"
+	niladic := c.f.Arg() == "-"
 	noArg := expr == nil
 	if niladic != noArg {
 		return nil, errors.Errorf(
-			"nullary-vs-unary function arg mismatch (%s vs %s)", c.f.arg, expr)
+			"nullary-vs-unary function arg mismatch (%s vs %s)", c.f.Arg(), expr)
 	}
 	if niladic {
 		return c.f.body.Eval(local)
 	}
-	return c.f.body.Eval(c.scope.With(c.f.arg, expr))
+
+	value, err := expr.Eval(local)
+	if err != nil {
+		return nil, err
+	}
+	return c.f.body.Eval(c.scope.Update(c.f.arg.Bind(local, value)))
 }

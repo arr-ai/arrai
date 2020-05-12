@@ -44,7 +44,7 @@ func array(intfs ...interface{}) []interface{} {
 func jsonEscapeExpr(expr Expr) interface{} {
 	switch x := expr.(type) {
 	case *Function:
-		if x.arg != "-" {
+		if x.Arg() != "-" {
 			return array("\\", x.arg, x.body)
 		}
 		return array("\\", nil, x.body)

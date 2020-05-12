@@ -2,7 +2,6 @@ package rel
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
 
 	"github.com/arr-ai/wbnf/parser"
@@ -16,13 +15,13 @@ import (
 type CondExpr struct {
 	ExprScanner
 	dicExpr, defaultExpr Expr
-	validValidation      func(condition Value, local Scope) bool // Valid condition validation.
+	validValidation      func(condition Value, local Scope) (bool, error) // Valid condition validation.
 }
 
 // NewCondExpr returns a new CondExpr.
 func NewCondExpr(scanner parser.Scanner, dict Expr, defaultExpr Expr) Expr {
-	return &CondExpr{ExprScanner{scanner}, dict, defaultExpr, func(condition Value, local Scope) bool {
-		return condition.IsTrue()
+	return &CondExpr{ExprScanner{scanner}, dict, defaultExpr, func(condition Value, local Scope) (bool, error) {
+		return condition.IsTrue(), nil
 	}}
 }
 
@@ -64,7 +63,11 @@ func (e *CondExpr) Eval(local Scope) (Value, error) {
 				return nil, wrapContext(err, e)
 			}
 
-			if cond != nil && e.validValidation(cond, local) {
+			valid, err := e.validValidation(cond, local)
+			if err != nil {
+				return nil, wrapContext(err, e)
+			}
+			if cond != nil && valid {
 				trueCond = &tempExpr
 				break
 			}
@@ -78,8 +81,7 @@ func (e *CondExpr) Eval(local Scope) (Value, error) {
 		finalCond = e.defaultExpr
 	} else {
 		// trueCond == nil && e.defaultCond == nil
-		return nil, wrapContext(errors.New("it expects one valid condition or default condition '*':valueExpression, "+
-			"but actually there is not any valid condition or default condition '*':valueExpression in cond expression"), e)
+		return None, nil
 	}
 
 	value, err := finalCond.Eval(local)
