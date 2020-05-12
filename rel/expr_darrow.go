@@ -43,7 +43,7 @@ func (e *DArrowExpr) Eval(local Scope) (Value, error) {
 	if set, ok := value.(Set); ok {
 		values := []Value{}
 		for i := set.Enumerator(); i.MoveNext(); {
-			v, err := e.fn.body.Eval(e.fn.arg.Bind(local, local, i.Current()))
+			v, err := e.fn.body.Eval(local.Update(e.fn.arg.Bind(local, i.Current())))
 			if err != nil {
 				return nil, wrapContext(err, e)
 			}

@@ -111,7 +111,7 @@ func (f *Function) Export() interface{} {
 		}
 	}
 	return func(e Value, local Scope) (Value, error) {
-		return f.body.Eval(f.arg.Bind(local, local, e))
+		return f.body.Eval(local.Update(f.arg.Bind(local, e)))
 	}
 }
 
@@ -130,5 +130,5 @@ func (f *Function) Call(expr Expr, local Scope) (Value, error) {
 	if err != nil {
 		return nil, err
 	}
-	return f.body.Eval(f.arg.Bind(local, local, value))
+	return f.body.Eval(local.Update(f.arg.Bind(local, value)))
 }
