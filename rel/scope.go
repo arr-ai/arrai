@@ -90,6 +90,8 @@ func (s Scope) Without(name ...string) Scope {
 	return Scope{s.m.Without(frozen.NewSetFromStrings(name...))}
 }
 
+// s.Update(t) merges s and t, choosing t's binding in the event of a name clash.
+// It's like calling s.With(t0).With(t1).With(t2)... for each element of t
 func (s Scope) Update(t Scope) Scope {
 	return Scope{m: s.m.Update(t.m)}
 }

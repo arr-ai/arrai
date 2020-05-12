@@ -5,27 +5,12 @@ import (
 	"fmt"
 )
 
+// Pattern can be inside an Expr, Expr can be a Pattern.
 type Pattern interface {
 	// Require a String() method.
 	fmt.Stringer
 
 	Bind(scope Scope, value Value) Scope
-}
-
-type IdentPattern struct {
-	ident string
-}
-
-func NewIdentPattern(ident string) IdentPattern {
-	return IdentPattern{ident}
-}
-
-func (p IdentPattern) Bind(scope Scope, value Value) Scope {
-	return EmptyScope.With(p.ident, value)
-}
-
-func (p IdentPattern) String() string {
-	return p.ident
 }
 
 type ValuePattern struct {

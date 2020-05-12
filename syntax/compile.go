@@ -127,25 +127,29 @@ func (pc ParseContext) CompileExpr(b ast.Branch) rel.Expr {
 
 func (pc ParseContext) compilePattern(b ast.Branch) rel.Pattern {
 	if ptn := b.One("pattern"); ptn != nil {
-		if ident := ptn.One("IDENT"); ident != nil {
-			return rel.NewIdentPattern(ident.Scanner().String())
+		return pc.compilePattern(ptn.(ast.Branch))
+	}
+	if ident := b.One("IDENT"); ident != nil {
+		expr := pc.CompileExpr(b)
+		if e, is := expr.(rel.IdentExpr); is {
+			return e
 		}
-		if num := ptn.One("NUM"); num != nil {
-			f, err := strconv.ParseFloat(num.Scanner().String(), 64)
-			if err != nil {
-				panic("NUM is not a float64")
-			}
-			return rel.NewValuePattern(rel.NewNumber(f))
+	}
+	if num := b.One("NUM"); num != nil {
+		f, err := strconv.ParseFloat(num.Scanner().String(), 64)
+		if err != nil {
+			panic("NUM is not a float64")
 		}
-		if arr := ptn.One("array"); arr != nil {
-			return pc.compileArrayPattern(arr.(ast.Branch))
-		}
+		return rel.NewValuePattern(rel.NewNumber(f))
+	}
+	if arr := b.One("array"); arr != nil {
+		return pc.compileArrayPattern(arr.(ast.Branch))
 	}
 	if expr := b.One("expr"); expr != nil {
 		exp := pc.CompileExpr(expr.(ast.Branch))
 		switch t := exp.(type) {
 		case rel.IdentExpr:
-			return rel.NewIdentPattern(t.Ident())
+			return t
 		}
 	}
 	return nil
@@ -163,7 +167,7 @@ func (pc ParseContext) compileArrayPattern(b ast.Branch) rel.Pattern {
 	if items := b["item"]; items != nil {
 		return rel.NewArrayPattern(pc.compilePatterns(items.(ast.Many)...)...)
 	}
-	panic("item not found")
+	return rel.NewArrayPattern()
 }
 
 func (pc ParseContext) compileArrow(b ast.Branch, name string, c ast.Children) rel.Expr {
@@ -185,7 +189,7 @@ func (pc ParseContext) compileArrow(b ast.Branch, name string, c ast.Children) r
 				rhs := pc.CompileExpr(arrow.(ast.Branch)["expr"].(ast.One).Node.(ast.Branch))
 				scanner := rhs.Source()
 				if ident := arrow.One("IDENT"); ident != nil {
-					rhs = rel.NewFunction(rel.NewIdentPattern(ident.Scanner().String()), rhs)
+					rhs = rel.NewFunction(rel.NewIdentExpr(ident.Scanner(), ident.Scanner().String()), rhs)
 					scanner = ident.Scanner()
 				}
 				expr = binops["->"](scanner, expr, rhs)
@@ -194,7 +198,7 @@ func (pc ParseContext) compileArrow(b ast.Branch, name string, c ast.Children) r
 	}
 	if name == "amp" {
 		for range c.(ast.Many) {
-			expr = rel.NewFunction(rel.NewIdentPattern("-"), expr)
+			expr = rel.NewFunction(rel.NewIdentExpr(*parser.NewScanner("-"), "-"), expr)
 		}
 	}
 	return expr
@@ -496,7 +500,8 @@ func (pc ParseContext) compileExprs4Cond(exprs ...ast.Node) []rel.Expr {
 func (pc ParseContext) compileFunction(b ast.Branch) rel.Expr {
 	ident := b.One("IDENT")
 	expr := pc.CompileExpr(b.One("expr").(ast.Branch))
-	return rel.NewFunction(rel.NewIdentPattern(ident.One("").Scanner().String()), expr)
+	source := ident.One("").Scanner()
+	return rel.NewFunction(rel.NewIdentExpr(source, source.String()), expr)
 }
 
 func (pc ParseContext) compilePackage(c ast.Children) rel.Expr {
