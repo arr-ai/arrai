@@ -90,9 +90,9 @@ func TestStrSplit(t *testing.T) {
 
 func TestStrJoin(t *testing.T) {
 	t.Parallel()
-	// AssertCodesEvalToSameValue(t, `""                `, `//seq.join([], ",")                         `)
-	// AssertCodesEvalToSameValue(t, `",,"              `, `//seq.join(["", "", ""], ",")               `)
-	// AssertCodesEvalToSameValue(t, `"this is a test"  `, `//seq.join(["this", "is", "a", "test"], " ")`)
-	// AssertCodesEvalToSameValue(t, `"this"            `, `//seq.join(["this"], ",")                   `)
-	// assertExprPanics(t, `//seq.join("this", 2)`)
+	AssertCodesEvalToSameValue(t, `""                `, `//seq.join([], ",")                         `)
+	AssertCodesEvalToSameValue(t, `",,"              `, `//seq.join(["", "", ""], ",")               `)
+	AssertCodesEvalToSameValue(t, `"this is a test"  `, `//seq.join(["this", "is", "a", "test"], " ")`)
+	AssertCodesEvalToSameValue(t, `"this"            `, `//seq.join(["this"], ",")                   `)
+	assertExprPanics(t, `//seq.join("this", 2)`)
 }

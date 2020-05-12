@@ -153,7 +153,7 @@ var (
 			return nil
 		},
 		// API join
-		typeMethod{reflect.TypeOf(rel.String{}), "join"}: func(args ...rel.Value) rel.Value {
+		typeMethod{reflect.TypeOf(rel.GenericSet{}), "join"}: func(args ...rel.Value) rel.Value {
 			strs := args[0].(rel.Set)
 			toJoin := make([]string, 0, strs.Count())
 			for i, ok := strs.(rel.Set).ArrayEnumerator(); ok && i.MoveNext(); {
@@ -162,7 +162,12 @@ var (
 			return rel.NewString([]rune(strings.Join(toJoin, mustAsString(args[1]))))
 		},
 		typeMethod{reflect.TypeOf(rel.Array{}), "join"}: func(args ...rel.Value) rel.Value {
-			return nil
+			strs := args[0].(rel.Set)
+			toJoin := make([]string, 0, strs.Count())
+			for i, ok := strs.(rel.Set).ArrayEnumerator(); ok && i.MoveNext(); {
+				toJoin = append(toJoin, mustAsString(i.Current()))
+			}
+			return rel.NewString([]rune(strings.Join(toJoin, mustAsString(args[1]))))
 		},
 		typeMethod{reflect.TypeOf(rel.Bytes{}), "join"}: func(args ...rel.Value) rel.Value {
 			return nil
