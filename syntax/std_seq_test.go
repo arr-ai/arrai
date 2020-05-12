@@ -40,20 +40,26 @@ func TestSeqRepeat(t *testing.T) {
 func TestContains(t *testing.T) {
 	t.Parallel()
 	// string
-	// AssertCodesEvalToSameValue(t, `true `, `//seq.contains("this is a test", "")             `)
-	// AssertCodesEvalToSameValue(t, `true `, `//seq.contains("this is a test", "is a test")    `)
-	// AssertCodesEvalToSameValue(t, `false`, `//seq.contains("this is a test", "is not a test")`)
-	// assertExprPanics(t, `//seq.contains(123, 124)`)
+	AssertCodesEvalToSameValue(t, `true `, `//seq.contains("this is a test", "")             `)
+	AssertCodesEvalToSameValue(t, `true `, `//seq.contains("this is a test", "is a test")    `)
+	AssertCodesEvalToSameValue(t, `false`, `//seq.contains("this is a test", "is not a test")`)
+	assertExprPanics(t, `//seq.contains(123, 124)`)
 	// array
-	// AssertCodesEvalToSameValue(t, `true`, `//seq.contains([1,2,3,4,5],1)`)
-	// AssertCodesEvalToSameValue(t, `true`, `//seq.contains([1,2,3,4,5],3)`)
-	// AssertCodesEvalToSameValue(t, `true`, `//seq.contains([1,2,3,4,5],5)`)
+	AssertCodesEvalToSameValue(t, `true`, `//seq.contains([1,2,3,4,5],1)`)
+	AssertCodesEvalToSameValue(t, `true`, `//seq.contains([1,2,3,4,5],3)`)
+	AssertCodesEvalToSameValue(t, `true`, `//seq.contains([1,2,3,4,5],5)`)
 
-	// AssertCodesEvalToSameValue(t, `true`, `//seq.contains(['A','B','C','D','E'],'A')`)
-	// AssertCodesEvalToSameValue(t, `true`, `//seq.contains(['A','B','C','D','E'],'E')`)
-	// AssertCodesEvalToSameValue(t, `true`, `//seq.contains(['A','B','C','D','E'],'C')`)
+	AssertCodesEvalToSameValue(t, `true`, `//seq.contains(['A','B','C','D','E'],'A')`)
+	AssertCodesEvalToSameValue(t, `true`, `//seq.contains(['A','B','C','D','E'],'E')`)
+	AssertCodesEvalToSameValue(t, `true`, `//seq.contains(['A','B','C','D','E'],'C')`)
 
+	AssertCodesEvalToSameValue(t, `true`, `//seq.contains(['A','B','C','D','E'],['A','B','C'])`)
 	AssertCodesEvalToSameValue(t, `true`, `//seq.contains(['A','B','C','D','E'],['B','C'])`)
+	AssertCodesEvalToSameValue(t, `true`, `//seq.contains(['A','B','C','D','E'],['C','D','E'])`)
+	AssertCodesEvalToSameValue(t, `true`, `//seq.contains(['A','B','C','D','E'],['A','B','C','D','E'])`)
+	AssertCodesEvalToSameValue(t, `false`, `//seq.contains(['A','B','C','D','E'],['B','C','E'])`)
+	AssertCodesEvalToSameValue(t, `false`, `//seq.contains(['A','B','C','D','E'],['A','B','C','E'])`)
+	AssertCodesEvalToSameValue(t, `false`, `//seq.contains(['A','B','C','D','E'],['A','B','C','D','E','F'])`)
 }
 
 ///////////////////
