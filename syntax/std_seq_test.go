@@ -83,7 +83,6 @@ func TestSub(t *testing.T) {
 	// 	`"this is a test"`,
 	// 	`//seq.sub(["this", "is", "not", "a", "test"], ["is", "not"], "is")`)
 	// bytes
-
 }
 
 func TestStrSplit(t *testing.T) {
