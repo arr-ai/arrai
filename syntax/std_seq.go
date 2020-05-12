@@ -91,20 +91,20 @@ func process(apiName string, args ...rel.Value) rel.Value {
 	return handler(args...)
 }
 
-// This seq API handlders mapping, the key is API name + '_' + data type.
+// This seq API handlders mapping.
 var (
 	handlerMapping = map[typeMethod]func(...rel.Value) rel.Value{
 		// API contains
-		typeMethod{reflect.TypeOf(rel.String{}), "contains"}: func(args ...rel.Value) rel.Value {
-			return rel.NewBool(strings.Contains(mustAsString(args[0]), mustAsString(args[1])))
-		},
-
 		typeMethod{reflect.TypeOf(rel.Array{}), "contains"}: func(args ...rel.Value) rel.Value {
 			return ArrayContains(args[0].(rel.Array), args[1])
 		},
 
 		typeMethod{reflect.TypeOf(rel.Bytes{}), "contains"}: func(args ...rel.Value) rel.Value {
 			return nil
+		},
+
+		typeMethod{reflect.TypeOf(rel.String{}), "contains"}: func(args ...rel.Value) rel.Value {
+			return rel.NewBool(strings.Contains(mustAsString(args[0]), mustAsString(args[1])))
 		},
 		// API sub
 		typeMethod{reflect.TypeOf(rel.String{}), "sub"}: func(args ...rel.Value) rel.Value {
