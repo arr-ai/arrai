@@ -30,7 +30,7 @@ func main() {
 	case "ai":
 		app.Name = "ai"
 		app.Usage = "arr.ai interactive shell"
-		app.Action = shell
+		app.Action = iShell
 	case "ax":
 		app.Name = "ax"
 		app.Usage = "the ultimate data transformer"

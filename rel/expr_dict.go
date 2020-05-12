@@ -27,7 +27,7 @@ func NewDictExpr(scanner parser.Scanner,
 				}
 			}
 		}
-		return DictExpr{entryExprs: entryExprs, allowDupKeys: allowDupKeys}
+		return DictExpr{ExprScanner: ExprScanner{Src: scanner}, entryExprs: entryExprs, allowDupKeys: allowDupKeys}
 	}
 	return NewDict(allowDupKeys, entries...)
 }

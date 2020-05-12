@@ -1,6 +1,6 @@
 //+build !wasm
 
-package main
+package shell
 
 import (
 	"regexp"

@@ -21,11 +21,12 @@ let endpoints = app.endpoints where !//str.has_prefix(.@item.name, "enum ");
             message ${.key} {
                 string alias${.type} = 1;
             }`::}
-        ${$`
-            ${//rel.union((endpoints >> (.params >> $`
-                import "${//str.sub(grpc.type(.), ".", "/")}.proto";`
-                    if //str.contains(grpc.type(.), "google.protobuf")
-                => .@item
+        ${cond (app.endpoints: $`
+            ${//rel.union((endpoints >> (.params >>
+                cond (
+                    //str.contains(grpc.type(.), "google.protobuf"): $`
+                        import "${//str.sub(grpc.type(.), ".", "/")}.proto";`,
+                ) => .@item
             )) => .@item)::\i:\n}
             service ${app.name} {
                 ${endpoints >> (proto.endpointInfo(.)).rpcMethod::\i}
@@ -35,7 +36,7 @@ let endpoints = app.endpoints where !//str.has_prefix(.@item.name, "enum ");
                     ${.stmts >> $`${.action};`::\i}
                 }`:::\n}
             ${endpoints >> proto.wrapSequence(.).grpcType::\i}
-            ${endpoints if wrap >>
+            ${cond (wrap: endpoints) >>
                 let retTokens = //str.split(ep.ret("ok"), " ");
                 let retName = //str.sub(//seq.concat(retTokens -- {"sequence", "of"}), ".", "");
                 let attr = ep.attrs(retName + "_rpcId");
@@ -49,8 +50,8 @@ let endpoints = app.endpoints where !//str.has_prefix(.@item.name, "enum ");
                 }
 
                 message ${epi.responseName} {
-                    ${'repeated ' if retTokens count > 1}${retName} res${retName} = ${attr};
+                    ${cond (retTokens count > 1: 'repeated ')}${retName} res${retName} = ${attr};
                 }`:::\n}
-        ` if app.endpoints}
+        `)}
     `,
 })

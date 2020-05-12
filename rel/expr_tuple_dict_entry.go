@@ -20,7 +20,7 @@ func NewDictEntryTupleExpr(scanner parser.Scanner, at, value Expr) DictEntryTupl
 	// 		return NewDictTuple(at, value)
 	// 	}
 	// }
-	return DictEntryTupleExpr{at: at, value: value}
+	return DictEntryTupleExpr{ExprScanner: ExprScanner{Src: scanner}, at: at, value: value}
 }
 
 // String returns a string representation of the expression.

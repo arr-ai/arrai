@@ -42,7 +42,7 @@ type OrExpr struct {
 }
 
 func NewOrExpr(scanner parser.Scanner, a, b Expr) Expr {
-	return OrExpr{a: a, b: b}
+	return OrExpr{ExprScanner: ExprScanner{Src: scanner}, a: a, b: b}
 }
 
 func (e OrExpr) String() string {

@@ -20,7 +20,7 @@ func NewStringCharTupleExpr(scanner parser.Scanner, at, char Expr) StringCharTup
 	// 		return NewDictTuple(at, char)
 	// 	}
 	// }
-	return StringCharTupleExpr{at: at, char: char}
+	return StringCharTupleExpr{ExprScanner: ExprScanner{Src: scanner}, at: at, char: char}
 }
 
 // String returns a string representation of the expression.
