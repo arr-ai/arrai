@@ -95,16 +95,16 @@ func process(apiName string, args ...rel.Value) rel.Value {
 var (
 	handlerMapping = map[typeMethod]func(...rel.Value) rel.Value{
 		// API contains
+		{reflect.TypeOf(rel.String{}), "contains"}: func(args ...rel.Value) rel.Value {
+			return rel.NewBool(strings.Contains(mustAsString(args[0]), mustAsString(args[1])))
+		},
+
 		{reflect.TypeOf(rel.Array{}), "contains"}: func(args ...rel.Value) rel.Value {
 			return ArrayContains(args[0].(rel.Array), args[1])
 		},
 
 		{reflect.TypeOf(rel.Bytes{}), "contains"}: func(args ...rel.Value) rel.Value {
 			return nil
-		},
-
-		{reflect.TypeOf(rel.String{}), "contains"}: func(args ...rel.Value) rel.Value {
-			return rel.NewBool(strings.Contains(mustAsString(args[0]), mustAsString(args[1])))
 		},
 		// API sub
 		{reflect.TypeOf(rel.String{}), "sub"}: func(args ...rel.Value) rel.Value {
@@ -164,20 +164,26 @@ var (
 			return rel.NewBool(strings.HasPrefix(mustAsString(args[0]), mustAsString(args[1])))
 		},
 		{reflect.TypeOf(rel.Array{}), "has_prefix"}: func(args ...rel.Value) rel.Value {
-			return nil
+			return ArrayPrefix(args[0].(rel.Array), args[1])
+		},
+		{reflect.TypeOf(rel.GenericSet{}), "has_prefix"}: func(args ...rel.Value) rel.Value {
+			return rel.NewBool(false)
 		},
 		{reflect.TypeOf(rel.Bytes{}), "has_prefix"}: func(args ...rel.Value) rel.Value {
-			return nil
+			return rel.NewBool(strings.HasPrefix(args[0].String(), args[1].String()))
 		},
 		// API has_suffix
 		{reflect.TypeOf(rel.String{}), "has_suffix"}: func(args ...rel.Value) rel.Value {
 			return rel.NewBool(strings.HasSuffix(mustAsString(args[0]), mustAsString(args[1])))
 		},
 		{reflect.TypeOf(rel.Array{}), "has_suffix"}: func(args ...rel.Value) rel.Value {
-			return nil
+			return ArraySuffix(args[0].(rel.Array), args[1])
+		},
+		{reflect.TypeOf(rel.GenericSet{}), "has_suffix"}: func(args ...rel.Value) rel.Value {
+			return rel.NewBool(false)
 		},
 		{reflect.TypeOf(rel.Bytes{}), "has_suffix"}: func(args ...rel.Value) rel.Value {
-			return nil
+			return rel.NewBool(strings.HasSuffix(args[0].String(), args[1].String()))
 		},
 	}
 )
