@@ -91,7 +91,7 @@ func process(apiName string, args ...rel.Value) rel.Value {
 	return handler(args...)
 }
 
-// This seq API handlders mapping.
+// This is seq API handlders mapping.
 var (
 	handlerMapping = map[typeMethod]func(...rel.Value) rel.Value{
 		// API contains
@@ -140,21 +140,20 @@ var (
 			return nil
 		},
 		// API join
-		{reflect.TypeOf(rel.GenericSet{}), "join"}: func(args ...rel.Value) rel.Value {
-			strs := args[0].(rel.Set)
+		{reflect.TypeOf(rel.String{}), "join"}: func(args ...rel.Value) rel.Value {
+			strs := args[1].(rel.Set)
 			toJoin := make([]string, 0, strs.Count())
 			for i, ok := strs.(rel.Set).ArrayEnumerator(); ok && i.MoveNext(); {
 				toJoin = append(toJoin, mustAsString(i.Current()))
 			}
-			return rel.NewString([]rune(strings.Join(toJoin, mustAsString(args[1]))))
+			return rel.NewString([]rune(strings.Join(toJoin, mustAsString(args[0]))))
+		},
+		{reflect.TypeOf(rel.GenericSet{}), "join"}: func(args ...rel.Value) rel.Value {
+			// e.g. //seq.join("",["You", "me"])
+			return args[1]
 		},
 		{reflect.TypeOf(rel.Array{}), "join"}: func(args ...rel.Value) rel.Value {
-			strs := args[0].(rel.Set)
-			toJoin := make([]string, 0, strs.Count())
-			for i, ok := strs.(rel.Set).ArrayEnumerator(); ok && i.MoveNext(); {
-				toJoin = append(toJoin, mustAsString(i.Current()))
-			}
-			return rel.NewString([]rune(strings.Join(toJoin, mustAsString(args[1]))))
+			return nil
 		},
 		{reflect.TypeOf(rel.Bytes{}), "join"}: func(args ...rel.Value) rel.Value {
 			return nil

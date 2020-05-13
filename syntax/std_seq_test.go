@@ -109,18 +109,28 @@ func TestStrSplit(t *testing.T) {
 	assertExprPanics(t, `//seq.split("this is a test", 1)`)
 }
 
+// TestStrJoin, joiner is string.
 func TestStrJoin(t *testing.T) {
 	t.Parallel()
-	AssertCodesEvalToSameValue(t, `""                `, `//seq.join([], ",")                         `)
-	AssertCodesEvalToSameValue(t, `",,"              `, `//seq.join(["", "", ""], ",")               `)
-	AssertCodesEvalToSameValue(t, `"this is a test"  `, `//seq.join(["this", "is", "a", "test"], " ")`)
-	AssertCodesEvalToSameValue(t, `"this"            `, `//seq.join(["this"], ",")                   `)
+	AssertCodesEvalToSameValue(t, `""                `, `//seq.join(",",[])                         `)
+	AssertCodesEvalToSameValue(t, `",,"              `, `//seq.join(",",["", "", ""])               `)
+	AssertCodesEvalToSameValue(t, `"this is a test"  `, `//seq.join(" ",["this", "is", "a", "test"])`)
+	AssertCodesEvalToSameValue(t, `"this"            `, `//seq.join(",",["this"])                   `)
+	AssertCodesEvalToSameValue(t, `"You and me"`, `//seq.join(" and ",["You", "me"])`)
 	assertExprPanics(t, `//seq.join("this", 2)`)
 }
 
 func TestArrayJoin(t *testing.T) {
 	t.Parallel()
-	// AssertCodesEvalToSameValue(t, `""`, `//seq.join([], ",")`)
+	AssertCodesEvalToSameValue(t, `["A","B"]`, `//seq.join([],["A","B"])`)
+	AssertCodesEvalToSameValue(t, `[1,2]`, `//seq.join([],[1,2])`)
+	// joiner "" is translated to rel.GenericSet
+	AssertCodesEvalToSameValue(t, `["You", "me"]`, `//seq.join("",["You", "me"])`)
+	AssertCodesEvalToSameValue(t, `[1,2]`, `//seq.join("",[1,2])`)
+	// AssertCodesEvalToSameValue(t, `["A",",","B"]`, `//seq.join([","],["A","B"])`)
+	// AssertCodesEvalToSameValue(t, `[1,1,2]`, `//seq.join([1],[1,2])`)
+	// AssertCodesEvalToSameValue(t, `[1,2]`, `//seq.join([],[1,2])`)
+	// AssertCodesEvalToSameValue(t, `[1]`, `//seq.join([1],[])`)
 }
 
 func TestBytesJoin(t *testing.T) {
