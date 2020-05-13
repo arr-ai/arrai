@@ -16,6 +16,7 @@ func TestExprLetValuePattern(t *testing.T) {
 }
 
 func TestExprLetArrayPattern(t *testing.T) {
+	AssertCodesEvalToSameValue(t, `1`, `let [] = []; 1`)
 	AssertCodesEvalToSameValue(t, `9`, `let [a, b, c] = [1, 2, 3]; 9`)
 	AssertCodesEvalToSameValue(t, `[1, 2, 3]`, `let [a, b, c] = [1, 2, 3]; [a, b, c]`)
 	AssertCodesEvalToSameValue(t, `2`, `let [a, b, c] = [1, 2, 3]; [a, b, c](1)`)
@@ -41,6 +42,7 @@ func TestExprLetArrayPattern(t *testing.T) {
 }
 
 func TestExprLetTuplePattern(t *testing.T) {
+	AssertCodesEvalToSameValue(t, `4`, `let () = (); 4`)
 	AssertCodesEvalToSameValue(t, `4`, `let (a:x, b:y) = (a:4, b:7); x`)
 	AssertCodesEvalToSameValue(t, `4`, `let (a:x) = (b:7, a:4); x`)
 	AssertCodesEvalToSameValue(t, `4`, `let (a:x, b:x) = (a:4, b:4); x`)

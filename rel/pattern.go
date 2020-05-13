@@ -33,6 +33,13 @@ func NewArrayPattern(elements ...Pattern) ArrayPattern {
 }
 
 func (p ArrayPattern) Bind(scope Scope, value Value) Scope {
+	if s, is := value.(GenericSet); is {
+		if s.set.IsEmpty() {
+			return EmptyScope
+		} else {
+			panic(fmt.Sprintf("value %s is not an array", value))
+		}
+	}
 	array, is := value.(Array)
 	if !is {
 		panic(fmt.Sprintf("value %s is not an array", value))
