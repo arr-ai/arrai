@@ -112,75 +112,6 @@ func (s *shellInstance) parseCmd(line string, l *readline.Instance) error {
 	return nil
 }
 
-func (s *shellInstance) Do(line []rune, pos int) (newLine [][]rune, length int) {
-	l := getLastToken(line[:pos])
-	switch {
-	case strings.HasSuffix(l, "///"):
-		return [][]rune{line}, len(line)
-	case strings.HasPrefix(l, "//"):
-		var names []string
-		var lastName string
-		if l == "//" {
-			lastName, names = "", []string{}
-		} else {
-			names = strings.Split(l[2:], ".")
-			lastName, names = names[len(names)-1], names[:len(names)-1]
-		}
-		newLine, length = getScopePredictions(names, lastName, s.scope.MustGet(".").(rel.Tuple))
-		if l == "//" {
-			newLine = append(newLine, []rune("{"))
-		}
-	}
-	return
-}
-
-func getLastToken(line []rune) string {
-	i := len(line) - 1
-	for ; i > 0; i-- {
-		if !isAlpha(line[i]) && line[i] != '.' {
-			if line[i] == '/' {
-				switch {
-				case strings.HasSuffix(string(line[:i+1]), "///"):
-					i -= 3
-				case strings.HasSuffix(string(line[:i+1]), "//"):
-					i -= 2
-				}
-			}
-			break
-		}
-	}
-	// +1 so it starts at a valid character
-	if i+1 == len(line) {
-		return ""
-	}
-	return string(line[i+1:])
-}
-
-func isAlpha(l rune) bool {
-	return (l >= 'a' && l <= 'z') || (l >= 'A' && l <= 'Z')
-}
-
-func getScopePredictions(tuplePath []string, name string, scope rel.Tuple) ([][]rune, int) {
-	var newLine [][]rune
-	length := len(name)
-	for _, attr := range tuplePath {
-		if value, has := scope.Get(attr); has {
-			if u, is := value.(rel.Tuple); is {
-				scope = u
-				continue
-			}
-		}
-		return nil, 0
-	}
-
-	for _, attr := range scope.Names().OrderedNames() {
-		if strings.HasPrefix(attr, name) {
-			newLine = append(newLine, []rune(attr[length:]))
-		}
-	}
-	return newLine, length
-}
-
 func shellEval(lines string, scope rel.Scope) (_ rel.Value, err error) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -246,6 +177,12 @@ func newLineCollector() *lineCollector {
 	}
 }
 
+func (l *lineCollector) withLine(line string) *lineCollector {
+	newCollector := &lineCollector{l.lines, l.stack, l.opener, l.maxOpenerLen}
+	newCollector.appendLine(line)
+	return newCollector
+}
+
 func (l *lineCollector) appendLine(line string) {
 	increment := 1
 	for i := 0; i < len(line); i += increment {
@@ -294,12 +231,13 @@ func (l *lineCollector) isBalanced() bool {
 	}
 
 	lastLine := l.lines[len(l.lines)-1]
-	if strings.HasSuffix(lastLine, ";") || strings.HasSuffix(lastLine, ":") {
-		return false
-	}
 
 	// check for function argument
 	if regexp.MustCompile(`\\([$@A-Za-z_][0-9$@A-Za-z_]*|\.)$`).Match([]byte(lastLine)) {
+		return false
+	}
+
+	if strings.HasSuffix(lastLine, ";") || strings.HasSuffix(lastLine, ":") || strings.HasSuffix(lastLine, ".") {
 		return false
 	}
 
