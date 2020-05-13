@@ -121,6 +121,22 @@ func TestIsBalanced(t *testing.T) {
 	assert.True(t, c.isBalanced())
 	c.reset()
 
+	c.appendLine("\"\\\"\"")
+	assert.True(t, c.isBalanced())
+	c.reset()
+
+	c.appendLine("\"\\\"x\"")
+	assert.True(t, c.isBalanced())
+	c.reset()
+
+	c.appendLine("\"\\\"xx\"")
+	assert.True(t, c.isBalanced())
+	c.reset()
+
+	c.appendLine("\"\\\"xxx\"")
+	assert.True(t, c.isBalanced())
+	c.reset()
+
 	c.appendLine(`let f = \x \y x + y; f(3, 4)`)
 	assert.True(t, c.isBalanced())
 	c.reset()
