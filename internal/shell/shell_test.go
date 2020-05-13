@@ -9,6 +9,7 @@ import (
 	"github.com/arr-ai/arrai/rel"
 	"github.com/arr-ai/arrai/syntax"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestLineCollectorAppendLine(t *testing.T) {
@@ -120,6 +121,22 @@ func TestIsBalanced(t *testing.T) {
 	assert.True(t, c.isBalanced())
 	c.reset()
 
+	c.appendLine("\"\\\"\"")
+	assert.True(t, c.isBalanced())
+	c.reset()
+
+	c.appendLine("\"\\\"x\"")
+	assert.True(t, c.isBalanced())
+	c.reset()
+
+	c.appendLine("\"\\\"xx\"")
+	assert.True(t, c.isBalanced())
+	c.reset()
+
+	c.appendLine("\"\\\"xxx\"")
+	assert.True(t, c.isBalanced())
+	c.reset()
+
 	c.appendLine(`let f = \x \y x + y; f(3, 4)`)
 	assert.True(t, c.isBalanced())
 	c.reset()
@@ -137,6 +154,8 @@ func TestGetLastToken(t *testing.T) {
 	assert.Equal(t, "//", getLastToken([]rune("//str.contains(//")))
 	assert.Equal(t, "//arch", getLastToken([]rune("//str.contains(//arch")))
 	assert.Equal(t, "tuple.", getLastToken([]rune("//str.contains(tuple.")))
+	assert.Equal(t, "x.", getLastToken([]rune("x.")))
+	assert.Equal(t, "x", getLastToken([]rune("x")))
 	assert.Equal(t, "", getLastToken([]rune("//str.contains(")))
 	assert.Equal(t, "", getLastToken([]rune("")))
 }
@@ -159,12 +178,74 @@ func TestTabCompletionStdlib(t *testing.T) {
 	assertTabCompletionWithPrefix(t, prefix, strlib, "//"+lib+".%s\t", nil)
 }
 
+func TestTrimExpr(t *testing.T) {
+	t.Parallel()
+
+	sh := newShellInstance(newLineCollector(), syntax.StdScope())
+
+	realExpr, residue := sh.trimExpr(`x.`)
+	assert.Equal(t, "x", realExpr)
+	assert.Equal(t, ".", residue)
+
+	realExpr, residue = sh.trimExpr(`abc(`)
+	assert.Equal(t, "abc", realExpr)
+	assert.Equal(t, "(", residue)
+
+	realExpr, residue = sh.trimExpr(`x`)
+	assert.Equal(t, "x", realExpr)
+	assert.Equal(t, "", residue)
+
+	//TODO: more advanced predictions
+	// realExpr, residue = sh.trimExpr(`abc.ab`)
+	// assert.Equal(t, "abc", realExpr)
+	// assert.Equal(t, ".ab", residue)
+}
+
+func TestCompletionCurrentExpr(t *testing.T) {
+	t.Parallel()
+
+	assertTabCompletion(t, []string{".a"}, 0, "(a: 1)\t", nil)
+	assertTabCompletion(t, []string{".a", ".b"}, 0, "(a: 1, b: 2)\t", nil)
+	assertTabCompletion(t, []string{".a", ".b"}, 0, "(a: 1, b: 2)\t + 123", nil)
+	assertTabCompletion(t, []string{"a"}, 1, "(a: 1).\t", nil)
+	assertTabCompletion(t, []string{"a", "b"}, 1, "(a: 1, b: 2).\t", nil)
+	assertTabCompletion(t, []string{"a", "b"}, 1, "(a: 1, b: 2).\t + 123", nil)
+	assertTabCompletion(t, []string{".c"}, 0, "(a: (c: 3), b: 2).a\t", nil)
+	assertTabCompletion(t, []string{`'random string'`}, 1, "(`random string`: 1).\t", nil)
+	assertTabCompletion(t, []string{".a"}, 0, "x\t", map[string]string{"x": "(a: 1)"})
+	assertTabCompletion(t,
+		[]string{"a", `'b"b'`, `"c'c"`, "'d`d'", "\"e\\\"e'e`ee\""}, 1,
+		"(a: 1, 'b\"b': 2, \"c'c\": 3, \"d`d\": 4, \"e\\\"e'e`ee\": 5).\t", nil)
+
+	assertTabCompletion(t, []string{`('a')`}, 0, "{`a`: 1}\t", nil)
+	assertTabCompletion(t, []string{`('a')`, `('b')`}, 0, "{`a`: 1, `b`: 2}\t", nil)
+	assertTabCompletion(t, []string{`('a')`, `('b')`}, 0, "{`a`: 1, `b`: 2}\t + 123", nil)
+	assertTabCompletion(t, []string{`'a')`}, 1, "{`a`: 1}(\t", nil)
+	assertTabCompletion(t, []string{`'a')`, `'b')`}, 1, "{`a`: 1, `b`: 2}(\t", nil)
+	assertTabCompletion(t, []string{`'a')`, `'b')`}, 1, "{`a`: 1, `b`: 2}(\t + 123", nil)
+	assertTabCompletion(t, []string{`'c')`}, 1, "{`a`: {`c`: 3}, `b`: 2}(`a`)(\t", nil)
+	assertTabCompletion(t, []string{`'random string')`}, 1, "{`random string`: 1}(\t", nil)
+	assertTabCompletion(t, []string{`('a')`}, 0, "x\t", map[string]string{"x": "{`a`: 1}"})
+	assertTabCompletion(t,
+		[]string{"('a')", `('b"b')`, `("c'c")`, "('d`d')", "(\"e\\\"e'e`ee\")"}, 0,
+		"{'a': 1, 'b\"b': 2, \"c'c\": 3, \"d`d\": 4, \"e\\\"e'e`ee\": 5}\t", nil)
+	assertTabCompletion(t,
+		[]string{`(2)`, `('string')`, `([1, 2, 3])`}, 0,
+		"{`string`: 1, 2: 20, [1, 2, 3]: 30}\t", nil)
+
+	assertTabCompletion(t, []string{`.a`}, 0, "let x = (a: 1); x\t", nil)
+	assertTabCompletion(t, []string{`('a')`}, 0, "let x = {`a`: 1}; x\t", nil)
+	assertTabCompletion(t, []string{`.a`}, 0, "x\t", map[string]string{"x": `(a: {"b": (c: 3)})`})
+	assertTabCompletion(t, []string{`('b')`}, 0, "x.a\t", map[string]string{"x": `(a: {"b": (c: 3)})`})
+	assertTabCompletion(t, []string{`.c`}, 0, "x.a(`b`)\t", map[string]string{"x": `(a: {"b": (c: 3)})`})
+}
+
 func assertTabCompletionWithPrefix(
 	t *testing.T,
 	prefix string,
 	choices []string,
 	format string,
-	scopeValues map[string]rel.Expr,
+	scopeValues map[string]string,
 ) {
 	var libWithPrefix []string
 	for _, c := range choices {
@@ -179,11 +260,13 @@ func assertTabCompletion(t *testing.T,
 	expectedPredictions []string,
 	expectedLength int,
 	line string,
-	scopeValues map[string]rel.Expr,
+	scopeValues map[string]string,
 ) {
 	scope := syntax.StdScope()
 	for name, expr := range scopeValues {
-		scope = scope.With(name, expr)
+		val, err := syntax.EvaluateExpr("", expr)
+		require.NoError(t, err)
+		scope = scope.With(name, val)
 	}
 	sh := newShellInstance(newLineCollector(), scope)
 	predictions, length := sh.Do([]rune(line), strings.Index(line, "\t"))
