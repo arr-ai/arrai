@@ -195,6 +195,18 @@ func TestTrimExpr(t *testing.T) {
 	assert.Equal(t, "x", realExpr)
 	assert.Equal(t, "", residue)
 
+	realExpr, residue = sh.trimExpr(`x.'`)
+	assert.Equal(t, "x", realExpr)
+	assert.Equal(t, ".'", residue)
+
+	realExpr, residue = sh.trimExpr(`abc("`)
+	assert.Equal(t, "abc", realExpr)
+	assert.Equal(t, "(\"", residue)
+
+	realExpr, residue = sh.trimExpr("x(`")
+	assert.Equal(t, "x", realExpr)
+	assert.Equal(t, "(`", residue)
+
 	//TODO: more advanced predictions
 	// realExpr, residue = sh.trimExpr(`abc.ab`)
 	// assert.Equal(t, "abc", realExpr)
