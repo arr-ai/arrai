@@ -36,45 +36,21 @@ func (p ArrayPattern) Bind(scope Scope, value Value) Scope {
 	if s, is := value.(GenericSet); is {
 		if s.set.IsEmpty() {
 			return EmptyScope
-		} else {
-			panic(fmt.Sprintf("value %s is not an array", value))
 		}
+		panic(fmt.Sprintf("value %s is not an array", value))
 	}
 	array, is := value.(Array)
 	if !is {
 		panic(fmt.Sprintf("value %s is not an array", value))
 	}
 
-	values := make(map[string]Value)
-	patterns := make(map[string]Pattern)
+	result := EmptyScope
 	for i, item := range p.items {
 		if len(array.Values()) < i+1 {
 			panic(fmt.Sprintf("length of value %s shorter than array pattern %s", array.Values(), p.items))
 		}
-		// `_` should never appear in scope
-		if item.String() == "_" {
-			continue
-		}
-
-		if expr, exists := scope.Get(item.String()); exists {
-			if expr.String() != array.Values()[i].String() {
-				panic(fmt.Sprintf("%s is redefined differently", item))
-			}
-		}
-
-		if v, ok := values[item.String()]; ok {
-			if v.Kind() == array.Values()[i].Kind() && v.String() == array.Values()[i].String() {
-				continue
-			}
-			panic(fmt.Sprintf("value %s does not equal to value %s", v, array.Values()[i]))
-		}
-		values[item.String()] = array.Values()[i]
-		patterns[item.String()] = item
-	}
-
-	result := EmptyScope
-	for s, ptn := range patterns {
-		result = result.Update(ptn.Bind(scope, values[s]))
+		scope.MatchedUpdate(item.Bind(scope, array.Values()[i]))
+		result = result.MatchedUpdate(item.Bind(scope, array.Values()[i]))
 	}
 
 	return result
@@ -132,29 +108,11 @@ func (p TuplePattern) Bind(scope Scope, value Value) Scope {
 		panic(fmt.Sprintf("%s is not a tuple", value))
 	}
 
-	values := make(map[string]Value)
-	patterns := make(map[string]Pattern)
+	result := EmptyScope
 	for _, attr := range p.attrs {
 		tupleExpr := tuple.MustGet(attr.name)
-		if expr, exists := scope.Get(attr.pattern.String()); exists {
-			if expr.String() != tupleExpr.String() {
-				panic(fmt.Sprintf("%s is redefined differently", attr.pattern))
-			}
-		}
-
-		if v, ok := values[attr.pattern.String()]; ok {
-			if v.Kind() == tupleExpr.Kind() && v.String() == tupleExpr.String() {
-				continue
-			}
-			panic(fmt.Sprintf("value %s does not equal to value %s", v, tupleExpr))
-		}
-		values[attr.pattern.String()] = tupleExpr
-		patterns[attr.pattern.String()] = attr.pattern
-	}
-
-	result := EmptyScope
-	for s, ptn := range patterns {
-		result = result.Update(ptn.Bind(scope, values[s]))
+		scope.MatchedUpdate(attr.pattern.Bind(scope, tupleExpr))
+		result = result.MatchedUpdate(attr.pattern.Bind(scope, tupleExpr))
 	}
 
 	return result
