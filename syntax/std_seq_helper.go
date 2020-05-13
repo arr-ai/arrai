@@ -76,8 +76,8 @@ func ArraySuffix(a rel.Array, b rel.Value) rel.Value {
 	bVals := bArray.Values()
 	bOffset := bArray.Count() - 1
 
-	for i := a.Count() - 1; i >= 0; i-- {
-		if bOffset > -1 && aVals[i].Equal(bVals[bOffset]) {
+	for _, val := range aVals[a.Count()-1:] {
+		if bOffset > -1 && val.Equal(bVals[bOffset]) {
 			bOffset--
 			if bOffset == -1 {
 				break

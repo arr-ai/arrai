@@ -64,7 +64,7 @@ func TestArrayContains(t *testing.T) {
 	AssertCodesEvalToSameValue(t, `false`, `//seq.contains(['A','B','C','D','E'],['A','B','C','E'])`)
 	AssertCodesEvalToSameValue(t, `false`, `//seq.contains(['A','B','C','D','E'],['A','B','C','D','E','F'])`)
 
-	// TODO, it requries API contains code change
+	// TODO, it requires API contains code change
 	// AssertCodesEvalToSameValue(t, `true`, `//seq.contains(['A', 'A', 'B','C','D','E'],['A','B','C'])`)
 }
 func TestBytesContains(t *testing.T) {
@@ -116,6 +116,15 @@ func TestStrJoin(t *testing.T) {
 	AssertCodesEvalToSameValue(t, `"this is a test"  `, `//seq.join(["this", "is", "a", "test"], " ")`)
 	AssertCodesEvalToSameValue(t, `"this"            `, `//seq.join(["this"], ",")                   `)
 	assertExprPanics(t, `//seq.join("this", 2)`)
+}
+
+func TestArrayJoin(t *testing.T) {
+	t.Parallel()
+	// AssertCodesEvalToSameValue(t, `""`, `//seq.join([], ",")`)
+}
+
+func TestBytesJoin(t *testing.T) {
+	t.Parallel()
 }
 
 func TestStrPrefix(t *testing.T) {
