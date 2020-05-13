@@ -86,6 +86,7 @@ C      -> /{ # .* $ };
   | C* "{" C* dict=((key=top ":" value=top):",",?) "}" C*
   | C* "[" C* array=(item=top:",",?) C* "]" C*
   | C* "(" tuple=(pairs=(name? ":" v=top):",",?) ")" C*
+  | C* "(" identpattern=IDENT ")" C*
 };
 
 `), nil)

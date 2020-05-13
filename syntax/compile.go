@@ -135,6 +135,9 @@ func (pc ParseContext) compilePattern(b ast.Branch) rel.Pattern {
 	if tuple := b.One("tuple"); tuple != nil {
 		return pc.compileTuplePattern(tuple.(ast.Branch))
 	}
+	if ident := b.One("identpattern"); ident != nil {
+		return rel.NewIdentPattern(ident.Scanner().String())
+	}
 	expr := pc.CompileExpr(b)
 	return rel.ExprAsPattern(expr)
 }

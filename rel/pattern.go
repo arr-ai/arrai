@@ -24,6 +24,24 @@ func ExprAsPattern(expr Expr) Pattern {
 	}
 }
 
+type IdentPattern struct {
+	ident string
+}
+
+func NewIdentPattern(ident string) IdentPattern {
+	return IdentPattern{ident}
+}
+
+func (p IdentPattern) Bind(scope Scope, value Value) Scope {
+	scope.MustGet(p.ident)
+	scope.MatchedWith(p.ident, value)
+	return EmptyScope.With(p.ident, value)
+}
+
+func (p IdentPattern) String() string {
+	return p.ident
+}
+
 type ArrayPattern struct {
 	items []Pattern
 }
@@ -49,7 +67,6 @@ func (p ArrayPattern) Bind(scope Scope, value Value) Scope {
 		if len(array.Values()) < i+1 {
 			panic(fmt.Sprintf("length of value %s shorter than array pattern %s", array.Values(), p.items))
 		}
-		scope.MatchedUpdate(item.Bind(scope, array.Values()[i]))
 		result = result.MatchedUpdate(item.Bind(scope, array.Values()[i]))
 	}
 
@@ -111,7 +128,6 @@ func (p TuplePattern) Bind(scope Scope, value Value) Scope {
 	result := EmptyScope
 	for _, attr := range p.attrs {
 		tupleExpr := tuple.MustGet(attr.name)
-		scope.MatchedUpdate(attr.pattern.Bind(scope, tupleExpr))
 		result = result.MatchedUpdate(attr.pattern.Bind(scope, tupleExpr))
 	}
 
