@@ -13,27 +13,15 @@ type Pattern interface {
 	Bind(scope Scope, value Value) Scope
 }
 
-type ValuePattern struct {
-	value Value
-}
-
-func NewValuePattern(val Value) ValuePattern {
-	return ValuePattern{val}
-}
-
-func (p ValuePattern) Bind(scope Scope, value Value) Scope {
-	switch v := p.value.(type) {
+func ExprAsPattern(expr Expr) Pattern {
+	switch t := expr.(type) {
+	case IdentExpr:
+		return t
 	case Number:
-		if !v.Equal(value) {
-			panic(fmt.Sprintf("%s doesn't equal to %s", v, value))
-		}
+		return t
+	default:
+		panic(fmt.Sprintf("%s is not a Pattern", t))
 	}
-
-	return EmptyScope
-}
-
-func (p ValuePattern) String() string {
-	return p.value.String()
 }
 
 type ArrayPattern struct {
@@ -95,5 +83,94 @@ func (p ArrayPattern) String() string {
 		b.WriteString(item.String())
 	}
 	b.WriteByte(']')
+	return b.String()
+}
+
+type AttrPattern struct {
+	name    string
+	pattern Pattern
+}
+
+func NewAttrPattern(name string, pattern Pattern) AttrPattern {
+	return AttrPattern{
+		name:    name,
+		pattern: pattern,
+	}
+}
+
+func (p AttrPattern) Bind(scope Scope, value Value) Scope {
+	fmt.Println(value)
+	return scope
+}
+
+func (p AttrPattern) String() string {
+	return fmt.Sprintf("%s:%s", p.name, p.pattern)
+}
+
+func (p *AttrPattern) IsWildcard() bool {
+	return p.name == "*"
+}
+
+type TuplePattern struct {
+	attrs []AttrPattern
+}
+
+func NewTuplePattern(attrs ...AttrPattern) TuplePattern {
+	return TuplePattern{attrs}
+}
+
+func (p TuplePattern) Bind(scope Scope, value Value) Scope {
+	tuple, is := value.(Tuple)
+	if !is {
+		panic(fmt.Sprintf("%s is not a tuple", value))
+	}
+
+	values := make(map[string]Value)
+	patterns := make(map[string]Pattern)
+	for _, attr := range p.attrs {
+		tupleExpr := tuple.MustGet(attr.name)
+		if expr, exists := scope.Get(attr.pattern.String()); exists {
+			if expr.String() != tupleExpr.String() {
+				panic(fmt.Sprintf("%s is redefined differently", attr.pattern))
+			}
+		}
+
+		if v, ok := values[attr.pattern.String()]; ok {
+			if v.Kind() == tupleExpr.Kind() && v.String() == tupleExpr.String() {
+				continue
+			}
+			panic(fmt.Sprintf("value %s does not equal to value %s", v, tupleExpr))
+		}
+		values[attr.pattern.String()] = tupleExpr
+		patterns[attr.pattern.String()] = attr.pattern
+	}
+
+	result := EmptyScope
+	for s, ptn := range patterns {
+		result = result.Update(ptn.Bind(scope, values[s]))
+	}
+
+	return result
+}
+
+func (p TuplePattern) String() string {
+	var b bytes.Buffer
+	b.WriteByte('(')
+	for i, attr := range p.attrs {
+		if i > 0 {
+			b.WriteString(", ")
+		}
+		if attr.IsWildcard() {
+			if attr.pattern != DotIdent {
+				b.WriteString(attr.pattern.String())
+			}
+			b.WriteString(".*")
+		} else {
+			b.WriteString(attr.name)
+			b.WriteString(": ")
+			b.WriteString(attr.pattern.String())
+		}
+	}
+	b.WriteByte(')')
 	return b.String()
 }

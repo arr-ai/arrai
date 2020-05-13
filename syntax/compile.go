@@ -129,30 +129,14 @@ func (pc ParseContext) compilePattern(b ast.Branch) rel.Pattern {
 	if ptn := b.One("pattern"); ptn != nil {
 		return pc.compilePattern(ptn.(ast.Branch))
 	}
-	if ident := b.One("IDENT"); ident != nil {
-		expr := pc.CompileExpr(b)
-		if e, is := expr.(rel.IdentExpr); is {
-			return e
-		}
-	}
-	if num := b.One("NUM"); num != nil {
-		f, err := strconv.ParseFloat(num.Scanner().String(), 64)
-		if err != nil {
-			panic("NUM is not a float64")
-		}
-		return rel.NewValuePattern(rel.NewNumber(f))
-	}
 	if arr := b.One("array"); arr != nil {
 		return pc.compileArrayPattern(arr.(ast.Branch))
 	}
-	if expr := b.One("expr"); expr != nil {
-		exp := pc.CompileExpr(expr.(ast.Branch))
-		switch t := exp.(type) {
-		case rel.IdentExpr:
-			return t
-		}
+	if tuple := b.One("tuple"); tuple != nil {
+		return pc.compileTuplePattern(tuple.(ast.Branch))
 	}
-	return nil
+	expr := pc.CompileExpr(b)
+	return rel.ExprAsPattern(expr)
 }
 
 func (pc ParseContext) compilePatterns(exprs ...ast.Node) []rel.Pattern {
@@ -168,6 +152,23 @@ func (pc ParseContext) compileArrayPattern(b ast.Branch) rel.Pattern {
 		return rel.NewArrayPattern(pc.compilePatterns(items.(ast.Many)...)...)
 	}
 	return rel.NewArrayPattern()
+}
+
+func (pc ParseContext) compileTuplePattern(b ast.Branch) rel.Pattern {
+	if pairs := b.Many("pairs"); pairs != nil {
+		attrs := make([]rel.AttrPattern, 0, len(pairs))
+		for _, pair := range pairs {
+			var k string
+			v := pc.compilePattern(pair.One("v").(ast.Branch))
+			if name := pair.One("name"); name != nil {
+				k = parseName(name.(ast.Branch))
+			}
+			attr := rel.NewAttrPattern(k, v)
+			attrs = append(attrs, attr)
+		}
+		return rel.NewTuplePattern(attrs...)
+	}
+	return rel.NewTuplePattern()
 }
 
 func (pc ParseContext) compileArrow(b ast.Branch, name string, c ast.Children) rel.Expr {
