@@ -73,7 +73,7 @@ Usage:
 | `//str.title("laser noises pew pew pew")` | `"Laser Noises Pew Pew Pew"` |
 | `//str.title("pew")` | `"Pew"` |
 
-## `//str.has_prefix(s <: string, prefix <: string) <: bool`
+## `//seq.has_prefix(s <: string, prefix <: string) <: bool`
 
 `has_prefix` checks whether the string `s` is prefixed by `prefix`. It returns a boolean.
 
@@ -81,8 +81,8 @@ Usage:
 
 | example | equals |
 |:-|:-|
-| `//str.has_prefix("I'm running out of stuff to write", "I'm")` | `true` |
-| `//str.has_prefix("I'm running out of stuff to write", "to write")` | `{}` which is equal to `false` |
+| `//seq.has_prefix("I'm running out of stuff to write", "I'm")` | `true` |
+| `//seq.has_prefix("I'm running out of stuff to write", "to write")` | `{}` which is equal to `false` |
 
 ## `//str.has_suffix(s <: string, suffix <: string) <: bool`
 
