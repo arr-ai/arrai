@@ -184,8 +184,9 @@ func (l *lineCollector) withLine(line string) *lineCollector {
 }
 
 func (l *lineCollector) appendLine(line string) {
-	increment := 1
+	var increment int
 	for i := 0; i < len(line); i += increment {
+		increment = 1
 		if nextCloser := l.peek(); line[i] == '\\' && nextCloser != nil && nextCloser.char != "`" {
 			increment = 2
 		} else if nextCloser != nil && strings.HasPrefix(line[i:], nextCloser.char) {
