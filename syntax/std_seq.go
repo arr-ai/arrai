@@ -95,19 +95,19 @@ func process(apiName string, args ...rel.Value) rel.Value {
 var (
 	handlerMapping = map[typeMethod]func(...rel.Value) rel.Value{
 		// API contains
-		typeMethod{reflect.TypeOf(rel.Array{}), "contains"}: func(args ...rel.Value) rel.Value {
+		{reflect.TypeOf(rel.Array{}), "contains"}: func(args ...rel.Value) rel.Value {
 			return ArrayContains(args[0].(rel.Array), args[1])
 		},
 
-		typeMethod{reflect.TypeOf(rel.Bytes{}), "contains"}: func(args ...rel.Value) rel.Value {
+		{reflect.TypeOf(rel.Bytes{}), "contains"}: func(args ...rel.Value) rel.Value {
 			return nil
 		},
 
-		typeMethod{reflect.TypeOf(rel.String{}), "contains"}: func(args ...rel.Value) rel.Value {
+		{reflect.TypeOf(rel.String{}), "contains"}: func(args ...rel.Value) rel.Value {
 			return rel.NewBool(strings.Contains(mustAsString(args[0]), mustAsString(args[1])))
 		},
 		// API sub
-		typeMethod{reflect.TypeOf(rel.String{}), "sub"}: func(args ...rel.Value) rel.Value {
+		{reflect.TypeOf(rel.String{}), "sub"}: func(args ...rel.Value) rel.Value {
 			return rel.NewString(
 				[]rune(
 					strings.ReplaceAll(
@@ -118,14 +118,14 @@ var (
 				),
 			)
 		},
-		typeMethod{reflect.TypeOf(rel.Array{}), "sub"}: func(args ...rel.Value) rel.Value {
+		{reflect.TypeOf(rel.Array{}), "sub"}: func(args ...rel.Value) rel.Value {
 			return ArraySub(args[0].(rel.Array), args[1], args[2])
 		},
-		typeMethod{reflect.TypeOf(rel.Bytes{}), "sub"}: func(args ...rel.Value) rel.Value {
+		{reflect.TypeOf(rel.Bytes{}), "sub"}: func(args ...rel.Value) rel.Value {
 			return nil
 		},
 		// API split
-		typeMethod{reflect.TypeOf(rel.String{}), "split"}: func(args ...rel.Value) rel.Value {
+		{reflect.TypeOf(rel.String{}), "split"}: func(args ...rel.Value) rel.Value {
 			splitted := strings.Split(mustAsString(args[0]), mustAsString(args[1]))
 			vals := make([]rel.Value, 0, len(splitted))
 			for _, s := range splitted {
@@ -133,14 +133,14 @@ var (
 			}
 			return rel.NewArray(vals...)
 		},
-		typeMethod{reflect.TypeOf(rel.Array{}), "split"}: func(args ...rel.Value) rel.Value {
+		{reflect.TypeOf(rel.Array{}), "split"}: func(args ...rel.Value) rel.Value {
 			return nil
 		},
-		typeMethod{reflect.TypeOf(rel.Bytes{}), "split"}: func(args ...rel.Value) rel.Value {
+		{reflect.TypeOf(rel.Bytes{}), "split"}: func(args ...rel.Value) rel.Value {
 			return nil
 		},
 		// API join
-		typeMethod{reflect.TypeOf(rel.GenericSet{}), "join"}: func(args ...rel.Value) rel.Value {
+		{reflect.TypeOf(rel.GenericSet{}), "join"}: func(args ...rel.Value) rel.Value {
 			strs := args[0].(rel.Set)
 			toJoin := make([]string, 0, strs.Count())
 			for i, ok := strs.(rel.Set).ArrayEnumerator(); ok && i.MoveNext(); {
@@ -148,7 +148,7 @@ var (
 			}
 			return rel.NewString([]rune(strings.Join(toJoin, mustAsString(args[1]))))
 		},
-		typeMethod{reflect.TypeOf(rel.Array{}), "join"}: func(args ...rel.Value) rel.Value {
+		{reflect.TypeOf(rel.Array{}), "join"}: func(args ...rel.Value) rel.Value {
 			strs := args[0].(rel.Set)
 			toJoin := make([]string, 0, strs.Count())
 			for i, ok := strs.(rel.Set).ArrayEnumerator(); ok && i.MoveNext(); {
@@ -156,27 +156,27 @@ var (
 			}
 			return rel.NewString([]rune(strings.Join(toJoin, mustAsString(args[1]))))
 		},
-		typeMethod{reflect.TypeOf(rel.Bytes{}), "join"}: func(args ...rel.Value) rel.Value {
+		{reflect.TypeOf(rel.Bytes{}), "join"}: func(args ...rel.Value) rel.Value {
 			return nil
 		},
 		// API has_prefix
-		typeMethod{reflect.TypeOf(rel.String{}), "has_prefix"}: func(args ...rel.Value) rel.Value {
+		{reflect.TypeOf(rel.String{}), "has_prefix"}: func(args ...rel.Value) rel.Value {
 			return rel.NewBool(strings.HasPrefix(mustAsString(args[0]), mustAsString(args[1])))
 		},
-		typeMethod{reflect.TypeOf(rel.Array{}), "has_prefix"}: func(args ...rel.Value) rel.Value {
+		{reflect.TypeOf(rel.Array{}), "has_prefix"}: func(args ...rel.Value) rel.Value {
 			return nil
 		},
-		typeMethod{reflect.TypeOf(rel.Bytes{}), "has_prefix"}: func(args ...rel.Value) rel.Value {
+		{reflect.TypeOf(rel.Bytes{}), "has_prefix"}: func(args ...rel.Value) rel.Value {
 			return nil
 		},
 		// API has_suffix
-		typeMethod{reflect.TypeOf(rel.String{}), "has_suffix"}: func(args ...rel.Value) rel.Value {
+		{reflect.TypeOf(rel.String{}), "has_suffix"}: func(args ...rel.Value) rel.Value {
 			return rel.NewBool(strings.HasSuffix(mustAsString(args[0]), mustAsString(args[1])))
 		},
-		typeMethod{reflect.TypeOf(rel.Array{}), "has_suffix"}: func(args ...rel.Value) rel.Value {
+		{reflect.TypeOf(rel.Array{}), "has_suffix"}: func(args ...rel.Value) rel.Value {
 			return nil
 		},
-		typeMethod{reflect.TypeOf(rel.Bytes{}), "has_suffix"}: func(args ...rel.Value) rel.Value {
+		{reflect.TypeOf(rel.Bytes{}), "has_suffix"}: func(args ...rel.Value) rel.Value {
 			return nil
 		},
 	}
