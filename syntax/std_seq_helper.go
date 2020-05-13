@@ -10,14 +10,9 @@ func ArrayContains(a rel.Array, b rel.Value) rel.Value {
 	case rel.Array:
 		return arrayContainsArray(a, b)
 	case rel.Value:
-		arrayEnum, _ := a.ArrayEnumerator()
-		if arrayEnum != nil {
-			for arrayEnum.MoveNext() {
-				if arrayEnum.Current().Equal(b) {
-					return rel.NewBool(true)
-				}
-			}
-		}
+		// Convert to array and make it using the same process
+		bArray, _ := rel.AsArray(rel.NewArray(b))
+		return arrayContainsArray(a, bArray)
 	}
 	return rel.NewBool(false)
 }
