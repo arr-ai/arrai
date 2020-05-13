@@ -14,7 +14,7 @@ func TestIsCommand(t *testing.T) {
 	t.Parallel()
 
 	assert.True(t, isCommand("/hi"))
-	assert.False(t, isCommand("//str.join"))
+	assert.False(t, isCommand("//seq.join"))
 }
 
 func TestTryRunCommand(t *testing.T) {
