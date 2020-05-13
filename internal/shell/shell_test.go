@@ -195,24 +195,32 @@ func TestCompletionCurrentExpr(t *testing.T) {
 	assertTabCompletion(t, []string{"a", "b"}, 1, "(a: 1, b: 2).\t", nil)
 	assertTabCompletion(t, []string{"a", "b"}, 1, "(a: 1, b: 2).\t + 123", nil)
 	assertTabCompletion(t, []string{".c"}, 0, "(a: (c: 3), b: 2).a\t", nil)
-	assertTabCompletion(t, []string{`"random string"`}, 1, "(`random string`: 1).\t", nil)
+	assertTabCompletion(t, []string{`'random string'`}, 1, "(`random string`: 1).\t", nil)
 	assertTabCompletion(t, []string{".a"}, 0, "x\t", map[string]string{"x": "(a: 1)"})
+	assertTabCompletion(t,
+		[]string{"a", `'b"b'`, `"c'c"`, "'d`d'", "\"e\\\"e'e`ee\""}, 1,
+		"(a: 1, 'b\"b': 2, \"c'c\": 3, \"d`d\": 4, \"e\\\"e'e`ee\": 5).\t", nil)
 
-	assertTabCompletion(t, []string{`("a")`}, 0, "{`a`: 1}\t", nil)
-	assertTabCompletion(t, []string{`("a")`, `("b")`}, 0, "{`a`: 1, `b`: 2}\t", nil)
-	assertTabCompletion(t, []string{`("a")`, `("b")`}, 0, "{`a`: 1, `b`: 2}\t + 123", nil)
-	assertTabCompletion(t, []string{`"a")`}, 1, "{`a`: 1}(\t", nil)
-	assertTabCompletion(t, []string{`"a")`, `"b")`}, 1, "{`a`: 1, `b`: 2}(\t", nil)
-	assertTabCompletion(t, []string{`"a")`, `"b")`}, 1, "{`a`: 1, `b`: 2}(\t + 123", nil)
-	assertTabCompletion(t, []string{`"c")`}, 1, "{`a`: {`c`: 3}, `b`: 2}(`a`)(\t", nil)
-	assertTabCompletion(t, []string{`"random string")`}, 1, "{`random string`: 1}(\t", nil)
-	assertTabCompletion(t, []string{`(2)`, `("string")`, `([1, 2, 3])`}, 0, "{`string`: 1, 2: 20, [1, 2, 3]: 30}\t", nil)
-	assertTabCompletion(t, []string{`("a")`}, 0, "x\t", map[string]string{"x": "{`a`: 1}"})
+	assertTabCompletion(t, []string{`('a')`}, 0, "{`a`: 1}\t", nil)
+	assertTabCompletion(t, []string{`('a')`, `('b')`}, 0, "{`a`: 1, `b`: 2}\t", nil)
+	assertTabCompletion(t, []string{`('a')`, `('b')`}, 0, "{`a`: 1, `b`: 2}\t + 123", nil)
+	assertTabCompletion(t, []string{`'a')`}, 1, "{`a`: 1}(\t", nil)
+	assertTabCompletion(t, []string{`'a')`, `'b')`}, 1, "{`a`: 1, `b`: 2}(\t", nil)
+	assertTabCompletion(t, []string{`'a')`, `'b')`}, 1, "{`a`: 1, `b`: 2}(\t + 123", nil)
+	assertTabCompletion(t, []string{`'c')`}, 1, "{`a`: {`c`: 3}, `b`: 2}(`a`)(\t", nil)
+	assertTabCompletion(t, []string{`'random string')`}, 1, "{`random string`: 1}(\t", nil)
+	assertTabCompletion(t, []string{`('a')`}, 0, "x\t", map[string]string{"x": "{`a`: 1}"})
+	assertTabCompletion(t,
+		[]string{"('a')", `('b"b')`, `("c'c")`, "('d`d')", "(\"e\\\"e'e`ee\")"}, 0,
+		"{'a': 1, 'b\"b': 2, \"c'c\": 3, \"d`d\": 4, \"e\\\"e'e`ee\": 5}\t", nil)
+	assertTabCompletion(t,
+		[]string{`(2)`, `('string')`, `([1, 2, 3])`}, 0,
+		"{`string`: 1, 2: 20, [1, 2, 3]: 30}\t", nil)
 
 	assertTabCompletion(t, []string{`.a`}, 0, "let x = (a: 1); x\t", nil)
-	assertTabCompletion(t, []string{`("a")`}, 0, "let x = {`a`: 1}; x\t", nil)
+	assertTabCompletion(t, []string{`('a')`}, 0, "let x = {`a`: 1}; x\t", nil)
 	assertTabCompletion(t, []string{`.a`}, 0, "x\t", map[string]string{"x": `(a: {"b": (c: 3)})`})
-	assertTabCompletion(t, []string{`("b")`}, 0, "x.a\t", map[string]string{"x": `(a: {"b": (c: 3)})`})
+	assertTabCompletion(t, []string{`('b')`}, 0, "x.a\t", map[string]string{"x": `(a: {"b": (c: 3)})`})
 	assertTabCompletion(t, []string{`.c`}, 0, "x.a(`b`)\t", map[string]string{"x": `(a: {"b": (c: 3)})`})
 }
 

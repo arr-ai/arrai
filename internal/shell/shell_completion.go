@@ -78,22 +78,12 @@ func predictFromValue(val rel.Value) (predictions []string) {
 	case rel.Tuple:
 		predictions = v.Names().OrderedNames()
 		for i := 0; i < len(predictions); i++ {
-			if strings.Contains(predictions[i], " ") {
-				predictions[i] = fmt.Sprintf(`."%s"`, predictions[i])
-			} else {
-				predictions[i] = fmt.Sprintf(`.%s`, predictions[i])
-			}
+			predictions[i] = fmt.Sprintf(`.%s`, rel.TupleNameRepr(predictions[i]))
 		}
 	case rel.Dict:
 		predictions = make([]string, 0, v.Count())
 		for _, e := range v.OrderedEntries() {
-			key := e.MustGet("@")
-			switch k := key.(type) {
-			case rel.String:
-				predictions = append(predictions, fmt.Sprintf(`("%s")`, k.String()))
-			default:
-				predictions = append(predictions, fmt.Sprintf(`(%s)`, k.String()))
-			}
+			predictions = append(predictions, fmt.Sprintf(`(%s)`, rel.Repr(e.MustGet("@"))))
 		}
 	}
 	return
