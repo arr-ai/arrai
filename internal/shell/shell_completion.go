@@ -52,8 +52,9 @@ func (s *shellInstance) Do(line []rune, pos int) (newLine [][]rune, length int) 
 // }
 
 func (s *shellInstance) trimExpr(expr string) (string, string) {
-	if regexp.MustCompile(`[\(\.]$`).MatchString(expr) {
-		return expr[:len(expr)-1], string(expr[len(expr)-1])
+	if re := regexp.MustCompile("[(.]('|`|\")?$"); re.MatchString(expr) {
+		prefix := re.FindString(expr)
+		return expr[:len(expr)-len(prefix)], prefix
 	}
 
 	//TODO:
