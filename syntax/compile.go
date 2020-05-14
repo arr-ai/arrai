@@ -229,7 +229,12 @@ func (pc ParseContext) compileUnop(b ast.Branch, c ast.Children) rel.Expr {
 	for i := len(ops) - 1; i >= 0; i-- {
 		op := ops[i].One("").(ast.Leaf).Scanner()
 		f := unops[op.String()]
-		result = f(op, result)
+		source, err := parser.MergeScanners(op, result.Source())
+		if err != nil {
+			// TODO: Figure out why some exprs don't have usable sources (could be native funcs).
+			source = op
+		}
+		result = f(source, result)
 	}
 	return result
 }
@@ -241,7 +246,13 @@ func (pc ParseContext) compileBinop(b ast.Branch, c ast.Children) rel.Expr {
 	for i, arg := range args[1:] {
 		op := ops[i].One("").(ast.Leaf).Scanner()
 		f := binops[op.String()]
-		result = f(op, result, pc.CompileExpr(arg.(ast.Branch)))
+		rhs := pc.CompileExpr(arg.(ast.Branch))
+		source, err := parser.MergeScanners(op, result.Source(), rhs.Source())
+		if err != nil {
+			// TODO: Figure out why some exprs don't have usable sources (could be native funcs).
+			source = op
+		}
+		result = f(source, result, rhs)
 	}
 	return result
 }
@@ -663,11 +674,26 @@ var binops = map[string]binOpFunc{
 }
 
 var compareOps = map[string]rel.CompareFunc{
-	"<:": func(a, b rel.Value) bool { return b.(rel.Set).Has(a) },
-	"=":  func(a, b rel.Value) bool { return a.Equal(b) },
-	"<":  func(a, b rel.Value) bool { return a.Less(b) },
-	">":  func(a, b rel.Value) bool { return b.Less(a) },
-	"!=": func(a, b rel.Value) bool { return !a.Equal(b) },
-	"<=": func(a, b rel.Value) bool { return !b.Less(a) },
-	">=": func(a, b rel.Value) bool { return !a.Less(b) },
+	"<:":  func(a, b rel.Value) bool { return b.(rel.Set).Has(a) },
+	"!<:": func(a, b rel.Value) bool { return !b.(rel.Set).Has(a) },
+	"=":   func(a, b rel.Value) bool { return a.Equal(b) },
+	"!=":  func(a, b rel.Value) bool { return !a.Equal(b) },
+	"<":   func(a, b rel.Value) bool { return a.Less(b) },
+	">":   func(a, b rel.Value) bool { return b.Less(a) },
+	"<=":  func(a, b rel.Value) bool { return !b.Less(a) },
+	">=":  func(a, b rel.Value) bool { return !a.Less(b) },
+
+	"(<)":   func(a, b rel.Value) bool { return subset(a, b) },
+	"(>)":   func(a, b rel.Value) bool { return subset(b, a) },
+	"(<=)":  func(a, b rel.Value) bool { return subsetOrEqual(a, b) },
+	"(>=)":  func(a, b rel.Value) bool { return subsetOrEqual(b, a) },
+	"(<>)":  func(a, b rel.Value) bool { return subsetOrSuperset(a, b) },
+	"(<>=)": func(a, b rel.Value) bool { return subsetSupersetOrEqual(b, a) },
+
+	"!(<)":   func(a, b rel.Value) bool { return !subset(a, b) },
+	"!(>)":   func(a, b rel.Value) bool { return !subset(b, a) },
+	"!(<=)":  func(a, b rel.Value) bool { return !subsetOrEqual(a, b) },
+	"!(>=)":  func(a, b rel.Value) bool { return !subsetOrEqual(b, a) },
+	"!(<>)":  func(a, b rel.Value) bool { return !subsetOrSuperset(a, b) },
+	"!(<>=)": func(a, b rel.Value) bool { return !subsetSupersetOrEqual(b, a) },
 }

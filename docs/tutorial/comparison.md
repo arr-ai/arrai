@@ -21,11 +21,11 @@ less/greater ordering.
 
 ```arrai
 @> {} (<) {1, 2}
-@> {1, 2} (!<) {}
-@> {1, 2} (!<=) {}
-@> {1, 2} (!<) {1, 2}
+@> {1, 2} !(<) {}
+@> {1, 2} !(<=) {}
+@> {1, 2} !(<) {1, 2}
 @> {1, 2} (<=) {1, 2}
-@> {1, 2} (!<>=) {1, 3}
+@> {1, 2} !(<>=) {1, 3}
 ```
 
 The general form is an optional `!` denoting "not" followed by any combination
@@ -37,5 +37,6 @@ In addition to comparing sets, you can test set membership:
 ```arrai
 @> 2 <: {1, 2, 3}
 @> 4 !<: {1, 2, 3}
+@> {2, 3} <: {1, 2, 3, 4}
 @> {2, 3} <: {1, {2, 3}, 4}
 ```
