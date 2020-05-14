@@ -81,7 +81,26 @@ func (s Scope) MustGet(name string) Expr {
 // With returns a new scope with all the old bindings and a new or replacement
 // binding for the given name to the given Expr.
 func (s Scope) With(name string, expr Expr) Scope {
+	if name == "_" {
+		return s
+	}
 	return Scope{s.m.With(name, expr)}
+}
+
+// MatchedWith returns a new scope. New keys are added as With,
+// but existing keys fail unless the new value equals the existing value
+func (s Scope) MatchedWith(name string, expr Expr) Scope {
+	if name == "_" {
+		return s
+	}
+
+	if v, exists := s.Get(name); exists {
+		if v.String() != expr.String() {
+			panic(fmt.Sprintf("%s is redefined differently", name))
+		}
+	}
+
+	return s.With(name, expr)
 }
 
 // Without returns a new scope with with all the old bindings except the ones
@@ -90,8 +109,26 @@ func (s Scope) Without(name ...string) Scope {
 	return Scope{s.m.Without(frozen.NewSetFromStrings(name...))}
 }
 
+// s.Update(t) merges s and t, choosing t's binding in the event of a name clash.
+// It's like calling s.With(t0).With(t1).With(t2)... for each element of t
 func (s Scope) Update(t Scope) Scope {
 	return Scope{m: s.m.Update(t.m)}
+}
+
+// MatchedUpdate merges s and t. New keys are added as Update,
+// but existing keys fail unless the new value equals the existing value
+func (s Scope) MatchedUpdate(t Scope) Scope {
+	t = t.Without("_")
+	for e := s.Enumerator(); e.MoveNext(); {
+		name, v := e.Current()
+		if expr, exists := t.Get(name); exists {
+			if expr.String() != v.String() {
+				panic(fmt.Sprintf("the value of %s is different in both scopes", name))
+			}
+		}
+	}
+
+	return s.Update(t)
 }
 
 // Project returns a new scope with just names from the input scope.

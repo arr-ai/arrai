@@ -1,6 +1,7 @@
 package rel
 
 import (
+	"fmt"
 	"reflect"
 	"strconv"
 	"unsafe"
@@ -108,4 +109,12 @@ func (n Number) Negate() Value {
 // Export exports a Number.
 func (n Number) Export() interface{} {
 	return n.Float64()
+}
+
+func (n Number) Bind(scope Scope, value Value) Scope {
+	if !n.Equal(value) {
+		panic(fmt.Sprintf("%s doesn't equal to %s", n, value))
+	}
+
+	return EmptyScope
 }
