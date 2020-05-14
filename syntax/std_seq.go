@@ -149,11 +149,11 @@ var (
 			return rel.NewString([]rune(strings.Join(toJoin, mustAsString(args[0]))))
 		},
 		{reflect.TypeOf(rel.GenericSet{}), "join"}: func(args ...rel.Value) rel.Value {
-			// e.g. //seq.join("",["You", "me"])
+			// e.g. `//seq.join("",["You", "me"])`, `//seq.join([],[1,2])`
 			return args[1]
 		},
 		{reflect.TypeOf(rel.Array{}), "join"}: func(args ...rel.Value) rel.Value {
-			return nil
+			return ArrayJoin(args[0].(rel.Array), args[1])
 		},
 		{reflect.TypeOf(rel.Bytes{}), "join"}: func(args ...rel.Value) rel.Value {
 			return nil

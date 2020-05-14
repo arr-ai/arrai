@@ -64,8 +64,8 @@ func TestArrayContains(t *testing.T) {
 	AssertCodesEvalToSameValue(t, `false`, `//seq.contains(['A','B','C','D','E'],['A','B','C','E'])`)
 	AssertCodesEvalToSameValue(t, `false`, `//seq.contains(['A','B','C','D','E'],['A','B','C','D','E','F'])`)
 
-	// TODO, it requires API contains code change
-	// AssertCodesEvalToSameValue(t, `true`, `//seq.contains(['A', 'A', 'B','C','D','E'],['A','B','C'])`)
+	AssertCodesEvalToSameValue(t, `true`, `//seq.contains(['A', 'A', 'B','C','D','E'],['A','B','C'])`)
+	AssertCodesEvalToSameValue(t, `true`, `//seq.contains(['A', 'A', 'B','C','D','E'],['B','C'])`)
 }
 func TestBytesContains(t *testing.T) {
 	t.Parallel()
@@ -122,19 +122,37 @@ func TestStrJoin(t *testing.T) {
 
 func TestArrayJoin(t *testing.T) {
 	t.Parallel()
-	AssertCodesEvalToSameValue(t, `["A","B"]`, `//seq.join([],["A","B"])`)
-	AssertCodesEvalToSameValue(t, `[1,2]`, `//seq.join([],[1,2])`)
 	// joiner "" is translated to rel.GenericSet
 	AssertCodesEvalToSameValue(t, `["You", "me"]`, `//seq.join("",["You", "me"])`)
 	AssertCodesEvalToSameValue(t, `[1,2]`, `//seq.join("",[1,2])`)
-	// AssertCodesEvalToSameValue(t, `["A",",","B"]`, `//seq.join([","],["A","B"])`)
-	// AssertCodesEvalToSameValue(t, `[1,1,2]`, `//seq.join([1],[1,2])`)
-	// AssertCodesEvalToSameValue(t, `[1,2]`, `//seq.join([],[1,2])`)
-	// AssertCodesEvalToSameValue(t, `[1]`, `//seq.join([1],[])`)
+
+	AssertCodesEvalToSameValue(t, `["A","B"]`, `//seq.join([],["A","B"])`)
+	AssertCodesEvalToSameValue(t, `[1,2]`, `//seq.join([],[1,2])`)
+	// if joinee is empty, the final value will be empty
+	AssertCodesEvalToSameValue(t, `[]`, `//seq.join([1],[])`)
+	AssertCodesEvalToSameValue(t, `[]`, `//seq.join(['A'],[])`)
+
+	AssertCodesEvalToSameValue(t, `["A",",","B"]`, `//seq.join([","],["A","B"])`)
+	AssertCodesEvalToSameValue(t, `[1,0,2,0,3,0,4,0,5]`, `//seq.join([0], [1,2,3,4,5])`)
+	AssertCodesEvalToSameValue(t, `['A','A','B','A','C','A','D']`, `//seq.join(['A'], ['A','B','C','D'])`)
 }
 
 func TestBytesJoin(t *testing.T) {
 	t.Parallel()
+	// joiner "" is translated to rel.GenericSet
+	AssertCodesEvalToSameValue(t, `//unicode.utf8.encode('hello')`, `//seq.join("",//unicode.utf8.encode('hello'))`)
+	AssertCodesEvalToSameValue(t, `//unicode.utf8.encode('hello')`, `//seq.join([],//unicode.utf8.encode('hello'))`)
+	AssertCodesEvalToSameValue(t, `[]`, `//seq.join([1],[])`)
+	AssertCodesEvalToSameValue(t, `[]`, `//seq.join(['A'],[])`)
+
+	// AssertCodesEvalToSameValue(t, `["A","B"]`, `//seq.join([],["A","B"])`)
+	// AssertCodesEvalToSameValue(t, `[1,2]`, `//seq.join([],[1,2])`)
+	// // if joinee is empty, the final value will be empty
+	// AssertCodesEvalToSameValue(t, `[]`, `//seq.join([1],[])`)
+	// AssertCodesEvalToSameValue(t, `[]`, `//seq.join(['A'],[])`)
+
+	// AssertCodesEvalToSameValue(t, `true`, `//seq.has_prefix(//unicode.utf8.encode('hello'),//unicode.utf8.encode('h'))`)
+
 }
 
 func TestStrPrefix(t *testing.T) {
