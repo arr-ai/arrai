@@ -15,7 +15,7 @@ func ArraySub(a rel.Array, old, new rel.Value) rel.Value {
 	oldArray := convert2Array(old)
 	newArray := convert2Array(new)
 
-	var finalVals []rel.Value = make([]rel.Value, 0, a.Count())
+	finalVals := make([]rel.Value, 0, a.Count())
 	for start, absoluteIndex := 0, 0; start < a.Count(); {
 		relativeIndex := indexSubArray(a.Values()[start:], oldArray.Values())
 		if relativeIndex >= 0 {
@@ -45,7 +45,7 @@ func ArrayJoin(a rel.Array, b rel.Value) rel.Value {
 		return a
 	}
 
-	var vals []rel.Value = make([]rel.Value, 0, a.Count())
+	vals := make([]rel.Value, 0, a.Count())
 	for i, value := range bArray.Values() {
 		vals = append(vals, value)
 		if i+1 < bArray.Count() {
