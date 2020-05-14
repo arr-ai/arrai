@@ -191,7 +191,6 @@ func TestBytesJoin(t *testing.T) {
 	// AssertCodesEvalToSameValue(t, `[]`, `//seq.join(['A'],[])`)
 
 	// AssertCodesEvalToSameValue(t, `true`, `//seq.has_prefix(//unicode.utf8.encode('hello'),//unicode.utf8.encode('h'))`)
-
 }
 
 func TestStrPrefix(t *testing.T) {
