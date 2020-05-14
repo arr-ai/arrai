@@ -229,7 +229,12 @@ func (pc ParseContext) compileUnop(b ast.Branch, c ast.Children) rel.Expr {
 	for i := len(ops) - 1; i >= 0; i-- {
 		op := ops[i].One("").(ast.Leaf).Scanner()
 		f := unops[op.String()]
-		result = f(op, result)
+		source, err := parser.MergeScanners(op, result.Source())
+		if err != nil {
+			// TODO: Figure out why some exprs don't have usable sources (could be native funcs).
+			source = op
+		}
+		result = f(source, result)
 	}
 	return result
 }
@@ -241,7 +246,13 @@ func (pc ParseContext) compileBinop(b ast.Branch, c ast.Children) rel.Expr {
 	for i, arg := range args[1:] {
 		op := ops[i].One("").(ast.Leaf).Scanner()
 		f := binops[op.String()]
-		result = f(op, result, pc.CompileExpr(arg.(ast.Branch)))
+		rhs := pc.CompileExpr(arg.(ast.Branch))
+		source, err := parser.MergeScanners(op, result.Source(), rhs.Source())
+		if err != nil {
+			// TODO: Figure out why some exprs don't have usable sources (could be native funcs).
+			source = op
+		}
+		result = f(source, result, rhs)
 	}
 	return result
 }
