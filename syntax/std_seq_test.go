@@ -138,6 +138,14 @@ func TestStrSplit(t *testing.T) {
 	assertExprPanics(t, `//seq.split("this is a test", 1)`)
 }
 
+func TestArraySplit(t *testing.T) {
+	t.Parallel()
+}
+
+func TestBytesSplit(t *testing.T) {
+	t.Parallel()
+}
+
 // TestStrJoin, joiner is string.
 func TestStrJoin(t *testing.T) {
 	t.Parallel()
