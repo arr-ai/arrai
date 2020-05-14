@@ -1,6 +1,8 @@
 package syntax
 
-import "testing"
+import (
+	"testing"
+)
 
 func TestSeqConcat(t *testing.T) {
 	t.Parallel()
@@ -78,11 +80,17 @@ func TestStrSub(t *testing.T) {
 	t.Parallel()
 	// string
 	AssertCodesEvalToSameValue(t,
+		`"this is not a test"`,
+		`//seq.sub("this is not a test", "aaa", "is")`)
+	AssertCodesEvalToSameValue(t,
 		`"this is a test"`,
 		`//seq.sub("this is not a test", "is not", "is")`)
 	AssertCodesEvalToSameValue(t,
 		`"this is a test"`,
 		`//seq.sub("this is not a test", "not ", "")`)
+	AssertCodesEvalToSameValue(t,
+		`"t1his is not1 a t1est1"`,
+		`//seq.sub("this is not a test", "t", "t1")`)
 	AssertCodesEvalToSameValue(t,
 		`"this is still a test"`,
 		`//seq.sub("this is still a test", "doesn't matter", "hello there")`)
@@ -91,9 +99,22 @@ func TestStrSub(t *testing.T) {
 
 func TestArraySub(t *testing.T) {
 	t.Parallel()
+	AssertCodesEvalToSameValue(t,
+		`['T', 'B', 'T', 'C', 'D', 'E']`,
+		`//seq.sub(['A', 'B', 'A', 'C', 'D', 'E'], 'A', 'T')`)
+	AssertCodesEvalToSameValue(t,
+		`['T', 'B', 'T']`,
+		`//seq.sub(['A', 'B', 'A'], 'A', 'T')`)
+	AssertCodesEvalToSameValue(t,
+		`['T', 'B', 'T']`,
+		`//seq.sub(['A', 'B', 'A'], 'A', 'T')`)
 	// AssertCodesEvalToSameValue(t,
-	// 	`"this is a test"`,
+	// 	`["this", "is", "a", "test"]`,
 	// 	`//seq.sub(["this", "is", "not", "a", "test"], ["is", "not"], "is")`)
+
+	// data := []string{"A", "B", "C"}
+	// data1 := data[1:1]
+	// fmt.Print(data1)
 }
 
 func TestBytesSub(t *testing.T) {

@@ -7,32 +7,30 @@ import (
 // ArrayContains check if array a contains b, and b can be rel.Value or rel.Array.
 func ArrayContains(a rel.Array, b rel.Value) rel.Value {
 	bArray := convert2Array(b)
-	return rel.NewBool(findFirstSequentialSubArray(a, bArray))
+	return rel.NewBool(indexSubArray(a.Values(), bArray.Values()) > -1)
 }
 
-// It is brute force approach, can be improved later if it is necessary.
-func findFirstSequentialSubArray(a, b rel.Array) bool {
-	bOffset := 0
-	aVals := a.Values()
-	bVals := b.Values()
+// ArraySub substitutes all old in a with new.
+func ArraySub(a rel.Array, old, new rel.Value) rel.Value {
+	oldArray := convert2Array(old)
 
-	for i := 0; i < len(aVals); i++ {
-		if bOffset < len(bVals) && aVals[i].Equal(bVals[bOffset]) {
-			bOffset++
-		} else {
-			if bOffset > 0 && bOffset < len(bVals) {
-				bOffset = 0
-				i--
+	var finalVals []rel.Value = nil
+	for start, absoluteIndex := 0, 0; start < a.Count(); {
+		relativeIndex := indexSubArray(a.Values()[start:], oldArray.Values())
+		if relativeIndex >= 0 {
+			absoluteIndex = relativeIndex + start
+			if absoluteIndex-start > 0 {
+				finalVals = append(finalVals, a.Values()[start:absoluteIndex]...)
 			}
+			finalVals = append(finalVals, new)
+			start = absoluteIndex + oldArray.Count()
+		} else {
+			finalVals = append(finalVals, a.Values()[absoluteIndex+1:]...)
+			break
 		}
 	}
 
-	return bOffset == len(bVals)
-}
-
-// ArraySub substitutes all b in a with c.
-func ArraySub(a rel.Array, b, c rel.Value) rel.Value {
-	return nil
+	return rel.NewArray(finalVals...)
 }
 
 // ArrayJoin joins array a to b, a is joiner and b is joinee.
@@ -127,4 +125,28 @@ func convert2Array(val rel.Value) rel.Array {
 	}
 
 	panic("it support types rel.Array, rel.GenericSet and rel.Value only.")
+}
+
+// It is brute force approach, can be improved later if it is necessary.
+func indexSubArray(a, b []rel.Value) int {
+	aOffset, bOffset := 0, 0
+
+	for ; aOffset < len(a); aOffset++ {
+		if bOffset < len(b) && a[aOffset].Equal(b[bOffset]) {
+			bOffset++
+		} else {
+			if bOffset > 0 && bOffset < len(b) {
+				bOffset = 0
+				aOffset--
+			}
+		}
+		if bOffset == len(b) {
+			break
+		}
+	}
+
+	if aOffset < len(a) {
+		return aOffset
+	}
+	return -1
 }
