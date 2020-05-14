@@ -674,11 +674,12 @@ var binops = map[string]binOpFunc{
 }
 
 var compareOps = map[string]rel.CompareFunc{
-	"<:": func(a, b rel.Value) bool { return b.(rel.Set).Has(a) },
-	"=":  func(a, b rel.Value) bool { return a.Equal(b) },
-	"<":  func(a, b rel.Value) bool { return a.Less(b) },
-	">":  func(a, b rel.Value) bool { return b.Less(a) },
-	"!=": func(a, b rel.Value) bool { return !a.Equal(b) },
-	"<=": func(a, b rel.Value) bool { return !b.Less(a) },
-	">=": func(a, b rel.Value) bool { return !a.Less(b) },
+	"<:":  func(a, b rel.Value) bool { return b.(rel.Set).Has(a) },
+	"!<:": func(a, b rel.Value) bool { return !b.(rel.Set).Has(a) },
+	"=":   func(a, b rel.Value) bool { return a.Equal(b) },
+	"<":   func(a, b rel.Value) bool { return a.Less(b) },
+	">":   func(a, b rel.Value) bool { return b.Less(a) },
+	"!=":  func(a, b rel.Value) bool { return !a.Equal(b) },
+	"<=":  func(a, b rel.Value) bool { return !b.Less(a) },
+	">=":  func(a, b rel.Value) bool { return !a.Less(b) },
 }
