@@ -37,5 +37,6 @@ In addition to comparing sets, you can test set membership:
 ```arrai
 @> 2 <: {1, 2, 3}
 @> 4 !<: {1, 2, 3}
+@> {2, 3} <: {1, 2, 3, 4}
 @> {2, 3} <: {1, {2, 3}, 4}
 ```
