@@ -140,6 +140,10 @@ func TestStrSplit(t *testing.T) {
 
 func TestArraySplit(t *testing.T) {
 	t.Parallel()
+	// TODO
+	// AssertCodesEvalToSameValue(t,
+	// 	`[['B'],['C', 'D', 'E']]`,
+	// 	`//seq.sub(['A', 'B', 'A', 'C', 'D', 'E'], 'A')`)
 }
 
 func TestBytesSplit(t *testing.T) {
@@ -171,6 +175,8 @@ func TestArrayJoin(t *testing.T) {
 
 	AssertCodesEvalToSameValue(t, `["A",",","B"]`, `//seq.join([","],["A","B"])`)
 	AssertCodesEvalToSameValue(t, `[1,0,2,0,3,0,4,0,5]`, `//seq.join([0], [1,2,3,4,5])`)
+	// TODO
+	//AssertCodesEvalToSameValue(t, `[1, 2, 0, 3, 4, 0, 5, 6]`, `//seq.join([0], [[1, 2], [3, 4], [5, 6]])`)
 	AssertCodesEvalToSameValue(t, `['A','A','B','A','C','A','D']`, `//seq.join(['A'], ['A','B','C','D'])`)
 }
 
