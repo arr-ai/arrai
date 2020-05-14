@@ -10,7 +10,7 @@ func ArrayContains(a rel.Array, b rel.Value) rel.Value {
 	return rel.NewBool(findFirstSequentialSubArray(a, bArray))
 }
 
-// It is brute force approach, can be imporved later if it is necessary.
+// It is brute force approach, can be improved later if it is necessary.
 func findFirstSequentialSubArray(a, b rel.Array) bool {
 	bOffset := 0
 	aVals := a.Values()
@@ -27,11 +27,7 @@ func findFirstSequentialSubArray(a, b rel.Array) bool {
 		}
 	}
 
-	if bOffset == len(bVals) {
-		return true
-	}
-
-	return false
+	return bOffset == len(bVals)
 }
 
 // ArraySub substitutes all b in a with c.
@@ -54,9 +50,7 @@ func ArrayJoin(a rel.Array, b rel.Value) rel.Value {
 	for i, value := range bArray.Values() {
 		vals = append(vals, value)
 		if i+1 < bArray.Count() {
-			for _, value := range a.Values() {
-				vals = append(vals, value)
-			}
+			vals = append(vals, a.Values()...)
 		}
 	}
 
