@@ -66,6 +66,8 @@ func TestArrayContains(t *testing.T) {
 
 	AssertCodesEvalToSameValue(t, `true`, `//seq.contains(['A', 'A', 'B','C','D','E'],['A','B','C'])`)
 	AssertCodesEvalToSameValue(t, `true`, `//seq.contains(['A', 'A', 'B','C','D','E'],['B','C'])`)
+
+	AssertCodesEvalToSameValue(t, `true`, `//seq.contains([['A', 'B'], ['B','C'],['D','E']],[['B','C']])`)
 }
 func TestBytesContains(t *testing.T) {
 	t.Parallel()
