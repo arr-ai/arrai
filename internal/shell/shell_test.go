@@ -207,10 +207,26 @@ func TestTrimExpr(t *testing.T) {
 	assert.Equal(t, "x", realExpr)
 	assert.Equal(t, "(`", residue)
 
-	//TODO: more advanced predictions
-	// realExpr, residue = sh.trimExpr(`abc.ab`)
-	// assert.Equal(t, "abc", realExpr)
-	// assert.Equal(t, ".ab", residue)
+	realExpr, residue = sh.trimExpr(`x.'random.random`)
+	assert.Equal(t, "x", realExpr)
+	assert.Equal(t, ".'random.random", residue)
+
+	realExpr, residue = sh.trimExpr(`abc("abc(`)
+	assert.Equal(t, "abc", realExpr)
+	assert.Equal(t, "(\"abc(", residue)
+
+	realExpr, residue = sh.trimExpr("x(abc.(bca`")
+	assert.Equal(t, "x", realExpr)
+	assert.Equal(t, "(abc.(bca`", residue)
+
+	realExpr, residue = sh.trimExpr(`abc.ab`)
+	assert.Equal(t, "abc", realExpr)
+	assert.Equal(t, ".ab", residue)
+
+	//FIXME: unable to handle this case
+	// realExpr, residue = sh.trimExpr("x(abc).\"(bca`")
+	// assert.Equal(t, "x(abc)", realExpr)
+	// assert.Equal(t, ".\"(bca`", residue)
 }
 
 func TestCompletionCurrentExpr(t *testing.T) {
@@ -228,6 +244,15 @@ func TestCompletionCurrentExpr(t *testing.T) {
 	assertTabCompletion(t,
 		[]string{"a", `'b"b'`, `"c'c"`, "'d`d'", "\"e\\\"e'e`ee\""}, 1,
 		"(a: 1, 'b\"b': 2, \"c'c\": 3, \"d`d\": 4, \"e\\\"e'e`ee\": 5).\t", nil)
+	assertTabCompletion(t,
+		[]string{"", "a", "aa"}, 2,
+		"x.a\t", map[string]string{"x": "(a: 1, aa: 2, aaa: 3)"})
+	assertTabCompletion(t,
+		[]string{"", "a", "aa", ".a"}, 2,
+		"x.a\t", map[string]string{"x": "(a: (a: 1), aa: 2, aaa: 3)"})
+	assertTabCompletion(t,
+		[]string{"", "a", "aa", ".a", ".b"}, 2,
+		"x.a\t", map[string]string{"x": "(a: (a: 1, b: 2), aa: 2, aaa: 3)"})
 
 	assertTabCompletion(t, []string{`('a')`}, 0, "{`a`: 1}\t", nil)
 	assertTabCompletion(t, []string{`('a')`, `('b')`}, 0, "{`a`: 1, `b`: 2}\t", nil)
@@ -244,6 +269,12 @@ func TestCompletionCurrentExpr(t *testing.T) {
 	assertTabCompletion(t,
 		[]string{`(2)`, `('string')`, `([1, 2, 3])`}, 0,
 		"{`string`: 1, 2: 20, [1, 2, 3]: 30}\t", nil)
+	assertTabCompletion(t,
+		[]string{`bc')`, `bcd')`, `bd')`}, 3,
+		"{`abc`: 1, `abcd`: 2, `abd`: 3, `bd`: 4}('a\t", nil)
+	assertTabCompletion(t,
+		[]string{`('abc')`}, 0,
+		"{`abc`: {`abc`: 1}, `abcd`: 2, `abd`: 3, `bd`: 4}('abc')\t", nil)
 
 	assertTabCompletion(t, []string{`.a`}, 0, "let x = (a: 1); x\t", nil)
 	assertTabCompletion(t, []string{`('a')`}, 0, "let x = {`a`: 1}; x\t", nil)
