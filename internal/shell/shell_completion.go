@@ -31,14 +31,23 @@ func (s *shellInstance) Do(line []rune, pos int) (newLine [][]rune, length int) 
 	default:
 		currentExpr := strings.Join(s.collector.withLine(string(line[:pos])).lines, "\n")
 		realExpr, residue := s.trimExpr(currentExpr)
-		val, err := tryEval(realExpr, s.scope)
-		if err != nil {
-			return
+		if residue != "" {
+			val, err := tryEval(realExpr, s.scope)
+			if err != nil {
+				return
+			}
+			toAdd := formatPredictions(predictFromValue(val), residue)
+			if !(len(toAdd) == 1 && len(toAdd[0]) == 0) {
+				newLine = append(newLine, formatPredictions(predictFromValue(val), residue)...)
+				length = len(residue)
+			}
 		}
-		newLine = formatPredictions(predictFromValue(val), residue)
-		length = len(residue)
+		val, err := tryEval(currentExpr, s.scope)
+		if err == nil {
+			newLine = append(newLine, formatPredictions(predictFromValue(val), "")...)
+		}
 	}
-	return
+	return newLine, length
 }
 
 //TODO: maybe needed for more advance predictions
@@ -51,12 +60,18 @@ func (s *shellInstance) Do(line []rune, pos int) (newLine [][]rune, length int) 
 // 	return val, residue, nil
 // }
 
-func (s *shellInstance) trimExpr(expr string) (string, string) {
-	if re := regexp.MustCompile("[(.]('|`|\")?$"); re.MatchString(expr) {
-		prefix := re.FindString(expr)
-		return expr[:len(expr)-len(prefix)], prefix
+func (s *shellInstance) trimExpr(expr string) (realExpr, residue string) {
+	realExpr = expr
+	getRe := regexp.MustCompile(`\.(\w*|\"(\\.|[^\\"])*|\'(\\.|[^\\'])*|\x60(\x60\x60|[^\x60])*)$`)
+	callRe := regexp.MustCompile(`\((\"([^\\"])*|\'(\\.|[^\\'])*|\x60(\x60\x60|[^\x60])*|[^)]*)$`)
+
+	if callRe.MatchString(expr) {
+		residue = callRe.FindString(expr)
+	} else if getRe.MatchString(expr) {
+		residue = getRe.FindString(expr)
 	}
 
+	realExpr = strings.TrimSuffix(expr, residue)
 	//TODO:
 	// string get expression will be handled by the isBalanced operation`
 	// getOp := regexp.MustCompile(`\.(\*|\.|[$@A-Za-z_][0-9$@A-Za-z_]*)$`)
@@ -71,7 +86,7 @@ func (s *shellInstance) trimExpr(expr string) (string, string) {
 	// 		return expr[:i], expr[i:]
 	// 	}
 	// }
-	return expr, ""
+	return
 }
 
 func predictFromValue(val rel.Value) (predictions []string) {
