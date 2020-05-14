@@ -55,8 +55,11 @@ func TestArrayContains(t *testing.T) {
 	AssertCodesEvalToSameValue(t, `true`, `//seq.contains([1,2,3,4,5],5)`)
 
 	AssertCodesEvalToSameValue(t, `true`, `//seq.contains(['A','B','C','D','E'],'A')`)
+	AssertCodesEvalToSameValue(t, `true`, `//seq.contains(['A','B','C','D','E'],['A'])`)
 	AssertCodesEvalToSameValue(t, `true`, `//seq.contains(['A','B','C','D','E'],'E')`)
+	AssertCodesEvalToSameValue(t, `true`, `//seq.contains(['A','B','C','D','E'],['E'])`)
 	AssertCodesEvalToSameValue(t, `true`, `//seq.contains(['A','B','C','D','E'],'C')`)
+	AssertCodesEvalToSameValue(t, `true`, `//seq.contains(['A','B','C','D','E'],['C'])`)
 
 	AssertCodesEvalToSameValue(t, `true`, `//seq.contains(['A','B','C','D','E'],['A','B','C'])`)
 	AssertCodesEvalToSameValue(t, `true`, `//seq.contains(['A','B','C','D','E'],['B','C'])`)
@@ -97,24 +100,27 @@ func TestStrSub(t *testing.T) {
 	assertExprPanics(t, `//seq.sub("hello there", "test", 1)`)
 }
 
+// TODO: unify the input syntax
 func TestArraySub(t *testing.T) {
 	t.Parallel()
 	AssertCodesEvalToSameValue(t,
 		`['T', 'B', 'T', 'C', 'D', 'E']`,
 		`//seq.sub(['A', 'B', 'A', 'C', 'D', 'E'], 'A', 'T')`)
 	AssertCodesEvalToSameValue(t,
-		`['T', 'B', 'T']`,
-		`//seq.sub(['A', 'B', 'A'], 'A', 'T')`)
+		`['T', 'B', 'T', 'C', 'D', 'E']`,
+		`//seq.sub(['A', 'B', 'A', 'C', 'D', 'E'], ['A'], ['T'])`)
 	AssertCodesEvalToSameValue(t,
-		`['T', 'B', 'T']`,
-		`//seq.sub(['A', 'B', 'A'], 'A', 'T')`)
-	// AssertCodesEvalToSameValue(t,
-	// 	`["this", "is", "a", "test"]`,
-	// 	`//seq.sub(["this", "is", "not", "a", "test"], ["is", "not"], "is")`)
-
-	// data := []string{"A", "B", "C"}
-	// data1 := data[1:1]
-	// fmt.Print(data1)
+		`[['A', 'B'], ['T','C'],['A','D']]`,
+		`//seq.sub([['A', 'B'], ['A','C'],['A','D']], [['A','C']], [['T','C']])`)
+	AssertCodesEvalToSameValue(t,
+		`[2, 2, 3]`,
+		`//seq.sub([1, 2, 3], 1, 2)`)
+	AssertCodesEvalToSameValue(t,
+		`[2, 2, 3]`,
+		`//seq.sub([1, 2, 3], [1], [2])`)
+	AssertCodesEvalToSameValue(t,
+		`[[1,1], [4,4], [3,3]]`,
+		`//seq.sub([[1,1], [2,2], [3,3]], [[2,2]], [[4,4]])`)
 }
 
 func TestBytesSub(t *testing.T) {

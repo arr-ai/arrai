@@ -13,8 +13,9 @@ func ArrayContains(a rel.Array, b rel.Value) rel.Value {
 // ArraySub substitutes all old in a with new.
 func ArraySub(a rel.Array, old, new rel.Value) rel.Value {
 	oldArray := convert2Array(old)
+	newArray := convert2Array(new)
 
-	var finalVals []rel.Value = nil
+	var finalVals []rel.Value = make([]rel.Value, 0, a.Count())
 	for start, absoluteIndex := 0, 0; start < a.Count(); {
 		relativeIndex := indexSubArray(a.Values()[start:], oldArray.Values())
 		if relativeIndex >= 0 {
@@ -22,7 +23,7 @@ func ArraySub(a rel.Array, old, new rel.Value) rel.Value {
 			if absoluteIndex-start > 0 {
 				finalVals = append(finalVals, a.Values()[start:absoluteIndex]...)
 			}
-			finalVals = append(finalVals, new)
+			finalVals = append(finalVals, newArray.Values()...)
 			start = absoluteIndex + oldArray.Count()
 		} else {
 			finalVals = append(finalVals, a.Values()[absoluteIndex+1:]...)
@@ -44,7 +45,7 @@ func ArrayJoin(a rel.Array, b rel.Value) rel.Value {
 		return a
 	}
 
-	var vals []rel.Value = nil
+	var vals []rel.Value = make([]rel.Value, 0, a.Count())
 	for i, value := range bArray.Values() {
 		vals = append(vals, value)
 		if i+1 < bArray.Count() {
