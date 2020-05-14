@@ -46,7 +46,7 @@ func ArrayJoin(a rel.Array, b rel.Value) rel.Value {
 		return a
 	}
 
-	var vals []rel.Value
+	var vals []rel.Value = nil
 	for i, value := range bArray.Values() {
 		vals = append(vals, value)
 		if i+1 < bArray.Count() {

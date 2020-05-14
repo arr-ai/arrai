@@ -140,8 +140,8 @@ func TestArrayJoin(t *testing.T) {
 func TestBytesJoin(t *testing.T) {
 	t.Parallel()
 	// joiner "" is translated to rel.GenericSet
-	AssertCodesEvalToSameValue(t, `//unicode.utf8.encode('hello')`, `//seq.join("",//unicode.utf8.encode('hello'))`)
-	AssertCodesEvalToSameValue(t, `//unicode.utf8.encode('hello')`, `//seq.join([],//unicode.utf8.encode('hello'))`)
+	AssertCodesEvalToSameValue(t, `{ |@, @byte| (0, 104), (1, 101), (2, 108), (3, 108), (4, 111) }`, `//seq.join("",//unicode.utf8.encode('hello'))`)
+	AssertCodesEvalToSameValue(t, `{ |@, @byte| (0, 104), (1, 101), (2, 108), (3, 108), (4, 111) }`, `//seq.join([],{ |@, @byte| (0, 104), (1, 101), (2, 108), (3, 108), (4, 111) })`)
 	AssertCodesEvalToSameValue(t, `[]`, `//seq.join([1],[])`)
 	AssertCodesEvalToSameValue(t, `[]`, `//seq.join(['A'],[])`)
 
