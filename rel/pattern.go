@@ -116,6 +116,12 @@ type TuplePattern struct {
 }
 
 func NewTuplePattern(attrs ...AttrPattern) TuplePattern {
+	names := make(map[string]bool)
+	for _, attr := range attrs {
+		if names[attr.name] {
+			panic(fmt.Sprintf("name %s is duplicated in tuple", attr.name))
+		}
+	}
 	return TuplePattern{attrs}
 }
 
@@ -123,6 +129,10 @@ func (p TuplePattern) Bind(scope Scope, value Value) Scope {
 	tuple, is := value.(Tuple)
 	if !is {
 		panic(fmt.Sprintf("%s is not a tuple", value))
+	}
+
+	if len(p.attrs) != tuple.Count() {
+		panic(fmt.Sprintf("tuples %s and %s cannot match", p, tuple))
 	}
 
 	result := EmptyScope
