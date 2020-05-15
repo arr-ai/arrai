@@ -40,22 +40,25 @@ func ArraySplit(a rel.Array, b rel.Value) rel.Value {
 	return nil
 }
 
-// ArrayJoin joins array a to b, a is joiner and b is joinee.
+// ArrayJoin joins array b to a, b is joiner and a is joinee.
 func ArrayJoin(a rel.Array, b rel.Value) rel.Value {
-	bArray := convert2Array(b)
-	if bArray.Count() == 0 {
+	joiner := convert2Array(b)
+	if joiner.Count() == 0 || a.Count() == 0 {
 		// if joinee is empty, the final value will be empty
-		return b
-	}
-	if a.Count() == 0 {
 		return a
 	}
 
 	vals := make([]rel.Value, 0, a.Count())
-	for i, value := range bArray.Values() {
-		vals = append(vals, value)
-		if i+1 < bArray.Count() {
-			vals = append(vals, a.Values()...)
+	for i, value := range a.Values() {
+		switch vArray := value.(type) {
+		case rel.Array:
+			vals = append(vals, generate1LevelArray(vArray)...)
+		case rel.Value:
+			vals = append(vals, value)
+		}
+
+		if i+1 < a.Count() {
+			vals = append(vals, generate1LevelArray(joiner)...)
 		}
 	}
 
@@ -156,4 +159,23 @@ func indexSubArray(a, b []rel.Value) int {
 		return aOffset
 	}
 	return -1
+}
+
+// Convert [[1, 2],[3, 4]] to [1, 2, 3, 4]
+func generate1LevelArray(source rel.Array) []rel.Value {
+	if source.Count() == 0 {
+		return nil
+	}
+
+	finalArray := make([]rel.Value, 0, source.Count())
+	for _, val := range source.Values() {
+		switch rVal := val.(type) {
+		case rel.Array:
+			finalArray = append(finalArray, generate1LevelArray(rVal)...)
+		case rel.Value:
+			finalArray = append(finalArray, rVal)
+		}
+	}
+
+	return finalArray
 }

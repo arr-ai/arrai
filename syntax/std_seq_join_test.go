@@ -2,35 +2,40 @@ package syntax
 
 import "testing"
 
-// TestStrJoin, joiner is string.
 func TestStrJoin(t *testing.T) {
 	t.Parallel()
 	AssertCodesEvalToSameValue(t, `"AB"`, `//seq.join("",['A','B'])                         `)
-	AssertCodesEvalToSameValue(t, `""                `, `//seq.join(",",[])                         `)
-	AssertCodesEvalToSameValue(t, `",,"              `, `//seq.join(",",["", "", ""])               `)
+	AssertCodesEvalToSameValue(t, `"Youme"`, `//seq.join("",["You", "me"])`)
+	AssertCodesEvalToSameValue(t, `"AB"`, `//seq.join([],["A","B"])`)
+	AssertCodesEvalToSameValue(t, `"AB"`, `//seq.join([],['A','B'])`)
 	AssertCodesEvalToSameValue(t, `"this is a test"  `, `//seq.join(" ",["this", "is", "a", "test"])`)
 	AssertCodesEvalToSameValue(t, `"this"            `, `//seq.join(",",["this"])                   `)
 	AssertCodesEvalToSameValue(t, `"You and me"`, `//seq.join(" and ",["You", "me"])`)
 	assertExprPanics(t, `//seq.join("this", 2)`)
+
+	// Following cases are not supported to make sure code is clear and simple.
+	// Or it has to check array element is rel.String or rel.Number.
+	// And they are imapcted by https://github.com/arr-ai/arrai/issues/268 too.
+	// AssertCodesEvalToSameValue(t, `""                `, `//seq.join(",",[])                         `)
+	// AssertCodesEvalToSameValue(t, `",,"              `, `//seq.join(",",["", "", ""])               `)
 }
 
 func TestArrayJoin(t *testing.T) {
 	t.Parallel()
 	// joiner "" is translated to rel.GenericSet
-	// AssertCodesEvalToSameValue(t, `["You", "me"]`, `//seq.join("",["You", "me"])`)
-	// AssertCodesEvalToSameValue(t, `[1,2]`, `//seq.join("",[1,2])`)
+	AssertCodesEvalToSameValue(t, `[1,2]`, `//seq.join([],[1,2])`)
+	AssertCodesEvalToSameValue(t, `[1,0,2,0,3,0,4,0,5]`, `//seq.join([0], [1,2,3,4,5])`)
+	AssertCodesEvalToSameValue(t, `[1, 2, 0, 3, 4, 0, 5, 6]`, `//seq.join([0], [[1, 2], [3, 4], [5, 6]])`)
+	AssertCodesEvalToSameValue(t, `[1, 2, 10, 11, 3, 4, 10, 11, 5, 6]`, `//seq.join([10,11], [[1, 2], [3, 4], [5, 6]])`)
+	AssertCodesEvalToSameValue(t, `[1, 2, 3, 4, 0, 5, 6, 7, 8]`, `//seq.join([0], [[[1, 2], [3, 4]],[[5, 6],[7, 8]]])`)
 
-	// AssertCodesEvalToSameValue(t, `["A","B"]`, `//seq.join([],["A","B"])`)
-	// AssertCodesEvalToSameValue(t, `[1,2]`, `//seq.join([],[1,2])`)
-	// // if joinee is empty, the final value will be empty
+	AssertCodesEvalToSameValue(t, `[1, 2, 10, 11, 3, 4, 10, 11, 5, 6]`, `//seq.join([[10],[11]], [[1, 2], [3, 4], [5, 6]])`)
+	AssertCodesEvalToSameValue(t, `[1, 2, 3, 4, 0, 1, 5, 6, 7, 8]`, `//seq.join([[0],[1]], [[[1, 2], [3, 4]],[[5, 6],[7, 8]]])`)
+
+	// Following cases are not supported to make sure code is clear and simple.
+	// Or it has to check array element is rel.String or rel.Number.
+	// And they are imapcted by https://github.com/arr-ai/arrai/issues/268 too.
 	// AssertCodesEvalToSameValue(t, `[]`, `//seq.join([1],[])`)
-	// AssertCodesEvalToSameValue(t, `[]`, `//seq.join(['A'],[])`)
-
-	// AssertCodesEvalToSameValue(t, `["A",",","B"]`, `//seq.join([","],["A","B"])`)
-	// AssertCodesEvalToSameValue(t, `[1,0,2,0,3,0,4,0,5]`, `//seq.join([0], [1,2,3,4,5])`)
-	// // TODO
-	// //AssertCodesEvalToSameValue(t, `[1, 2, 0, 3, 4, 0, 5, 6]`, `//seq.join([0], [[1, 2], [3, 4], [5, 6]])`)
-	// AssertCodesEvalToSameValue(t, `['A','A','B','A','C','A','D']`, `//seq.join(['A'], ['A','B','C','D'])`)
 }
 
 func TestBytesJoin(t *testing.T) {
@@ -40,14 +45,4 @@ func TestBytesJoin(t *testing.T) {
 	// 	`//seq.join("",//unicode.utf8.encode('hello'))`)
 	// AssertCodesEvalToSameValue(t, `{ |@, @byte| (0, 104), (1, 101), (2, 108), (3, 108), (4, 111) }`,
 	// 	`//seq.join([],{ |@, @byte| (0, 104), (1, 101), (2, 108), (3, 108), (4, 111) })`)
-	// AssertCodesEvalToSameValue(t, `[]`, `//seq.join([1],[])`)
-	// AssertCodesEvalToSameValue(t, `[]`, `//seq.join(['A'],[])`)
-
-	// AssertCodesEvalToSameValue(t, `["A","B"]`, `//seq.join([],["A","B"])`)
-	// AssertCodesEvalToSameValue(t, `[1,2]`, `//seq.join([],[1,2])`)
-	// // if joinee is empty, the final value will be empty
-	// AssertCodesEvalToSameValue(t, `[]`, `//seq.join([1],[])`)
-	// AssertCodesEvalToSameValue(t, `[]`, `//seq.join(['A'],[])`)
-
-	// AssertCodesEvalToSameValue(t, `true`, `//seq.has_prefix(//unicode.utf8.encode('hello'),//unicode.utf8.encode('h'))`)
 }

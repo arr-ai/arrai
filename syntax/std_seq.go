@@ -143,29 +143,30 @@ func stdSeq() rel.Attr {
 				reflect.TypeOf(args[2])))
 		}),
 		createNestedFuncAttr("join", 2, func(args ...rel.Value) rel.Value {
-			switch args[1].(type) {
-			case rel.Set:
-				strs := args[1].(rel.Set)
-				toJoin := make([]string, 0, strs.Count())
-				for i, ok := strs.(rel.Set).ArrayEnumerator(); ok && i.MoveNext(); {
-					toJoin = append(toJoin, mustAsString(i.Current()))
-				}
-				return rel.NewString([]rune(strings.Join(toJoin, mustAsString(args[0]))))
+			switch a1 := args[1].(type) {
 			case rel.Array:
-				return ArrayContains(args[1].(rel.Array), args[0])
+				switch a1.Values()[0].(type) {
+				case rel.String:
+					return strJoin(args...)
+				case rel.Value:
+					return ArrayJoin(a1, args[0])
+				}
 			case rel.Bytes:
 				return nil
 			}
-
-			panic(fmt.Errorf("expected subject sequence types are %s, %s and %s, but the actual type is %s",
-				reflect.TypeOf(rel.String{}), reflect.TypeOf(rel.Array{}), reflect.TypeOf(rel.Bytes{}),
+			// 	return ArrayContains(args[1].(rel.Array), args[0])
+			panic(fmt.Errorf("expected subject sequence types are %s and %s, but the actual type is %s",
+				reflect.TypeOf(rel.Array{}), reflect.TypeOf(rel.Bytes{}),
 				reflect.TypeOf(args[2])))
 		}),
 	)
 }
 
-func subjectSeqPanic(args ...rel.Value) {
-	panic(fmt.Errorf("expected subject sequence types are %s, %s and %s, but the actual type is %s",
-		reflect.TypeOf(rel.String{}), reflect.TypeOf(rel.Array{}), reflect.TypeOf(rel.Bytes{}),
-		reflect.TypeOf(args[2])))
+func strJoin(args ...rel.Value) rel.Value {
+	strs := args[1].(rel.Set)
+	toJoin := make([]string, 0, strs.Count())
+	for i, ok := strs.(rel.Set).ArrayEnumerator(); ok && i.MoveNext(); {
+		toJoin = append(toJoin, mustAsString(i.Current()))
+	}
+	return rel.NewString([]rune(strings.Join(toJoin, mustAsString(args[0]))))
 }
