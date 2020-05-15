@@ -87,7 +87,9 @@ func stdSeq() rel.Attr {
 }
 
 func process(apiName string, args ...rel.Value) rel.Value {
-	handler := handlerMapping[typeMethod{reflect.TypeOf(args[0]), apiName}]
+	// As https://github.com/arr-ai/arrai/issues/230, the subject parameter is placed in the last param in API signature,
+	// so get handler by the last param.
+	handler := handlerMapping[typeMethod{reflect.TypeOf(args[len(args)-1]), apiName}]
 	return handler(args...)
 }
 
@@ -96,44 +98,43 @@ var (
 	handlerMapping = map[typeMethod]func(...rel.Value) rel.Value{
 		// API contains
 		{reflect.TypeOf(rel.String{}), "contains"}: func(args ...rel.Value) rel.Value {
-			return rel.NewBool(strings.Contains(mustAsString(args[0]), mustAsString(args[1])))
+			return rel.NewBool(strings.Contains(mustAsString(args[1]), mustAsString(args[0])))
 		},
 
 		{reflect.TypeOf(rel.Array{}), "contains"}: func(args ...rel.Value) rel.Value {
-			return ArrayContains(args[0].(rel.Array), args[1])
+			return ArrayContains(args[1].(rel.Array), args[0])
 		},
 
 		{reflect.TypeOf(rel.Bytes{}), "contains"}: func(args ...rel.Value) rel.Value {
-			return nil
+			return BytesContain(args[1].(rel.Bytes), args[0].(rel.Bytes))
 		},
 		// API sub
 		{reflect.TypeOf(rel.String{}), "sub"}: func(args ...rel.Value) rel.Value {
 			return rel.NewString(
 				[]rune(
 					strings.ReplaceAll(
+						mustAsString(args[2]),
 						mustAsString(args[0]),
 						mustAsString(args[1]),
-						mustAsString(args[2]),
 					),
 				),
 			)
 		},
 		{reflect.TypeOf(rel.Array{}), "sub"}: func(args ...rel.Value) rel.Value {
-			return ArraySub(args[0].(rel.Array), args[1], args[2])
+			return ArraySub(args[2].(rel.Array), args[0], args[1])
 		},
 		{reflect.TypeOf(rel.Bytes{}), "sub"}: func(args ...rel.Value) rel.Value {
 			return nil
 		},
 		// API split
+		{reflect.TypeOf(rel.GenericSet{}), "split"}: func(args ...rel.Value) rel.Value {
+			return strSplit(args...)
+		},
 		{reflect.TypeOf(rel.String{}), "split"}: func(args ...rel.Value) rel.Value {
-			splitted := strings.Split(mustAsString(args[0]), mustAsString(args[1]))
-			vals := make([]rel.Value, 0, len(splitted))
-			for _, s := range splitted {
-				vals = append(vals, rel.NewString([]rune(s)))
-			}
-			return rel.NewArray(vals...)
+			return strSplit(args...)
 		},
 		{reflect.TypeOf(rel.Array{}), "split"}: func(args ...rel.Value) rel.Value {
+			// return ArraySplit(a, b)
 			return nil
 		},
 		{reflect.TypeOf(rel.Bytes{}), "split"}: func(args ...rel.Value) rel.Value {
@@ -190,4 +191,14 @@ var (
 type typeMethod struct {
 	t       reflect.Type
 	apiName string
+}
+
+// String funcs
+func strSplit(args ...rel.Value) rel.Value {
+	splitted := strings.Split(mustAsString(args[1]), mustAsString(args[0]))
+	vals := make([]rel.Value, 0, len(splitted))
+	for _, s := range splitted {
+		vals = append(vals, rel.NewString([]rune(s)))
+	}
+	return rel.NewArray(vals...)
 }
