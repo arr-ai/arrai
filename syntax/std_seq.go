@@ -2,7 +2,6 @@ package syntax
 
 import (
 	"fmt"
-	"reflect"
 	"strings"
 
 	"github.com/arr-ai/arrai/rel"
@@ -66,139 +65,94 @@ func stdSeq() rel.Attr {
 		rel.NewNativeFunctionAttr("concat", stdSeqConcat),
 		rel.NewNativeFunctionAttr("repeat", stdSeqRepeat),
 		createNestedFuncAttr("contains", 2, func(args ...rel.Value) rel.Value {
-			return process("contains", args...)
+			switch args[1].(type) {
+			case rel.String:
+				return rel.NewBool(strings.Contains(mustAsString(args[1]), mustAsString(args[0])))
+			case rel.Array:
+				return ArrayContains(args[1].(rel.Array), args[0])
+			case rel.Bytes:
+				return BytesContain(args[1].(rel.Bytes), args[0].(rel.Bytes))
+			}
+
+			return rel.NewBool(false)
 		}),
 		createNestedFuncAttr("split", 2, func(args ...rel.Value) rel.Value {
-			return process("split", args...)
+			switch args[1].(type) {
+			case rel.String:
+				splitted := strings.Split(mustAsString(args[1]), mustAsString(args[0]))
+				vals := make([]rel.Value, 0, len(splitted))
+				for _, s := range splitted {
+					vals = append(vals, rel.NewString([]rune(s)))
+				}
+				return rel.NewArray(vals...)
+			case rel.Array:
+				return nil
+			case rel.Bytes:
+				return nil
+			}
+
+			return nil
 		}),
 		createNestedFuncAttr("sub", 3, func(args ...rel.Value) rel.Value {
-			return process("sub", args...)
+			switch args[1].(type) {
+			case rel.String:
+				return rel.NewString(
+					[]rune(
+						strings.ReplaceAll(
+							mustAsString(args[2]),
+							mustAsString(args[0]),
+							mustAsString(args[1]),
+						),
+					),
+				)
+			case rel.Array:
+				return ArraySub(args[2].(rel.Array), args[0], args[1])
+			case rel.Bytes:
+				return BytesSub(args[2].(rel.Bytes), args[0].(rel.Bytes), args[1].(rel.Bytes))
+			}
+
+			return nil
 		}),
 		createNestedFuncAttr("has_prefix", 2, func(args ...rel.Value) rel.Value {
-			return process("has_prefix", args...)
+			switch args[1].(type) {
+			case rel.String:
+				return rel.NewBool(strings.HasPrefix(mustAsString(args[1]), mustAsString(args[0])))
+			case rel.Array:
+				return ArrayPrefix(args[1].(rel.Array), args[0])
+			case rel.Bytes:
+				return rel.NewBool(strings.HasPrefix(args[1].String(), args[0].String()))
+			}
+
+			return rel.NewBool(false)
 		}),
 		createNestedFuncAttr("has_suffix", 2, func(args ...rel.Value) rel.Value {
-			return process("has_suffix", args...)
+			switch args[1].(type) {
+			case rel.String:
+				return rel.NewBool(strings.HasSuffix(mustAsString(args[1]), mustAsString(args[0])))
+			case rel.Array:
+				return ArraySuffix(args[1].(rel.Array), args[0])
+			case rel.Bytes:
+				return rel.NewBool(strings.HasSuffix(args[1].String(), args[0].String()))
+			}
+
+			return rel.NewBool(false)
 		}),
 		createNestedFuncAttr("join", 2, func(args ...rel.Value) rel.Value {
-			return process("join", args...)
+			switch args[1].(type) {
+			case rel.Set:
+				strs := args[1].(rel.Set)
+				toJoin := make([]string, 0, strs.Count())
+				for i, ok := strs.(rel.Set).ArrayEnumerator(); ok && i.MoveNext(); {
+					toJoin = append(toJoin, mustAsString(i.Current()))
+				}
+				return rel.NewString([]rune(strings.Join(toJoin, mustAsString(args[0]))))
+			case rel.Array:
+				return ArrayContains(args[1].(rel.Array), args[0])
+			case rel.Bytes:
+				return nil
+			}
+
+			panic("couldn't find hanlder for subject sequence, the supported subject sequence are string, array and byte array.")
 		}),
 	)
-}
-
-func process(apiName string, args ...rel.Value) rel.Value {
-	// As https://github.com/arr-ai/arrai/issues/230, the subject parameter is placed in the last param in API signature,
-	// so get handler by the last param.
-	handler := handlerMapping[typeMethod{reflect.TypeOf(args[len(args)-1]), apiName}]
-	return handler(args...)
-}
-
-// This is seq API handlders mapping.
-var (
-	handlerMapping = map[typeMethod]func(...rel.Value) rel.Value{
-		// API contains
-		{reflect.TypeOf(rel.String{}), "contains"}: func(args ...rel.Value) rel.Value {
-			return rel.NewBool(strings.Contains(mustAsString(args[1]), mustAsString(args[0])))
-		},
-
-		{reflect.TypeOf(rel.Array{}), "contains"}: func(args ...rel.Value) rel.Value {
-			return ArrayContains(args[1].(rel.Array), args[0])
-		},
-
-		{reflect.TypeOf(rel.Bytes{}), "contains"}: func(args ...rel.Value) rel.Value {
-			return BytesContain(args[1].(rel.Bytes), args[0].(rel.Bytes))
-		},
-		// API sub
-		{reflect.TypeOf(rel.String{}), "sub"}: func(args ...rel.Value) rel.Value {
-			return rel.NewString(
-				[]rune(
-					strings.ReplaceAll(
-						mustAsString(args[2]),
-						mustAsString(args[0]),
-						mustAsString(args[1]),
-					),
-				),
-			)
-		},
-		{reflect.TypeOf(rel.Array{}), "sub"}: func(args ...rel.Value) rel.Value {
-			return ArraySub(args[2].(rel.Array), args[0], args[1])
-		},
-		{reflect.TypeOf(rel.Bytes{}), "sub"}: func(args ...rel.Value) rel.Value {
-			return nil
-		},
-		// API split
-		{reflect.TypeOf(rel.GenericSet{}), "split"}: func(args ...rel.Value) rel.Value {
-			return strSplit(args...)
-		},
-		{reflect.TypeOf(rel.String{}), "split"}: func(args ...rel.Value) rel.Value {
-			return strSplit(args...)
-		},
-		{reflect.TypeOf(rel.Array{}), "split"}: func(args ...rel.Value) rel.Value {
-			// return ArraySplit(a, b)
-			return nil
-		},
-		{reflect.TypeOf(rel.Bytes{}), "split"}: func(args ...rel.Value) rel.Value {
-			return nil
-		},
-		// API join
-		{reflect.TypeOf(rel.String{}), "join"}: func(args ...rel.Value) rel.Value {
-			strs := args[1].(rel.Set)
-			toJoin := make([]string, 0, strs.Count())
-			for i, ok := strs.(rel.Set).ArrayEnumerator(); ok && i.MoveNext(); {
-				toJoin = append(toJoin, mustAsString(i.Current()))
-			}
-			return rel.NewString([]rune(strings.Join(toJoin, mustAsString(args[0]))))
-		},
-		{reflect.TypeOf(rel.GenericSet{}), "join"}: func(args ...rel.Value) rel.Value {
-			// e.g. `//seq.join("",["You", "me"])`, `//seq.join([],[1,2])`
-			return args[1]
-		},
-		{reflect.TypeOf(rel.Array{}), "join"}: func(args ...rel.Value) rel.Value {
-			return ArrayJoin(args[0].(rel.Array), args[1])
-		},
-		{reflect.TypeOf(rel.Bytes{}), "join"}: func(args ...rel.Value) rel.Value {
-			return nil
-		},
-		// API has_prefix
-		{reflect.TypeOf(rel.String{}), "has_prefix"}: func(args ...rel.Value) rel.Value {
-			return rel.NewBool(strings.HasPrefix(mustAsString(args[0]), mustAsString(args[1])))
-		},
-		{reflect.TypeOf(rel.Array{}), "has_prefix"}: func(args ...rel.Value) rel.Value {
-			return ArrayPrefix(args[0].(rel.Array), args[1])
-		},
-		{reflect.TypeOf(rel.GenericSet{}), "has_prefix"}: func(args ...rel.Value) rel.Value {
-			return rel.NewBool(false)
-		},
-		{reflect.TypeOf(rel.Bytes{}), "has_prefix"}: func(args ...rel.Value) rel.Value {
-			return rel.NewBool(strings.HasPrefix(args[0].String(), args[1].String()))
-		},
-		// API has_suffix
-		{reflect.TypeOf(rel.String{}), "has_suffix"}: func(args ...rel.Value) rel.Value {
-			return rel.NewBool(strings.HasSuffix(mustAsString(args[0]), mustAsString(args[1])))
-		},
-		{reflect.TypeOf(rel.Array{}), "has_suffix"}: func(args ...rel.Value) rel.Value {
-			return ArraySuffix(args[0].(rel.Array), args[1])
-		},
-		{reflect.TypeOf(rel.GenericSet{}), "has_suffix"}: func(args ...rel.Value) rel.Value {
-			return rel.NewBool(false)
-		},
-		{reflect.TypeOf(rel.Bytes{}), "has_suffix"}: func(args ...rel.Value) rel.Value {
-			return rel.NewBool(strings.HasSuffix(args[0].String(), args[1].String()))
-		},
-	}
-)
-
-type typeMethod struct {
-	t       reflect.Type
-	apiName string
-}
-
-// String funcs
-func strSplit(args ...rel.Value) rel.Value {
-	splitted := strings.Split(mustAsString(args[1]), mustAsString(args[0]))
-	vals := make([]rel.Value, 0, len(splitted))
-	for _, s := range splitted {
-		vals = append(vals, rel.NewString([]rune(s)))
-	}
-	return rel.NewArray(vals...)
 }
