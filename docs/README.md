@@ -434,6 +434,9 @@ External libraries may be accessed via package references.
       request content of `https://foo.org/bar/some.json` via HTTPS
    5. **`//{foo.org/bar/some.yaml}`/`//{https://foo.org/bar/some.yml}`:**
       request content of `https://foo.org/bar/some.yaml` via HTTPS, file extension can be `yml` or `yaml`
+5. **NOTE: Transitive packages that use absolute or relative file paths are relative to location of which the main arrai file is run.**  
+   E.g. Running ```arrai r foo.arrai``` where ```foo.arrai``` imports package `http://foo.bar/hello.arrai`.  
+   `http://foo.bar/hello.arrai` that itself contains a relative package import of ```//{./tool}``` will not reference `http://foo.bar/tool.arrai` but reference the directory of where the ```foo.arrai``` is located locally.
 
 ### Tuples vs Maps
 
