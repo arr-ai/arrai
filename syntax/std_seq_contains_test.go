@@ -8,7 +8,6 @@ func TestStrContains(t *testing.T) {
 	AssertCodesEvalToSameValue(t, `true `, `//seq.contains("is a test", "this is a test")    `)
 	AssertCodesEvalToSameValue(t, `false`, `//seq.contains("is not a test", "this is a test")`)
 	AssertCodesEvalToSameValue(t, `false`, `//seq.contains("a is", "this is a test")`)
-	assertExprPanics(t, `//seq.contains(124, 123)`)
 }
 
 func TestArrayContains(t *testing.T) {
