@@ -2,6 +2,7 @@ package syntax
 
 import (
 	"fmt"
+	"reflect"
 	"strings"
 
 	"github.com/arr-ai/arrai/rel"
@@ -76,43 +77,6 @@ func stdSeq() rel.Attr {
 
 			return rel.NewBool(false)
 		}),
-		createNestedFuncAttr("split", 2, func(args ...rel.Value) rel.Value {
-			switch args[1].(type) {
-			case rel.String:
-				splitted := strings.Split(mustAsString(args[1]), mustAsString(args[0]))
-				vals := make([]rel.Value, 0, len(splitted))
-				for _, s := range splitted {
-					vals = append(vals, rel.NewString([]rune(s)))
-				}
-				return rel.NewArray(vals...)
-			case rel.Array:
-				return nil
-			case rel.Bytes:
-				return nil
-			}
-
-			return nil
-		}),
-		createNestedFuncAttr("sub", 3, func(args ...rel.Value) rel.Value {
-			switch args[1].(type) {
-			case rel.String:
-				return rel.NewString(
-					[]rune(
-						strings.ReplaceAll(
-							mustAsString(args[2]),
-							mustAsString(args[0]),
-							mustAsString(args[1]),
-						),
-					),
-				)
-			case rel.Array:
-				return ArraySub(args[2].(rel.Array), args[0], args[1])
-			case rel.Bytes:
-				return BytesSub(args[2].(rel.Bytes), args[0].(rel.Bytes), args[1].(rel.Bytes))
-			}
-
-			return nil
-		}),
 		createNestedFuncAttr("has_prefix", 2, func(args ...rel.Value) rel.Value {
 			switch args[1].(type) {
 			case rel.String:
@@ -137,6 +101,47 @@ func stdSeq() rel.Attr {
 
 			return rel.NewBool(false)
 		}),
+		createNestedFuncAttr("split", 2, func(args ...rel.Value) rel.Value {
+			switch args[1].(type) {
+			case rel.String:
+				splitted := strings.Split(mustAsString(args[1]), mustAsString(args[0]))
+				vals := make([]rel.Value, 0, len(splitted))
+				for _, s := range splitted {
+					vals = append(vals, rel.NewString([]rune(s)))
+				}
+				return rel.NewArray(vals...)
+			case rel.Array:
+				return nil
+			case rel.Bytes:
+				return nil
+			}
+
+			panic(fmt.Errorf("expected subject sequence types are %s, %s and %s, but the actual type is %s",
+				reflect.TypeOf(rel.String{}), reflect.TypeOf(rel.Array{}), reflect.TypeOf(rel.Bytes{}),
+				reflect.TypeOf(args[2])))
+		}),
+		createNestedFuncAttr("sub", 3, func(args ...rel.Value) rel.Value {
+			switch args[2].(type) {
+			case rel.String:
+				return rel.NewString(
+					[]rune(
+						strings.ReplaceAll(
+							mustAsString(args[2]),
+							mustAsString(args[0]),
+							mustAsString(args[1]),
+						),
+					),
+				)
+			case rel.Array:
+				return ArraySub(args[2].(rel.Array), args[0], args[1])
+			case rel.Bytes:
+				return BytesSub(args[2].(rel.Bytes), args[0].(rel.Bytes), args[1].(rel.Bytes))
+			}
+
+			panic(fmt.Errorf("expected subject sequence types are %s, %s and %s, but the actual type is %s",
+				reflect.TypeOf(rel.String{}), reflect.TypeOf(rel.Array{}), reflect.TypeOf(rel.Bytes{}),
+				reflect.TypeOf(args[2])))
+		}),
 		createNestedFuncAttr("join", 2, func(args ...rel.Value) rel.Value {
 			switch args[1].(type) {
 			case rel.Set:
@@ -152,7 +157,15 @@ func stdSeq() rel.Attr {
 				return nil
 			}
 
-			panic("couldn't find hanlder for subject sequence, the supported subject sequence are string, array and byte array.")
+			panic(fmt.Errorf("expected subject sequence types are %s, %s and %s, but the actual type is %s",
+				reflect.TypeOf(rel.String{}), reflect.TypeOf(rel.Array{}), reflect.TypeOf(rel.Bytes{}),
+				reflect.TypeOf(args[2])))
 		}),
 	)
+}
+
+func subjectSeqPanic(args ...rel.Value) {
+	panic(fmt.Errorf("expected subject sequence types are %s, %s and %s, but the actual type is %s",
+		reflect.TypeOf(rel.String{}), reflect.TypeOf(rel.Array{}), reflect.TypeOf(rel.Bytes{}),
+		reflect.TypeOf(args[2])))
 }
