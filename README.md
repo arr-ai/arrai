@@ -6,18 +6,15 @@ The ultimate data engine.
 
 ## Install
 
-[Install Go](https://golang.org/doc/install), then:
+[Install Go](https://golang.org/doc/install), then, on a Unix-like OS:
 
 ```bash
-go get -v -u github.com/arr-ai/arrai/cmd/arrai
-arrai -h
+git clone https://github.com/arr-ai/arrai.git
+make install
 ```
 
-On Unix-like platforms, you can also symlink a handy shortcut:
-
-```bash
-ln -s arrai $(dirname $(which arrai))/ai
-```
+On Windows, download the relevant ZIP file from the
+[Releases page](https://github.com/arr-ai/arrai/releases).
 
 ## Learn
 
