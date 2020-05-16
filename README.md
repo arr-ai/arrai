@@ -120,5 +120,6 @@ arrai observe localhost '$'
 ### Update a server
 
 ```bash
-arrai update localhost '{a: {|1, 2, 3|}, b: "hello"}'
+arrai update localhost '(a: {1, 2, 3}, b: "hello")'
+arrai u localhost '$ + (a: $.a | {4, 5, 6})'
 ```
