@@ -10,6 +10,7 @@ The ultimate data engine.
 
 ```bash
 git clone https://github.com/arr-ai/arrai.git
+cd arrai
 make install
 ```
 
