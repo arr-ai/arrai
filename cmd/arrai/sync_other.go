@@ -1,4 +1,4 @@
-// +build !darwin !386
+// +build !darwin
 
 package main
 

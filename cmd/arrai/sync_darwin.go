@@ -1,5 +1,4 @@
-// +build: darwin
-// +build: 386
+// +build darwin
 
 package main
 
