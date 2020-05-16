@@ -3,7 +3,6 @@ module github.com/arr-ai/arrai
 go 1.13
 
 require (
-	github.com/ChloePlanet/arrai-examples v0.1.0 // indirect
 	github.com/anz-bank/pkg v0.0.7
 	github.com/arr-ai/frozen v0.13.0
 	github.com/arr-ai/hash v0.4.0

@@ -42,7 +42,7 @@ jobs:
       - name: Set env
         run: echo ::set-env name=GOVERSION::$(go version | awk '{print $3, $4;}')
 
-      # GoReleaser release process is customized in `.goreleaser.yml` file
+      # Configured via `.github/goreleaser_config/.goreleaser.yml`
       - name: Release binaries via goreleaser
         uses: goreleaser/goreleaser-action@v2.0.2
         with:

@@ -7,6 +7,7 @@ install: all
 
 test:
 	go test $(GOTESTFLAGS) -tags timingsensitive ./...
+	GOARCH=386 go build ./...
 
 lint:
 	golangci-lint run
