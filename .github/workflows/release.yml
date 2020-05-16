@@ -22,6 +22,9 @@ jobs:
       - name: Check out code into the Go module directory
         uses: actions/checkout@master
 
+      - name: Unshallow
+        run: git fetch --prune --unshallow
+
       - name: Build
         run: make all
 
@@ -29,7 +32,7 @@ jobs:
         uses: goreleaser/goreleaser-action@v2.0.2
         with:
           version: v0.134.0
-          args: check -f .github/goreleaser_configs/.goreleaser.yml
+          args: check -f .github/goreleaser_configs/goreleaser.yml
 
       - name: Set env
         run: echo ::set-env name=GOVERSION::$(go version | awk '{print $3, $4;}')
@@ -39,6 +42,6 @@ jobs:
         uses: goreleaser/goreleaser-action@v2.0.2
         with:
           version: v0.134.0
-          args: release --rm-dist --debug -f .github/goreleaser_configs/.goreleaser.yml
+          args: release --rm-dist --debug -f .github/goreleaser_configs/goreleaser.yml
         env:
           GITHUB_TOKEN: ${{ secrets.REPO_ACCESS_TOKEN }}
