@@ -72,7 +72,28 @@ func NewCountExpr(scanner parser.Scanner, a Expr) Expr {
 			if x, ok := a.(Set); ok {
 				return NewNumber(float64(x.Count())), nil
 			}
-			return nil, errors.Errorf("eval arg must be a Function, not %T", a)
+			return nil, errors.Errorf("eval arg must be a Set, not %T", a)
+		})
+}
+
+// NewSingleExpr evaluates to the single element in a or fails if a count != 1.
+func NewSingleExpr(scanner parser.Scanner, a Expr) Expr {
+	return newUnaryExpr(scanner, a, "single", "(%s single)",
+		func(a Value, local Scope) (Value, error) {
+			if x, ok := a.(Set); ok {
+				var result Value
+				for e := x.Enumerator(); e.MoveNext(); {
+					if result != nil {
+						return nil, fmt.Errorf("single: too many elements")
+					}
+					result = e.Current()
+				}
+				if result == nil {
+					return nil, fmt.Errorf("single: empty set")
+				}
+				return result, nil
+			}
+			return nil, errors.Errorf("eval arg must be a Set, not %T", a)
 		})
 }
 

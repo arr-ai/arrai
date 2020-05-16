@@ -31,7 +31,7 @@ expr   -> C* amp="&"* @ C* arrow=(
         > C* @:rbinop="^" C*
         > C* unop=/{:>|=>|>>|[-+!*^]}* @ C*
         > C* @:binop=">>>" C*
-        > C* @ count="count"? C* touch? C*
+        > C* @ postfix=/{count|single}? C* touch? C*
         > C* (get | @) tail=(
               get
             | call=("("
