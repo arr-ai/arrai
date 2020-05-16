@@ -2,6 +2,7 @@ package rel
 
 import (
 	"reflect"
+	"unsafe"
 
 	"github.com/arr-ai/hash"
 	"github.com/arr-ai/wbnf/parser"
@@ -35,7 +36,7 @@ func (f *NativeExprFunction) Fn() func(Expr, Scope) (Value, error) {
 
 // Hash computes a hash for a NativeExprFunction.
 func (f *NativeExprFunction) Hash(seed uintptr) uintptr {
-	return hash.String(f.String(), hash.Uintptr(9714745597188477233, seed))
+	return hash.String(f.String(), hash.Uintptr(9714745597188477233>>(64-8*unsafe.Sizeof(uintptr(0))), seed))
 }
 
 // Equal tests two Values for equality. Any other type returns false.
