@@ -25,6 +25,9 @@ jobs:
       - name: Unshallow
         run: git fetch --prune --unshallow
 
+      - name: Install golangci-lint
+        run: go get github.com/golangci/golangci-lint/cmd/golangci-lint
+
       - name: Build
         run: make all
 
