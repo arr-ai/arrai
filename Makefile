@@ -15,4 +15,4 @@ wasm:
 	GOOS=js GOARCH=wasm go build -o /tmp/arrai.wasm ./cmd/arrai
 
 parser:
-	go generate main.go
+	go generate .
