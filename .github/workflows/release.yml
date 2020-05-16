@@ -26,7 +26,9 @@ jobs:
         run: git fetch --prune --unshallow
 
       - name: Install golangci-lint
-        run: go get github.com/golangci/golangci-lint/cmd/golangci-lint@v1.24.0
+        run: |
+          go get github.com/golangci/golangci-lint/cmd/golangci-lint@v1.24.0
+          git restore go.mod go.sum
 
       - name: Build
         run: PATH=$PATH:$(go env GOPATH)/bin make all
