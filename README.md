@@ -6,7 +6,7 @@ The ultimate data engine.
 
 ## Install
 
-[Install Go](https://golang.org/doc/install), then, on a Unix-like OS:
+On a Unix-like OS, [install Go](https://golang.org/doc/install), then:
 
 ```bash
 git clone https://github.com/arr-ai/arrai.git
