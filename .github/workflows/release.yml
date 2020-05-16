@@ -26,10 +26,10 @@ jobs:
         run: git fetch --prune --unshallow
 
       - name: Install golangci-lint
-        run: go get github.com/golangci/golangci-lint/cmd/golangci-lint
+        run: go get github.com/golangci/golangci-lint/cmd/golangci-lint@1.24.0
 
       - name: Build
-        run: make all
+        run: PATH=$PATH:$(go env GOPATH)/bin make all
 
       - name: Validate goreleaser config
         uses: goreleaser/goreleaser-action@v2.0.2
