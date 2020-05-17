@@ -133,7 +133,7 @@ func stdSeq() rel.Attr {
 				}
 				return rel.NewArray(vals...)
 			case rel.Array:
-				return nil
+				return ArraySplit(args[1].(rel.Array), args[0])
 			case rel.Bytes:
 				return BytesSplit(args[1].(rel.Bytes), args[0])
 			}

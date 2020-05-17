@@ -37,7 +37,32 @@ func ArraySub(a rel.Array, old, new rel.Value) rel.Value {
 
 // ArraySplit split a by b.
 func ArraySplit(a rel.Array, b rel.Value) rel.Value {
-	return nil
+	delimiter := convert2Array(b)
+	var result []rel.Value
+
+	if delimiter.Count() == 0 {
+		for _, e := range a.Values() {
+			result = append(result, rel.NewArray(e))
+		}
+	} else {
+		for start, absoluteIndex := 0, 0; start < a.Count(); {
+			relativeIndex := indexSubArray(a.Values()[start:], delimiter.Values())
+			if relativeIndex >= 0 {
+				absoluteIndex = relativeIndex + start
+				if start != absoluteIndex {
+					result = append(result, rel.NewArray(a.Values()[start:absoluteIndex]...))
+				}
+				start = absoluteIndex + delimiter.Count()
+			} else {
+				if start == 0 || start < a.Count() {
+					result = append(result, rel.NewArray(a.Values()[start:]...))
+				}
+				break
+			}
+		}
+	}
+
+	return rel.NewArray(result...)
 }
 
 // ArrayJoin joins array b to a, b is joiner and a is joinee.
