@@ -159,7 +159,7 @@ func convert2Array(val rel.Value) rel.Array {
 		return valArray
 	}
 
-	panic("it support types rel.Array, rel.GenericSet and rel.Value only.")
+	panic("it supports types rel.Array, rel.GenericSet and rel.Value only.")
 }
 
 // It is brute force approach, can be improved later if it is necessary.
