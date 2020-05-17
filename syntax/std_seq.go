@@ -154,7 +154,7 @@ func stdSeq() rel.Attr {
 			case rel.Bytes:
 				return BytesJoin(args[1].(rel.Bytes), args[0].(rel.Bytes))
 			}
-			// 	return ArrayContains(args[1].(rel.Array), args[0])
+
 			panic(fmt.Errorf("expected subject sequence types are %s and %s, but the actual type is %s",
 				reflect.TypeOf(rel.Array{}), reflect.TypeOf(rel.Bytes{}),
 				reflect.TypeOf(args[2])))
