@@ -28,7 +28,8 @@ func TestBytesSplit(t *testing.T) {
 		`[//unicode.utf8.encode('y'),//unicode.utf8.encode('e'),//unicode.utf8.encode('s')]`,
 		`//seq.split(//unicode.utf8.encode(""),//unicode.utf8.encode("yes"))`)
 	AssertCodesEvalToSameValue(t,
-		`[//unicode.utf8.encode("this"), //unicode.utf8.encode("is"), //unicode.utf8.encode("a"), //unicode.utf8.encode("test")]`,
+		`[//unicode.utf8.encode("this"), //unicode.utf8.encode("is"),`+
+			` //unicode.utf8.encode("a"), //unicode.utf8.encode("test")]`,
 		`//seq.split(//unicode.utf8.encode(" "),//unicode.utf8.encode("this is a test"))`)
 	AssertCodesEvalToSameValue(t,
 		`[//unicode.utf8.encode("this is a test")]`,
