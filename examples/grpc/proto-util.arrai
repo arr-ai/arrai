@@ -1,21 +1,21 @@
 let grpc = //{./grpc};
 
 \wrap (
-    field: \. $`${grpc.type(.)} ${//seq.sub(.key, "-", "")} = ${.attrs.rpcId};`,
+    field: \. $`${grpc.type(.)} ${//seq.sub("-", "", .key)} = ${.attrs.rpcId};`,
 
     imports: \fields
-        fields where(//seq.contains(grpc.type(.@item), "google.protobuf")) >>
-            $`import "${//seq.sub(grpc.type(.), ".", "/")}.proto";`,
+        fields where(//seq.contains("google.protobuf", grpc.type(.@item))) >>
+            $`import "${//seq.sub(".", "/", grpc.type(.))}.proto";`,
 
     endpointInfo: \ep
-        let method = //seq.sub(//str.title(//str.lower(ep.name)), "-", "");
+        let method = //seq.sub("-", "", //str.title(//str.lower(ep.name)));
         let paramName = cond (
             wrap: method + "Request",
             *: $"${ep.params >> grpc.type(.)::, }",
         );
         let streamRes = cond (
-            ep.attrs.stream: //seq.sub(ep.ret("ok"), "sequence of", "stream"),
-            *: //seq.sub(ep.ret("ok"), "sequence of ", "") + "s",
+            ep.attrs.stream: //seq.sub("sequence of", "stream", ep.ret("ok")),
+            *: //seq.sub("sequence of ", "", ep.ret("ok")) + "s",
         );
         let responseName = cond (wrap: method + "Response", *: streamRes);
         (
@@ -26,7 +26,7 @@ let grpc = //{./grpc};
         ),
 
     wrapSequence: \ep
-        let type = //seq.sub(ep.ret("ok"), "sequence of ", "");
+        let type = //seq.sub("sequence of ", "", ep.ret("ok"));
         let wrapType = type + "s";
         let name = //str.lower(type) + "s";
         (

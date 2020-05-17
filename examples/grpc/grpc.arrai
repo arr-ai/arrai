@@ -13,7 +13,7 @@
             ),
             'sequence': 'repeated ' + type(t.sequence)
             *: cond (
-                //seq.contains(t.type_ref, "google-protobuf"): //seq.sub(t.type_ref, "-", "."),
+                //seq.contains("google-protobuf", t.type_ref): //seq.sub("-", ".", t.type_ref),
                 *: t.type_ref,
             ),
         ),
