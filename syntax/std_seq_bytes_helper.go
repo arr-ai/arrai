@@ -4,6 +4,19 @@ import (
 	"github.com/arr-ai/arrai/rel"
 )
 
+// BytesJoin join b to a
+func BytesJoin(a, b rel.Bytes) rel.Value {
+	result := make([]byte, 0, a.Count())
+	for index, e := range a.Bytes() {
+		if index > 0 && index < a.Count() {
+			result = append(result, b.Bytes()...)
+		}
+		result = append(result, e)
+	}
+
+	return rel.NewBytes(result)
+}
+
 // BytesContain check if a contains b.
 func BytesContain(a, b rel.Bytes) rel.Value {
 	return rel.NewBool(indexSubBytes(a.Bytes(), b.Bytes()) > -1)
@@ -54,10 +67,3 @@ func indexSubBytes(a, b []byte) int {
 	}
 	return -1
 }
-
-// func convert2Bytes(val rel.Value) rel.Bytes {
-// 	// switch val := val.(type) {
-// 	return nil
-
-// 	// panic("it support types rel.Array, rel.GenericSet and rel.Value only.")
-// }

@@ -72,7 +72,7 @@ func stdSeq() rel.Attr {
 			case rel.Array:
 				return ArrayContains(args[1].(rel.Array), args[0])
 			case rel.Bytes:
-				return BytesContain(args[1].(rel.Bytes), args[0].(rel.Bytes))
+				return rel.NewBool(strings.Contains(args[1].String(), args[0].String()))
 			}
 
 			return rel.NewBool(false)
@@ -101,25 +101,6 @@ func stdSeq() rel.Attr {
 
 			return rel.NewBool(false)
 		}),
-		createNestedFuncAttr("split", 2, func(args ...rel.Value) rel.Value {
-			switch args[1].(type) {
-			case rel.String:
-				splitted := strings.Split(mustAsString(args[1]), mustAsString(args[0]))
-				vals := make([]rel.Value, 0, len(splitted))
-				for _, s := range splitted {
-					vals = append(vals, rel.NewString([]rune(s)))
-				}
-				return rel.NewArray(vals...)
-			case rel.Array:
-				return nil
-			case rel.Bytes:
-				return nil
-			}
-
-			panic(fmt.Errorf("expected subject sequence types are %s, %s and %s, but the actual type is %s",
-				reflect.TypeOf(rel.String{}), reflect.TypeOf(rel.Array{}), reflect.TypeOf(rel.Bytes{}),
-				reflect.TypeOf(args[2])))
-		}),
 		createNestedFuncAttr("sub", 3, func(args ...rel.Value) rel.Value {
 			switch args[2].(type) {
 			case rel.String:
@@ -135,7 +116,31 @@ func stdSeq() rel.Attr {
 			case rel.Array:
 				return ArraySub(args[2].(rel.Array), args[0], args[1])
 			case rel.Bytes:
-				return BytesSub(args[2].(rel.Bytes), args[0].(rel.Bytes), args[1].(rel.Bytes))
+				return rel.NewBytes([]byte(strings.ReplaceAll(args[2].String(), args[0].String(), args[1].String())))
+			}
+
+			panic(fmt.Errorf("expected subject sequence types are %s, %s and %s, but the actual type is %s",
+				reflect.TypeOf(rel.String{}), reflect.TypeOf(rel.Array{}), reflect.TypeOf(rel.Bytes{}),
+				reflect.TypeOf(args[2])))
+		}),
+		createNestedFuncAttr("split", 2, func(args ...rel.Value) rel.Value {
+			switch args[1].(type) {
+			case rel.String:
+				splitted := strings.Split(mustAsString(args[1]), mustAsString(args[0]))
+				vals := make([]rel.Value, 0, len(splitted))
+				for _, s := range splitted {
+					vals = append(vals, rel.NewString([]rune(s)))
+				}
+				return rel.NewArray(vals...)
+			case rel.Array:
+				return nil
+			case rel.Bytes:
+				splitted := strings.Split(args[1].String(), args[0].String())
+				vals := make([]byte, 0, len(splitted))
+				for _, s := range splitted {
+					vals = append(vals, []byte(s)...)
+				}
+				return rel.NewBytes(vals)
 			}
 
 			panic(fmt.Errorf("expected subject sequence types are %s, %s and %s, but the actual type is %s",
@@ -152,7 +157,7 @@ func stdSeq() rel.Attr {
 					return ArrayJoin(a1, args[0])
 				}
 			case rel.Bytes:
-				return nil
+				return BytesJoin(args[1].(rel.Bytes), args[0].(rel.Bytes))
 			}
 			// 	return ArrayContains(args[1].(rel.Array), args[0])
 			panic(fmt.Errorf("expected subject sequence types are %s and %s, but the actual type is %s",
