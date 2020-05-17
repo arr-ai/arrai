@@ -135,12 +135,7 @@ func stdSeq() rel.Attr {
 			case rel.Array:
 				return nil
 			case rel.Bytes:
-				splitted := strings.Split(args[1].String(), args[0].String())
-				vals := make([]byte, 0, len(splitted))
-				for _, s := range splitted {
-					vals = append(vals, []byte(s)...)
-				}
-				return rel.NewBytes(vals)
+				return BytesSplit(args[1].(rel.Bytes), args[0])
 			}
 
 			panic(fmt.Errorf("expected subject sequence types are %s, %s and %s, but the actual type is %s",
