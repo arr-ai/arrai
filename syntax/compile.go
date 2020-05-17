@@ -65,7 +65,7 @@ func (pc ParseContext) CompileExpr(b ast.Branch) rel.Expr {
 	// Note: please make sure if it is necessary to add new syntax name before `expr`.
 	name, c := which(b,
 		"amp", "arrow", "let", "unop", "binop", "compare", "rbinop", "if", "get",
-		"tail", "count", "touch", "get", "rel", "set", "dict", "array",
+		"tail", "postfix", "touch", "get", "rel", "set", "dict", "array",
 		"embed", "op", "fn", "pkg", "tuple", "xstr", "IDENT", "STR", "NUM", "cond",
 		"expr",
 	)
@@ -89,8 +89,8 @@ func (pc ParseContext) CompileExpr(b ast.Branch) rel.Expr {
 		return pc.compileIf(b, c)
 	case "cond":
 		return pc.compileCond(b, c)
-	case "count", "touch":
-		return pc.compileCountTouch(b)
+	case "postfix", "touch":
+		return pc.compilePostfixAndTouch(b, c)
 	case "get", "tail":
 		return pc.compileCallGet(b)
 	case "rel":
@@ -351,11 +351,18 @@ func (pc ParseContext) compileCond(b ast.Branch, c ast.Children) rel.Expr {
 	return result
 }
 
-func (pc ParseContext) compileCountTouch(b ast.Branch) rel.Expr {
+func (pc ParseContext) compilePostfixAndTouch(b ast.Branch, c ast.Children) rel.Expr {
 	if _, has := b["touch"]; has {
 		panic("unfinished")
 	}
-	return rel.NewCountExpr(b.Scanner(), pc.CompileExpr(b.One("expr").(ast.Branch)))
+	switch c.Scanner().String() {
+	case "count":
+		return rel.NewCountExpr(b.Scanner(), pc.CompileExpr(b.One("expr").(ast.Branch)))
+	case "single":
+		return rel.NewSingleExpr(b.Scanner(), pc.CompileExpr(b.One("expr").(ast.Branch)))
+	default:
+		panic("wat?")
+	}
 
 	// touch -> ("->*" ("&"? IDENT | STR))+ "(" expr:"," ","? ")";
 	// result := p.parseExpr(b.One("expr").(ast.Branch))

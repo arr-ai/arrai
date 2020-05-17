@@ -3,6 +3,7 @@ package rel
 import (
 	"fmt"
 	"reflect"
+	"unsafe"
 
 	"github.com/arr-ai/hash"
 	"github.com/arr-ai/wbnf/parser"
@@ -42,7 +43,7 @@ func (f *Function) Body() Expr {
 
 // Hash computes a hash for a Function.
 func (f *Function) Hash(seed uintptr) uintptr {
-	return hash.String(f.String(), hash.Uintptr(17297263775284131973, seed))
+	return hash.String(f.String(), hash.Uintptr(17297263775284131973>>(64-8*unsafe.Sizeof(uintptr(0))), seed))
 }
 
 // Equal tests two Values for equality. Any other type returns false.
