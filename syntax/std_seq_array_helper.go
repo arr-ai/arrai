@@ -40,7 +40,7 @@ func arraySplit(subject rel.Array, delimiter rel.Value) rel.Value {
 	delimiterArray := convert2Array(delimiter)
 	var result []rel.Value
 
-	if delimiterArray.Count() == 0 {
+	if !delimiterArray.IsTrue() {
 		for _, e := range subject.Values() {
 			result = append(result, rel.NewArray(e))
 		}
@@ -68,8 +68,7 @@ func arraySplit(subject rel.Array, delimiter rel.Value) rel.Value {
 // Joins array joiner to subject.
 func arrayJoin(subject rel.Array, joiner rel.Value) rel.Value {
 	joinerArray := convert2Array(joiner)
-	if joinerArray.Count() == 0 || subject.Count() == 0 {
-		// if joinee is empty, the final value will be empty
+	if !joinerArray.IsTrue() || !subject.IsTrue() {
 		return subject
 	}
 
@@ -94,7 +93,7 @@ func arrayJoin(subject rel.Array, joiner rel.Value) rel.Value {
 func arrayHasPrefix(subject rel.Array, prefix rel.Value) rel.Value {
 	prefixArray := convert2Array(prefix)
 
-	if prefixArray.Count() == 0 {
+	if !prefixArray.IsTrue() {
 		return rel.NewBool(false)
 	}
 	if subject.Count() < prefixArray.Count() {
@@ -122,7 +121,7 @@ func arrayHasPrefix(subject rel.Array, prefix rel.Value) rel.Value {
 func arrayHasSuffix(subject rel.Array, suffix rel.Value) rel.Value {
 	suffixArray := convert2Array(suffix)
 
-	if suffixArray.Count() == 0 {
+	if !suffixArray.IsTrue() {
 		return rel.NewBool(false)
 	}
 	if subject.Count() < suffixArray.Count() {
@@ -189,7 +188,7 @@ func search(subject, sub []rel.Value) int {
 
 // Convert [[1, 2],[3, 4]] to [1, 2, 3, 4]
 func generate1LevelArray(source rel.Array) []rel.Value {
-	if source.Count() == 0 {
+	if !source.IsTrue() {
 		return nil
 	}
 

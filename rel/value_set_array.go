@@ -141,10 +141,10 @@ func (a Array) Kind() int {
 	return arrayKind
 }
 
-// Bool returns true iff the tuple has attributes.
+// IsTrue returns true if the tuple has attributes.
 func (a Array) IsTrue() bool {
 	if len(a.values) == 0 {
-		panic("Empty array not allowed (should be == None)")
+		return false
 	}
 	return true
 }
