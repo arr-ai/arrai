@@ -26,14 +26,15 @@ func TestArrayJoin(t *testing.T) {
 	AssertCodesEvalToSameValue(t, `[1,2]`, `//seq.join([],[1,2])`)
 	AssertCodesEvalToSameValue(t, `[1,0,2,0,3,0,4,0,5]`, `//seq.join([0], [1,2,3,4,5])`)
 	AssertCodesEvalToSameValue(t, `[1, 2, 0, 3, 4, 0, 5, 6]`, `//seq.join([0], [[1, 2], [3, 4], [5, 6]])`)
+	AssertCodesEvalToSameValue(t, `[2, [3, 4], 0, 5, 6]`, `//seq.join([0], [[2, [3, 4]], [5, 6]])`)
 	AssertCodesEvalToSameValue(t, `[1, 2, 10, 11, 3, 4, 10, 11, 5, 6]`,
 		`//seq.join([10,11], [[1, 2], [3, 4], [5, 6]])`)
-	AssertCodesEvalToSameValue(t, `[1, 2, 3, 4, 0, 5, 6, 7, 8]`,
+	AssertCodesEvalToSameValue(t, `[[1, 2], [3, 4], 0, [5, 6], [7, 8]]`,
 		`//seq.join([0], [[[1, 2], [3, 4]],[[5, 6],[7, 8]]])`)
 
-	AssertCodesEvalToSameValue(t, `[1, 2, 10, 11, 3, 4, 10, 11, 5, 6]`,
+	AssertCodesEvalToSameValue(t, `[1, 2, [10], [11], 3, 4, [10], [11], 5, 6]`,
 		`//seq.join([[10],[11]], [[1, 2], [3, 4], [5, 6]])`)
-	AssertCodesEvalToSameValue(t, `[1, 2, 3, 4, 0, 1, 5, 6, 7, 8]`,
+	AssertCodesEvalToSameValue(t, `[[1, 2], [3, 4], [0], [1], [5, 6], [7, 8]]`,
 		`//seq.join([[0],[1]], [[[1, 2], [3, 4]],[[5, 6],[7, 8]]])`)
 
 	// Following cases are not supported to make sure code is clear and simple.
