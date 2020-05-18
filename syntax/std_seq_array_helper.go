@@ -92,8 +92,8 @@ func arrayJoin(subject rel.Array, joiner rel.Value) rel.Value {
 func arrayHasPrefix(subject rel.Array, prefix rel.Value) rel.Value {
 	prefixArray := convert2Array(prefix)
 
-	if !prefixArray.IsTrue() {
-		return rel.NewBool(false)
+	if !prefixArray.IsTrue() && subject.IsTrue() {
+		return rel.NewBool(true)
 	}
 	if subject.Count() < prefixArray.Count() {
 		return rel.NewBool(false)

@@ -4,6 +4,10 @@ import "testing"
 
 func TestStrContains(t *testing.T) {
 	t.Parallel()
+	AssertCodesEvalToSameValue(t, `true`, `//seq.contains("", "A")`)
+	AssertCodesEvalToSameValue(t, `false`, `//seq.contains("", "")`)
+	AssertCodesEvalToSameValue(t, `false`, `//seq.contains("A", "")`)
+
 	AssertCodesEvalToSameValue(t, `true `, `//seq.contains("", "this is a test")             `)
 	AssertCodesEvalToSameValue(t, `true `, `//seq.contains("is a test", "this is a test")    `)
 	AssertCodesEvalToSameValue(t, `false`, `//seq.contains("is not a test", "this is a test")`)
@@ -12,6 +16,11 @@ func TestStrContains(t *testing.T) {
 
 func TestArrayContains(t *testing.T) {
 	t.Parallel()
+
+	AssertCodesEvalToSameValue(t, `false`, `//seq.contains(1, [])`)
+	AssertCodesEvalToSameValue(t, `false`, `//seq.contains([], [])`)
+	AssertCodesEvalToSameValue(t, `true`, `//seq.contains([], [1])`)
+
 	AssertCodesEvalToSameValue(t, `true`, `//seq.contains(1, [1,2,3,4,5])`)
 	AssertCodesEvalToSameValue(t, `true`, `//seq.contains(3, [1,2,3,4,5])`)
 	AssertCodesEvalToSameValue(t, `true`, `//seq.contains(5, [1,2,3,4,5])`)

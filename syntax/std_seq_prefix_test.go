@@ -8,6 +8,12 @@ func TestStrPrefix(t *testing.T) {
 	AssertCodesEvalToSameValue(t, `true`, `//seq.has_prefix("AB","ABCDE")`)
 	AssertCodesEvalToSameValue(t, `false`, `//seq.has_prefix("BCD","ABCDE")`)
 	AssertCodesEvalToSameValue(t, `false`, `//seq.has_prefix("CD","ABCDE")`)
+	AssertCodesEvalToSameValue(t, `false`, `//seq.has_prefix("CD","")`)
+	AssertCodesEvalToSameValue(t, `true`, `//seq.has_prefix("","ABCD")`)
+
+	AssertCodesEvalToSameValue(t, `false`, `//seq.has_prefix("","")`)
+	AssertCodesEvalToSameValue(t, `false`, `//seq.has_prefix("A","")`)
+	AssertCodesEvalToSameValue(t, `true`, `//seq.has_prefix("","A")`)
 }
 
 func TestArrayPrefix(t *testing.T) {
@@ -16,13 +22,14 @@ func TestArrayPrefix(t *testing.T) {
 	AssertCodesEvalToSameValue(t, `true`, `//seq.has_prefix(['A','B'],['A','B','C','D','E'])`)
 	AssertCodesEvalToSameValue(t, `true`, `//seq.has_prefix(['A','B','C'],['A','B','C','D','E'])`)
 	AssertCodesEvalToSameValue(t, `true`, `//seq.has_prefix(['A','B','C','D'],['A','B','C','D','E'])`)
-	AssertCodesEvalToSameValue(t, `false`, `//seq.has_prefix([],['A','B','C','D','E'])`)
-	AssertCodesEvalToSameValue(t, `false`, `//seq.has_prefix([], [])`)
 	AssertCodesEvalToSameValue(t, `false`, `//seq.has_prefix('B',['A','B','C','D','E'])`)
 	AssertCodesEvalToSameValue(t, `false`, `//seq.has_prefix(['B'],['A','B','C','D','E'])`)
 	AssertCodesEvalToSameValue(t, `false`, `//seq.has_prefix(['B','C'],['A','B','C','D','E'])`)
 	AssertCodesEvalToSameValue(t, `false`, `//seq.has_prefix(['A','B','C','D','E','F'],['A','B','C','D','E'])`)
+
+	AssertCodesEvalToSameValue(t, `false`, `//seq.has_prefix([], [])`)
 	AssertCodesEvalToSameValue(t, `false`, `//seq.has_prefix(['A','B','C','D','E','F'],[])`)
+	AssertCodesEvalToSameValue(t, `true`, `//seq.has_prefix([],['A','B','C','D','E'])`)
 }
 
 func TestBytesPrefix(t *testing.T) {
@@ -31,4 +38,8 @@ func TestBytesPrefix(t *testing.T) {
 	AssertCodesEvalToSameValue(t, `false`, `//seq.has_prefix(//unicode.utf8.encode('e'),//unicode.utf8.encode('hello'))`)
 	AssertCodesEvalToSameValue(t, `false`, `//seq.has_prefix(//unicode.utf8.encode('l'),//unicode.utf8.encode('hello'))`)
 	AssertCodesEvalToSameValue(t, `false`, `//seq.has_prefix(//unicode.utf8.encode('o'),//unicode.utf8.encode('hello'))`)
+
+	AssertCodesEvalToSameValue(t, `false`, `//seq.has_prefix(//unicode.utf8.encode(''),//unicode.utf8.encode(''))`)
+	AssertCodesEvalToSameValue(t, `false`, `//seq.has_prefix(//unicode.utf8.encode('o'),//unicode.utf8.encode(''))`)
+	AssertCodesEvalToSameValue(t, `true`, `//seq.has_prefix(//unicode.utf8.encode(''),//unicode.utf8.encode('hello'))`)
 }
