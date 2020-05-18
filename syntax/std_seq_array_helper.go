@@ -40,7 +40,7 @@ func arraySplit(a rel.Array, b rel.Value) rel.Value {
 	delimiter := convert2Array(b)
 	var result []rel.Value
 
-	if !delimiter.IsTrue() {
+	if delimiter.Count() == 0 {
 		for _, e := range a.Values() {
 			result = append(result, rel.NewArray(e))
 		}
