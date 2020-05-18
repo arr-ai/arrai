@@ -6,8 +6,8 @@ import (
 	"github.com/arr-ai/arrai/rel"
 )
 
-// BytesJoin join b to a
-func BytesJoin(a, b rel.Bytes) rel.Value {
+// bytesJoin join b to a
+func bytesJoin(a, b rel.Bytes) rel.Value {
 	result := make([]byte, 0, a.Count())
 	for index, e := range a.Bytes() {
 		if index > 0 && index < a.Count() {
@@ -19,8 +19,8 @@ func BytesJoin(a, b rel.Bytes) rel.Value {
 	return rel.NewBytes(result)
 }
 
-// BytesSplit split a by b
-func BytesSplit(a rel.Bytes, b rel.Value) rel.Value {
+// bytesSplit split a by b
+func bytesSplit(a rel.Bytes, b rel.Value) rel.Value {
 	var splitted []string
 
 	switch b := b.(type) {

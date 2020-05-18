@@ -70,7 +70,7 @@ func stdSeq() rel.Attr {
 			case rel.String:
 				return rel.NewBool(strings.Contains(mustAsString(args[1]), mustAsString(args[0])))
 			case rel.Array:
-				return ArrayContains(args[1].(rel.Array), args[0])
+				return arrayContains(args[1].(rel.Array), args[0])
 			case rel.Bytes:
 				return rel.NewBool(strings.Contains(args[1].String(), args[0].String()))
 			}
@@ -82,7 +82,7 @@ func stdSeq() rel.Attr {
 			case rel.String:
 				return rel.NewBool(strings.HasPrefix(mustAsString(args[1]), mustAsString(args[0])))
 			case rel.Array:
-				return ArrayPrefix(args[1].(rel.Array), args[0])
+				return arrayPrefix(args[1].(rel.Array), args[0])
 			case rel.Bytes:
 				return rel.NewBool(strings.HasPrefix(args[1].String(), args[0].String()))
 			}
@@ -94,7 +94,7 @@ func stdSeq() rel.Attr {
 			case rel.String:
 				return rel.NewBool(strings.HasSuffix(mustAsString(args[1]), mustAsString(args[0])))
 			case rel.Array:
-				return ArraySuffix(args[1].(rel.Array), args[0])
+				return arraySuffix(args[1].(rel.Array), args[0])
 			case rel.Bytes:
 				return rel.NewBool(strings.HasSuffix(args[1].String(), args[0].String()))
 			}
@@ -114,7 +114,7 @@ func stdSeq() rel.Attr {
 					),
 				)
 			case rel.Array:
-				return ArraySub(args[2].(rel.Array), args[0], args[1])
+				return arraySub(args[2].(rel.Array), args[0], args[1])
 			case rel.Bytes:
 				return rel.NewBytes([]byte(strings.ReplaceAll(args[2].String(), args[0].String(), args[1].String())))
 			}
@@ -133,9 +133,9 @@ func stdSeq() rel.Attr {
 				}
 				return rel.NewArray(vals...)
 			case rel.Array:
-				return ArraySplit(args[1].(rel.Array), args[0])
+				return arraySplit(args[1].(rel.Array), args[0])
 			case rel.Bytes:
-				return BytesSplit(args[1].(rel.Bytes), args[0])
+				return bytesSplit(args[1].(rel.Bytes), args[0])
 			}
 
 			panic(fmt.Errorf("expected subject sequence types are %s, %s and %s, but the actual type is %s",
@@ -149,10 +149,10 @@ func stdSeq() rel.Attr {
 				case rel.String:
 					return strJoin(args...)
 				case rel.Value:
-					return ArrayJoin(a1, args[0])
+					return arrayJoin(a1, args[0])
 				}
 			case rel.Bytes:
-				return BytesJoin(args[1].(rel.Bytes), args[0].(rel.Bytes))
+				return bytesJoin(args[1].(rel.Bytes), args[0].(rel.Bytes))
 			}
 
 			panic(fmt.Errorf("expected subject sequence types are %s and %s, but the actual type is %s",

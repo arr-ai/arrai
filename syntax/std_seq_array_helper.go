@@ -4,14 +4,14 @@ import (
 	"github.com/arr-ai/arrai/rel"
 )
 
-// ArrayContains check if array a contains b, and b can be rel.Value or rel.Array.
-func ArrayContains(a rel.Array, b rel.Value) rel.Value {
+// arrayContains check if array a contains b, and b can be rel.Value or rel.Array.
+func arrayContains(a rel.Array, b rel.Value) rel.Value {
 	bArray := convert2Array(b)
 	return rel.NewBool(indexSubArray(a.Values(), bArray.Values()) > -1)
 }
 
-// ArraySub substitutes all old in a with new.
-func ArraySub(a rel.Array, old, new rel.Value) rel.Value {
+// arraySub substitutes all old in a with new.
+func arraySub(a rel.Array, old, new rel.Value) rel.Value {
 	// Convert to array to facilitate process
 	oldArray := convert2Array(old)
 	newArray := convert2Array(new)
@@ -35,12 +35,12 @@ func ArraySub(a rel.Array, old, new rel.Value) rel.Value {
 	return rel.NewArray(finalVals...)
 }
 
-// ArraySplit split a by b.
-func ArraySplit(a rel.Array, b rel.Value) rel.Value {
+// arraySplit split a by b.
+func arraySplit(a rel.Array, b rel.Value) rel.Value {
 	delimiter := convert2Array(b)
 	var result []rel.Value
 
-	if delimiter.Count() == 0 {
+	if !delimiter.IsTrue() {
 		for _, e := range a.Values() {
 			result = append(result, rel.NewArray(e))
 		}
@@ -65,8 +65,8 @@ func ArraySplit(a rel.Array, b rel.Value) rel.Value {
 	return rel.NewArray(result...)
 }
 
-// ArrayJoin joins array b to a, b is joiner and a is joinee.
-func ArrayJoin(a rel.Array, b rel.Value) rel.Value {
+// arrayJoin joins array b to a, b is joiner and a is joinee.
+func arrayJoin(a rel.Array, b rel.Value) rel.Value {
 	joiner := convert2Array(b)
 	if joiner.Count() == 0 || a.Count() == 0 {
 		// if joinee is empty, the final value will be empty
@@ -90,8 +90,8 @@ func ArrayJoin(a rel.Array, b rel.Value) rel.Value {
 	return rel.NewArray(vals...)
 }
 
-// ArrayPrefix check if a starts with b.
-func ArrayPrefix(a rel.Array, b rel.Value) rel.Value {
+// arrayPrefix check if a starts with b.
+func arrayPrefix(a rel.Array, b rel.Value) rel.Value {
 	bArray := convert2Array(b)
 
 	if bArray.Count() == 0 {
@@ -118,8 +118,8 @@ func ArrayPrefix(a rel.Array, b rel.Value) rel.Value {
 	return rel.NewBool(true)
 }
 
-// ArraySuffix check if a starts with b.
-func ArraySuffix(a rel.Array, b rel.Value) rel.Value {
+// arraySuffix check if a ends with b.
+func arraySuffix(a rel.Array, b rel.Value) rel.Value {
 	bArray := convert2Array(b)
 
 	if bArray.Count() == 0 {
