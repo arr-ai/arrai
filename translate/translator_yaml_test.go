@@ -25,7 +25,7 @@ func TestYAMLObjectToArrai(t *testing.T) {
 
 	// different value types
 	AssertExpectedYAMLTranslation(t, `{"key": (123)}              `, `key: 123       `)
-	AssertExpectedYAMLTranslation(t, `{"key": (null: {})}         `, `key:           `)
+	AssertExpectedYAMLTranslation(t, `{"key": ()}         `, `key:           `)
 	AssertExpectedYAMLTranslation(t, `{"key": (s: "val")}         `, `key: val       `)
 	AssertExpectedYAMLTranslation(t, `{"key": (a: [1, 2, 3])}     `, `key: [1,2,3]   `)
 	AssertExpectedYAMLTranslation(t, `{"key": {"foo": (s: "bar")}}`, `key: {foo: bar}`)
@@ -42,18 +42,18 @@ func TestYAMLArrayToArrai(t *testing.T) {
 
 	// Different value types
 	AssertExpectedYAMLTranslation(t, `(a: [1])                            `, `[1]            `)
-	AssertExpectedYAMLTranslation(t, `(a: [(null: {})])                   `, `[null]         `)
+	AssertExpectedYAMLTranslation(t, `(a: [()])                   `, `[null]         `)
 	AssertExpectedYAMLTranslation(t, `(a: [(s: "hello")])                 `, `["hello"]      `)
 	AssertExpectedYAMLTranslation(t, `(a: [(a: [1, 2, 3])])               `, `[[1, 2, 3]]    `)
 	AssertExpectedYAMLTranslation(t, `(a: [{"foo": (s: "bar")}])          `, `[{"foo":"bar"}]`)
 
 	// Multiple values with different types
-	AssertExpectedYAMLTranslation(t, `(a: [1, (s: 'Hello'), (null: {})])`, `[1, "Hello", null]`)
+	AssertExpectedYAMLTranslation(t, `(a: [1, (s: 'Hello'), ()])`, `[1, "Hello", null]`)
 }
 
 func TestYAMLNullToNone(t *testing.T) {
 	t.Parallel()
-	AssertExpectedYAMLTranslation(t, `(null: {})`, `null`)
+	AssertExpectedYAMLTranslation(t, `()`, `null`)
 }
 
 func TestYAMLStringToArrai(t *testing.T) {

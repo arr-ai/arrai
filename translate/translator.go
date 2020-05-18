@@ -39,7 +39,7 @@ func ToArrai(data interface{}) (rel.Value, error) {
 	case bool:
 		return rel.NewTuple(rel.NewAttr("b", rel.NewBool(v))), nil
 	case nil:
-		return rel.NewTuple(rel.NewAttr("null", rel.None)), nil
+		return rel.NewTuple(), nil
 	default:
 		t, err := rel.NewValue(v)
 		if err != nil {
