@@ -1,6 +1,6 @@
 # seq
 
-The `seq` library contains functions that are used for string, array and bytes manipulations.
+The `seq` library contains functions that are used for manipulating sequenced data structures.
 
 ## `//seq.concat(seqs <: array) <: array` <br/> `concat(seqs <: string) <: string`
 

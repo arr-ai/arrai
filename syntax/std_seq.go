@@ -119,9 +119,7 @@ func stdSeq() rel.Attr {
 				return rel.NewBytes([]byte(strings.ReplaceAll(args[2].String(), args[0].String(), args[1].String())))
 			}
 
-			panic(fmt.Errorf("expected subject sequence types are %s, %s and %s, but the actual type is %s",
-				reflect.TypeOf(rel.String{}), reflect.TypeOf(rel.Array{}), reflect.TypeOf(rel.Bytes{}),
-				reflect.TypeOf(args[2])))
+			panic(fmt.Errorf(sharedError, reflect.TypeOf(args[2])))
 		}),
 		createNestedFuncAttr("split", 2, func(args ...rel.Value) rel.Value {
 			switch args[1].(type) {
@@ -155,9 +153,7 @@ func stdSeq() rel.Attr {
 				return bytesJoin(args[1].(rel.Bytes), args[0].(rel.Bytes))
 			}
 
-			panic(fmt.Errorf("expected subject sequence types are %s and %s, but the actual type is %s",
-				reflect.TypeOf(rel.Array{}), reflect.TypeOf(rel.Bytes{}),
-				reflect.TypeOf(args[2])))
+			panic(fmt.Errorf(sharedError, reflect.TypeOf(args[2])))
 		}),
 	)
 }
@@ -170,3 +166,5 @@ func strJoin(args ...rel.Value) rel.Value {
 	}
 	return rel.NewString([]rune(strings.Join(toJoin, mustAsString(args[0]))))
 }
+
+var sharedError = "expected subject sequence types are rel.String, rel.Array and rel.Bytes, but the actual type is %s"
