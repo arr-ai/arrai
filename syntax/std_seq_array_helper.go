@@ -76,13 +76,13 @@ func arrayJoin(subject rel.Array, joiner rel.Value) rel.Value {
 	for i, value := range subject.Values() {
 		switch vArray := value.(type) {
 		case rel.Array:
-			result = append(result, generate1LevelArray(vArray)...)
+			result = append(result, vArray.Values()...)
 		case rel.Value:
 			result = append(result, value)
 		}
 
 		if i+1 < subject.Count() {
-			result = append(result, generate1LevelArray(joinerArray)...)
+			result = append(result, joinerArray.Values()...)
 		}
 	}
 
@@ -184,23 +184,4 @@ func search(subject, sub []rel.Value) int {
 		return subjectOffset
 	}
 	return -1
-}
-
-// Convert [[1, 2],[3, 4]] to [1, 2, 3, 4]
-func generate1LevelArray(source rel.Array) []rel.Value {
-	if !source.IsTrue() {
-		return nil
-	}
-
-	finalArray := make([]rel.Value, 0, source.Count())
-	for _, val := range source.Values() {
-		switch rVal := val.(type) {
-		case rel.Array:
-			finalArray = append(finalArray, generate1LevelArray(rVal)...)
-		case rel.Value:
-			finalArray = append(finalArray, rVal)
-		}
-	}
-
-	return finalArray
 }
