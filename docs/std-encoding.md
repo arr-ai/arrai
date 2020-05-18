@@ -16,7 +16,7 @@ maps incoming JSON values as follows:
 | `"abc"` | `(s: "abc")` |
 | `[1, 2, 3]` | `(a: [1, 2, 3])` |
 | `false`/`true` | `(b: false)`/`(b: true)` |
-| `null` | `(null: {})` |
+| `null` | `()` |
 | `{"a": [2, 4, 8]}` | `{"a": (a: [2, 4, 8])}` | Objects are mapped directly to dicts. |
 | `42` | `42` | Numbers, including zero, cannot be confused with other values. |
 
