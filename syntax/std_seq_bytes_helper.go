@@ -6,12 +6,12 @@ import (
 	"github.com/arr-ai/arrai/rel"
 )
 
-// bytesJoin join b to a
-func bytesJoin(a, b rel.Bytes) rel.Value {
-	result := make([]byte, 0, a.Count())
-	for index, e := range a.Bytes() {
-		if index > 0 && index < a.Count() {
-			result = append(result, b.Bytes()...)
+// Joins byte array joiner to subject.
+func bytesJoin(subject, joiner rel.Bytes) rel.Value {
+	result := make([]byte, 0, subject.Count())
+	for index, e := range subject.Bytes() {
+		if index > 0 && index < subject.Count() {
+			result = append(result, joiner.Bytes()...)
 		}
 		result = append(result, e)
 	}
@@ -19,20 +19,20 @@ func bytesJoin(a, b rel.Bytes) rel.Value {
 	return rel.NewBytes(result)
 }
 
-// bytesSplit split a by b
-func bytesSplit(a rel.Bytes, b rel.Value) rel.Value {
+// Splits byte array subject by delimiter.
+func bytesSplit(subject rel.Bytes, delimiter rel.Value) rel.Value {
 	var splitted []string
 
-	switch b := b.(type) {
+	switch delimiter := delimiter.(type) {
 	case rel.Bytes:
-		splitted = strings.Split(a.String(), b.String())
+		splitted = strings.Split(subject.String(), delimiter.String())
 	case rel.GenericSet:
-		splitted = strings.Split(a.String(), mustAsString(b))
+		splitted = strings.Split(subject.String(), mustAsString(delimiter))
 	}
 
-	vals := make([]rel.Value, 0, len(splitted))
+	result := make([]rel.Value, 0, len(splitted))
 	for _, s := range splitted {
-		vals = append(vals, rel.NewBytes([]byte(s)).(rel.Value))
+		result = append(result, rel.NewBytes([]byte(s)).(rel.Value))
 	}
-	return rel.NewArray(vals...)
+	return rel.NewArray(result...)
 }

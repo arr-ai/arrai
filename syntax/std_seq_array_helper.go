@@ -4,58 +4,58 @@ import (
 	"github.com/arr-ai/arrai/rel"
 )
 
-// arrayContains check if array a contains b, and b can be rel.Value or rel.Array.
-func arrayContains(a rel.Array, b rel.Value) rel.Value {
-	bArray := convert2Array(b)
-	return rel.NewBool(indexSubArray(a.Values(), bArray.Values()) > -1)
+// Checks if array subject contains sub.
+func arrayContain(subject rel.Array, sub rel.Value) rel.Value {
+	subArray := convert2Array(sub)
+	return rel.NewBool(search(subject.Values(), subArray.Values()) > -1)
 }
 
-// arraySub substitutes all old in a with new.
-func arraySub(a rel.Array, old, new rel.Value) rel.Value {
+// Substitutes all old in subject with new.
+func arraySub(subject rel.Array, old, new rel.Value) rel.Value {
 	// Convert to array to facilitate process
 	oldArray := convert2Array(old)
 	newArray := convert2Array(new)
 
-	finalVals := make([]rel.Value, 0, a.Count())
-	for start, absoluteIndex := 0, 0; start < a.Count(); {
-		relativeIndex := indexSubArray(a.Values()[start:], oldArray.Values())
+	result := make([]rel.Value, 0, subject.Count())
+	for start, absoluteIndex := 0, 0; start < subject.Count(); {
+		relativeIndex := search(subject.Values()[start:], oldArray.Values())
 		if relativeIndex >= 0 {
 			absoluteIndex = relativeIndex + start
 			if absoluteIndex-start > 0 {
-				finalVals = append(finalVals, a.Values()[start:absoluteIndex]...)
+				result = append(result, subject.Values()[start:absoluteIndex]...)
 			}
-			finalVals = append(finalVals, newArray.Values()...)
+			result = append(result, newArray.Values()...)
 			start = absoluteIndex + oldArray.Count()
 		} else {
-			finalVals = append(finalVals, a.Values()[absoluteIndex+1:]...)
+			result = append(result, subject.Values()[absoluteIndex+1:]...)
 			break
 		}
 	}
 
-	return rel.NewArray(finalVals...)
+	return rel.NewArray(result...)
 }
 
-// arraySplit split a by b.
-func arraySplit(a rel.Array, b rel.Value) rel.Value {
-	delimiter := convert2Array(b)
+// Splits array subject by delimiter.
+func arraySplit(subject rel.Array, delimiter rel.Value) rel.Value {
+	delimiterArray := convert2Array(delimiter)
 	var result []rel.Value
 
-	if delimiter.Count() == 0 {
-		for _, e := range a.Values() {
+	if delimiterArray.Count() == 0 {
+		for _, e := range subject.Values() {
 			result = append(result, rel.NewArray(e))
 		}
 	} else {
-		for start, absoluteIndex := 0, 0; start < a.Count(); {
-			relativeIndex := indexSubArray(a.Values()[start:], delimiter.Values())
+		for start, absoluteIndex := 0, 0; start < subject.Count(); {
+			relativeIndex := search(subject.Values()[start:], delimiterArray.Values())
 			if relativeIndex >= 0 {
 				absoluteIndex = relativeIndex + start
 				if start != absoluteIndex {
-					result = append(result, rel.NewArray(a.Values()[start:absoluteIndex]...))
+					result = append(result, rel.NewArray(subject.Values()[start:absoluteIndex]...))
 				}
-				start = absoluteIndex + delimiter.Count()
+				start = absoluteIndex + delimiterArray.Count()
 			} else {
-				if start == 0 || start < a.Count() {
-					result = append(result, rel.NewArray(a.Values()[start:]...))
+				if start == 0 || start < subject.Count() {
+					result = append(result, rel.NewArray(subject.Values()[start:]...))
 				}
 				break
 			}
@@ -65,49 +65,49 @@ func arraySplit(a rel.Array, b rel.Value) rel.Value {
 	return rel.NewArray(result...)
 }
 
-// arrayJoin joins array b to a, b is joiner and a is joinee.
-func arrayJoin(a rel.Array, b rel.Value) rel.Value {
-	joiner := convert2Array(b)
-	if joiner.Count() == 0 || a.Count() == 0 {
+// Joins array joiner to subject.
+func arrayJoin(subject rel.Array, joiner rel.Value) rel.Value {
+	joinerArray := convert2Array(joiner)
+	if joinerArray.Count() == 0 || subject.Count() == 0 {
 		// if joinee is empty, the final value will be empty
-		return a
+		return subject
 	}
 
-	vals := make([]rel.Value, 0, a.Count())
-	for i, value := range a.Values() {
+	result := make([]rel.Value, 0, subject.Count())
+	for i, value := range subject.Values() {
 		switch vArray := value.(type) {
 		case rel.Array:
-			vals = append(vals, generate1LevelArray(vArray)...)
+			result = append(result, generate1LevelArray(vArray)...)
 		case rel.Value:
-			vals = append(vals, value)
+			result = append(result, value)
 		}
 
-		if i+1 < a.Count() {
-			vals = append(vals, generate1LevelArray(joiner)...)
+		if i+1 < subject.Count() {
+			result = append(result, generate1LevelArray(joinerArray)...)
 		}
 	}
 
-	return rel.NewArray(vals...)
+	return rel.NewArray(result...)
 }
 
-// arrayPrefix check if a starts with b.
-func arrayPrefix(a rel.Array, b rel.Value) rel.Value {
-	bArray := convert2Array(b)
+// Check if array subject starts with prefix.
+func arrayHasPrefix(subject rel.Array, prefix rel.Value) rel.Value {
+	prefixArray := convert2Array(prefix)
 
-	if bArray.Count() == 0 {
+	if prefixArray.Count() == 0 {
 		return rel.NewBool(false)
 	}
-	if a.Count() < bArray.Count() {
+	if subject.Count() < prefixArray.Count() {
 		return rel.NewBool(false)
 	}
 
-	bVals := bArray.Values()
-	bOffset := 0
-	arrayEnum, _ := a.ArrayEnumerator()
+	prefixVals := prefixArray.Values()
+	prefixOffset := 0
+	arrayEnum, _ := subject.ArrayEnumerator()
 	for arrayEnum.MoveNext() {
-		if bOffset < bArray.Count() && arrayEnum.Current().Equal(bVals[bOffset]) {
-			bOffset++
-			if bOffset == bArray.Count() {
+		if prefixOffset < prefixArray.Count() && arrayEnum.Current().Equal(prefixVals[prefixOffset]) {
+			prefixOffset++
+			if prefixOffset == prefixArray.Count() {
 				break
 			}
 		} else {
@@ -118,25 +118,25 @@ func arrayPrefix(a rel.Array, b rel.Value) rel.Value {
 	return rel.NewBool(true)
 }
 
-// arraySuffix check if a ends with b.
-func arraySuffix(a rel.Array, b rel.Value) rel.Value {
-	bArray := convert2Array(b)
+// Check if array subject ends with suffix.
+func arrayHasSuffix(subject rel.Array, suffix rel.Value) rel.Value {
+	suffixArray := convert2Array(suffix)
 
-	if bArray.Count() == 0 {
+	if suffixArray.Count() == 0 {
 		return rel.NewBool(false)
 	}
-	if a.Count() < bArray.Count() {
+	if subject.Count() < suffixArray.Count() {
 		return rel.NewBool(false)
 	}
 
-	aVals := a.Values()
-	bVals := bArray.Values()
-	bOffset := bArray.Count() - 1
+	subjectVals := subject.Values()
+	suffixVals := suffixArray.Values()
+	suffixOffset := suffixArray.Count() - 1
 
-	for _, val := range aVals[a.Count()-1:] {
-		if bOffset > -1 && val.Equal(bVals[bOffset]) {
-			bOffset--
-			if bOffset == -1 {
+	for _, val := range subjectVals[subject.Count()-1:] {
+		if suffixOffset > -1 && val.Equal(suffixVals[suffixOffset]) {
+			suffixOffset--
+			if suffixOffset == -1 {
 				break
 			}
 		} else {
@@ -162,26 +162,27 @@ func convert2Array(val rel.Value) rel.Array {
 	panic("it supports types rel.Array, rel.GenericSet and rel.Value only.")
 }
 
+// Searches array sub in subject and return the first indedx if found, or return -1.
 // It is brute force approach, can be improved later if it is necessary.
-func indexSubArray(a, b []rel.Value) int {
-	aOffset, bOffset := 0, 0
+func search(subject, sub []rel.Value) int {
+	subjectOffset, subOffset := 0, 0
 
-	for ; aOffset < len(a); aOffset++ {
-		if bOffset < len(b) && a[aOffset].Equal(b[bOffset]) {
-			bOffset++
+	for ; subjectOffset < len(subject); subjectOffset++ {
+		if subOffset < len(sub) && subject[subjectOffset].Equal(sub[subOffset]) {
+			subOffset++
 		} else {
-			if bOffset > 0 && bOffset < len(b) {
-				bOffset = 0
-				aOffset--
+			if subOffset > 0 && subOffset < len(sub) {
+				subOffset = 0
+				subjectOffset--
 			}
 		}
-		if bOffset == len(b) {
+		if subOffset == len(sub) {
 			break
 		}
 	}
 
-	if aOffset < len(a) {
-		return aOffset
+	if subjectOffset < len(subject) {
+		return subjectOffset
 	}
 	return -1
 }

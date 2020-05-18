@@ -70,7 +70,7 @@ func stdSeq() rel.Attr {
 			case rel.String:
 				return rel.NewBool(strings.Contains(mustAsString(args[1]), mustAsString(args[0])))
 			case rel.Array:
-				return arrayContains(args[1].(rel.Array), args[0])
+				return arrayContain(args[1].(rel.Array), args[0])
 			case rel.Bytes:
 				return rel.NewBool(strings.Contains(args[1].String(), args[0].String()))
 			}
@@ -82,7 +82,7 @@ func stdSeq() rel.Attr {
 			case rel.String:
 				return rel.NewBool(strings.HasPrefix(mustAsString(args[1]), mustAsString(args[0])))
 			case rel.Array:
-				return arrayPrefix(args[1].(rel.Array), args[0])
+				return arrayHasPrefix(args[1].(rel.Array), args[0])
 			case rel.Bytes:
 				return rel.NewBool(strings.HasPrefix(args[1].String(), args[0].String()))
 			}
@@ -94,7 +94,7 @@ func stdSeq() rel.Attr {
 			case rel.String:
 				return rel.NewBool(strings.HasSuffix(mustAsString(args[1]), mustAsString(args[0])))
 			case rel.Array:
-				return arraySuffix(args[1].(rel.Array), args[0])
+				return arrayHasSuffix(args[1].(rel.Array), args[0])
 			case rel.Bytes:
 				return rel.NewBool(strings.HasSuffix(args[1].String(), args[0].String()))
 			}
