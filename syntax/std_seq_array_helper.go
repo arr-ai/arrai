@@ -120,8 +120,8 @@ func arrayHasPrefix(subject rel.Array, prefix rel.Value) rel.Value {
 func arrayHasSuffix(subject rel.Array, suffix rel.Value) rel.Value {
 	suffixArray := convert2Array(suffix)
 
-	if !suffixArray.IsTrue() {
-		return rel.NewBool(false)
+	if !suffixArray.IsTrue() && subject.IsTrue() {
+		return rel.NewBool(true)
 	}
 	if subject.Count() < suffixArray.Count() {
 		return rel.NewBool(false)

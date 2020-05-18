@@ -57,4 +57,11 @@ func TestBytesContains(t *testing.T) {
 		`//seq.contains({ |@, @byte| (0, 108),(0, 108)},//unicode.utf8.encode('hello'))`)
 	AssertCodesEvalToSameValue(t, `true`,
 		`//seq.contains(//unicode.utf8.encode('h'),//unicode.utf8.encode('hello'))`)
+
+	AssertCodesEvalToSameValue(t, `false`,
+		`//seq.contains(//unicode.utf8.encode('A'),//unicode.utf8.encode(''))`)
+	AssertCodesEvalToSameValue(t, `false`,
+		`//seq.contains(//unicode.utf8.encode(''),//unicode.utf8.encode(''))`)
+	AssertCodesEvalToSameValue(t, `true`,
+		`//seq.contains(//unicode.utf8.encode(''),//unicode.utf8.encode('hello'))`)
 }
