@@ -4,20 +4,21 @@ import "testing"
 
 func TestStrSplit(t *testing.T) {
 	t.Parallel()
-	AssertCodesEvalToSameValue(t,
-		`["t", "h", "i", "s", " ", "i", "s", " ", "a", " ", "t", "e", "s", "t"]`,
-		`//seq.split("","this is a test")`)
+
 	AssertCodesEvalToSameValue(t, `["this", "is", "a", "test"]`, `//seq.split(" ","this is a test") `)
 	AssertCodesEvalToSameValue(t, `["this is a test"]         `, `//seq.split(",","this is a test") `)
 	AssertCodesEvalToSameValue(t, `["th", " ", " a test"]     `, `//seq.split("is","this is a test")`)
 	assertExprPanics(t, `//seq.split(1, "this is a test")`)
+
+	AssertCodesEvalToSameValue(t,
+		`["t", "h", "i", "s", " ", "i", "s", " ", "a", " ", "t", "e", "s", "t"]`,
+		`//seq.split("","this is a test")`)
+	AssertCodesEvalToSameValue(t, `""`, `//seq.split("","") `)
+	AssertCodesEvalToSameValue(t, `[""]`, `//seq.split(",","") `)
 }
 
 func TestArraySplit(t *testing.T) {
 	t.Parallel()
-	AssertCodesEvalToSameValue(t,
-		`[['A'],['B'],['A']]`,
-		`//seq.split([],['A', 'B', 'A'])`)
 	AssertCodesEvalToSameValue(t,
 		`[['B'],['C', 'D', 'E']]`,
 		`//seq.split('A',['A', 'B', 'A', 'C', 'D', 'E'])`)
@@ -43,6 +44,16 @@ func TestArraySplit(t *testing.T) {
 	AssertCodesEvalToSameValue(t,
 		`[[[1,2]], [[3,4]]]`,
 		`//seq.split([],[[1,2], [3,4]])`)
+
+	AssertCodesEvalToSameValue(t,
+		`[['A'],['B'],['A']]`,
+		`//seq.split([],['A', 'B', 'A'])`)
+	AssertCodesEvalToSameValue(t,
+		`[]`,
+		`//seq.split([],[])`)
+	AssertCodesEvalToSameValue(t,
+		`[[]]`,
+		`//seq.split(['A'],[])`)
 }
 
 func TestBytesSplit(t *testing.T) {
@@ -58,4 +69,14 @@ func TestBytesSplit(t *testing.T) {
 	AssertCodesEvalToSameValue(t,
 		`[//unicode.utf8.encode("this is a test")]`,
 		`//seq.split(//unicode.utf8.encode("get"),//unicode.utf8.encode("this is a test"))`)
+
+	AssertCodesEvalToSameValue(t,
+		`//unicode.utf8.encode("")`,
+		`//seq.split(//unicode.utf8.encode(""),//unicode.utf8.encode(""))`)
+	AssertCodesEvalToSameValue(t,
+		`[//unicode.utf8.encode("A"),//unicode.utf8.encode("B"),//unicode.utf8.encode("C")]`,
+		`//seq.split(//unicode.utf8.encode(""),//unicode.utf8.encode("ABC"))`)
+	AssertCodesEvalToSameValue(t,
+		`[//unicode.utf8.encode("")]`,
+		`//seq.split(//unicode.utf8.encode(","),//unicode.utf8.encode(""))`)
 }

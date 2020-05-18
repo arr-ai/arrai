@@ -152,6 +152,15 @@ func stdSeq() rel.Attr {
 				return arraySplit(args[1].(rel.Array), args[0])
 			case rel.Bytes:
 				return bytesSplit(args[1].(rel.Bytes), args[0])
+			case rel.GenericSet:
+				switch args[0].(type) {
+				case rel.String:
+					return rel.NewArray(args[1])
+				case rel.Array, rel.Bytes:
+					return rel.NewArray(rel.NewArray())
+				case rel.GenericSet:
+					return args[1]
+				}
 			}
 
 			panic(fmt.Errorf("expected subject sequence types are %s, %s and %s, but the actual type is %s",
