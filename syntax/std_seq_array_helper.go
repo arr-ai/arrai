@@ -74,15 +74,14 @@ func arrayJoin(subject rel.Array, joiner rel.Value) rel.Value {
 
 	result := make([]rel.Value, 0, subject.Count())
 	for i, value := range subject.Values() {
+		if i > 0 {
+			result = append(result, joinerArray.Values()...)
+		}
 		switch vArray := value.(type) {
 		case rel.Array:
 			result = append(result, vArray.Values()...)
 		case rel.Value:
 			result = append(result, value)
-		}
-
-		if i+1 < subject.Count() {
-			result = append(result, joinerArray.Values()...)
 		}
 	}
 
