@@ -4,6 +4,8 @@ import "testing"
 
 func TestStrSuffix(t *testing.T) {
 	t.Parallel()
+	AssertCodesEvalToSameValue(t, `true`, `//seq.has_suffix("ABCDE","ABCDE")`)
+
 	AssertCodesEvalToSameValue(t, `true`, `//seq.has_suffix("E","ABCDE")`)
 	AssertCodesEvalToSameValue(t, `true`, `//seq.has_suffix("DE","ABCDE")`)
 	AssertCodesEvalToSameValue(t, `false`, `//seq.has_suffix("CD", "ABCDE")`)
@@ -16,6 +18,7 @@ func TestStrSuffix(t *testing.T) {
 
 func TestArraySuffix(t *testing.T) {
 	t.Parallel()
+	AssertCodesEvalToSameValue(t, `true`, `//seq.has_suffix(['A','B'],['A','B'])`)
 
 	AssertCodesEvalToSameValue(t, `true`, `//seq.has_suffix('E',['A','B','C','D','E'])`)
 	AssertCodesEvalToSameValue(t, `true`, `//seq.has_suffix(['E'],['A','B','C','D','E'])`)
@@ -33,6 +36,7 @@ func TestArraySuffix(t *testing.T) {
 
 func TestBytesSuffix(t *testing.T) {
 	t.Parallel()
+	AssertCodesEvalToSameValue(t, `true`, `//seq.has_suffix(//unicode.utf8.encode('hello'),//unicode.utf8.encode('hello'))`)
 
 	AssertCodesEvalToSameValue(t, `true`, `//seq.has_suffix(//unicode.utf8.encode('o'),//unicode.utf8.encode('hello'))`)
 	AssertCodesEvalToSameValue(t, `true`, `//seq.has_suffix(//unicode.utf8.encode('lo'),//unicode.utf8.encode('hello'))`)

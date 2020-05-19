@@ -4,6 +4,8 @@ import "testing"
 
 func TestStrContains(t *testing.T) {
 	t.Parallel()
+	AssertCodesEvalToSameValue(t, `true`, `//seq.contains("A", "A")`)
+
 	AssertCodesEvalToSameValue(t, `true`, `//seq.contains("", "A")`)
 	AssertCodesEvalToSameValue(t, `false`, `//seq.contains("", "")`)
 	AssertCodesEvalToSameValue(t, `false`, `//seq.contains("A", "")`)
@@ -16,6 +18,8 @@ func TestStrContains(t *testing.T) {
 
 func TestArrayContains(t *testing.T) {
 	t.Parallel()
+	AssertCodesEvalToSameValue(t, `true`, `//seq.contains([1,2,3,4,5], [1,2,3,4,5])`)
+	AssertCodesEvalToSameValue(t, `true`, `//seq.contains([[1,2],[3,4],[5]], [[1,2],[3,4],[5]])`)
 
 	AssertCodesEvalToSameValue(t, `false`, `//seq.contains(1, [])`)
 	AssertCodesEvalToSameValue(t, `false`, `//seq.contains([], [])`)
@@ -49,6 +53,9 @@ func TestArrayContains(t *testing.T) {
 func TestBytesContains(t *testing.T) {
 	t.Parallel()
 	// hello bytes - 104 101 108 108 111
+	AssertCodesEvalToSameValue(t, `true`,
+		`//seq.contains(//unicode.utf8.encode('hello'),//unicode.utf8.encode('hello'))`)
+
 	AssertCodesEvalToSameValue(t, `true`,
 		`//seq.contains({ |@, @byte| (0, 104)},//unicode.utf8.encode('hello'))`)
 	AssertCodesEvalToSameValue(t, `true`,

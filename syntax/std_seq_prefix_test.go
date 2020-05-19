@@ -4,6 +4,8 @@ import "testing"
 
 func TestStrPrefix(t *testing.T) {
 	t.Parallel()
+	AssertCodesEvalToSameValue(t, `true`, `//seq.has_prefix("ABC","ABC")`)
+
 	AssertCodesEvalToSameValue(t, `true`, `//seq.has_prefix("A","ABCDE")`)
 	AssertCodesEvalToSameValue(t, `true`, `//seq.has_prefix("AB","ABCDE")`)
 	AssertCodesEvalToSameValue(t, `false`, `//seq.has_prefix("BCD","ABCDE")`)
@@ -18,6 +20,9 @@ func TestStrPrefix(t *testing.T) {
 
 func TestArrayPrefix(t *testing.T) {
 	t.Parallel()
+	AssertCodesEvalToSameValue(t, `true`, `//seq.has_prefix('A',['A'])`)
+	AssertCodesEvalToSameValue(t, `true`, `//seq.has_prefix(['A','B'],['A','B'])`)
+
 	AssertCodesEvalToSameValue(t, `true`, `//seq.has_prefix('A',['A','B','C','D','E'])`)
 	AssertCodesEvalToSameValue(t, `true`, `//seq.has_prefix(['A'],['A','B','C','D','E'])`)
 	AssertCodesEvalToSameValue(t, `true`, `//seq.has_prefix(['A','B'],['A','B','C','D','E'])`)
@@ -27,6 +32,7 @@ func TestArrayPrefix(t *testing.T) {
 	AssertCodesEvalToSameValue(t, `false`, `//seq.has_prefix(['B'],['A','B','C','D','E'])`)
 	AssertCodesEvalToSameValue(t, `false`, `//seq.has_prefix(['B','C'],['A','B','C','D','E'])`)
 	AssertCodesEvalToSameValue(t, `false`, `//seq.has_prefix(['A','B','C','D','E','F'],['A','B','C','D','E'])`)
+	AssertCodesEvalToSameValue(t, `false`, `//seq.has_prefix(['A','B','C','D','E','F'],['A','B','C','D','E'])`)
 
 	AssertCodesEvalToSameValue(t, `false`, `//seq.has_prefix([], [])`)
 	AssertCodesEvalToSameValue(t, `false`, `//seq.has_prefix(['A','B','C','D','E','F'],[])`)
@@ -35,6 +41,7 @@ func TestArrayPrefix(t *testing.T) {
 
 func TestBytesPrefix(t *testing.T) {
 	t.Parallel()
+	AssertCodesEvalToSameValue(t, `true`, `//seq.has_prefix(//unicode.utf8.encode('hello'),//unicode.utf8.encode('hello'))`)
 
 	AssertCodesEvalToSameValue(t, `true`, `//seq.has_prefix(//unicode.utf8.encode('h'),//unicode.utf8.encode('hello'))`)
 	AssertCodesEvalToSameValue(t, `true`, `//seq.has_prefix(//unicode.utf8.encode('he'),//unicode.utf8.encode('hello'))`)
