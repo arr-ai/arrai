@@ -17,8 +17,8 @@ func TestJSONDecode(t *testing.T) {
 			},
 			"h": (a: [])
 		},
-		"i": (null: {}),
-		"j": (a: [(b: {()}), (b: {})]),
+		"i": (),
+		"j": (a: [(b: true), (b: false)]),
 		"k": (s: {})
 	}`
 
