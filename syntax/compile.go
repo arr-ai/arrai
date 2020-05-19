@@ -165,6 +165,8 @@ func (pc ParseContext) compileTuplePattern(b ast.Branch) rel.Pattern {
 			v := pc.compilePattern(pair.One("v").(ast.Branch))
 			if name := pair.One("name"); name != nil {
 				k = parseName(name.(ast.Branch))
+			} else {
+				k = v.String()
 			}
 			attr := rel.NewAttrPattern(k, v)
 			attrs = append(attrs, attr)
