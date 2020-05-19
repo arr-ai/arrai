@@ -40,7 +40,8 @@ func TestArraySuffix(t *testing.T) {
 
 func TestBytesSuffix(t *testing.T) {
 	t.Parallel()
-	AssertCodesEvalToSameValue(t, `true`, `//seq.has_suffix(//unicode.utf8.encode('hello'),//unicode.utf8.encode('hello'))`)
+	AssertCodesEvalToSameValue(t, `true`,
+		`//seq.has_suffix(//unicode.utf8.encode('hello'),//unicode.utf8.encode('hello'))`)
 
 	AssertCodesEvalToSameValue(t, `true`, `//seq.has_suffix(//unicode.utf8.encode('o'),//unicode.utf8.encode('hello'))`)
 	AssertCodesEvalToSameValue(t, `true`, `//seq.has_suffix(//unicode.utf8.encode('lo'),//unicode.utf8.encode('hello'))`)

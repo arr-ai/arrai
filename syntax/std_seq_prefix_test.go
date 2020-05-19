@@ -44,7 +44,8 @@ func TestArrayPrefix(t *testing.T) {
 
 func TestBytesPrefix(t *testing.T) {
 	t.Parallel()
-	AssertCodesEvalToSameValue(t, `true`, `//seq.has_prefix(//unicode.utf8.encode('hello'),//unicode.utf8.encode('hello'))`)
+	AssertCodesEvalToSameValue(t, `true`,
+		`//seq.has_prefix(//unicode.utf8.encode('hello'),//unicode.utf8.encode('hello'))`)
 
 	AssertCodesEvalToSameValue(t, `true`, `//seq.has_prefix(//unicode.utf8.encode('h'),//unicode.utf8.encode('hello'))`)
 	AssertCodesEvalToSameValue(t, `true`, `//seq.has_prefix(//unicode.utf8.encode('he'),//unicode.utf8.encode('hello'))`)
@@ -54,7 +55,8 @@ func TestBytesPrefix(t *testing.T) {
 
 	AssertCodesEvalToSameValue(t, `true `, `//seq.has_prefix(//unicode.utf8.encode('h'),//unicode.utf8.encode('hello'))`)
 	AssertCodesEvalToSameValue(t, `true `, `//seq.has_prefix(//unicode.utf8.encode('he'),//unicode.utf8.encode('hello'))`)
-	AssertCodesEvalToSameValue(t, `true `, `//seq.has_prefix(//unicode.utf8.encode('hello'),//unicode.utf8.encode('hello'))`)
+	AssertCodesEvalToSameValue(t, `true `,
+		`//seq.has_prefix(//unicode.utf8.encode('hello'),//unicode.utf8.encode('hello'))`)
 
 	AssertCodesEvalToSameValue(t, `true`, `//seq.has_prefix(//unicode.utf8.encode(''),//unicode.utf8.encode(''))`)
 	AssertCodesEvalToSameValue(t, `false`, `//seq.has_prefix(//unicode.utf8.encode('o'),//unicode.utf8.encode(''))`)

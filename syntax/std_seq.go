@@ -201,12 +201,27 @@ func stdSeq() rel.Attr {
 			case rel.Array:
 				switch a1.Values()[0].(type) {
 				case rel.String:
+					// if subject is rel.String
 					return strJoin(args...)
 				case rel.Value:
+					if _, isStr := args[0].(rel.String); isStr {
+						return strJoin(args...)
+					}
 					return arrayJoin(args[0], a1)
 				}
 			case rel.Bytes:
+				if _, isSet := args[0].(rel.GenericSet); isSet {
+					return args[1]
+				}
 				return bytesJoin(args[0].(rel.Bytes), args[1].(rel.Bytes))
+			case rel.GenericSet:
+				switch args[0].(type) {
+				case rel.String:
+					// if joiner is rel.String
+					return strJoin(args...)
+				case rel.Array, rel.GenericSet, rel.Bytes:
+					return args[1]
+				}
 			}
 
 			panic(fmt.Errorf(sharedError, reflect.TypeOf(args[2])))
