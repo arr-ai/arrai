@@ -208,7 +208,6 @@ func includingProcess(
 	arrayHandler,
 	bytesHandler func(...rel.Value) rel.Value,
 	args ...rel.Value) rel.Value {
-
 	switch args[1].(type) {
 	case rel.String:
 		return strHandler(args...)
