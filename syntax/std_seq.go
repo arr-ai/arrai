@@ -66,67 +66,40 @@ func stdSeq() rel.Attr {
 		rel.NewNativeFunctionAttr("concat", stdSeqConcat),
 		rel.NewNativeFunctionAttr("repeat", stdSeqRepeat),
 		createNestedFuncAttr("contains", 2, func(args ...rel.Value) rel.Value {
-			switch args[1].(type) {
-			case rel.String:
+			return includingProcess(func(args ...rel.Value) rel.Value {
 				return rel.NewBool(strings.Contains(mustAsString(args[1]), mustAsString(args[0])))
-			case rel.Array:
-				return arrayContains(args[0], args[1].(rel.Array))
-			case rel.Bytes:
-				if _, isSet := args[0].(rel.GenericSet); isSet {
-					if len(args[1].String()) > 0 {
-						return rel.NewBool(true)
-					}
-				}
-				return rel.NewBool(strings.Contains(args[1].String(), args[0].String()))
-			case rel.GenericSet:
-				if _, isSet := args[0].(rel.GenericSet); isSet {
-					return rel.NewBool(true)
-				}
-			}
-
-			return rel.NewBool(false)
+			},
+				func(args ...rel.Value) rel.Value {
+					return arrayContains(args[0], args[1].(rel.Array))
+				},
+				func(args ...rel.Value) rel.Value {
+					return rel.NewBool(strings.Contains(args[1].String(), args[0].String()))
+				},
+				args...)
 		}),
 		createNestedFuncAttr("has_prefix", 2, func(args ...rel.Value) rel.Value {
-			switch args[1].(type) {
-			case rel.String:
+			return includingProcess(func(args ...rel.Value) rel.Value {
 				return rel.NewBool(strings.HasPrefix(mustAsString(args[1]), mustAsString(args[0])))
-			case rel.Array:
-				return arrayHasPrefix(args[0], args[1].(rel.Array))
-			case rel.Bytes:
-				if _, isSet := args[0].(rel.GenericSet); isSet {
-					if len(args[1].String()) > 0 {
-						return rel.NewBool(true)
-					}
-				}
-				return rel.NewBool(strings.HasPrefix(args[1].String(), args[0].String()))
-			case rel.GenericSet:
-				if _, isSet := args[0].(rel.GenericSet); isSet {
-					return rel.NewBool(true)
-				}
-			}
-
-			return rel.NewBool(false)
+			},
+				func(args ...rel.Value) rel.Value {
+					return arrayHasPrefix(args[0], args[1].(rel.Array))
+				},
+				func(args ...rel.Value) rel.Value {
+					return rel.NewBool(strings.HasPrefix(args[1].String(), args[0].String()))
+				},
+				args...)
 		}),
 		createNestedFuncAttr("has_suffix", 2, func(args ...rel.Value) rel.Value {
-			switch args[1].(type) {
-			case rel.String:
+			return includingProcess(func(args ...rel.Value) rel.Value {
 				return rel.NewBool(strings.HasSuffix(mustAsString(args[1]), mustAsString(args[0])))
-			case rel.Array:
-				return arrayHasSuffix(args[0], args[1].(rel.Array))
-			case rel.Bytes:
-				if _, isSet := args[0].(rel.GenericSet); isSet {
-					if len(args[1].String()) > 0 {
-						return rel.NewBool(true)
-					}
-				}
-				return rel.NewBool(strings.HasSuffix(args[1].String(), args[0].String()))
-			case rel.GenericSet:
-				if _, isSet := args[0].(rel.GenericSet); isSet {
-					return rel.NewBool(true)
-				}
-			}
-
-			return rel.NewBool(false)
+			},
+				func(args ...rel.Value) rel.Value {
+					return arrayHasSuffix(args[0], args[1].(rel.Array))
+				},
+				func(args ...rel.Value) rel.Value {
+					return rel.NewBool(strings.HasSuffix(args[1].String(), args[0].String()))
+				},
+				args...)
 		}),
 		createNestedFuncAttr("sub", 3, func(args ...rel.Value) rel.Value {
 			switch args[2].(type) {
@@ -227,6 +200,34 @@ func stdSeq() rel.Attr {
 			panic(fmt.Errorf(sharedError, reflect.TypeOf(args[2])))
 		}),
 	)
+}
+
+// Shared method for contains, hasPrefix and hasSuffix
+func includingProcess(
+	strHandler,
+	arrayHandler,
+	bytesHandler func(...rel.Value) rel.Value,
+	args ...rel.Value) rel.Value {
+
+	switch args[1].(type) {
+	case rel.String:
+		return strHandler(args...)
+	case rel.Array:
+		return arrayHandler(args...)
+	case rel.Bytes:
+		if _, isSet := args[0].(rel.GenericSet); isSet {
+			if len(args[1].String()) > 0 {
+				return rel.NewBool(true)
+			}
+		}
+		return bytesHandler(args...)
+	case rel.GenericSet:
+		if _, isSet := args[0].(rel.GenericSet); isSet {
+			return rel.NewBool(true)
+		}
+	}
+
+	return rel.NewBool(false)
 }
 
 func strJoin(args ...rel.Value) rel.Value {
