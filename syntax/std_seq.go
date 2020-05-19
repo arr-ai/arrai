@@ -72,8 +72,7 @@ func stdSeq() rel.Attr {
 			case rel.Array:
 				return arrayContains(args[0], args[1].(rel.Array))
 			case rel.Bytes:
-				switch args[0].(type) {
-				case rel.GenericSet:
+				if _, isSet := args[0].(rel.GenericSet); isSet {
 					if len(args[1].String()) > 0 {
 						return rel.NewBool(true)
 					}
@@ -90,8 +89,7 @@ func stdSeq() rel.Attr {
 			case rel.Array:
 				return arrayHasPrefix(args[0], args[1].(rel.Array))
 			case rel.Bytes:
-				switch args[0].(type) {
-				case rel.GenericSet:
+				if _, isSet := args[0].(rel.GenericSet); isSet {
 					if len(args[1].String()) > 0 {
 						return rel.NewBool(true)
 					}
@@ -108,8 +106,7 @@ func stdSeq() rel.Attr {
 			case rel.Array:
 				return arrayHasSuffix(args[0], args[1].(rel.Array))
 			case rel.Bytes:
-				switch args[0].(type) {
-				case rel.GenericSet:
+				if _, isSet := args[0].(rel.GenericSet); isSet {
 					if len(args[1].String()) > 0 {
 						return rel.NewBool(true)
 					}
