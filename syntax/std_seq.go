@@ -131,7 +131,27 @@ func stdSeq() rel.Attr {
 			case rel.Array:
 				return arraySub(args[0], args[1], args[2].(rel.Array))
 			case rel.Bytes:
-				return rel.NewBytes([]byte(strings.ReplaceAll(args[2].String(), args[0].String(), args[1].String())))
+				_, arg0IsSet := args[0].(rel.GenericSet)
+				_, arg1IsSet := args[1].(rel.GenericSet)
+				if !arg0IsSet && arg1IsSet {
+					return rel.NewBytes([]byte(strings.ReplaceAll(args[2].String(),
+						args[0].String(), "")))
+				} else if arg0IsSet && !arg1IsSet {
+					return rel.NewBytes([]byte(strings.ReplaceAll(args[2].String(),
+						"", args[1].String())))
+				}
+				return rel.NewBytes([]byte(strings.ReplaceAll(args[2].String(),
+					args[0].String(), args[1].String())))
+			case rel.GenericSet:
+				_, arg0IsSet := args[0].(rel.GenericSet)
+				_, arg1IsSet := args[1].(rel.GenericSet)
+				if arg0IsSet && arg1IsSet {
+					return args[2]
+				} else if arg0IsSet && !arg1IsSet {
+					return args[1]
+				} else if !arg0IsSet && arg1IsSet {
+					return args[2]
+				}
 			}
 
 			panic(fmt.Errorf(sharedError, reflect.TypeOf(args[2])))

@@ -16,19 +16,30 @@ func arraySub(old, new rel.Value, subject rel.Array) rel.Value {
 	oldArray := convert2Array(old)
 	newArray := convert2Array(new)
 
+	if !oldArray.IsTrue() && !new.IsTrue() {
+		return subject
+	}
+
 	result := make([]rel.Value, 0, subject.Count())
-	for start, absoluteIndex := 0, 0; start < subject.Count(); {
-		relativeIndex := search(subject.Values()[start:], oldArray.Values())
-		if relativeIndex >= 0 {
-			absoluteIndex = relativeIndex + start
-			if absoluteIndex-start > 0 {
-				result = append(result, subject.Values()[start:absoluteIndex]...)
+	if !old.IsTrue() {
+		for _, e := range subject.Values() {
+			result = append(append(result, newArray.Values()...), e)
+		}
+		result = append(result, newArray.Values()...)
+	} else {
+		for start, absoluteIndex := 0, 0; start < subject.Count(); {
+			relativeIndex := search(subject.Values()[start:], oldArray.Values())
+			if relativeIndex >= 0 {
+				absoluteIndex = relativeIndex + start
+				if absoluteIndex-start > 0 {
+					result = append(result, subject.Values()[start:absoluteIndex]...)
+				}
+				result = append(result, newArray.Values()...)
+				start = absoluteIndex + oldArray.Count()
+			} else {
+				result = append(result, subject.Values()[absoluteIndex+1:]...)
+				break
 			}
-			result = append(result, newArray.Values()...)
-			start = absoluteIndex + oldArray.Count()
-		} else {
-			result = append(result, subject.Values()[absoluteIndex+1:]...)
-			break
 		}
 	}
 

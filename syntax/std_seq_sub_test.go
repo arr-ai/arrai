@@ -5,6 +5,9 @@ import "testing"
 func TestStrSub(t *testing.T) {
 	t.Parallel()
 	AssertCodesEvalToSameValue(t,
+		`" BC"`,
+		`//seq.sub( "A", " ","ABC")`)
+	AssertCodesEvalToSameValue(t,
 		`"this is not a test"`,
 		`//seq.sub("aaa", "is", "this is not a test")`)
 	AssertCodesEvalToSameValue(t,
@@ -20,6 +23,26 @@ func TestStrSub(t *testing.T) {
 		`"this is still a test"`,
 		`//seq.sub( "doesn't matter", "hello there","this is still a test")`)
 	assertExprPanics(t, `//seq.sub("hello there", "test", 1)`)
+	/////////////////
+	AssertCodesEvalToSameValue(t,
+		`""`,
+		`//seq.sub( "","", "")`)
+	AssertCodesEvalToSameValue(t,
+		`"A"`,
+		`//seq.sub( "","A", "")`)
+	AssertCodesEvalToSameValue(t,
+		`""`,
+		`//seq.sub( "A","", "")`)
+
+	AssertCodesEvalToSameValue(t,
+		`"ABC"`,
+		`//seq.sub( "","", "ABC")`)
+	AssertCodesEvalToSameValue(t,
+		`"EAEBECE"`,
+		`//seq.sub( "", "E","ABC")`)
+	AssertCodesEvalToSameValue(t,
+		`"BC"`,
+		`//seq.sub( "A", "","ABC")`)
 }
 
 func TestArraySub(t *testing.T) {
@@ -42,6 +65,42 @@ func TestArraySub(t *testing.T) {
 	AssertCodesEvalToSameValue(t,
 		`[[1,1], [4,4], [3,3]]`,
 		`//seq.sub([[2,2]], [[4,4]], [[1,1], [2,2], [3,3]])`)
+
+}
+
+func TestArraySubEdgeCases(t *testing.T) {
+	/////////////////
+	AssertCodesEvalToSameValue(t,
+		`[]`,
+		`//seq.sub( [],[], [])`)
+	AssertCodesEvalToSameValue(t,
+		`[1]`,
+		`//seq.sub( [],[1], [])`)
+	AssertCodesEvalToSameValue(t,
+		`[1,2]`,
+		`//seq.sub( [],[1,2], [])`)
+	AssertCodesEvalToSameValue(t,
+		`[[1,2]]`,
+		`//seq.sub( [],[[1,2]], [])`)
+	AssertCodesEvalToSameValue(t,
+		`[]`,
+		`//seq.sub( [1],[], [])`)
+
+	AssertCodesEvalToSameValue(t,
+		`[1,2,3]`,
+		`//seq.sub( [],[], [1,2,3])`)
+	AssertCodesEvalToSameValue(t,
+		`[4,1,4,2,4,3,4]`,
+		`//seq.sub( [], [4],[1,2,3])`)
+	AssertCodesEvalToSameValue(t,
+		`[4,[1,2],4,[3,4],4]`,
+		`//seq.sub( [], [4],[[1,2],[3,4]])`)
+	AssertCodesEvalToSameValue(t,
+		`[[4],[1,2],[4],[3,4],[4]]`,
+		`//seq.sub( [], [[4]],[[1,2],[3,4]])`)
+	AssertCodesEvalToSameValue(t,
+		`[1,3]`,
+		`//seq.sub([2], [],[1,2,3])`)
 }
 
 func TestBytesSub(t *testing.T) {
@@ -51,4 +110,19 @@ func TestBytesSub(t *testing.T) {
 		`//seq.sub({ |@, @byte| (0, 104)},{ |@, @byte| (0, 111)},//unicode.utf8.encode('hello'))`)
 	AssertCodesEvalToSameValue(t, `//unicode.utf8.encode('hehho')`,
 		`//seq.sub({ |@, @byte| (0, 108)},{ |@, @byte| (0, 104)},//unicode.utf8.encode('hello'))`)
+	///////////////////
+	AssertCodesEvalToSameValue(t, `//unicode.utf8.encode('')`,
+		`//seq.sub(//unicode.utf8.encode(''),//unicode.utf8.encode(''),//unicode.utf8.encode(''))`)
+	AssertCodesEvalToSameValue(t, `//unicode.utf8.encode('')`,
+		`//seq.sub(//unicode.utf8.encode('a'),//unicode.utf8.encode(''),//unicode.utf8.encode(''))`)
+	AssertCodesEvalToSameValue(t, `//unicode.utf8.encode('a')`,
+		`//seq.sub(//unicode.utf8.encode(''),//unicode.utf8.encode('a'),//unicode.utf8.encode(''))`)
+
+	AssertCodesEvalToSameValue(t, `//unicode.utf8.encode('hello')`,
+		`//seq.sub(//unicode.utf8.encode(''),//unicode.utf8.encode(''),//unicode.utf8.encode('hello'))`)
+	AssertCodesEvalToSameValue(t, `//unicode.utf8.encode('ello')`,
+		`//seq.sub(//unicode.utf8.encode('h'),//unicode.utf8.encode(''),//unicode.utf8.encode('hello'))`)
+
+	AssertCodesEvalToSameValue(t, `//unicode.utf8.encode('thtetltltot')`,
+		`//seq.sub(//unicode.utf8.encode(''),//unicode.utf8.encode('t'),//unicode.utf8.encode('hello'))`)
 }
