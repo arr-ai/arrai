@@ -5,6 +5,9 @@ import "testing"
 func TestStrSplit(t *testing.T) {
 	t.Parallel()
 
+	AssertCodesEvalToSameValue(t, `[[], "B", "CD"]     `, `//seq.split("A","ABACD")`)
+	AssertCodesEvalToSameValue(t, `["ABAC", []]     `, `//seq.split("D","ABACD")`)
+
 	AssertCodesEvalToSameValue(t, `["this", "is", "a", "test"]`, `//seq.split(" ","this is a test") `)
 	AssertCodesEvalToSameValue(t, `["this is a test"]         `, `//seq.split(",","this is a test") `)
 	AssertCodesEvalToSameValue(t, `["th", " ", " a test"]     `, `//seq.split("is","this is a test")`)
@@ -59,6 +62,11 @@ func TestBytesSplit(t *testing.T) {
 	AssertCodesEvalToSameValue(t,
 		`[//unicode.utf8.encode("this is a test")]`,
 		`//seq.split(//unicode.utf8.encode("get"),//unicode.utf8.encode("this is a test"))`)
+
+	AssertCodesEvalToSameValue(t, `[[], //unicode.utf8.encode("B"), //unicode.utf8.encode("CD")]`,
+		`//seq.split(//unicode.utf8.encode("A"),//unicode.utf8.encode("ABACD"))`)
+	AssertCodesEvalToSameValue(t, `[//unicode.utf8.encode("ABAC"), []]`,
+		`//seq.split(//unicode.utf8.encode("D"),//unicode.utf8.encode("ABACD"))`)
 
 	AssertCodesEvalToSameValue(t,
 		`//unicode.utf8.encode("")`,
