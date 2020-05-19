@@ -70,7 +70,7 @@ func stdSeq() rel.Attr {
 			case rel.String:
 				return rel.NewBool(strings.Contains(mustAsString(args[1]), mustAsString(args[0])))
 			case rel.Array:
-				return arrayContain(args[1].(rel.Array), args[0])
+				return arrayContains(args[1].(rel.Array), args[0])
 			case rel.Bytes:
 				switch args[0].(type) {
 				case rel.GenericSet:
