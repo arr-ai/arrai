@@ -4,16 +4,19 @@ import "testing"
 
 func TestStrContains(t *testing.T) {
 	t.Parallel()
-	AssertCodesEvalToSameValue(t, `true`, `//seq.contains("A", "A")`)
 
-	AssertCodesEvalToSameValue(t, `true`, `//seq.contains("", "A")`)
-	AssertCodesEvalToSameValue(t, `false`, `//seq.contains("A", "")`)
-	AssertCodesEvalToSameValue(t, `true`, `//seq.contains("", "")`)
+	AssertCodesEvalToSameValue(t, `true`, `//seq.contains("A", "A")`)
 
 	AssertCodesEvalToSameValue(t, `true `, `//seq.contains("", "this is a test")             `)
 	AssertCodesEvalToSameValue(t, `true `, `//seq.contains("is a test", "this is a test")    `)
 	AssertCodesEvalToSameValue(t, `false`, `//seq.contains("is not a test", "this is a test")`)
 	AssertCodesEvalToSameValue(t, `false`, `//seq.contains("a is", "this is a test")`)
+
+	AssertCodesEvalToSameValue(t, `true`, `//seq.contains("", "A")`)
+	AssertCodesEvalToSameValue(t, `false`, `//seq.contains("A", "")`)
+	AssertCodesEvalToSameValue(t, `true`, `//seq.contains("", "")`)
+
+	assertExprPanics(t, `//seq.contains(1, "ABC")`)
 }
 
 func TestArrayContains(t *testing.T) {
@@ -21,19 +24,12 @@ func TestArrayContains(t *testing.T) {
 	AssertCodesEvalToSameValue(t, `true`, `//seq.contains([1,2,3,4,5], [1,2,3,4,5])`)
 	AssertCodesEvalToSameValue(t, `true`, `//seq.contains([[1,2],[3,4],[5]], [[1,2],[3,4],[5]])`)
 
-	AssertCodesEvalToSameValue(t, `false`, `//seq.contains(1, [])`)
+	AssertCodesEvalToSameValue(t, `false`, `//seq.contains([1], [])`)
 	AssertCodesEvalToSameValue(t, `true`, `//seq.contains([], [1])`)
 	AssertCodesEvalToSameValue(t, `true`, `//seq.contains([], [])`)
 
-	AssertCodesEvalToSameValue(t, `true`, `//seq.contains(1, [1,2,3,4,5])`)
-	AssertCodesEvalToSameValue(t, `true`, `//seq.contains(3, [1,2,3,4,5])`)
-	AssertCodesEvalToSameValue(t, `true`, `//seq.contains(5, [1,2,3,4,5])`)
-
-	AssertCodesEvalToSameValue(t, `true`, `//seq.contains('A',['A','B','C','D','E'])`)
 	AssertCodesEvalToSameValue(t, `true`, `//seq.contains(['A'],['A','B','C','D','E'])`)
-	AssertCodesEvalToSameValue(t, `true`, `//seq.contains('E',['A','B','C','D','E'])`)
 	AssertCodesEvalToSameValue(t, `true`, `//seq.contains(['E'],['A','B','C','D','E'])`)
-	AssertCodesEvalToSameValue(t, `true`, `//seq.contains('C',['A','B','C','D','E'])`)
 	AssertCodesEvalToSameValue(t, `true`, `//seq.contains(['C'],['A','B','C','D','E'])`)
 
 	AssertCodesEvalToSameValue(t, `true`, `//seq.contains(['A','B','C'],['A','B','C','D','E'])`)
@@ -46,8 +42,10 @@ func TestArrayContains(t *testing.T) {
 
 	AssertCodesEvalToSameValue(t, `true`, `//seq.contains(['A','B','C'], ['A', 'A', 'B','C','D','E'])`)
 	AssertCodesEvalToSameValue(t, `true`, `//seq.contains(['B','C'],['A', 'A', 'B','C','D','E'])`)
-
 	AssertCodesEvalToSameValue(t, `true`, `//seq.contains([['B','C']],[['A', 'B'], ['B','C'],['D','E']])`)
+
+	assertExprPanics(t, `//seq.contains(1, [1,2,3,4,5])`)
+	assertExprPanics(t, `//seq.contains('A',['A','B','C','D','E'])`)
 }
 
 func TestBytesContains(t *testing.T) {

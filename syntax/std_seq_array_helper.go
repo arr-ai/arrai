@@ -163,12 +163,9 @@ func convert2Array(val rel.Value) rel.Array {
 	case rel.GenericSet:
 		valArray, _ := rel.AsArray(val)
 		return valArray
-	case rel.Value:
-		valArray, _ := rel.AsArray(rel.NewArray(val))
-		return valArray
 	}
 
-	panic("it supports types rel.Array, rel.GenericSet and rel.Value only.")
+	panic("it supports types rel.Array and rel.GenericSet only.")
 }
 
 // Searches array sub in subject and return the first indedx if found, or return -1.

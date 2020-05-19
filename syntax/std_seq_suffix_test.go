@@ -14,17 +14,18 @@ func TestStrSuffix(t *testing.T) {
 	AssertCodesEvalToSameValue(t, `false`, `//seq.has_suffix("D","")`)
 	AssertCodesEvalToSameValue(t, `true`, `//seq.has_suffix("","")`)
 	AssertCodesEvalToSameValue(t, `true`, `//seq.has_suffix("","ABCDE")`)
+
+	assertExprPanics(t, `//seq.has_suffix(1,"ABC")`)
 }
 
 func TestArraySuffix(t *testing.T) {
 	t.Parallel()
 	AssertCodesEvalToSameValue(t, `true`, `//seq.has_suffix(['A','B'],['A','B'])`)
 
-	AssertCodesEvalToSameValue(t, `true`, `//seq.has_suffix('E',['A','B','C','D','E'])`)
+	AssertCodesEvalToSameValue(t, `true`, `//seq.has_suffix(['E'],['A','B','C','D','E'])`)
 	AssertCodesEvalToSameValue(t, `true`, `//seq.has_suffix(['E'],['A','B','C','D','E'])`)
 	AssertCodesEvalToSameValue(t, `true`, `//seq.has_suffix( ['D','E'],['A','B','C','D','E'])`)
 
-	AssertCodesEvalToSameValue(t, `false`, `//seq.has_suffix('D',['A','B','C','D','E'])`)
 	AssertCodesEvalToSameValue(t, `false`, `//seq.has_suffix(['D'],['A','B','C','D','E'])`)
 	AssertCodesEvalToSameValue(t, `false`, `//seq.has_suffix(['C','D'],['A','B','C','D','E'])`)
 	AssertCodesEvalToSameValue(t, `false`, `//seq.has_suffix(['A','B','C','D','E','F'],['A','B','C','D','E'])`)
@@ -32,6 +33,9 @@ func TestArraySuffix(t *testing.T) {
 	AssertCodesEvalToSameValue(t, `true`, `//seq.has_suffix([],['A','B','C','D','E'])`)
 	AssertCodesEvalToSameValue(t, `true`, `//seq.has_suffix([], [])`)
 	AssertCodesEvalToSameValue(t, `false`, `//seq.has_suffix(['D','E'],[])`)
+
+	assertExprPanics(t, `//seq.has_suffix(1,[1,2])`)
+	assertExprPanics(t, `//seq.has_suffix('A',['A','B'])`)
 }
 
 func TestBytesSuffix(t *testing.T) {

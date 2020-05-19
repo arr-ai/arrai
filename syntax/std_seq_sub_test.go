@@ -43,13 +43,12 @@ func TestStrSub(t *testing.T) {
 	AssertCodesEvalToSameValue(t,
 		`"BC"`,
 		`//seq.sub( "A", "","ABC")`)
+
+	assertExprPanics(t, `//seq.sub(1,'B','BCD')`)
 }
 
 func TestArraySub(t *testing.T) {
 	t.Parallel()
-	AssertCodesEvalToSameValue(t,
-		`['T', 'B', 'T', 'C', 'D', 'E']`,
-		`//seq.sub('A', 'T', ['A', 'B', 'A', 'C', 'D', 'E'])`)
 	AssertCodesEvalToSameValue(t,
 		`['T', 'B', 'T', 'C', 'D', 'E']`,
 		`//seq.sub(['A'], ['T'], ['A', 'B', 'A', 'C', 'D', 'E'])`)
@@ -58,14 +57,13 @@ func TestArraySub(t *testing.T) {
 		`//seq.sub([['A','C']], [['T','C']], [['A', 'B'], ['A','C'],['A','D']])`)
 	AssertCodesEvalToSameValue(t,
 		`[2, 2, 3]`,
-		`//seq.sub(1, 2, [1, 2, 3])`)
-	AssertCodesEvalToSameValue(t,
-		`[2, 2, 3]`,
 		`//seq.sub([1], [2], [1, 2, 3])`)
 	AssertCodesEvalToSameValue(t,
 		`[[1,1], [4,4], [3,3]]`,
 		`//seq.sub([[2,2]], [[4,4]], [[1,1], [2,2], [3,3]])`)
 
+	assertExprPanics(t, `//seq.sub(1,'B',[1,2,3])`)
+	assertExprPanics(t, `//seq.sub(1,'B',['A','B','C'])`)
 }
 
 func TestArraySubEdgeCases(t *testing.T) {

@@ -13,9 +13,6 @@ func TestStrJoin(t *testing.T) {
 	AssertCodesEvalToSameValue(t, `"You and me"`, `//seq.join(" and ",["You", "me"])`)
 	assertExprPanics(t, `//seq.join("this", 2)`)
 
-	// Following cases are not supported to make sure code is clear and simple.
-	// Or it has to check array element is rel.String or rel.Number.
-	// And they are imapcted by https://github.com/arr-ai/arrai/issues/268 too.
 	// AssertCodesEvalToSameValue(t, `""                `, `//seq.join(",",[])                         `)
 	// AssertCodesEvalToSameValue(t, `",,"              `, `//seq.join(",",["", "", ""])               `)
 }
@@ -37,10 +34,9 @@ func TestArrayJoin(t *testing.T) {
 	AssertCodesEvalToSameValue(t, `[[1, 2], [3, 4], [0], [1], [5, 6], [7, 8]]`,
 		`//seq.join([[0],[1]], [[[1, 2], [3, 4]],[[5, 6],[7, 8]]])`)
 
-	// Following cases are not supported to make sure code is clear and simple.
-	// Or it has to check array element is rel.String or rel.Number.
-	// And they are imapcted by https://github.com/arr-ai/arrai/issues/268 too.
 	// AssertCodesEvalToSameValue(t, `[]`, `//seq.join([1],[])`)
+
+	assertExprPanics(t, `//seq.join(1, [1,2,3,4,5])`)
 }
 
 func TestBytesJoin(t *testing.T) {

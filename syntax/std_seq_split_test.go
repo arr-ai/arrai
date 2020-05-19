@@ -20,16 +20,18 @@ func TestStrSplit(t *testing.T) {
 	AssertCodesEvalToSameValue(t, `[]`, `//seq.split("","") `)
 
 	AssertCodesEvalToSameValue(t, `[""]`, `//seq.split(",","") `)
+
+	assertExprPanics(t, `//seq.split(1,"ABC")`)
 }
 
 func TestArraySplit(t *testing.T) {
 	t.Parallel()
 	AssertCodesEvalToSameValue(t,
 		`[['B'],['C', 'D', 'E']]`,
-		`//seq.split('A',['A', 'B', 'A', 'C', 'D', 'E'])`)
+		`//seq.split(['A'],['A', 'B', 'A', 'C', 'D', 'E'])`)
 	AssertCodesEvalToSameValue(t,
 		`[['B'],['C'], ['D', 'E']]`,
-		`//seq.split('A',['B', 'A', 'C', 'A', 'D', 'E'])`)
+		`//seq.split(['A'],['B', 'A', 'C', 'A', 'D', 'E'])`)
 	AssertCodesEvalToSameValue(t,
 		`[['A', 'B', 'C']]`,
 		`//seq.split(['F'],['A', 'B', 'C'])`)
@@ -37,9 +39,6 @@ func TestArraySplit(t *testing.T) {
 		`[[['A','B'], ['C','D'], ['E','F']]]`,
 		`//seq.split([['F','F']],[['A','B'], ['C','D'], ['E','F']])`)
 
-	AssertCodesEvalToSameValue(t,
-		`[[1],[3]]`,
-		`//seq.split(2,[1, 2, 3])`)
 	AssertCodesEvalToSameValue(t,
 		`[[1],[3]]`,
 		`//seq.split([2],[1, 2, 3])`)
@@ -59,6 +58,9 @@ func TestArraySplit(t *testing.T) {
 	AssertCodesEvalToSameValue(t,
 		`[[]]`,
 		`//seq.split(['A'],[])`)
+
+	assertExprPanics(t, `//seq.split(1,[1,2,3])`)
+	assertExprPanics(t, `//seq.split('A',['A','B'])`)
 }
 
 func TestBytesSplit(t *testing.T) {
