@@ -5,13 +5,13 @@ import (
 )
 
 // Checks if array subject contains sub.
-func arrayContains(subject rel.Array, sub rel.Value) rel.Value {
+func arrayContains(sub rel.Value, subject rel.Array) rel.Value {
 	subArray := convert2Array(sub)
 	return rel.NewBool(search(subject.Values(), subArray.Values()) > -1)
 }
 
 // Substitutes all old in subject with new.
-func arraySub(subject rel.Array, old, new rel.Value) rel.Value {
+func arraySub(old, new rel.Value, subject rel.Array) rel.Value {
 	// Convert to array to facilitate process
 	oldArray := convert2Array(old)
 	newArray := convert2Array(new)
@@ -36,7 +36,7 @@ func arraySub(subject rel.Array, old, new rel.Value) rel.Value {
 }
 
 // Splits array subject by delimiter.
-func arraySplit(subject rel.Array, delimiter rel.Value) rel.Value {
+func arraySplit(delimiter rel.Value, subject rel.Array) rel.Value {
 	delimiterArray := convert2Array(delimiter)
 	var result []rel.Value
 
@@ -66,7 +66,7 @@ func arraySplit(subject rel.Array, delimiter rel.Value) rel.Value {
 }
 
 // Joins array joiner to subject.
-func arrayJoin(subject rel.Array, joiner rel.Value) rel.Value {
+func arrayJoin(joiner rel.Value, subject rel.Array) rel.Value {
 	joinerArray := convert2Array(joiner)
 	if !joinerArray.IsTrue() || !subject.IsTrue() {
 		return subject
@@ -89,7 +89,7 @@ func arrayJoin(subject rel.Array, joiner rel.Value) rel.Value {
 }
 
 // Check if array subject starts with prefix.
-func arrayHasPrefix(subject rel.Array, prefix rel.Value) rel.Value {
+func arrayHasPrefix(prefix rel.Value, subject rel.Array) rel.Value {
 	prefixArray := convert2Array(prefix)
 
 	if !prefixArray.IsTrue() && subject.IsTrue() {
@@ -117,7 +117,7 @@ func arrayHasPrefix(subject rel.Array, prefix rel.Value) rel.Value {
 }
 
 // Check if array subject ends with suffix.
-func arrayHasSuffix(subject rel.Array, suffix rel.Value) rel.Value {
+func arrayHasSuffix(suffix rel.Value, subject rel.Array) rel.Value {
 	suffixArray := convert2Array(suffix)
 
 	if !suffixArray.IsTrue() && subject.IsTrue() {

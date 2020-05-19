@@ -7,7 +7,7 @@ import (
 )
 
 // Joins byte array joiner to subject.
-func bytesJoin(subject, joiner rel.Bytes) rel.Value {
+func bytesJoin(joiner, subject rel.Bytes) rel.Value {
 	result := make([]byte, 0, subject.Count())
 	for index, e := range subject.Bytes() {
 		if index > 0 && index < subject.Count() {
@@ -20,7 +20,7 @@ func bytesJoin(subject, joiner rel.Bytes) rel.Value {
 }
 
 // Splits byte array subject by delimiter.
-func bytesSplit(subject rel.Bytes, delimiter rel.Value) rel.Value {
+func bytesSplit(delimiter rel.Value, subject rel.Bytes) rel.Value {
 	var splitted []string
 
 	switch delimiter := delimiter.(type) {

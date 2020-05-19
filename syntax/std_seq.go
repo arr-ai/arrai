@@ -70,7 +70,7 @@ func stdSeq() rel.Attr {
 			case rel.String:
 				return rel.NewBool(strings.Contains(mustAsString(args[1]), mustAsString(args[0])))
 			case rel.Array:
-				return arrayContains(args[1].(rel.Array), args[0])
+				return arrayContains(args[0], args[1].(rel.Array))
 			case rel.Bytes:
 				switch args[0].(type) {
 				case rel.GenericSet:
@@ -88,7 +88,7 @@ func stdSeq() rel.Attr {
 			case rel.String:
 				return rel.NewBool(strings.HasPrefix(mustAsString(args[1]), mustAsString(args[0])))
 			case rel.Array:
-				return arrayHasPrefix(args[1].(rel.Array), args[0])
+				return arrayHasPrefix(args[0], args[1].(rel.Array))
 			case rel.Bytes:
 				switch args[0].(type) {
 				case rel.GenericSet:
@@ -106,7 +106,7 @@ func stdSeq() rel.Attr {
 			case rel.String:
 				return rel.NewBool(strings.HasSuffix(mustAsString(args[1]), mustAsString(args[0])))
 			case rel.Array:
-				return arrayHasSuffix(args[1].(rel.Array), args[0])
+				return arrayHasSuffix(args[0], args[1].(rel.Array))
 			case rel.Bytes:
 				switch args[0].(type) {
 				case rel.GenericSet:
@@ -132,7 +132,7 @@ func stdSeq() rel.Attr {
 					),
 				)
 			case rel.Array:
-				return arraySub(args[2].(rel.Array), args[0], args[1])
+				return arraySub(args[0], args[1], args[2].(rel.Array))
 			case rel.Bytes:
 				return rel.NewBytes([]byte(strings.ReplaceAll(args[2].String(), args[0].String(), args[1].String())))
 			}
@@ -149,9 +149,9 @@ func stdSeq() rel.Attr {
 				}
 				return rel.NewArray(vals...)
 			case rel.Array:
-				return arraySplit(args[1].(rel.Array), args[0])
+				return arraySplit(args[0], args[1].(rel.Array))
 			case rel.Bytes:
-				return bytesSplit(args[1].(rel.Bytes), args[0])
+				return bytesSplit(args[0], args[1].(rel.Bytes))
 			case rel.GenericSet:
 				switch args[0].(type) {
 				case rel.String:
@@ -174,10 +174,10 @@ func stdSeq() rel.Attr {
 				case rel.String:
 					return strJoin(args...)
 				case rel.Value:
-					return arrayJoin(a1, args[0])
+					return arrayJoin(args[0], a1)
 				}
 			case rel.Bytes:
-				return bytesJoin(args[1].(rel.Bytes), args[0].(rel.Bytes))
+				return bytesJoin(args[0].(rel.Bytes), args[1].(rel.Bytes))
 			}
 
 			panic(fmt.Errorf(sharedError, reflect.TypeOf(args[2])))
