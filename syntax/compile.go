@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"path"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"sync"
@@ -44,17 +45,24 @@ func Compile(filepath, source string) (_ rel.Expr, err error) {
 	return MustCompile(filepath, source), nil
 }
 
-func MustCompile(filepath, source string) rel.Expr {
+func MustCompile(filePath, source string) rel.Expr {
 	dirpath := "."
-	if filepath != "" {
-		if filepath == NoPath {
+	if filePath != "" {
+		if filePath == NoPath {
 			dirpath = NoPath
 		} else {
-			dirpath = path.Dir(filepath)
+			dirpath = path.Dir(filePath)
 		}
 	}
 	pc := ParseContext{SourceDir: dirpath}
-	ast, err := pc.Parse(parser.NewScannerWithFilename(source, dirpath))
+	if !filepath.IsAbs(filePath) {
+		var err error
+		filePath, err = filepath.Rel(".", filePath)
+		if err != nil {
+			panic(err)
+		}
+	}
+	ast, err := pc.Parse(parser.NewScannerWithFilename(source, filePath))
 	if err != nil {
 		panic(err)
 	}
@@ -165,6 +173,8 @@ func (pc ParseContext) compileTuplePattern(b ast.Branch) rel.Pattern {
 			v := pc.compilePattern(pair.One("v").(ast.Branch))
 			if name := pair.One("name"); name != nil {
 				k = parseName(name.(ast.Branch))
+			} else {
+				k = v.String()
 			}
 			attr := rel.NewAttrPattern(k, v)
 			attrs = append(attrs, attr)
