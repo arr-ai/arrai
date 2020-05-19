@@ -5,16 +5,16 @@ import "testing"
 func TestStrJoin(t *testing.T) {
 	t.Parallel()
 
-	AssertCodesEvalToSameValue(t, `""                `, `//seq.join(",",[])                         `)
+	AssertCodesEvalToSameValue(t, `""`, `//seq.join(",",[])`)
 
-	AssertCodesEvalToSameValue(t, `"this is a test"  `, `//seq.join(" ",["this", "is", "a", "test"])`)
-	AssertCodesEvalToSameValue(t, `"this"            `, `//seq.join(",",["this"])                   `)
+	AssertCodesEvalToSameValue(t, `"this is a test" `, `//seq.join(" ",["this", "is", "a", "test"])`)
+	AssertCodesEvalToSameValue(t, `"this"`, `//seq.join(",",["this"])`)
 	AssertCodesEvalToSameValue(t, `"You and me"`, `//seq.join(" and ",["You", "me"])`)
-	AssertCodesEvalToSameValue(t, `"AB"`, `//seq.join("",['A','B'])                         `)
+	AssertCodesEvalToSameValue(t, `"AB"`, `//seq.join("",['A','B'])`)
 
 	AssertCodesEvalToSameValue(t, `"Youme"`, `//seq.join("",["You", "me"])`)
-	AssertCodesEvalToSameValue(t, `""                `, `//seq.join(",",[])                         `)
-	AssertCodesEvalToSameValue(t, `",,"              `, `//seq.join(",",["", "", ""])               `)
+	AssertCodesEvalToSameValue(t, `""`, `//seq.join(",",[])`)
+	AssertCodesEvalToSameValue(t, `",,"`, `//seq.join(",",["", "", ""])`)
 
 	// It is not supported
 	// AssertCodesEvalToSameValue(t, `""`, `//seq.join("",[])`)
