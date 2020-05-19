@@ -44,6 +44,15 @@ func TestArraySplit(t *testing.T) {
 		`//seq.split(['F'],['A', 'B', 'C'])`)
 	AssertCodesEvalToSameValue(t, `[[['A','B'], ['C','D'], ['E','F']]]`,
 		`//seq.split([['F','F']],[['A','B'], ['C','D'], ['E','F']])`)
+	AssertCodesEvalToSameValue(t, `[[['A','B']], [['E','F']]]`,
+		`//seq.split([['C','D']],[['A','B'], ['C','D'], ['E','F']])`)
+	AssertCodesEvalToSameValue(t, `[[['A','B']], [['E','F'],['G']]]`,
+		`//seq.split([['C','D']],[['A','B'], ['C','D'], ['E','F'], ['G']])`)
+
+	AssertCodesEvalToSameValue(t, `[[['A','B']], [['G']]]`,
+		`//seq.split([['C','D'],['E','F']],[['A','B'], ['C','D'], ['E','F'], ['G']])`)
+	AssertCodesEvalToSameValue(t, `[[['A','B'], ['C','D'], ['E','F'], ['G']]]`,
+		`//seq.split([['C','D'],['E','T']],[['A','B'], ['C','D'], ['E','F'], ['G']])`)
 
 	AssertCodesEvalToSameValue(t, `[[],[2,3]]`, `//seq.split([1],[1, 2, 3])`)
 	AssertCodesEvalToSameValue(t, `[[1,2],[]]`, `//seq.split([3],[1, 2, 3])`)

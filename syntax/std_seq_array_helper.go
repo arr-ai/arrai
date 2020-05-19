@@ -27,17 +27,13 @@ func arraySub(old, new rel.Value, subject rel.Array) rel.Value {
 		}
 		result = append(result, newArray.Values()...)
 	} else {
-		for start, absoluteIndex := 0, 0; start < subject.Count(); {
-			relativeIndex := search(subject.Values()[start:], oldArray.Values())
-			if relativeIndex >= 0 {
-				absoluteIndex = relativeIndex + start
-				if absoluteIndex-start > 0 {
-					result = append(result, subject.Values()[start:absoluteIndex]...)
-				}
-				result = append(result, newArray.Values()...)
-				start = absoluteIndex + oldArray.Count()
+		subjectVals := subject.Values()
+		for {
+			if i := search(subjectVals, oldArray.Values()); i >= 0 {
+				result = append(append(result, subjectVals[:i]...), newArray.Values()...)
+				subjectVals = subjectVals[i+oldArray.Count():]
 			} else {
-				result = append(result, subject.Values()[absoluteIndex+1:]...)
+				result = append(result, subjectVals...)
 				break
 			}
 		}
@@ -59,14 +55,10 @@ func arraySplit(delimiter rel.Value, subject rel.Array) rel.Value {
 		subjectVals := subject.Values()
 		for {
 			if i := search(subjectVals, delimiterArray.Values()); i >= 0 {
-				if len(subjectVals[:i]) == 0 {
-					result = append(result, rel.NewArray())
-				} else {
-					result = append(result, rel.NewArray(subjectVals[:i]...))
-				}
+				result = append(result, rel.NewArray(subjectVals[:i]...))
 				subjectVals = subjectVals[i+delimiterArray.Count():]
 			} else {
-				result = append(result, rel.NewArray(subjectVals[i+delimiterArray.Count():]...))
+				result = append(result, rel.NewArray(subjectVals...))
 				break
 			}
 		}
@@ -169,6 +161,9 @@ func convert2Array(val rel.Value) rel.Array {
 
 // Searches array sub in subject and return the first indedx if found, or return -1.
 // It is brute force approach, can be improved later if it is necessary.
+// Case: subject=[1,2,3,4], sub=[2], return 1
+// Case: subject=[1,2,3,4], sub=[2,3], return 1
+// Case: subject=[1,2,3,4], sub=[2,5], return -1
 func search(subject, sub []rel.Value) int {
 	subjectOffset, subOffset := 0, 0
 
@@ -187,7 +182,8 @@ func search(subject, sub []rel.Value) int {
 	}
 
 	if subjectOffset < len(subject) {
-		return subjectOffset
+		// see len(sub) > 1
+		return (subjectOffset + 1) - len(sub)
 	}
 	return -1
 }
