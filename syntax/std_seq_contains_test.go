@@ -7,8 +7,8 @@ func TestStrContains(t *testing.T) {
 	AssertCodesEvalToSameValue(t, `true`, `//seq.contains("A", "A")`)
 
 	AssertCodesEvalToSameValue(t, `true`, `//seq.contains("", "A")`)
-	AssertCodesEvalToSameValue(t, `false`, `//seq.contains("", "")`)
 	AssertCodesEvalToSameValue(t, `false`, `//seq.contains("A", "")`)
+	AssertCodesEvalToSameValue(t, `true`, `//seq.contains("", "")`)
 
 	AssertCodesEvalToSameValue(t, `true `, `//seq.contains("", "this is a test")             `)
 	AssertCodesEvalToSameValue(t, `true `, `//seq.contains("is a test", "this is a test")    `)
@@ -22,8 +22,8 @@ func TestArrayContains(t *testing.T) {
 	AssertCodesEvalToSameValue(t, `true`, `//seq.contains([[1,2],[3,4],[5]], [[1,2],[3,4],[5]])`)
 
 	AssertCodesEvalToSameValue(t, `false`, `//seq.contains(1, [])`)
-	AssertCodesEvalToSameValue(t, `false`, `//seq.contains([], [])`)
 	AssertCodesEvalToSameValue(t, `true`, `//seq.contains([], [1])`)
+	AssertCodesEvalToSameValue(t, `true`, `//seq.contains([], [])`)
 
 	AssertCodesEvalToSameValue(t, `true`, `//seq.contains(1, [1,2,3,4,5])`)
 	AssertCodesEvalToSameValue(t, `true`, `//seq.contains(3, [1,2,3,4,5])`)
@@ -67,7 +67,7 @@ func TestBytesContains(t *testing.T) {
 
 	AssertCodesEvalToSameValue(t, `false`,
 		`//seq.contains(//unicode.utf8.encode('A'),//unicode.utf8.encode(''))`)
-	AssertCodesEvalToSameValue(t, `false`,
+	AssertCodesEvalToSameValue(t, `true`,
 		`//seq.contains(//unicode.utf8.encode(''),//unicode.utf8.encode(''))`)
 	AssertCodesEvalToSameValue(t, `true`,
 		`//seq.contains(//unicode.utf8.encode(''),//unicode.utf8.encode('hello'))`)

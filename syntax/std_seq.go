@@ -78,6 +78,10 @@ func stdSeq() rel.Attr {
 					}
 				}
 				return rel.NewBool(strings.Contains(args[1].String(), args[0].String()))
+			case rel.GenericSet:
+				if _, isSet := args[0].(rel.GenericSet); isSet {
+					return rel.NewBool(true)
+				}
 			}
 
 			return rel.NewBool(false)
@@ -95,6 +99,10 @@ func stdSeq() rel.Attr {
 					}
 				}
 				return rel.NewBool(strings.HasPrefix(args[1].String(), args[0].String()))
+			case rel.GenericSet:
+				if _, isSet := args[0].(rel.GenericSet); isSet {
+					return rel.NewBool(true)
+				}
 			}
 
 			return rel.NewBool(false)
@@ -112,6 +120,10 @@ func stdSeq() rel.Attr {
 					}
 				}
 				return rel.NewBool(strings.HasSuffix(args[1].String(), args[0].String()))
+			case rel.GenericSet:
+				if _, isSet := args[0].(rel.GenericSet); isSet {
+					return rel.NewBool(true)
+				}
 			}
 
 			return rel.NewBool(false)
