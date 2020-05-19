@@ -62,8 +62,15 @@ func arraySplit(delimiter rel.Value, subject rel.Array) rel.Value {
 				absoluteIndex = relativeIndex + start
 				if start != absoluteIndex {
 					result = append(result, rel.NewArray(subject.Values()[start:absoluteIndex]...))
+				} else if start == absoluteIndex {
+					// case `//seq.split(['A'],['A', 'B'])` -> `[[], ['B']]`
+					result = append(result, rel.NewArray())
 				}
 				start = absoluteIndex + delimiterArray.Count()
+				if start == subject.Count() {
+					// case `//seq.split(['B'],['A', 'B'])` -> `[['A'], []]`
+					result = append(result, rel.NewArray())
+				}
 			} else {
 				if start == 0 || start < subject.Count() {
 					result = append(result, rel.NewArray(subject.Values()[start:]...))
