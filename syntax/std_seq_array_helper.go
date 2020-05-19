@@ -56,25 +56,17 @@ func arraySplit(delimiter rel.Value, subject rel.Array) rel.Value {
 			result = append(result, rel.NewArray(e))
 		}
 	} else {
-		for start, absoluteIndex := 0, 0; start < subject.Count(); {
-			relativeIndex := search(subject.Values()[start:], delimiterArray.Values())
-			if relativeIndex >= 0 {
-				absoluteIndex = relativeIndex + start
-				if start != absoluteIndex {
-					result = append(result, rel.NewArray(subject.Values()[start:absoluteIndex]...))
-				} else if start == absoluteIndex {
-					// case `//seq.split(['A'],['A', 'B'])` -> `[[], ['B']]`
+		subjectVals := subject.Values()
+		for {
+			if i := search(subjectVals, delimiterArray.Values()); i >= 0 {
+				if len(subjectVals[:i]) == 0 {
 					result = append(result, rel.NewArray())
+				} else {
+					result = append(result, rel.NewArray(subjectVals[:i]...))
 				}
-				start = absoluteIndex + delimiterArray.Count()
-				if start == subject.Count() {
-					// case `//seq.split(['B'],['A', 'B'])` -> `[['A'], []]`
-					result = append(result, rel.NewArray())
-				}
+				subjectVals = subjectVals[i+delimiterArray.Count():]
 			} else {
-				if start == 0 || start < subject.Count() {
-					result = append(result, rel.NewArray(subject.Values()[start:]...))
-				}
+				result = append(result, rel.NewArray(subjectVals[i+delimiterArray.Count():]...))
 				break
 			}
 		}
