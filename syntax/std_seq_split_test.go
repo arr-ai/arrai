@@ -13,7 +13,12 @@ func TestStrSplit(t *testing.T) {
 	AssertCodesEvalToSameValue(t,
 		`["t", "h", "i", "s", " ", "i", "s", " ", "a", " ", "t", "e", "s", "t"]`,
 		`//seq.split("","this is a test")`)
-	AssertCodesEvalToSameValue(t, `""`, `//seq.split("","") `)
+
+	// As https://github.com/arr-ai/arrai/issues/268, `{}`, `[]` and `""` means empty set in arr.ai
+	// And the intent for //seq.split is to return an array, so it should be expressed as such.
+	// `""` -> empty string, `[]` -> empty array and `{}` -> empty set
+	AssertCodesEvalToSameValue(t, `[]`, `//seq.split("","") `)
+
 	AssertCodesEvalToSameValue(t, `[""]`, `//seq.split(",","") `)
 }
 
