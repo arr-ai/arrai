@@ -2,11 +2,14 @@ package syntax
 
 import "testing"
 
-func TestExprLetIdentPattern(t *testing.T) {
+func TestExprLet(t *testing.T) {
 	AssertCodesEvalToSameValue(t, `7`, `let x = 6; 7`)
 	AssertCodesEvalToSameValue(t, `42`, `let x = 6; x * 7`)
 	AssertCodesEvalToSameValue(t, `[1, 2]`, `let x = 1; [x, 2]`)
 	AssertCodesEvalToSameValue(t, `2`, `let x = 1; let x = x + 1; x`)
+	AssertCodesEvalToSameValue(t, `(x: 1)`, `let x = 1; (:x)`)
+	AssertCodesEvalToSameValue(t, `(x: 1, y: 2)`, `let x = 1; let y = 2; (:x, :y)`)
+	AssertCodesEvalToSameValue(t, `(x: 1, y: 2)`, `let x = 1; (:x, y: 2)`)
 }
 
 func TestExprLetValuePattern(t *testing.T) {
@@ -50,6 +53,8 @@ func TestExprLetTuplePattern(t *testing.T) {
 	AssertCodesEvalToSameValue(t, `4`, `let (a:x, b:x) = (a:4, b:4); x`)
 	AssertCodesEvalToSameValue(t, `4`, `let x = 4; let (a:x) = (a:4); x`)
 	AssertCodesEvalToSameValue(t, `4`, `let x = 5; let (a:x) = (a:4); x`)
+	AssertCodesEvalToSameValue(t, `1`, `let (:x) = (x: 1); x`)
+	AssertCodesEvalToSameValue(t, `2`, `let (:x, :y) = (x: 1, y: 2); y`)
 	AssertCodePanics(t, `let (a:x) = (b:7, a:4); x`)
 	AssertCodePanics(t, `let (a:x, a:x) = (a:4, a:4); x`)
 	AssertCodePanics(t, `let (a:x, a:x) = (a:4); x`)
