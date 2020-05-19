@@ -5,7 +5,7 @@ import (
 )
 
 // Checks if array subject contains sub.
-func arrayContain(subject rel.Array, sub rel.Value) rel.Value {
+func arrayContains(subject rel.Array, sub rel.Value) rel.Value {
 	subArray := convert2Array(sub)
 	return rel.NewBool(search(subject.Values(), subArray.Values()) > -1)
 }
