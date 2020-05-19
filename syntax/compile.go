@@ -73,7 +73,7 @@ func (pc ParseContext) CompileExpr(b ast.Branch) rel.Expr {
 	// Note: please make sure if it is necessary to add new syntax name before `expr`.
 	name, c := which(b,
 		"amp", "arrow", "let", "unop", "binop", "compare", "rbinop", "if", "get",
-		"tail", "postfix", "touch", "get", "rel", "set", "dict", "array",
+		"tail_op", "postfix", "touch", "get", "rel", "set", "dict", "array",
 		"embed", "op", "fn", "pkg", "tuple", "xstr", "IDENT", "STR", "NUM", "cond",
 		"expr",
 	)
@@ -99,7 +99,7 @@ func (pc ParseContext) CompileExpr(b ast.Branch) rel.Expr {
 		return pc.compileCond(b, c)
 	case "postfix", "touch":
 		return pc.compilePostfixAndTouch(b, c)
-	case "get", "tail":
+	case "get", "tail_op":
 		return pc.compileCallGet(b)
 	case "rel":
 		return pc.compileRelation(c)
@@ -405,41 +405,97 @@ func (pc ParseContext) compilePostfixAndTouch(b ast.Branch, c ast.Children) rel.
 
 func (pc ParseContext) compileCallGet(b ast.Branch) rel.Expr {
 	var result rel.Expr
-
-	get := func(get ast.Node) {
-		if get != nil {
-			if ident := get.One("IDENT"); ident != nil {
-				scanner := ident.One("").(ast.Leaf).Scanner()
-				result = rel.NewDotExpr(scanner, result, scanner.String())
-			}
-			if str := get.One("STR"); str != nil {
-				s := str.One("").Scanner()
-				result = rel.NewDotExpr(s, result, parseArraiString(s.String()))
-			}
-		}
-	}
-
 	if expr := b.One("expr"); expr != nil {
 		result = pc.CompileExpr(expr.(ast.Branch))
 	} else {
-		result = rel.DotIdent
-		get(b.One("get"))
+		result = pc.compileGet(rel.DotIdent, b.One("get"), false)
 	}
+	for _, part := range b.Many("tail_op") {
+		if safe := part.One("safe_tail"); safe != nil {
+			result = pc.compileSafeTails(result, part.One("safe_tail"))
+		} else {
+			result = pc.compileTail(result, part.One("tail"), false)
+		}
+	}
+	return result
+}
 
-	for _, part := range b.Many("tail") {
-		if call := part.One("call"); call != nil {
+func (pc ParseContext) compileTail(base rel.Expr, tail ast.Node, safe bool) rel.Expr {
+	createExpr := rel.NewCallExpr
+	if safe {
+		createExpr = rel.NewSafeCallExpr
+	}
+	if tail != nil {
+		if call := tail.One("call"); call != nil {
 			args := call.Many("arg")
 			exprs := make([]ast.Node, 0, len(args))
 			for _, arg := range args {
 				exprs = append(exprs, arg.One("expr"))
 			}
 			for _, arg := range pc.compileExprs(exprs...) {
-				result = rel.NewCallExpr(call.Scanner(), result, arg)
+				base = createExpr(call.Scanner(), base, arg)
 			}
 		}
-		get(part.One("get"))
+		base = pc.compileGet(base, tail.One("get"), safe)
 	}
-	return result
+	return base
+}
+
+func (pc ParseContext) compileGet(base rel.Expr, get ast.Node, safe bool) rel.Expr {
+	createExpr := rel.NewDotExpr
+	if safe {
+		createExpr = rel.NewSafeDotExpr
+	}
+	if get != nil {
+		if ident := get.One("IDENT"); ident != nil {
+			scanner := ident.One("").(ast.Leaf).Scanner()
+			base = createExpr(scanner, base, scanner.String())
+		}
+		if str := get.One("STR"); str != nil {
+			s := str.One("").Scanner()
+			base = createExpr(s, base, parseArraiString(s.String()))
+		}
+	}
+	return base
+}
+
+func (pc ParseContext) compileSafeTails(base rel.Expr, tail ast.Node) rel.Expr {
+	if tail != nil {
+		firstSafe := tail.One("first_safe").One("tail")
+		exprStates := []func(rel.Expr) rel.Expr{
+			func(expr rel.Expr) rel.Expr {
+				return pc.compileTail(base, firstSafe, true)
+			},
+		}
+
+		fallback := pc.CompileExpr(tail.One("fall").(ast.Branch))
+
+		for _, o := range tail.Many("ops") {
+			if safeTail := o.One("safe"); safeTail != nil {
+				exprStates = append(exprStates,
+					func(expr rel.Expr) rel.Expr {
+						pctx := pc
+						safe := safeTail.One("tail")
+						return pctx.compileTail(expr, safe, true)
+					},
+				)
+			} else if tail := o.One("tail"); tail != nil {
+				exprStates = append(exprStates,
+					func(expr rel.Expr) rel.Expr {
+						pctx := pc
+						unsafeTail := tail
+						return pctx.compileTail(expr, unsafeTail, false)
+					},
+				)
+			} else {
+				panic("wat")
+			}
+		}
+
+		return rel.NewSafeTailExpr(tail.Scanner(), fallback, base, exprStates)
+	}
+	//TODO: panic?
+	return base
 }
 
 func (pc ParseContext) compileRelation(c ast.Children) rel.Expr {

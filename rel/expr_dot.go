@@ -87,3 +87,23 @@ func (x *DotExpr) Eval(local Scope) (Value, error) {
 			"(%s).%s: lhs must be a Tuple, not %T", x.lhs, x.attr, a), x)
 	}
 }
+
+type SafeDotExpr struct {
+	d *DotExpr
+}
+
+func NewSafeDotExpr(scanner parser.Scanner, lhs Expr, attr string) Expr {
+	return &SafeDotExpr{NewDotExpr(scanner, lhs, attr).(*DotExpr)}
+}
+
+func (sd *SafeDotExpr) Eval(local Scope) (Value, error) {
+	return sd.d.Eval(local)
+}
+
+func (sd *SafeDotExpr) Source() parser.Scanner {
+	return sd.d.Src
+}
+
+func (sd *SafeDotExpr) String() string {
+	return sd.d.String() + "?"
+}
