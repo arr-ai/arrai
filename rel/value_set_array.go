@@ -280,7 +280,7 @@ func arrayCall(s Set, arg Value) Value {
 
 func (a Array) CallAll(arg Value) Set {
 	i := int(arg.(Number).Float64()) - a.offset
-	if i < 0 {
+	if i < 0 || i >= len(a.values) {
 		return None
 	}
 	return None.With(a.values[i-a.offset])

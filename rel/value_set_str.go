@@ -224,7 +224,7 @@ func (s String) Call(arg Value) Value {
 
 func (s String) CallAll(arg Value) Set {
 	i := int(arg.(Number).Float64()) - s.offset
-	if i < 0 {
+	if i < 0 || i >= len(s.s) {
 		return None
 	}
 	return None.With(NewNumber(float64(string(s.s)[i])))
