@@ -191,17 +191,18 @@ func (pc ParseContext) compileTuplePattern(b ast.Branch) rel.Pattern {
 func (pc ParseContext) compileDictPattern(b ast.Branch) rel.Pattern {
 	keys := b["key"]
 	values := b["value"]
-	if (keys != nil) || (values != nil) {
-		if (keys != nil) && (values != nil) {
-			keyExprs := pc.compileExprs(keys.(ast.Many)...)
-			valuePtns := pc.compilePatterns(values.(ast.Many)...)
-			if len(keyExprs) == len(valuePtns) {
-				entryPtns := make([]rel.DictPatternEntry, 0, len(keyExprs))
-				for i, keyExpr := range keyExprs {
-					entryPtns = append(entryPtns, rel.NewDictPatternEntry(keyExpr, valuePtns[i]))
-				}
-				return rel.NewDictPattern(entryPtns...)
+	if (keys != nil) != (values != nil) {
+		panic("mismatch between dict keys and values")
+	}
+	if (keys != nil) && (values != nil) {
+		keyExprs := pc.compileExprs(keys.(ast.Many)...)
+		valuePtns := pc.compilePatterns(values.(ast.Many)...)
+		if len(keyExprs) == len(valuePtns) {
+			entryPtns := make([]rel.DictPatternEntry, 0, len(keyExprs))
+			for i, keyExpr := range keyExprs {
+				entryPtns = append(entryPtns, rel.NewDictPatternEntry(keyExpr, valuePtns[i]))
 			}
+			return rel.NewDictPattern(entryPtns...)
 		}
 		panic("mismatch between dict keys and values")
 	}
