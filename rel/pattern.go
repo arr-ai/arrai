@@ -86,36 +86,31 @@ func (p ArrayPattern) String() string {
 	return b.String()
 }
 
-type AttrPattern struct {
+type TuplePatternAttr struct {
 	name    string
 	pattern Pattern
 }
 
-func NewAttrPattern(name string, pattern Pattern) AttrPattern {
-	return AttrPattern{
+func NewTuplePatternAttr(name string, pattern Pattern) TuplePatternAttr {
+	return TuplePatternAttr{
 		name:    name,
 		pattern: pattern,
 	}
 }
 
-func (p AttrPattern) Bind(scope Scope, value Value) Scope {
-	fmt.Println(value)
-	return scope
+func (a TuplePatternAttr) String() string {
+	return fmt.Sprintf("%s:%s", a.name, a.pattern)
 }
 
-func (p AttrPattern) String() string {
-	return fmt.Sprintf("%s:%s", p.name, p.pattern)
-}
-
-func (p *AttrPattern) IsWildcard() bool {
-	return p.name == "*"
+func (a *TuplePatternAttr) IsWildcard() bool {
+	return a.name == "*"
 }
 
 type TuplePattern struct {
-	attrs []AttrPattern
+	attrs []TuplePatternAttr
 }
 
-func NewTuplePattern(attrs ...AttrPattern) TuplePattern {
+func NewTuplePattern(attrs ...TuplePatternAttr) TuplePattern {
 	names := make(map[string]bool)
 	for _, attr := range attrs {
 		if names[attr.name] {
@@ -163,5 +158,68 @@ func (p TuplePattern) String() string {
 		}
 	}
 	b.WriteByte(')')
+	return b.String()
+}
+
+type DictPatternEntry struct {
+	at    Expr
+	value Pattern
+}
+
+func NewDictPatternEntry(at Expr, value Pattern) DictPatternEntry {
+	return DictPatternEntry{
+		at:    at,
+		value: value,
+	}
+}
+
+func (p DictPatternEntry) String() string {
+	return fmt.Sprintf("%s:%s", p.at, p.value)
+}
+
+type DictPattern struct {
+	entries []DictPatternEntry
+}
+
+func NewDictPattern(entries ...DictPatternEntry) DictPattern {
+	names := make(map[string]bool)
+	for _, entry := range entries {
+		if names[entry.at.String()] {
+			panic(fmt.Sprintf("name %s is duplicated in dict", entry.at))
+		}
+	}
+
+	return DictPattern{entries}
+}
+
+func (p DictPattern) Bind(scope Scope, value Value) Scope {
+	dict, is := value.(Dict)
+	if !is {
+		panic(fmt.Sprintf("%s is not a dict", value))
+	}
+
+	if len(p.entries) != dict.Count() {
+		panic(fmt.Sprintf("dicts %s and %s cannot match", p, dict))
+	}
+
+	result := EmptyScope
+	for _, entry := range p.entries {
+		dictValue := dict.m.MustGet(entry.at)
+		result = result.MatchedUpdate(entry.value.Bind(scope, dictValue.(Value)))
+	}
+
+	return result
+}
+
+func (p DictPattern) String() string {
+	var b bytes.Buffer
+	b.WriteByte('{')
+	for i, expr := range p.entries {
+		if i > 0 {
+			b.WriteString(", ")
+		}
+		fmt.Fprintf(&b, "%v: %v", expr.at.String(), expr.value.String())
+	}
+	b.WriteByte('}')
 	return b.String()
 }

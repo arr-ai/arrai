@@ -113,7 +113,7 @@ func (n Number) Export() interface{} {
 
 func (n Number) Bind(scope Scope, value Value) Scope {
 	if !n.Equal(value) {
-		panic(fmt.Sprintf("%s doesn't equal to %s", n, value))
+		panic(fmt.Sprintf("%s doesn't equal to %s, cannot bind these two numbers", n, value))
 	}
 
 	return EmptyScope
