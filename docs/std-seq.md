@@ -2,6 +2,8 @@
 
 The `seq` library contains functions that are used for manipulating sequenced data structures.
 
+## String
+
 ## `//seq.concat(seqs <: array) <: array` <br/> `concat(seqs <: string) <: string`
 
 `concat` takes an array of sequences `seqs` and returns a sequence that is
@@ -90,3 +92,75 @@ Usage:
 | `//seq.split(" ", "deliberately adding spaces to demonstrate the split function")` | `["deliberately", "adding", "spaces", "to", "demonstrate", "the", "split", "function"]` |
 | `//seq.split("random stuff", "this is just a random sentence")` | `["this is just a random sentence"]` |
 
+## Array
+
+## `//seq.has_prefix(prefix <: array, subject <: array) <: bool`
+
+`has_prefix` checks whether the array `subject` is prefixed by array `prefix`. It returns a boolean.
+
+Usage:
+
+| example | equals |
+|:-|:-|
+| `//seq.has_prefix(['A'],['A','B','C'])` | `true` |
+| `//seq.has_prefix([1, 2],[1, 2, 3])` | `true` |
+| `//seq.has_prefix([[1, 2]],[[1, 2], [3]])` | `true` |
+
+## `//seq.has_suffix(suffix <: array, subject <: array) <: bool`
+
+`has_suffix` checks whether the array `subject` is suffixed by array `suffix`. It returns a boolean.
+
+Usage:
+
+| example | equals |
+|:-|:-|
+| `//seq.has_suffix(['E'],['A','B','C','D','E'])` | `true` |
+| `//seq.has_suffix([[3, 4]],[[1 ,2], [3, 4]])` | `true` |
+
+## `//seq.join(joiner <: array, subject <: array) <: array`
+
+`join` returns a concatenated array with each member of `subject` delimited by `joiner`
+
+Usage:
+
+| example | equals |
+|:-|:-|
+| `//seq.join([0], [1,2,3,4,5])` | `[1,0,2,0,3,0,4,0,5]` |
+| `//seq.join([0], [[2, [3, 4]], [5, 6]])` | `[2, [3, 4], 0, 5, 6]` |
+| `//seq.join([[0],[1]], [[[1, 2], [3, 4]],[[5, 6],[7, 8]]])` | `[[1, 2], [3, 4], [0], [1], [5, 6], [7, 8]]` |
+
+## `//seq.contains(sub <: array, subject <: array) <: bool`
+
+`contains` checks whether array `sub` is contained in array `subject`. It returns a boolean.
+
+Usage:
+
+| example | equals |
+|:-|:-|
+| `//seq.contains([1,2,3,4,5], [1,2,3,4,5])` | `true` |
+| `//seq.contains([['B','C']],[['A', 'B'], ['B','C'],['D','E']])` | `true` |
+
+## `//seq.sub(old <: array, new <: array, subject <: array) <: array`
+
+`new` replaces occurrences of array `old` in array `subject` with array `new`. It returns the modified array.
+
+Usage:
+
+| example | equals |
+|:-|:-|
+| `//seq.sub([1], [2], [1, 2, 3])` | `[2, 2, 3]` |
+| `//seq.sub([[2,2]], [[4,4]], [[1,1], [2,2], [3,3]])`| `[[1,1], [4,4], [3,3]]` |
+
+## `//seq.split(delimiter <: array, subject <: array) <: array`
+
+`split` splits the array `subject` based on the provided array `delimiter`. It returns an array
+which are split from the array `subject`.
+
+Usage:
+
+| example | equals |
+|:-|:-|
+| `//seq.split([1],[1, 2, 3])` | `[[],[2,3]]` |
+| `//seq.split([3],[1, 2, 3])` | `[[1,2],[]]` |
+| `//seq.split(['A'],['B', 'A', 'C', 'A', 'D', 'E'])` | `[['B'],['C'], ['D', 'E']]` |
+| `//seq.split([['C','D'],['E','F']],[['A','B'], ['C','D'], ['E','F'], ['G']])`) | `[[['A','B']], [['G']]]` |

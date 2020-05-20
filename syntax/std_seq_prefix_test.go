@@ -34,6 +34,9 @@ func TestArrayPrefix(t *testing.T) {
 	AssertCodesEvalToSameValue(t, `false`, `//seq.has_prefix(['A','B','C','D','E','F'],['A','B','C','D','E'])`)
 	AssertCodesEvalToSameValue(t, `false`, `//seq.has_prefix(['A','B','C','D','E','F'],['A','B','C','D','E'])`)
 
+	AssertCodesEvalToSameValue(t, `true`, `//seq.has_prefix([1, 2],[1, 2, 3])`)
+	AssertCodesEvalToSameValue(t, `true`, `//seq.has_prefix([[1, 2]],[[1, 2], [3]])`)
+
 	AssertCodesEvalToSameValue(t, `true`, `//seq.has_prefix([], [])`)
 	AssertCodesEvalToSameValue(t, `false`, `//seq.has_prefix(['A','B','C','D','E','F'],[])`)
 	AssertCodesEvalToSameValue(t, `true`, `//seq.has_prefix([],['A','B','C','D','E'])`)

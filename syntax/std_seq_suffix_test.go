@@ -30,6 +30,8 @@ func TestArraySuffix(t *testing.T) {
 	AssertCodesEvalToSameValue(t, `false`, `//seq.has_suffix(['C','D'],['A','B','C','D','E'])`)
 	AssertCodesEvalToSameValue(t, `false`, `//seq.has_suffix(['A','B','C','D','E','F'],['A','B','C','D','E'])`)
 
+	AssertCodesEvalToSameValue(t, `true`, `//seq.has_suffix([[3, 4]],[[1 ,2], [3, 4]])`)
+
 	AssertCodesEvalToSameValue(t, `true`, `//seq.has_suffix([],['A','B','C','D','E'])`)
 	AssertCodesEvalToSameValue(t, `true`, `//seq.has_suffix([], [])`)
 	AssertCodesEvalToSameValue(t, `false`, `//seq.has_suffix(['D','E'],[])`)
