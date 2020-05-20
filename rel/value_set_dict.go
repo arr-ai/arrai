@@ -268,9 +268,9 @@ func (d Dict) Call(arg Value) Value {
 	vals := d.CallAll(arg)
 	switch {
 	case vals.Count() == 1:
-		e := vals.Enumerator()
-		e.MoveNext()
-		return e.Current()
+		for e := vals.Enumerator(); e.MoveNext(); {
+			return e.Current()
+		}
 	case vals.Count() > 1:
 		panic(fmt.Errorf("Dict.Call: too many return values for %v: %v", arg, vals)) //nolint:golint
 	}

@@ -284,9 +284,9 @@ func (s GenericSet) Call(arg Value) Value {
 	vals := s.CallAll(arg)
 	switch {
 	case vals.Count() == 1:
-		e := vals.Enumerator()
-		e.MoveNext()
-		return e.Current()
+		for e := vals.Enumerator(); e.MoveNext(); {
+			return e.Current()
+		}
 	case vals.Count() > 1:
 		panic(fmt.Errorf("GenericSet.Call: too many return values for %v: %v", arg, vals)) //nolint:golint
 	}
