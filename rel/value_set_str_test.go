@@ -18,17 +18,6 @@ func TestIsStringTuple(t *testing.T) {
 	}
 }
 
-func TestStringCall(t *testing.T) {
-	t.Parallel()
-	f := NewString([]rune(hello))
-	for i, c := range hello {
-		assert.Equal(t, c, rune(f.Call(NewNumber(float64(i))).(Number).Float64()))
-	}
-
-	assert.Panics(t, func() { f.Call(NewNumber(6)) })
-	assert.Panics(t, func() { f.Call(NewNumber(-1)) })
-}
-
 func TestStringCallAll(t *testing.T) {
 	t.Parallel()
 

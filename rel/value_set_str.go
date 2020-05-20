@@ -217,11 +217,6 @@ func (s String) Where(p func(v Value) bool) Set {
 	return NewSet(values...)
 }
 
-// Call ...
-func (s String) Call(arg Value) Value {
-	return arrayCall(s, arg)
-}
-
 func (s String) CallAll(arg Value) Set {
 	i := int(arg.(Number).Float64()) - s.offset
 	if i < 0 || i >= len(s.s) {

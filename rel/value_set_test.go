@@ -58,35 +58,3 @@ func TestGenericSetCallAll(t *testing.T) {
 	AssertEqualValues(t, NewSet(NewNumber(5)), set.CallAll(NewNumber(4)))
 	AssertEqualValues(t, None, set.CallAll(NewNumber(5)))
 }
-
-func TestGenericSetCall(t *testing.T) {
-	t.Parallel()
-
-	set := NewSet(
-		NewTuple(
-			NewAttr("@", NewNumber(1)),
-			NewAttr("@fooo", NewNumber(42)),
-		),
-		NewTuple(
-			NewAttr("@", NewNumber(1)),
-			NewAttr("@baar", NewNumber(24)),
-		),
-		NewTuple(
-			NewAttr("@", NewNumber(2)),
-			NewAttr("@foo", NewNumber(3)),
-			NewAttr("@bar", NewNumber(4)),
-		),
-		NewTuple(
-			NewAttr("@", NewNumber(3)),
-		),
-		NewTuple(
-			NewAttr("@", NewNumber(4)),
-			NewAttr("random", NewNumber(5)),
-		),
-	)
-
-	AssertEqualValues(t, NewNumber(5), set.Call(NewNumber(4)))
-	assert.Panics(t, func() { set.Call(NewNumber(1)) })
-	assert.Panics(t, func() { set.Call(NewNumber(2)) })
-	assert.Panics(t, func() { set.Call(NewNumber(3)) })
-}

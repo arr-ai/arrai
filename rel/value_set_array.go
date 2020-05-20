@@ -263,21 +263,6 @@ func (a Array) Where(p func(v Value) bool) Set {
 	return NewSet(values...)
 }
 
-// Call ...
-func (a Array) Call(arg Value) Value {
-	return arrayCall(a, arg)
-}
-
-func arrayCall(s Set, arg Value) Value {
-	result := s.CallAll(arg)
-	if !result.IsTrue() {
-		panic("no result")
-	}
-	e := result.Enumerator()
-	e.MoveNext()
-	return e.Current()
-}
-
 func (a Array) CallAll(arg Value) Set {
 	i := int(arg.(Number).Float64()) - a.offset
 	if i < 0 || i >= len(a.values) {

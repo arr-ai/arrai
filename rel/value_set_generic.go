@@ -2,7 +2,6 @@ package rel
 
 import (
 	"bytes"
-	"fmt"
 	"reflect"
 	"sort"
 
@@ -277,20 +276,6 @@ func (s GenericSet) Map(f func(v Value) Value) Set {
 func (s GenericSet) Where(p func(v Value) bool) Set {
 	s.set = s.set.Where(func(elem interface{}) bool { return p(elem.(Value)) })
 	return s
-}
-
-// Call ...
-func (s GenericSet) Call(arg Value) Value {
-	vals := s.CallAll(arg)
-	switch {
-	case vals.Count() == 1:
-		for e := vals.Enumerator(); e.MoveNext(); {
-			return e.Current()
-		}
-	case vals.Count() > 1:
-		panic(fmt.Errorf("GenericSet.Call: too many return values for %v: %v", arg, vals)) //nolint:golint
-	}
-	panic("no result")
 }
 
 func (s GenericSet) CallAll(arg Value) Set {

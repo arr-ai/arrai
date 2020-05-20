@@ -279,18 +279,6 @@ func TestBytesByteTuple_Enumerator(t *testing.T) {
 	assert.Equal(t, map[string]int{"@": 1, "@byte": 'a'}, attrs)
 }
 
-func TestBytesCall(t *testing.T) {
-	t.Parallel()
-	s := "hello"
-	f := NewBytes([]byte(s))
-	for i, c := range s {
-		assert.Equal(t, c, rune(f.Call(NewNumber(float64(i))).(Number).Float64()))
-	}
-
-	assert.Panics(t, func() { f.Call(NewNumber(6)) })
-	assert.Panics(t, func() { f.Call(NewNumber(-1)) })
-}
-
 func TestBytesCallAll(t *testing.T) {
 	t.Parallel()
 

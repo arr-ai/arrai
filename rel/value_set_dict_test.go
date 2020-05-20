@@ -52,27 +52,6 @@ func TestDictLess(t *testing.T) {
 	assertSame(NewDict(true, kv(1, 43), kv(2, 42)), NewDict(true, kv(1, 43), kv(2, 42)))
 }
 
-func TestDictCall(t *testing.T) {
-	t.Parallel()
-
-	kv := func(k, v float64) DictEntryTuple {
-		return NewDictEntryTuple(NewNumber(k), NewNumber(v))
-	}
-	dict := NewDict(false, kv(1, 10), kv(2, 20), kv(3, 30))
-
-	AssertEqualValues(t, NewNumber(10), dict.Call(NewNumber(1)))
-	AssertEqualValues(t, NewNumber(20), dict.Call(NewNumber(2)))
-	AssertEqualValues(t, NewNumber(30), dict.Call(NewNumber(3)))
-	assert.Panics(t, func() { dict.Call(NewNumber(4)) })
-
-	dict = NewDict(true, kv(1, 10), kv(1, 11), kv(2, 20), kv(3, 30))
-
-	AssertEqualValues(t, NewNumber(20), dict.Call(NewNumber(2)))
-	AssertEqualValues(t, NewNumber(30), dict.Call(NewNumber(3)))
-	assert.Panics(t, func() { dict.Call(NewNumber(1)) })
-	assert.Panics(t, func() { dict.Call(NewNumber(4)) })
-}
-
 func TestDictCallAll(t *testing.T) {
 	t.Parallel()
 

@@ -224,11 +224,6 @@ func (b Bytes) Where(p func(v Value) bool) Set {
 	return result
 }
 
-// Call ...
-func (b Bytes) Call(arg Value) Value {
-	return arrayCall(b, arg)
-}
-
 func (b Bytes) CallAll(arg Value) Set {
 	i := int(arg.(Number).Float64()) - b.offset
 	if i < 0 || i >= len(b.Bytes()) {

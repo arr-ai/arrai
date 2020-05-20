@@ -264,19 +264,6 @@ func (d Dict) Where(pred func(Value) bool) Set {
 	return Dict{m: m}
 }
 
-func (d Dict) Call(arg Value) Value {
-	vals := d.CallAll(arg)
-	switch {
-	case vals.Count() == 1:
-		for e := vals.Enumerator(); e.MoveNext(); {
-			return e.Current()
-		}
-	case vals.Count() > 1:
-		panic(fmt.Errorf("Dict.Call: too many return values for %v: %v", arg, vals)) //nolint:golint
-	}
-	panic("no result")
-}
-
 func (d Dict) CallAll(arg Value) Set {
 	val, exists := d.m.Get(arg)
 	if exists {

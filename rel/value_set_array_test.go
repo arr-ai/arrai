@@ -1,10 +1,6 @@
 package rel
 
-import (
-	"testing"
-
-	"github.com/stretchr/testify/assert"
-)
+import "testing"
 
 func TestAsArray(t *testing.T) {
 	AssertEqualValues(t,
@@ -73,22 +69,4 @@ func TestArrayCallAll(t *testing.T) {
 	AssertEqualValues(t, NewSet(NewNumber(12)), three.CallAll(NewNumber(4)))
 	AssertEqualValues(t, None, three.CallAll(NewNumber(1)))
 	AssertEqualValues(t, None, three.CallAll(NewNumber(5)))
-}
-
-func TestArrayCall(t *testing.T) {
-	t.Parallel()
-	f := NewArray(
-		NewNumber(0),
-		NewNumber(1),
-		NewNumber(4),
-		NewNumber(9),
-		NewNumber(16),
-		NewNumber(25),
-	)
-	for i := 0; i < f.Count(); i++ {
-		assert.Equal(t, i*i, int(f.Call(NewNumber(float64(i))).(Number).Float64()))
-	}
-
-	assert.Panics(t, func() { f.Call(NewNumber(6)) })
-	assert.Panics(t, func() { f.Call(NewNumber(-1)) })
 }
