@@ -278,15 +278,18 @@ func (d Dict) Call(arg Value) Value {
 }
 
 func (d Dict) CallAll(arg Value) Set {
-	switch v := d.m.MustGet(arg).(type) {
-	case Value:
-		return None.With(v)
-	case multipleValues:
-		values := make([]Value, 0, frozen.Set(v).Count())
-		for e := frozen.Set(v).Range(); e.Next(); {
-			values = append(values, e.Value().(Value))
+	val, exists := d.m.Get(arg)
+	if exists {
+		switch v := val.(type) {
+		case Value:
+			return None.With(v)
+		case multipleValues:
+			values := make([]Value, 0, frozen.Set(v).Count())
+			for e := frozen.Set(v).Range(); e.Next(); {
+				values = append(values, e.Value().(Value))
+			}
+			return NewSet(values...)
 		}
-		return NewSet(values...)
 	}
 	return None
 }
