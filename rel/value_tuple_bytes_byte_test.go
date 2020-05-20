@@ -277,3 +277,41 @@ func TestBytesByteTuple_Enumerator(t *testing.T) {
 	}
 	assert.Equal(t, map[string]int{"@": 1, "@byte": 'a'}, attrs)
 }
+
+func TestBytesCall(t *testing.T) {
+	t.Parallel()
+	s := "hello"
+	f := NewBytes([]byte(s))
+	for i, c := range s {
+		assert.Equal(t, c, rune(f.Call(NewNumber(float64(i))).(Number).Float64()))
+	}
+
+	assert.Panics(t, func() { f.Call(NewNumber(6)) })
+	assert.Panics(t, func() { f.Call(NewNumber(-1)) })
+}
+
+func TestBytesCallAll(t *testing.T) {
+	t.Parallel()
+
+	abc := NewBytes([]byte("abc"))
+
+	AssertEqualValues(t, NewSet(NewNumber(float64('a'))), abc.CallAll(NewNumber(0)))
+	AssertEqualValues(t, NewSet(NewNumber(float64('b'))), abc.CallAll(NewNumber(1)))
+	AssertEqualValues(t, NewSet(NewNumber(float64('c'))), abc.CallAll(NewNumber(2)))
+	AssertEqualValues(t, None, abc.CallAll(NewNumber(5)))
+	AssertEqualValues(t, None, abc.CallAll(NewNumber(-1)))
+
+	abc = NewOffsetBytes([]byte("abc"), -2)
+	AssertEqualValues(t, NewSet(NewNumber(float64('a'))), abc.CallAll(NewNumber(-2)))
+	AssertEqualValues(t, NewSet(NewNumber(float64('b'))), abc.CallAll(NewNumber(-1)))
+	AssertEqualValues(t, NewSet(NewNumber(float64('c'))), abc.CallAll(NewNumber(0)))
+	AssertEqualValues(t, None, abc.CallAll(NewNumber(1)))
+	AssertEqualValues(t, None, abc.CallAll(NewNumber(-3)))
+
+	abc = NewOffsetBytes([]byte("abc"), 2)
+	AssertEqualValues(t, NewSet(NewNumber(float64('a'))), abc.CallAll(NewNumber(2)))
+	AssertEqualValues(t, NewSet(NewNumber(float64('b'))), abc.CallAll(NewNumber(3)))
+	AssertEqualValues(t, NewSet(NewNumber(float64('c'))), abc.CallAll(NewNumber(4)))
+	AssertEqualValues(t, None, abc.CallAll(NewNumber(1)))
+	AssertEqualValues(t, None, abc.CallAll(NewNumber(5)))
+}
