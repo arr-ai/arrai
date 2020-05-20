@@ -149,6 +149,7 @@ func (pc ParseContext) compilePattern(b ast.Branch) rel.Pattern {
 	if ident := b.One("identpattern"); ident != nil {
 		return rel.NewIdentPattern(ident.Scanner().String())
 	}
+
 	expr := pc.CompileExpr(b)
 	return rel.ExprAsPattern(expr)
 }
@@ -192,12 +193,12 @@ func (pc ParseContext) compileDictPattern(b ast.Branch) rel.Pattern {
 	values := b["value"]
 	if (keys != nil) || (values != nil) {
 		if (keys != nil) && (values != nil) {
-			keyPtns := pc.compileExprs(keys.(ast.Many)...)
+			keyExprs := pc.compileExprs(keys.(ast.Many)...)
 			valuePtns := pc.compilePatterns(values.(ast.Many)...)
-			if len(keyPtns) == len(valuePtns) {
-				entryPtns := make([]rel.DictPatternEntry, 0, len(keyPtns))
-				for i, keyPtn := range keyPtns {
-					entryPtns = append(entryPtns, rel.NewDictPatternEntry(keyPtn, valuePtns[i]))
+			if len(keyExprs) == len(valuePtns) {
+				entryPtns := make([]rel.DictPatternEntry, 0, len(keyExprs))
+				for i, keyExpr := range keyExprs {
+					entryPtns = append(entryPtns, rel.NewDictPatternEntry(keyExpr, valuePtns[i]))
 				}
 				return rel.NewDictPattern(entryPtns...)
 			}
