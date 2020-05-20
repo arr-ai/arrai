@@ -219,8 +219,15 @@ func (s String) Where(p func(v Value) bool) Set {
 
 // Call ...
 func (s String) Call(arg Value) Value {
-	i := int(arg.(Number).Float64())
-	return NewNumber(float64(string(s.s)[i-s.offset]))
+	return arrayCall(s, arg)
+}
+
+func (s String) CallAll(arg Value) Set {
+	i := int(arg.(Number).Float64()) - s.offset
+	if i < 0 {
+		return None
+	}
+	return None.With(NewNumber(float64(string(s.s)[i])))
 }
 
 func (s String) index(pos int) int {

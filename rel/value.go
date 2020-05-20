@@ -109,6 +109,7 @@ type Set interface {
 	Map(func(Value) Value) Set
 	Where(func(Value) bool) Set
 	Call(arg Value) Value
+	CallAll(arg Value) Set
 
 	ArrayEnumerator() (OffsetValueEnumerator, bool)
 }

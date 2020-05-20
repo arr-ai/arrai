@@ -265,8 +265,25 @@ func (a Array) Where(p func(v Value) bool) Set {
 
 // Call ...
 func (a Array) Call(arg Value) Value {
-	i := int(arg.(Number).Float64())
-	return a.values[i-a.offset]
+	return arrayCall(a, arg)
+}
+
+func arrayCall(s Set, arg Value) Value {
+	result := s.CallAll(arg)
+	if !result.IsTrue() {
+		panic("no result")
+	}
+	e := result.Enumerator()
+	e.MoveNext()
+	return e.Current()
+}
+
+func (a Array) CallAll(arg Value) Set {
+	i := int(arg.(Number).Float64()) - a.offset
+	if i < 0 {
+		return None
+	}
+	return None.With(a.values[i-a.offset])
 }
 
 func (a Array) index(pos int) int {

@@ -226,8 +226,15 @@ func (b Bytes) Where(p func(v Value) bool) Set {
 
 // Call ...
 func (b Bytes) Call(arg Value) Value {
-	i := int(arg.(Number).Float64())
-	return NewNumber(float64(string(b.b)[i-b.offset]))
+	return arrayCall(b, arg)
+}
+
+func (b Bytes) CallAll(arg Value) Set {
+	i := int(arg.(Number).Float64()) - b.offset
+	if i < 0 {
+		return None
+	}
+	return None.With(NewNumber(float64(string(b.b)[i])))
 }
 
 func (b Bytes) index(pos int) int {

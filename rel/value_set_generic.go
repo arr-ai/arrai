@@ -2,6 +2,7 @@ package rel
 
 import (
 	"bytes"
+	"fmt"
 	"reflect"
 	"sort"
 
@@ -280,17 +281,32 @@ func (s GenericSet) Where(p func(v Value) bool) Set {
 
 // Call ...
 func (s GenericSet) Call(arg Value) Value {
+	vals := s.CallAll(arg)
+	switch {
+	case vals.Count() == 1:
+		e := vals.Enumerator()
+		e.MoveNext()
+		return e.Current()
+	case vals.Count() > 1:
+		panic(fmt.Errorf("GenericSet.Call: too many return values for %v: %v", arg, vals)) //nolint:golint
+	}
+	panic("no result")
+}
+
+func (s GenericSet) CallAll(arg Value) Set {
+	var t Tuple
+	var at Value
+	tm := NewTupleMatcher(map[string]Matcher{"@": Bind(&at)}, Bind(&t))
+	set := None
 	for e := s.Enumerator(); e.MoveNext(); {
-		var at Value
-		var t Tuple
-		if NewTupleMatcher(map[string]Matcher{"@": Bind(&at)}, Bind(&t)).Match(e.Current()) && at.Equal(arg) {
+		if tm.Match(e.Current()) && at.Equal(arg) {
 			for attr := t.Enumerator(); attr.MoveNext(); {
 				_, value := attr.Current()
-				return value
+				set = set.With(value)
 			}
 		}
 	}
-	return nil
+	return set
 }
 
 // Enumerator returns an enumerator over the Values in the genericSet.
