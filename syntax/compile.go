@@ -143,6 +143,9 @@ func (pc ParseContext) compilePattern(b ast.Branch) rel.Pattern {
 	if tuple := b.One("tuple"); tuple != nil {
 		return pc.compileTuplePattern(tuple.(ast.Branch))
 	}
+	if dict := b.One("dict"); dict != nil {
+		return pc.compileDictPattern(dict.(ast.Branch))
+	}
 	if ident := b.One("identpattern"); ident != nil {
 		return rel.NewIdentPattern(ident.Scanner().String())
 	}
@@ -167,7 +170,7 @@ func (pc ParseContext) compileArrayPattern(b ast.Branch) rel.Pattern {
 
 func (pc ParseContext) compileTuplePattern(b ast.Branch) rel.Pattern {
 	if pairs := b.Many("pairs"); pairs != nil {
-		attrs := make([]rel.AttrPattern, 0, len(pairs))
+		attrs := make([]rel.TuplePatternAttr, 0, len(pairs))
 		for _, pair := range pairs {
 			var k string
 			v := pc.compilePattern(pair.One("v").(ast.Branch))
@@ -176,12 +179,32 @@ func (pc ParseContext) compileTuplePattern(b ast.Branch) rel.Pattern {
 			} else {
 				k = v.String()
 			}
-			attr := rel.NewAttrPattern(k, v)
+			attr := rel.NewTuplePatternAttr(k, v)
 			attrs = append(attrs, attr)
 		}
 		return rel.NewTuplePattern(attrs...)
 	}
 	return rel.NewTuplePattern()
+}
+
+func (pc ParseContext) compileDictPattern(b ast.Branch) rel.Pattern {
+	keys := b["key"]
+	values := b["value"]
+	if (keys != nil) || (values != nil) {
+		if (keys != nil) && (values != nil) {
+			keyPtns := pc.compileExprs(keys.(ast.Many)...)
+			valuePtns := pc.compilePatterns(values.(ast.Many)...)
+			if len(keyPtns) == len(valuePtns) {
+				entryPtns := make([]rel.DictPatternEntry, 0, len(keyPtns))
+				for i, keyPtn := range keyPtns {
+					entryPtns = append(entryPtns, rel.NewDictPatternEntry(keyPtn, valuePtns[i]))
+				}
+				return rel.NewDictPattern(entryPtns...)
+			}
+		}
+		panic("mismatch between dict keys and values")
+	}
+	return rel.NewDictPattern()
 }
 
 func (pc ParseContext) compileArrow(b ast.Branch, name string, c ast.Children) rel.Expr {
