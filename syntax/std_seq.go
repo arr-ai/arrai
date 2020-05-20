@@ -2,7 +2,6 @@ package syntax
 
 import (
 	"fmt"
-	"reflect"
 	"strings"
 
 	"github.com/arr-ai/arrai/rel"
@@ -139,7 +138,7 @@ func stdSeq() rel.Attr {
 				}
 			}
 
-			panic(fmt.Errorf(sharedError, reflect.TypeOf(args[2])))
+			panic(fmt.Errorf("sub: unsupported args: %s, %s, %s", args[0], args[1], args[2]))
 		}),
 		createNestedFuncAttr("split", 2, func(args ...rel.Value) rel.Value {
 			switch args[1].(type) {
@@ -165,9 +164,7 @@ func stdSeq() rel.Attr {
 				}
 			}
 
-			panic(fmt.Errorf("expected subject sequence types are %s, %s and %s, but the actual type is %s",
-				reflect.TypeOf(rel.String{}), reflect.TypeOf(rel.Array{}), reflect.TypeOf(rel.Bytes{}),
-				reflect.TypeOf(args[2])))
+			panic(fmt.Errorf("split: unsupported args: %s, %s", args[0], args[1]))
 		}),
 		createNestedFuncAttr("join", 2, func(args ...rel.Value) rel.Value {
 			switch a1 := args[1].(type) {
@@ -197,7 +194,7 @@ func stdSeq() rel.Attr {
 				}
 			}
 
-			panic(fmt.Errorf(sharedError, reflect.TypeOf(args[2])))
+			panic(fmt.Errorf("join: unsupported args: %s, %s", args[0], args[1]))
 		}),
 	)
 }
@@ -237,5 +234,3 @@ func strJoin(args ...rel.Value) rel.Value {
 	}
 	return rel.NewString([]rune(strings.Join(toJoin, mustAsString(args[0]))))
 }
-
-var sharedError = "expected subject sequence types are rel.String, rel.Array and rel.Bytes, but the actual type is %s"
