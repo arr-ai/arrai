@@ -1,4 +1,5 @@
-package rel //nolint:dupl
+//nolint:dupl
+package rel
 
 import (
 	"testing"

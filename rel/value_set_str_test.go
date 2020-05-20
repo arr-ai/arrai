@@ -1,3 +1,4 @@
+//nolint:dupl
 package rel
 
 import (
@@ -6,21 +7,21 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+const hello = "hello"
+
 func TestIsStringTuple(t *testing.T) {
-	s := "hello"
-	for e := NewString([]rune(s)).Enumerator(); e.MoveNext(); {
+	for e := NewString([]rune(hello)).Enumerator(); e.MoveNext(); {
 		tuple, is := e.Current().(StringCharTuple)
 		if assert.True(t, is) {
-			assert.Equal(t, rune(s[tuple.at]), tuple.char)
+			assert.Equal(t, rune(hello[tuple.at]), tuple.char)
 		}
 	}
 }
 
 func TestStringCall(t *testing.T) {
 	t.Parallel()
-	s := "hello"
-	f := NewString([]rune(s))
-	for i, c := range s {
+	f := NewString([]rune(hello))
+	for i, c := range hello {
 		assert.Equal(t, c, rune(f.Call(NewNumber(float64(i))).(Number).Float64()))
 	}
 
