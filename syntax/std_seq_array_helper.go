@@ -16,10 +16,6 @@ func arraySub(old, new rel.Value, subject rel.Array) rel.Value {
 	oldArray := convert2Array(old)
 	newArray := convert2Array(new)
 
-	if !oldArray.IsTrue() && !new.IsTrue() {
-		return subject
-	}
-
 	result := make([]rel.Value, 0, subject.Count())
 	if !old.IsTrue() {
 		for _, e := range subject.Values() {
@@ -70,9 +66,6 @@ func arraySplit(delimiter rel.Value, subject rel.Array) rel.Value {
 // Joins array joiner to subject.
 func arrayJoin(joiner rel.Value, subject rel.Array) rel.Value {
 	joinerArray := convert2Array(joiner)
-	if !joinerArray.IsTrue() || !subject.IsTrue() {
-		return subject
-	}
 
 	result := make([]rel.Value, 0, subject.Count())
 	for i, value := range subject.Values() {

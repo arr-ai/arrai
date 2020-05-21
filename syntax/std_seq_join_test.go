@@ -42,6 +42,9 @@ func TestArrayJoin(t *testing.T) {
 	AssertCodesEvalToSameValue(t, `[]`, `//seq.join([],[])`)
 	AssertCodesEvalToSameValue(t, `[]`, `//seq.join([1],[])`)
 
+	AssertCodesEvalToSameValue(t, `[1, 2, 3, 4]`, `//seq.join([], [[1, 2], [3, 4]])`)
+	AssertCodesEvalToSameValue(t, `[[1, 2], 3, 4]`, `//seq.join([], [[[1, 2]], [3, 4]])`)
+
 	assertExprPanics(t, `//seq.join(1, [1,2,3,4,5])`)
 	assertExprPanics(t, `//seq.join('A', [1,2])`)
 }

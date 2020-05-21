@@ -43,6 +43,7 @@ func TestArraySubEdgeCases(t *testing.T) {
 	AssertCodesEvalToSameValue(t, `[[1,2]]`, `//seq.sub( [],[[1,2]], [])`)
 	AssertCodesEvalToSameValue(t, `[]`, `//seq.sub( [1],[], [])`)
 	AssertCodesEvalToSameValue(t, `[1,2,3]`, `//seq.sub( [],[], [1,2,3])`)
+	AssertCodesEvalToSameValue(t, `[[1,2],3]`, `//seq.sub( [],[], [[1,2],3])`)
 	AssertCodesEvalToSameValue(t, `[4,1,4,2,4,3,4]`, `//seq.sub( [], [4],[1,2,3])`)
 	AssertCodesEvalToSameValue(t, `[4,[1,2],4,[3,4],4]`, `//seq.sub( [], [4],[[1,2],[3,4]])`)
 	AssertCodesEvalToSameValue(t, `[[4],[1,2],[4],[3,4],[4]]`, `//seq.sub( [], [[4]],[[1,2],[3,4]])`)
