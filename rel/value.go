@@ -117,10 +117,12 @@ type Set interface {
 func SetCall(s Set, arg Value) Value {
 	result := s.CallAll(arg)
 	if !result.IsTrue() {
-		panic("no result")
+		panic(fmt.Sprintf("Call: no return values from set %v", s))
 	}
-	if result.Count() > 1 {
-		panic(fmt.Sprintf("Call: too many return values from set %v: %v", s, result))
+	for i, e := 1, result.Enumerator(); e.MoveNext(); i++ {
+		if i > 1 {
+			panic(fmt.Sprintf("Call: too many return values from set %v: %v", s, result))
+		}
 	}
 	return SetAny(result)
 }

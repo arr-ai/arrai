@@ -82,7 +82,7 @@ func (c Closure) Export() interface{} {
 	if c.f.Arg() == "-" {
 		return SetCall(c, None)
 	}
-	return func (arg Value) Value {
+	return func(arg Value) Value {
 		return SetCall(c, arg)
 	}
 }

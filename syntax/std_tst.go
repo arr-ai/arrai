@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/arr-ai/arrai/rel"
-	"github.com/arr-ai/wbnf/parser"
 )
 
 func createTestCompareFuncAttr(name string, ok func(a, b rel.Value) bool, message string) rel.Attr {
@@ -81,6 +80,6 @@ func stdTest() rel.Attr {
 	)
 }
 
-func wrapContext(err error, expr rel.Expr) error {
-	return fmt.Errorf("%s\n%s", err.Error(), expr.Source().Context(parser.DefaultLimit))
-}
+// func wrapContext(err error, expr rel.Expr) error {
+// 	return fmt.Errorf("%s\n%s", err.Error(), expr.Source().Context(parser.DefaultLimit))
+// }
