@@ -39,6 +39,9 @@ func TestEvalCond(t *testing.T) {
 
 func TestEvalCondWithControlVar(t *testing.T) {
 	t.Parallel()
+	AssertCodesEvalToSameValue(t, `1`, `let a = 1; a cond {(1) :1, (2) :2}`)
+	// AssertCodesEvalToSameValue(t, `1`, `let [a, b, c , _] = [1,2,3,4]; [a,b]`)
+
 	// Control var conditions
 	AssertCodesEvalToSameValue(t, `1`, `let a = 1; a cond {(1) :1}`)
 	AssertCodesEvalToSameValue(t, `1`, `let a = 1; a cond {(1) :1, (2) :2}`)
