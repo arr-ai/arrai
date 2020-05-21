@@ -52,7 +52,7 @@ sexpr  -> "${"
           C* expr C*
           control=/{ (?: : [-+#*\.\_0-9a-z]* (?: : (?: \\. | [^\\:}] )* ){0,2} )? }
           close=/{\}\s*};
-pattern -> %!patternterms(pattern|expr) | IDENT | NUM;
+pattern -> extra=("..." ident=IDENT?) | %!patternterms(pattern|expr) | IDENT | NUM;
 
 ARROW  -> /{:>|=>|>>|orderby|order|where|sum|max|mean|median|min};
 IDENT  -> /{ \. | [$@A-Za-z_][0-9$@A-Za-z_]* };
@@ -69,7 +69,7 @@ C      -> /{ # .* $ };
 .macro patternterms(top) {
     C* "{" C* rel=(names tuple=("(" v=top:",", ")"):",",?) "}" C*
   | C* "{" C* set=(elt=top:",",?) "}" C*
-  | C* "{" C* dict=((key=top ":" value=top):",",?) "}" C*
+  | C* "{" C* dict=((key=expr ":" value=top):",",?) "}" C*
   | C* "[" C* array=(item=top:",",?) C* "]" C*
   | C* "(" tuple=(pairs=(name? ":" v=top):",",?) ")" C*
   | C* "(" identpattern=IDENT ")" C*

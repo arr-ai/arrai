@@ -42,6 +42,22 @@ func (p IdentPattern) String() string {
 	return p.ident
 }
 
+type ExtraElementPattern struct {
+	ident string
+}
+
+func NewExtraElementPattern(ident string) ExtraElementPattern {
+	return ExtraElementPattern{ident}
+}
+
+func (p ExtraElementPattern) Bind(scope Scope, value Value) Scope {
+	return EmptyScope.With(p.ident, value)
+}
+
+func (p ExtraElementPattern) String() string {
+	return "..." + p.ident
+}
+
 type ArrayPattern struct {
 	items []Pattern
 }
@@ -62,10 +78,26 @@ func (p ArrayPattern) Bind(scope Scope, value Value) Scope {
 		panic(fmt.Sprintf("value %s is not an array", value))
 	}
 
+	if len(p.items) > array.Count() {
+		panic(fmt.Sprintf("length of array %s shorter than array pattern %s", array, p))
+	}
+
+	nonExtraElements := make([]int, 0)
+	for i, item := range p.items {
+		if _, is := item.(ExtraElementPattern); !is {
+			nonExtraElements = append(nonExtraElements, i)
+		}
+	}
+
+	if len(p.items)-len(nonExtraElements) == 0 && len(p.items) < array.Count() {
+		panic(fmt.Sprintf("length of array %s longer than array pattern %s", array, p))
+	}
+
 	result := EmptyScope
 	for i, item := range p.items {
-		if len(array.Values()) < i+1 {
-			panic(fmt.Sprintf("length of value %s shorter than array pattern %s", array.Values(), p.items))
+		if _, is := item.(ExtraElementPattern); is {
+			result = result.MatchedUpdate(item.Bind(scope, NewArray(array.Values()[i:]...)))
+			continue
 		}
 		result = result.MatchedUpdate(item.Bind(scope, array.Values()[i]))
 	}
@@ -127,7 +159,7 @@ func (p TuplePattern) Bind(scope Scope, value Value) Scope {
 	}
 
 	if len(p.attrs) != tuple.Count() {
-		panic(fmt.Sprintf("tuples %s and %s cannot match", p, tuple))
+		panic(fmt.Sprintf("the length of tuple %s and %s do not match", p, tuple))
 	}
 
 	result := EmptyScope
@@ -199,7 +231,7 @@ func (p DictPattern) Bind(scope Scope, value Value) Scope {
 	}
 
 	if len(p.entries) != dict.Count() {
-		panic(fmt.Sprintf("dicts %s and %s cannot match", p, dict))
+		panic(fmt.Sprintf("the length of dict %s and %s do not match", p, dict))
 	}
 
 	result := EmptyScope

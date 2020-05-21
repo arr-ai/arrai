@@ -149,6 +149,13 @@ func (pc ParseContext) compilePattern(b ast.Branch) rel.Pattern {
 	if ident := b.One("identpattern"); ident != nil {
 		return rel.NewIdentPattern(ident.Scanner().String())
 	}
+	if extra := b.One("extra"); extra != nil {
+		var ident string
+		if id := extra.One("ident"); id != nil {
+			ident = id.Scanner().String()
+		}
+		return rel.NewExtraElementPattern(ident)
+	}
 
 	expr := pc.CompileExpr(b)
 	return rel.ExprAsPattern(expr)
