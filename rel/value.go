@@ -131,7 +131,7 @@ func SetAny(s Set) Value {
 	for e := s.Enumerator(); e.MoveNext(); {
 		return e.Current()
 	}
-	panic("set is empty")
+	panic("SetAny: set is empty")
 }
 
 // NewValue constructs a new value from a Go value.
