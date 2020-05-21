@@ -38,12 +38,14 @@ func TestArrayJoin(t *testing.T) {
 	AssertCodesEvalToSameValue(t, `[[1, 2], [3, 4], [0], [1], [5, 6], [7, 8]]`,
 		`//seq.join([[0],[1]], [[[1, 2], [3, 4]],[[5, 6],[7, 8]]])`)
 
+	// Test cases the delimiter is []
 	AssertCodesEvalToSameValue(t, `[1,2]`, `//seq.join([],[1,2])`)
 	AssertCodesEvalToSameValue(t, `[]`, `//seq.join([],[])`)
 	AssertCodesEvalToSameValue(t, `[]`, `//seq.join([1],[])`)
 
 	AssertCodesEvalToSameValue(t, `[1, 2, 3, 4]`, `//seq.join([], [[1, 2], [3, 4]])`)
 	AssertCodesEvalToSameValue(t, `[[1, 2], 3, 4]`, `//seq.join([], [[[1, 2]], [3, 4]])`)
+	AssertCodesEvalToSameValue(t, `[[1, 2], [3, 4], 5]`, `//seq.join([], [[[1, 2]], [[3,4], 5]])`)
 
 	assertExprPanics(t, `//seq.join(1, [1,2,3,4,5])`)
 	assertExprPanics(t, `//seq.join('A', [1,2])`)
