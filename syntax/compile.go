@@ -191,26 +191,6 @@ func (pc ParseContext) compileTuplePattern(b ast.Branch) rel.Pattern {
 func (pc ParseContext) compileDictPattern(b ast.Branch) rel.Pattern {
 	keys := b["key"]
 	values := b["value"]
-	if (keys != nil) || (values != nil) {
-		if (keys != nil) && (values != nil) {
-			keyPtns := pc.compileExprs(keys.(ast.Many)...)
-			valuePtns := pc.compilePatterns(values.(ast.Many)...)
-			if len(keyPtns) == len(valuePtns) {
-				entryPtns := make([]rel.DictPatternEntry, 0, len(keyPtns))
-				for i, keyPtn := range keyPtns {
-					entryPtns = append(entryPtns, rel.NewDictPatternEntry(keyPtn, valuePtns[i]))
-				}
-				return rel.NewDictPattern(entryPtns...)
-			}
-		}
-		panic("mismatch between dict keys and values")
-	}
-	return rel.NewDictPattern()
-}
-
-func (pc ParseContext) compileDictPattern(b ast.Branch) rel.Pattern {
-	keys := b["key"]
-	values := b["value"]
 	if (keys != nil) != (values != nil) {
 		panic("mismatch between dict keys and values")
 	}
