@@ -285,6 +285,9 @@ func (s GenericSet) CallAll(arg Value) Set {
 	set := None
 	for e := s.Enumerator(); e.MoveNext(); {
 		if tm.Match(e.Current()) && at.Equal(arg) {
+			if t.Count() != 1 {
+				panic("GenericSet.CallAll: only works on binary tuple with one '@' attribute")
+			}
 			for attr := t.Enumerator(); attr.MoveNext(); {
 				_, value := attr.Current()
 				set = set.With(value)

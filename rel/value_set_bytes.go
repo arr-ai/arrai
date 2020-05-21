@@ -229,7 +229,7 @@ func (b Bytes) CallAll(arg Value) Set {
 	if i < 0 || i >= len(b.Bytes()) {
 		return None
 	}
-	return None.With(NewNumber(float64(string(b.b)[i])))
+	return NewSet(NewNumber(float64(string(b.b)[i])))
 }
 
 func (b Bytes) index(pos int) int {

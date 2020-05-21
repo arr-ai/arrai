@@ -222,7 +222,7 @@ func (s String) CallAll(arg Value) Set {
 	if i < 0 || i >= len(s.s) {
 		return None
 	}
-	return None.With(NewNumber(float64(string(s.s)[i])))
+	return NewSet(NewNumber(float64(string(s.s)[i])))
 }
 
 func (s String) index(pos int) int {

@@ -268,7 +268,7 @@ func (a Array) CallAll(arg Value) Set {
 	if i < 0 || i >= len(a.values) {
 		return None
 	}
-	return None.With(a.values[i])
+	return NewSet(a.values[i])
 }
 
 func (a Array) index(pos int) int {
