@@ -269,7 +269,7 @@ func (d Dict) CallAll(arg Value) Set {
 	if exists {
 		switch v := val.(type) {
 		case Value:
-			return None.With(v)
+			return NewSet(v)
 		case multipleValues:
 			values := make([]Value, 0, frozen.Set(v).Count())
 			for e := frozen.Set(v).Range(); e.Next(); {
