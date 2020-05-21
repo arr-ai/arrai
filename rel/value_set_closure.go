@@ -88,7 +88,7 @@ func (c Closure) Export() interface{} {
 }
 
 func (c Closure) Count() int {
-	return 1
+	panic("unimplemented")
 }
 
 func (c Closure) Has(v Value) bool {
