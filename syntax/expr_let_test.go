@@ -49,19 +49,19 @@ func TestExprLetArrayPattern(t *testing.T) {
 
 func TestExprLetTuplePattern(t *testing.T) {
 	AssertCodesEvalToSameValue(t, `4`, `let () = (); 4`)
-	AssertCodesEvalToSameValue(t, `4`, `let (a:x, b:y) = (a:4, b:7); x`)
-	AssertCodesEvalToSameValue(t, `4`, `let (a:x, b:x) = (a:4, b:4); x`)
-	AssertCodesEvalToSameValue(t, `4`, `let x = 4; let (a:x) = (a:4); x`)
-	AssertCodesEvalToSameValue(t, `4`, `let x = 5; let (a:x) = (a:4); x`)
-	AssertCodesEvalToSameValue(t, `4`, `let (a:[x]) = (a:[4]); x`)
+	AssertCodesEvalToSameValue(t, `4`, `let (a: x, b: y) = (a: 4, b: 7); x`)
+	AssertCodesEvalToSameValue(t, `4`, `let (a: x, b: x) = (a: 4, b: 4); x`)
+	AssertCodesEvalToSameValue(t, `4`, `let x = 4; let (a: x) = (a: 4); x`)
+	AssertCodesEvalToSameValue(t, `4`, `let x = 5; let (a: x) = (a: 4); x`)
+	AssertCodesEvalToSameValue(t, `4`, `let (a: [x]) = (a: [4]); x`)
 	AssertCodesEvalToSameValue(t, `1`, `let (:x) = (x: 1); x`)
 	AssertCodesEvalToSameValue(t, `2`, `let (:x, :y) = (x: 1, y: 2); y`)
-	AssertCodeErrors(t, `let (a:x) = (b:7, a:4); x`, "")
-	AssertCodeErrors(t, `let (a:x, a:x) = (a:4, a:4); x`, "")
-	AssertCodeErrors(t, `let (a:x, a:x) = (a:4); x`, "")
-	AssertCodeErrors(t, `let x = 5; let (a:(x)) = (a:4); x`, "")
-	AssertCodeErrors(t, `let (a:x, b:x) = (a:4, b:7); x`, "")
-	AssertCodeErrors(t, `let x = 5; let (a:[(x)]) = (a:[4]); x`, "")
+	AssertCodeErrors(t, `let (a: x) = (b: 7, a: 4); x`, "")
+	AssertCodeErrors(t, `let (a: x, a: x) = (a: 4, a: 4); x`, "")
+	AssertCodeErrors(t, `let (a: x, a: x) = (a: 4); x`, "")
+	AssertCodeErrors(t, `let x = 5; let (a: (x)) = (a: 4); x`, "")
+	AssertCodeErrors(t, `let (a: x, b: x) = (a: 4, b: 7); x`, "")
+	AssertCodeErrors(t, `let x = 5; let (a: [(x)]) = (a: [4]); x`, "")
 }
 
 func TestExprLetDictPattern(t *testing.T) {

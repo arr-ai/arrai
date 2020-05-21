@@ -52,7 +52,8 @@ sexpr  -> "${"
           C* expr C*
           control=/{ (?: : [-+#*\.\_0-9a-z]* (?: : (?: \\. | [^\\:}] )* ){0,2} )? }
           close=/{\}\s*};
-pattern -> extra=("..." ident=IDENT?) | %!patternterms(pattern|expr) | IDENT | NUM;
+pattern -> extra | %!patternterms(pattern|expr) | IDENT | NUM;
+extra -> ("..." ident=IDENT?);
 
 ARROW  -> /{:>|=>|>>|orderby|order|where|sum|max|mean|median|min};
 IDENT  -> /{ \. | [$@A-Za-z_][0-9$@A-Za-z_]* };
