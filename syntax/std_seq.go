@@ -66,25 +66,31 @@ func stdSeq() rel.Attr {
 		rel.NewNativeFunctionAttr("repeat", stdSeqRepeat),
 		createNestedFuncAttr("contains", 2, func(args ...rel.Value) rel.Value {
 			return includingProcess(func(args ...rel.Value) rel.Value {
-				return rel.NewBool(strings.Contains(mustAsString(args[1]), mustAsString(args[0])))
+				sub, subject := args[0], args[1]
+				return rel.NewBool(strings.Contains(mustAsString(subject), mustAsString(sub)))
 			},
 				func(args ...rel.Value) rel.Value {
-					return arrayContains(args[0], args[1].(rel.Array))
+					sub, subject := args[0], args[1]
+					return arrayContains(sub, subject.(rel.Array))
 				},
 				func(args ...rel.Value) rel.Value {
-					return rel.NewBool(strings.Contains(args[1].String(), args[0].String()))
+					sub, subject := args[0], args[1]
+					return rel.NewBool(strings.Contains(subject.String(), sub.String()))
 				},
 				args...)
 		}),
 		createNestedFuncAttr("has_prefix", 2, func(args ...rel.Value) rel.Value {
 			return includingProcess(func(args ...rel.Value) rel.Value {
-				return rel.NewBool(strings.HasPrefix(mustAsString(args[1]), mustAsString(args[0])))
+				sub, subject := args[0], args[1]
+				return rel.NewBool(strings.HasPrefix(mustAsString(subject), mustAsString(sub)))
 			},
 				func(args ...rel.Value) rel.Value {
-					return arrayHasPrefix(args[0], args[1].(rel.Array))
+					sub, subject := args[0], args[1]
+					return arrayHasPrefix(sub, subject.(rel.Array))
 				},
 				func(args ...rel.Value) rel.Value {
-					return rel.NewBool(strings.HasPrefix(args[1].String(), args[0].String()))
+					sub, subject := args[0], args[1]
+					return rel.NewBool(strings.HasPrefix(subject.String(), sub.String()))
 				},
 				args...)
 		}),
