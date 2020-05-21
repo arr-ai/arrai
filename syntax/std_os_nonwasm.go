@@ -15,7 +15,11 @@ func stdOsGetArgs() rel.Value {
 	case "ai", "ax":
 		offset = 1
 	default:
-		offset = 2
+		if RunOmitted {
+			offset = 1
+		} else {
+			offset = 2
+		}
 	}
 	return strArrToRelArr(os.Args[offset:])
 }
