@@ -75,7 +75,7 @@ func stdSeq() rel.Attr {
 				},
 				func(args ...rel.Value) rel.Value {
 					sub, subject := args[0], args[1]
-					return rel.NewBool(strings.Contains(subject.String(), sub.String()))
+					return rel.NewBool(strings.Contains(asString(subject), asString(sub)))
 				},
 				args...)
 		}),
@@ -90,7 +90,7 @@ func stdSeq() rel.Attr {
 				},
 				func(args ...rel.Value) rel.Value {
 					sub, subject := args[0], args[1]
-					return rel.NewBool(strings.HasPrefix(subject.String(), sub.String()))
+					return rel.NewBool(strings.HasPrefix(asString(subject), asString(sub)))
 				},
 				args...)
 		}),
@@ -105,7 +105,7 @@ func stdSeq() rel.Attr {
 				},
 				func(args ...rel.Value) rel.Value {
 					suffix, subject := args[0], args[1]
-					return rel.NewBool(strings.HasSuffix(subject.String(), suffix.String()))
+					return rel.NewBool(strings.HasSuffix(asString(subject), asString(suffix)))
 				},
 				args...)
 		}),
@@ -224,11 +224,6 @@ func includingProcess(
 	case rel.Array:
 		return arrayHandler(args...)
 	case rel.Bytes:
-		if _, isSet := sub.(rel.GenericSet); isSet {
-			if len(subject.String()) > 0 {
-				return rel.NewBool(true)
-			}
-		}
 		return bytesHandler(args...)
 	case rel.GenericSet:
 		if _, isSet := sub.(rel.GenericSet); isSet {
@@ -247,4 +242,14 @@ func strJoin(args ...rel.Value) rel.Value {
 		toJoin = append(toJoin, mustAsString(i.Current()))
 	}
 	return rel.NewString([]rune(strings.Join(toJoin, mustAsString(joiner))))
+}
+
+func asString(val rel.Value) string {
+	switch val := val.(type) {
+	case rel.Bytes:
+		return val.String()
+	case rel.Set:
+		return mustAsString(val)
+	}
+	panic("value can't be converted to a string")
 }
