@@ -25,7 +25,6 @@ func TestStrJoin(t *testing.T) {
 func TestArrayJoin(t *testing.T) {
 	t.Parallel()
 	// joiner "" is translated to rel.GenericSet
-	AssertCodesEvalToSameValue(t, `[1,0,2,0,3,0,4,0,5]`, `//seq.join([0], [1,2,3,4,5])`)
 	AssertCodesEvalToSameValue(t, `[1, 2, 0, 3, 4, 0, 5, 6]`, `//seq.join([0], [[1, 2], [3, 4], [5, 6]])`)
 	AssertCodesEvalToSameValue(t, `[2, [3, 4], 0, 5, 6]`, `//seq.join([0], [[2, [3, 4]], [5, 6]])`)
 	AssertCodesEvalToSameValue(t, `[1, 2, 10, 11, 3, 4, 10, 11, 5, 6]`,
@@ -38,8 +37,13 @@ func TestArrayJoin(t *testing.T) {
 	AssertCodesEvalToSameValue(t, `[[1, 2], [3, 4], [0], [1], [5, 6], [7, 8]]`,
 		`//seq.join([[0],[1]], [[[1, 2], [3, 4]],[[5, 6],[7, 8]]])`)
 
+	AssertCodesEvalToSameValue(t, `['AA', 'AB', 'BB', 'AB', 'CC', 'DD']`,
+		`//seq.join(['AB'], [['AA'], ['BB'], ['CC' , 'DD']])`)
+	AssertCodesEvalToSameValue(t, `['AA', 'AB', 'BB', ['CC', 'DD']]`,
+		`//seq.join(['AB'], [['AA'], ['BB' ,['CC' , 'DD']]])`)
+
 	// Test cases the delimiter is []
-	AssertCodesEvalToSameValue(t, `[1,2]`, `//seq.join([],[1,2])`)
+	AssertCodesEvalToSameValue(t, `[1,2]`, `//seq.join([],[[1],[2]])`)
 	AssertCodesEvalToSameValue(t, `[]`, `//seq.join([],[])`)
 	AssertCodesEvalToSameValue(t, `[]`, `//seq.join([1],[])`)
 
@@ -49,6 +53,10 @@ func TestArrayJoin(t *testing.T) {
 
 	assertExprPanics(t, `//seq.join(1, [1,2,3,4,5])`)
 	assertExprPanics(t, `//seq.join('A', [1,2])`)
+	assertExprPanics(t, `//seq.join([],[1,2])`)
+	assertExprPanics(t, `//seq.join([1],[1,2])`)
+	assertExprPanics(t, `//seq.join([0], [1,2,3,4,5])`)
+	assertExprPanics(t, `//seq.join(['A'], ['AT','BB', 'CD'])`)
 }
 
 func TestBytesJoin(t *testing.T) {
