@@ -7,13 +7,13 @@ import (
 	"github.com/arr-ai/arrai/rel"
 )
 
-func stdSeqConcat(arg rel.Value) rel.Value {
-	if set, is := arg.(rel.Set); is {
+func stdSeqConcat(seq rel.Value) rel.Value {
+	if set, is := seq.(rel.Set); is {
 		if !set.IsTrue() {
 			return rel.None
 		}
 	}
-	values := arg.(rel.Array).Values()
+	values := seq.(rel.Array).Values()
 	if len(values) == 0 {
 		return rel.None
 	}
@@ -96,111 +96,117 @@ func stdSeq() rel.Attr {
 		}),
 		createNestedFuncAttr("has_suffix", 2, func(args ...rel.Value) rel.Value {
 			return includingProcess(func(args ...rel.Value) rel.Value {
-				return rel.NewBool(strings.HasSuffix(mustAsString(args[1]), mustAsString(args[0])))
+				suffix, subject := args[0], args[1]
+				return rel.NewBool(strings.HasSuffix(mustAsString(subject), mustAsString(suffix)))
 			},
 				func(args ...rel.Value) rel.Value {
-					return arrayHasSuffix(args[0], args[1].(rel.Array))
+					suffix, subject := args[0], args[1]
+					return arrayHasSuffix(suffix, subject.(rel.Array))
 				},
 				func(args ...rel.Value) rel.Value {
-					return rel.NewBool(strings.HasSuffix(args[1].String(), args[0].String()))
+					suffix, subject := args[0], args[1]
+					return rel.NewBool(strings.HasSuffix(subject.String(), suffix.String()))
 				},
 				args...)
 		}),
 		createNestedFuncAttr("sub", 3, func(args ...rel.Value) rel.Value {
-			switch args[2].(type) {
+			old, new, subject := args[0], args[1], args[2]
+			switch subject.(type) {
 			case rel.String:
 				return rel.NewString(
 					[]rune(
 						strings.ReplaceAll(
-							mustAsString(args[2]),
-							mustAsString(args[0]),
-							mustAsString(args[1]),
+							mustAsString(subject),
+							mustAsString(old),
+							mustAsString(new),
 						),
 					),
 				)
 			case rel.Array:
-				return arraySub(args[0], args[1], args[2].(rel.Array))
+				return arraySub(old, new, subject.(rel.Array))
 			case rel.Bytes:
-				_, arg0IsSet := args[0].(rel.GenericSet)
-				_, arg1IsSet := args[1].(rel.GenericSet)
-				if !arg0IsSet && arg1IsSet {
-					return rel.NewBytes([]byte(strings.ReplaceAll(args[2].String(),
-						args[0].String(), "")))
-				} else if arg0IsSet && !arg1IsSet {
-					return rel.NewBytes([]byte(strings.ReplaceAll(args[2].String(),
-						"", args[1].String())))
+				_, oldIsSet := old.(rel.GenericSet)
+				_, newIsSet := new.(rel.GenericSet)
+				if !oldIsSet && newIsSet {
+					return rel.NewBytes([]byte(strings.ReplaceAll(subject.String(),
+						old.String(), "")))
+				} else if oldIsSet && !newIsSet {
+					return rel.NewBytes([]byte(strings.ReplaceAll(subject.String(),
+						"", new.String())))
 				}
-				return rel.NewBytes([]byte(strings.ReplaceAll(args[2].String(),
-					args[0].String(), args[1].String())))
+				return rel.NewBytes([]byte(strings.ReplaceAll(subject.String(),
+					old.String(), new.String())))
 			case rel.GenericSet:
-				_, arg0IsSet := args[0].(rel.GenericSet)
-				_, arg1IsSet := args[1].(rel.GenericSet)
-				if arg0IsSet && arg1IsSet {
-					return args[2]
-				} else if arg0IsSet && !arg1IsSet {
-					return args[1]
-				} else if !arg0IsSet && arg1IsSet {
-					return args[2]
+				_, oldIsSet := old.(rel.GenericSet)
+				_, newIsSet := new.(rel.GenericSet)
+				if oldIsSet && newIsSet {
+					return subject
+				} else if oldIsSet && !newIsSet {
+					return new
+				} else if !oldIsSet && newIsSet {
+					return subject
 				}
 			}
 
-			panic(fmt.Errorf("sub: unsupported args: %s, %s, %s", args[0], args[1], args[2]))
+			panic(fmt.Errorf("sub: unsupported args: %s, %s, %s", old, new, subject))
 		}),
 		createNestedFuncAttr("split", 2, func(args ...rel.Value) rel.Value {
-			switch args[1].(type) {
+			delimiter, subject := args[0], args[1]
+			switch subject.(type) {
 			case rel.String:
-				splitted := strings.Split(mustAsString(args[1]), mustAsString(args[0]))
+				splitted := strings.Split(mustAsString(subject), mustAsString(delimiter))
 				vals := make([]rel.Value, 0, len(splitted))
 				for _, s := range splitted {
 					vals = append(vals, rel.NewString([]rune(s)))
 				}
 				return rel.NewArray(vals...)
 			case rel.Array:
-				return arraySplit(args[0], args[1].(rel.Array))
+				return arraySplit(delimiter, subject.(rel.Array))
 			case rel.Bytes:
-				return bytesSplit(args[0], args[1].(rel.Bytes))
+				return bytesSplit(delimiter, subject.(rel.Bytes))
 			case rel.GenericSet:
-				switch args[0].(type) {
+				switch delimiter.(type) {
 				case rel.String:
-					return rel.NewArray(args[1])
+					return rel.NewArray(subject)
 				case rel.Array, rel.Bytes:
 					return rel.NewArray(rel.NewArray())
 				case rel.GenericSet:
-					return args[1]
+					return subject
 				}
 			}
 
-			panic(fmt.Errorf("split: unsupported args: %s, %s", args[0], args[1]))
+			panic(fmt.Errorf("split: unsupported args: %s, %s", delimiter, subject))
 		}),
 		createNestedFuncAttr("join", 2, func(args ...rel.Value) rel.Value {
-			switch a1 := args[1].(type) {
+			joiner, subject := args[0], args[1]
+			switch subject := subject.(type) {
 			case rel.Array:
-				switch a1.Values()[0].(type) {
+				switch subject.Values()[0].(type) {
 				case rel.String:
 					// if subject is rel.String
 					return strJoin(args...)
 				case rel.Value:
-					if _, isStr := args[0].(rel.String); isStr {
+					if _, isStr := joiner.(rel.String); isStr {
 						return strJoin(args...)
 					}
-					return arrayJoin(args[0], a1)
+					return arrayJoin(joiner, subject)
 				}
 			case rel.Bytes:
-				if _, isSet := args[0].(rel.GenericSet); isSet {
-					return args[1]
+				if _, isSet := joiner.(rel.GenericSet); isSet {
+					return subject
 				}
-				return bytesJoin(args[0].(rel.Bytes), args[1].(rel.Bytes))
+				return bytesJoin(joiner.(rel.Bytes), subject)
 			case rel.GenericSet:
-				switch args[0].(type) {
+				switch joiner.(type) {
 				case rel.String:
 					// if joiner is rel.String
 					return strJoin(args...)
 				case rel.Array, rel.GenericSet, rel.Bytes:
-					return args[1]
+					return subject
 				}
 			}
 
-			panic(fmt.Errorf("join: unsupported args: %s, %s", args[0], args[1]))
+			panic(fmt.Errorf("join: unsupported args: %s, %s", joiner, subject))
 		}),
 	)
 }
@@ -211,20 +217,21 @@ func includingProcess(
 	arrayHandler,
 	bytesHandler func(...rel.Value) rel.Value,
 	args ...rel.Value) rel.Value {
-	switch args[1].(type) {
+	sub, subject := args[0], args[1]
+	switch subject.(type) {
 	case rel.String:
 		return strHandler(args...)
 	case rel.Array:
 		return arrayHandler(args...)
 	case rel.Bytes:
-		if _, isSet := args[0].(rel.GenericSet); isSet {
-			if len(args[1].String()) > 0 {
+		if _, isSet := sub.(rel.GenericSet); isSet {
+			if len(subject.String()) > 0 {
 				return rel.NewBool(true)
 			}
 		}
 		return bytesHandler(args...)
 	case rel.GenericSet:
-		if _, isSet := args[0].(rel.GenericSet); isSet {
+		if _, isSet := sub.(rel.GenericSet); isSet {
 			return rel.NewBool(true)
 		}
 	}
@@ -233,10 +240,11 @@ func includingProcess(
 }
 
 func strJoin(args ...rel.Value) rel.Value {
-	strs := args[1].(rel.Set)
+	joiner, subject := args[0], args[1]
+	strs := subject.(rel.Set)
 	toJoin := make([]string, 0, strs.Count())
 	for i, ok := strs.(rel.Set).ArrayEnumerator(); ok && i.MoveNext(); {
 		toJoin = append(toJoin, mustAsString(i.Current()))
 	}
-	return rel.NewString([]rune(strings.Join(toJoin, mustAsString(args[0]))))
+	return rel.NewString([]rune(strings.Join(toJoin, mustAsString(joiner))))
 }
