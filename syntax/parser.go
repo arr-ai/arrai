@@ -42,7 +42,7 @@ expr   -> C* amp="&"* @ C* arrow=(
               ")")
           )* C*
         > %!patternterms(expr)
-        | C* cond=("cond" "{" (key=@  ":" value=@):",",? ("_" ":" f=expr ","?)? "}") C*
+        | C* cond=("cond" "{" (key=pattern  ":" value=@):",",? ("_" ":" f=expr ","?)? "}") C*
         | C* "{:" C* embed=(grammar=@ ":" subgrammar=%%ast) ":}" C*
         | C* op="\\\\" @ C*
         | C* fn="\\" IDENT @ C*
