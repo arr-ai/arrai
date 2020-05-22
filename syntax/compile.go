@@ -146,19 +146,23 @@ func (pc ParseContext) compilePattern(b ast.Branch) rel.Pattern {
 	if dict := b.One("dict"); dict != nil {
 		return pc.compileDictPattern(dict.(ast.Branch))
 	}
+	if extra := b.One("extra"); extra != nil {
+		return pc.compileExtraElementPattern(extra.(ast.Branch))
+	}
 	if ident := b.One("identpattern"); ident != nil {
 		return rel.NewIdentPattern(ident.Scanner().String())
-	}
-	if extra := b.One("extra"); extra != nil {
-		var ident string
-		if id := extra.One("ident"); id != nil {
-			ident = id.Scanner().String()
-		}
-		return rel.NewExtraElementPattern(ident)
 	}
 
 	expr := pc.CompileExpr(b)
 	return rel.ExprAsPattern(expr)
+}
+
+func (pc ParseContext) compileExtraElementPattern(b ast.Branch) rel.Pattern {
+	var ident string
+	if id := b.One("ident"); id != nil {
+		ident = id.Scanner().String()
+	}
+	return rel.NewExtraElementPattern(ident)
 }
 
 func (pc ParseContext) compilePatterns(exprs ...ast.Node) []rel.Pattern {
@@ -183,15 +187,15 @@ func (pc ParseContext) compileTuplePattern(b ast.Branch) rel.Pattern {
 			var k string
 			var v rel.Pattern
 
-			if n := pair.One("v"); n != nil {
-				v = pc.compilePattern(n.(ast.Branch))
+			if extra := pair.One("extra"); extra != nil {
+				v = pc.compilePattern(pair.(ast.Branch))
+			} else {
+				v = pc.compilePattern(pair.One("v").(ast.Branch))
 				if name := pair.One("name"); name != nil {
 					k = parseName(name.(ast.Branch))
 				} else {
 					k = v.String()
 				}
-			} else {
-				v = pc.compilePattern(pair.(ast.Branch))
 			}
 
 			attr := rel.NewTuplePatternAttr(k, v)
@@ -215,6 +219,15 @@ func (pc ParseContext) compileDictPattern(b ast.Branch) rel.Pattern {
 			entryPtns := make([]rel.DictPatternEntry, 0, len(keyExprs))
 			for i, keyExpr := range keyExprs {
 				entryPtns = append(entryPtns, rel.NewDictPatternEntry(keyExpr, valuePtns[i]))
+			}
+			if extra := b["ext"]; extra != nil {
+				entryPtns = append(
+					entryPtns,
+					rel.NewDictPatternEntry(
+						rel.DotIdent,
+						pc.compileExtraElementPattern(extra.(ast.Many)[0].One("extra").(ast.Branch)),
+					),
+				)
 			}
 			return rel.NewDictPattern(entryPtns...)
 		}

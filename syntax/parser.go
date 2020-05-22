@@ -84,7 +84,7 @@ C      -> /{ # .* $ };
 .macro patternterms(top) {
     C* "{" C* rel=(names tuple=("(" v=top:",", ")"):",",?) "}" C*
   | C* "{" C* set=(elt=top:",",?) "}" C*
-  | C* "{" C* dict=((extra|key=expr ":" value=top):",",?) "}" C*
+  | C* "{" C* dict=((ext=extra|key=expr ":" value=top):",",?) "}" C*
   | C* "[" C* array=(item=top:",",?) C* "]" C*
   | C* "(" tuple=(pairs=(extra|name? ":" v=top):",",?) ")" C*
   | C* "(" identpattern=IDENT ")" C*

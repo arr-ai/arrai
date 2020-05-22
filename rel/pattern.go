@@ -3,6 +3,8 @@ package rel
 import (
 	"bytes"
 	"fmt"
+
+	"github.com/arr-ai/frozen"
 )
 
 // Pattern can be inside an Expr, Expr can be a Pattern.
@@ -51,6 +53,9 @@ func NewExtraElementPattern(ident string) ExtraElementPattern {
 }
 
 func (p ExtraElementPattern) Bind(scope Scope, value Value) Scope {
+	if p.ident == "" {
+		return EmptyScope
+	}
 	return EmptyScope.With(p.ident, value)
 }
 
@@ -251,14 +256,31 @@ func (p DictPattern) Bind(scope Scope, value Value) Scope {
 		panic(fmt.Sprintf("%s is not a dict", value))
 	}
 
-	if len(p.entries) != dict.Count() {
-		panic(fmt.Sprintf("the length of dict %s and %s do not match", p, dict))
+	if len(p.entries) > dict.Count() {
+		panic(fmt.Sprintf("length of dict %s shorter than dict pattern %s", dict, p))
+	}
+
+	nonExtraElements := make([]int, 0)
+	for i, entry := range p.entries {
+		if _, is := entry.value.(ExtraElementPattern); !is {
+			nonExtraElements = append(nonExtraElements, i)
+		}
+	}
+
+	if len(p.entries)-len(nonExtraElements) == 0 && len(p.entries) < dict.Count() {
+		panic(fmt.Sprintf("length of dict %s longer than dict pattern %s", dict, p))
 	}
 
 	result := EmptyScope
+	m := dict.m
 	for _, entry := range p.entries {
-		dictValue := dict.m.MustGet(entry.at)
+		if _, is := entry.value.(ExtraElementPattern); is {
+			result = result.MatchedUpdate(entry.value.Bind(scope, Dict{m: m}))
+			continue
+		}
+		dictValue := m.MustGet(entry.at)
 		result = result.MatchedUpdate(entry.value.Bind(scope, dictValue.(Value)))
+		m = m.Without(frozen.NewSet(entry.at))
 	}
 
 	return result
