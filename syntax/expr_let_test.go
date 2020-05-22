@@ -87,5 +87,9 @@ func TestExprLetExtraElementsInPattern(t *testing.T) {
 	AssertCodesEvalToSameValue(t, `[1, 2, [3, 4, 5]]`, `let [x, y, ...t] = [1, 2, 3, 4, 5]; [x, y, t]`)
 	AssertCodesEvalToSameValue(t, `[2, 3, 4, 5]`, `let [_, ...t] = [1, 2, 3, 4, 5]; t`)
 	AssertCodesEvalToSameValue(t, `[2, [3, 4, 5]]`, `let [_, x, ...t] = [1, 2, 3, 4, 5]; [x, t]`)
-	AssertCodePanics(t, `let [x, ...] = [1]; x`)
+	AssertCodesEvalToSameValue(t, `[1, 2]`, `let (m: x, n: y, ...) = (m: 1, n: 2, j: 3, k: 4); [x, y]`)
+	AssertCodesEvalToSameValue(t, `[1, 2, (j: 3, k: 4)]`, `let (m: x, n: y, ...t) = (m: 1, n: 2, j: 3, k: 4); [x, y, t]`)
+	AssertCodePanics(t, `let [x, y, ...] = [1, 2]; x`)
+	AssertCodePanics(t, `let [x, y, ...y] = [1, 2, 2]; x`)
+	AssertCodePanics(t, `let [x, y, ...y] = [1, 2, 4]; x`)
 }

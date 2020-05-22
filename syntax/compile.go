@@ -181,12 +181,19 @@ func (pc ParseContext) compileTuplePattern(b ast.Branch) rel.Pattern {
 		attrs := make([]rel.TuplePatternAttr, 0, len(pairs))
 		for _, pair := range pairs {
 			var k string
-			v := pc.compilePattern(pair.One("v").(ast.Branch))
-			if name := pair.One("name"); name != nil {
-				k = parseName(name.(ast.Branch))
+			var v rel.Pattern
+
+			if n := pair.One("v"); n != nil {
+				v = pc.compilePattern(n.(ast.Branch))
+				if name := pair.One("name"); name != nil {
+					k = parseName(name.(ast.Branch))
+				} else {
+					k = v.String()
+				}
 			} else {
-				k = v.String()
+				v = pc.compilePattern(pair.(ast.Branch))
 			}
+
 			attr := rel.NewTuplePatternAttr(k, v)
 			attrs = append(attrs, attr)
 		}

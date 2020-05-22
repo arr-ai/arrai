@@ -158,14 +158,35 @@ func (p TuplePattern) Bind(scope Scope, value Value) Scope {
 		panic(fmt.Sprintf("%s is not a tuple", value))
 	}
 
-	if len(p.attrs) != tuple.Count() {
-		panic(fmt.Sprintf("the length of tuple %s and %s do not match", p, tuple))
+	if len(p.attrs) > tuple.Count() {
+		panic(fmt.Sprintf("length of tuple %s shorter than tuple pattern %s", tuple, p))
+	}
+
+	nonExtraElements := make([]int, 0)
+	for i, attr := range p.attrs {
+		if _, is := attr.pattern.(ExtraElementPattern); !is {
+			nonExtraElements = append(nonExtraElements, i)
+		}
+	}
+
+	if len(p.attrs)-len(nonExtraElements) == 0 && len(p.attrs) < tuple.Count() {
+		panic(fmt.Sprintf("length of tuple %s longer than tuple pattern %s", tuple, p))
 	}
 
 	result := EmptyScope
+	names := tuple.Names()
 	for _, attr := range p.attrs {
+		if _, is := attr.pattern.(ExtraElementPattern); is {
+			tupleExpr := tuple.Project(names)
+			if tupleExpr == nil {
+				panic(fmt.Sprintf("tuple %s cannot match tuple pattern %s", tuple, p))
+			}
+			result = result.MatchedUpdate(attr.pattern.Bind(scope, tupleExpr))
+			continue
+		}
 		tupleExpr := tuple.MustGet(attr.name)
 		result = result.MatchedUpdate(attr.pattern.Bind(scope, tupleExpr))
+		names = names.Without(attr.name)
 	}
 
 	return result
