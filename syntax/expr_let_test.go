@@ -53,6 +53,7 @@ func TestExprLetTuplePattern(t *testing.T) {
 	AssertCodesEvalToSameValue(t, `4`, `let (a:x, b:x) = (a:4, b:4); x`)
 	AssertCodesEvalToSameValue(t, `4`, `let x = 4; let (a:x) = (a:4); x`)
 	AssertCodesEvalToSameValue(t, `4`, `let x = 5; let (a:x) = (a:4); x`)
+	AssertCodesEvalToSameValue(t, `4`, `let (a:[x]) = (a:[4]); x`)
 	AssertCodesEvalToSameValue(t, `1`, `let (:x) = (x: 1); x`)
 	AssertCodesEvalToSameValue(t, `2`, `let (:x, :y) = (x: 1, y: 2); y`)
 	AssertCodePanics(t, `let (a:x) = (b:7, a:4); x`)
@@ -60,4 +61,16 @@ func TestExprLetTuplePattern(t *testing.T) {
 	AssertCodePanics(t, `let (a:x, a:x) = (a:4); x`)
 	AssertCodePanics(t, `let x = 5; let (a:(x)) = (a:4); x`)
 	AssertCodePanics(t, `let (a:x, b:x) = (a:4, b:7); x`)
+	AssertCodePanics(t, `let x = 5; let (a:[(x)]) = (a:[4]); x`)
+}
+
+func TestExprLetDictPattern(t *testing.T) {
+	AssertCodesEvalToSameValue(t, `[4, 5]`, `let d = {"x": 4, "y": 5}; let {"x": a, "y": b} = d; [a, b]`)
+	AssertCodesEvalToSameValue(t, `[4, 5]`, `let {"x": a, "y": b} = {"x": 4, "y": 5}; [a, b]`)
+	AssertCodesEvalToSameValue(t, `4`, `let a = 4; let {"x": (a)} = {"x": 4}; a`)
+	AssertCodePanics(t, `let {"x": a, "y": b} = {"x": 4}; a`)
+	AssertCodePanics(t, `let {"x": a, "y": b} = {"x": 4, "y": 5, "z": 6}; a`)
+	AssertCodePanics(t, `let {"x": a, "x": a} = {"x": 4}; a`)
+	AssertCodePanics(t, `let {"x": a, "x": a} = {"x": 4, "x": 4}; a`)
+	AssertCodePanics(t, `let a = 4; let {"x": (a)} = {"x": 5}; a`)
 }

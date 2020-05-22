@@ -8,6 +8,7 @@ install: parser
 test:
 	go test $(GOTESTFLAGS) -tags timingsensitive ./...
 	GOARCH=386 go build ./...
+	go mod tidy
 
 lint:
 	golangci-lint run

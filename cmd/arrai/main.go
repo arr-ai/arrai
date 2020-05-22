@@ -4,6 +4,7 @@ import (
 	"os"
 	"path"
 
+	"github.com/arr-ai/arrai/syntax"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
 )
@@ -43,6 +44,7 @@ func main() {
 			if execCmd := fetchCommand(args[1:]); execCmd != "" && !isExecCommand(execCmd, app.Commands) {
 				tmpArgs := append(make([]string, 0, 1+len(args)), args[0], "run")
 				args = append(tmpArgs, args[1:]...)
+				syntax.RunOmitted = true
 			}
 		}
 		//nolint:lll

@@ -8,6 +8,8 @@ import (
 	"github.com/arr-ai/arrai/rel"
 )
 
+var RunOmitted = false
+
 func stdOs() rel.Attr {
 	return rel.NewTupleAttr("os",
 		rel.NewAttr("args", stdOsGetArgs()),
