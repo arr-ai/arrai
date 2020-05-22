@@ -60,7 +60,7 @@ Usage:
 | `//seq.join(", ", ["pew", "another pew", "and more pews"])` | `"pew, another pew, and more pews"` |
 | `//seq.join(" ", ["this", "is", "a", "sentence"])` | `"this is a sentence"` |
 | `//seq.join(["", "this", "is", "a", "sentence"])` | `"thisisasentence"` |
-| `//seq.join([0], [1,2,3,4,5])` | `[1,0,2,0,3,0,4,0,5]` |
+| `//seq.join([0], [[1, 2], [3, 4], [5, 6]]` | `[1, 2, 0, 3, 4, 0, 5, 6]` 
 | `//seq.join([0], [[2, [3, 4]], [5, 6]])` | `[2, [3, 4], 0, 5, 6]` |
 | `//seq.join([[0],[1]], [[[1, 2], [3, 4]],[[5, 6],[7, 8]]])` | `[[1, 2], [3, 4], [0], [1], [5, 6], [7, 8]]` |
 
