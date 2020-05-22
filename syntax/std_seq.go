@@ -178,8 +178,8 @@ func stdSeq() rel.Attr {
 			panic(fmt.Errorf("split: unsupported args: %s, %s", delimiter, subject))
 		}),
 		createNestedFuncAttr("join", 2, func(args ...rel.Value) rel.Value {
-			joiner, subject := args[0], args[1]
-			switch subject := subject.(type) {
+			joiner, subjectParam := args[0], args[1]
+			switch subject := subjectParam.(type) {
 			case rel.Array:
 				switch subject.Values()[0].(type) {
 				case rel.String:
@@ -206,7 +206,7 @@ func stdSeq() rel.Attr {
 				}
 			}
 
-			panic(fmt.Errorf("join: unsupported args: %s, %s", joiner, subject))
+			panic(fmt.Errorf("join: unsupported args: %s, %s", joiner, subjectParam))
 		}),
 	)
 }
