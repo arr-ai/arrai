@@ -111,7 +111,7 @@ func stdSeq() rel.Attr {
 		}),
 		createNestedFuncAttr("sub", 3, func(args ...rel.Value) rel.Value {
 			old, new, subject := args[0], args[1], args[2]
-			switch subject.(type) {
+			switch subject := subject.(type) {
 			case rel.String:
 				return rel.NewString(
 					[]rune(
@@ -123,7 +123,7 @@ func stdSeq() rel.Attr {
 					),
 				)
 			case rel.Array:
-				return arraySub(old, new, subject.(rel.Array))
+				return arraySub(old, new, subject)
 			case rel.Bytes:
 				_, oldIsSet := old.(rel.GenericSet)
 				_, newIsSet := new.(rel.GenericSet)
@@ -152,7 +152,7 @@ func stdSeq() rel.Attr {
 		}),
 		createNestedFuncAttr("split", 2, func(args ...rel.Value) rel.Value {
 			delimiter, subject := args[0], args[1]
-			switch subject.(type) {
+			switch subject := subject.(type) {
 			case rel.String:
 				splitted := strings.Split(mustAsString(subject), mustAsString(delimiter))
 				vals := make([]rel.Value, 0, len(splitted))
@@ -161,9 +161,9 @@ func stdSeq() rel.Attr {
 				}
 				return rel.NewArray(vals...)
 			case rel.Array:
-				return arraySplit(delimiter, subject.(rel.Array))
+				return arraySplit(delimiter, subject)
 			case rel.Bytes:
-				return bytesSplit(delimiter, subject.(rel.Bytes))
+				return bytesSplit(delimiter, subject)
 			case rel.GenericSet:
 				switch delimiter.(type) {
 				case rel.String:
@@ -178,8 +178,8 @@ func stdSeq() rel.Attr {
 			panic(fmt.Errorf("split: unsupported args: %s, %s", delimiter, subject))
 		}),
 		createNestedFuncAttr("join", 2, func(args ...rel.Value) rel.Value {
-			joiner, subjectParam := args[0], args[1]
-			switch subject := subjectParam.(type) {
+			joiner, subject := args[0], args[1]
+			switch subject := subject.(type) {
 			case rel.Array:
 				switch subject.Values()[0].(type) {
 				case rel.String:
@@ -206,7 +206,7 @@ func stdSeq() rel.Attr {
 				}
 			}
 
-			panic(fmt.Errorf("join: unsupported args: %s, %s", joiner, subjectParam))
+			panic(fmt.Errorf("join: unsupported args: %s, %s", joiner, subject))
 		}),
 	)
 }
