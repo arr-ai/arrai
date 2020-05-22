@@ -64,6 +64,11 @@ func arraySplit(delimiter rel.Value, subject rel.Array) rel.Value {
 }
 
 // Joins array joiner to subject.
+// The type of subject element must be rel.Array, it can help to make sure the API output is clear and will not confuse.
+// For example:
+//  `//seq.join([0], [1, 2])`, it can return [1, 0, 2] or [1, 2],
+//  `//seq.join([], [1, [2, 3]])`, it can return [1, 2, 3] or [1, [2, 3]].
+// All of the results make sense. It can see the output can't be sure in above cases, it is not good.
 func arrayJoin(joiner rel.Value, subject rel.Array) rel.Value {
 	joinerArray := convert2Array(joiner)
 
@@ -76,7 +81,7 @@ func arrayJoin(joiner rel.Value, subject rel.Array) rel.Value {
 		case rel.Array:
 			result = append(result, vArray.Values()...)
 		case rel.Value:
-			result = append(result, value)
+			panic("the type of subject element must be rel.Array")
 		}
 	}
 
