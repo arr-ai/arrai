@@ -263,10 +263,12 @@ func (a Array) Where(p func(v Value) bool) Set {
 	return NewSet(values...)
 }
 
-// Call ...
-func (a Array) Call(arg Value) Value {
-	i := int(arg.(Number).Float64())
-	return a.values[i-a.offset]
+func (a Array) CallAll(arg Value) Set {
+	i := int(arg.(Number).Float64()) - a.offset
+	if i < 0 || i >= len(a.values) {
+		return None
+	}
+	return NewSet(a.values[i])
 }
 
 func (a Array) index(pos int) int {
