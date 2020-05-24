@@ -2,12 +2,10 @@ package rel
 
 import (
 	"fmt"
-	"reflect"
 	"unsafe"
 
 	"github.com/arr-ai/hash"
 	"github.com/arr-ai/wbnf/parser"
-	"github.com/go-errors/errors"
 )
 
 // Function represents a binary relation uniquely mapping inputs to outputs.
@@ -43,6 +41,7 @@ func (f *Function) Body() Expr {
 
 // Hash computes a hash for a Function.
 func (f *Function) Hash(seed uintptr) uintptr {
+	//TODO: function should be an expr but hash is called by Closure
 	return hash.String(f.String(), hash.Uintptr(17297263775284131973>>(64-8*unsafe.Sizeof(uintptr(0))), seed))
 }
 
@@ -77,59 +76,4 @@ func (f *Function) Eval(local Scope) (Value, error) {
 // Source returns a scanner locating the Function's source code.
 func (f *Function) Source() parser.Scanner {
 	return *parser.NewScanner("")
-}
-
-var functionKind = registerKind(202, reflect.TypeOf(Function{}))
-
-// Kind returns a number that is unique for each major kind of Value.
-func (f *Function) Kind() int {
-	return functionKind
-}
-
-// Bool returns true iff the tuple has attributes.
-func (f *Function) IsTrue() bool {
-	return true
-}
-
-// Less returns true iff g is not a number or f.number < g.number.
-func (f *Function) Less(g Value) bool {
-	if f.Kind() != g.Kind() {
-		return f.Kind() < g.Kind()
-	}
-	return f.String() < g.String()
-}
-
-// Negate returns {(negateTag): f}.
-func (f *Function) Negate() Value {
-	return NewTuple(NewAttr(negateTag, f))
-}
-
-// Export exports a Function.
-func (f *Function) Export() interface{} {
-	if f.Arg() == "-" {
-		return func(local Scope) (Value, error) {
-			return f.Call(None, local)
-		}
-	}
-	return func(e Value, local Scope) (Value, error) {
-		return f.body.Eval(local.Update(f.arg.Bind(local, e)))
-	}
-}
-
-// Call calls the Function with the given parameter.
-func (f *Function) Call(expr Expr, local Scope) (Value, error) {
-	niladic := f.Arg() == "-"
-	noArg := expr == nil
-	if niladic != noArg {
-		return nil, errors.Errorf(
-			"nullary-vs-unary function arg mismatch (%s vs %s)", f.arg, expr)
-	}
-	if niladic {
-		return f.body.Eval(local)
-	}
-	value, err := expr.Eval(local)
-	if err != nil {
-		return nil, err
-	}
-	return f.body.Eval(local.Update(f.arg.Bind(local, value)))
 }

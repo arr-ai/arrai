@@ -76,7 +76,9 @@ func reprArray(a Array, w io.Writer) {
 	var sep reprCommaSep
 	for _, v := range a.values {
 		sep.Sep(w)
-		reprValue(v, w)
+		if v != nil {
+			reprValue(v, w)
+		}
 	}
 	fmt.Fprint(w, "]")
 }

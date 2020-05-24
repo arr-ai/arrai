@@ -51,12 +51,12 @@ func (x *DotExpr) Eval(local Scope) (Value, error) {
 		}
 		if x.attr[:1] != "&" {
 			if value, found := t.Get("&" + x.attr); found {
-				tupleScope := local.With("self", t)
+				//TODO: add tupleScope self to allow accessing itself
 				switch f := value.(type) {
-				case *Function:
-					return f.Call(nil, tupleScope)
+				case Closure:
+					return SetCall(f, nil), nil
 				case *NativeFunction:
-					return f.Call(nil, tupleScope)
+					return SetCall(f, nil), nil
 				default:
 					panic(fmt.Errorf("not a function: %v", f))
 				}

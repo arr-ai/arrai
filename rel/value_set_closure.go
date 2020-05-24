@@ -80,30 +80,62 @@ func (c Closure) Negate() Value {
 // Export exports a Closure.
 func (c Closure) Export() interface{} {
 	if c.f.Arg() == "-" {
-		return func(_ Value, local Scope) (Value, error) {
-			return c.Call(None, local)
-		}
+		return SetCall(c, None)
 	}
-	return func(e Value, local Scope) (Value, error) {
-		return c.f.body.Eval(local.Update(c.f.arg.Bind(local, e)))
+	return func(arg Value) Value {
+		return SetCall(c, arg)
 	}
 }
 
-// Call calls the Closure with the given parameter.
-func (c Closure) Call(expr Expr, local Scope) (Value, error) {
+func (c Closure) Count() int {
+	panic("unimplemented")
+}
+
+func (c Closure) Has(v Value) bool {
+	panic("unimplemented")
+}
+
+func (c Closure) Enumerator() ValueEnumerator {
+	panic("unimplemented")
+}
+
+func (c Closure) With(v Value) Set {
+	panic("unimplemented")
+}
+
+func (c Closure) Without(v Value) Set {
+	panic("unimplemented")
+}
+
+func (c Closure) Map(f func(Value) Value) Set {
+	panic("unimplemented")
+}
+
+func (c Closure) Where(f func(Value) bool) Set {
+	panic("unimplemented")
+}
+
+func (c Closure) CallAll(arg Value) Set {
 	niladic := c.f.Arg() == "-"
-	noArg := expr == nil
+	noArg := arg == nil
 	if niladic != noArg {
-		return nil, errors.Errorf(
-			"nullary-vs-unary function arg mismatch (%s vs %s)", c.f.Arg(), expr)
+		panic(errors.Errorf(
+			"nullary-vs-unary function arg mismatch (%s vs %s)", c.f.Arg(), arg))
 	}
 	if niladic {
-		return c.f.body.Eval(local)
+		val, err := c.f.body.Eval(c.scope)
+		if err != nil {
+			panic(err)
+		}
+		return NewSet(val)
 	}
-
-	value, err := expr.Eval(local)
+	val, err := c.f.body.Eval(c.scope.Update(c.f.arg.Bind(c.scope, arg)))
 	if err != nil {
-		return nil, err
+		panic(err)
 	}
-	return c.f.body.Eval(c.scope.Update(c.f.arg.Bind(local, value)))
+	return NewSet(val)
+}
+
+func (c Closure) ArrayEnumerator() (OffsetValueEnumerator, bool) {
+	panic("unimplemented")
 }

@@ -62,7 +62,8 @@ func TestArrayWhere(t *testing.T) {
 	AssertCodesEvalToSameValue(t, `[1, 2]`, `[1, 2] where .@item < 10`)
 	AssertCodesEvalToSameValue(t, `[1]`, `[1, 2] where .@ < 1`)
 	AssertCodesEvalToSameValue(t, `[1]`, `[1, 2] where .@item < 2`)
-	// TODO: Test for offset arrays and holey arrays.
+	AssertCodesEvalToSameValue(t, `1\[2]`, `[1, 2] where .@ > 0`)
+	AssertCodesEvalToSameValue(t, `1\[2]`, `[1, 2] where .@item > 1`)
 }
 
 func TestDict(t *testing.T) {
