@@ -30,7 +30,7 @@ chapters.
 1. [Values](values.md)
 2. [Name bindings](binding.md)
 3. [Comparison operators](comparison.md)
-4. [Basic arithmetic](arithmetic.md)
+4. [Arithmetic and logical operators](arithmetic.md)
 5. [Set operators](setops.md)
 6. (TODO) [Functions and function calls](function.md)
 7. (TODO) [Transforms](transforms.md)
