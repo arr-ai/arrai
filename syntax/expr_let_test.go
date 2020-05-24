@@ -15,8 +15,8 @@ func TestExprLet(t *testing.T) {
 func TestExprLetValuePattern(t *testing.T) {
 	AssertCodesEvalToSameValue(t, `42`, `let 42 = 42; 42`)
 	AssertCodesEvalToSameValue(t, `1`, `let 42 = 42; 1`)
-	AssertCodePanics(t, `let 42 = 1; 42`)
-	AssertCodePanics(t, `let 42 = 1; 1`)
+	AssertCodeErrors(t, `let 42 = 1; 42`, "")
+	AssertCodeErrors(t, `let 42 = 1; 1`, "")
 }
 
 func TestExprLetArrayPattern(t *testing.T) {
@@ -36,15 +36,15 @@ func TestExprLetArrayPattern(t *testing.T) {
 	AssertCodesEvalToSameValue(t, `2`, `let x = 3; let [_, b, (x)] = [1, 2, 3]; b`)
 	AssertCodesEvalToSameValue(t, `2`, `let x = 3; let [x] = [2]; x`)
 
-	AssertCodePanics(t, `let [(x)] = [2]; x`)
-	AssertCodePanics(t, `let x = 3; let [(x)] = [2]; x`)
-	AssertCodePanics(t, `let [x, y] = 1; x`)
-	AssertCodePanics(t, `let [x, x] = [1]; x`)
-	AssertCodePanics(t, `let [x, y] = [1]; x`)
-	AssertCodePanics(t, `let [x, x] = [1, 2]; x`)
+	AssertCodeErrors(t, `let [(x)] = [2]; x`, "")
+	AssertCodeErrors(t, `let x = 3; let [(x)] = [2]; x`, "")
+	AssertCodeErrors(t, `let [x, y] = 1; x`, "")
+	AssertCodeErrors(t, `let [x, x] = [1]; x`, "")
+	AssertCodeErrors(t, `let [x, y] = [1]; x`, "")
+	AssertCodeErrors(t, `let [x, x] = [1, 2]; x`, "")
 	AssertCodeErrors(t, `let [_] = [1]; _`,
 		"Name \"_\" not found in {} \n\n\x1b[1;37m:1:16:\x1b[0m\nlet [_]")
-	AssertCodePanics(t, `let x = 3; let [b, (x)] = [2, 1]; b`)
+	AssertCodeErrors(t, `let x = 3; let [b, (x)] = [2, 1]; b`, "")
 }
 
 func TestExprLetTuplePattern(t *testing.T) {
@@ -56,21 +56,21 @@ func TestExprLetTuplePattern(t *testing.T) {
 	AssertCodesEvalToSameValue(t, `4`, `let (a:[x]) = (a:[4]); x`)
 	AssertCodesEvalToSameValue(t, `1`, `let (:x) = (x: 1); x`)
 	AssertCodesEvalToSameValue(t, `2`, `let (:x, :y) = (x: 1, y: 2); y`)
-	AssertCodePanics(t, `let (a:x) = (b:7, a:4); x`)
-	AssertCodePanics(t, `let (a:x, a:x) = (a:4, a:4); x`)
-	AssertCodePanics(t, `let (a:x, a:x) = (a:4); x`)
-	AssertCodePanics(t, `let x = 5; let (a:(x)) = (a:4); x`)
-	AssertCodePanics(t, `let (a:x, b:x) = (a:4, b:7); x`)
-	AssertCodePanics(t, `let x = 5; let (a:[(x)]) = (a:[4]); x`)
+	AssertCodeErrors(t, `let (a:x) = (b:7, a:4); x`, "")
+	AssertCodeErrors(t, `let (a:x, a:x) = (a:4, a:4); x`, "")
+	AssertCodeErrors(t, `let (a:x, a:x) = (a:4); x`, "")
+	AssertCodeErrors(t, `let x = 5; let (a:(x)) = (a:4); x`, "")
+	AssertCodeErrors(t, `let (a:x, b:x) = (a:4, b:7); x`, "")
+	AssertCodeErrors(t, `let x = 5; let (a:[(x)]) = (a:[4]); x`, "")
 }
 
 func TestExprLetDictPattern(t *testing.T) {
 	AssertCodesEvalToSameValue(t, `[4, 5]`, `let d = {"x": 4, "y": 5}; let {"x": a, "y": b} = d; [a, b]`)
 	AssertCodesEvalToSameValue(t, `[4, 5]`, `let {"x": a, "y": b} = {"x": 4, "y": 5}; [a, b]`)
 	AssertCodesEvalToSameValue(t, `4`, `let a = 4; let {"x": (a)} = {"x": 4}; a`)
-	AssertCodePanics(t, `let {"x": a, "y": b} = {"x": 4}; a`)
-	AssertCodePanics(t, `let {"x": a, "y": b} = {"x": 4, "y": 5, "z": 6}; a`)
-	AssertCodePanics(t, `let {"x": a, "x": a} = {"x": 4}; a`)
+	AssertCodeErrors(t, `let {"x": a, "y": b} = {"x": 4}; a`, "")
+	AssertCodeErrors(t, `let {"x": a, "y": b} = {"x": 4, "y": 5, "z": 6}; a`, "")
+	AssertCodeErrors(t, `let {"x": a, "x": a} = {"x": 4}; a`, "")
+	AssertCodeErrors(t, `let a = 4; let {"x": (a)} = {"x": 5}; a`, "")
 	AssertCodePanics(t, `let {"x": a, "x": a} = {"x": 4, "x": 4}; a`)
-	AssertCodePanics(t, `let a = 4; let {"x": (a)} = {"x": 5}; a`)
 }
