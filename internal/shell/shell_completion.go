@@ -27,6 +27,16 @@ func (s *shellInstance) Do(line []rune, pos int) (newLine [][]rune, length int) 
 		newLine, length = getScopePredictions(names, lastName, s.scope.MustGet(".").(rel.Tuple))
 		if l == "//" {
 			newLine = append(newLine, []rune("{"))
+		} else if lastName != "" {
+			if len(newLine) == 0 {
+				length = 0
+			}
+			names, lastName = append(names, lastName), ""
+			predictions, _ := getScopePredictions(names, lastName, s.scope.MustGet(".").(rel.Tuple))
+			for i := 0; i < len(predictions); i++ {
+				predictions[i] = append([]rune("."), predictions[i]...)
+			}
+			newLine = append(newLine, predictions...)
 		}
 	default:
 		currentExpr := strings.Join(s.collector.withLine(string(line[:pos])).lines, "\n")
@@ -158,7 +168,7 @@ func getScopePredictions(tuplePath []string, name string, scope rel.Tuple) ([][]
 	}
 
 	for _, attr := range scope.Names().OrderedNames() {
-		if strings.HasPrefix(attr, name) {
+		if strings.HasPrefix(attr, name) && name != attr {
 			newLine = append(newLine, []rune(attr[length:]))
 		}
 	}

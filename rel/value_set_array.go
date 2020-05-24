@@ -13,6 +13,7 @@ import (
 type Array struct {
 	values []Value
 	offset int
+	count  int
 }
 
 // NewArray constructs an array as a relation.
@@ -25,7 +26,7 @@ func NewOffsetArray(offset int, values ...Value) Set {
 	if len(values) == 0 {
 		return None
 	}
-	return Array{values: values, offset: offset}
+	return Array{values: values, offset: offset, count: len(values)}
 }
 
 func AsArray(s Set) (Array, bool) {
@@ -69,12 +70,26 @@ func asArray(s Set) (Array, bool) {
 			}
 		}
 
-		return Array{values: items[lowestIndex : highestIndex+1], offset: minOffset}, true
+		return Array{
+			values: items[lowestIndex : highestIndex+1],
+			offset: minOffset,
+			count:  s.Count(),
+		}, true
 	}
 	return Array{}, true
 }
 
-// Values returns the slice of values in the array.
+func (a Array) clone() Array {
+	values := make([]Value, len(a.values))
+	copy(values, a.values)
+	a.values = values
+	return a
+}
+
+// Values returns the slice of values in the array. Holes in the indices are
+// represented by nil elements.
+//
+// Callers must not reassign elements of the returned slice.
 func (a Array) Values() []Value {
 	return a.values
 }
@@ -92,7 +107,7 @@ func (a Array) Hash(seed uintptr) uintptr {
 func (a Array) Equal(v interface{}) bool {
 	switch x := v.(type) {
 	case Array:
-		if len(a.values) != len(x.values) {
+		if len(a.values) != len(x.values) || a.count != x.count {
 			return false
 		}
 		for i, c := range a.values {
@@ -101,8 +116,6 @@ func (a Array) Equal(v interface{}) bool {
 			}
 		}
 		return true
-	case Set:
-		return newSetFromSet(a).Equal(x)
 	}
 	return false
 }
@@ -118,7 +131,9 @@ func (a Array) String() string {
 		if i > 0 {
 			sb.WriteString(", ")
 		}
-		sb.WriteString(v.String())
+		if v != nil {
+			sb.WriteString(v.String())
+		}
 	}
 	sb.WriteRune(']')
 	return sb.String()
@@ -143,7 +158,11 @@ func (a Array) Kind() int {
 
 // IsTrue returns true if the tuple has attributes.
 func (a Array) IsTrue() bool {
+<<<<<<< HEAD
 	return len(a.values) > 0
+=======
+	return a.count > 0
+>>>>>>> master
 }
 
 // Less returns true iff v is not a number or tuple, or v is a tuple and t
@@ -162,6 +181,12 @@ func (a Array) Less(v Value) bool {
 	}
 	for i, av := range a.values[:n] {
 		bv := b.values[i]
+		if bv == nil {
+			return av != nil
+		}
+		if av == nil {
+			return false
+		}
 		if av.Less(bv) {
 			return true
 		}
@@ -181,21 +206,26 @@ func (a Array) Negate() Value {
 func (a Array) Export() interface{} {
 	result := make([]interface{}, 0, a.Count())
 	for _, v := range a.values {
-		result = append(result, v.Export())
+		if v != nil {
+			result = append(result, v.Export())
+		} else {
+			result = append(result, nil)
+		}
 	}
 	return result
 }
 
 // Count returns the number of elements in the Array.
 func (a Array) Count() int {
-	return len(a.values)
+	return a.count
 }
 
 // Has returns true iff the given Value is in the Array.
 func (a Array) Has(value Value) bool {
 	if t, ok := value.(ArrayItemTuple); ok {
 		if a.offset <= t.at && t.at < a.offset+len(a.values) {
-			return t.item == a.values[t.at-a.offset]
+			v := a.values[t.at-a.offset]
+			return v != nil && v.Equal(t.item)
 		}
 	}
 	return false
@@ -203,11 +233,16 @@ func (a Array) Has(value Value) bool {
 
 func (a Array) with(index int, item Value) Set {
 	if a.index(index) == len(a.values) {
-		return Array{values: append(a.values, item), offset: a.offset}
+		return Array{
+			values: append(a.values, item),
+			offset: a.offset,
+			count:  a.count + 1,
+		}
 	} else if index == a.offset-1 {
 		return Array{
 			values: append(append(make([]Value, 0, 1+len(a.values)), item), a.values...),
 			offset: a.offset - 1,
+			count:  a.count + 1,
 		}
 	}
 	return newSetFromSet(a).With(NewArrayItemTuple(index, item))
@@ -226,14 +261,27 @@ func (a Array) With(value Value) Set {
 // was already absent, the original Array is returned.
 func (a Array) Without(value Value) Set {
 	if t, ok := value.(ArrayItemTuple); ok {
-		if i := a.index(t.at); i >= 0 && i < len(a.values) && t.item == a.values[i] {
-			if t.at == a.offset {
-				return Array{values: a.values[1:], offset: a.offset + 1}
+		if i := a.index(t.at); 0 <= i && i < len(a.values) {
+			v := a.values[i]
+			if v != nil && v.Equal(t.item) {
+				if t.at == a.offset {
+					return Array{
+						values: a.values[1:],
+						offset: a.offset + 1,
+						count:  a.count - 1,
+					}
+				}
+				if t.at == a.offset+len(a.values)-1 {
+					return Array{
+						values: a.values[:len(a.values)-1],
+						offset: a.offset,
+						count:  a.count - 1,
+					}
+				}
+				result := a.clone()
+				result.values[i] = nil
+				result.count--
 			}
-			if t.at == a.offset+len(a.values)-1 {
-				return Array{values: a.values[:len(a.values)-1], offset: a.offset}
-			}
-			return newSetFromSet(a).Without(value)
 		}
 	}
 	return a
@@ -241,29 +289,58 @@ func (a Array) Without(value Value) Set {
 
 // Map maps values per f.
 func (a Array) Map(f func(v Value) Value) Set {
-	result := NewSet()
+	var values []Value
 	for e := a.Enumerator(); e.MoveNext(); {
-		result = result.With(f(e.Current()))
-	}
-	return result
-}
-
-// Where returns a new Array with all the Values satisfying predicate p.
-func (a Array) Where(p func(v Value) bool) Set {
-	values := make([]Value, 0, a.Count())
-	for e := a.Enumerator(); e.MoveNext(); {
-		value := e.Current()
-		if p(value) {
-			values = append(values, value)
-		}
+		values = append(values, f(e.Current()))
 	}
 	return NewSet(values...)
 }
 
-// Call ...
-func (a Array) Call(arg Value) Value {
-	i := int(arg.(Number).Float64())
-	return a.values[i-a.offset]
+// Where returns a new Array with all the Values satisfying predicate p.
+func (a Array) Where(p func(v Value) bool) Set {
+	result := a.clone()
+	for i, v := range a.values {
+		if v != nil {
+			if !p(NewArrayItemTuple(i, v)) {
+				result.values[i] = nil
+				result.count--
+			}
+		}
+	}
+	if result.count == 0 {
+		return None
+	}
+	// Trim leading nils.
+	for i, v := range result.values {
+		if v != nil {
+			if i > 0 {
+				result.values = result.values[i:]
+				result.offset += i
+			}
+			break
+		}
+	}
+	// Trim trailing nils.
+	for i := len(result.values) - 1; i >= 0; i-- {
+		if v := result.values[i]; v != nil {
+			if i < len(result.values)-1 {
+				result.values = result.values[:i+1]
+			}
+			break
+		}
+	}
+	return result
+}
+
+func (a Array) CallAll(arg Value) Set {
+	i := int(arg.(Number).Float64()) - a.offset
+	if i < 0 || i >= len(a.values) {
+		return None
+	}
+	if v := a.values[i]; v != nil {
+		return NewSet(v)
+	}
+	return None
 }
 
 func (a Array) index(pos int) int {
@@ -294,8 +371,13 @@ func (e *arrayValueEnumerator) MoveNext() bool {
 	if e.i >= len(e.a.values)-1 {
 		return false
 	}
-	e.i++
-	return true
+	for {
+		e.i++
+		if e.i < len(e.a.values) && e.a.values[e.i] != nil {
+			break
+		}
+	}
+	return e.i < len(e.a.values)
 }
 
 // Current returns the enumerator's current Value.

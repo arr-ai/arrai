@@ -12,7 +12,7 @@ var transformCommand = &cli.Command{
 }
 
 func transform(c *cli.Context) error {
-	panic("unfinished")
+	panic("transform|x not implemented (https://github.com/arr-ai/arrai/issues/310)")
 	// source := c.Args().Get(0)
 
 	// expr, err := syntax.Parse(parser.NewScanner(source))

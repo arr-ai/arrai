@@ -1,7 +1,6 @@
 package rel
 
 import (
-	"fmt"
 	"reflect"
 	"unsafe"
 
@@ -99,23 +98,39 @@ func (f *NativeFunction) Export() interface{} {
 	return f.fn
 }
 
+func (*NativeFunction) Count() int {
+	return 1
+}
+
+func (*NativeFunction) Has(Value) bool {
+	panic("unimplemented")
+}
+
+func (*NativeFunction) Enumerator() ValueEnumerator {
+	panic("unimplemented")
+}
+
+func (*NativeFunction) With(Value) Set {
+	panic("unimplemented")
+}
+
+func (*NativeFunction) Without(Value) Set {
+	panic("unimplemented")
+}
+
+func (*NativeFunction) Map(func(Value) Value) Set {
+	panic("unimplemented")
+}
+
+func (*NativeFunction) Where(func(Value) bool) Set {
+	panic("unimplemented")
+}
+
 // Call calls the NativeFunction with the given parameter.
-func (f *NativeFunction) Call(expr Expr, local Scope) (_ Value, err error) {
-	defer func() {
-		switch r := recover().(type) {
-		case nil:
-		case error:
-			panic(wrapContext(r, expr))
-		default:
-			panic(wrapContext(fmt.Errorf("unexpected panic calling %s: %v", f, r), expr))
-		}
-	}()
-	if expr == nil {
-		return f.fn(nil), nil
-	}
-	value, err := expr.Eval(local)
-	if err != nil {
-		return nil, err
-	}
-	return f.fn(value), nil
+func (f *NativeFunction) CallAll(arg Value) Set {
+	return NewSet(f.fn(arg))
+}
+
+func (*NativeFunction) ArrayEnumerator() (OffsetValueEnumerator, bool) {
+	panic("unimplemented")
 }
