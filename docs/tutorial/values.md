@@ -7,7 +7,7 @@ that the output matches what you expect.
 
 ## Numbers
 
-```text
+```arrai
 @> 42
 42
 @> +1.23E4
@@ -20,7 +20,7 @@ that the output matches what you expect.
 
 **Explore:** What do the following output?
 
-```text
+```arrai
 @> 1.23E-4
 @> 1.23E-5
 @> --10
@@ -32,7 +32,7 @@ that the output matches what you expect.
 
 Tuples associate names with values. Each name/value pair is called an attribute.
 
-```text
+```arrai
 @> ()
 ()
 @> (x: 1, y: 2)
@@ -50,7 +50,7 @@ usually print tuples with names ordered lexicograpically.
 Attribute names can be pretty much anything. Names that don't fit the standard
 identifier rules can be written using string syntax:
 
-```text
+```arrai
 @> ('-1-': 23, '-2-': 34)
 ('-1-': 23, '-2-': 34)
 @> ('\007': 100)
@@ -61,7 +61,7 @@ identifier rules can be written using string syntax:
 
 **Explore:** What do the following output?
 
-```text
+```arrai
 @> ((a: 1, b: 2))
 @> ((()))
 ```
@@ -72,7 +72,7 @@ Sets hold values. Any given value is either in a set or it isn't. There is no
 notion of multiplicity; a value cannot be present more than once. There is also
 no notion of ordering.
 
-```text
+```arrai
 @> {}
 {}
 @> {1, 2, 3}
@@ -96,7 +96,7 @@ set with just the empty tuple in it, `{()}`.
 
 **Explore:** What do the following output?
 
-```text
+```arrai
 @> true
 @> false
 ```
@@ -126,7 +126,7 @@ The following sample run demonstrates the syntax for arrays, strings and
 dictionaries. It also shows that they are nothing more than syntactic sugar for
 special compositions of numbers, tuples and sets.
 
-```text
+```arrai
 @> [3, 9, 27]
 [3, 9, 27]
 @> {(@: 0, @item: 3), (@: 1, @item: 9), (@: 2, @item: 27)}
@@ -149,7 +149,7 @@ special compositions of numbers, tuples and sets.
 
 **Explore:** How would you describe the following values?
 
-```text
+```arrai
 @> {{}: {}, (): ()}
 @> {{{(x:1): 42}: 54}}
 ```
@@ -158,7 +158,7 @@ special compositions of numbers, tuples and sets.
 collections, how would you characterise their differences and can you explain
 why both are available in arr.ai? The following idiomatic example might help.
 
-```text
+```arrai
 @> {"dog": (legs: 4, sound: "bark"), "cat": (legs: 4, sound: "meow")}
 ```
 
@@ -176,7 +176,7 @@ Since strings, array, etc., are simply sets of tuples, what happens if they
 don't quite fit the pattern of a string? For instance, what if we remove the
 tuples representing the first two characters from the string `"treat"`?
 
-```text
+```arrai
 @> "treat" where .@ >= 2
 2\'eat'
 ```
@@ -184,14 +184,14 @@ tuples representing the first two characters from the string `"treat"`?
 The result is a string with an offset. The `2\` in front indicates that the
 offset string starts at index 2. You can enter such sequences directly:
 
-```text
+```arrai
 @> 2\"eat"
 2\'eat'
 ```
 
 **Explore:** What does the following output?
 
-```text
+```arrai
 @> (2*3)\"abc"
 ```
 
@@ -202,7 +202,7 @@ surprise that relations are not a first class type within the language. The
 reason for this is simple. A relation is simply a set of tuples, all of which
 have the same names.
 
-```text
+```arrai
 @> {(x: 1, y: 1), (x: 5, y: 1), (x: 4, y: 2), (x: 2, y: 2)}
 {(x: 1, y: 1), (x: 2, y: 2), (x: 4, y: 2), (x: 5, y: 1)}
 ```
@@ -210,7 +210,7 @@ have the same names.
 Since the concept of a set of tuples with the same names is so common, arr.ai
 offers a special syntax for this:
 
-```text
+```arrai
 @> {|x,y| (1, 1), (5, 1), (4, 2), (2, 2)}
 {(x: 1, y: 1), (x: 2, y: 2), (x: 4, y: 2), (x: 5, y: 1)}
 ```
@@ -218,7 +218,7 @@ offers a special syntax for this:
 You may have noticed that strings, arrays and dictionaries are in fact
 relations.
 
-```text
+```arrai
 @> {|@,@item| (0, 3), (1, 9), (2, 27)}
 [3, 9, 27]
 @> {|@,@char| (0, 104), (1, 101), (2, 108), (3, 108), (4, 111)}
@@ -229,6 +229,6 @@ relations.
 
 **Explore:** What does the following output?
 
-```text
+```arrai
 @> {|x| (1), (2)}
 ```
