@@ -535,7 +535,7 @@ func (pc ParseContext) compileExprs4Cond(exprs ...ast.Node) ([]rel.Expr, bool) {
 	result := make([]rel.Expr, 0, len(exprs))
 	var hasDefaultExpr bool = false
 
-	for _, expr := range exprs {
+	for index, expr := range exprs {
 		var exprResult rel.Expr
 
 		name, c := which(expr.(ast.Branch), "expr")
@@ -563,10 +563,10 @@ func (pc ParseContext) compileExprs4Cond(exprs ...ast.Node) ([]rel.Expr, bool) {
 
 		if exprResult != nil {
 			if identExpr, isIdentExpr := exprResult.(rel.IdentExpr); isIdentExpr && identExpr.Ident() == "_" {
-				if hasDefaultExpr == false {
+				if index == len(exprs)-1 {
 					hasDefaultExpr = true
 				} else {
-					panic("there are more than 1 default expressions '_: expr'")
+					panic("the default expression '_: expr' is not the last expression in cond")
 				}
 			} else {
 				result = append(result, exprResult)
