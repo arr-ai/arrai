@@ -84,9 +84,9 @@ no notion of ordering.
 @> {(x: 1), (s: {2, 3})}
 {(s: {2, 3}), (x: 1)}
 @> {()}
-{()}
+true
 @> 3 < 4
-{()}
+true
 ```
 
 Note that we introduced a Boolean test in that last expression, `3 < 4`. Since
@@ -99,6 +99,17 @@ set with just the empty tuple in it, `{()}`.
 ```text
 @> true
 @> false
+```
+
+Why doesn't `false` print as `false`? As explained above, `true` is actually a
+set (the set with the empty tuple, to be precise). Similarly, `false` is
+actually the empty set. However, while `{()}` very rarely means anything other
+than `true`, the empty set often means something other than `false`, so it is
+usually printed in its base form: a set. If you want to output Boolean values as
+"true" and "false", you can do this in an [expression string](../expr-str.md).
+
+```arrai
+@> let passed = false; $"...${passed:t}..."
 ```
 
 ## Special values
