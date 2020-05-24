@@ -158,11 +158,7 @@ func (a Array) Kind() int {
 
 // IsTrue returns true if the tuple has attributes.
 func (a Array) IsTrue() bool {
-<<<<<<< HEAD
-	return len(a.values) > 0
-=======
 	return a.count > 0
->>>>>>> master
 }
 
 // Less returns true iff v is not a number or tuple, or v is a tuple and t
