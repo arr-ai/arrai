@@ -28,7 +28,7 @@ func NewCondExpr(scanner parser.Scanner, dict Expr, defaultExpr Expr) Expr {
 // String returns a string representation of the expression.
 func (e *CondExpr) String() string {
 	var b bytes.Buffer
-	b.WriteByte('(')
+	b.WriteByte('{')
 	var i int = -1
 	var expr DictEntryTupleExpr
 	switch c := e.dicExpr.(type) {
@@ -44,9 +44,9 @@ func (e *CondExpr) String() string {
 		if i >= 0 {
 			b.WriteString(", ")
 		}
-		fmt.Fprintf(&b, "%v: %v", "*", e.defaultExpr.String())
+		fmt.Fprintf(&b, "%v: %v", "_", e.defaultExpr.String())
 	}
-	b.WriteByte(')')
+	b.WriteByte('}')
 	return b.String()
 }
 

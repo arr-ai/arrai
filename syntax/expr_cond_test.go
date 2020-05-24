@@ -37,6 +37,34 @@ func TestEvalCond(t *testing.T) {
 	AssertCodesEvalToSameValue(t, `{}`, `cond {}`)
 }
 
+// TestEvalCondMulti executes the cases whose condition has multiple expressions.
+func TestEvalCondMulti(t *testing.T) {
+	t.Parallel()
+	AssertCodesEvalToSameValue(t, `1`, `cond {1 > 0 || 3 > 2: 1, 2 > 3: 2, _:1 + 2,}`)
+	AssertCodesEvalToSameValue(t, `1`, `cond {0 > 1 || 3 > 2: 1, 2 > 3: 2, _:1 + 2,}`)
+	AssertCodesEvalToSameValue(t, `3`, `cond {0 > 1 || 3 > 4: 1, 2 > 3: 2, _:1 + 2,}`)
+	AssertCodesEvalToSameValue(t, `1`, `cond {1 > 0 && 3 > 2: 1, 2 > 3: 2, _:1 + 2,}`)
+	AssertCodesEvalToSameValue(t, `1`, `cond {(1 > 0 && 3 > 2): 1, (2 > 3) || (1 < 0): 2, _:1 + 2,}`)
+	AssertCodesEvalToSameValue(t, `3`, `let a = cond {1 > 2 && 2 > 1: 1, _ : 1 + 2};a`)
+	// Multiple true conditions
+	AssertCodesEvalToSameValue(t, `1`, `cond {1 > 0 && 3 > 2: 1, 2 > 1: 2, _:1 + 2,}`)
+	AssertCodesEvalToSameValue(t, `2`, `cond {(1 > 0 && 3 < 2): 1, (2 > 1) || (1 > 0): 2, _:1 + 2,}`)
+	AssertCodesEvalToSameValue(t, `2`, `let a = cond {1 > 2 && 2 > 1: 1, (2 > 1) : 2, _ : 1 + 2};a`)
+
+	AssertCodesEvalToSameValue(t, `{}`, `cond {1 < 0 || 2 > 3 : 1, 2 > 3: 2}`)
+	AssertCodesEvalToSameValue(t, `{}`, `cond {1 < 0 || 3 > 4 : 1}`)
+}
+
+func TestEvalCondStr(t *testing.T) {
+	t.Parallel()
+	AssertEvalExprString(t, "{(1>0):1,(2>3):2,_:(1+2)}", "cond {1 > 0 : 1, 2 > 3: 2, _:1 + 2,}")
+	AssertEvalExprString(t, "{(1>0):1,(2>3):2,_:(1+2)}", "cond {1 > 0 : 1, 2 > 3: 2, _:1 + 2}")
+	AssertEvalExprString(t, "{(1<2):1}", "cond {1 < 2 : 1}")
+	AssertEvalExprString(t, "{(1>2):1,(2<3):2}", "cond {1 > 2 : 1, 2 < 3: 2}")
+	AssertEvalExprString(t, "{_:(1+2)}", "cond {_: 1 + 2}")
+	AssertEvalExprString(t, "{(1<2):1,_:(1+2)}", "cond {1 < 2: 1, _ : 1 + 2}")
+}
+
 func TestEvalCondWithControlVar(t *testing.T) {
 	t.Parallel()
 	AssertCodesEvalToSameValue(t, `1`, `let a = 1; a cond {(1) :1, (2) :2}`)
@@ -70,32 +98,21 @@ func TestEvalCondWithControlVar(t *testing.T) {
 	// AssertCodesEvalToSameValue(t, ``, `let a = 3; let b = (a + 10) cond {(1) :1, (2) :2 + 1}; b`)
 }
 
-func TestEvalCondStr(t *testing.T) {
-	t.Parallel()
-	AssertCodesEvalToSameValue(t, "((1>0):1,(2>3):2,*:(1+2))", "cond (1 > 0 : 1, 2 > 3: 2, *:1 + 2,)")
-	AssertCodesEvalToSameValue(t, "((1>0):1,(2>3):2,*:(1+2))", "cond (1 > 0 : 1, 2 > 3: 2, *:1 + 2)")
-	AssertCodesEvalToSameValue(t, "((1<2):1)", "cond (1 < 2 : 1)")
-	AssertCodesEvalToSameValue(t, "((1>2):1,(2<3):2)", "cond (1 > 2 : 1, 2 < 3: 2)")
-	AssertCodesEvalToSameValue(t, "(*:(1+2))", "cond (*: 1 + 2)")
-	AssertCodesEvalToSameValue(t, "((1<2):1,*:(1+2))", "cond (1 < 2: 1, * : 1 + 2)")
-}
+func TestEvalCondWithControlVarMulti(t *testing.T) {
+	AssertCodesEvalToSameValue(t, `1`, `let a = 1; a cond ((1,2) :1)`)
+	AssertCodesEvalToSameValue(t, `1`, `let a = 2; a cond ((1,2,3) :1, 2 :2)`)
+	AssertCodesEvalToSameValue(t, `1`, `let a = 3; a cond ((1,2,3) :1, 2 :2, *:1 + 2)`)
+	AssertCodesEvalToSameValue(t, `2`, `let a = 2; a cond (1 :1 + 10, (2,3) : 2, *:1 + 2)`)
 
-// TestEvalCondMulti executes the cases whose condition has multiple expressions.
-func TestEvalCondMulti(t *testing.T) {
-	t.Parallel()
-	AssertCodesEvalToSameValue(t, `1`, `cond (1 > 0 || 3 > 2: 1, 2 > 3: 2, *:1 + 2,)`)
-	AssertCodesEvalToSameValue(t, `1`, `cond (0 > 1 || 3 > 2: 1, 2 > 3: 2, *:1 + 2,)`)
-	AssertCodesEvalToSameValue(t, `3`, `cond (0 > 1 || 3 > 4: 1, 2 > 3: 2, *:1 + 2,)`)
-	AssertCodesEvalToSameValue(t, `1`, `cond (1 > 0 && 3 > 2: 1, 2 > 3: 2, *:1 + 2,)`)
-	AssertCodesEvalToSameValue(t, `1`, `cond ((1 > 0 && 3 > 2): 1, (2 > 3) || (1 < 0): 2, *:1 + 2,)`)
-	AssertCodesEvalToSameValue(t, `3`, `let a = cond (1 > 2 && 2 > 1: 1, * : 1 + 2);a`)
-	// Multiple true conditions
-	AssertCodesEvalToSameValue(t, `1`, `cond (1 > 0 && 3 > 2: 1, 2 > 1: 2, *:1 + 2,)`)
-	AssertCodesEvalToSameValue(t, `2`, `cond ((1 > 0 && 3 < 2): 1, (2 > 1) || (1 > 0): 2, *:1 + 2,)`)
-	AssertCodesEvalToSameValue(t, `2`, `let a = cond (1 > 2 && 2 > 1: 1, (2 > 1) : 2, * : 1 + 2);a`)
+	AssertCodesEvalToSameValue(t, `med`, `let a = 2;
+	a cond (
+		1:"lo",
+		(2,3): "med",
+		*: "hi")`)
 
-	AssertCodesEvalToSameValue(t, ``, `cond (1 < 0 || 2 > 3 : 1, 2 > 3: 2)`)
-	AssertCodesEvalToSameValue(t, ``, `cond (1 < 0 || 3 > 4 : 1)`)
+	// var sb strings.Builder
+	// assert.Error(t, evalImpl(`let a = 1; a cond ((2,3)) : 2, 3: 3)`, &sb))
+	// assert.Error(t, evalImpl(`let a = 1; a cond ((2,3)) : 2, (3,5): 3)`, &sb))
 }
 
 // TestEvalCondMultiStr executes the cases whose condition has multiple expressions.
@@ -123,23 +140,6 @@ func TestEvalCondWithControlVarStr(t *testing.T) {
 		"let a = 2; let b = a cond (1 + 2: 1, * : 1 + 2); b * 1")
 	AssertCodesEvalToSameValue(t, "(3->(\\a((control_var:(a+2)),((1+2):1,*:(1+2)))))",
 		"let a = 3; (a + 2) cond (1 + 2: 1, * : 1 + 2)")
-}
-
-func TestEvalCondWithControlVarMulti(t *testing.T) {
-	AssertCodesEvalToSameValue(t, `1`, `let a = 1; a cond ((1,2) :1)`)
-	AssertCodesEvalToSameValue(t, `1`, `let a = 2; a cond ((1,2,3) :1, 2 :2)`)
-	AssertCodesEvalToSameValue(t, `1`, `let a = 3; a cond ((1,2,3) :1, 2 :2, *:1 + 2)`)
-	AssertCodesEvalToSameValue(t, `2`, `let a = 2; a cond (1 :1 + 10, (2,3) : 2, *:1 + 2)`)
-
-	AssertCodesEvalToSameValue(t, `med`, `let a = 2;
-	a cond (
-		1:"lo",
-		(2,3): "med",
-		*: "hi")`)
-
-	// var sb strings.Builder
-	// assert.Error(t, evalImpl(`let a = 1; a cond ((2,3)) : 2, 3: 3)`, &sb))
-	// assert.Error(t, evalImpl(`let a = 1; a cond ((2,3)) : 2, (3,5): 3)`, &sb))
 }
 
 func TestEvalCondWithControlVarMultiStr(t *testing.T) {
