@@ -351,9 +351,6 @@ func (pc ParseContext) compileCond(b ast.Branch, c ast.Children) rel.Expr {
 	// arrai eval 'cond (1 > 0:1, 2 > 3:2, *:10)'
 	var result rel.Expr
 
-	p := pc.compilePattern(c.(ast.One).Node.(ast.Branch))
-	fmt.Println(p)
-
 	keys := c.(ast.One).Node.(ast.Branch)["key"]
 	values := c.(ast.One).Node.(ast.Branch)["value"]
 	var keyExprs, valueExprs []rel.Expr
@@ -381,6 +378,8 @@ func (pc ParseContext) compileCond(b ast.Branch, c ast.Children) rel.Expr {
 	}
 
 	if controlVarExpr != nil {
+		p := pc.compilePattern(c.(ast.One).Node.(ast.Branch))
+		fmt.Println(p)
 		result = rel.NewCondControlVarExpr(c.(ast.One).Node.Scanner(), controlVarExpr, result, fExpr)
 	} else {
 		result = rel.NewCondExpr(c.(ast.One).Node.Scanner(), result, fExpr)
