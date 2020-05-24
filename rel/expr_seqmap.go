@@ -35,7 +35,8 @@ func (e *SequenceMapExpr) String() string {
 }
 
 // Eval returns the lhs
-func (e *SequenceMapExpr) Eval(local Scope) (Value, error) {
+func (e *SequenceMapExpr) Eval(local Scope) (_ Value, err error) {
+	defer wrapPanic(e, &err)
 	value, err := e.lhs.Eval(local)
 	if err != nil {
 		return nil, wrapContext(err, e)

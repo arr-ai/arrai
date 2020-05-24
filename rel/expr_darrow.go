@@ -35,7 +35,8 @@ func (e *DArrowExpr) String() string {
 }
 
 // Eval returns the lhs transformed elementwise by fn.
-func (e *DArrowExpr) Eval(local Scope) (Value, error) {
+func (e *DArrowExpr) Eval(local Scope) (_ Value, err error) {
+	defer wrapPanic(e, &err)
 	value, err := e.lhs.Eval(local)
 	if err != nil {
 		return nil, wrapContext(err, e)
