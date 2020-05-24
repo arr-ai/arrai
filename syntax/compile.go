@@ -353,13 +353,20 @@ func (pc ParseContext) compileCond(b ast.Branch, c ast.Children) rel.Expr {
 
 	keys := c.(ast.One).Node.(ast.Branch)["key"]
 	values := c.(ast.One).Node.(ast.Branch)["value"]
+
 	var keyExprs, valueExprs []rel.Expr
+	var hasDefaultExpr bool
 	if keys != nil && values != nil {
-		keyExprs = pc.compileExprs4Cond(keys.(ast.Many)...)
-		valueExprs = pc.compileExprs4Cond(values.(ast.Many)...)
+		keyExprs, hasDefaultExpr = pc.compileExprs4Cond(keys.(ast.Many)...)
+		valueExprs, _ = pc.compileExprs4Cond(values.(ast.Many)...)
 	}
 
-	entryExprs := pc.compileDictEntryExprs(c, keyExprs, valueExprs)
+	var entryExprs []rel.DictEntryTupleExpr
+	if hasDefaultExpr {
+		entryExprs = pc.compileDictEntryExprs(c, keyExprs, valueExprs[0:len(valueExprs)-1])
+	} else {
+		entryExprs = pc.compileDictEntryExprs(c, keyExprs, valueExprs)
+	}
 	if entryExprs != nil {
 		// Generates type DictExpr always to make sure it is easy to do Eval, only process type DictExpr.
 		result = rel.NewDictExpr(c.(ast.One).Node.Scanner(), false, true, entryExprs...)
@@ -375,6 +382,9 @@ func (pc ParseContext) compileCond(b ast.Branch, c ast.Children) rel.Expr {
 
 	if fNode := c.(ast.One).Node.One("f"); fNode != nil {
 		fExpr = pc.CompileExpr(fNode.(ast.Branch))
+	}
+	if fExpr == nil && hasDefaultExpr {
+		fExpr = valueExprs[len(valueExprs)-1]
 	}
 
 	if controlVarExpr != nil {
@@ -521,8 +531,10 @@ func (pc ParseContext) compileExprs(exprs ...ast.Node) []rel.Expr {
 }
 
 // compileExprs4Cond parses conditons/keys and values expressions for syntax `cond`.
-func (pc ParseContext) compileExprs4Cond(exprs ...ast.Node) []rel.Expr {
+func (pc ParseContext) compileExprs4Cond(exprs ...ast.Node) ([]rel.Expr, bool) {
 	result := make([]rel.Expr, 0, len(exprs))
+	var hasDefaultExpr bool = false
+
 	for _, expr := range exprs {
 		var exprResult rel.Expr
 
@@ -550,10 +562,19 @@ func (pc ParseContext) compileExprs4Cond(exprs ...ast.Node) []rel.Expr {
 		}
 
 		if exprResult != nil {
-			result = append(result, exprResult)
+			if identExpr, isIdentExpr := exprResult.(rel.IdentExpr); isIdentExpr && identExpr.Ident() == "_" {
+				if hasDefaultExpr == false {
+					hasDefaultExpr = true
+				} else {
+					panic("there are more than 1 default expressions '_: expr'")
+				}
+			} else {
+				result = append(result, exprResult)
+			}
 		}
 	}
-	return result
+
+	return result, hasDefaultExpr
 }
 
 func (pc ParseContext) compileFunction(b ast.Branch) rel.Expr {
