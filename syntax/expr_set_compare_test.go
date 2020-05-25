@@ -2,7 +2,6 @@ package syntax
 
 import (
 	"fmt"
-	"log"
 	"math/bits"
 	"testing"
 
@@ -20,11 +19,9 @@ func TestSetCompare(t *testing.T) {
 	for i := 0; i < 8; i++ {
 		i := i
 		a := intSet(i)
-		log.Print(i, a)
 		for j := 0; j < 8; j++ {
 			j := j
 			b := intSet(j)
-			log.Print(a, b)
 			t.Run(fmt.Sprintf("%v.%v", a, b), func(t *testing.T) {
 				assertComparison := func(op string, result bool) bool { //nolint:unparam
 					var expected string

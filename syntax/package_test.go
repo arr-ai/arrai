@@ -1,8 +1,6 @@
 package syntax
 
-import (
-	"testing"
-)
+import "testing"
 
 // func TestPackageStd(t *testing.T) {
 // 	AssertCodesEvalToSameValue(t, `3.141592653589793`, `//.`)
