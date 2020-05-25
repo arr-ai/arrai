@@ -65,49 +65,55 @@ func stdSeq() rel.Attr {
 		rel.NewNativeFunctionAttr("concat", stdSeqConcat),
 		rel.NewNativeFunctionAttr("repeat", stdSeqRepeat),
 		createNestedFuncAttr("contains", 2, func(args ...rel.Value) rel.Value { //nolint:dupl
-			return includingProcess(func(args ...rel.Value) rel.Value {
-				sub, subject := args[0], args[1]
+			sub, subject := args[0], args[1]
+			switch subject.(type) {
+			case rel.String:
 				return rel.NewBool(strings.Contains(mustAsString(subject), mustAsString(sub)))
-			},
-				func(args ...rel.Value) rel.Value {
-					sub, subject := args[0], args[1]
-					return arrayContains(sub, subject.(rel.Array))
-				},
-				func(args ...rel.Value) rel.Value {
-					sub, subject := args[0], args[1]
-					return rel.NewBool(strings.Contains(asString(subject), asString(sub)))
-				},
-				args...)
+			case rel.Array:
+				return arrayContains(sub, subject.(rel.Array))
+			case rel.Bytes:
+				return rel.NewBool(strings.Contains(asString(subject), asString(sub)))
+			case rel.GenericSet:
+				if emptySet, isSet := sub.(rel.GenericSet); isSet && !emptySet.IsTrue() {
+					return rel.NewBool(true)
+				}
+			}
+
+			return rel.NewBool(false)
 		}),
 		createNestedFuncAttr("has_prefix", 2, func(args ...rel.Value) rel.Value { //nolint:dupl
-			return includingProcess(func(args ...rel.Value) rel.Value {
-				sub, subject := args[0], args[1]
-				return rel.NewBool(strings.HasPrefix(mustAsString(subject), mustAsString(sub)))
-			},
-				func(args ...rel.Value) rel.Value {
-					sub, subject := args[0], args[1]
-					return arrayHasPrefix(sub, subject.(rel.Array))
-				},
-				func(args ...rel.Value) rel.Value {
-					sub, subject := args[0], args[1]
-					return rel.NewBool(strings.HasPrefix(asString(subject), asString(sub)))
-				},
-				args...)
+			prefix, subject := args[0], args[1]
+			switch subject.(type) {
+			case rel.String:
+				return rel.NewBool(strings.HasPrefix(mustAsString(subject), mustAsString(prefix)))
+			case rel.Array:
+				return arrayHasPrefix(prefix, subject.(rel.Array))
+			case rel.Bytes:
+				return rel.NewBool(strings.HasPrefix(asString(subject), asString(prefix)))
+			case rel.GenericSet:
+				if emptySet, isSet := prefix.(rel.GenericSet); isSet && !emptySet.IsTrue() {
+					return rel.NewBool(true)
+				}
+			}
+
+			return rel.NewBool(false)
 		}),
 		createNestedFuncAttr("has_suffix", 2, func(args ...rel.Value) rel.Value { //nolint:dupl
-			return includingProcess(func(args ...rel.Value) rel.Value {
-				suffix, subject := args[0], args[1]
+			suffix, subject := args[0], args[1]
+			switch subject.(type) {
+			case rel.String:
 				return rel.NewBool(strings.HasSuffix(mustAsString(subject), mustAsString(suffix)))
-			},
-				func(args ...rel.Value) rel.Value {
-					suffix, subject := args[0], args[1]
-					return arrayHasSuffix(suffix, subject.(rel.Array))
-				},
-				func(args ...rel.Value) rel.Value {
-					suffix, subject := args[0], args[1]
-					return rel.NewBool(strings.HasSuffix(asString(subject), asString(suffix)))
-				},
-				args...)
+			case rel.Array:
+				return arrayHasSuffix(suffix, subject.(rel.Array))
+			case rel.Bytes:
+				return rel.NewBool(strings.HasSuffix(asString(subject), asString(suffix)))
+			case rel.GenericSet:
+				if emptySet, isSet := suffix.(rel.GenericSet); isSet && !emptySet.IsTrue() {
+					return rel.NewBool(true)
+				}
+			}
+
+			return rel.NewBool(false)
 		}),
 		createNestedFuncAttr("sub", 3, func(args ...rel.Value) rel.Value {
 			old, new, subject := args[0], args[1], args[2]
