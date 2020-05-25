@@ -212,6 +212,22 @@ Arr.ai allows a shorthand form to represent relations:
 }
 ```
 
+##### Character syntax
+
+A character can be expressed in arr.ai as a `Number`. Its syntactic sugar uses the
+form of `%char`. The syntax will evaluate to a `Number` whose value corresponds
+to the ASCII code of `char`.
+
+Usage:
+
+```arrai
+%a  = 97
+%A  = 65
+%\n = 10
+%\t = 9
+%🙂 = 240
+```
+
 ##### String syntax
 
 Strings may be expressed in arr.ai. They are syntactic sugar for relations of
