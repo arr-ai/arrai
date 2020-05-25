@@ -175,10 +175,76 @@ have the same number of elements:
 
 We'll learn more about `=>` in a later tutorial.
 
-## Pattern matching (FUTURE)
+## Pattern matching
 
 Both let-bindings and function parameters support pattern matching. This is a
 very powerful mechanism to extract elements from a complex structure and also
 restrict what values may be used as input.
 
-TODO
+Try out the following examples to use pattern in array:
+
+```arrai
+@> let [] = []; 1
+@> let [a, b, c] = [1, 2, 3]; b
+@> let arr = [1, 2]; let [a, b] = arr; b
+@> let [x, x] = [1, 1]; x                  # should fail
+@> let [x, x] = [1, 2]; x                  # should fail
+```
+
+in tuple:
+```arrai
+@> let () = (); 4
+@> let (a:x, b:y) = (a:4, b:7); x
+@> let (a:x, b:x) = (a:4, b:4); x
+@> let (:x) = (x: 1); x
+```
+
+in dictionary:
+```arrai
+@> let {"a": f, "b": k} = {"a": 1, "b": 2}; [f, k]
+```
+
+and in set:
+```arrai
+@> let {a, b, c} = {1, 2, 3}; a
+@> let {a, 42} = {3, 42}; a
+```
+
+Also, nested pattern is supported as:
+```arrai
+@> let [[x, y], z] = [[1, 2], 3]; x
+@> let [{"a": x}, (b: y), z] = [{"a": 1}, (b: 2), 3]; [x, y, z]
+```
+
+Underscore `_` matches any items and ignore it.
+
+```arrai
+@> let [_, x, _] = [1, 2, 3]; x
+```
+
+Name within parentheses like `(x)` refers to the value `x` which is supposed to be defined before.
+
+```arrai
+@> let x = 3; let [b, x] = [2, 4]; x
+@> let x = 3; let [b, (x)] = [2, 3]; b
+@> let x = 3; let [b, (x)] = [2, 4]; b     # should fail
+@> let [(x)] = [2]; x                      # should fail
+```
+
+`let a = 56; let {"x": a, "y": (a)} = {"x": 42, "y": 56}; a` is valid 
+but `let a = 56; let {"x": a, "y": (a)} = {"x": 42, "y": 42}; a` should fail. 
+The previous statement could confuse people, should be avoided.
+
+What's more, Arr-ai allows extra elements `...` or `...x` in addition to the explicitly bounds ones and binds name `x` to the extra ones:
+```arrai
+@> let [x, y, ...] = [1, 2]; [x, y]
+@> let [x, y, ...t] = [1, 2]; [x, y, t]
+@> let [x, y, ...] = [1, 2, 3, 4, 5, 6]; [x, y]
+@> let [x, y, ...t] = [1, 2, 3, 4, 5, 6]; [x, y, t]
+@> let [..., x, y] = [1, 2, 3, 4, 5, 6]; [x, y]
+@> let [...t, x, y] = [1, 2, 3, 4, 5, 6]; [x, y, t]
+@> let [x, ..., y] = [1, 2, 3, 4, 5, 6]; [x, y]
+@> let [x, ...t, y] = [1, 2, 3, 4, 5, 6]; [x, y, t]
+@> let (m: x, n: y, ...t) = (m: 1, n: 2, j: 3, k: 4); [x, y, t]
+@> let {"m": x, "n": y, ...t} = {"m": 1, "n": 2, "j": 3, "k": 4}; [x, y, t]
+```
