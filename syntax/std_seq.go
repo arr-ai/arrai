@@ -66,11 +66,11 @@ func stdSeq() rel.Attr {
 		rel.NewNativeFunctionAttr("repeat", stdSeqRepeat),
 		createNestedFuncAttr("contains", 2, func(args ...rel.Value) rel.Value { //nolint:dupl
 			sub, subject := args[0], args[1]
-			switch subject.(type) {
+			switch subject := subject.(type) {
 			case rel.String:
 				return rel.NewBool(strings.Contains(mustAsString(subject), mustAsString(sub)))
 			case rel.Array:
-				return arrayContains(sub, subject.(rel.Array))
+				return arrayContains(sub, subject)
 			case rel.Bytes:
 				return rel.NewBool(strings.Contains(asString(subject), asString(sub)))
 			case rel.GenericSet:
@@ -82,11 +82,11 @@ func stdSeq() rel.Attr {
 		}),
 		createNestedFuncAttr("has_prefix", 2, func(args ...rel.Value) rel.Value { //nolint:dupl
 			prefix, subject := args[0], args[1]
-			switch subject.(type) {
+			switch subject := subject.(type) {
 			case rel.String:
 				return rel.NewBool(strings.HasPrefix(mustAsString(subject), mustAsString(prefix)))
 			case rel.Array:
-				return arrayHasPrefix(prefix, subject.(rel.Array))
+				return arrayHasPrefix(prefix, subject)
 			case rel.Bytes:
 				return rel.NewBool(strings.HasPrefix(asString(subject), asString(prefix)))
 			case rel.GenericSet:
@@ -98,11 +98,11 @@ func stdSeq() rel.Attr {
 		}),
 		createNestedFuncAttr("has_suffix", 2, func(args ...rel.Value) rel.Value { //nolint:dupl
 			suffix, subject := args[0], args[1]
-			switch subject.(type) {
+			switch subject := subject.(type) {
 			case rel.String:
 				return rel.NewBool(strings.HasSuffix(mustAsString(subject), mustAsString(suffix)))
 			case rel.Array:
-				return arrayHasSuffix(suffix, subject.(rel.Array))
+				return arrayHasSuffix(suffix, subject)
 			case rel.Bytes:
 				return rel.NewBool(strings.HasSuffix(asString(subject), asString(suffix)))
 			case rel.GenericSet:
