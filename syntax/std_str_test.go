@@ -2,8 +2,6 @@ package syntax
 
 import (
 	"testing"
-
-	"github.com/stretchr/testify/assert"
 )
 
 func TestStrLower(t *testing.T) {
@@ -31,8 +29,4 @@ func TestStrTitle(t *testing.T) {
 	AssertCodesEvalToSameValue(t, `"ThIs Is A TeST"`, `//str.title("ThIs is A TeST")`)
 	AssertCodesEvalToSameValue(t, `"This Is A Test"`, `//str.title("this is a test")`)
 	AssertCodeErrors(t, `//str.title(123)`, "")
-}
-
-func assertExprPanics(t *testing.T, code string) {
-	assert.Panics(t, func() { AssertCodesEvalToSameValue(t, `"doesn't matter"`, code) })
 }

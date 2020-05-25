@@ -11,7 +11,7 @@ func TestStrSub(t *testing.T) {
 	AssertCodesEvalToSameValue(t, `"t1his is not1 a t1est1"`, `//seq.sub("t", "t1","this is not a test")`)
 	AssertCodesEvalToSameValue(t, `"this is still a test"`,
 		`//seq.sub( "doesn't matter", "hello there","this is still a test")`)
-	assertExprPanics(t, `//seq.sub("hello there", "test", 1)`)
+	AssertCodeErrors(t, `//seq.sub("hello there", "test", 1)`, "")
 	/////////////////
 	AssertCodesEvalToSameValue(t, `""`, `//seq.sub( "","", "")`)
 	AssertCodesEvalToSameValue(t, `"A"`, `//seq.sub( "","A", "")`)
@@ -20,7 +20,7 @@ func TestStrSub(t *testing.T) {
 	AssertCodesEvalToSameValue(t, `"EAEBECE"`, `//seq.sub( "", "E","ABC")`)
 	AssertCodesEvalToSameValue(t, `"BC"`, `//seq.sub( "A", "","ABC")`)
 
-	assertExprPanics(t, `//seq.sub(1,'B','BCD')`)
+	AssertCodeErrors(t, `//seq.sub(1,'B','BCD')`, "")
 }
 
 func TestArraySub(t *testing.T) {
@@ -32,8 +32,8 @@ func TestArraySub(t *testing.T) {
 	AssertCodesEvalToSameValue(t, `[2, 2, 3]`, `//seq.sub([1], [2], [1, 2, 3])`)
 	AssertCodesEvalToSameValue(t, `[[1,1], [4,4], [3,3]]`, `//seq.sub([[2,2]], [[4,4]], [[1,1], [2,2], [3,3]])`)
 
-	assertExprPanics(t, `//seq.sub(1,'B',[1,2,3])`)
-	assertExprPanics(t, `//seq.sub(1,'B',['A','B','C'])`)
+	AssertCodeErrors(t, `//seq.sub(1,'B',[1,2,3])`, "")
+	AssertCodeErrors(t, `//seq.sub(1,'B',['A','B','C'])`, "")
 }
 
 func TestArraySubEdgeCases(t *testing.T) {

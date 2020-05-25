@@ -16,7 +16,7 @@ func TestStrContains(t *testing.T) {
 	AssertCodesEvalToSameValue(t, `false`, `//seq.contains("A", "")`)
 	AssertCodesEvalToSameValue(t, `true`, `//seq.contains("", "")`)
 
-	assertExprPanics(t, `//seq.contains(1, "ABC")`)
+	AssertCodeErrors(t, `//seq.contains(1, "ABC")`, "")
 }
 
 func TestArrayContains(t *testing.T) { //nolint:dupl
@@ -45,8 +45,8 @@ func TestArrayContains(t *testing.T) { //nolint:dupl
 	AssertCodesEvalToSameValue(t, `true`, `//seq.contains([], [1])`)
 	AssertCodesEvalToSameValue(t, `true`, `//seq.contains([], [])`)
 
-	assertExprPanics(t, `//seq.contains(1, [1,2,3,4,5])`)
-	assertExprPanics(t, `//seq.contains('A',['A','B','C','D','E'])`)
+	AssertCodeErrors(t, `//seq.contains(1, [1,2,3,4,5])`, "")
+	AssertCodeErrors(t, `//seq.contains('A',['A','B','C','D','E'])`, "")
 }
 
 func TestBytesContains(t *testing.T) {

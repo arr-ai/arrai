@@ -19,7 +19,7 @@ func TestStrJoin(t *testing.T) {
 	// It is not supported
 	// AssertCodesEvalToSameValue(t, `""`, `//seq.join("",[])`)
 
-	assertExprPanics(t, `//seq.join("this", 2)`)
+	AssertCodeErrors(t, `//seq.join("this", 2)`, "")
 }
 
 func TestArrayJoin(t *testing.T) {
@@ -51,12 +51,12 @@ func TestArrayJoin(t *testing.T) {
 	AssertCodesEvalToSameValue(t, `[[1, 2], 3, 4]`, `//seq.join([], [[[1, 2]], [3, 4]])`)
 	AssertCodesEvalToSameValue(t, `[[1, 2], [3, 4], 5]`, `//seq.join([], [[[1, 2]], [[3,4], 5]])`)
 
-	assertExprPanics(t, `//seq.join(1, [1,2,3,4,5])`)
-	assertExprPanics(t, `//seq.join('A', [1,2])`)
-	assertExprPanics(t, `//seq.join([],[1,2])`)
-	assertExprPanics(t, `//seq.join([1],[1,2])`)
-	assertExprPanics(t, `//seq.join([0], [1,2,3,4,5])`)
-	assertExprPanics(t, `//seq.join(['A'], ['AT','BB', 'CD'])`)
+	AssertCodeErrors(t, `//seq.join(1, [1,2,3,4,5])`, "")
+	AssertCodeErrors(t, `//seq.join('A', [1,2])`, "")
+	AssertCodeErrors(t, `//seq.join([],[1,2])`, "")
+	AssertCodeErrors(t, `//seq.join([1],[1,2])`, "")
+	AssertCodeErrors(t, `//seq.join([0], [1,2,3,4,5])`, "")
+	AssertCodeErrors(t, `//seq.join(['A'], ['AT','BB', 'CD'])`, "")
 }
 
 func TestBytesJoin(t *testing.T) {

@@ -17,7 +17,7 @@ func TestStrPrefix(t *testing.T) {
 	AssertCodesEvalToSameValue(t, `false`, `//seq.has_prefix("A","")`)
 	AssertCodesEvalToSameValue(t, `true`, `//seq.has_prefix("","A")`)
 
-	assertExprPanics(t, `//seq.has_prefix(1,"ABC")`)
+	AssertCodeErrors(t, `//seq.has_prefix(1,"ABC")`, "")
 }
 
 func TestArrayPrefix(t *testing.T) {
@@ -41,8 +41,8 @@ func TestArrayPrefix(t *testing.T) {
 	AssertCodesEvalToSameValue(t, `false`, `//seq.has_prefix(['A','B','C','D','E','F'],[])`)
 	AssertCodesEvalToSameValue(t, `true`, `//seq.has_prefix([],['A','B','C','D','E'])`)
 
-	assertExprPanics(t, `//seq.has_prefix(1,[1,2,3])`)
-	assertExprPanics(t, `//seq.has_prefix('A',['A','B','C'])`)
+	AssertCodeErrors(t, `//seq.has_prefix(1,[1,2,3])`, "")
+	AssertCodeErrors(t, `//seq.has_prefix('A',['A','B','C'])`, "")
 }
 
 func TestBytesPrefix(t *testing.T) {
