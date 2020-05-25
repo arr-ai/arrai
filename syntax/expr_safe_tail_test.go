@@ -39,5 +39,7 @@ func TestSafeTail(t *testing.T) {
 
 	AssertCodeErrors(t, `(a: 1).a?.c:42               `, `(1).c: lhs must be a Tuple, not rel.Number`)
 	AssertCodeErrors(t, `(a: (b: 1)).a?.c:42          `, `Missing attr c`)
-	AssertCodePanics(t, `{"a": {"b": 1}}("a")?("c"):42`)
+	AssertCodeErrors(t,
+		`{"a": {"b": 1}}("a")?("c"):42`,
+		`unexpected panic: Call: no return values from set {b: 1}`)
 }
