@@ -448,7 +448,7 @@ External libraries may be accessed via package references.
    1. **`//math`:** math functions and constants such as `//math.sin`
       and `//math.pi`.
    2. **`//str`:** string functions such as `//str.upper` and
-      `//str.join`.
+      `//str.lower`.
    3. **`//fn`:** higher order functions such as `//fn.fix` and `//fn.fixt`.
    See the [standard library reference](std.md) for full documentation on all packages.
 2. **`//{./path}`** provides access to other arrai files relative to the current

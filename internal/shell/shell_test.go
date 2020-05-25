@@ -151,12 +151,12 @@ func TestGetLastToken(t *testing.T) {
 	assert.Equal(t, "//str", getLastToken([]rune("//str")))
 	assert.Equal(t, "//", getLastToken([]rune("//")))
 	assert.Equal(t, "///", getLastToken([]rune("///")))
-	assert.Equal(t, "//", getLastToken([]rune("//str.contains(//")))
-	assert.Equal(t, "//arch", getLastToken([]rune("//str.contains(//arch")))
-	assert.Equal(t, "tuple.", getLastToken([]rune("//str.contains(tuple.")))
+	assert.Equal(t, "//", getLastToken([]rune("//seq.contains(//")))
+	assert.Equal(t, "//arch", getLastToken([]rune("//seq.contains(//arch")))
+	assert.Equal(t, "tuple.", getLastToken([]rune("//seq.contains(tuple.")))
 	assert.Equal(t, "x.", getLastToken([]rune("x.")))
 	assert.Equal(t, "x", getLastToken([]rune("x")))
-	assert.Equal(t, "", getLastToken([]rune("//str.contains(")))
+	assert.Equal(t, "", getLastToken([]rune("//seq.contains(")))
 	assert.Equal(t, "", getLastToken([]rune("")))
 }
 
@@ -166,14 +166,14 @@ func TestTabCompletionStdlib(t *testing.T) {
 	stdlibNames := stdlib.Names().OrderedNames()
 
 	assertTabCompletion(t, append(stdlibNames, "{"), 0, "//\t", nil)
-	assertTabCompletion(t, append(stdlibNames, "{"), 0, "//str.contains(//\t", nil)
+	assertTabCompletion(t, append(stdlibNames, "{"), 0, "//seq.contains(//\t", nil)
 	prefix := "s"
 
 	assertTabCompletionWithPrefix(t, prefix, stdlibNames, "//%s\t", nil)
 	assertTabCompletionWithPrefix(t, prefix, stdlibNames, "x(//%s\t", nil)
 	assertTabCompletionWithPrefix(t, prefix, stdlibNames, "x(//%s\t + random)", nil)
 
-	lib := "str"
+	lib := "seq"
 	strlib := stdlib.MustGet(lib).(rel.Tuple).Names().OrderedNames()
 	assertTabCompletionWithPrefix(t, prefix, strlib, "//"+lib+".%s\t", nil)
 	for i := 0; i < len(strlib); i++ {
