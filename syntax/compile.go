@@ -642,12 +642,13 @@ func (pc ParseContext) compileExprs4Cond(exprs ...ast.Node) []rel.Expr {
 	for _, expr := range exprs {
 		var exprResult rel.Expr
 
-		name, c := which(expr.(ast.Branch), "expr")
+		name, c := which(expr.(ast.Branch), "expr", "pattern")
 		if c == nil {
 			panic(fmt.Errorf("misshapen node AST: %v", expr.(ast.Branch)))
 		}
 
-		if name == "expr" {
+		switch name {
+		case "expr":
 			switch c := c.(type) {
 			case ast.One:
 				exprResult = pc.CompileExpr(c.Node.(ast.Branch))
@@ -663,6 +664,9 @@ func (pc ParseContext) compileExprs4Cond(exprs ...ast.Node) []rel.Expr {
 					exprResult = rel.NewArrayExpr(c.Scanner(), elements...)
 				}
 			}
+		case "pattern":
+			pattern := pc.compilePattern(expr.(ast.Branch))
+			fmt.Println(pattern)
 		}
 
 		if exprResult != nil {

@@ -145,4 +145,5 @@ func TestEvalCondWithControlVarMultiStr(t *testing.T) {
 
 func TestEvalCondPatternMatchingWithControlVar(t *testing.T) {
 	// ./arrai e "let a = 1; a cond {(type:'hello'):1}"
+	// AssertCodesEvalToSameValue(t, `1`, `let a = 1; a cond {((x:1)):x, _:1 + 2}`)
 }
