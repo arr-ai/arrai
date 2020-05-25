@@ -268,9 +268,8 @@ The result is an array of Bytes and each Byte is represented as a `Number`.
 Example of usages:
 
 ```arrai
-# String is used to show the results, but they are arrays of bytes
-<<"hello", 10>> = "hello\n"
-<<97, 98, 99>>  = "abc"
+<<"hello", 10>> = <<"hello\n">>
+<<97, 98, 99>>  = <<"abc">>
 ```
 
 ##### Expression string syntax
