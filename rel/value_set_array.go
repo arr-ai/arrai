@@ -156,7 +156,7 @@ func (a Array) Kind() int {
 	return arrayKind
 }
 
-// Bool returns true iff the tuple has attributes.
+// IsTrue returns true if the tuple has attributes.
 func (a Array) IsTrue() bool {
 	return a.count > 0
 }

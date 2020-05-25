@@ -71,47 +71,11 @@ var (
 
 func stdStr() rel.Attr {
 	return rel.NewTupleAttr("str",
-		createNestedFuncAttr("contains", 2, func(args ...rel.Value) rel.Value {
-			return rel.NewBool(strings.Contains(mustAsString(args[0]), mustAsString(args[1])))
-		}),
 		rel.NewAttr("expand", stdStrExpand),
-		createNestedFuncAttr("has_prefix", 2, func(args ...rel.Value) rel.Value {
-			return rel.NewBool(strings.HasPrefix(mustAsString(args[0]), mustAsString(args[1])))
-		}),
-		createNestedFuncAttr("has_suffix", 2, func(args ...rel.Value) rel.Value {
-			return rel.NewBool(strings.HasPrefix(mustAsString(args[0]), mustAsString(args[1])))
-		}),
-		createNestedFuncAttr("join", 2, func(args ...rel.Value) rel.Value {
-			strs := args[0].(rel.Set)
-			toJoin := make([]string, 0, strs.Count())
-			for i, ok := strs.(rel.Set).ArrayEnumerator(); ok && i.MoveNext(); {
-				toJoin = append(toJoin, mustAsString(i.Current()))
-			}
-			return rel.NewString([]rune(strings.Join(toJoin, mustAsString(args[1]))))
-		}),
 		createNestedFuncAttr("lower", 1, func(args ...rel.Value) rel.Value {
 			return rel.NewString([]rune(strings.ToLower(mustAsString(args[0]))))
 		}),
 		rel.NewAttr("repr", stdStrRepr),
-		createNestedFuncAttr("split", 2, func(args ...rel.Value) rel.Value {
-			splitted := strings.Split(mustAsString(args[0]), mustAsString(args[1]))
-			vals := make([]rel.Value, 0, len(splitted))
-			for _, s := range splitted {
-				vals = append(vals, rel.NewString([]rune(s)))
-			}
-			return rel.NewArray(vals...)
-		}),
-		createNestedFuncAttr("sub", 3, func(args ...rel.Value) rel.Value {
-			return rel.NewString(
-				[]rune(
-					strings.ReplaceAll(
-						mustAsString(args[0]),
-						mustAsString(args[1]),
-						mustAsString(args[2]),
-					),
-				),
-			)
-		}),
 		createNestedFuncAttr("title", 1, func(args ...rel.Value) rel.Value {
 			return rel.NewString([]rune(strings.Title(mustAsString(args[0]))))
 		}),
