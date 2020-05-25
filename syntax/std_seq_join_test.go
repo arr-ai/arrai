@@ -63,20 +63,13 @@ func TestArrayJoin(t *testing.T) {
 func TestBytesJoin(t *testing.T) {
 	t.Parallel()
 	// joiner "" is translated to rel.GenericSet
-	AssertCodesEvalToSameValue(t, `//unicode.utf8.encode('hhehlhlho')`,
-		`//seq.join({ |@, @byte| (0, 104)},//unicode.utf8.encode('hello'))`)
+	AssertCodesEvalToSameValue(t, `<<'hhehlhlho'>>    `, `//seq.join(<<104>>,<<'hello'>>) `)
+	AssertCodesEvalToSameValue(t, `<<'hateatlatlato'>>`, `//seq.join(<<'at'>>,<<'hello'>>)`)
 	AssertCodesEvalToSameValue(t,
-		`{ |@, @byte| (0, 104), (1, 108), (2, 111), (3, 101), (4, 108), (5, 111),`+
-			`(6, 108), (7, 108), (8, 111), (9, 108), (10, 108), (11, 111), (12, 111) }`,
-		`//seq.join({ |@, @byte| (0, 108), (1, 111)},{ |@, @byte| (0, 104), (1, 101),`+
-			` (2, 108), (3, 108), (4, 111) })`)
-	AssertCodesEvalToSameValue(t, `//unicode.utf8.encode('hateatlatlato')`,
-		`//seq.join(//unicode.utf8.encode('at'),//unicode.utf8.encode('hello'))`)
+		`<<104, 108, 111, 101, 108, 111, 108, 108, 111, 108, 108, 111, 111>>`,
+		`//seq.join(<<108, 111>>, <<104, 101, 108, 108, 111>>)`)
 
-	AssertCodesEvalToSameValue(t, `//unicode.utf8.encode('')`,
-		`//seq.join(//unicode.utf8.encode(''),//unicode.utf8.encode(''))`)
-	AssertCodesEvalToSameValue(t, `//unicode.utf8.encode('hello')`,
-		`//seq.join(//unicode.utf8.encode(''),//unicode.utf8.encode('hello'))`)
-	AssertCodesEvalToSameValue(t, `//unicode.utf8.encode('')`,
-		`//seq.join(//unicode.utf8.encode('h'),//unicode.utf8.encode(''))`)
+	AssertCodesEvalToSameValue(t, `<<>>       `, `//seq.join(<<>>,<<>>)       `)
+	AssertCodesEvalToSameValue(t, `<<'hello'>>`, `//seq.join(<<>>,<<'hello'>>)`)
+	AssertCodesEvalToSameValue(t, `<<>>       `, `//seq.join(<<'h'>>,<<>>)    `)
 }

@@ -26,8 +26,8 @@ Usage:
 
 | example | equals |
 |:-|:-|
-|`//os.file("path/to/file")` | `{ |@, @byte| ... }` |
-|`//os.file("/absolute/path/to/file")` | `{ |@, @byte| ... }` |
+|`//os.file("path/to/file")` | `<<...>>` |
+|`//os.file("/absolute/path/to/file")` | `<<...>>` |
 
 ## `//os.get_env(key <: string) <: string`
 
@@ -68,4 +68,4 @@ Usage:
 
 | example | equals |
 |:-|:-|
-| `//os.stdin` | `{ |@, @byte| ... }` |
+| `//os.stdin` | `<<...>>` |
