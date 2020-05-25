@@ -30,7 +30,7 @@ Usage:
 | example | equals |
 |:-|:-|
 | `//seq.has_prefix("I'm", "I'm running out of stuff to write")` | `true` |
-| `//seq.has_prefix("to write", "I'm running out of stuff to write")` | `{}` which is equal to `false` |
+| `//seq.has_prefix("to write", "I'm running out of stuff to write")` | `false` |
 | `//seq.has_prefix(['A'],['A','B','C'])` | `true` |
 | `//seq.has_prefix([1, 2],[1, 2, 3])` | `true` |
 | `//seq.has_prefix([[1, 2]],[[1, 2], [3]])` | `true` |

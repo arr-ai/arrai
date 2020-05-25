@@ -27,7 +27,7 @@ func TestStrSplit(t *testing.T) {
 	assertExprPanics(t, `//seq.split(1,"ABC")`)
 }
 
-func TestArraySplit(t *testing.T) {
+func TestArraySplit(t *testing.T) { //nolint:dupl
 	t.Parallel()
 	AssertCodesEvalToSameValue(t, `[['A'], ['B']]`,
 		`//seq.split([],['A', 'B'])`)

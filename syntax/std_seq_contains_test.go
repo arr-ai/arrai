@@ -19,7 +19,7 @@ func TestStrContains(t *testing.T) {
 	assertExprPanics(t, `//seq.contains(1, "ABC")`)
 }
 
-func TestArrayContains(t *testing.T) {
+func TestArrayContains(t *testing.T) { //nolint:dupl
 	t.Parallel()
 	AssertCodesEvalToSameValue(t, `true`, `//seq.contains(['A'],['A', 'D','E'])`)
 	AssertCodesEvalToSameValue(t, `true`, `//seq.contains(['E'],['A','C','E'])`)
