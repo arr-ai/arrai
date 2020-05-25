@@ -331,7 +331,7 @@ Arr.ai supports operations on numbers.
 
    Not all access failures are allowed. Only missing attributes of a `Tuple` or a `Set` call
    does not return exactly 1 value.
-   1. `(a: (b: 1)).a?.b?:42` will fail
+   1. `(a: (b: 1)).a?.b.c?:42` will fail as it will try to evaluate `1.c?:42`.
 5. Function slice:
    1. `[1, 1, 2, 3, 5, 8](2:5) = [2, 3, 5]`
    2. `[1, 2, 3, 4, 5, 6](1:5:2) = [2, 4]`
