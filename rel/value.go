@@ -127,6 +127,10 @@ func SetCall(s Set, arg Value) Value {
 	return SetAny(result)
 }
 
+func SafeSetCall(s Set, arg Value) Value {
+	return s.CallAll(arg)
+}
+
 func SetAny(s Set) Value {
 	for e := s.Enumerator(); e.MoveNext(); {
 		return e.Current()

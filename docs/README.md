@@ -317,7 +317,22 @@ Arr.ai supports operations on numbers.
 3. Function call:
    1. `[2, 4, 6, 8](2) = 6`, `"hello"(1) = 101`
    2. `{"red": 0.3, "green": 0.5, "blue", 0.2}("green") = 0.5`
-4. Function slice:
+4. Conditional Accessor Syntax: This feature allows failures in accessing a `Tuple` attribute
+   or a `Set` call and replacing it with a provided expression in case of failure. Any call or
+   attribute access that ends with `?` are allowed to fail.
+   1. `(a: 1).b?:42 = 42`
+   2. `(a: 1).a?:42 = 1`
+   3. `{"a": 1}("b")?:42 = 42`
+   4. `{"a": 1}("a")?:42 = 1`
+
+   It also allows appending access expressions.
+   1. `(a: {"b": (c: 2)}).a?("b").c?:42 = 2`
+   2. `(a: {"b": (c: 2)}).a?("b").d?:42 = 42`
+
+   Not all access failures are allowed. Only missing attributes of a `Tuple` or a `Set` call
+   does not return exactly 1 value.
+   1. `(a: (b: 1)).a?.b.c?:42` will fail as it will try to evaluate `1.c?:42`.
+5. Function slice:
    1. `[1, 1, 2, 3, 5, 8](2:5) = [2, 3, 5]`
    2. `[1, 2, 3, 4, 5, 6](1:5:2) = [2, 4]`
 
