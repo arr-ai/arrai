@@ -87,24 +87,29 @@ func (p ArrayPattern) Bind(scope Scope, value Value) Scope {
 		panic(fmt.Sprintf("length of array %s shorter than array pattern %s", array, p))
 	}
 
-	nonExtraElements := make([]int, 0)
+	extraElements := make(map[int]int)
 	for i, item := range p.items {
-		if _, is := item.(ExtraElementPattern); !is {
-			nonExtraElements = append(nonExtraElements, i)
+		if _, is := item.(ExtraElementPattern); is {
+			if len(extraElements) == 1 {
+				panic("multiple ... not supported yet")
+			}
+			extraElements[i] = array.Count() - len(p.items)
 		}
 	}
 
-	if len(p.items)-len(nonExtraElements) == 0 && len(p.items) < array.Count() {
+	if len(extraElements) == 0 && len(p.items) < array.Count() {
 		panic(fmt.Sprintf("length of array %s longer than array pattern %s", array, p))
 	}
 
 	result := EmptyScope
+	offset := 0
 	for i, item := range p.items {
 		if _, is := item.(ExtraElementPattern); is {
-			result = result.MatchedUpdate(item.Bind(scope, NewArray(array.Values()[i:]...)))
+			offset = extraElements[i]
+			result = result.MatchedUpdate(item.Bind(scope, NewArray(array.Values()[i:i+offset+1]...)))
 			continue
 		}
-		result = result.MatchedUpdate(item.Bind(scope, array.Values()[i]))
+		result = result.MatchedUpdate(item.Bind(scope, array.Values()[i+offset]))
 	}
 
 	return result
@@ -167,14 +172,17 @@ func (p TuplePattern) Bind(scope Scope, value Value) Scope {
 		panic(fmt.Sprintf("length of tuple %s shorter than tuple pattern %s", tuple, p))
 	}
 
-	nonExtraElements := make([]int, 0)
+	extraElements := make(map[int]int)
 	for i, attr := range p.attrs {
-		if _, is := attr.pattern.(ExtraElementPattern); !is {
-			nonExtraElements = append(nonExtraElements, i)
+		if _, is := attr.pattern.(ExtraElementPattern); is {
+			if len(extraElements) == 1 {
+				panic("multiple ... not supported yet")
+			}
+			extraElements[i] = tuple.Count() - len(p.attrs)
 		}
 	}
 
-	if len(p.attrs)-len(nonExtraElements) == 0 && len(p.attrs) < tuple.Count() {
+	if len(extraElements) == 0 && len(p.attrs) < tuple.Count() {
 		panic(fmt.Sprintf("length of tuple %s longer than tuple pattern %s", tuple, p))
 	}
 
@@ -260,14 +268,17 @@ func (p DictPattern) Bind(scope Scope, value Value) Scope {
 		panic(fmt.Sprintf("length of dict %s shorter than dict pattern %s", dict, p))
 	}
 
-	nonExtraElements := make([]int, 0)
+	extraElements := make(map[int]int)
 	for i, entry := range p.entries {
-		if _, is := entry.value.(ExtraElementPattern); !is {
-			nonExtraElements = append(nonExtraElements, i)
+		if _, is := entry.value.(ExtraElementPattern); is {
+			if len(extraElements) == 1 {
+				panic("multiple ... not supported yet")
+			}
+			extraElements[i] = dict.Count() - len(p.entries)
 		}
 	}
 
-	if len(p.entries)-len(nonExtraElements) == 0 && len(p.entries) < dict.Count() {
+	if len(extraElements) == 0 && len(p.entries) < dict.Count() {
 		panic(fmt.Sprintf("length of dict %s longer than dict pattern %s", dict, p))
 	}
 
