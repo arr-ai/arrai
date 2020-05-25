@@ -261,7 +261,7 @@ Array of Bytes can be expressed in arr.ai. The syntactic sugar is in the form of
 It only accepts expressions that are evaluated to either a `Number` whose values
 range from 0-255 inclusive or a `String` with `0` offset.
 Any other values and the expression will fail.
-`Number` is appended to the array while `String`, each of its character will be
+A `Number` is appended to the array while each characters of a `String` is
 appended to the array.
 The result is an array of Bytes and each Byte is represented as a `Number`.
 
