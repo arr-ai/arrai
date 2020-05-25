@@ -53,23 +53,14 @@ func TestArraySubEdgeCases(t *testing.T) {
 func TestBytesSub(t *testing.T) {
 	t.Parallel()
 	// hello bytes - 104 101 108 108 111
-	AssertCodesEvalToSameValue(t, `//unicode.utf8.encode('oello')`,
-		`//seq.sub({ |@, @byte| (0, 104)},{ |@, @byte| (0, 111)},//unicode.utf8.encode('hello'))`)
-	AssertCodesEvalToSameValue(t, `//unicode.utf8.encode('hehho')`,
-		`//seq.sub({ |@, @byte| (0, 108)},{ |@, @byte| (0, 104)},//unicode.utf8.encode('hello'))`)
-	///////////////////
-	AssertCodesEvalToSameValue(t, `//unicode.utf8.encode('')`,
-		`//seq.sub(//unicode.utf8.encode(''),//unicode.utf8.encode(''),//unicode.utf8.encode(''))`)
-	AssertCodesEvalToSameValue(t, `//unicode.utf8.encode('')`,
-		`//seq.sub(//unicode.utf8.encode('a'),//unicode.utf8.encode(''),//unicode.utf8.encode(''))`)
-	AssertCodesEvalToSameValue(t, `//unicode.utf8.encode('a')`,
-		`//seq.sub(//unicode.utf8.encode(''),//unicode.utf8.encode('a'),//unicode.utf8.encode(''))`)
+	AssertCodesEvalToSameValue(t, `<<'oello'>>`, `//seq.sub(<<104>>,<<111>>,<<'hello'>>)`)
+	AssertCodesEvalToSameValue(t, `<<'hehho'>>`, `//seq.sub(<<108>>,<<104>>,<<'hello'>>)`)
+	AssertCodesEvalToSameValue(t, `<<>>       `, `//seq.sub(<<>>,<<>>,<<>>)             `)
+	AssertCodesEvalToSameValue(t, `<<>>       `, `//seq.sub(<<'a'>>,<<>>,<<>>)          `)
+	AssertCodesEvalToSameValue(t, `<<'a'>>    `, `//seq.sub(<<>>,<<'a'>>,<<>>)          `)
 
-	AssertCodesEvalToSameValue(t, `//unicode.utf8.encode('hello')`,
-		`//seq.sub(//unicode.utf8.encode(''),//unicode.utf8.encode(''),//unicode.utf8.encode('hello'))`)
-	AssertCodesEvalToSameValue(t, `//unicode.utf8.encode('ello')`,
-		`//seq.sub(//unicode.utf8.encode('h'),//unicode.utf8.encode(''),//unicode.utf8.encode('hello'))`)
+	AssertCodesEvalToSameValue(t, `<<'hello'>>`, `//seq.sub(<<>>,<<>>,<<'hello'>>)   `)
+	AssertCodesEvalToSameValue(t, `<<'ello'>> `, `//seq.sub(<<'h'>>,<<>>,<<'hello'>>)`)
 
-	AssertCodesEvalToSameValue(t, `//unicode.utf8.encode('thtetltltot')`,
-		`//seq.sub(//unicode.utf8.encode(''),//unicode.utf8.encode('t'),//unicode.utf8.encode('hello'))`)
+	AssertCodesEvalToSameValue(t, `<<'thtetltltot'>>`, `//seq.sub(<<>>,<<'t'>>,<<'hello'>>)`)
 }

@@ -52,22 +52,12 @@ func TestArrayContains(t *testing.T) { //nolint:dupl
 func TestBytesContains(t *testing.T) {
 	t.Parallel()
 	// hello bytes - 104 101 108 108 111
-	AssertCodesEvalToSameValue(t, `true`,
-		`//seq.contains(//unicode.utf8.encode('hello'),//unicode.utf8.encode('hello'))`)
-
-	AssertCodesEvalToSameValue(t, `true`,
-		`//seq.contains({ |@, @byte| (0, 104)},//unicode.utf8.encode('hello'))`)
-	AssertCodesEvalToSameValue(t, `true`,
-		`//seq.contains({ |@, @byte| (0, 111)},//unicode.utf8.encode('hello'))`)
-	AssertCodesEvalToSameValue(t, `true`,
-		`//seq.contains({ |@, @byte| (0, 108),(0, 108)},//unicode.utf8.encode('hello'))`)
-	AssertCodesEvalToSameValue(t, `true`,
-		`//seq.contains(//unicode.utf8.encode('h'),//unicode.utf8.encode('hello'))`)
-
-	AssertCodesEvalToSameValue(t, `false`,
-		`//seq.contains(//unicode.utf8.encode('A'),//unicode.utf8.encode(''))`)
-	AssertCodesEvalToSameValue(t, `true`,
-		`//seq.contains(//unicode.utf8.encode(''),//unicode.utf8.encode(''))`)
-	AssertCodesEvalToSameValue(t, `true`,
-		`//seq.contains(//unicode.utf8.encode(''),//unicode.utf8.encode('hello'))`)
+	AssertCodesEvalToSameValue(t, `true `, `//seq.contains(<<'hello'>>, <<'hello'>>)                    `)
+	AssertCodesEvalToSameValue(t, `true `, `//seq.contains(<<104>>, <<'hello'>>)                        `)
+	AssertCodesEvalToSameValue(t, `true `, `//seq.contains(<<111>>, <<'hello'>>)                        `)
+	AssertCodesEvalToSameValue(t, `true `, `//seq.contains(<<'h'>>, <<'hello'>>)                        `)
+	AssertCodesEvalToSameValue(t, `false`, `//seq.contains(<<'A'>>, <<>>)                               `)
+	AssertCodesEvalToSameValue(t, `true `, `//seq.contains({ |@, @byte| (0, 108),(0, 108)}, <<'hello'>>)`)
+	AssertCodesEvalToSameValue(t, `true `, `//seq.contains(<<>>, <<>>)                                  `)
+	AssertCodesEvalToSameValue(t, `true `, `//seq.contains(<<>>, <<'hello'>>)                           `)
 }

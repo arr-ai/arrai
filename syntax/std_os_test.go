@@ -16,6 +16,6 @@ func TestStdOsStdin(t *testing.T) {
 	AssertCodesEvalToSameValue(t, `{}`, `//os.stdin`)
 
 	stdOsStdinVar.reset(bytes.NewBuffer([]byte("abc")))
-	AssertCodesEvalToSameValue(t, `{|@,@byte| (0,97), (1,98), (2,99)}`, `//os.stdin`)
-	AssertCodesEvalToSameValue(t, `{|@,@byte| (0,97), (1,98), (2,99)}`, `//os.stdin`)
+	AssertCodesEvalToSameValue(t, `<<97, 98, 99>>`, `//os.stdin`)
+	AssertCodesEvalToSameValue(t, `<<97, 98, 99>>`, `//os.stdin`)
 }
