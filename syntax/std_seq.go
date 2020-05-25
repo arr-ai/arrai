@@ -74,9 +74,8 @@ func stdSeq() rel.Attr {
 			case rel.Bytes:
 				return rel.NewBool(strings.Contains(asString(subject), asString(sub)))
 			case rel.GenericSet:
-				if emptySet, isSet := sub.(rel.GenericSet); isSet && !emptySet.IsTrue() {
-					return rel.NewBool(true)
-				}
+				emptySet, isSet := sub.(rel.GenericSet)
+				return rel.NewBool(isSet && !emptySet.IsTrue())
 			}
 
 			return rel.NewBool(false)
@@ -91,9 +90,8 @@ func stdSeq() rel.Attr {
 			case rel.Bytes:
 				return rel.NewBool(strings.HasPrefix(asString(subject), asString(prefix)))
 			case rel.GenericSet:
-				if emptySet, isSet := prefix.(rel.GenericSet); isSet && !emptySet.IsTrue() {
-					return rel.NewBool(true)
-				}
+				emptySet, isSet := prefix.(rel.GenericSet)
+				return rel.NewBool(isSet && !emptySet.IsTrue())
 			}
 
 			return rel.NewBool(false)
@@ -108,9 +106,8 @@ func stdSeq() rel.Attr {
 			case rel.Bytes:
 				return rel.NewBool(strings.HasSuffix(asString(subject), asString(suffix)))
 			case rel.GenericSet:
-				if emptySet, isSet := suffix.(rel.GenericSet); isSet && !emptySet.IsTrue() {
-					return rel.NewBool(true)
-				}
+				emptySet, isSet := suffix.(rel.GenericSet)
+				return rel.NewBool(isSet && !emptySet.IsTrue())
 			}
 
 			return rel.NewBool(false)
