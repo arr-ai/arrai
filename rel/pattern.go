@@ -3,6 +3,8 @@ package rel
 import (
 	"bytes"
 	"fmt"
+
+	"github.com/arr-ai/frozen"
 )
 
 // Pattern can be inside an Expr, Expr can be a Pattern.
@@ -42,6 +44,25 @@ func (p IdentPattern) String() string {
 	return p.ident
 }
 
+type ExtraElementPattern struct {
+	ident string
+}
+
+func NewExtraElementPattern(ident string) ExtraElementPattern {
+	return ExtraElementPattern{ident}
+}
+
+func (p ExtraElementPattern) Bind(scope Scope, value Value) Scope {
+	if p.ident == "" {
+		return EmptyScope
+	}
+	return EmptyScope.With(p.ident, value)
+}
+
+func (p ExtraElementPattern) String() string {
+	return "..." + p.ident
+}
+
 type ArrayPattern struct {
 	items []Pattern
 }
@@ -62,12 +83,37 @@ func (p ArrayPattern) Bind(scope Scope, value Value) Scope {
 		panic(fmt.Sprintf("value %s is not an array", value))
 	}
 
-	result := EmptyScope
+	extraElements := make(map[int]int)
 	for i, item := range p.items {
-		if len(array.Values()) < i+1 {
-			panic(fmt.Sprintf("length of value %s shorter than array pattern %s", array.Values(), p.items))
+		if _, is := item.(ExtraElementPattern); is {
+			if len(extraElements) == 1 {
+				panic("multiple ... not supported yet")
+			}
+			extraElements[i] = array.Count() - len(p.items)
 		}
-		result = result.MatchedUpdate(item.Bind(scope, array.Values()[i]))
+	}
+
+	if len(p.items) > array.Count()+len(extraElements) {
+		panic(fmt.Sprintf("length of array %s shorter than array pattern %s", array, p))
+	}
+
+	if len(extraElements) == 0 && len(p.items) < array.Count() {
+		panic(fmt.Sprintf("length of array %s longer than array pattern %s", array, p))
+	}
+
+	result := EmptyScope
+	offset := 0
+	for i, item := range p.items {
+		if _, is := item.(ExtraElementPattern); is {
+			offset = extraElements[i]
+			arr := NewArray()
+			if offset >= 0 {
+				arr = NewArray(array.Values()[i : i+offset+1]...)
+			}
+			result = result.MatchedUpdate(item.Bind(scope, arr))
+			continue
+		}
+		result = result.MatchedUpdate(item.Bind(scope, array.Values()[i+offset]))
 	}
 
 	return result
@@ -126,14 +172,38 @@ func (p TuplePattern) Bind(scope Scope, value Value) Scope {
 		panic(fmt.Sprintf("%s is not a tuple", value))
 	}
 
-	if len(p.attrs) != tuple.Count() {
-		panic(fmt.Sprintf("tuples %s and %s cannot match", p, tuple))
+	extraElements := make(map[int]int)
+	for i, attr := range p.attrs {
+		if _, is := attr.pattern.(ExtraElementPattern); is {
+			if len(extraElements) == 1 {
+				panic("multiple ... not supported yet")
+			}
+			extraElements[i] = tuple.Count() - len(p.attrs)
+		}
+	}
+
+	if len(p.attrs) > tuple.Count()+len(extraElements) {
+		panic(fmt.Sprintf("length of tuple %s shorter than tuple pattern %s", tuple, p))
+	}
+
+	if len(extraElements) == 0 && len(p.attrs) < tuple.Count() {
+		panic(fmt.Sprintf("length of tuple %s longer than tuple pattern %s", tuple, p))
 	}
 
 	result := EmptyScope
+	names := tuple.Names()
 	for _, attr := range p.attrs {
+		if _, is := attr.pattern.(ExtraElementPattern); is {
+			tupleExpr := tuple.Project(names)
+			if tupleExpr == nil {
+				panic(fmt.Sprintf("tuple %s cannot match tuple pattern %s", tuple, p))
+			}
+			result = result.MatchedUpdate(attr.pattern.Bind(scope, tupleExpr))
+			continue
+		}
 		tupleExpr := tuple.MustGet(attr.name)
 		result = result.MatchedUpdate(attr.pattern.Bind(scope, tupleExpr))
+		names = names.Without(attr.name)
 	}
 
 	return result
@@ -198,14 +268,39 @@ func (p DictPattern) Bind(scope Scope, value Value) Scope {
 		panic(fmt.Sprintf("%s is not a dict", value))
 	}
 
-	if len(p.entries) != dict.Count() {
-		panic(fmt.Sprintf("dicts %s and %s cannot match", p, dict))
+	extraElements := make(map[int]int)
+	for i, entry := range p.entries {
+		if _, is := entry.value.(ExtraElementPattern); is {
+			if len(extraElements) == 1 {
+				panic("multiple ... not supported yet")
+			}
+			extraElements[i] = dict.Count() - len(p.entries)
+		}
+	}
+
+	if len(p.entries) > dict.Count()+len(extraElements) {
+		panic(fmt.Sprintf("length of dict %s shorter than dict pattern %s", dict, p))
+	}
+
+	if len(extraElements) == 0 && len(p.entries) < dict.Count() {
+		panic(fmt.Sprintf("length of dict %s longer than dict pattern %s", dict, p))
 	}
 
 	result := EmptyScope
+	m := dict.m
 	for _, entry := range p.entries {
-		dictValue := dict.m.MustGet(entry.at)
+		if _, is := entry.value.(ExtraElementPattern); is {
+			if m.IsEmpty() {
+				result = result.MatchedUpdate(entry.value.Bind(scope, None))
+			} else {
+				result = result.MatchedUpdate(entry.value.Bind(scope, Dict{m: m}))
+			}
+
+			continue
+		}
+		dictValue := m.MustGet(entry.at)
 		result = result.MatchedUpdate(entry.value.Bind(scope, dictValue.(Value)))
+		m = m.Without(frozen.NewSet(entry.at))
 	}
 
 	return result
