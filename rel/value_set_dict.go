@@ -264,15 +264,21 @@ func (d Dict) Where(pred func(Value) bool) Set {
 	return Dict{m: m}
 }
 
-func (d Dict) Call(arg Value) Value {
-	switch v := d.m.MustGet(arg).(type) {
-	case Value:
-		return v
-	case multipleValues:
-		panic(fmt.Errorf("Dict.Call: too many return values for %v: %v", arg, frozen.Set(v))) //nolint:golint
-	default:
-		panic("wtf?")
+func (d Dict) CallAll(arg Value) Set {
+	val, exists := d.m.Get(arg)
+	if exists {
+		switch v := val.(type) {
+		case Value:
+			return NewSet(v)
+		case multipleValues:
+			values := make([]Value, 0, frozen.Set(v).Count())
+			for e := frozen.Set(v).Range(); e.Next(); {
+				values = append(values, e.Value().(Value))
+			}
+			return NewSet(values...)
+		}
 	}
+	return None
 }
 
 func (d Dict) ArrayEnumerator() (OffsetValueEnumerator, bool) {

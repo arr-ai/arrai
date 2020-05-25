@@ -7,20 +7,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestArrayCall(t *testing.T) {
-	f := NewArray(
-		NewNumber(0),
-		NewNumber(1),
-		NewNumber(4),
-		NewNumber(9),
-		NewNumber(16),
-		NewNumber(25),
-	)
-	for i := 0; i < f.Count(); i++ {
-		assert.Equal(t, i*i, int(f.Call(NewNumber(float64(i))).(Number).Float64()))
-	}
-}
-
 func TestAsString(t *testing.T) {
 	t.Parallel()
 
@@ -38,4 +24,37 @@ func TestAsString(t *testing.T) {
 	// stringified, isString = AsString(generic)
 	// require.True(t, isString)
 	// assert.True(t, stringified.Equal(NewString([]rune(""))))
+}
+
+func TestGenericSetCallAll(t *testing.T) {
+	t.Parallel()
+
+	set := NewSet(
+		NewTuple(
+			NewAttr("@", NewNumber(1)),
+			NewAttr("@fooo", NewNumber(42)),
+		),
+		NewTuple(
+			NewAttr("@", NewNumber(1)),
+			NewAttr("@baar", NewNumber(24)),
+		),
+		NewTuple(
+			NewAttr("@", NewNumber(2)),
+			NewAttr("@foo", NewNumber(3)),
+			NewAttr("@bar", NewNumber(4)),
+		),
+		NewTuple(
+			NewAttr("@", NewNumber(3)),
+		),
+		NewTuple(
+			NewAttr("@", NewNumber(4)),
+			NewAttr("random", NewNumber(5)),
+		),
+	)
+
+	AssertEqualValues(t, NewSet(NewNumber(42), NewNumber(24)), set.CallAll(NewNumber(1)))
+	assert.Panics(t, func() { set.CallAll(NewNumber(2)) })
+	assert.Panics(t, func() { set.CallAll(NewNumber(3)) })
+	AssertEqualValues(t, NewSet(NewNumber(5)), set.CallAll(NewNumber(4)))
+	AssertEqualValues(t, None, set.CallAll(NewNumber(5)))
 }

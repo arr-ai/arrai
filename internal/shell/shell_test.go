@@ -176,6 +176,10 @@ func TestTabCompletionStdlib(t *testing.T) {
 	lib := "seq"
 	strlib := stdlib.MustGet(lib).(rel.Tuple).Names().OrderedNames()
 	assertTabCompletionWithPrefix(t, prefix, strlib, "//"+lib+".%s\t", nil)
+	for i := 0; i < len(strlib); i++ {
+		strlib[i] = "." + strlib[i]
+	}
+	assertTabCompletionWithPrefix(t, "", strlib, "//"+lib+"%s\t", nil)
 }
 
 func TestTrimExpr(t *testing.T) {
