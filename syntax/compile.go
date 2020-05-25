@@ -388,8 +388,8 @@ func (pc ParseContext) compileCond(b ast.Branch, c ast.Children) rel.Expr {
 	}
 
 	if controlVarExpr != nil {
-		p := pc.compilePattern(c.(ast.One).Node.(ast.Branch))
-		fmt.Println(p)
+		// p := pc.compilePattern(c.(ast.One).Node.(ast.Branch))
+		// fmt.Println(p)
 		result = rel.NewCondControlVarExpr(c.(ast.One).Node.Scanner(), controlVarExpr, result, fExpr)
 	} else {
 		result = rel.NewCondExpr(c.(ast.One).Node.Scanner(), result, fExpr)
