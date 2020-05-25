@@ -375,7 +375,61 @@ func (pc ParseContext) compileIf(b ast.Branch, c ast.Children) rel.Expr {
 }
 
 func (pc ParseContext) compileCond(b ast.Branch, c ast.Children) rel.Expr {
-	// arrai eval 'cond (1 > 0:1, 2 > 3:2, *:10)'
+	if controlVarNode := b.One("expr"); controlVarNode != nil {
+		return pc.compileCondWithControlVar(b, c)
+	}
+	return pc.compileCondWithoutControlVar(b, c)
+}
+
+func (pc ParseContext) compileCondWithControlVar(b ast.Branch, c ast.Children) rel.Expr {
+	// var controlVarExpr rel.Expr
+	// controlVarExpr = pc.CompileExpr(b.One("expr").(ast.Branch))
+
+	// keys := c.(ast.One).Node.(ast.Branch)["key"]
+	// values := c.(ast.One).Node.(ast.Branch)["value"]
+
+	// var keyExprs, valueExprs []rel.Expr
+	// var hasDefaultExpr bool
+	// if keys != nil && values != nil {
+	// 	keyExprs, hasDefaultExpr = pc.compileExprs4Cond(keys.(ast.Many)...)
+	// 	valueExprs, _ = pc.compileExprs4Cond(values.(ast.Many)...)
+	// }
+
+	// var entryExprs []rel.DictEntryTupleExpr
+	// if hasDefaultExpr {
+	// 	entryExprs = pc.compileDictEntryExprs(c, keyExprs, valueExprs[0:len(valueExprs)-1])
+	// } else {
+	// 	entryExprs = pc.compileDictEntryExprs(c, keyExprs, valueExprs)
+	// }
+	// if entryExprs != nil {
+	// 	// Generates type DictExpr always to make sure it is easy to do Eval, only process type DictExpr.
+	// 	result = rel.NewDictExpr(c.(ast.One).Node.Scanner(), false, true, entryExprs...)
+	// } else {
+	// 	result = rel.NewDict(false)
+	// }
+
+	// var fExpr rel.Expr
+
+	// if fNode := c.(ast.One).Node.One("f"); fNode != nil {
+	// 	fExpr = pc.CompileExpr(fNode.(ast.Branch))
+	// }
+	// if fExpr == nil && hasDefaultExpr {
+	// 	fExpr = valueExprs[len(valueExprs)-1]
+	// }
+
+	// if controlVarExpr != nil {
+	// 	// p := pc.compilePattern(c.(ast.One).Node.(ast.Branch))
+	// 	// fmt.Println(p)
+	// 	result = rel.NewCondControlVarExpr(c.(ast.One).Node.Scanner(), controlVarExpr, result, fExpr)
+	// } else {
+	// 	result = rel.NewCondExpr(c.(ast.One).Node.Scanner(), result, fExpr)
+	// }
+
+	// return result
+	return nil
+}
+
+func (pc ParseContext) compileCondWithoutControlVar(b ast.Branch, c ast.Children) rel.Expr {
 	var result rel.Expr
 
 	keys := c.(ast.One).Node.(ast.Branch)["key"]
@@ -401,28 +455,13 @@ func (pc ParseContext) compileCond(b ast.Branch, c ast.Children) rel.Expr {
 		result = rel.NewDict(false)
 	}
 
-	var controlVarExpr, fExpr rel.Expr
+	var fExpr rel.Expr
 
-	if controlVarNode := b.One("expr"); controlVarNode != nil {
-		controlVarExpr = pc.CompileExpr(b.One("expr").(ast.Branch))
+	if hasDefaultExpr {
+		return rel.NewCondExpr(c.(ast.One).Node.Scanner(), result, valueExprs[len(valueExprs)-1])
 	}
 
-	if fNode := c.(ast.One).Node.One("f"); fNode != nil {
-		fExpr = pc.CompileExpr(fNode.(ast.Branch))
-	}
-	if fExpr == nil && hasDefaultExpr {
-		fExpr = valueExprs[len(valueExprs)-1]
-	}
-
-	if controlVarExpr != nil {
-		// p := pc.compilePattern(c.(ast.One).Node.(ast.Branch))
-		// fmt.Println(p)
-		result = rel.NewCondControlVarExpr(c.(ast.One).Node.Scanner(), controlVarExpr, result, fExpr)
-	} else {
-		result = rel.NewCondExpr(c.(ast.One).Node.Scanner(), result, fExpr)
-	}
-
-	return result
+	return rel.NewCondExpr(c.(ast.One).Node.Scanner(), result, fExpr)
 }
 
 func (pc ParseContext) compilePostfixAndTouch(b ast.Branch, c ast.Children) rel.Expr {
