@@ -47,20 +47,19 @@ func TestArrayPrefix(t *testing.T) {
 
 func TestBytesPrefix(t *testing.T) {
 	t.Parallel()
-	AssertCodesEvalToSameValue(t, `true`,
-		`//seq.has_prefix(<<'hello'>>,<<'hello'>>)`)
+	AssertCodesEvalToSameValue(t, `true`, `//seq.has_prefix(<<'hello'>>, <<'hello'>>)`)
 
-	AssertCodesEvalToSameValue(t, `true `, `//seq.has_prefix(<<'h'>>,<<'hello'>>) `)
-	AssertCodesEvalToSameValue(t, `true `, `//seq.has_prefix(<<'he'>>,<<'hello'>>)`)
-	AssertCodesEvalToSameValue(t, `false`, `//seq.has_prefix(<<'e'>>,<<'hello'>>) `)
-	AssertCodesEvalToSameValue(t, `false`, `//seq.has_prefix(<<'l'>>,<<'hello'>>) `)
-	AssertCodesEvalToSameValue(t, `false`, `//seq.has_prefix(<<'o'>>,<<'hello'>>) `)
+	AssertCodesEvalToSameValue(t, `true `, `//seq.has_prefix(<<'h'>>, <<'hello'>>) `)
+	AssertCodesEvalToSameValue(t, `true `, `//seq.has_prefix(<<'he'>>, <<'hello'>>)`)
+	AssertCodesEvalToSameValue(t, `false`, `//seq.has_prefix(<<'e'>>, <<'hello'>>) `)
+	AssertCodesEvalToSameValue(t, `false`, `//seq.has_prefix(<<'l'>>, <<'hello'>>) `)
+	AssertCodesEvalToSameValue(t, `false`, `//seq.has_prefix(<<'o'>>, <<'hello'>>) `)
 
-	AssertCodesEvalToSameValue(t, `true`, `//seq.has_prefix(<<'h'>>,<<'hello'>>)    `)
-	AssertCodesEvalToSameValue(t, `true`, `//seq.has_prefix(<<'he'>>,<<'hello'>>)   `)
-	AssertCodesEvalToSameValue(t, `true`, `//seq.has_prefix(<<'hello'>>,<<'hello'>>)`)
+	AssertCodesEvalToSameValue(t, `true`, `//seq.has_prefix(<<'h'>>, <<'hello'>>)    `)
+	AssertCodesEvalToSameValue(t, `true`, `//seq.has_prefix(<<'he'>>, <<'hello'>>)   `)
+	AssertCodesEvalToSameValue(t, `true`, `//seq.has_prefix(<<'hello'>>, <<'hello'>>)`)
 
-	AssertCodesEvalToSameValue(t, `true `, `//seq.has_prefix(<<>>,<<>>)       `)
-	AssertCodesEvalToSameValue(t, `false`, `//seq.has_prefix(<<'o'>>,<<>>)    `)
-	AssertCodesEvalToSameValue(t, `true `, `//seq.has_prefix(<<>>,<<'hello'>>)`)
+	AssertCodesEvalToSameValue(t, `true `, `//seq.has_prefix(<<>>, <<>>)       `)
+	AssertCodesEvalToSameValue(t, `false`, `//seq.has_prefix(<<'o'>>, <<>>)    `)
+	AssertCodesEvalToSameValue(t, `true `, `//seq.has_prefix(<<>>, <<'hello'>>)`)
 }
