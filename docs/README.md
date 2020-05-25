@@ -254,6 +254,25 @@ The three forms differ only in their escaping rules.
    `Let's escape some ``backquotes``!`
    ```
 
+##### Bytes Syntax
+
+Array of Bytes can be expressed in arr.ai. The syntactic sugar is in the form of
+`<< expr1, expr2, expr3, ... >>`.
+It only accepts expressions that are evaluated to either a `Number` whose values
+range from 0-255 inclusive or a `String` with `0` offset.
+Any other values and the expression will fail.
+`Number` is appended to the array while `String`, each of its character will be
+appended to the array.
+The result is an array of Bytes and each Byte is represented as a `Number`.
+
+Example of usages:
+
+```arrai
+# String is used to show the results, but they are arrays of bytes
+<<"hello", 10>> = "hello\n"
+<<97, 98, 99>>  = "abc"
+```
+
 ##### Expression string syntax
 
 Expression strings appear on the surface to be quite similar to regular strings:
