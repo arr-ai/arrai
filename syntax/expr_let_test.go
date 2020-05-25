@@ -76,7 +76,7 @@ func TestExprLetDictPattern(t *testing.T) {
 	AssertCodeErrors(t, `let {"x": a, "y": b} = {"x": 4, "y": 5, "z": 6}; a`, "")
 	AssertCodeErrors(t, `let {"x": a, "x": a} = {"x": 4}; a`, "")
 	AssertCodeErrors(t, `let a = 4; let {"x": (a)} = {"x": 5}; a`, "")
-	AssertCodeErrors(t, `let {"x": a, "x": a} = {"x": 4, "x": 4}; a`, "")
+	AssertCodePanics(t, `let {"x": a, "x": a} = {"x": 4, "x": 4}; a`)
 }
 
 func TestExprLetExtraElementsInPattern(t *testing.T) {
@@ -95,8 +95,8 @@ func TestExprLetExtraElementsInPattern(t *testing.T) {
 	AssertCodesEvalToSameValue(t, `[1, 2, {"j": 3, "k": 4}]`,
 		`let {"m": x, "n": y, ...t} = {"m": 1, "n": 2, "j": 3, "k": 4}; [x, y, t]`,
 	)
-	AssertCodePanics(t, `let [x, y, ...] = [1, 2]; x`)
-	AssertCodePanics(t, `let [x, y, ...y] = [1, 2, 2]; x`)
-	AssertCodePanics(t, `let [x, y, ...y] = [1, 2, 4]; x`)
-	AssertCodePanics(t, `let [..., y, ...] = [1, 2, 4]; x`)
+	AssertCodeErrors(t, `let [x, y, ...] = [1, 2]; x`, "")
+	AssertCodeErrors(t, `let [x, y, ...y] = [1, 2, 2]; x`, "")
+	AssertCodeErrors(t, `let [x, y, ...y] = [1, 2, 4]; x`, "")
+	AssertCodeErrors(t, `let [..., y, ...] = [1, 2, 4]; x`, "")
 }
