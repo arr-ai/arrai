@@ -4,7 +4,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/arr-ai/arrai/syntax"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -12,13 +11,6 @@ func assertEvalOutputs(t *testing.T, expected, source string) bool { //nolint:un
 	var sb strings.Builder
 	return assert.NoError(t, evalImpl(source, &sb)) &&
 		assert.Equal(t, expected, strings.TrimRight(sb.String(), "\n"))
-}
-
-func assertEvalExprString(t *testing.T, expected, source string) bool { //nolint:unparam
-	expr, err := syntax.Compile(".", source)
-	return assert.True(t, err == nil) &&
-		assert.True(t, expr != nil) &&
-		assert.Equal(t, expected, strings.Replace(expr.String(), ` `, ``, -1))
 }
 
 func TestEvalNumberULP(t *testing.T) {

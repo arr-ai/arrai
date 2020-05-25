@@ -378,7 +378,7 @@ func (pc ParseContext) compileCond(b ast.Branch, c ast.Children) rel.Expr {
 	if controlVarNode := b.One("expr"); controlVarNode != nil {
 		return pc.compileCondWithControlVar(b, c)
 	}
-	return pc.compileCondWithoutControlVar(b, c)
+	return pc.compileCondWithoutControlVar(c)
 }
 
 func (pc ParseContext) compileCondWithControlVar(b ast.Branch, c ast.Children) rel.Expr {
@@ -410,7 +410,7 @@ func (pc ParseContext) compileCondWithControlVar(b ast.Branch, c ast.Children) r
 	return rel.NewCondControlVarExpr(c.(ast.One).Node.Scanner(), controlVarExpr, result, nil)
 }
 
-func (pc ParseContext) compileCondWithoutControlVar(b ast.Branch, c ast.Children) rel.Expr {
+func (pc ParseContext) compileCondWithoutControlVar(c ast.Children) rel.Expr {
 	keys := c.(ast.One).Node.(ast.Branch)["expr"]
 	values := c.(ast.One).Node.(ast.Branch)["value"]
 	var keyExprs, valueExprs []rel.Expr
