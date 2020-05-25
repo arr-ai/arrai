@@ -50,7 +50,10 @@ func (s *SafeTailExpr) Eval(local Scope) (value Value, err error) {
 		} else if safeDot, isSafeDot := expr.(*SafeDotExpr); isSafeDot {
 			value, err = safeDot.Eval(local)
 			if err != nil {
-				return s.fallbackValue.Eval(local)
+				if _, isMissingAttr := err.(missingAttrError); isMissingAttr {
+					return s.fallbackValue.Eval(local)
+				}
+				return nil, wrapContext(err, s)
 			}
 		} else {
 			value, err = expr.Eval(local)

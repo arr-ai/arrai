@@ -7,6 +7,14 @@ import (
 	"github.com/go-errors/errors"
 )
 
+type missingAttrError struct {
+	ctxErr error
+}
+
+func (m missingAttrError) Error() string {
+	return m.ctxErr.Error()
+}
+
 // DotExpr returns the tuple or set with a single field replaced by an
 // expression.
 type DotExpr struct {
@@ -62,7 +70,7 @@ func (x *DotExpr) Eval(local Scope) (Value, error) {
 				}
 			}
 		}
-		return nil, wrapContext(errors.Errorf("Missing attr %s", x.attr), x)
+		return nil, missingAttrError{wrapContext(errors.Errorf("Missing attr %s", x.attr), x)}
 	}
 
 	switch t := a.(type) {
