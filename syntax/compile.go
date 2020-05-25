@@ -432,22 +432,16 @@ func (pc ParseContext) compileCondWithControlVar(b ast.Branch, c ast.Children) r
 func (pc ParseContext) compileCondWithoutControlVar(b ast.Branch, c ast.Children) rel.Expr {
 	var result rel.Expr
 
-	keys := c.(ast.One).Node.(ast.Branch)["key"]
+	keys := c.(ast.One).Node.(ast.Branch)["expr"]
 	values := c.(ast.One).Node.(ast.Branch)["value"]
-
 	var keyExprs, valueExprs []rel.Expr
-	var hasDefaultExpr bool
+
 	if keys != nil && values != nil {
-		keyExprs, hasDefaultExpr = pc.compileExprs4Cond(keys.(ast.Many)...)
-		valueExprs, _ = pc.compileExprs4Cond(values.(ast.Many)...)
+		keyExprs = pc.compileExprs4Cond(keys.(ast.Many)...)
+		valueExprs = pc.compileExprs4Cond(values.(ast.Many)...)
 	}
 
-	var entryExprs []rel.DictEntryTupleExpr
-	if hasDefaultExpr {
-		entryExprs = pc.compileDictEntryExprs(c, keyExprs, valueExprs[0:len(valueExprs)-1])
-	} else {
-		entryExprs = pc.compileDictEntryExprs(c, keyExprs, valueExprs)
-	}
+	entryExprs := pc.compileDictEntryExprs(c, keyExprs, valueExprs)
 	if entryExprs != nil {
 		// Generates type DictExpr always to make sure it is easy to do Eval, only process type DictExpr.
 		result = rel.NewDictExpr(c.(ast.One).Node.Scanner(), false, true, entryExprs...)
@@ -455,13 +449,12 @@ func (pc ParseContext) compileCondWithoutControlVar(b ast.Branch, c ast.Children
 		result = rel.NewDict(false)
 	}
 
-	var fExpr rel.Expr
-
-	if hasDefaultExpr {
-		return rel.NewCondExpr(c.(ast.One).Node.Scanner(), result, valueExprs[len(valueExprs)-1])
+	if fNode := c.(ast.One).Node.One("f"); fNode != nil {
+		fExpr := pc.CompileExpr(fNode.(ast.Branch))
+		return rel.NewCondExpr(c.(ast.One).Node.Scanner(), result, fExpr)
 	}
 
-	return rel.NewCondExpr(c.(ast.One).Node.Scanner(), result, fExpr)
+	return rel.NewCondExpr(c.(ast.One).Node.Scanner(), result, nil)
 }
 
 func (pc ParseContext) compilePostfixAndTouch(b ast.Branch, c ast.Children) rel.Expr {
@@ -653,11 +646,10 @@ func (pc ParseContext) compileExprs(exprs ...ast.Node) []rel.Expr {
 }
 
 // compileExprs4Cond parses conditons/keys and values expressions for syntax `cond`.
-func (pc ParseContext) compileExprs4Cond(exprs ...ast.Node) ([]rel.Expr, bool) {
+func (pc ParseContext) compileExprs4Cond(exprs ...ast.Node) []rel.Expr {
 	result := make([]rel.Expr, 0, len(exprs))
-	var hasDefaultExpr bool = false
 
-	for index, expr := range exprs {
+	for _, expr := range exprs {
 		var exprResult rel.Expr
 
 		name, c := which(expr.(ast.Branch), "expr")
@@ -684,19 +676,11 @@ func (pc ParseContext) compileExprs4Cond(exprs ...ast.Node) ([]rel.Expr, bool) {
 		}
 
 		if exprResult != nil {
-			if identExpr, isIdentExpr := exprResult.(rel.IdentExpr); isIdentExpr && identExpr.Ident() == "_" {
-				if index == len(exprs)-1 {
-					hasDefaultExpr = true
-				} else {
-					panic("the default expression '_: expr' is not the last expression in cond")
-				}
-			} else {
-				result = append(result, exprResult)
-			}
+			result = append(result, exprResult)
 		}
 	}
 
-	return result, hasDefaultExpr
+	return result
 }
 
 func (pc ParseContext) compileFunction(b ast.Branch) rel.Expr {
