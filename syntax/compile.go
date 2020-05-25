@@ -733,8 +733,8 @@ func (pc ParseContext) compileChar(c ast.Children) rel.Expr {
 	if char[0] == '\'' {
 		quote = "'"
 	}
-	bytes := []byte(parseArraiStringFragment(char, quote, ""))
-	return rel.NewNumber(float64(bytes[0]))
+	runes := []rune(parseArraiStringFragment(char, quote, ""))
+	return rel.NewNumber(float64(runes[0]))
 }
 
 func (pc ParseContext) compileExpr(c ast.Children) rel.Expr {
