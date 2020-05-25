@@ -212,6 +212,22 @@ Arr.ai allows a shorthand form to represent relations:
 }
 ```
 
+##### Character syntax
+
+A character can be expressed in arr.ai as a `Number`. Its syntactic sugar uses the
+form of `%char`. The syntax will evaluate to a `Number` whose value corresponds
+to the ASCII code of `char`.
+
+Usage:
+
+```arrai
+%a  = 97
+%A  = 65
+%\n = 10
+%\t = 9
+%🙂 = 128578
+```
+
 ##### String syntax
 
 Strings may be expressed in arr.ai. They are syntactic sugar for relations of
@@ -237,6 +253,25 @@ The three forms differ only in their escaping rules.
    ```arrai
    `Let's escape some ``backquotes``!`
    ```
+
+##### Bytes Syntax
+
+Array of Bytes can be expressed in arr.ai. The syntactic sugar is in the form of
+`<< expr1, expr2, expr3, ... >>`.
+It only accepts expressions that are evaluated to either a `Number` whose values
+range from 0-255 inclusive or a `String` with `0` offset.
+Any other values and the expression will fail.
+A `Number` is appended to the array while each characters of a `String` is
+appended to the array.
+The result is an array of Bytes and each Byte is represented as a `Number`.
+
+Example of usages:
+
+```arrai
+# String is used to show the results, but they are arrays of bytes
+<<"hello", 10>> = "hello\n"
+<<97, 98, 99>>  = "abc"
+```
 
 ##### Expression string syntax
 

@@ -44,7 +44,8 @@ expr   -> C* amp="&"* @ C* arrow=(
         | C* xstr C*
         | C* IDENT C*
         | C* STR C*
-        | C* NUM C*;
+        | C* NUM C*
+        | C* CHAR C*;
 nest   -> C* "nest" names IDENT C*;
 unnest -> C* "unnest" IDENT C*;
 touch  -> C* ("->*" ("&"? IDENT | STR))+ "(" expr:"," ","? ")" C*;
@@ -77,6 +78,7 @@ STR    -> /{ " (?: \\. | [^\\"] )* "
            | ‵ (?: ‵‵  | [^‵  ] )* ‵
            };
 NUM    -> /{ (?: \d+(?:\.\d*)? | \.\d+ ) (?: [Ee][-+]?\d+ )? };
+CHAR   -> /{%(\\.|.)};
 C      -> /{ # .* $ };
 
 .wrapRE -> /{\s*()\s*};
@@ -86,6 +88,7 @@ C      -> /{ # .* $ };
   | C* "{" C* set=(elt=top:",",?) "}" C*
   | C* "{" C* dict=((ext=extra|key=expr ":" value=top):",",?) "}" C*
   | C* "[" C* array=(item=top:",",?) C* "]" C*
+  | C* "<<" C* bytes=(item=top:",",?) C* ">>" C*
   | C* "(" tuple=(pairs=(extra|name? ":" v=top):",",?) ")" C*
   | C* "(" identpattern=IDENT ")" C*
 };

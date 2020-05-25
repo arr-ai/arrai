@@ -73,9 +73,9 @@ func (pc ParseContext) CompileExpr(b ast.Branch) rel.Expr {
 	// Note: please make sure if it is necessary to add new syntax name before `expr`.
 	name, c := which(b,
 		"amp", "arrow", "let", "unop", "binop", "compare", "rbinop", "if", "get",
-		"tail_op", "postfix", "touch", "get", "rel", "set", "dict", "array",
-		"embed", "op", "fn", "pkg", "tuple", "xstr", "IDENT", "STR", "NUM", "cond",
-		"expr",
+		"tail_op", "postfix", "touch", "get", "rel", "set", "dict", "array", "bytes",
+		"embed", "op", "fn", "pkg", "tuple", "xstr", "IDENT", "STR", "NUM", "CHAR",
+		"cond", "expr",
 	)
 	if c == nil {
 		panic(fmt.Errorf("misshapen node AST: %v", b))
@@ -109,6 +109,8 @@ func (pc ParseContext) CompileExpr(b ast.Branch) rel.Expr {
 		return pc.compileDict(c)
 	case "array":
 		return pc.compileArray(c)
+	case "bytes":
+		return pc.compileBytes(c)
 	case "embed":
 		return rel.ASTNodeToValue(b.One("embed").One("subgrammar").One("ast"))
 	case "fn":
@@ -125,6 +127,8 @@ func (pc ParseContext) CompileExpr(b ast.Branch) rel.Expr {
 		return pc.compileExpandableString(c)
 	case "NUM":
 		return pc.compileNumber(c)
+	case "CHAR":
+		return pc.compileChar(c)
 	case "expr":
 		if result := pc.compileExpr(c); result != nil {
 			return result
@@ -617,6 +621,13 @@ func (pc ParseContext) compileArray(c ast.Children) rel.Expr {
 	return rel.NewArray()
 }
 
+func (pc ParseContext) compileBytes(c ast.Children) rel.Expr {
+	if items := c.(ast.One).Node.(ast.Branch)["item"]; items != nil {
+		return rel.NewBytesExpr(items.Scanner(), pc.compileExprs(items.(ast.Many)...)...)
+	}
+	return rel.NewBytes([]byte{})
+}
+
 func (pc ParseContext) compileExprs(exprs ...ast.Node) []rel.Expr {
 	result := make([]rel.Expr, 0, len(exprs))
 	for _, expr := range exprs {
@@ -747,6 +758,16 @@ func (pc ParseContext) compileNumber(c ast.Children) rel.Expr {
 		panic("Wat?")
 	}
 	return rel.NewNumber(n)
+}
+
+func (pc ParseContext) compileChar(c ast.Children) rel.Expr {
+	char := c.(ast.One).Node.One("").Scanner().String()
+	quote := "\""
+	if char[0] == '\'' {
+		quote = "'"
+	}
+	runes := []rune(parseArraiStringFragment(char, quote, ""))
+	return rel.NewNumber(float64(runes[0]))
 }
 
 func (pc ParseContext) compileExpr(c ast.Children) rel.Expr {
