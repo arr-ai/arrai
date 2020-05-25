@@ -22,6 +22,7 @@ func TestStrJoin(t *testing.T) {
 	AssertCodeErrors(t, `//seq.join("this", 2)`, "")
 }
 
+//nolint:dupl
 func TestArrayJoin(t *testing.T) {
 	t.Parallel()
 	// joiner "" is translated to rel.GenericSet

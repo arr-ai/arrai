@@ -105,6 +105,7 @@ func TestEvalCondMultiStr(t *testing.T) {
 	assertEvalExprString(t, "((control_var:1),(((1>0))||((2>1)):1,*:11))", "(1) cond (1 > 0 || 2 > 1 : 1, * : 11)")
 }
 
+//nolint:dupl
 func TestEvalCondWithControlVar(t *testing.T) {
 	t.Parallel()
 	// Control var conditions
