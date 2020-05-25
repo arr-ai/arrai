@@ -32,15 +32,7 @@ expr   -> C* amp="&"* @ C* arrow=(
         > C* unop=/{:>|=>|>>|[-+!*^]}* @ C*
         > C* @:binop=">>>" C*
         > C* @ postfix=/{count|single}? C* touch? C*
-        > C* (get | @) tail=(
-              get
-            | call=("("
-                  arg=(
-                      expr (":" end=expr? (":" step=expr)?)?
-                      |     ":" end=expr  (":" step=expr)?
-                  ):",",
-              ")")
-          )* C*
+        > C* (get | @) tail_op=(safe_tail | tail)* C*
         > %!patternterms(expr)
         | C* cond=("cond" "{" (key=@ ":" value=@):",",? ("_" ":" f=expr ","?)? "}") C*
         | C* "{:" C* embed=(grammar=@ ":" subgrammar=%%ast) ":}" C*
@@ -66,6 +58,14 @@ sexpr  -> "${"
           C* expr C*
           control=/{ (?: : [-+#*\.\_0-9a-z]* (?: : (?: \\. | [^\\:}] )* ){0,2} )? }
           close=/{\}\s*};
+tail   -> get
+          | call=("("
+                arg=(
+                    expr (":" end=expr? (":" step=expr)?)?
+                    |     ":" end=expr  (":" step=expr)?
+                ):",",
+            ")");
+safe_tail -> first_safe=(tail "?") ops=(safe=(tail "?") | tail)* ":" fall=expr;
 pattern -> extra | %!patternterms(pattern|expr) | IDENT | NUM;
 extra -> ("..." ident=IDENT?);
 

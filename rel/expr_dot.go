@@ -7,6 +7,14 @@ import (
 	"github.com/go-errors/errors"
 )
 
+type missingAttrError struct {
+	ctxErr error
+}
+
+func (m missingAttrError) Error() string {
+	return m.ctxErr.Error()
+}
+
 // DotExpr returns the tuple or set with a single field replaced by an
 // expression.
 type DotExpr struct {
@@ -63,7 +71,7 @@ func (x *DotExpr) Eval(local Scope) (_ Value, err error) {
 				}
 			}
 		}
-		return nil, wrapContext(errors.Errorf("Missing attr %s", x.attr), x)
+		return nil, missingAttrError{wrapContext(errors.Errorf("Missing attr %s", x.attr), x)}
 	}
 
 	switch t := a.(type) {
@@ -87,4 +95,24 @@ func (x *DotExpr) Eval(local Scope) (_ Value, err error) {
 		return nil, wrapContext(errors.Errorf(
 			"(%s).%s: lhs must be a Tuple, not %T", x.lhs, x.attr, a), x)
 	}
+}
+
+type SafeDotExpr struct {
+	d *DotExpr
+}
+
+func NewSafeDotExpr(scanner parser.Scanner, lhs Expr, attr string) Expr {
+	return &SafeDotExpr{NewDotExpr(scanner, lhs, attr).(*DotExpr)}
+}
+
+func (sd *SafeDotExpr) Eval(local Scope) (Value, error) {
+	return sd.d.Eval(local)
+}
+
+func (sd *SafeDotExpr) Source() parser.Scanner {
+	return sd.d.Src
+}
+
+func (sd *SafeDotExpr) String() string {
+	return sd.d.String() + "?"
 }

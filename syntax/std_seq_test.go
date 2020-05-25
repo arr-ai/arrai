@@ -1,6 +1,8 @@
 package syntax
 
-import "testing"
+import (
+	"testing"
+)
 
 func TestSeqConcat(t *testing.T) {
 	t.Parallel()
