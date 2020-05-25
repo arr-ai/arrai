@@ -217,29 +217,6 @@ func stdSeq() rel.Attr {
 	)
 }
 
-// Shared method for contains, hasPrefix and hasSuffix
-func includingProcess(
-	strHandler,
-	arrayHandler,
-	bytesHandler func(...rel.Value) rel.Value,
-	args ...rel.Value) rel.Value {
-	sub, subject := args[0], args[1]
-	switch subject.(type) {
-	case rel.String:
-		return strHandler(args...)
-	case rel.Array:
-		return arrayHandler(args...)
-	case rel.Bytes:
-		return bytesHandler(args...)
-	case rel.GenericSet:
-		if emptySet, isSet := sub.(rel.GenericSet); isSet && !emptySet.IsTrue() {
-			return rel.NewBool(true)
-		}
-	}
-
-	return rel.NewBool(false)
-}
-
 func strJoin(args ...rel.Value) rel.Value {
 	joiner, subject := args[0], args[1]
 	strs := subject.(rel.Set)
