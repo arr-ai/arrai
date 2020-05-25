@@ -65,7 +65,7 @@ func (t DictEntryTuple) Equal(v interface{}) bool {
 
 // String returns a string representation of a Tuple.
 func (t DictEntryTuple) String() string {
-	return fmt.Sprintf("(@: %d, %s: %v)", t.at, DictValueAttr, t.value)
+	return fmt.Sprintf("(@: %v, %s: %v)", t.at, DictValueAttr, t.value)
 }
 
 // Eval returns the tuple.
