@@ -74,8 +74,8 @@ func (pc ParseContext) CompileExpr(b ast.Branch) rel.Expr {
 	name, c := which(b,
 		"amp", "arrow", "let", "unop", "binop", "compare", "rbinop", "if", "get",
 		"tail_op", "postfix", "touch", "get", "rel", "set", "dict", "array",
-		"embed", "op", "fn", "pkg", "tuple", "xstr", "IDENT", "STR", "NUM", "cond",
-		"expr",
+		"embed", "op", "fn", "pkg", "tuple", "xstr", "IDENT", "STR", "NUM", "CHAR",
+		"cond", "expr",
 	)
 	if c == nil {
 		panic(fmt.Errorf("misshapen node AST: %v", b))
@@ -125,6 +125,8 @@ func (pc ParseContext) CompileExpr(b ast.Branch) rel.Expr {
 		return pc.compileExpandableString(c)
 	case "NUM":
 		return pc.compileNumber(c)
+	case "CHAR":
+		return pc.compileChar(c)
 	case "expr":
 		if result := pc.compileExpr(c); result != nil {
 			return result
@@ -723,6 +725,16 @@ func (pc ParseContext) compileNumber(c ast.Children) rel.Expr {
 		panic("Wat?")
 	}
 	return rel.NewNumber(n)
+}
+
+func (pc ParseContext) compileChar(c ast.Children) rel.Expr {
+	char := c.(ast.One).Node.One("").Scanner().String()
+	quote := "\""
+	if char[0] == '\'' {
+		quote = "'"
+	}
+	runes := []rune(parseArraiStringFragment(char, quote, ""))
+	return rel.NewNumber(float64(runes[0]))
 }
 
 func (pc ParseContext) compileExpr(c ast.Children) rel.Expr {

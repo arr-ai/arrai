@@ -28,6 +28,18 @@ func TestParseNumber(t *testing.T) {
 	assertParse(t, rel.NewNumber(4.5e+123), "4.5e+123")
 }
 
+func TestParseChar(t *testing.T) {
+	t.Parallel()
+	AssertCodesEvalToSameValue(t, `97    `, `%a `)
+	AssertCodesEvalToSameValue(t, `65    `, `%A `)
+	AssertCodesEvalToSameValue(t, `32    `, `%  `)
+	AssertCodesEvalToSameValue(t, `40    `, `%( `)
+	AssertCodesEvalToSameValue(t, `10    `, `%\n`)
+	AssertCodesEvalToSameValue(t, `9     `, `%\t`)
+	AssertCodesEvalToSameValue(t, `9786  `, `%☺ `)
+	AssertCodesEvalToSameValue(t, `128578`, `%🙂`)
+}
+
 func TestParseTuple(t *testing.T) {
 	t.Parallel()
 	assertParse(t, rel.EmptyTuple, `()`)
