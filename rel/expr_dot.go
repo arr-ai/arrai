@@ -45,7 +45,8 @@ func (x *DotExpr) String() string {
 }
 
 // Eval returns the lhs
-func (x *DotExpr) Eval(local Scope) (Value, error) {
+func (x *DotExpr) Eval(local Scope) (_ Value, err error) {
+	defer wrapPanic(x, &err)
 	if x.attr == "*" {
 		return nil, errors.Errorf("expr.* not allowed outside tuple attr")
 	}

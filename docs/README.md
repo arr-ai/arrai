@@ -82,7 +82,7 @@ All of the above forms are syntactic sugar for specific combinations of numbers,
 tuples and sets. For example, the string `"hello"` is a shorthand for the
 following set:
 
-```text
+```arrai
 {
    (@: 1, @char: 101),
    (@: 2, @char: 108),
@@ -196,7 +196,7 @@ exceptions are `0`, `()` and `{}`.
 
 A relation is a set of tuples with the same names. For example:
 
-```text
+```arrai
 {
    (acctid: 1, descr: "ACME Corp", balance: 123456789.01),
    (acctid: 2, descr: "Francis Jones", balance: 4567.23),
@@ -205,7 +205,7 @@ A relation is a set of tuples with the same names. For example:
 
 Arr.ai allows a shorthand form to represent relations:
 
-```text
+```arrai
 {|acctid, descr          , balance     |
  (     1, "ACME Corp"    , 123456789.01),
  (     2, "Francis Jones", 4567.23     ),
@@ -219,7 +219,7 @@ the form `{|@, @item| ...}`.
 
 Strings may be expressed in three different forms:
 
-```text
+```arrai
 "abc"
 'abc'
 `abc`
@@ -234,7 +234,7 @@ The three forms differ only in their escaping rules.
 3. Backquoted strings support no escaping other than the backquote character,
    which may be escaped with a double backquote:
 
-   ```text
+   ```arrai
    `Let's escape some ``backquotes``!`
    ```
 
@@ -242,7 +242,7 @@ The three forms differ only in their escaping rules.
 
 Expression strings appear on the surface to be quite similar to regular strings:
 
-```text
+```arrai
 $"abc"
 $'abc'
 $`abc`
@@ -252,7 +252,7 @@ They are, however, a very powerful text templating mechanism that allows
 arbitrarily complex nestings of strings and logic. For example, the following
 expression:
 
-```text
+```arrai
 let lib = (
    functions: [
       (name: "square", params: ["x"], expr: "x ^ 2"),
@@ -268,7 +268,7 @@ $`${lib.functions >> $`
 
 Outputs the following text:
 
-```text
+```arrai
 function square(x) {
    return x ^ 2
 }
@@ -456,7 +456,7 @@ It may not be immediately obvious why tuples and maps exist as distinct kinds of
 values. Firstly, there is a practical reason: maps can have any kind of value as
 keys:
 
-```text
+```arrai
 {
    "x":                 "red",
    [1, 2]:              "green",
@@ -471,7 +471,7 @@ collection of cars by license plate should be modeled as a map, since the set of
 license plates is unbounded. The details of each car, however, form a closed set
 of known attributes, which should be expressed as tuples:
 
-```text
+```arrai
 # Map
 {
    "ILVME-23": (        # Tuple

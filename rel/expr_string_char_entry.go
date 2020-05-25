@@ -29,7 +29,8 @@ func (e StringCharTupleExpr) String() string {
 }
 
 // Eval returns the subject
-func (e StringCharTupleExpr) Eval(local Scope) (Value, error) {
+func (e StringCharTupleExpr) Eval(local Scope) (_ Value, err error) {
+	defer wrapPanic(e, &err)
 	at, err := e.at.Eval(local)
 	if err != nil {
 		return nil, wrapContext(err, e)

@@ -38,7 +38,7 @@ are included in arr.ai.
 
 ### Run the interactive shell
 
-```text
+```arrai
 $ arrai i
 @> 6 * 7
 42

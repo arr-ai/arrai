@@ -28,7 +28,7 @@ Expression strings apply the following rules to handle whitespace:
 
    **Example:** The following string equals `"abc"`.
 
-   ```text
+   ```arrai
    $"
    abc"
    ```
@@ -39,7 +39,7 @@ Expression strings apply the following rules to handle whitespace:
 
    **Example:** The following:
 
-   ```text
+   ```arrai
    $"
        abc
          def
@@ -49,7 +49,7 @@ Expression strings apply the following rules to handle whitespace:
 
    produces the following output:
 
-   ```text
+   ```arrai
    abc
      def
    ghi
@@ -65,7 +65,7 @@ Expression strings apply the following rules to handle whitespace:
 
    **Example:** The following expression equals `"abc\ndef"`:
 
-   ```text
+   ```arrai
    let s = ""; $"
        abc
        ${s}
@@ -75,7 +75,7 @@ Expression strings apply the following rules to handle whitespace:
    In contrast, the following expression equals `"abc\n123\ndef"` (note the
    extra `\n` in the result):
 
-   ```text
+   ```arrai
    let s = "123"; $"
        abc
        ${s}
@@ -123,7 +123,7 @@ The elements are as follows:
 
    **Example:** The following:
 
-   ```text
+   ```arrai
    let arr = [1, 2, 3, 4]; $"
        numbers:
            ${arr::\i}
@@ -132,7 +132,7 @@ The elements are as follows:
 
    produces the following output:
 
-   ```text
+   ```arrai
    numbers:
        1
        2
