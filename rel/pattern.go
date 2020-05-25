@@ -83,10 +83,6 @@ func (p ArrayPattern) Bind(scope Scope, value Value) Scope {
 		panic(fmt.Sprintf("value %s is not an array", value))
 	}
 
-	if len(p.items) > array.Count() {
-		panic(fmt.Sprintf("length of array %s shorter than array pattern %s", array, p))
-	}
-
 	extraElements := make(map[int]int)
 	for i, item := range p.items {
 		if _, is := item.(ExtraElementPattern); is {
@@ -95,6 +91,10 @@ func (p ArrayPattern) Bind(scope Scope, value Value) Scope {
 			}
 			extraElements[i] = array.Count() - len(p.items)
 		}
+	}
+
+	if len(p.items) > array.Count()+len(extraElements) {
+		panic(fmt.Sprintf("length of array %s shorter than array pattern %s", array, p))
 	}
 
 	if len(extraElements) == 0 && len(p.items) < array.Count() {
@@ -106,7 +106,11 @@ func (p ArrayPattern) Bind(scope Scope, value Value) Scope {
 	for i, item := range p.items {
 		if _, is := item.(ExtraElementPattern); is {
 			offset = extraElements[i]
-			result = result.MatchedUpdate(item.Bind(scope, NewArray(array.Values()[i:i+offset+1]...)))
+			arr := NewArray()
+			if offset >= 0 {
+				arr = NewArray(array.Values()[i : i+offset+1]...)
+			}
+			result = result.MatchedUpdate(item.Bind(scope, arr))
 			continue
 		}
 		result = result.MatchedUpdate(item.Bind(scope, array.Values()[i+offset]))
@@ -168,10 +172,6 @@ func (p TuplePattern) Bind(scope Scope, value Value) Scope {
 		panic(fmt.Sprintf("%s is not a tuple", value))
 	}
 
-	if len(p.attrs) > tuple.Count() {
-		panic(fmt.Sprintf("length of tuple %s shorter than tuple pattern %s", tuple, p))
-	}
-
 	extraElements := make(map[int]int)
 	for i, attr := range p.attrs {
 		if _, is := attr.pattern.(ExtraElementPattern); is {
@@ -180,6 +180,10 @@ func (p TuplePattern) Bind(scope Scope, value Value) Scope {
 			}
 			extraElements[i] = tuple.Count() - len(p.attrs)
 		}
+	}
+
+	if len(p.attrs) > tuple.Count()+len(extraElements) {
+		panic(fmt.Sprintf("length of tuple %s shorter than tuple pattern %s", tuple, p))
 	}
 
 	if len(extraElements) == 0 && len(p.attrs) < tuple.Count() {
@@ -264,10 +268,6 @@ func (p DictPattern) Bind(scope Scope, value Value) Scope {
 		panic(fmt.Sprintf("%s is not a dict", value))
 	}
 
-	if len(p.entries) > dict.Count() {
-		panic(fmt.Sprintf("length of dict %s shorter than dict pattern %s", dict, p))
-	}
-
 	extraElements := make(map[int]int)
 	for i, entry := range p.entries {
 		if _, is := entry.value.(ExtraElementPattern); is {
@@ -278,6 +278,10 @@ func (p DictPattern) Bind(scope Scope, value Value) Scope {
 		}
 	}
 
+	if len(p.entries) > dict.Count()+len(extraElements) {
+		panic(fmt.Sprintf("length of dict %s shorter than dict pattern %s", dict, p))
+	}
+
 	if len(extraElements) == 0 && len(p.entries) < dict.Count() {
 		panic(fmt.Sprintf("length of dict %s longer than dict pattern %s", dict, p))
 	}
@@ -286,7 +290,12 @@ func (p DictPattern) Bind(scope Scope, value Value) Scope {
 	m := dict.m
 	for _, entry := range p.entries {
 		if _, is := entry.value.(ExtraElementPattern); is {
-			result = result.MatchedUpdate(entry.value.Bind(scope, Dict{m: m}))
+			if m.IsEmpty() {
+				result = result.MatchedUpdate(entry.value.Bind(scope, None))
+			} else {
+				result = result.MatchedUpdate(entry.value.Bind(scope, Dict{m: m}))
+			}
+
 			continue
 		}
 		dictValue := m.MustGet(entry.at)

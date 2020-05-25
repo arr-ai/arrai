@@ -80,22 +80,37 @@ func TestExprLetDictPattern(t *testing.T) {
 }
 
 func TestExprLetExtraElementsInPattern(t *testing.T) {
+	AssertCodesEvalToSameValue(t, `42`, `let [...] = [1, 2]; 42`)
 	AssertCodesEvalToSameValue(t, `1`, `let [x, ...] = [1, 2, 4]; x`)
 	AssertCodesEvalToSameValue(t, `[1, 2]`, `let [x, y, ...] = [1, 2, 4]; [x, y]`)
 	AssertCodesEvalToSameValue(t, `[1, 2]`, `let [x, y, ...] = [1, 2, 4, 8]; [x, y]`)
+	AssertCodesEvalToSameValue(t, `[1, 2]`, `let [x, y, ...] = [1, 2]; [x, y]`)
+	AssertCodesEvalToSameValue(t, `2`, `let [..., x] = [1, 2]; x`)
+	AssertCodesEvalToSameValue(t, `[1, 2]`, `let [..., x, y] = [1, 2]; [x, y]`)
+	AssertCodesEvalToSameValue(t, `[1, 2]`, `let [x, ..., y] = [1, 2]; [x, y]`)
+	AssertCodesEvalToSameValue(t, `[1, 3]`, `let [x, ..., y] = [1, 2, 3]; [x, y]`)
+
+	AssertCodesEvalToSameValue(t, `[1, 2]`, `let [...t] = [1, 2]; t`)
 	AssertCodesEvalToSameValue(t, `[1, [2, 3, 4, 5]]`, `let [x, ...t] = [1, 2, 3, 4, 5]; [x, t]`)
 	AssertCodesEvalToSameValue(t, `[1, 2, [3, 4, 5]]`, `let [x, y, ...t] = [1, 2, 3, 4, 5]; [x, y, t]`)
 	AssertCodesEvalToSameValue(t, `[2, 3, 4, 5]`, `let [_, ...t] = [1, 2, 3, 4, 5]; t`)
 	AssertCodesEvalToSameValue(t, `[2, [3, 4, 5]]`, `let [_, x, ...t] = [1, 2, 3, 4, 5]; [x, t]`)
 	AssertCodesEvalToSameValue(t, `[1, 4, 5, [2, 3]]`, `let [x, ...t, y, z] = [1, 2, 3, 4, 5]; [x, y, z, t]`)
 	AssertCodesEvalToSameValue(t, `[4, 5, [2, 3]]`, `let [_, ...t, y, z] = [1, 2, 3, 4, 5]; [y, z, t]`)
+	AssertCodesEvalToSameValue(t, `[1, 2, 3, []]`, `let [x, ...t, y, z] = [1, 2, 3]; [x, y, z, t]`)
+
+	AssertCodesEvalToSameValue(t, `[1, 2]`, `let (m: x, n: y, ...) = (m: 1, n: 2); [x, y]`)
 	AssertCodesEvalToSameValue(t, `[1, 2]`, `let (m: x, n: y, ...) = (m: 1, n: 2, j: 3, k: 4); [x, y]`)
+	AssertCodesEvalToSameValue(t, `[1, 2, ()]`, `let (m: x, n: y, ...t) = (m: 1, n: 2); [x, y, t]`)
 	AssertCodesEvalToSameValue(t, `[1, 2, (j: 3, k: 4)]`, `let (m: x, n: y, ...t) = (m: 1, n: 2, j: 3, k: 4); [x, y, t]`)
+
+	AssertCodesEvalToSameValue(t, `[1, 2]`, `let {"m": x, "n": y, ...} = {"m": 1, "n": 2}; [x, y]`)
 	AssertCodesEvalToSameValue(t, `[1, 2]`, `let {"m": x, "n": y, ...} = {"m": 1, "n": 2, "j": 3, "k": 4}; [x, y]`)
+	AssertCodesEvalToSameValue(t, `[1, 2, {}]`, `let {"m": x, "n": y, ...t} = {"m": 1, "n": 2}; [x, y, t]`)
 	AssertCodesEvalToSameValue(t, `[1, 2, {"j": 3, "k": 4}]`,
 		`let {"m": x, "n": y, ...t} = {"m": 1, "n": 2, "j": 3, "k": 4}; [x, y, t]`,
 	)
-	AssertCodeErrors(t, `let [x, y, ...] = [1, 2]; x`, "")
+
 	AssertCodeErrors(t, `let [x, y, ...y] = [1, 2, 2]; x`, "")
 	AssertCodeErrors(t, `let [x, y, ...y] = [1, 2, 4]; x`, "")
 	AssertCodeErrors(t, `let [..., y, ...] = [1, 2, 4]; x`, "")
