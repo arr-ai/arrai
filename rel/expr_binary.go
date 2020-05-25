@@ -153,11 +153,7 @@ func NewWhereExpr(scanner parser.Scanner, a, pred Expr) Expr {
 			if x, ok := a.(Set); ok {
 				if p, ok := pred.(Closure); ok {
 					return x.Where(func(v Value) bool {
-						match, err := p.Call(v, local)
-						if err != nil {
-							panic(err)
-						}
-						return match.IsTrue()
+						return SetCall(p, v).IsTrue()
 					}), nil
 				}
 				return nil, errors.Errorf("'where' rhs must be a Fn, not %T", a)
@@ -175,7 +171,7 @@ func NewOrderByExpr(scanner parser.Scanner, a, key Expr) Expr {
 				if k, ok := key.(Closure); ok {
 					values, err := OrderBy(x,
 						func(value Value) (Value, error) {
-							return k.Call(value, local)
+							return SetCall(k, value), nil
 						},
 						func(a, b Value) bool {
 							return a.Less(b)
@@ -203,15 +199,7 @@ func NewOrderExpr(scanner parser.Scanner, a, key Expr) Expr {
 							return value, nil
 						},
 						func(a, b Value) bool {
-							f, err := l.Call(a, local)
-							if err != nil {
-								panic(err)
-							}
-							result, err := f.(Closure).Call(b, local)
-							if err != nil {
-								panic(err)
-							}
-							return result.IsTrue()
+							return SetCall(SetCall(l, a).(Closure), b).IsTrue()
 						})
 					if err != nil {
 						return nil, err
@@ -224,38 +212,9 @@ func NewOrderExpr(scanner parser.Scanner, a, key Expr) Expr {
 		})
 }
 
-type Callable interface {
-	Call(Expr, Scope) (Value, error)
-}
-
 func Call(a, b Value, local Scope) (Value, error) {
-	switch x := a.(type) {
-	case Callable:
-		return x.Call(b, local)
-	case Set:
-		var out Value
-		for e := x.Enumerator(); e.MoveNext(); {
-			if t, ok := e.Current().(Tuple); ok {
-				// log.Printf("%v %v %[2]T %v %[3]T", t, t.MustGet("@"), b)
-				if v, found := t.Get("@"); found && b.Equal(v) {
-					if out != nil {
-						return nil, errors.Errorf("Too many items found")
-					}
-					if t.Count() != 2 {
-						return nil, errors.Errorf("Too many outputs")
-					}
-					rest := t.Without("@")
-					for e := rest.Enumerator(); e.MoveNext(); {
-						_, value := e.Current()
-						out = value
-					}
-				}
-			}
-		}
-		if out == nil {
-			return nil, errors.Errorf("No items found: %v", b)
-		}
-		return out, nil
+	if x, ok := a.(Set); ok {
+		return SetCall(x, b), nil
 	}
 	return nil, errors.Errorf(
 		"call lhs must be a function, not %T", a)
@@ -290,15 +249,7 @@ func (e *BinExpr) String() string {
 
 // Eval returns the subject
 func (e *BinExpr) Eval(local Scope) (_ Value, err error) {
-	defer func() {
-		switch r := recover().(type) {
-		case nil:
-		case error:
-			panic(wrapContext(r, e))
-		default:
-			panic(wrapContext(fmt.Errorf("panic: %v", r), e))
-		}
-	}()
+	defer wrapPanic(e, &err)
 	a, err := e.a.Eval(local)
 	if err != nil {
 		return nil, wrapContext(err, e)

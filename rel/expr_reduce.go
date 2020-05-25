@@ -137,7 +137,8 @@ func (e *ReduceExpr) String() string {
 }
 
 // Eval returns the subject
-func (e *ReduceExpr) Eval(local Scope) (Value, error) {
+func (e *ReduceExpr) Eval(local Scope) (_ Value, err error) {
+	defer wrapPanic(e, &err)
 	a, err := e.a.Eval(local)
 	if err != nil {
 		return nil, wrapContext(err, e)
@@ -148,11 +149,11 @@ func (e *ReduceExpr) Eval(local Scope) (Value, error) {
 			return nil, wrapContext(err, e)
 		}
 		for i := s.Enumerator(); i.MoveNext(); {
-			b, err := e.f.Call(i.Current(), local)
+			f, err := e.f.Eval(local)
 			if err != nil {
 				return nil, wrapContext(err, e)
 			}
-			acc, err = e.reduce(acc, b)
+			acc, err = e.reduce(acc, SetCall(f.(Closure), i.Current()))
 			if err != nil {
 				return nil, wrapContext(err, e)
 			}

@@ -6,7 +6,8 @@ The ultimate data engine.
 
 ## Install
 
-On a Unix-like OS, [install Go](https://golang.org/doc/install), then:
+On a Unix-like OS, [install Go](https://golang.org/doc/install) (1.14 or above),
+then:
 
 ```bash
 git clone https://github.com/arr-ai/arrai.git
@@ -37,7 +38,7 @@ are included in arr.ai.
 
 ### Run the interactive shell
 
-```text
+```arrai
 $ arrai i
 @> 6 * 7
 42

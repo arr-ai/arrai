@@ -37,14 +37,16 @@ func wrapContext(err error, expr Expr) error {
 }
 
 func EvalExpr(expr Expr, local Scope) (_ Value, err error) {
-	defer func() {
-		switch r := recover().(type) {
-		case nil:
-		case error:
-			err = wrapContext(r, expr)
-		default:
-			err = wrapContext(fmt.Errorf("unexpected panic: %v", r), expr)
-		}
-	}()
+	defer wrapPanic(expr, &err)
 	return expr.Eval(local)
+}
+
+func wrapPanic(expr Expr, err *error) {
+	switch r := recover().(type) {
+	case nil:
+	case error:
+		*err = wrapContext(r, expr)
+	default:
+		*err = wrapContext(fmt.Errorf("unexpected panic: %v", r), expr)
+	}
 }

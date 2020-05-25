@@ -278,19 +278,23 @@ func (s GenericSet) Where(p func(v Value) bool) Set {
 	return s
 }
 
-// Call ...
-func (s GenericSet) Call(arg Value) Value {
+func (s GenericSet) CallAll(arg Value) Set {
+	var t Tuple
+	var at Value
+	tm := NewTupleMatcher(map[string]Matcher{"@": Bind(&at)}, Bind(&t))
+	set := None
 	for e := s.Enumerator(); e.MoveNext(); {
-		var at Value
-		var t Tuple
-		if NewTupleMatcher(map[string]Matcher{"@": Bind(&at)}, Bind(&t)).Match(e.Current()) && at.Equal(arg) {
+		if tm.Match(e.Current()) && at.Equal(arg) {
+			if t.Count() != 1 {
+				panic("GenericSet.CallAll: only works on binary tuple with one '@' attribute")
+			}
 			for attr := t.Enumerator(); attr.MoveNext(); {
 				_, value := attr.Current()
-				return value
+				set = set.With(value)
 			}
 		}
 	}
-	return nil
+	return set
 }
 
 // Enumerator returns an enumerator over the Values in the genericSet.

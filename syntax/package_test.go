@@ -1,8 +1,6 @@
 package syntax
 
-import (
-	"testing"
-)
+import "testing"
 
 // func TestPackageStd(t *testing.T) {
 // 	AssertCodesEvalToSameValue(t, `3.141592653589793`, `//.`)
@@ -45,7 +43,7 @@ func TestJsonPackageImport(t *testing.T) {
 }
 
 func TestJsonPackageImportNotExists(t *testing.T) {
-	AssertCodePanics(t, `//{./examples/json/fooooo.json}`)
+	AssertCodeErrors(t, `//{./examples/json/fooooo.json}`, "")
 }
 
 // func TestPackageExternalImport(t *testing.T) {

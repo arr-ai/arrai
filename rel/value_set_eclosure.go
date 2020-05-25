@@ -80,12 +80,44 @@ func (c ExprClosure) Negate() Value {
 
 // Export exports a ExprClosure.
 func (c ExprClosure) Export() interface{} {
-	return func(_ Value, local Scope) (Value, error) {
-		return c.Call(None, local)
+	return func(v Value) Value {
+		return SetCall(c, v)
 	}
 }
 
-// Call calls the ExprClosure with the given parameter.
-func (c ExprClosure) Call(expr Expr, local Scope) (Value, error) {
-	return c.e.Eval(local)
+func (ExprClosure) Count() int {
+	return 1
+}
+
+func (ExprClosure) Has(Value) bool {
+	panic("unimplemented")
+}
+
+func (ExprClosure) Enumerator() ValueEnumerator {
+	panic("unimplemented")
+}
+
+func (c ExprClosure) With(Value) Set {
+	panic("unimplemented")
+}
+
+func (ExprClosure) Without(Value) Set {
+	panic("unimplemented")
+}
+
+func (ExprClosure) Map(func(Value) Value) Set {
+	panic("unimplemented")
+}
+
+func (ExprClosure) Where(func(Value) bool) Set {
+	panic("unimplemented")
+}
+
+func (c ExprClosure) CallAll(arg Value) Set {
+	//TODO: CallAll
+	panic("unimplemented")
+}
+
+func (ExprClosure) ArrayEnumerator() (OffsetValueEnumerator, bool) {
+	panic("unimplemented")
 }

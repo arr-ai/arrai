@@ -19,7 +19,8 @@ func NewOffsetExpr(scanner parser.Scanner, n, s Expr) Expr {
 	return &OffsetExpr{ExprScanner{scanner}, n, s}
 }
 
-func (o *OffsetExpr) Eval(local Scope) (Value, error) {
+func (o *OffsetExpr) Eval(local Scope) (_ Value, err error) {
+	defer wrapPanic(o, &err)
 	offset, err := o.offset.Eval(local)
 	if err != nil {
 		return nil, wrapContext(err, o)

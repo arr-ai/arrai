@@ -108,9 +108,30 @@ type Set interface {
 	Without(Value) Set
 	Map(func(Value) Value) Set
 	Where(func(Value) bool) Set
-	Call(arg Value) Value
+	CallAll(Value) Set
 
 	ArrayEnumerator() (OffsetValueEnumerator, bool)
+}
+
+// SetCall does a CallAll to a Set and panics when there's less or more than 1 value.
+func SetCall(s Set, arg Value) Value {
+	result := s.CallAll(arg)
+	if !result.IsTrue() {
+		panic(fmt.Sprintf("Call: no return values from set %v", s))
+	}
+	for i, e := 1, result.Enumerator(); e.MoveNext(); i++ {
+		if i > 1 {
+			panic(fmt.Sprintf("Call: too many return values from set %v: %v", s, result))
+		}
+	}
+	return SetAny(result)
+}
+
+func SetAny(s Set) Value {
+	for e := s.Enumerator(); e.MoveNext(); {
+		return e.Current()
+	}
+	panic("SetAny: set is empty")
 }
 
 // NewValue constructs a new value from a Go value.
