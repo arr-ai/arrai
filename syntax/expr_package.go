@@ -15,7 +15,7 @@ type PackageExpr struct {
 
 // NewPackageExpr evaluates to !a.
 func NewPackageExpr(scanner parser.Scanner, a rel.Expr) rel.Expr {
-	return PackageExpr{rel.ExprScanner{scanner}, a}
+	return PackageExpr{ExprScanner: rel.ExprScanner{Src: scanner}, a: a}
 }
 
 // Arg returns the PackageExpr's arg.
