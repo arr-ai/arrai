@@ -6,19 +6,15 @@ import (
 	"github.com/arr-ai/wbnf/parser"
 )
 
-const safeCallOp = "safe_call"
+type SafeTailCallback func(Value, Scope) (Value, error)
 
 type SafeTailExpr struct {
 	ExprScanner
 	fallbackValue, base Expr
-	tailExprs           []func(Expr) Expr
+	tailExprs           []SafeTailCallback
 }
 
-func NewSafeTailExpr(
-	scanner parser.Scanner,
-	fallback, base Expr,
-	tailExprs []func(Expr) Expr,
-) Expr {
+func NewSafeTailExpr(scanner parser.Scanner, fallback, base Expr, tailExprs []SafeTailCallback) Expr {
 	if len(tailExprs) == 0 {
 		panic("exprs cannot be empty")
 	}
@@ -31,46 +27,18 @@ func (s *SafeTailExpr) Eval(local Scope) (value Value, err error) {
 		return nil, wrapContext(err, s)
 	}
 	for _, t := range s.tailExprs {
-		expr := t(value)
-		if call, isCall := expr.(*BinExpr); isCall && call.op == "safe_call" {
-			value, err = call.Eval(local)
-			if err != nil {
-				return nil, wrapContext(err, s)
-			}
-
-			for e, i := value.(Set).Enumerator(), 1; e.MoveNext(); i++ {
-				if i > 1 {
-					return s.fallbackValue.Eval(local)
-				}
-			}
-			if !value.IsTrue() {
-				return s.fallbackValue.Eval(local)
-			}
-			value = SetAny(value.(Set))
-		} else if safeDot, isSafeDot := expr.(*SafeDotExpr); isSafeDot {
-			value, err = safeDot.Eval(local)
-			if err != nil {
-				if _, isMissingAttr := err.(missingAttrError); isMissingAttr {
-					return s.fallbackValue.Eval(local)
-				}
-				return nil, wrapContext(err, s)
-			}
-		} else {
-			value, err = expr.Eval(local)
-			if err != nil {
-				return nil, wrapContext(err, s)
-			}
+		value, err = t(value, local)
+		if err != nil {
+			return nil, err
+		}
+		if value == nil {
+			return s.fallbackValue.Eval(local)
 		}
 	}
-	return value, err
+	return
 }
 
 func (s *SafeTailExpr) String() string {
-	finalExpr := s.tailExprs[0](s.base)
-	if len(s.tailExprs) > 1 {
-		for _, e := range s.tailExprs[1:] {
-			finalExpr = e(finalExpr)
-		}
-	}
-	return finalExpr.String() + fmt.Sprintf(":%s", s.fallbackValue.String())
+	//FIXME: printing not very descriptive
+	return fmt.Sprintf("%s...TODO...:%s", s.base.String(), s.fallbackValue.String())
 }
