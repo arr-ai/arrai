@@ -386,10 +386,15 @@ func (pc ParseContext) compileCond(b ast.Branch, c ast.Children) rel.Expr {
 }
 
 func (pc ParseContext) compileCondWithControlVar(b ast.Branch, c ast.Children) rel.Expr {
-	conditions := c.(ast.One).Node.(ast.Branch)["condition"]
-	values := c.(ast.One).Node.(ast.Branch)["value"]
+	conditions := pc.compileCondElements(c.(ast.One).Node.(ast.Branch)["condition"].(ast.Many)...)
+	values := pc.compileCondExprs(c.(ast.One).Node.(ast.Branch)["value"].(ast.Many)...)
+
+	if len(conditions) != len(values) {
+		panic("mismatch between conditions and values")
+	}
+
 	return rel.NewCondPatternControlVarExpr(c.(ast.One).Node.Scanner(), pc.CompileExpr(b.One("expr").(ast.Branch)),
-		pc.compileCondElements(conditions.(ast.Many)...), pc.compileCondExprs(values.(ast.Many)...))
+		conditions, values)
 }
 
 func (pc ParseContext) compileCondElements(elements ...ast.Node) []interface{} {

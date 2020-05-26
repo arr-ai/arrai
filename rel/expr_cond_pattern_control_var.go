@@ -1,10 +1,13 @@
 package rel
 
 import (
+	"bytes"
+	"fmt"
+
 	"github.com/arr-ai/wbnf/parser"
 )
 
-// CondPatternControlVarExpr
+// CondPatternControlVarExpr which is used for `cond` pattern matching.
 type CondPatternControlVarExpr struct {
 	ExprScanner
 	controlVarExpr Expr
@@ -18,9 +21,33 @@ func NewCondPatternControlVarExpr(scanner parser.Scanner, controlVar Expr, condi
 }
 
 func (expr *CondPatternControlVarExpr) String() string {
-	return ""
+	var b bytes.Buffer
+	b.WriteByte('(')
+	fmt.Fprintf(&b, "(control_var: %v)", expr.controlVarExpr.String())
+
+	if len(expr.conditions) > 0 {
+		b.WriteByte(',')
+	}
+
+	b.WriteByte('{')
+	for i, cond := range expr.conditions {
+		if i > 0 {
+			b.WriteString(", ")
+		}
+		switch cond := cond.(type) {
+		case Expr:
+			fmt.Fprintf(&b, "%v: %v", cond.String(), expr.values[i].String())
+		case Pattern:
+			fmt.Fprintf(&b, "%v: %v", cond.String(), expr.values[i].String())
+		}
+	}
+
+	b.WriteByte('}')
+	b.WriteByte(')')
+	return b.String()
 }
 
+// Eval evaluates with pattern matching.
 func (expr *CondPatternControlVarExpr) Eval(local Scope) (Value, error) {
 	varVal, err := expr.controlVarExpr.Eval(local)
 	if err != nil {
@@ -69,7 +96,7 @@ func (expr *CondPatternControlVarExpr) Eval(local Scope) (Value, error) {
 					return nil, wrapContext(err, condition)
 				}
 				if varVal.Equal(cond) {
-					val, err := expr.values[index].Eval(local)
+					val, err := expr.values[index].(Expr).Eval(local)
 					if err != nil {
 						return nil, wrapContext(err, condition)
 					}
@@ -77,8 +104,16 @@ func (expr *CondPatternControlVarExpr) Eval(local Scope) (Value, error) {
 				}
 			}
 		case Pattern:
-			condition.Bind(local, nil)
+			// TODO: now binding can't check types, see this case `let a = {"a":3}; a cond {(a:x): x + 5,_:2}`
+			// It will panic and stop the process, it is not good.
+			local = condition.Bind(local, varVal)
+			val, err := expr.values[index].Eval(local)
+			if err != nil {
+				return nil, err
+			}
+			return val, nil
 		}
 	}
+
 	return None, nil
 }
