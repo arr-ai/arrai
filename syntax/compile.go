@@ -660,7 +660,7 @@ func (pc ParseContext) compileCondExprs(exprs ...ast.Node) []rel.Expr {
 	for _, expr := range exprs {
 		var exprResult rel.Expr
 
-		name, c := which(expr.(ast.Branch), "expr", "pattern")
+		name, c := which(expr.(ast.Branch), "expr")
 		if c == nil {
 			panic(fmt.Errorf("misshapen node AST: %v", expr.(ast.Branch)))
 		}
