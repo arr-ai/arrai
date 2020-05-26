@@ -16,7 +16,8 @@ type CondPatternControlVarExpr struct {
 }
 
 // NewCondPatternControlVarExpr returns a new CondPatternControlVarExpr.
-func NewCondPatternControlVarExpr(scanner parser.Scanner, controlVar Expr, conditions []interface{}, values []Expr) Expr {
+func NewCondPatternControlVarExpr(scanner parser.Scanner, controlVar Expr, conditions []interface{},
+	values []Expr) Expr {
 	return &CondPatternControlVarExpr{ExprScanner{scanner}, controlVar, conditions, values}
 }
 

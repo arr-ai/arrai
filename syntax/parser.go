@@ -24,7 +24,7 @@ expr   -> C* amp="&"* @ C* arrow=(
         > C* @:binop="&&" C*
         > C* @:compare=/{!?(?:<:|=|<=?|>=?|\((?:<=?|>=?|<>=?)\))} C*
         > C* @ if=("if" t=expr ("else" f=expr)?)* C*
-        > C* @ cond=("cond" "{" (condition=(("(" expr:",", ")") | "("expr")" | pattern) ":" value=expr):",",? "}")? C*
+        > C* @ cond=("cond" "{" (condition=(("(" expr:",", ")") | "("expr")" | pattern) ":" value=expr):",",? ("_" ":" f=expr ","?)? "}")? C*
         > C* @:binop=/{\+\+|[+|]|-%?} C*
         > C* @:binop=/{&~|&|~~?|[-<][-&][->]} C*
         > C* @:binop=/{//|[*/%]|\\} C*
