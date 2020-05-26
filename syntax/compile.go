@@ -386,32 +386,50 @@ func (pc ParseContext) compileCond(b ast.Branch, c ast.Children) rel.Expr {
 }
 
 func (pc ParseContext) compileCondWithControlVar(b ast.Branch, c ast.Children) rel.Expr {
-	keys := c.(ast.One).Node.(ast.Branch)["key"]
+	conditions := c.(ast.One).Node.(ast.Branch)["condition"]
 	values := c.(ast.One).Node.(ast.Branch)["value"]
+	return rel.NewCondPatternControlVarExpr(c.(ast.One).Node.Scanner(), pc.CompileExpr(b.One("expr").(ast.Branch)),
+		pc.compileCondElements(conditions.(ast.Many)...), pc.compileCondExprs(values.(ast.Many)...))
+}
 
-	var keyExprs, valueExprs []rel.Expr
-	if keys != nil && values != nil {
-		keyExprs = pc.compileExprs4Cond(keys.(ast.Many)...)
-		valueExprs = pc.compileExprs4Cond(values.(ast.Many)...)
+func (pc ParseContext) compileCondElements(elements ...ast.Node) []interface{} {
+	result := make([]interface{}, 0, len(elements))
+	for _, element := range elements {
+		name, c := which(element.(ast.Branch), "expr", "pattern")
+		if c == nil {
+			panic(fmt.Errorf("misshapen node AST: %v", element.(ast.Branch)))
+		}
+
+		switch name {
+		case "expr":
+			var exprResult rel.Expr
+			switch c := c.(type) {
+			case ast.One:
+				exprResult = pc.CompileExpr(c.Node.(ast.Branch))
+			case ast.Many:
+				if len(c) == 1 {
+					exprResult = pc.CompileExpr(c[0].(ast.Branch))
+				} else {
+					var elements []rel.Expr
+					for _, e := range c {
+						expr := pc.CompileExpr(e.(ast.Branch))
+						elements = append(elements, expr)
+					}
+					exprResult = rel.NewArrayExpr(c.Scanner(), elements...)
+				}
+			}
+			if exprResult != nil {
+				result = append(result, exprResult)
+			}
+		case "pattern":
+			pattern := pc.compilePattern(element.(ast.Branch))
+			if pattern != nil {
+				result = append(result, pattern)
+			}
+		}
 	}
 
-	entryExprs := pc.compileDictEntryExprs(c, keyExprs, valueExprs)
-	var result rel.Expr
-	if entryExprs != nil {
-		// Generates type DictExpr always to make sure it is easy to do Eval, only process type DictExpr.
-		result = rel.NewDictExpr(c.(ast.One).Node.Scanner(), false, true, entryExprs...)
-	} else {
-		result = rel.NewDict(false)
-	}
-
-	controlVarExpr := pc.CompileExpr(b.One("expr").(ast.Branch))
-	if fNode := c.(ast.One).Node.One("f"); fNode != nil {
-		fExpr := pc.CompileExpr(fNode.(ast.Branch))
-		// p := pc.compilePattern(c.(ast.One).Node.(ast.Branch))
-		// fmt.Println(p)
-		return rel.NewCondControlVarExpr(c.(ast.One).Node.Scanner(), controlVarExpr, result, fExpr)
-	}
-	return rel.NewCondControlVarExpr(c.(ast.One).Node.Scanner(), controlVarExpr, result, nil)
+	return result
 }
 
 func (pc ParseContext) compileCondWithoutControlVar(c ast.Children) rel.Expr {
@@ -420,8 +438,8 @@ func (pc ParseContext) compileCondWithoutControlVar(c ast.Children) rel.Expr {
 	var keyExprs, valueExprs []rel.Expr
 
 	if keys != nil && values != nil {
-		keyExprs = pc.compileExprs4Cond(keys.(ast.Many)...)
-		valueExprs = pc.compileExprs4Cond(values.(ast.Many)...)
+		keyExprs = pc.compileCondExprs(keys.(ast.Many)...)
+		valueExprs = pc.compileCondExprs(values.(ast.Many)...)
 	}
 
 	entryExprs := pc.compileDictEntryExprs(c, keyExprs, valueExprs)
@@ -636,8 +654,8 @@ func (pc ParseContext) compileExprs(exprs ...ast.Node) []rel.Expr {
 	return result
 }
 
-// compileExprs4Cond parses conditons/keys and values expressions for syntax `cond`.
-func (pc ParseContext) compileExprs4Cond(exprs ...ast.Node) []rel.Expr {
+// compileCondExprs parses conditons/keys and values expressions for syntax `cond`.
+func (pc ParseContext) compileCondExprs(exprs ...ast.Node) []rel.Expr {
 	result := make([]rel.Expr, 0, len(exprs))
 	for _, expr := range exprs {
 		var exprResult rel.Expr
@@ -647,8 +665,7 @@ func (pc ParseContext) compileExprs4Cond(exprs ...ast.Node) []rel.Expr {
 			panic(fmt.Errorf("misshapen node AST: %v", expr.(ast.Branch)))
 		}
 
-		switch name {
-		case "expr":
+		if name == "expr" {
 			switch c := c.(type) {
 			case ast.One:
 				exprResult = pc.CompileExpr(c.Node.(ast.Branch))
@@ -664,9 +681,6 @@ func (pc ParseContext) compileExprs4Cond(exprs ...ast.Node) []rel.Expr {
 					exprResult = rel.NewArrayExpr(c.Scanner(), elements...)
 				}
 			}
-		case "pattern":
-			pattern := pc.compilePattern(expr.(ast.Branch))
-			fmt.Println(pattern)
 		}
 
 		if exprResult != nil {
