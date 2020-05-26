@@ -10,13 +10,14 @@ import (
 
 // Function represents a binary relation uniquely mapping inputs to outputs.
 type Function struct {
+	ExprScanner
 	arg  Pattern
 	body Expr
 }
 
 // NewFunction returns a new function.
-func NewFunction(arg Pattern, body Expr) Expr {
-	return &Function{arg, body}
+func NewFunction(scanner parser.Scanner, arg Pattern, body Expr) Expr {
+	return &Function{ExprScanner: ExprScanner{Src: scanner}, arg: arg, body: body}
 }
 
 // ExprAsFunction returns a function for an expr. If the expr is already a
@@ -26,7 +27,7 @@ func ExprAsFunction(expr Expr) *Function {
 	if fn, ok := expr.(*Function); ok {
 		return fn
 	}
-	return NewFunction(IdentExpr{ident: "."}, expr).(*Function)
+	return NewFunction(expr.Source(), IdentExpr{ident: "."}, expr).(*Function)
 }
 
 // Arg returns a function's formal argument.
@@ -71,9 +72,4 @@ func (f *Function) String() string {
 // Eval returns the Value
 func (f *Function) Eval(local Scope) (Value, error) {
 	return NewClosure(local, f), nil
-}
-
-// Source returns a scanner locating the Function's source code.
-func (f *Function) Source() parser.Scanner {
-	return *parser.NewScanner("")
 }
