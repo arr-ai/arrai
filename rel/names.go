@@ -70,6 +70,7 @@ func (n Names) String() string {
 		if i != 0 {
 			buf.WriteRune(',')
 		}
+		i++
 		buf.WriteString(e.Current())
 	}
 	buf.WriteRune('|')

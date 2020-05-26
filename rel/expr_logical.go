@@ -12,7 +12,7 @@ type AndExpr struct {
 }
 
 func NewAndExpr(scanner parser.Scanner, a, b Expr) Expr {
-	return AndExpr{a: a, b: b}
+	return AndExpr{ExprScanner: ExprScanner{Src: scanner}, a: a, b: b}
 }
 
 func (e AndExpr) String() string {

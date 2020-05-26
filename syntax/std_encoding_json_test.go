@@ -41,5 +41,5 @@ func TestJSONDecode(t *testing.T) {
 	// String
 	AssertCodesEvalToSameValue(t, expected, `//encoding.json.decode(`+encoding+`)`)
 	// Bytes
-	AssertCodesEvalToSameValue(t, expected, `//encoding.json.decode(//unicode.utf8.encode(`+encoding+`))`)
+	AssertCodesEvalToSameValue(t, expected, `//encoding.json.decode(<<`+encoding+`>>)`)
 }

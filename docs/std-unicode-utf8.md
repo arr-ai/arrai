@@ -12,6 +12,7 @@ The `utf8` tuple contains functions that are used with utf8-encoded data.
 
 Usage:
 
-| example |
-|:-|
-| `//unicode.utf8.encode("abc")` |
+| example | equals |
+|:-|:-|
+| `//unicode.utf8.encode("abc")` | `<<"abc">>` |
+| `//unicode.utf8.encode("🙂")` | `<<"🙂">>` |
