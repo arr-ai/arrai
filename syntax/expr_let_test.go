@@ -116,3 +116,7 @@ func TestExprLetExtraElementsInPattern(t *testing.T) {
 	AssertCodeErrors(t, `let [x, y, ...y] = [1, 2, 4]; x`, "")
 	AssertCodeErrors(t, `let [..., y, ...] = [1, 2, 4]; x`, "")
 }
+
+func TestExprLetNestedPattern(t *testing.T) {
+	AssertCodeErrors(t, `let [[x]] = []; 42`, "")
+}
