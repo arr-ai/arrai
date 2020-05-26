@@ -187,15 +187,15 @@ Try out the following examples to use pattern in array:
 @> let [] = []; 1
 @> let [a, b, c] = [1, 2, 3]; b
 @> let arr = [1, 2]; let [a, b] = arr; b
-@> let [x, x] = [1, 1]; x                  # should fail
+@> let [x, x] = [1, 1]; x
 @> let [x, x] = [1, 2]; x                  # should fail
 ```
 
 in tuple:
 ```arrai
-@> let () = (); 4
-@> let (a:x, b:y) = (a:4, b:7); x
-@> let (a:x, b:x) = (a:4, b:4); x
+@> let () = (); 1
+@> let (a: x, b: y) = (a: 4, b: 7); x
+@> let (a: x, b: x) = (a: 4, b: 4); x
 @> let (:x) = (x: 1); x
 ```
 
@@ -206,6 +206,7 @@ in dictionary:
 
 and in set:
 ```arrai
+@> let {} = {}; 1
 @> let {a, b, c} = {1, 2, 3}; a
 @> let {a, 42} = {3, 42}; a
 ```
@@ -219,6 +220,7 @@ Also, nested pattern is supported as:
 Underscore `_` matches any items and ignore it.
 
 ```arrai
+@> let [x, _, _] = [1, 2, 3]; x
 @> let [_, x, _] = [1, 2, 3]; x
 ```
 
@@ -227,6 +229,7 @@ Name within parentheses like `(x)` refers to the value `x` which is supposed to 
 ```arrai
 @> let x = 3; let [b, x] = [2, 4]; x
 @> let x = 3; let [b, (x)] = [2, 3]; b
+@> let x = 3; let [_, b, (x)] = [1, 2, 3]; b
 @> let x = 3; let [b, (x)] = [2, 4]; b     # should fail
 @> let [(x)] = [2]; x                      # should fail
 ```
