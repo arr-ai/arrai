@@ -26,22 +26,22 @@ func ExprAsPattern(expr Expr) Pattern {
 	}
 }
 
-type IdentPattern struct {
-	ident string
+type ExprPattern struct {
+	expr Expr
 }
 
-func NewIdentPattern(ident string) IdentPattern {
-	return IdentPattern{ident}
+func NewExprPattern(expr Expr) ExprPattern {
+	return ExprPattern{expr}
 }
 
-func (p IdentPattern) Bind(scope Scope, value Value) Scope {
-	scope.MustGet(p.ident)
-	scope.MatchedWith(p.ident, value)
-	return EmptyScope.With(p.ident, value)
+func (p ExprPattern) Bind(scope Scope, value Value) Scope {
+	scope.MustGet(p.expr.String())
+	scope.MatchedWith(p.expr.String(), value)
+	return EmptyScope.With(p.expr.String(), value)
 }
 
-func (p IdentPattern) String() string {
-	return p.ident
+func (p ExprPattern) String() string {
+	return p.expr.String()
 }
 
 type ExtraElementPattern struct {

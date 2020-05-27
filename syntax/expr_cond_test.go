@@ -146,8 +146,24 @@ func TestEvalCondWithControlVarMultiStr(t *testing.T) {
 }
 
 func TestEvalCondPatternMatchingWithControlVar(t *testing.T) {
-	AssertCodesEvalToSameValue(t, `8`, `let a = (a:3); a cond {(a:x): x + 5,_:2}`)
-	AssertCodesEvalToSameValue(t, `8`, `let a = {"a":3}; a cond {{"a":x}: x + 5,_:2}`)
-	AssertCodesEvalToSameValue(t, `2`, `let a = {"a":3}; a cond {1 : x + 5,_:2}`)
-	AssertCodeErrors(t, `let a = {"a":3}; a cond {(a:x): x + 5,_:2}`, "")
+	// AssertCodesEvalToSameValue(t, `6`, `let a = 2; a cond {(1): 6}`)
+	// AssertCodesEvalToSameValue(t, `6`, `let a = 2; a cond {(2 > 1 && 2 > 0): 6}`)
+	// AssertCodesEvalToSameValue(t, `6`, `let a = 2; a cond {[1,2,3]: 6}`)
+	// AssertCodesEvalToSameValue(t, `2`, `let [a,b] = [1, 2]; b`)
+	// AssertCodesEvalToSameValue(t, `2`, `let a = [1, 2]; a cond {(1): 2}`)
+	// AssertCodesEvalToSameValue(t, `2`, `let a = [1, 2]; a cond {([1, 2]): 2}`)
+	// AssertCodesEvalToSameValue(t, `6`, `let a = (x:4); a cond {(x:x): x + 2}`)
+	// AssertCodesEvalToSameValue(t, `6`, ` (x:4) cond {((x:x)): x + 2}`)
+
+	// AssertCodesEvalToSameValue(t, `8`, `let a = (a:3); a cond {(a:x): x + 5,_:2}`)
+	// AssertCodesEvalToSameValue(t, `8`, `let a = {"a":3}; a cond {{"a":x}: x + 5,_:2}`)
+	// AssertCodesEvalToSameValue(t, `2`, `let a = {"a":3}; a cond {1 : x + 5,_:2}`)
+
+	// // AssertCodesEvalToSameValue(t, `2`, `let a = 1, b = 2; cond {([1] ++ [2]): 2}`)
+
+	// AssertCodeErrors(t, `let a = {"a":3}; a cond {(a:x): x + 5,_:2}`, "")
+
+	// let a = [1, 2]; a cond {([1, 2]): 2} or let a = 1, b = 2; cond {([1] ++ [2]): 2}
+
+	AssertCodeErrors(t, `let [(x)] = [2]; x`, "")
 }
