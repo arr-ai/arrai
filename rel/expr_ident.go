@@ -57,6 +57,6 @@ func (e IdentExpr) Eval(local Scope) (Value, error) {
 	return nil, IdentLookupFailed{local, e}
 }
 
-func (e IdentExpr) Bind(scope Scope, value Value) Scope {
-	return EmptyScope.With(e.ident, value)
+func (e IdentExpr) Bind(scope Scope, value Value) (Scope, error) {
+	return EmptyScope.With(e.ident, value), nil
 }

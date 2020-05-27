@@ -12,7 +12,7 @@ type Pattern interface {
 	// Require a String() method.
 	fmt.Stringer
 
-	Bind(scope Scope, value Value) Scope
+	Bind(scope Scope, value Value) (Scope, error)
 }
 
 func ExprAsPattern(expr Expr) Pattern {
@@ -20,6 +20,10 @@ func ExprAsPattern(expr Expr) Pattern {
 	case IdentExpr:
 		return t
 	case Number:
+		return t
+	case Array:
+		return t
+	case ArrayExpr:
 		return t
 	default:
 		panic(fmt.Sprintf("%s is not a Pattern", t))
@@ -34,10 +38,10 @@ func NewIdentPattern(ident string) IdentPattern {
 	return IdentPattern{ident}
 }
 
-func (p IdentPattern) Bind(scope Scope, value Value) Scope {
+func (p IdentPattern) Bind(scope Scope, value Value) (Scope, error) {
 	scope.MustGet(p.ident)
 	scope.MatchedWith(p.ident, value)
-	return EmptyScope.With(p.ident, value)
+	return EmptyScope.With(p.ident, value), nil
 }
 
 func (p IdentPattern) String() string {
@@ -52,11 +56,11 @@ func NewExtraElementPattern(ident string) ExtraElementPattern {
 	return ExtraElementPattern{ident}
 }
 
-func (p ExtraElementPattern) Bind(scope Scope, value Value) Scope {
+func (p ExtraElementPattern) Bind(scope Scope, value Value) (Scope, error) {
 	if p.ident == "" {
-		return EmptyScope
+		return EmptyScope, nil
 	}
-	return EmptyScope.With(p.ident, value)
+	return EmptyScope.With(p.ident, value), nil
 }
 
 func (p ExtraElementPattern) String() string {
@@ -71,11 +75,11 @@ func NewArrayPattern(elements ...Pattern) ArrayPattern {
 	return ArrayPattern{elements}
 }
 
-func (p ArrayPattern) Bind(scope Scope, value Value) Scope {
+func (p ArrayPattern) Bind(local Scope, value Value) (Scope, error) {
 	if s, is := value.(GenericSet); is {
 		if s.set.IsEmpty() {
 			if len(p.items) == 0 {
-				return EmptyScope
+				return EmptyScope, nil
 			}
 			panic(fmt.Sprintf("value [] is empty but pattern %s is not", p))
 		}
@@ -114,13 +118,21 @@ func (p ArrayPattern) Bind(scope Scope, value Value) Scope {
 			if offset >= 0 {
 				arr = NewArray(array.Values()[i : i+offset+1]...)
 			}
-			result = result.MatchedUpdate(item.Bind(scope, arr))
+			scope, err := item.Bind(local, arr)
+			if err != nil {
+				return EmptyScope, err
+			}
+			result = result.MatchedUpdate(scope)
 			continue
 		}
-		result = result.MatchedUpdate(item.Bind(scope, array.Values()[i+offset]))
+		scope, err := item.Bind(local, array.Values()[i+offset])
+		if err != nil {
+			return EmptyScope, err
+		}
+		result = result.MatchedUpdate(scope)
 	}
 
-	return result
+	return result, nil
 }
 
 func (p ArrayPattern) String() string {
@@ -170,7 +182,7 @@ func NewTuplePattern(attrs ...TuplePatternAttr) TuplePattern {
 	return TuplePattern{attrs}
 }
 
-func (p TuplePattern) Bind(scope Scope, value Value) Scope {
+func (p TuplePattern) Bind(local Scope, value Value) (Scope, error) {
 	tuple, is := value.(Tuple)
 	if !is {
 		panic(fmt.Sprintf("%s is not a tuple", value))
@@ -202,15 +214,23 @@ func (p TuplePattern) Bind(scope Scope, value Value) Scope {
 			if tupleExpr == nil {
 				panic(fmt.Sprintf("tuple %s cannot match tuple pattern %s", tuple, p))
 			}
-			result = result.MatchedUpdate(attr.pattern.Bind(scope, tupleExpr))
+			scope, err := attr.pattern.Bind(local, tupleExpr)
+			if err != nil {
+				return EmptyScope, err
+			}
+			result = result.MatchedUpdate(scope)
 			continue
 		}
 		tupleExpr := tuple.MustGet(attr.name)
-		result = result.MatchedUpdate(attr.pattern.Bind(scope, tupleExpr))
+		scope, err := attr.pattern.Bind(local, tupleExpr)
+		if err != nil {
+			return EmptyScope, err
+		}
+		result = result.MatchedUpdate(scope)
 		names = names.Without(attr.name)
 	}
 
-	return result
+	return result, nil
 }
 
 func (p TuplePattern) String() string {
@@ -266,7 +286,7 @@ func NewDictPattern(entries ...DictPatternEntry) DictPattern {
 	return DictPattern{entries}
 }
 
-func (p DictPattern) Bind(scope Scope, value Value) Scope {
+func (p DictPattern) Bind(local Scope, value Value) (Scope, error) {
 	dict, is := value.(Dict)
 	if !is {
 		panic(fmt.Sprintf("%s is not a dict", value))
@@ -295,19 +315,31 @@ func (p DictPattern) Bind(scope Scope, value Value) Scope {
 	for _, entry := range p.entries {
 		if _, is := entry.value.(ExtraElementPattern); is {
 			if m.IsEmpty() {
-				result = result.MatchedUpdate(entry.value.Bind(scope, None))
+				scope, err := entry.value.Bind(local, None)
+				if err != nil {
+					return EmptyScope, err
+				}
+				result = result.MatchedUpdate(scope)
 			} else {
-				result = result.MatchedUpdate(entry.value.Bind(scope, Dict{m: m}))
+				scope, err := entry.value.Bind(local, Dict{m: m})
+				if err != nil {
+					return EmptyScope, err
+				}
+				result = result.MatchedUpdate(scope)
 			}
 
 			continue
 		}
 		dictValue := m.MustGet(entry.at)
-		result = result.MatchedUpdate(entry.value.Bind(scope, dictValue.(Value)))
+		scope, err := entry.value.Bind(local, dictValue.(Value))
+		if err != nil {
+			return EmptyScope, err
+		}
+		result = result.MatchedUpdate(scope)
 		m = m.Without(frozen.NewSet(entry.at))
 	}
 
-	return result
+	return result, nil
 }
 
 func (p DictPattern) String() string {

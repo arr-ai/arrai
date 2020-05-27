@@ -158,6 +158,14 @@ func (pc ParseContext) compilePattern(b ast.Branch) rel.Pattern {
 	if ident := b.One("identpattern"); ident != nil {
 		return rel.NewIdentPattern(ident.Scanner().String())
 	}
+	if expr := b.Many("exprpattern"); expr != nil {
+		var elements []rel.Expr
+		for _, e := range expr {
+			expr := pc.CompileExpr(e.(ast.Branch))
+			elements = append(elements, expr)
+		}
+		return rel.ExprAsPattern(rel.NewArrayExpr(b.Scanner(), elements...))
+	}
 
 	expr := pc.CompileExpr(b)
 	return rel.ExprAsPattern(expr)
@@ -399,36 +407,15 @@ func (pc ParseContext) compileCondWithControlVar(b ast.Branch, c ast.Children) r
 		conditions, values)
 }
 
-func (pc ParseContext) compileCondElements(elements ...ast.Node) []interface{} {
-	result := make([]interface{}, 0, len(elements))
+func (pc ParseContext) compileCondElements(elements ...ast.Node) []rel.Pattern {
+	result := make([]rel.Pattern, 0, len(elements))
 	for _, element := range elements {
-		name, c := which(element.(ast.Branch), exprTag, "pattern")
+		name, c := which(element.(ast.Branch), "pattern")
 		if c == nil {
 			panic(fmt.Errorf("misshapen node AST: %v", element.(ast.Branch)))
 		}
 
-		switch name {
-		case exprTag:
-			var exprResult rel.Expr
-			switch c := c.(type) {
-			case ast.One:
-				exprResult = pc.CompileExpr(c.Node.(ast.Branch))
-			case ast.Many:
-				if len(c) == 1 {
-					exprResult = pc.CompileExpr(c[0].(ast.Branch))
-				} else {
-					var elements []rel.Expr
-					for _, e := range c {
-						expr := pc.CompileExpr(e.(ast.Branch))
-						elements = append(elements, expr)
-					}
-					exprResult = rel.NewArrayExpr(c.Scanner(), elements...)
-				}
-			}
-			if exprResult != nil {
-				result = append(result, exprResult)
-			}
-		case "pattern":
+		if name == "pattern" {
 			pattern := pc.compilePattern(element.(ast.Branch))
 			if pattern != nil {
 				result = append(result, pattern)

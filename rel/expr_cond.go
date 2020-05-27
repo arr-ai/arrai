@@ -20,13 +20,13 @@ type CondExpr struct {
 
 // NewCondExpr returns a new CondExpr.
 func NewCondExpr(scanner parser.Scanner, dict Expr, defaultExpr Expr) Expr {
-	return &CondExpr{ExprScanner{scanner}, dict, defaultExpr, func(condition Value, local Scope) (bool, error) {
+	return CondExpr{ExprScanner{scanner}, dict, defaultExpr, func(condition Value, local Scope) (bool, error) {
 		return condition.IsTrue(), nil
 	}}
 }
 
 // String returns a string representation of the expression.
-func (e *CondExpr) String() string {
+func (e CondExpr) String() string {
 	var b bytes.Buffer
 	b.WriteByte('{')
 	var i int = -1
@@ -51,7 +51,7 @@ func (e *CondExpr) String() string {
 }
 
 // Eval returns the value of true condition, or default condition value.
-func (e *CondExpr) Eval(local Scope) (Value, error) {
+func (e CondExpr) Eval(local Scope) (Value, error) {
 	var trueCond *DictEntryTupleExpr
 	// If there is not any valid condition, the condtion defaultExpr will work.
 	switch c := e.dicExpr.(type) {
