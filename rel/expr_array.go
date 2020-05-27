@@ -4,6 +4,7 @@ import (
 	"bytes"
 
 	"github.com/arr-ai/wbnf/parser"
+	"github.com/go-errors/errors"
 )
 
 // ArrayExpr represents an expr that evaluates to an Array.
@@ -57,4 +58,9 @@ func (e ArrayExpr) Eval(local Scope) (Value, error) {
 		values = append(values, value)
 	}
 	return NewArray(values...), nil
+}
+
+// Bind it is not supproted by now.
+func (e ArrayExpr) Bind(scope Scope, value Value) (Scope, error) {
+	return EmptyScope, errors.Errorf("rel.ArrayExpr doesn't support")
 }

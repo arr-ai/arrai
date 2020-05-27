@@ -67,7 +67,7 @@ tail   -> get
                 ):",",
             ")");
 safe_tail -> first_safe=(tail "?") ops=(safe=(tail "?") | tail)* ":" fall=expr;
-pattern -> extra | %!patternterms(pattern|expr) | IDENT | NUM;
+pattern -> extra | %!patternterms(pattern|expr) | IDENT | NUM | C* "(" exprpattern=expr:",",? ")" C*;
 extra -> ("..." ident=IDENT?);
 
 ARROW  -> /{:>|=>|>>|orderby|order|where|sum|max|mean|median|min};
@@ -91,7 +91,6 @@ C      -> /{ # .* $ };
   | C* "<<" C* bytes=(item=top:",",?) C* ">>" C*
   | C* "(" tuple=(pairs=(extra|name? ":" v=top):",",?) ")" C*
   | C* "(" identpattern=IDENT ")" C*
-  | C* "(" exprpattern=expr:",",? ")" C*
 };
 
 `), nil)

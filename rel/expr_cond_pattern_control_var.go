@@ -43,23 +43,40 @@ func (expr CondPatternControlVarExpr) String() string {
 	return b.String()
 }
 
-// Eval evaluates with pattern matching.
-// It checks first matched condition by binding which calling method `Bind(scope Scope, value Value) (Scope, error)`
-// in condition.
+// Eval evaluates to find the first valid condition and return its value.
 func (expr CondPatternControlVarExpr) Eval(local Scope) (Value, error) {
 	varVal, err := expr.controlVarExpr.Eval(local)
 	if err != nil {
 		return nil, wrapContext(err, expr.controlVarExpr)
 	}
 
-	for index, condition := range expr.conditions {
-		local, err = condition.Bind(local, varVal)
-		if err == nil {
-			val, err := expr.values[index].Eval(local)
-			if err != nil {
-				return nil, err
+	for cIndex, condition := range expr.conditions {
+		switch condition := condition.(type) {
+		case Array:
+			for _, exprVal := range condition.Values() {
+				if exprVal.Equal(varVal) {
+					return expr.values[cIndex].Eval(local)
+				}
 			}
-			return val, nil
+		case ArrayExpr:
+			for _, exprVal := range condition.Elements() {
+				val, err := exprVal.Eval(local)
+				if err != nil {
+					return None, wrapContext(err, exprVal)
+				}
+				if val.Equal(varVal) {
+					return expr.values[cIndex].Eval(local)
+				}
+			}
+		case Pattern:
+			local, err = condition.Bind(local, varVal)
+			if err == nil {
+				val, err := expr.values[cIndex].Eval(local)
+				if err != nil {
+					return nil, err
+				}
+				return val, nil
+			}
 		}
 	}
 
