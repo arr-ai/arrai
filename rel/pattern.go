@@ -21,12 +21,6 @@ func ExprAsPattern(expr Expr) Pattern {
 		return t
 	case Number:
 		return t
-	case *BinExpr:
-		return t
-	case ArrayExpr:
-		return t
-	case Array:
-		return t
 	default:
 		panic(fmt.Sprintf("%s is not a Pattern", t))
 	}

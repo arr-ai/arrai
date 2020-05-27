@@ -7,7 +7,6 @@ import (
 
 	"github.com/arr-ai/frozen"
 	"github.com/arr-ai/wbnf/parser"
-	"github.com/go-errors/errors"
 )
 
 // Array is an ordered collection of Values.
@@ -143,25 +142,6 @@ func (a Array) String() string {
 // Eval returns the string.
 func (a Array) Eval(_ Scope) (Value, error) {
 	return a, nil
-}
-
-func (e Array) Bind(scope Scope, value Value) (Scope, error) {
-	passedVal, err := value.Eval(scope)
-	if err != nil {
-		return EmptyScope, wrapContext(err, e)
-	}
-
-	for _, e := range e.Values() {
-		currentVal, err := e.Eval(scope)
-		if err != nil {
-			return EmptyScope, wrapContext(err, e)
-		}
-		if currentVal.Equal(passedVal) {
-			return EmptyScope, nil
-		}
-	}
-
-	return EmptyScope, errors.Errorf("couldn't bind %s to %s", passedVal, e)
 }
 
 // Source returns a scanner locating the Array's source code.

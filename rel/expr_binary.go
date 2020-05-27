@@ -274,21 +274,3 @@ func (e *BinExpr) Eval(local Scope) (_ Value, err error) {
 
 	return e.eval(a, b, local)
 }
-
-// Bind binds param value to value of BinExpr.
-func (e *BinExpr) Bind(scope Scope, value Value) (Scope, error) {
-	currentVal, err := e.Eval(scope)
-	if err != nil {
-		return EmptyScope, wrapContext(err, e)
-	}
-	passedVal, err := value.Eval(scope)
-	if err != nil {
-		return EmptyScope, wrapContext(err, e)
-	}
-
-	if !currentVal.Equal(passedVal) {
-		return EmptyScope, errors.Errorf("couldn't bind %s to %s", passedVal, currentVal)
-	}
-
-	return EmptyScope, nil
-}
