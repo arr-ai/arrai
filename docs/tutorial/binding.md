@@ -175,10 +175,82 @@ have the same number of elements:
 
 We'll learn more about `=>` in a later tutorial.
 
-## Pattern matching (FUTURE)
+## Pattern matching
 
 Both let-bindings and function parameters support pattern matching. This is a
 very powerful mechanism to extract elements from a complex structure and also
 restrict what values may be used as input.
 
-TODO
+Try out the following examples to use pattern with arrays:
+
+```arrai
+@> let [] = []; 1
+@> let [a, b, c] = [1, 2, 3]; b
+@> let arr = [1, 2]; let [a, b] = arr; b
+@> let [x, x] = [1, 1]; x
+@> let [x, x] = [1, 2]; x                  # should fail
+```
+
+with tuples:
+```arrai
+@> let () = (); 1
+@> let (a: x, b: y) = (a: 4, b: 7); x
+@> let (a: x, b: x) = (a: 4, b: 4); x
+@> let (:x) = (x: 1); x
+```
+
+with dictionaries:
+```arrai
+@> let {"a": f, "b": k} = {"a": 1, "b": 2}; [f, k]
+```
+
+and with sets:
+```arrai
+@> let {} = {}; 1
+@> let {a, b, c} = {1, 2, 3}; a
+@> let {a, 42} = {3, 42}; a
+```
+
+Also, nested patterns are supported as:
+```arrai
+@> let [[x, y], z] = [[1, 2], 3]; x
+@> let [{"a": x}, (b: y), z] = [{"a": 1}, (b: 2), 3]; [x, y, z]
+```
+
+Underscore `_` matches any value and ignores it.
+
+```arrai
+@> let [x, _, _] = [1, 2, 3]; x
+@> let [_, x, _] = [1, 2, 3]; x
+```
+
+A name within parentheses like `(x)` refers to the value bound to the name `x`.
+
+```arrai
+@> let x = 3; let [b, x] = [2, 4]; x
+@> let x = 3; let [b, (x)] = [2, 3]; b
+@> let x = 3; let [_, b, (x)] = [1, 2, 3]; b
+@> let x = 3; let [b, (x)] = [2, 4]; b     # should fail because (x) != 4
+@> let [(x)] = [2]; x                      # should fail because `x` isn't in scope
+```
+
+`let a = 56; let {"x": a, "y": (a)} = {"x": 42, "y": 56}; a` is valid 
+but `let a = 56; let {"x": a, "y": (a)} = {"x": 42, "y": 42}; a` should fail. 
+Using the same name in an expression, `(a)`, and a newly bound name, `a`, is
+confusing and should be avoided.
+
+What's more, arr.ai allows extra elements `...` or `...x` in addition to 
+the explicitly bound ones and binds name `x` to any additional elements 
+that weren't explicitly matched by other patterns.
+```arrai
+@> let [x, y, ...] = [1, 2]; [x, y]
+@> let [x, y, ...t] = [1, 2]; [x, y, t]
+@> let [x, y, ...] = [1, 2, 3, 4, 5, 6]; [x, y]
+@> let [x, y, ...t] = [1, 2, 3, 4, 5, 6]; [x, y, t]
+@> let [..., x, y] = [1, 2, 3, 4, 5, 6]; [x, y]
+@> let [...t, x, y] = [1, 2, 3, 4, 5, 6]; [x, y, t]
+@> let [x, ..., y] = [1, 2, 3, 4, 5, 6]; [x, y]
+@> let [x, ...t, y] = [1, 2, 3, 4, 5, 6]; [x, y, t]
+@> let (m: x, n: y, ...t) = (m: 1, n: 2, j: 3, k: 4); [x, y, t]
+@> let {"m": x, "n": y, ...t} = {"m": 1, "n": 2, "j": 3, "k": 4}; [x, y, t]
+```
