@@ -90,7 +90,8 @@ C      -> /{ # .* $ };
   | C* "[" C* array=(item=top:",",?) C* "]" C*
   | C* "<<" C* bytes=(item=top:",",?) C* ">>" C*
   | C* "(" tuple=(pairs=(extra|name? ":" v=top):",",?) ")" C*
-  | C* "(" exprpattern=top:",",? ")" C*
+  | C* "(" identpattern=IDENT ")" C*
+  | C* "(" exprpattern=expr:",",? ")" C*
 };
 
 `), nil)
