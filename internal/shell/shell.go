@@ -187,7 +187,10 @@ func (l *lineCollector) appendLine(line string) {
 	var increment int
 	for i := 0; i < len(line); i += increment {
 		increment = 1
-		if nextCloser := l.peek(); line[i] == '\\' && nextCloser != nil && nextCloser.char != "`" {
+		if nextCloser := l.peek(); line[i] == '\\' &&
+			nextCloser != nil &&
+			nextCloser.char != "`" &&
+			isEscapable(nextCloser) {
 			increment = 2
 		} else if nextCloser != nil && strings.HasPrefix(line[i:], nextCloser.char) {
 			if nextCloser.char == "`" && strings.HasPrefix(line[i:], "``") {
@@ -248,4 +251,8 @@ func (l *lineCollector) isBalanced() bool {
 func (l *lineCollector) reset() {
 	l.lines = []string{}
 	l.stack = []*closer{}
+}
+
+func isEscapable(nextCloser *closer) bool {
+	return nextCloser.char == "\"" || nextCloser.char == "'"
 }
