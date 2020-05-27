@@ -18,10 +18,10 @@ type CondPatternControlVarExpr struct {
 // NewCondPatternControlVarExpr returns a new CondPatternControlVarExpr.
 func NewCondPatternControlVarExpr(scanner parser.Scanner, controlVar Expr, conditions []Pattern,
 	values []Expr) Expr {
-	return &CondPatternControlVarExpr{ExprScanner{scanner}, controlVar, conditions, values}
+	return CondPatternControlVarExpr{ExprScanner{scanner}, controlVar, conditions, values}
 }
 
-func (expr *CondPatternControlVarExpr) String() string {
+func (expr CondPatternControlVarExpr) String() string {
 	var b bytes.Buffer
 	b.WriteByte('(')
 	fmt.Fprintf(&b, "(control_var: %v)", expr.controlVarExpr.String())
@@ -44,62 +44,17 @@ func (expr *CondPatternControlVarExpr) String() string {
 }
 
 // Eval evaluates with pattern matching.
-func (expr *CondPatternControlVarExpr) Eval(local Scope) (Value, error) {
+// It checks first matched condition by binding which calling method `Bind(scope Scope, value Value) (Scope, error)`
+// in condition.
+func (expr CondPatternControlVarExpr) Eval(local Scope) (Value, error) {
 	varVal, err := expr.controlVarExpr.Eval(local)
 	if err != nil {
 		return nil, wrapContext(err, expr.controlVarExpr)
 	}
 
 	for index, condition := range expr.conditions {
-		switch condition := condition.(type) {
-		case IdentExpr:
-			if condition.String() == "_" {
-				val, err := expr.values[index].Eval(local)
-				if err != nil {
-					return nil, wrapContext(err, condition)
-				}
-				return val, nil
-			}
-		// case Array:
-		// 	for _, exprVal := range condition.Values() {
-		// 		if exprVal.Equal(varVal) {
-		// 			val, err := expr.values[index].Eval(local)
-		// 			if err != nil {
-		// 				return nil, wrapContext(err, condition)
-		// 			}
-		// 			return val, nil
-		// 		}
-		// 	}
-		// case ArrayExpr:
-		// 	for _, exprVal := range condition.Elements() {
-		// 		val, err := exprVal.Eval(local)
-		// 		if err != nil {
-		// 			return nil, wrapContext(err, condition)
-		// 		}
-		// 		if val.Equal(varVal) {
-		// 			val, err := expr.values[index].Eval(local)
-		// 			if err != nil {
-		// 				return nil, wrapContext(err, condition)
-		// 			}
-		// 			return val, nil
-		// 		}
-		// 	}
-		// case Expr:
-		// 	cond, err := condition.Eval(local)
-		// 	if err != nil {
-		// 		return nil, wrapContext(err, condition)
-		// 	}
-		// 	if varVal.Equal(cond) {
-		// 		val, err := expr.values[index].(Expr).Eval(local)
-		// 		if err != nil {
-		// 			return nil, wrapContext(err, condition)
-		// 		}
-		// 		return val, nil
-		// 	}
-		case Pattern:
-			// TODO: now binding can't check types, see this case `let a = {"a":3}; a cond {(a:x): x + 5,_:2}`
-			// It will panic and stop the process, it is not good.
-			local = condition.Bind(local, varVal)
+		local, err = condition.Bind(local, varVal)
+		if err == nil {
 			val, err := expr.values[index].Eval(local)
 			if err != nil {
 				return nil, err

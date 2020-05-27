@@ -83,25 +83,26 @@ func TestEvalCondWithControlVar(t *testing.T) {
 	AssertCodesEvalToSameValue(t, `1`, `let a = 1; let b = a cond {(1) :1, (2) :2, _:1 + 2}; b`)
 	AssertCodesEvalToSameValue(t, `100`, `let a = 1; let b = a cond {(1) :1, (2) :2, _:1 + 2}; b * 100`)
 	// // //
-	AssertCodesEvalToSameValue(t, `2`, `let a = 1; (a + 1) cond {(1) :1, (2) :2, _:1 + 2}`)
-	AssertCodesEvalToSameValue(t, `3`, `let a = 1; (a + 10) cond {(1) :1, (2) :2, _:1 + 2}`)
-	AssertCodesEvalToSameValue(t, `2`, `let a = 1; let b = (a + 1) cond {(1) :1, (2) :2, _:1 + 2}; b`)
-	AssertCodesEvalToSameValue(t, `300`, `let a = 1; let b = (a + 10) cond {(1) :1, (2) :2, _:1 + 2}; b * 100`)
+	// `(a + 1)` will be parsed to exprpattern, so use `a + 1`
+	AssertCodesEvalToSameValue(t, `2`, `let a = 1; a + 1 cond {(1) :1, (2) :2, _:1 + 2}`)
+	AssertCodesEvalToSameValue(t, `3`, `let a = 1; a + 10 cond {(1) :1, (2) :2, _:1 + 2}`)
+	AssertCodesEvalToSameValue(t, `2`, `let a = 1; let b = a + 1 cond {(1) :1, (2) :2, _:1 + 2}; b`)
+	AssertCodesEvalToSameValue(t, `300`, `let a = 1; let b = a + 10 cond {(1) :1, (2) :2, _:1 + 2}; b * 100`)
 	// Nested call
-	AssertCodesEvalToSameValue(t, `"B"`, `let a = 2; a cond {(a cond {(1,2) : 1}): "A", (2, 3): "B", _: "C"}`)
-	AssertCodesEvalToSameValue(t, `"A"`, `let a = 1; a cond { (cond {(2 > 1) : 1}): "A", (2, 3): "B", _: "C"}`)
-	AssertCodesEvalToSameValue(t, `"A"`, `let a = 1; cond { (a cond {(1) : 1}) : "A", (2): "B", _: "C"}`)
+	// AssertCodesEvalToSameValue(t, `"B"`, `let a = 2; a cond {(a cond {(1,2) : 1}): "A", (2, 3): "B", _: "C"}`)
+	// AssertCodesEvalToSameValue(t, `"A"`, `let a = 1; a cond { (cond {(2 > 1) : 1}): "A", (2, 3): "B", _: "C"}`)
+	// AssertCodesEvalToSameValue(t, `"A"`, `let a = 1; cond { (a cond {(1) : 1}) : "A", (2): "B", _: "C"}`)
 
 	AssertCodesEvalToSameValue(t, `{}`, `let a = 3; a cond {(1) :1, (2) :2 + 1}`)
 	AssertCodesEvalToSameValue(t, `{}`, `let a = 3; let b = a cond {(1) :1, (2) :2 + 1}; b`)
-	AssertCodesEvalToSameValue(t, `{}`, `let a = 3; let b = (a + 10) cond {(1) :1, (2) :2 + 1}; b`)
+	AssertCodesEvalToSameValue(t, `{}`, `let a = 3; let b = a + 10 cond {(1) :1, (2) :2 + 1}; b`)
 }
 
 func TestEvalCondWithControlVarMulti(t *testing.T) {
 	AssertCodesEvalToSameValue(t, `1`, `let a = 1; a cond {(1,2) :1}`)
 	AssertCodesEvalToSameValue(t, `1`, `let a = 2; a cond {(1,2,3) :1, (2):2}`)
-	AssertCodesEvalToSameValue(t, `2`, `let a = 2; a cond {(1,2 + 4,(3 + 5)) :1, (2):2}`)
-	AssertCodesEvalToSameValue(t, `11`, `let [a,b] = [2,4]; a cond {(1,b -2,(3 + 5)) :11, (2):2}`)
+	AssertCodesEvalToSameValue(t, `2`, `let a = 2; a cond {(1,2 + 4,3 + 5) :1, (2):2}`)
+	AssertCodesEvalToSameValue(t, `11`, `let [a,b] = [2,4]; a cond {(1,b -2,3 + 5) :11, (2):2}`)
 	AssertCodesEvalToSameValue(t, `1`, `let a = 3; a cond {(1,2,3) :1, (2) :2, _:1 + 2}`)
 	AssertCodesEvalToSameValue(t, `2`, `let a = 2; a cond {(1) :1 + 10, (2,3) : 2, _:1 + 2}`)
 
@@ -146,14 +147,15 @@ func TestEvalCondWithControlVarMultiStr(t *testing.T) {
 }
 
 func TestEvalCondPatternMatchingWithControlVar(t *testing.T) {
-	// AssertCodesEvalToSameValue(t, `6`, `let a = 2; a cond {(1): 6}`)
+
+	AssertCodesEvalToSameValue(t, `2`, `let a = 2; a cond {(1,2 + 4,3 + 5) :1, (2):2}`)
+
 	// AssertCodesEvalToSameValue(t, `6`, `let a = 2; a cond {(2 > 1 && 2 > 0): 6}`)
 	// AssertCodesEvalToSameValue(t, `6`, `let a = 2; a cond {[1,2,3]: 6}`)
 	// AssertCodesEvalToSameValue(t, `2`, `let [a,b] = [1, 2]; b`)
 	// AssertCodesEvalToSameValue(t, `2`, `let a = [1, 2]; a cond {(1): 2}`)
 	// AssertCodesEvalToSameValue(t, `2`, `let a = [1, 2]; a cond {([1, 2]): 2}`)
 	// AssertCodesEvalToSameValue(t, `6`, `let a = (x:4); a cond {(x:x): x + 2}`)
-	// AssertCodesEvalToSameValue(t, `6`, ` (x:4) cond {((x:x)): x + 2}`)
 
 	// AssertCodesEvalToSameValue(t, `8`, `let a = (a:3); a cond {(a:x): x + 5,_:2}`)
 	// AssertCodesEvalToSameValue(t, `8`, `let a = {"a":3}; a cond {{"a":x}: x + 5,_:2}`)
@@ -165,5 +167,6 @@ func TestEvalCondPatternMatchingWithControlVar(t *testing.T) {
 
 	// let a = [1, 2]; a cond {([1, 2]): 2} or let a = 1, b = 2; cond {([1] ++ [2]): 2}
 
-	AssertCodeErrors(t, `let [(x)] = [2]; x`, "")
+	/// Passed
+	// AssertCodesEvalToSameValue(t, `6`, ` (x:4) cond {((x:x)): x + 2}`)
 }

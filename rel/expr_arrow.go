@@ -43,5 +43,9 @@ func (e *ArrowExpr) Eval(local Scope) (_ Value, err error) {
 	if err != nil {
 		return nil, wrapContext(err, e)
 	}
-	return e.fn.body.Eval(local.Update(e.fn.arg.Bind(local, value)))
+	scope, err := e.fn.arg.Bind(local, value)
+	if err != nil {
+		return nil, err
+	}
+	return e.fn.body.Eval(local.Update(scope))
 }

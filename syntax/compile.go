@@ -159,7 +159,15 @@ func (pc ParseContext) compilePattern(b ast.Branch) rel.Pattern {
 		return rel.NewIdentPattern(ident.Scanner().String())
 	}
 	if expr := b.Many("exprpattern"); expr != nil {
-		return pc.compilePattern(expr[0].(ast.Branch))
+		if len(expr) == 1 {
+			return pc.compilePattern(expr[0].(ast.Branch))
+		}
+		var elements []rel.Expr
+		for _, e := range expr {
+			expr := pc.CompileExpr(e.(ast.Branch))
+			elements = append(elements, expr)
+		}
+		return rel.ExprAsPattern(rel.NewArrayExpr(b.Scanner(), elements...))
 	}
 
 	expr := pc.CompileExpr(b)
