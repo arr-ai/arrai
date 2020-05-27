@@ -57,52 +57,49 @@ func (expr *CondPatternControlVarExpr) Eval(local Scope) (Value, error) {
 
 	for index, condition := range expr.conditions {
 		switch condition := condition.(type) {
-		case Expr:
-			switch condition := condition.(type) {
-			case IdentExpr:
-				if condition.String() == "_" {
+		case IdentExpr:
+			if condition.String() == "_" {
+				val, err := expr.values[index].Eval(local)
+				if err != nil {
+					return nil, wrapContext(err, condition)
+				}
+				return val, nil
+			}
+		case Array:
+			for _, exprVal := range condition.Values() {
+				if exprVal.Equal(varVal) {
 					val, err := expr.values[index].Eval(local)
 					if err != nil {
 						return nil, wrapContext(err, condition)
 					}
 					return val, nil
 				}
-			case Array:
-				for _, exprVal := range condition.Values() {
-					if exprVal.Equal(varVal) {
-						val, err := expr.values[index].Eval(local)
-						if err != nil {
-							return nil, wrapContext(err, condition)
-						}
-						return val, nil
-					}
-				}
-			case ArrayExpr:
-				for _, exprVal := range condition.Elements() {
-					val, err := exprVal.Eval(local)
-					if err != nil {
-						return nil, wrapContext(err, condition)
-					}
-					if val.Equal(varVal) {
-						val, err := expr.values[index].Eval(local)
-						if err != nil {
-							return nil, wrapContext(err, condition)
-						}
-						return val, nil
-					}
-				}
-			default:
-				cond, err := condition.Eval(local)
+			}
+		case ArrayExpr:
+			for _, exprVal := range condition.Elements() {
+				val, err := exprVal.Eval(local)
 				if err != nil {
 					return nil, wrapContext(err, condition)
 				}
-				if varVal.Equal(cond) {
-					val, err := expr.values[index].(Expr).Eval(local)
+				if val.Equal(varVal) {
+					val, err := expr.values[index].Eval(local)
 					if err != nil {
 						return nil, wrapContext(err, condition)
 					}
 					return val, nil
 				}
+			}
+		case Expr:
+			cond, err := condition.Eval(local)
+			if err != nil {
+				return nil, wrapContext(err, condition)
+			}
+			if varVal.Equal(cond) {
+				val, err := expr.values[index].(Expr).Eval(local)
+				if err != nil {
+					return nil, wrapContext(err, condition)
+				}
+				return val, nil
 			}
 		case Pattern:
 			// TODO: now binding can't check types, see this case `let a = {"a":3}; a cond {(a:x): x + 5,_:2}`
