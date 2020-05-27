@@ -26,7 +26,7 @@ let endpoints = app.endpoints where !//seq.has_prefix("enum ", .@item.name);
                 cond {
                     (//seq.contains("google.protobuf", grpc.type(.))): $`
                         import "${//seq.sub(".", "/", grpc.type(.))}.proto";`,
-                 } => .@item
+                } => .@item
             )) => .@item)::\i:\n}
             service ${app.name} {
                 ${endpoints >> (proto.endpointInfo(.)).rpcMethod::\i}

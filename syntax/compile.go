@@ -29,7 +29,7 @@ import (
 
 const NoPath = "\000"
 
-const ExprStr = "expr"
+const exprTag = "expr"
 
 var loggingOnce sync.Once
 
@@ -77,7 +77,7 @@ func (pc ParseContext) CompileExpr(b ast.Branch) rel.Expr {
 		"amp", "arrow", "let", "unop", "binop", "compare", "rbinop", "if", "get",
 		"tail_op", "postfix", "touch", "get", "rel", "set", "dict", "array", "bytes",
 		"embed", "op", "fn", "pkg", "tuple", "xstr", "IDENT", "STR", "NUM", "CHAR",
-		"cond", ExprStr,
+		"cond", exprTag,
 	)
 	if c == nil {
 		panic(fmt.Errorf("misshapen node AST: %v", b))
@@ -131,7 +131,7 @@ func (pc ParseContext) CompileExpr(b ast.Branch) rel.Expr {
 		return pc.compileNumber(c)
 	case "CHAR":
 		return pc.compileChar(c)
-	case ExprStr:
+	case exprTag:
 		if result := pc.compileExpr(c); result != nil {
 			return result
 		}
@@ -243,7 +243,7 @@ func (pc ParseContext) compileDictPattern(b ast.Branch) rel.Pattern {
 }
 
 func (pc ParseContext) compileArrow(b ast.Branch, name string, c ast.Children) rel.Expr {
-	expr := pc.CompileExpr(b[ExprStr].(ast.One).Node.(ast.Branch))
+	expr := pc.CompileExpr(b[exprTag].(ast.One).Node.(ast.Branch))
 	if arrows, has := b["arrow"]; has {
 		for _, arrow := range arrows.(ast.Many) {
 			branch := arrow.(ast.Branch)
@@ -256,9 +256,9 @@ func (pc ParseContext) compileArrow(b ast.Branch, name string, c ast.Children) r
 			case "ARROW":
 				op := d.(ast.One).Node.One("").(ast.Leaf).Scanner()
 				f := binops[op.String()]
-				expr = f(op, expr, pc.CompileExpr(arrow.(ast.Branch)[ExprStr].(ast.One).Node.(ast.Branch)))
+				expr = f(op, expr, pc.CompileExpr(arrow.(ast.Branch)[exprTag].(ast.One).Node.(ast.Branch)))
 			case "binding":
-				rhs := pc.CompileExpr(arrow.(ast.Branch)[ExprStr].(ast.One).Node.(ast.Branch))
+				rhs := pc.CompileExpr(arrow.(ast.Branch)[exprTag].(ast.One).Node.(ast.Branch))
 				scanner := rhs.Source()
 				if ident := arrow.One("IDENT"); ident != nil {
 					rhs = rel.NewFunction(c.Scanner(), rel.NewIdentExpr(ident.Scanner(), ident.Scanner().String()), rhs)
@@ -280,7 +280,7 @@ func (pc ParseContext) compileArrow(b ast.Branch, name string, c ast.Children) r
 // let c.(ast.One).Node.One("...") = expr;  rhs
 // EXPR1 -> \PATTERN EXPR2
 func (pc ParseContext) compileLet(c ast.Children) rel.Expr {
-	exprs := c.(ast.One).Node.Many(ExprStr)
+	exprs := c.(ast.One).Node.Many(exprTag)
 	expr := pc.CompileExpr(exprs[0].(ast.Branch))
 	rhs := pc.CompileExpr(exprs[1].(ast.Branch))
 	source := c.Scanner()
@@ -293,7 +293,7 @@ func (pc ParseContext) compileLet(c ast.Children) rel.Expr {
 
 func (pc ParseContext) compileUnop(b ast.Branch, c ast.Children) rel.Expr {
 	ops := c.(ast.Many)
-	result := pc.CompileExpr(b.One(ExprStr).(ast.Branch))
+	result := pc.CompileExpr(b.One(exprTag).(ast.Branch))
 	for i := len(ops) - 1; i >= 0; i-- {
 		op := ops[i].One("").(ast.Leaf).Scanner()
 		f := unops[op.String()]
@@ -309,7 +309,7 @@ func (pc ParseContext) compileUnop(b ast.Branch, c ast.Children) rel.Expr {
 
 func (pc ParseContext) compileBinop(b ast.Branch, c ast.Children) rel.Expr {
 	ops := c.(ast.Many)
-	args := b.Many(ExprStr)
+	args := b.Many(exprTag)
 	result := pc.CompileExpr(args[0].(ast.Branch))
 	for i, arg := range args[1:] {
 		op := ops[i].One("").(ast.Leaf).Scanner()
@@ -326,7 +326,7 @@ func (pc ParseContext) compileBinop(b ast.Branch, c ast.Children) rel.Expr {
 }
 
 func (pc ParseContext) compileCompare(b ast.Branch, c ast.Children) rel.Expr {
-	args := b.Many(ExprStr)
+	args := b.Many(exprTag)
 	argExprs := make([]rel.Expr, 0, len(args))
 	comps := make([]rel.CompareFunc, 0, len(args))
 
@@ -347,7 +347,7 @@ func (pc ParseContext) compileCompare(b ast.Branch, c ast.Children) rel.Expr {
 
 func (pc ParseContext) compileRbinop(b ast.Branch, c ast.Children) rel.Expr {
 	ops := c.(ast.Many)
-	args := b[ExprStr].(ast.Many)
+	args := b[exprTag].(ast.Many)
 	result := pc.CompileExpr(args[len(args)-1].(ast.Branch))
 	for i := len(args) - 2; i >= 0; i-- {
 		op := ops[i].One("").(ast.Leaf).Scanner()
@@ -367,7 +367,7 @@ func (pc ParseContext) compileIf(b ast.Branch, c ast.Children) rel.Expr {
 				"Operator cond sample: let a = cond ( 2 > 1 : 1, 2 > 3 :2, * : 3)"))
 	})
 
-	result := pc.CompileExpr(b.One(ExprStr).(ast.Branch))
+	result := pc.CompileExpr(b.One(exprTag).(ast.Branch))
 	source := result.Source()
 	for _, ifelse := range c.(ast.Many) {
 		t := pc.CompileExpr(ifelse.One("t").(ast.Branch))
@@ -381,7 +381,7 @@ func (pc ParseContext) compileIf(b ast.Branch, c ast.Children) rel.Expr {
 }
 
 func (pc ParseContext) compileCond(b ast.Branch, c ast.Children) rel.Expr {
-	if controlVarNode := b.One(ExprStr); controlVarNode != nil {
+	if controlVarNode := b.One(exprTag); controlVarNode != nil {
 		return pc.compileCondWithControlVar(b, c)
 	}
 	return pc.compileCondWithoutControlVar(c)
@@ -395,20 +395,20 @@ func (pc ParseContext) compileCondWithControlVar(b ast.Branch, c ast.Children) r
 		panic("mismatch between conditions and values")
 	}
 
-	return rel.NewCondPatternControlVarExpr(c.(ast.One).Node.Scanner(), pc.CompileExpr(b.One(ExprStr).(ast.Branch)),
+	return rel.NewCondPatternControlVarExpr(c.(ast.One).Node.Scanner(), pc.CompileExpr(b.One(exprTag).(ast.Branch)),
 		conditions, values)
 }
 
 func (pc ParseContext) compileCondElements(elements ...ast.Node) []interface{} {
 	result := make([]interface{}, 0, len(elements))
 	for _, element := range elements {
-		name, c := which(element.(ast.Branch), ExprStr, "pattern")
+		name, c := which(element.(ast.Branch), exprTag, "pattern")
 		if c == nil {
 			panic(fmt.Errorf("misshapen node AST: %v", element.(ast.Branch)))
 		}
 
 		switch name {
-		case ExprStr:
+		case exprTag:
 			var exprResult rel.Expr
 			switch c := c.(type) {
 			case ast.One:
@@ -440,7 +440,7 @@ func (pc ParseContext) compileCondElements(elements ...ast.Node) []interface{} {
 }
 
 func (pc ParseContext) compileCondWithoutControlVar(c ast.Children) rel.Expr {
-	keys := c.(ast.One).Node.(ast.Branch)[ExprStr]
+	keys := c.(ast.One).Node.(ast.Branch)[exprTag]
 	values := c.(ast.One).Node.(ast.Branch)["value"]
 	var keyExprs, valueExprs []rel.Expr
 
@@ -472,20 +472,20 @@ func (pc ParseContext) compilePostfixAndTouch(b ast.Branch, c ast.Children) rel.
 	}
 	switch c.Scanner().String() {
 	case "count":
-		return rel.NewCountExpr(b.Scanner(), pc.CompileExpr(b.One(ExprStr).(ast.Branch)))
+		return rel.NewCountExpr(b.Scanner(), pc.CompileExpr(b.One(exprTag).(ast.Branch)))
 	case "single":
-		return rel.NewSingleExpr(b.Scanner(), pc.CompileExpr(b.One(ExprStr).(ast.Branch)))
+		return rel.NewSingleExpr(b.Scanner(), pc.CompileExpr(b.One(exprTag).(ast.Branch)))
 	default:
 		panic("wat?")
 	}
 
 	// touch -> ("->*" ("&"? IDENT | STR))+ "(" expr:"," ","? ")";
-	// result := p.parseExpr(b.One(ExprStr).(ast.Branch))
+	// result := p.parseExpr(b.One(exprTag).(ast.Branch))
 }
 
 func (pc ParseContext) compileCallGet(b ast.Branch) rel.Expr {
 	var result rel.Expr
-	if expr := b.One(ExprStr); expr != nil {
+	if expr := b.One(exprTag); expr != nil {
 		result = pc.CompileExpr(expr.(ast.Branch))
 	} else {
 		result = pc.compileGet(rel.DotIdent, b.One("get"), false)
@@ -510,7 +510,7 @@ func (pc ParseContext) compileTail(base rel.Expr, tail ast.Node, safe bool) rel.
 			args := call.Many("arg")
 			exprs := make([]ast.Node, 0, len(args))
 			for _, arg := range args {
-				exprs = append(exprs, arg.One(ExprStr))
+				exprs = append(exprs, arg.One(exprTag))
 			}
 			for _, arg := range pc.compileExprs(exprs...) {
 				base = createExpr(call.Scanner(), base, arg)
@@ -667,12 +667,12 @@ func (pc ParseContext) compileCondExprs(exprs ...ast.Node) []rel.Expr {
 	for _, expr := range exprs {
 		var exprResult rel.Expr
 
-		name, c := which(expr.(ast.Branch), ExprStr)
+		name, c := which(expr.(ast.Branch), exprTag)
 		if c == nil {
 			panic(fmt.Errorf("misshapen node AST: %v", expr.(ast.Branch)))
 		}
 
-		if name == ExprStr {
+		if name == exprTag {
 			switch c := c.(type) {
 			case ast.One:
 				exprResult = pc.CompileExpr(c.Node.(ast.Branch))
@@ -699,7 +699,7 @@ func (pc ParseContext) compileCondExprs(exprs ...ast.Node) []rel.Expr {
 
 func (pc ParseContext) compileFunction(b ast.Branch) rel.Expr {
 	ident := b.One("IDENT")
-	expr := pc.CompileExpr(b.One(ExprStr).(ast.Branch))
+	expr := pc.CompileExpr(b.One(exprTag).(ast.Branch))
 	source := ident.One("").Scanner()
 	return rel.NewFunction(b.Scanner(), rel.NewIdentExpr(source, source.String()), expr)
 }
