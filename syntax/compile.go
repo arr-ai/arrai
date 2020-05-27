@@ -155,7 +155,9 @@ func (pc ParseContext) compilePattern(b ast.Branch) rel.Pattern {
 	if extra := b.One("extra"); extra != nil {
 		return pc.compileExtraElementPattern(extra.(ast.Branch))
 	}
-
+	if ident := b.One("identpattern"); ident != nil {
+		return rel.NewIdentPattern(ident.Scanner().String())
+	}
 	if expr := b.Many("exprpattern"); expr != nil {
 		return pc.compilePattern(expr[0].(ast.Branch))
 	}
