@@ -403,8 +403,13 @@ func (pc ParseContext) compileCondWithControlVar(b ast.Branch, c ast.Children) r
 		panic("mismatch between conditions and values")
 	}
 
+	conditionPairs := []rel.PatternExpr{}
+	for i, condition := range conditions {
+		conditionPairs = append(conditionPairs, rel.NewPatternExpr(condition, values[i]))
+	}
+
 	return rel.NewCondPatternControlVarExpr(c.(ast.One).Node.Scanner(), pc.CompileExpr(b.One(exprTag).(ast.Branch)),
-		conditions, values)
+		conditionPairs...)
 }
 
 func (pc ParseContext) compileCondElements(elements ...ast.Node) []rel.Pattern {

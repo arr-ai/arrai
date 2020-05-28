@@ -8,7 +8,7 @@ import (
 )
 
 // CondExpr returns the tuple applied to a function, the expression looks like:
-// cond (1 > 0: 2 + 1, 3 > 4: 5, *: 10).
+// cond (1 > 0: 2 + 1, 3 > 4: 5, _: 10).
 // The original keyword was switch (SwitchExpr), and finally it was chanaged from switch to cond.
 // The keyword cond is more unusual, therefore less likely to be chosen as a regular name,
 // and avoids accidental comparisons with the switch statement in other languages.
@@ -50,6 +50,7 @@ func (e CondExpr) Eval(local Scope) (Value, error) {
 	case DictExpr:
 		for _, expr := range c.entryExprs {
 			tempExpr := expr
+			// Can't call Eval if it is `_`, so compare its String.
 			if expr.at.String() == "_" {
 				trueCond = &tempExpr
 				break
