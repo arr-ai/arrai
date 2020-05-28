@@ -164,7 +164,7 @@ func (pc ParseContext) compilePattern(b ast.Branch) rel.Pattern {
 			expr := pc.CompileExpr(e.(ast.Branch))
 			elements = append(elements, expr)
 		}
-		return rel.ExprAsPattern(rel.NewArrayExpr(b.Scanner(), elements...))
+		return rel.NewExprsPattern(elements)
 	}
 
 	expr := pc.CompileExpr(b)

@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/arr-ai/frozen"
+	"github.com/go-errors/errors"
 )
 
 // Pattern can be inside an Expr, Expr can be a Pattern.
@@ -352,5 +353,47 @@ func (p DictPattern) String() string {
 		fmt.Fprintf(&b, "%v: %v", expr.at.String(), expr.value.String())
 	}
 	b.WriteByte('}')
+	return b.String()
+}
+
+type ExprsPattern struct {
+	exprs []Expr
+}
+
+func NewExprsPattern(exprs []Expr) ExprsPattern {
+	return ExprsPattern{exprs: exprs}
+}
+
+func (ep ExprsPattern) Bind(scope Scope, value Value) (Scope, error) {
+	incomingVal, err := value.Eval(scope)
+	if err != nil {
+		return EmptyScope, err
+	}
+
+	for _, e := range ep.exprs {
+		val, err := e.Eval(scope)
+		if err != nil {
+			return EmptyScope, err
+		}
+		if incomingVal.Equal(val) {
+			return scope, nil
+		}
+	}
+
+	return EmptyScope, errors.Errorf("didn't find matched value")
+}
+
+func (ep ExprsPattern) String() string {
+	var b bytes.Buffer
+	b.WriteByte('[')
+
+	for i, e := range ep.exprs {
+		if i > 0 {
+			b.WriteString(", ")
+		}
+		fmt.Fprintf(&b, "%v", e.String())
+	}
+
+	b.WriteByte(']')
 	return b.String()
 }
