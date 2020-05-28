@@ -10,14 +10,14 @@ let grpc = //{./grpc};
     endpointInfo: \ep
         let method = //seq.sub("-", "", //str.title(//str.lower(ep.name)));
         let paramName = cond {
-            (wrap): method + "Request",
+            wrap: method + "Request",
             _: $"${ep.params >> grpc.type(.)::, }",
         };
         let streamRes = cond {
-            (ep.attrs.stream): //seq.sub("sequence of", "stream", ep.ret("ok")),
+            ep.attrs.stream: //seq.sub("sequence of", "stream", ep.ret("ok")),
             _: //seq.sub("sequence of ", "", ep.ret("ok")) + "s",
         };
-        let responseName = cond {(wrap): method + "Response", _: streamRes};
+        let responseName = cond {wrap: method + "Response", _: streamRes};
         (
             method:       method,
             paramName:    paramName,
@@ -30,6 +30,6 @@ let grpc = //{./grpc};
         let wrapType = type + "s";
         let name = //str.lower(type) + "s";
         (
-            grpcType: cond {(!ep.attrs.stream): $`message ${wrapType} { repeated ${type} ${name} = 1; }`},
+            grpcType: cond {!ep.attrs.stream: $`message ${wrapType} { repeated ${type} ${name} = 1; }`},
         ),
 )

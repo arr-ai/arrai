@@ -21,10 +21,10 @@ let endpoints = app.endpoints where !//seq.has_prefix("enum ", .@item.name);
             message ${.key} {
                 string alias${.type} = 1;
             }`::}
-        ${cond {(app.endpoints): $`
+        ${cond {app.endpoints: $`
             ${//rel.union((endpoints >> (.params >>
                 cond {
-                    (//seq.contains("google.protobuf", grpc.type(.))): $`
+                    //seq.contains("google.protobuf", grpc.type(.)): $`
                         import "${//seq.sub(".", "/", grpc.type(.))}.proto";`,
                 } => .@item
             )) => .@item)::\i:\n}
@@ -36,7 +36,7 @@ let endpoints = app.endpoints where !//seq.has_prefix("enum ", .@item.name);
                     ${.stmts >> $`${.action};`::\i}
                 }`:::\n}
             ${endpoints >> proto.wrapSequence(.).grpcType::\i}
-            ${cond {(wrap): endpoints} >>
+            ${cond {wrap: endpoints} >>
                 let retTokens = //seq.split(" ", ep.ret("ok"));
                 let retName = //seq.sub(".", "", //seq.concat(retTokens -- {"sequence", "of"}));
                 let attr = ep.attrs(retName + "_rpcId");
@@ -50,7 +50,7 @@ let endpoints = app.endpoints where !//seq.has_prefix("enum ", .@item.name);
                 }
 
                 message ${epi.responseName} {
-                    ${cond {(retTokens count > 1): 'repeated '}}${retName} res${retName} = ${attr};
+                    ${cond {retTokens count > 1: 'repeated '}}${retName} res${retName} = ${attr};
                 }`:::\n}
         `}}
     `,
