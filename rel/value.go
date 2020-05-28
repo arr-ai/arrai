@@ -113,22 +113,33 @@ type Set interface {
 	ArrayEnumerator() (OffsetValueEnumerator, bool)
 }
 
+type NoReturnError struct{ s Set }
+
+func (n NoReturnError) Error() string {
+	return fmt.Sprintf("Call: no return values from set %v", n.s)
+}
+
 // SetCall does a CallAll to a Set and panics when there's less or more than 1 value.
 func SetCall(s Set, arg Value) Value {
+	//TODO: this should return error when set doesn't return anything
+	result, err := SafeSetCall(s, arg)
+	if err != nil {
+		panic(err)
+	}
+	return result
+}
+
+func SafeSetCall(s Set, arg Value) (Value, error) {
 	result := s.CallAll(arg)
 	if !result.IsTrue() {
-		panic(fmt.Sprintf("Call: no return values from set %v", s))
+		return nil, NoReturnError{s}
 	}
 	for i, e := 1, result.Enumerator(); e.MoveNext(); i++ {
 		if i > 1 {
 			panic(fmt.Sprintf("Call: too many return values from set %v: %v", s, result))
 		}
 	}
-	return SetAny(result)
-}
-
-func SafeSetCall(s Set, arg Value) Value {
-	return s.CallAll(arg)
+	return SetAny(result), nil
 }
 
 func SetAny(s Set) Value {

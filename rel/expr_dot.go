@@ -7,11 +7,11 @@ import (
 	"github.com/go-errors/errors"
 )
 
-type missingAttrError struct {
+type MissingAttrError struct {
 	ctxErr error
 }
 
-func (m missingAttrError) Error() string {
+func (m MissingAttrError) Error() string {
 	return m.ctxErr.Error()
 }
 
@@ -71,7 +71,7 @@ func (x *DotExpr) Eval(local Scope) (_ Value, err error) {
 				}
 			}
 		}
-		return nil, missingAttrError{
+		return nil, MissingAttrError{
 			wrapContext(errors.Errorf("Missing attr %q (available: %v)", x.attr, t.Names()), x),
 		}
 	}
@@ -97,24 +97,4 @@ func (x *DotExpr) Eval(local Scope) (_ Value, err error) {
 		return nil, wrapContext(errors.Errorf(
 			"(%s).%s: lhs must be a Tuple, not %T", x.lhs, x.attr, a), x)
 	}
-}
-
-type SafeDotExpr struct {
-	d *DotExpr
-}
-
-func NewSafeDotExpr(scanner parser.Scanner, lhs Expr, attr string) Expr {
-	return &SafeDotExpr{NewDotExpr(scanner, lhs, attr).(*DotExpr)}
-}
-
-func (sd *SafeDotExpr) Eval(local Scope) (Value, error) {
-	return sd.d.Eval(local)
-}
-
-func (sd *SafeDotExpr) Source() parser.Scanner {
-	return sd.d.Src
-}
-
-func (sd *SafeDotExpr) String() string {
-	return sd.d.String() + "?"
 }
