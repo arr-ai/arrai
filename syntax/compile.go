@@ -527,9 +527,9 @@ func (pc ParseContext) compileGet(base rel.Expr, get ast.Node) rel.Expr {
 func (pc ParseContext) compileSafeTails(base rel.Expr, tail ast.Node) rel.Expr {
 	if tail != nil {
 		firstSafe := tail.One("first_safe").One("tail")
-		safeCallback := func(tailNode ast.Node) rel.SafeTailCallback {
+		safeCallback := func(tailFunc rel.SafeTailCallback) rel.SafeTailCallback {
 			return func(v rel.Value, local rel.Scope) (rel.Value, error) {
-				val, err := pc.compileTailFunc(tailNode)(v, local)
+				val, err := tailFunc(v, local)
 				if err != nil {
 					switch err.(type) {
 					case rel.MissingAttrError, rel.NoReturnError:
@@ -541,13 +541,13 @@ func (pc ParseContext) compileSafeTails(base rel.Expr, tail ast.Node) rel.Expr {
 				return val, nil
 			}
 		}
-		exprStates := []rel.SafeTailCallback{safeCallback(firstSafe)}
 
+		exprStates := []rel.SafeTailCallback{safeCallback(pc.compileTailFunc(firstSafe))}
 		fallback := pc.CompileExpr(tail.One("fall").(ast.Branch))
 
 		for _, o := range tail.Many("ops") {
 			if safeTail := o.One("safe"); safeTail != nil {
-				exprStates = append(exprStates, safeCallback(safeTail.One("tail")))
+				exprStates = append(exprStates, safeCallback(pc.compileTailFunc(safeTail.One("tail"))))
 			} else if tail := o.One("tail"); tail != nil {
 				exprStates = append(exprStates, pc.compileTailFunc(tail))
 			} else {
