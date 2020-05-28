@@ -225,18 +225,6 @@ func NewCallExpr(scanner parser.Scanner, a, b Expr) Expr {
 	return newBinExpr(scanner, a, b, "call", "«%s»(%s)", Call)
 }
 
-func SafeCall(a, b Value, local Scope) (Value, error) {
-	if x, ok := a.(Set); ok {
-		return x.CallAll(b), nil
-	}
-	return nil, errors.Errorf(
-		"call lhs must be a function, not %T", a)
-}
-
-func NewSafeCallExpr(scanner parser.Scanner, a, b Expr) Expr {
-	return newBinExpr(scanner, a, b, safeCallOp, "«%s»(%s)?", SafeCall)
-}
-
 func NewCallExprCurry(scanner parser.Scanner, f Expr, args ...Expr) Expr {
 	for _, arg := range args {
 		f = NewCallExpr(scanner, f, arg)

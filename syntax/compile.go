@@ -475,23 +475,19 @@ func (pc ParseContext) compileCallGet(b ast.Branch) rel.Expr {
 	if expr := b.One(exprTag); expr != nil {
 		result = pc.CompileExpr(expr.(ast.Branch))
 	} else {
-		result = pc.compileGet(rel.DotIdent, b.One("get"), false)
+		result = pc.compileGet(rel.DotIdent, b.One("get"))
 	}
 	for _, part := range b.Many("tail_op") {
 		if safe := part.One("safe_tail"); safe != nil {
 			result = pc.compileSafeTails(result, part.One("safe_tail"))
 		} else {
-			result = pc.compileTail(result, part.One("tail"), false)
+			result = pc.compileTail(result, part.One("tail"))
 		}
 	}
 	return result
 }
 
-func (pc ParseContext) compileTail(base rel.Expr, tail ast.Node, safe bool) rel.Expr {
-	createExpr := rel.NewCallExpr
-	if safe {
-		createExpr = rel.NewSafeCallExpr
-	}
+func (pc ParseContext) compileTail(base rel.Expr, tail ast.Node) rel.Expr {
 	if tail != nil {
 		if call := tail.One("call"); call != nil {
 			args := call.Many("arg")
@@ -500,27 +496,65 @@ func (pc ParseContext) compileTail(base rel.Expr, tail ast.Node, safe bool) rel.
 				exprs = append(exprs, arg.One(exprTag))
 			}
 			for _, arg := range pc.compileExprs(exprs...) {
-				base = createExpr(call.Scanner(), base, arg)
+				base = rel.NewCallExpr(call.Scanner(), base, arg)
 			}
 		}
-		base = pc.compileGet(base, tail.One("get"), safe)
+		base = pc.compileGet(base, tail.One("get"))
 	}
 	return base
 }
 
-func (pc ParseContext) compileGet(base rel.Expr, get ast.Node, safe bool) rel.Expr {
-	createExpr := rel.NewDotExpr
-	if safe {
-		createExpr = rel.NewSafeDotExpr
+func (pc ParseContext) compileTailFunc(tail ast.Node) rel.SafeTailCallback {
+	if tail != nil {
+		if call := tail.One("call"); call != nil {
+			args := call.Many("arg")
+			exprs := make([]ast.Node, 0, len(args))
+			for _, arg := range args {
+				exprs = append(exprs, arg.One("expr"))
+			}
+			compiledExprs := pc.compileExprs(exprs...)
+			return func(v rel.Value, local rel.Scope) (rel.Value, error) {
+				for _, arg := range compiledExprs {
+					a, err := arg.Eval(local)
+					if err != nil {
+						return nil, err
+					}
+					v, err = rel.SafeSetCall(v.(rel.Set), a)
+					if err != nil {
+						return nil, err
+					}
+				}
+				return v, nil
+			}
+		}
+		if get := tail.One("get"); get != nil {
+			var scanner parser.Scanner
+			var attr string
+			if ident := get.One("IDENT"); ident != nil {
+				scanner = ident.One("").(ast.Leaf).Scanner()
+				attr = scanner.String()
+			}
+			if str := get.One("STR"); str != nil {
+				scanner = str.One("").Scanner()
+				attr = parseArraiString(scanner.String())
+			}
+			return func(v rel.Value, local rel.Scope) (rel.Value, error) {
+				return rel.NewDotExpr(scanner, v, attr).Eval(local)
+			}
+		}
 	}
+	panic("no tail")
+}
+
+func (pc ParseContext) compileGet(base rel.Expr, get ast.Node) rel.Expr {
 	if get != nil {
 		if ident := get.One("IDENT"); ident != nil {
 			scanner := ident.One("").(ast.Leaf).Scanner()
-			base = createExpr(scanner, base, scanner.String())
+			base = rel.NewDotExpr(scanner, base, scanner.String())
 		}
 		if str := get.One("STR"); str != nil {
 			s := str.One("").Scanner()
-			base = createExpr(s, base, parseArraiString(s.String()))
+			base = rel.NewDotExpr(s, base, parseArraiString(s.String()))
 		}
 	}
 	return base
@@ -529,31 +563,29 @@ func (pc ParseContext) compileGet(base rel.Expr, get ast.Node, safe bool) rel.Ex
 func (pc ParseContext) compileSafeTails(base rel.Expr, tail ast.Node) rel.Expr {
 	if tail != nil {
 		firstSafe := tail.One("first_safe").One("tail")
-		exprStates := []func(rel.Expr) rel.Expr{
-			func(expr rel.Expr) rel.Expr {
-				return pc.compileTail(base, firstSafe, true)
-			},
+		safeCallback := func(tailFunc rel.SafeTailCallback) rel.SafeTailCallback {
+			return func(v rel.Value, local rel.Scope) (rel.Value, error) {
+				val, err := tailFunc(v, local)
+				if err != nil {
+					switch err.(type) {
+					case rel.MissingAttrError, rel.NoReturnError:
+						return nil, nil
+					default:
+						return nil, err
+					}
+				}
+				return val, nil
+			}
 		}
 
+		exprStates := []rel.SafeTailCallback{safeCallback(pc.compileTailFunc(firstSafe))}
 		fallback := pc.CompileExpr(tail.One("fall").(ast.Branch))
 
 		for _, o := range tail.Many("ops") {
 			if safeTail := o.One("safe"); safeTail != nil {
-				exprStates = append(exprStates,
-					func(expr rel.Expr) rel.Expr {
-						pctx := pc
-						safe := safeTail.One("tail")
-						return pctx.compileTail(expr, safe, true)
-					},
-				)
+				exprStates = append(exprStates, safeCallback(pc.compileTailFunc(safeTail.One("tail"))))
 			} else if tail := o.One("tail"); tail != nil {
-				exprStates = append(exprStates,
-					func(expr rel.Expr) rel.Expr {
-						pctx := pc
-						unsafeTail := tail
-						return pctx.compileTail(expr, unsafeTail, false)
-					},
-				)
+				exprStates = append(exprStates, pc.compileTailFunc(tail))
 			} else {
 				panic("wat")
 			}

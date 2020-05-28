@@ -24,10 +24,38 @@ func NewArray(values ...Value) Set {
 
 // NewArray constructs an array as a relation.
 func NewOffsetArray(offset int, values ...Value) Set {
+	// Trim holes from both ends.
+	for i, v := range values {
+		if v != nil {
+			if i > 0 {
+				offset += i
+				values = values[i:]
+			}
+			break
+		}
+	}
+	for i := len(values) - 1; i >= 0; i-- {
+		if values[i] != nil {
+			if i < len(values)-1 {
+				values = values[:i+1]
+			}
+			break
+		}
+	}
+
 	if len(values) == 0 {
 		return None
 	}
-	return Array{values: values, offset: offset, count: len(values)}
+
+	// Count non-holes.
+	n := 0
+	for _, v := range values {
+		if v != nil {
+			n++
+		}
+	}
+
+	return Array{values: values, offset: offset, count: n}
 }
 
 func AsArray(s Set) (Array, bool) {
@@ -108,11 +136,11 @@ func (a Array) Hash(seed uintptr) uintptr {
 func (a Array) Equal(v interface{}) bool {
 	switch x := v.(type) {
 	case Array:
-		if len(a.values) != len(x.values) || a.count != x.count {
+		if len(a.values) != len(x.values) || a.offset != x.offset || a.count != x.count {
 			return false
 		}
 		for i, c := range a.values {
-			if !c.Equal(x.values[i]) {
+			if (c != nil) != (x.values[i] != nil) || c != nil && !c.Equal(x.values[i]) {
 				return false
 			}
 		}
@@ -233,28 +261,35 @@ func (a Array) Has(value Value) bool {
 	return false
 }
 
-func (a Array) with(index int, item Value) Set {
-	if a.index(index) == len(a.values) {
-		return Array{
-			values: append(a.values, item),
-			offset: a.offset,
-			count:  a.count + 1,
-		}
-	} else if index == a.offset-1 {
-		return Array{
-			values: append(append(make([]Value, 0, 1+len(a.values)), item), a.values...),
-			offset: a.offset - 1,
-			count:  a.count + 1,
-		}
+func (a Array) withItem(index int, item Value) Set {
+	b := a
+	index -= a.offset
+	switch {
+	case index < 0:
+		b.values = make([]Value, len(a.values)-index)
+		copy(b.values[-index:], a.values)
+		b.offset += index
+		index = 0
+	case index < len(a.values):
+		b.values = make([]Value, len(a.values))
+		copy(b.values, a.values)
+	default:
+		b.values = make([]Value, index+1)
+		copy(b.values, a.values)
 	}
-	return newSetFromSet(a).With(NewArrayItemTuple(index, item))
+	if b.values[index] != nil {
+		panic("superimposed array items not supported yet")
+	}
+	b.values[index] = item
+	b.count++
+	return b
 }
 
 // With returns the original Array with given value added. Iff the value was
 // already present, the original Array is returned.
 func (a Array) With(value Value) Set {
 	if t, ok := value.(ArrayItemTuple); ok {
-		return a.with(t.at, t.item)
+		return a.withItem(t.at, t.item)
 	}
 	return newSetFromSet(a).With(value)
 }
@@ -263,7 +298,7 @@ func (a Array) With(value Value) Set {
 // was already absent, the original Array is returned.
 func (a Array) Without(value Value) Set {
 	if t, ok := value.(ArrayItemTuple); ok {
-		if i := a.index(t.at); 0 <= i && i < len(a.values) {
+		if i := t.at - a.offset; 0 <= i && i < len(a.values) {
 			v := a.values[i]
 			if v != nil && v.Equal(t.item) {
 				if t.at == a.offset {
@@ -343,14 +378,6 @@ func (a Array) CallAll(arg Value) Set {
 		return NewSet(v)
 	}
 	return None
-}
-
-func (a Array) index(pos int) int {
-	pos -= a.offset
-	if 0 <= pos && pos <= len(a.values) {
-		return pos
-	}
-	return -1
 }
 
 // Enumerator returns an enumerator over the Values in the Array.
