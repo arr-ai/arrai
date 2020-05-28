@@ -20,7 +20,7 @@ expr   -> C* amp="&"* @ C* arrow=(
         > C* @ postfix=/{count|single}? C* touch? C*
         > C* (get | @) tail_op=(safe_tail | tail)* C*
         > %!patternterms(expr)
-        | C* cond=("cond" "{" (key="(" @ ")" ":" value=@):",",? ("_" ":" f=expr ","?)? "}") C*
+        | C* cond=("cond" "{" (key=@ ":" value=@):",",? "}") C*
         | C* "{:" C* embed=(grammar=@ ":" subgrammar=%%ast) ":}" C*
         | C* op="\\\\" @ C*
         | C* fn="\\" IDENT @ C*

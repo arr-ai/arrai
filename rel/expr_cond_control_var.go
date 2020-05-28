@@ -17,9 +17,9 @@ type CondControlVarExpr struct {
 }
 
 // NewCondControlVarExpr returns a new CondControlVarExpr.
-func NewCondControlVarExpr(scanner parser.Scanner, controlVar Expr, dictExpr Expr, defaultExpr Expr) Expr {
+func NewCondControlVarExpr(scanner parser.Scanner, controlVar Expr, dictExpr Expr) Expr {
 	return CondControlVarExpr{ExprScanner{scanner}, controlVar,
-		CondExpr{ExprScanner{scanner}, dictExpr, defaultExpr, func(condition Value, local Scope) (bool, error) {
+		CondExpr{ExprScanner{scanner}, dictExpr, func(condition Value, local Scope) (bool, error) {
 			controlVarVal, has := local.Get("controlVarVal")
 			if !has {
 				return false, fmt.Errorf("couldn't get 'controlVarVal' in Scope, and it is expected")

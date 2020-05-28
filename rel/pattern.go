@@ -356,7 +356,7 @@ type ExprsPattern struct {
 	exprs []Expr
 }
 
-func NewExprsPattern(exprs []Expr) ExprsPattern {
+func NewExprsPattern(exprs ...Expr) ExprsPattern {
 	return ExprsPattern{exprs: exprs}
 }
 

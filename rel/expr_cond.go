@@ -14,13 +14,13 @@ import (
 // and avoids accidental comparisons with the switch statement in other languages.
 type CondExpr struct {
 	ExprScanner
-	dicExpr, defaultExpr Expr
-	validValidation      func(condition Value, local Scope) (bool, error) // Valid condition validation.
+	dicExpr         Expr
+	validValidation func(condition Value, local Scope) (bool, error) // Valid condition validation.
 }
 
 // NewCondExpr returns a new CondExpr.
-func NewCondExpr(scanner parser.Scanner, dict Expr, defaultExpr Expr) Expr {
-	return CondExpr{ExprScanner{scanner}, dict, defaultExpr, func(condition Value, local Scope) (bool, error) {
+func NewCondExpr(scanner parser.Scanner, dict Expr) Expr {
+	return CondExpr{ExprScanner{scanner}, dict, func(condition Value, local Scope) (bool, error) {
 		return condition.IsTrue(), nil
 	}}
 }
@@ -40,12 +40,6 @@ func (e CondExpr) String() string {
 			fmt.Fprintf(&b, "%v: %v", expr.at.String(), expr.value.String())
 		}
 	}
-	if e.defaultExpr != nil {
-		if i >= 0 {
-			b.WriteString(", ")
-		}
-		fmt.Fprintf(&b, "%v: %v", "_", e.defaultExpr.String())
-	}
 	b.WriteByte('}')
 	return b.String()
 }
@@ -53,11 +47,16 @@ func (e CondExpr) String() string {
 // Eval returns the value of true condition, or default condition value.
 func (e CondExpr) Eval(local Scope) (Value, error) {
 	var trueCond *DictEntryTupleExpr
-	// If there is not any valid condition, the condtion defaultExpr will work.
+
 	switch c := e.dicExpr.(type) {
 	case DictExpr:
 		for _, expr := range c.entryExprs {
 			tempExpr := expr
+			if expr.at.String() == "_" {
+				trueCond = &tempExpr
+				break
+			}
+
 			cond, err := tempExpr.at.Eval(local)
 			if err != nil {
 				return nil, wrapContext(err, e)
@@ -77,10 +76,7 @@ func (e CondExpr) Eval(local Scope) (Value, error) {
 	var finalCond Expr
 	if trueCond != nil {
 		finalCond = trueCond.value
-	} else if trueCond == nil && e.defaultExpr != nil {
-		finalCond = e.defaultExpr
 	} else {
-		// trueCond == nil && e.defaultCond == nil
 		return None, nil
 	}
 

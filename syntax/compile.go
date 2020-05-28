@@ -164,7 +164,7 @@ func (pc ParseContext) compilePattern(b ast.Branch) rel.Pattern {
 			expr := pc.CompileExpr(e.(ast.Branch))
 			elements = append(elements, expr)
 		}
-		return rel.NewExprsPattern(elements)
+		return rel.NewExprsPattern(elements...)
 	}
 
 	expr := pc.CompileExpr(b)
@@ -427,30 +427,23 @@ func (pc ParseContext) compileCondElements(elements ...ast.Node) []rel.Pattern {
 }
 
 func (pc ParseContext) compileCondWithoutControlVar(c ast.Children) rel.Expr {
-	keys := c.(ast.One).Node.(ast.Branch)[exprTag]
+	keys := c.(ast.One).Node.(ast.Branch)["key"]
 	values := c.(ast.One).Node.(ast.Branch)["value"]
-	var keyExprs, valueExprs []rel.Expr
-
-	if keys != nil && values != nil {
-		keyExprs = pc.compileCondExprs(keys.(ast.Many)...)
-		valueExprs = pc.compileCondExprs(values.(ast.Many)...)
-	}
-
-	entryExprs := pc.compileDictEntryExprs(c, keyExprs, valueExprs)
 	var result rel.Expr
-	if entryExprs != nil {
-		// Generates type DictExpr always to make sure it is easy to do Eval, only process type DictExpr.
-		result = rel.NewDictExpr(c.(ast.One).Node.Scanner(), false, true, entryExprs...)
-	} else {
-		result = rel.NewDict(false)
+	if keys != nil && values != nil {
+		keyExprs := pc.compileCondExprs(keys.(ast.Many)...)
+		valueExprs := pc.compileCondExprs(values.(ast.Many)...)
+		entryExprs := pc.compileDictEntryExprs(c, keyExprs, valueExprs)
+		if entryExprs != nil {
+			// Generates type DictExpr always to make sure it is easy to do Eval, only process type DictExpr.
+			result = rel.NewDictExpr(c.(ast.One).Node.Scanner(), false, true, entryExprs...)
+		} else {
+			result = rel.NewDict(false)
+		}
 	}
 
-	if fNode := c.(ast.One).Node.One("f"); fNode != nil {
-		fExpr := pc.CompileExpr(fNode.(ast.Branch))
-		return rel.NewCondExpr(c.(ast.One).Node.Scanner(), result, fExpr)
-	}
-
-	return rel.NewCondExpr(c.(ast.One).Node.Scanner(), result, nil)
+	// Note, the default case `_:expr` which can match anything is parsed to condition/value pairs by current syntax.
+	return rel.NewCondExpr(c.(ast.One).Node.Scanner(), result)
 }
 
 func (pc ParseContext) compilePostfixAndTouch(b ast.Branch, c ast.Children) rel.Expr {
