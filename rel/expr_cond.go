@@ -29,11 +29,9 @@ func NewCondExpr(scanner parser.Scanner, dict Expr) Expr {
 func (e CondExpr) String() string {
 	var b bytes.Buffer
 	b.WriteByte('{')
-	var i int = -1
-	var expr DictEntryTupleExpr
 	switch c := e.dicExpr.(type) {
 	case DictExpr:
-		for i, expr = range c.entryExprs {
+		for i, expr := range c.entryExprs {
 			if i > 0 {
 				b.WriteString(", ")
 			}

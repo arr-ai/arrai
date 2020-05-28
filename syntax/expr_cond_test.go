@@ -98,12 +98,14 @@ func TestEvalCondWithControlVar(t *testing.T) {
 }
 
 func TestEvalCondWithControlVarMulti(t *testing.T) {
-	AssertCodesEvalToSameValue(t, `1`, `let a = 1; a cond {(1,2) :1}`)
-	AssertCodesEvalToSameValue(t, `1`, `let a = 2; a cond {(1,2,3) :1, (2):2}`)
-	AssertCodesEvalToSameValue(t, `2`, `let a = 2; a cond {(1,2 + 4,3 + 5) :1, (2):2}`)
-	AssertCodesEvalToSameValue(t, `11`, `let [a,b] = [2,4]; a cond {(1,b -2,3 + 5) :11, (2):2}`)
-	AssertCodesEvalToSameValue(t, `1`, `let a = 3; a cond {(1,2,3) :1, (2) :2, _:1 + 2}`)
+	AssertCodesEvalToSameValue(t, `1`, `let a = 1; a cond {(1 + 0,2 + 0) :1}`)
+	AssertCodesEvalToSameValue(t, `1`, `let a = 2; a cond {(1 + 0,2 + 0,3 + 0) :1, (2 + 0):2}`)
+	AssertCodesEvalToSameValue(t, `2`, `let a = 2; a cond {(1 + 0,2 + 4,3 + 5) :1, (2 + 0):2}`)
+	AssertCodesEvalToSameValue(t, `11`, `let [a,b] = [2,4]; a cond {(1 + 0,b -2,3 + 5) :11, (2):2}`)
+	AssertCodesEvalToSameValue(t, `1`, `let a = 3; a cond {(1 + 0,2 + 0,3 + 0) :1, (2 + 0) :2, _:1 + 2}`)
+
 	AssertCodesEvalToSameValue(t, `2`, `let a = 2; a cond {(1) :1 + 10, (2,3) : 2, _:1 + 2}`)
+	AssertCodesEvalToSameValue(t, `2`, `let a = 2; a cond {(1) :1 + 10, (3,2) : 2, _:1 + 2}`)
 
 	AssertCodesEvalToSameValue(t, `"med"`, `let a = 2;
 	a cond {
@@ -115,39 +117,40 @@ func TestEvalCondWithControlVarMulti(t *testing.T) {
 // TestEvalCondMultiStr executes the cases whose condition has multiple expressions.
 func TestEvalCondMultiStr(t *testing.T) {
 	t.Parallel()
-	AssertEvalExprString(t, "((control_var:1),{[((1>0))&&((2>1))]:1})", "(1) cond {(1 > 0 && 2 > 1) : 1}")
-	AssertEvalExprString(t, "((control_var:1),{[((1>0))||((2>1))]:1})", "(1) cond {(1 > 0 || 2 > 1) : 1}")
-	AssertEvalExprString(t, "((control_var:1),{[((1>0))||((2>1))]:1,_:11})", "(1) cond {(1 > 0 || 2 > 1) : 1, _ : 11}")
+	AssertEvalExprString(t, "((control_var:1),{((1>0))&&((2>1)):1})", "(1) cond {(1 > 0 && 2 > 1) : 1}")
+	AssertEvalExprString(t, "((control_var:1),{((1>0))||((2>1)):1})", "(1) cond {(1 > 0 || 2 > 1) : 1}")
+	AssertEvalExprString(t, "((control_var:1),{((1>0))||((2>1)):1,_:11})", "(1) cond {(1 > 0 || 2 > 1) : 1, _ : 11}")
 }
 
 func TestEvalCondWithControlVarStr(t *testing.T) {
 	t.Parallel()
-	AssertEvalExprString(t, "((control_var:1),{[1]:1})", "(1) cond {(1) : 1}")
-	AssertEvalExprString(t, "((control_var:1),{[1]:1})", "(1) cond {(1) : 1,}")
-	AssertEvalExprString(t, "((control_var:1),{[1]:1,[(2+1)]:3})", "(1) cond {(1) : 1, (2 + 1) : 3}")
-	AssertEvalExprString(t, "((control_var:1),{[1]:1,[(2+1)]:3})", "(1) cond {(1) : 1, (2 + 1) : 3,}")
-	AssertEvalExprString(t, "((control_var:1),{[1]:1,[(2+1)]:3,_:4})", "(1) cond {(1) : 1, (2 + 1) : 3, _ : 4}")
-	AssertEvalExprString(t, "((control_var:1),{[1]:1,[(2+1)]:3,_:4})", "(1) cond {(1) : 1, (2 + 1) : 3, _ : 4,}")
+	AssertEvalExprString(t, "((control_var:1),{1:1})", "(1) cond {(1) : 1}")
+	AssertEvalExprString(t, "((control_var:1),{1:1})", "(1) cond {(1) : 1,}")
+	AssertEvalExprString(t, "((control_var:1),{1:1,(2+1):3})", "(1) cond {(1) : 1, (2 + 1) : 3}")
+	AssertEvalExprString(t, "((control_var:1),{1:1,(2+1):3})", "(1) cond {(1) : 1, (2 + 1) : 3,}")
+	AssertEvalExprString(t, "((control_var:1),{1:1,(2+1):3,_:4})", "(1) cond {(1) : 1, (2 + 1) : 3, _ : 4}")
+	AssertEvalExprString(t, "((control_var:1),{1:1,(2+1):3,_:4})", "(1) cond {(1) : 1, (2 + 1) : 3, _ : 4,}")
 
-	AssertEvalExprString(t, "(1->(\\a((control_var:a),{[1]:1})))",
+	AssertEvalExprString(t, "(1->(\\a((control_var:a),{1:1})))",
 		"let a = 1; a cond {(1) : 1}")
-	AssertEvalExprString(t, "(1->(\\a((control_var:a),{[(1+2)]:1,_:(1+2)})))",
+	AssertEvalExprString(t, "(1->(\\a((control_var:a),{(1+2):1,_:(1+2)})))",
 		"let a = 1; a cond {(1 + 2): 1, _ : 1 + 2}")
-	AssertEvalExprString(t, "(2->(\\a(((control_var:a),{[(1+2)]:1,_:(1+2)})->(\\b(b*1)))))",
+	AssertEvalExprString(t, "(2->(\\a(((control_var:a),{(1+2):1,_:(1+2)})->(\\b(b*1)))))",
 		"let a = 2; let b = a cond {(1 + 2): 1, _ : 1 + 2}; b * 1")
-	AssertEvalExprString(t, "(3->(\\a((control_var:(a+2)),{[(1+2)]:1,_:(1+2)})))",
+	AssertEvalExprString(t, "(3->(\\a((control_var:(a+2)),{(1+2):1,_:(1+2)})))",
 		"let a = 3; (a + 2) cond {(1 + 2): 1, _ : 1 + 2}")
 }
 
 func TestEvalCondWithControlVarMultiStr(t *testing.T) {
 	t.Parallel()
 	AssertEvalExprString(t, "((control_var:1),{[1,2]:1})", "(1) cond {(1,2) :1}")
-	AssertEvalExprString(t, "((control_var:2),{[1]:(1+10),[2,3]:2,_:(1+2)})", "(2) cond {(1) :1 + 10, (2,3) : 2, _:1 + 2}")
+	AssertEvalExprString(t, "((control_var:2),{1:(1+10),[2,3]:2,_:(1+2)})", "(2) cond {(1) :1 + 10, (2,3) : 2, _:1 + 2}")
 }
 
 func TestEvalCondPatternMatchingWithControlVar(t *testing.T) {
+	t.Parallel()
 	AssertCodesEvalToSameValue(t, `2`, `let a = [1, 2]; a cond {[1, 2]: 2}`)
-	AssertCodesEvalToSameValue(t, `2`, `let a = [1, 2]; a cond {([1, 2]): 2}`)
+	AssertCodesEvalToSameValue(t, `2`, `let a = ['a', 'b']; a cond {['a', 'b']: 2}`)
 	AssertCodesEvalToSameValue(t, `6`, `let a = (x:4); a cond {(x:x): x + 2}`)
 	AssertCodesEvalToSameValue(t, `6`, `(x:4) cond {(x:x): x + 2}`)
 

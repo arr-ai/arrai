@@ -361,6 +361,15 @@ func NewExprsPattern(exprs ...Expr) ExprsPattern {
 }
 
 func (ep ExprsPattern) Bind(scope Scope, value Value) (Scope, error) {
+	if len(ep.exprs) == 0 {
+		return EmptyScope, errors.Errorf("there is not any rel.Expr in rel.ExprsPattern")
+	}
+
+	if pe, isPattern := ep.exprs[0].(Pattern); len(ep.exprs) == 1 && isPattern {
+		// Support patterns IDENT and NUM
+		return pe.Bind(scope, value)
+	}
+
 	incomingVal, err := value.Eval(scope)
 	if err != nil {
 		return EmptyScope, err
@@ -380,16 +389,23 @@ func (ep ExprsPattern) Bind(scope Scope, value Value) (Scope, error) {
 }
 
 func (ep ExprsPattern) String() string {
+	if len(ep.exprs) == 0 {
+		panic("there is not any rel.Expr in rel.ExprsPattern")
+	}
+
+	if len(ep.exprs) == 1 {
+		// it processes cases IDENT and NUM as syntax, otherwise `let (:x) = (x: 1); x` will fail.
+		return ep.exprs[0].String()
+	}
+
 	var b bytes.Buffer
 	b.WriteByte('[')
-
 	for i, e := range ep.exprs {
 		if i > 0 {
 			b.WriteString(", ")
 		}
 		fmt.Fprintf(&b, "%v", e.String())
 	}
-
 	b.WriteByte(']')
 	return b.String()
 }

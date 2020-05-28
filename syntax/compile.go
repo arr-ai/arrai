@@ -168,7 +168,7 @@ func (pc ParseContext) compilePattern(b ast.Branch) rel.Pattern {
 	}
 
 	expr := pc.CompileExpr(b)
-	return rel.ExprAsPattern(expr)
+	return rel.NewExprsPattern(expr)
 }
 
 func (pc ParseContext) compileExtraElementPattern(b ast.Branch) rel.Pattern {
