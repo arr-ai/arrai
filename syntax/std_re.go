@@ -16,7 +16,11 @@ var (
 				for _, m := range regex.FindAllStringSubmatchIndex(s, -1) {
 					submatches := []rel.Value{}
 					for i := 0; i < len(m); i += 2 {
-						submatches = append(submatches, rel.NewOffsetString([]rune(s[m[i]:m[i+1]]), m[i]))
+						if m[i] >= 0 {
+							submatches = append(submatches, rel.NewOffsetString([]rune(s[m[i]:m[i+1]]), m[i]))
+						} else {
+							submatches = append(submatches, nil)
+						}
 					}
 					matches = append(matches, rel.NewArray(submatches...))
 				}
