@@ -11,7 +11,7 @@
                 ('DATE'):     'string',
                 ('DATETIME'): 'string',
             },
-            ('sequence'): 'repeated ' + type(t.sequence)
+            ('sequence'): 'repeated ' + type(t.sequence),
             _: cond {
                 //seq.contains("google-protobuf", t.type_ref): //seq.sub("-", ".", t.type_ref),
                 _: t.type_ref,
