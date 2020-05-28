@@ -16,17 +16,6 @@ type Pattern interface {
 	Bind(scope Scope, value Value) (Scope, error)
 }
 
-func ExprAsPattern(expr Expr) Pattern {
-	switch t := expr.(type) {
-	case IdentExpr:
-		return t
-	case Number:
-		return t
-	default:
-		panic(fmt.Sprintf("%s is not a Pattern", t))
-	}
-}
-
 type IdentPattern struct {
 	ident string
 }
