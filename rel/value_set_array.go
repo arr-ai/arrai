@@ -332,7 +332,7 @@ func (a Array) Where(p func(v Value) bool) Set {
 	result := a.clone()
 	for i, v := range a.values {
 		if v != nil {
-			if !p(NewArrayItemTuple(i, v)) {
+			if !p(NewArrayItemTuple(a.offset+i, v)) {
 				result.values[i] = nil
 				result.count--
 			}
