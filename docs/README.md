@@ -319,6 +319,16 @@ Expression strings are fully described in [Expression strings](expr-str.md).
 Arrays may be expressed using the conventional `[...]` notation, e.g.:
 `[1, 2, [3, 4]]`. They represent relations of the form `{|@, @item| ...}`.
 
+Sparse arrays or arrays with holes can also be defined. For example,
+`[1, 2, , 3]`. This is equivalent to `{|@, @item| (0, 1), (1, 2), (3, 3)}`.
+
+However, holes must be defined in the middle of the elements, which means you
+can not defined `[, , 1, 2]`. Should you want to define that, you can use the
+offset syntax `2\[1, 2]`.
+
+Any empty elements at the end will be trimmed which means
+`[1, 2, 3, ] = [1, 2, 3]`
+
 ### Logic expressions
 
 Arr.ai supports operations on "true" and "false" values. The values `0`, `()`
