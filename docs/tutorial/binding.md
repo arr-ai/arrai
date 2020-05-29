@@ -189,6 +189,7 @@ Try out the following examples to use pattern with arrays:
 @> let arr = [1, 2]; let [a, b] = arr; b
 @> let [x, x] = [1, 1]; x
 @> let [x, x] = [1, 2]; x                  # should fail
+@> [1, 2] -> \[x, y] x + y
 ```
 
 with tuples:
@@ -197,11 +198,13 @@ with tuples:
 @> let (a: x, b: y) = (a: 4, b: 7); x
 @> let (a: x, b: x) = (a: 4, b: 4); x
 @> let (:x) = (x: 1); x
+@> (m: 1, n: 2) -> \(m: x, n: y) x + y
 ```
 
 with dictionaries:
 ```arrai
 @> let {"a": f, "b": k} = {"a": 1, "b": 2}; [f, k]
+@> {"m": 1, "n": 2} -> \{"m": x, "n": y} x + y
 ```
 
 and with sets:
@@ -215,6 +218,7 @@ Also, nested patterns are supported as:
 ```arrai
 @> let [[x, y], z] = [[1, 2], 3]; x
 @> let [{"a": x}, (b: y), z] = [{"a": 1}, (b: 2), 3]; [x, y, z]
+@> [1, [2, 3]] -> \[x, [y, z]] x + y + z
 ```
 
 Underscore `_` matches any value and ignores it.
@@ -230,6 +234,7 @@ A name within parentheses like `(x)` refers to the value bound to the name `x`.
 @> let x = 3; let [b, x] = [2, 4]; x
 @> let x = 3; let [b, (x)] = [2, 3]; b
 @> let x = 3; let [_, b, (x)] = [1, 2, 3]; b
+@> 1 -> \x let [(x), y] = [1, 2]; y
 @> let x = 3; let [b, (x)] = [2, 4]; b     # should fail because (x) != 4
 @> let [(x)] = [2]; x                      # should fail because `x` isn't in scope
 ```
@@ -253,4 +258,5 @@ that weren't explicitly matched by other patterns.
 @> let [x, ...t, y] = [1, 2, 3, 4, 5, 6]; [x, y, t]
 @> let (m: x, n: y, ...t) = (m: 1, n: 2, j: 3, k: 4); [x, y, t]
 @> let {"m": x, "n": y, ...t} = {"m": 1, "n": 2, "j": 3, "k": 4}; [x, y, t]
+@> [1, 2, 3, 4] -> \[x, y, ...t] [x + y, t]
 ```
