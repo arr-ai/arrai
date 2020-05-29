@@ -2,7 +2,7 @@ expr   -> C* amp="&"* @ C* arrow=(
               nest |
               unnest |
               ARROW @ |
-              binding="->" C* "\\" C* IDENT C* %%bind C* @ |
+              binding="->" C* "\\" C* pattern C* %%bind C* @ |
               binding="->" C* %%bind @
           )* C*
         > C* @:binop=("without" | "with") C*
