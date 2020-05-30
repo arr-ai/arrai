@@ -73,8 +73,12 @@ C      -> /{ # .* $ };
     C* "{" C* rel=(names tuple=("(" v=top:",", ")"):",",?) "}" C*
   | C* "{" C* set=(elt=top:",",?) "}" C*
   | C* "{" C* dict=((ext=extra|key=expr ":" value=top):",",?) "}" C*
-  | C* "[" C* array=(item=top:",",?) C* "]" C*
+  | C* "[" C* array=(%!sparse_sequence(top)?) C* "]" C*
   | C* "<<" C* bytes=(item=top:",",?) C* ">>" C*
   | C* "(" tuple=(pairs=(extra|name? ":" v=top):",",?) ")" C*
   | C* "(" identpattern=IDENT ")" C*
 };
+
+.macro sparse_sequence(top) {
+  first_item=(top) (",":(item=(top|empty=\s*)),)?
+}

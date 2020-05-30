@@ -187,11 +187,29 @@ func (pc ParseContext) compilePatterns(exprs ...ast.Node) []rel.Pattern {
 	return result
 }
 
-func (pc ParseContext) compileArrayPattern(b ast.Branch) rel.Pattern {
-	if items := b["item"]; items != nil {
-		return rel.NewArrayPattern(pc.compilePatterns(items.(ast.Many)...)...)
+func (pc ParseContext) compileSparsePatterns(b ast.Branch) []rel.Pattern {
+	var nodes []ast.Node
+	if firstItem, exists := b["first_item"]; exists {
+		nodes = []ast.Node{firstItem.(ast.One).Node}
+		if items, exists := b["item"]; exists {
+			for _, i := range items.(ast.Many) {
+				nodes = append(nodes, i)
+			}
+		}
 	}
-	return rel.NewArrayPattern()
+	result := make([]rel.Pattern, 0, len(nodes))
+	for _, expr := range nodes {
+		if expr.One("empty") != nil {
+			result = append(result, nil)
+			continue
+		}
+		result = append(result, pc.compilePattern(expr.(ast.Branch)))
+	}
+	return result
+}
+
+func (pc ParseContext) compileArrayPattern(b ast.Branch) rel.Pattern {
+	return rel.NewArrayPattern(pc.compileSparsePatterns(b)...)
 }
 
 func (pc ParseContext) compileTuplePattern(b ast.Branch) rel.Pattern {
@@ -657,14 +675,15 @@ func (pc ParseContext) compileDictEntryExprs(c ast.Children, keyExprs []rel.Expr
 }
 
 func (pc ParseContext) compileArray(c ast.Children) rel.Expr {
-	if items := c.(ast.One).Node.(ast.Branch)["item"]; items != nil {
-		return rel.NewArrayExpr(items.Scanner(), pc.compileExprs(items.(ast.Many)...)...)
+	if exprs := pc.compileSparseItems(c); len(exprs) > 0 {
+		return rel.NewArrayExpr(c.Scanner(), exprs...)
 	}
 	return rel.NewArray()
 }
 
 func (pc ParseContext) compileBytes(c ast.Children) rel.Expr {
 	if items := c.(ast.One).Node.(ast.Branch)["item"]; items != nil {
+		//TODO: support sparse bytes
 		return rel.NewBytesExpr(items.Scanner(), pc.compileExprs(items.(ast.Many)...)...)
 	}
 	return rel.NewBytes([]byte{})
@@ -673,6 +692,25 @@ func (pc ParseContext) compileBytes(c ast.Children) rel.Expr {
 func (pc ParseContext) compileExprs(exprs ...ast.Node) []rel.Expr {
 	result := make([]rel.Expr, 0, len(exprs))
 	for _, expr := range exprs {
+		result = append(result, pc.CompileExpr(expr.(ast.Branch)))
+	}
+	return result
+}
+
+func (pc ParseContext) compileSparseItems(c ast.Children) []rel.Expr {
+	var nodes []ast.Node
+	if firstItem := c.(ast.One).Node.One("first_item"); firstItem != nil {
+		nodes = []ast.Node{firstItem}
+		if items := c.(ast.One).Node.Many("item"); items != nil {
+			nodes = append(nodes, items...)
+		}
+	}
+	result := make([]rel.Expr, 0, len(nodes))
+	for _, expr := range nodes {
+		if expr.One("empty") != nil {
+			result = append(result, nil)
+			continue
+		}
 		result = append(result, pc.CompileExpr(expr.(ast.Branch)))
 	}
 	return result

@@ -25,6 +25,8 @@ func TestExprLetArrayPattern(t *testing.T) { //nolint:dupl
 	t.Parallel()
 	AssertCodesEvalToSameValue(t, `1`, `let [] = []; 1`)
 	AssertCodesEvalToSameValue(t, `9`, `let [a, b, c] = [1, 2, 3]; 9`)
+	//TODO: implement pattern matching for sparse array
+	// AssertCodesEvalToSameValue(t, `9`, `let [a, b, , c] = [1, 2, , 3]; 9`)
 	AssertCodesEvalToSameValue(t, `[1, 2, 3]`, `let [a, b, c] = [1, 2, 3]; [a, b, c]`)
 	AssertCodesEvalToSameValue(t, `2`, `let [a, b, c] = [1, 2, 3]; b`)
 	AssertCodesEvalToSameValue(t, `2`, `let arr = [1, 2]; let [a, b] = arr; b`)

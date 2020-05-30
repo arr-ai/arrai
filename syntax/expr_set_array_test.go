@@ -38,6 +38,7 @@ func TestArrayWhere(t *testing.T) {
 
 func TestArrayWithHoles(t *testing.T) {
 	// TODO: Use holey array syntax when available.
-	AssertCodesEvalToSameValue(t, `[10] | 2\[12]`, `[10, 11, 12] where .@ != 1`)
-	AssertCodesEvalToSameValue(t, `[10, 11, 12]`, `([10, 11, 12] where .@ != 1) with (@: 1, @item: 11)`)
+	AssertCodesEvalToSameValue(t, `[10] | 2\[12]`, `[10, , 12]`)
+	AssertCodesEvalToSameValue(t, `[10, 11, 12]`, `[10, , 12] with (@: 1, @item: 11)`)
+	AssertCodesEvalToSameValue(t, `[10, 11, 12]`, `[10, , 12, , , ] with (@: 1, @item: 11)`)
 }
