@@ -16,9 +16,11 @@ type ArrayExpr struct {
 func NewArrayExpr(scanner parser.Scanner, elements ...Expr) Expr {
 	values := make([]Value, 0, len(elements))
 	for _, expr := range elements {
-		if value, ok := expr.(Value); ok {
-			values = append(values, value)
-			continue
+		if expr != nil {
+			if value, ok := expr.(Value); ok {
+				values = append(values, value)
+				continue
+			}
 		}
 		return ArrayExpr{ExprScanner{scanner}, elements}
 	}
@@ -50,9 +52,13 @@ func (e ArrayExpr) String() string {
 func (e ArrayExpr) Eval(local Scope) (Value, error) {
 	values := make([]Value, 0, len(e.elements))
 	for _, expr := range e.elements {
-		value, err := expr.Eval(local)
-		if err != nil {
-			return nil, wrapContext(err, e)
+		var value Value
+		if expr != nil {
+			var err error
+			value, err = expr.Eval(local)
+			if err != nil {
+				return nil, wrapContext(err, e)
+			}
 		}
 		values = append(values, value)
 	}
