@@ -303,6 +303,12 @@ func (pc ParseContext) compileLet(c ast.Children) rel.Expr {
 
 	p := pc.compilePattern(c.(ast.One).Node.(ast.Branch))
 	rhs = rel.NewFunction(source, p, rhs)
+
+	if c.(ast.One).Node.One("rec") != nil {
+		fix, fixt := FixFuncs()
+		expr = rel.NewRecursionExpr(c.Scanner(), p, expr, fix, fixt)
+	}
+
 	expr = binops["->"](source, expr, rhs)
 	return expr
 }

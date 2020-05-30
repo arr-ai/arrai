@@ -40,7 +40,7 @@ expr   -> C* amp="&"* @ C* arrow=(
         | C* fn="\\" IDENT @ C*
         | C* "//" pkg=( "{" dot="."? PKGPATH "}" | std=IDENT?)
         | C* "(" @ ")" C*
-        | C* let=("let" C* pattern C* "=" C* @ %%bind C* ";" C* @) C*
+        | C* let=("let" C* rec="rec"? pattern C* "=" C* @ %%bind C* ";" C* @) C*
         | C* xstr C*
         | C* IDENT C*
         | C* STR C*
