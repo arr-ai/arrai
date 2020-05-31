@@ -13,11 +13,23 @@ import (
 	"github.com/arr-ai/wbnf/wbnf"
 )
 
-var stdScopeOnce sync.Once
-var stdScopeVar rel.Scope
+var (
+	stdScopeOnce, fixOnce sync.Once
+	stdScopeVar           rel.Scope
+	fix, fixt             rel.Value
+)
+
+func FixFuncs() (rel.Value, rel.Value) {
+	fixOnce.Do(func() {
+		fix = parseLit(`(\f f(f))(\f \g \n g(f(f)(g))(n))`)
+		fixt = parseLit(`(\f f(f))(\f \t t :> \g \n g(f(f)(t))(n))`)
+	})
+	return fix, fixt
+}
 
 func StdScope() rel.Scope {
 	stdScopeOnce.Do(func() {
+		fixFn, fixtFn := FixFuncs()
 		stdScopeVar = rel.EmptyScope.
 			With(".", rel.NewTuple(
 				rel.NewNativeFunctionAttr("dict", func(value rel.Value) rel.Value {
@@ -64,8 +76,8 @@ func StdScope() rel.Scope {
 					),
 				),
 				rel.NewTupleAttr("fn",
-					rel.NewAttr("fix", parseLit(`(\f f(f))(\f \g \n g(f(f)(g))(n))`)),
-					rel.NewAttr("fixt", parseLit(`(\f f(f))(\f \t t :> \g \n g(f(f)(t))(n))`)),
+					rel.NewAttr("fix", fixFn),
+					rel.NewAttr("fixt", fixtFn),
 				),
 				rel.NewTupleAttr("log",
 					rel.NewNativeFunctionAttr("print", func(value rel.Value) rel.Value {

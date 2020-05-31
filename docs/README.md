@@ -451,20 +451,25 @@ library:
    eo.even(6)
    ```
 
-In future, these functions will be available through syntactic sugar, something
-like:
+However, these functions are also available through the syntactic sugar in the
+following syntax:
 
+1. For regular recursive functions:
 ```arrai
-let rec factorial = \n 1 if n < 2 else n * factorial(n - 1);
+let rec factorial = \n 1 if n < 2 else n * factorial(n - 1); factorial(5)
 ```
 
+2. For mutual recursion:
 ```arrai
-let rec (
-   even = \n n == 0 || odd (n - 1),
-   odd  = \n n != 0 && even(n - 1),
+let rec oe = (
+   even = \n n == 0 || oe.odd (n - 1),
+   odd  = \n n != 0 && oe.even(n - 1),
 );
-even(6)
+oe.even(6)
 ```
+
+This syntactic sugar only works with expression that evaluates to either a
+function or a tuple of functions. Anything else and the expression will fail.
 
 ### Packages
 
