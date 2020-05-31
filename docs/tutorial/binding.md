@@ -234,7 +234,7 @@ A name within parentheses like `(x)` refers to the value bound to the name `x`.
 @> let x = 3; let [b, x] = [2, 4]; x
 @> let x = 3; let [b, (x)] = [2, 3]; b
 @> let x = 3; let [_, b, (x)] = [1, 2, 3]; b
-@> 1 -> \x let [(x), y] = [1, 2]; y
+@> let x = 1; [1, 2] -> \[(x), y] y
 @> let x = 3; let [b, (x)] = [2, 4]; b     # should fail because (x) != 4
 @> let [(x)] = [2]; x                      # should fail because `x` isn't in scope
 ```
