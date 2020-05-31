@@ -1,13 +1,13 @@
 package rel
 
 import (
-	"fmt"
 	"reflect"
 	"strconv"
 	"unsafe"
 
 	"github.com/arr-ai/hash"
 	"github.com/arr-ai/wbnf/parser"
+	"github.com/go-errors/errors"
 )
 
 // Number is a number.
@@ -111,10 +111,10 @@ func (n Number) Export() interface{} {
 	return n.Float64()
 }
 
-func (n Number) Bind(scope Scope, value Value) Scope {
+func (n Number) Bind(scope Scope, value Value) (Scope, error) {
 	if !n.Equal(value) {
-		panic(fmt.Sprintf("%s doesn't equal to %s, cannot bind these two numbers", n, value))
+		return EmptyScope, errors.Errorf("%s doesn't equal to %s, cannot bind these two numbers", n, value)
 	}
 
-	return EmptyScope
+	return EmptyScope, nil
 }

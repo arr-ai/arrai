@@ -3,6 +3,7 @@ package syntax
 import (
 	"errors"
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/arr-ai/arrai/rel"
@@ -120,4 +121,12 @@ func AssertScan(t *testing.T, l *Lexer, tok Token, intf interface{}, lexeme stri
 	}
 
 	return assert.Equal(t, lexeme, lexeme, l)
+}
+
+// AssertEvalExprString asserts Expr string.
+func AssertEvalExprString(t *testing.T, expected, source string) bool {
+	expr, err := Compile(".", source)
+	return assert.NoError(t, err) &&
+		assert.NotNil(t, expr) &&
+		assert.Equal(t, expected, strings.Replace(expr.String(), ` `, ``, -1))
 }

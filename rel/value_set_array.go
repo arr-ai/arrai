@@ -7,6 +7,7 @@ import (
 
 	"github.com/arr-ai/frozen"
 	"github.com/arr-ai/wbnf/parser"
+	"github.com/go-errors/errors"
 )
 
 // Array is an ordered collection of Values.
@@ -170,6 +171,11 @@ func (a Array) String() string {
 // Eval returns the string.
 func (a Array) Eval(_ Scope) (Value, error) {
 	return a, nil
+}
+
+// Bind it is not supported by now.
+func (a Array) Bind(scope Scope, value Value) (Scope, error) {
+	return EmptyScope, errors.Errorf("rel.Array doesn't support")
 }
 
 // Source returns a scanner locating the Array's source code.

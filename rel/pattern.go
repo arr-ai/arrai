@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/arr-ai/frozen"
+	"github.com/go-errors/errors"
 )
 
 // Pattern can be inside an Expr, Expr can be a Pattern.
@@ -12,18 +13,7 @@ type Pattern interface {
 	// Require a String() method.
 	fmt.Stringer
 
-	Bind(scope Scope, value Value) Scope
-}
-
-func ExprAsPattern(expr Expr) Pattern {
-	switch t := expr.(type) {
-	case IdentExpr:
-		return t
-	case Number:
-		return t
-	default:
-		panic(fmt.Sprintf("%s is not a Pattern", t))
-	}
+	Bind(scope Scope, value Value) (Scope, error)
 }
 
 type IdentPattern struct {
@@ -34,10 +24,10 @@ func NewIdentPattern(ident string) IdentPattern {
 	return IdentPattern{ident}
 }
 
-func (p IdentPattern) Bind(scope Scope, value Value) Scope {
+func (p IdentPattern) Bind(scope Scope, value Value) (Scope, error) {
 	scope.MustGet(p.ident)
 	scope.MatchedWith(p.ident, value)
-	return EmptyScope.With(p.ident, value)
+	return EmptyScope.With(p.ident, value), nil
 }
 
 func (p IdentPattern) String() string {
@@ -52,11 +42,11 @@ func NewExtraElementPattern(ident string) ExtraElementPattern {
 	return ExtraElementPattern{ident}
 }
 
-func (p ExtraElementPattern) Bind(scope Scope, value Value) Scope {
+func (p ExtraElementPattern) Bind(scope Scope, value Value) (Scope, error) {
 	if p.ident == "" {
-		return EmptyScope
+		return EmptyScope, nil
 	}
-	return EmptyScope.With(p.ident, value)
+	return EmptyScope.With(p.ident, value), nil
 }
 
 func (p ExtraElementPattern) String() string {
@@ -71,11 +61,11 @@ func NewArrayPattern(elements ...Pattern) ArrayPattern {
 	return ArrayPattern{elements}
 }
 
-func (p ArrayPattern) Bind(scope Scope, value Value) Scope {
+func (p ArrayPattern) Bind(local Scope, value Value) (Scope, error) {
 	if s, is := value.(GenericSet); is {
 		if s.set.IsEmpty() {
 			if len(p.items) == 0 {
-				return EmptyScope
+				return EmptyScope, nil
 			}
 			panic(fmt.Sprintf("value [] is empty but pattern %s is not", p))
 		}
@@ -114,13 +104,21 @@ func (p ArrayPattern) Bind(scope Scope, value Value) Scope {
 			if offset >= 0 {
 				arr = NewArray(array.Values()[i : i+offset+1]...)
 			}
-			result = result.MatchedUpdate(item.Bind(scope, arr))
+			scope, err := item.Bind(local, arr)
+			if err != nil {
+				return EmptyScope, err
+			}
+			result = result.MatchedUpdate(scope)
 			continue
 		}
-		result = result.MatchedUpdate(item.Bind(scope, array.Values()[i+offset]))
+		scope, err := item.Bind(local, array.Values()[i+offset])
+		if err != nil {
+			return EmptyScope, err
+		}
+		result = result.MatchedUpdate(scope)
 	}
 
-	return result
+	return result, nil
 }
 
 func (p ArrayPattern) String() string {
@@ -170,7 +168,7 @@ func NewTuplePattern(attrs ...TuplePatternAttr) TuplePattern {
 	return TuplePattern{attrs}
 }
 
-func (p TuplePattern) Bind(scope Scope, value Value) Scope {
+func (p TuplePattern) Bind(local Scope, value Value) (Scope, error) {
 	tuple, is := value.(Tuple)
 	if !is {
 		panic(fmt.Sprintf("%s is not a tuple", value))
@@ -202,15 +200,23 @@ func (p TuplePattern) Bind(scope Scope, value Value) Scope {
 			if tupleExpr == nil {
 				panic(fmt.Sprintf("tuple %s cannot match tuple pattern %s", tuple, p))
 			}
-			result = result.MatchedUpdate(attr.pattern.Bind(scope, tupleExpr))
+			scope, err := attr.pattern.Bind(local, tupleExpr)
+			if err != nil {
+				return EmptyScope, err
+			}
+			result = result.MatchedUpdate(scope)
 			continue
 		}
 		tupleExpr := tuple.MustGet(attr.name)
-		result = result.MatchedUpdate(attr.pattern.Bind(scope, tupleExpr))
+		scope, err := attr.pattern.Bind(local, tupleExpr)
+		if err != nil {
+			return EmptyScope, err
+		}
+		result = result.MatchedUpdate(scope)
 		names = names.Without(attr.name)
 	}
 
-	return result
+	return result, nil
 }
 
 func (p TuplePattern) String() string {
@@ -266,7 +272,7 @@ func NewDictPattern(entries ...DictPatternEntry) DictPattern {
 	return DictPattern{entries}
 }
 
-func (p DictPattern) Bind(scope Scope, value Value) Scope {
+func (p DictPattern) Bind(local Scope, value Value) (Scope, error) {
 	dict, is := value.(Dict)
 	if !is {
 		panic(fmt.Sprintf("%s is not a dict", value))
@@ -295,19 +301,31 @@ func (p DictPattern) Bind(scope Scope, value Value) Scope {
 	for _, entry := range p.entries {
 		if _, is := entry.value.(ExtraElementPattern); is {
 			if m.IsEmpty() {
-				result = result.MatchedUpdate(entry.value.Bind(scope, None))
+				scope, err := entry.value.Bind(local, None)
+				if err != nil {
+					return EmptyScope, err
+				}
+				result = result.MatchedUpdate(scope)
 			} else {
-				result = result.MatchedUpdate(entry.value.Bind(scope, Dict{m: m}))
+				scope, err := entry.value.Bind(local, Dict{m: m})
+				if err != nil {
+					return EmptyScope, err
+				}
+				result = result.MatchedUpdate(scope)
 			}
 
 			continue
 		}
 		dictValue := m.MustGet(entry.at)
-		result = result.MatchedUpdate(entry.value.Bind(scope, dictValue.(Value)))
+		scope, err := entry.value.Bind(local, dictValue.(Value))
+		if err != nil {
+			return EmptyScope, err
+		}
+		result = result.MatchedUpdate(scope)
 		m = m.Without(frozen.NewSet(entry.at))
 	}
 
-	return result
+	return result, nil
 }
 
 func (p DictPattern) String() string {
@@ -320,5 +338,63 @@ func (p DictPattern) String() string {
 		fmt.Fprintf(&b, "%v: %v", expr.at.String(), expr.value.String())
 	}
 	b.WriteByte('}')
+	return b.String()
+}
+
+type ExprsPattern struct {
+	exprs []Expr
+}
+
+func NewExprsPattern(exprs ...Expr) ExprsPattern {
+	return ExprsPattern{exprs: exprs}
+}
+
+func (ep ExprsPattern) Bind(scope Scope, value Value) (Scope, error) {
+	if len(ep.exprs) == 0 {
+		return EmptyScope, errors.Errorf("there is not any rel.Expr in rel.ExprsPattern")
+	}
+
+	if pe, isPattern := ep.exprs[0].(Pattern); len(ep.exprs) == 1 && isPattern {
+		// Support patterns IDENT and NUM
+		return pe.Bind(scope, value)
+	}
+
+	incomingVal, err := value.Eval(scope)
+	if err != nil {
+		return EmptyScope, err
+	}
+
+	for _, e := range ep.exprs {
+		val, err := e.Eval(scope)
+		if err != nil {
+			return EmptyScope, err
+		}
+		if incomingVal.Equal(val) {
+			return scope, nil
+		}
+	}
+
+	return EmptyScope, errors.Errorf("didn't find matched value")
+}
+
+func (ep ExprsPattern) String() string {
+	if len(ep.exprs) == 0 {
+		panic("there is not any rel.Expr in rel.ExprsPattern")
+	}
+
+	if len(ep.exprs) == 1 {
+		// it processes cases IDENT and NUM as syntax, otherwise `let (:x) = (x: 1); x` will fail.
+		return ep.exprs[0].String()
+	}
+
+	var b bytes.Buffer
+	b.WriteByte('[')
+	for i, e := range ep.exprs {
+		if i > 0 {
+			b.WriteString(", ")
+		}
+		fmt.Fprintf(&b, "%v", e.String())
+	}
+	b.WriteByte(']')
 	return b.String()
 }

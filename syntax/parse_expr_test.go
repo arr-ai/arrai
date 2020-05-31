@@ -40,13 +40,13 @@ func TestParseFix(t *testing.T) {
 	t.Parallel()
 
 	fix := `(\f f(f))(\f \g \n g(f(f)(g))(n))`
-	AssertCodesEvalToSameValue(t, `720`, fix+`(\fact \n cond (n < 2: 1, *: fact(n - 1) * n)) (6)`)
-	AssertCodesEvalToSameValue(t, `2`, fix+`(\gcd \a \b cond (b = 0: a, *: gcd(b)(a % b))) (20)(14)`)
-	AssertCodesEvalToSameValue(t, `2`, fix+`(\gcd \a \b cond (b = 0: a, *: gcd(b, a % b))) (20, 14)`)
+	AssertCodesEvalToSameValue(t, `720`, fix+`(\fact \n cond {n < 2: 1, _: fact(n - 1) * n}) (6)`)
+	AssertCodesEvalToSameValue(t, `2`, fix+`(\gcd \a \b cond {b = 0: a, _: gcd(b)(a % b)}) (20)(14)`)
+	AssertCodesEvalToSameValue(t, `2`, fix+`(\gcd \a \b cond {b = 0: a, _: gcd(b, a % b)}) (20, 14)`)
 
-	AssertCodesEvalToSameValue(t, `720`, `//fn.fix(\fact \n cond (n < 2: 1, *: fact(n - 1) * n))(6)`)
-	AssertCodesEvalToSameValue(t, `2`, `//fn.fix(\gcd \a \b cond (b = 0: a, *: gcd(b)(a % b)))(20)(14)`)
-	AssertCodesEvalToSameValue(t, `2`, `//fn.fix(\gcd \a \b cond (b = 0: a, *: gcd(b, a % b)))(20, 14)`)
+	AssertCodesEvalToSameValue(t, `720`, `//fn.fix(\fact \n cond {n < 2: 1, _: fact(n - 1) * n})(6)`)
+	AssertCodesEvalToSameValue(t, `2`, `//fn.fix(\gcd \a \b cond {b = 0: a, _: gcd(b)(a % b)})(20)(14)`)
+	AssertCodesEvalToSameValue(t, `2`, `//fn.fix(\gcd \a \b cond {b = 0: a, _: gcd(b, a % b)})(20, 14)`)
 }
 
 func TestParseFixt(t *testing.T) {
