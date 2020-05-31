@@ -3,6 +3,7 @@ package syntax
 import "testing"
 
 func TestExprLet(t *testing.T) {
+	t.Parallel()
 	AssertCodesEvalToSameValue(t, `7`, `let x = 6; 7`)
 	AssertCodesEvalToSameValue(t, `42`, `let x = 6; x * 7`)
 	AssertCodesEvalToSameValue(t, `[1, 2]`, `let x = 1; [x, 2]`)
@@ -13,15 +14,19 @@ func TestExprLet(t *testing.T) {
 }
 
 func TestExprLetValuePattern(t *testing.T) {
+	t.Parallel()
 	AssertCodesEvalToSameValue(t, `42`, `let 42 = 42; 42`)
 	AssertCodesEvalToSameValue(t, `1`, `let 42 = 42; 1`)
 	AssertCodeErrors(t, `let 42 = 1; 42`, "")
 	AssertCodeErrors(t, `let 42 = 1; 1`, "")
 }
 
-func TestExprLetArrayPattern(t *testing.T) {
+func TestExprLetArrayPattern(t *testing.T) { //nolint:dupl
+	t.Parallel()
 	AssertCodesEvalToSameValue(t, `1`, `let [] = []; 1`)
 	AssertCodesEvalToSameValue(t, `9`, `let [a, b, c] = [1, 2, 3]; 9`)
+	//TODO: implement pattern matching for sparse array
+	// AssertCodesEvalToSameValue(t, `9`, `let [a, b, , c] = [1, 2, , 3]; 9`)
 	AssertCodesEvalToSameValue(t, `[1, 2, 3]`, `let [a, b, c] = [1, 2, 3]; [a, b, c]`)
 	AssertCodesEvalToSameValue(t, `2`, `let [a, b, c] = [1, 2, 3]; b`)
 	AssertCodesEvalToSameValue(t, `2`, `let arr = [1, 2]; let [a, b] = arr; b`)
@@ -44,7 +49,8 @@ func TestExprLetArrayPattern(t *testing.T) {
 	AssertCodeErrors(t, `let x = 3; let [b, (x)] = [2, 1]; b`, "")
 }
 
-func TestExprLetTuplePattern(t *testing.T) {
+func TestExprLetTuplePattern(t *testing.T) { //nolint:dupl
+	t.Parallel()
 	AssertCodesEvalToSameValue(t, `4`, `let () = (); 4`)
 	AssertCodesEvalToSameValue(t, `4`, `let (a: x, b: y) = (a: 4, b: 7); x`)
 	AssertCodesEvalToSameValue(t, `4`, `let (a: x, b: x) = (a: 4, b: 4); x`)
@@ -62,6 +68,7 @@ func TestExprLetTuplePattern(t *testing.T) {
 }
 
 func TestExprLetDictPattern(t *testing.T) {
+	t.Parallel()
 	AssertCodesEvalToSameValue(t, `42`, `let {1: a} = {1: 42}; a`)
 	AssertCodesEvalToSameValue(t, `42`, `let {[1, 2, 3]: a} = {[1, 2, 3]: 42}; a`)
 	AssertCodesEvalToSameValue(t, `42`, `let a = 4; let {"x": a} = {"x": 42}; a`)
@@ -78,6 +85,7 @@ func TestExprLetDictPattern(t *testing.T) {
 }
 
 func TestExprLetExtraElementsInPattern(t *testing.T) {
+	t.Parallel()
 	AssertCodesEvalToSameValue(t, `42`, `let [...] = [1, 2]; 42`)
 	AssertCodesEvalToSameValue(t, `1`, `let [x, ...] = [1, 2, 4]; x`)
 	AssertCodesEvalToSameValue(t, `[1, 2]`, `let [x, y, ...] = [1, 2, 4]; [x, y]`)
@@ -115,6 +123,7 @@ func TestExprLetExtraElementsInPattern(t *testing.T) {
 }
 
 func TestExprLetNestedPattern(t *testing.T) {
+	t.Parallel()
 	AssertCodesEvalToSameValue(t, `[1, 2, 3]`, `let [[x, y], z] = [[1, 2], 3]; [x, y, z]`)
 	AssertCodesEvalToSameValue(t, `[1, 2, 3]`, `let [{"a": x}, (b: y), z] = [{"a": 1}, (b: 2), 3]; [x, y, z]`)
 	AssertCodeErrors(t, `let [[x]] = []; 42`, "")

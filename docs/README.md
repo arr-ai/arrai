@@ -319,6 +319,16 @@ Expression strings are fully described in [Expression strings](expr-str.md).
 Arrays may be expressed using the conventional `[...]` notation, e.g.:
 `[1, 2, [3, 4]]`. They represent relations of the form `{|@, @item| ...}`.
 
+Sparse arrays or arrays with holes can also be defined. For example,
+`[1, 2, , 3]`. This is equivalent to `{|@, @item| (0, 1), (1, 2), (3, 3)}`.
+
+However, holes must be defined in the middle of the elements, which means you
+can not defined `[, , 1, 2]`. Should you want to define that, you can use the
+offset syntax `2\[1, 2]`.
+
+Any empty elements at the end will be trimmed which means
+`[1, 2, 3, ] = [1, 2, 3]`
+
 ### Logic expressions
 
 Arr.ai supports operations on "true" and "false" values. The values `0`, `()`
@@ -441,20 +451,25 @@ library:
    eo.even(6)
    ```
 
-In future, these functions will be available through syntactic sugar, something
-like:
+However, these functions are also available through the syntactic sugar in the
+following syntax:
 
+1. For regular recursive functions:
 ```arrai
-let rec factorial = \n 1 if n < 2 else n * factorial(n - 1);
+let rec factorial = \n 1 if n < 2 else n * factorial(n - 1); factorial(5)
 ```
 
+2. For mutual recursion:
 ```arrai
-let rec (
-   even = \n n == 0 || odd (n - 1),
-   odd  = \n n != 0 && even(n - 1),
+let rec oe = (
+   even = \n n == 0 || oe.odd (n - 1),
+   odd  = \n n != 0 && oe.even(n - 1),
 );
-even(6)
+oe.even(6)
 ```
+
+This syntactic sugar only works with expression that evaluates to either a
+function or a tuple of functions. Anything else and the expression will fail.
 
 ### Packages
 

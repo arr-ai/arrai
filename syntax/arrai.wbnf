@@ -10,7 +10,7 @@ expr   -> C* amp="&"* @ C* arrow=(
         > C* @:binop="&&" C*
         > C* @:compare=/{!?(?:<:|=|<=?|>=?|\((?:<=?|>=?|<>=?)\))} C*
         > C* @ if=("if" t=expr ("else" f=expr)?)* C*
-        > C* @ cond=("cond" "(" (key=(("(" expr:",", ")") | expr) ":" value=expr):",",? ("*" ":" f=expr ","?)? ")")? C*
+        > C* @ cond=("cond" "{" (condition=pattern ":" value=expr):",",? "}")? C*
         > C* @:binop=/{\+\+|[+|]|-%?} C*
         > C* @:binop=/{&~|&|~~?|[-<][-&][->]} C*
         > C* @:binop=/{//|[*/%]|\\} C*
@@ -20,13 +20,13 @@ expr   -> C* amp="&"* @ C* arrow=(
         > C* @ postfix=/{count|single}? C* touch? C*
         > C* (get | @) tail_op=(safe_tail | tail)* C*
         > %!patternterms(expr)
-        | C* cond=("cond" "(" (key=@ ":" value=@):",",? ("*" ":" f=expr ","?)? ")") C*
+        | C* cond=("cond" "{" (key=@ ":" value=@):",",? "}") C*
         | C* "{:" C* embed=(grammar=@ ":" subgrammar=%%ast) ":}" C*
         | C* op="\\\\" @ C*
         | C* fn="\\" IDENT @ C*
         | C* "//" pkg=( "{" dot="."? PKGPATH "}" | std=IDENT?)
         | C* "(" @ ")" C*
-        | C* let=("let" C* pattern C* "=" C* @ %%bind C* ";" C* @) C*
+        | C* let=("let" C* rec="rec"? pattern C* "=" C* @ %%bind C* ";" C* @) C*
         | C* xstr C*
         | C* IDENT C*
         | C* STR C*
@@ -53,7 +53,7 @@ tail   -> get
                 ):",",
             ")");
 safe_tail -> first_safe=(tail "?") ops=(safe=(tail "?") | tail)* ":" fall=expr;
-pattern -> extra | %!patternterms(pattern|expr) | IDENT | NUM;
+pattern -> extra | %!patternterms(pattern|expr) | IDENT | NUM | C* "(" exprpattern=expr:",",? ")" C* | C* exprpattern=STR C*;
 extra -> ("..." ident=IDENT?);
 
 ARROW  -> /{:>|=>|>>|orderby|order|where|sum|max|mean|median|min};
@@ -73,8 +73,12 @@ C      -> /{ # .* $ };
     C* "{" C* rel=(names tuple=("(" v=top:",", ")"):",",?) "}" C*
   | C* "{" C* set=(elt=top:",",?) "}" C*
   | C* "{" C* dict=((ext=extra|key=expr ":" value=top):",",?) "}" C*
-  | C* "[" C* array=(item=top:",",?) C* "]" C*
+  | C* "[" C* array=(%!sparse_sequence(top)?) C* "]" C*
   | C* "<<" C* bytes=(item=top:",",?) C* ">>" C*
   | C* "(" tuple=(pairs=(extra|name? ":" v=top):",",?) ")" C*
   | C* "(" identpattern=IDENT ")" C*
 };
+
+.macro sparse_sequence(top) {
+  first_item=(top) (",":(item=(top|empty=\s*)),)?
+}

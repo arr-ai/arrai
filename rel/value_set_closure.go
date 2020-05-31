@@ -129,7 +129,8 @@ func (c Closure) CallAll(arg Value) Set {
 		}
 		return NewSet(val)
 	}
-	val, err := c.f.body.Eval(c.scope.Update(c.f.arg.Bind(c.scope, arg)))
+	scope, _ := c.f.arg.Bind(c.scope, arg) //nolint: errcheck
+	val, err := c.f.body.Eval(c.scope.Update(scope))
 	if err != nil {
 		panic(err)
 	}
