@@ -126,6 +126,32 @@ func createNestedFuncAttr(name string, nArgs int, f func(...rel.Value) rel.Value
 	return rel.NewAttr(name, createNestedFunc(name, nArgs, f))
 }
 
+func createFunc2(name string, f func(a, b rel.Value) rel.Value) rel.Value {
+	return rel.NewNativeFunction(name, func(a rel.Value) rel.Value {
+		return rel.NewNativeFunction(name+"_2", func(b rel.Value) rel.Value {
+			return f(a, b)
+		})
+	})
+}
+
+func createFunc2Attr(name string, f func(a, b rel.Value) rel.Value) rel.Attr {
+	return rel.NewAttr(name, createFunc2(name, f))
+}
+
+func createFunc3(name string, f func(a, b, c rel.Value) rel.Value) rel.Value {
+	return rel.NewNativeFunction(name, func(a rel.Value) rel.Value {
+		return rel.NewNativeFunction(name+"$2", func(b rel.Value) rel.Value {
+			return rel.NewNativeFunction(name+"$3", func(c rel.Value) rel.Value {
+				return f(a, b, c)
+			})
+		})
+	})
+}
+
+func createFunc3Attr(name string, f func(a, b, c rel.Value) rel.Value) rel.Attr {
+	return rel.NewAttr(name, createFunc3(name, f))
+}
+
 func parseLit(s string) rel.Value {
 	v, err := MustCompile(NoPath, s).Eval(rel.EmptyScope)
 	if err != nil {
