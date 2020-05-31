@@ -9,11 +9,12 @@ import (
 
 type RecursionExpr struct {
 	ExprScanner
-	name          Pattern
-	fn, fix, fixt Expr
+	name      Pattern
+	fn        Expr
+	fix, fixt Value
 }
 
-func NewRecursionExpr(scanner parser.Scanner, name Pattern, fn, fix, fixt Expr) Expr {
+func NewRecursionExpr(scanner parser.Scanner, name Pattern, fn Expr, fix, fixt Value) Expr {
 	return RecursionExpr{ExprScanner{scanner}, name, fn, fix, fixt}
 }
 
@@ -32,18 +33,18 @@ func (r RecursionExpr) Eval(local Scope) (Value, error) {
 	//TODO: optimise, get it to load either fix or fixt not both
 	switch f := val.(type) {
 	case Tuple:
-		valString := f.String()
+		t := f
 		for e := f.Enumerator(); e.MoveNext(); {
 			attr, val := e.Current()
 			if fn, isFunction := val.(Closure); isFunction {
 				f = f.With(attr, NewClosure(local, NewFunction(fn.Source(), argName, fn.f).(*Function)))
 				continue
 			}
-			return nil, errors.Errorf("Recursion requires a tuple of functions: %v", valString)
+			return nil, errors.Errorf("Recursion requires a tuple of functions: %v", t.String())
 		}
-		return NewCallExpr(r.Source(), r.fixt, f).Eval(local)
+		return Call(r.fixt, f, local)
 	case Closure:
-		return NewCallExpr(r.Source(), r.fix, NewFunction(f.Source(), argName, f.f)).Eval(local)
+		return Call(r.fix, NewClosure(local, NewFunction(f.Source(), argName, f.f).(*Function)), local)
 	}
 	return nil, errors.Errorf("Recursion does not support %T", val)
 }
