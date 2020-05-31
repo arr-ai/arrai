@@ -902,6 +902,7 @@ var binops = map[string]binOpFunc{
 	":>":      rel.NewTupleMapExpr,
 	"orderby": rel.NewOrderByExpr,
 	"order":   rel.NewOrderExpr,
+	"rank":    rel.NewRankExpr,
 	"where":   rel.NewWhereExpr,
 	"sum":     rel.NewSumExpr,
 	"max":     rel.NewMaxExpr,
