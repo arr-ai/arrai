@@ -70,72 +70,46 @@ func NewRelationExpr(scanner parser.Scanner, names []string, tuples ...[]Expr) (
 	return NewSetExpr(scanner, elements...), nil
 }
 
-// NewJoinExpr evaluates a <&> b.
-func NewJoinExpr(scanner parser.Scanner, a, b Expr) Expr {
-	return newBinExpr(scanner, a, b, "<&>", "(%s <&> %s)",
+func newSetBinExpr(scanner parser.Scanner, a, b Expr, op string, f func(x, y Set) (Set, error)) Expr {
+	return newBinExpr(scanner, a, b, op, "(%s "+op+" %s)",
 		func(a, b Value, _ Scope) (Value, error) {
 			if x, ok := a.(Set); ok {
 				if y, ok := b.(Set); ok {
-					return Join(x, y), nil
+					return f(x, y)
 				}
-				return nil, errors.Errorf("<&> rhs must be a Set, not %T", b)
+				return nil, errors.Errorf(op+" rhs must be a Set, not %T", b)
 			}
-			return nil, errors.Errorf("<&> lhs must be a Set, not %T", a)
+			return nil, errors.Errorf(op+" lhs must be a Set, not %T", a)
 		})
+}
+
+func newSetBinExprNoError(scanner parser.Scanner, a, b Expr, op string, f func(x, y Set) Set) Expr {
+	return newSetBinExpr(scanner, a, b, op, func(x, y Set) (Set, error) {
+		return f(x, y), nil
+	})
+}
+
+// NewJoinExpr evaluates a <&> b.
+func NewJoinExpr(scanner parser.Scanner, a, b Expr) Expr {
+	return newSetBinExprNoError(scanner, a, b, "<&>", Join)
 }
 
 // NewUnionExpr evaluates a | b.
 func NewUnionExpr(scanner parser.Scanner, a, b Expr) Expr {
-	return newBinExpr(scanner, a, b, "|", "(%s | %s)",
-		func(a, b Value, _ Scope) (Value, error) {
-			if x, ok := a.(Set); ok {
-				if y, ok := b.(Set); ok {
-					return Union(x, y), nil
-				}
-				return nil, errors.Errorf("| rhs must be a Set, not %T", b)
-			}
-			return nil, errors.Errorf("| lhs must be a Set, not %T", a)
-		})
+	return newSetBinExprNoError(scanner, a, b, "|", Union)
 }
 
 // NewDiffExpr evaluates a &~ b.
 func NewDiffExpr(scanner parser.Scanner, a, b Expr) Expr {
-	return newBinExpr(scanner, a, b, "&~", "(%s &~ %s)",
-		func(a, b Value, _ Scope) (Value, error) {
-			if x, ok := a.(Set); ok {
-				if y, ok := b.(Set); ok {
-					return Difference(x, y), nil
-				}
-				return nil, errors.Errorf("&~ rhs must be a Set, not %T", b)
-			}
-			return nil, errors.Errorf("&~ lhs must be a Set, not %T", a)
-		})
+	return newSetBinExprNoError(scanner, a, b, "&~", Difference)
 }
 
 // NewSymmDiffExpr evaluates a ~~ b.
 func NewSymmDiffExpr(scanner parser.Scanner, a, b Expr) Expr {
-	return newBinExpr(scanner, a, b, "~~", "(%s ~~ %s)",
-		func(a, b Value, _ Scope) (Value, error) {
-			if x, ok := a.(Set); ok {
-				if y, ok := b.(Set); ok {
-					return SymmetricDifference(x, y), nil
-				}
-				return nil, errors.Errorf("~~ rhs must be a Set, not %T", b)
-			}
-			return nil, errors.Errorf("~~ lhs must be a Set, not %T", a)
-		})
+	return newSetBinExprNoError(scanner, a, b, "~~", SymmetricDifference)
 }
 
 // NewConcatExpr evaluates a ++ b.
 func NewConcatExpr(scanner parser.Scanner, a, b Expr) Expr {
-	return newBinExpr(scanner, a, b, "++", "(%s ++ %s)",
-		func(a, b Value, _ Scope) (Value, error) {
-			if x, ok := a.(Set); ok {
-				if y, ok := b.(Set); ok {
-					return Concatenate(x, y)
-				}
-				return nil, errors.Errorf("++ rhs must be a Set, not %T", b)
-			}
-			return nil, errors.Errorf("++ lhs must be a Set, not %T", a)
-		})
+	return newSetBinExpr(scanner, a, b, "++", Concatenate)
 }
