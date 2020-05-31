@@ -60,7 +60,7 @@ func (t ArrayItemTuple) Hash(seed uintptr) uintptr {
 // Equal tests two Tuples for equality. Any other type returns false.
 func (t ArrayItemTuple) Equal(v interface{}) bool {
 	if u, ok := v.(ArrayItemTuple); ok {
-		return t == u
+		return t.at == u.at && t.item.Equal(u.item)
 	}
 	return false
 }
