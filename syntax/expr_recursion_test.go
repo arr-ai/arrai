@@ -9,7 +9,7 @@ func TestRecursionExpr(t *testing.T) {
 
 	AssertCodesEvalToSameValue(t,
 		`55`,
-		`let rec fib = \n cond (n = 0: 0, n = 1: 1, n > 0: fib(n-1) + fib(n-2), *: 0);
+		`let rec fib = \n cond {(n = 0): 0, (n = 1): 1, (n > 0): fib(n-1) + fib(n-2), _: 0};
 		fib(10)`,
 	)
 	AssertCodesEvalToSameValue(t,

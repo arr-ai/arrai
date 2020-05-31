@@ -19,7 +19,11 @@ func NewRecursionExpr(scanner parser.Scanner, name Pattern, fn Expr, fix, fixt V
 }
 
 func (r RecursionExpr) Eval(local Scope) (Value, error) {
-	if _, isIdent := r.name.(IdentExpr); !isIdent {
+	exprs := r.name.(ExprsPattern).exprs
+
+	var name IdentExpr
+	var isIdent bool
+	if name, isIdent = exprs[0].(IdentExpr); !isIdent || len(exprs) != 1 {
 		return nil, errors.Errorf("Does not evaluate to a variable name: %v", r.name)
 	}
 
@@ -28,7 +32,7 @@ func (r RecursionExpr) Eval(local Scope) (Value, error) {
 		return nil, err
 	}
 
-	argName := ExprAsPattern(NewIdentExpr(r.Source(), r.name.String()))
+	argName := NewIdentExpr(name.Source(), name.String())
 
 	//TODO: optimise, get it to load either fix or fixt not both
 	switch f := val.(type) {
