@@ -17,9 +17,9 @@ type CondControlVarExpr struct {
 }
 
 // NewCondControlVarExpr returns a new CondControlVarExpr.
-func NewCondControlVarExpr(scanner parser.Scanner, controlVar Expr, dictExpr Expr, defaultExpr Expr) Expr {
-	return &CondControlVarExpr{ExprScanner{scanner}, controlVar,
-		CondExpr{ExprScanner{scanner}, dictExpr, defaultExpr, func(condition Value, local Scope) (bool, error) {
+func NewCondControlVarExpr(scanner parser.Scanner, controlVar Expr, dictExpr Expr) Expr {
+	return CondControlVarExpr{ExprScanner{scanner}, controlVar,
+		CondExpr{ExprScanner{scanner}, dictExpr, func(condition Value, local Scope) (bool, error) {
 			controlVarVal, has := local.Get("controlVarVal")
 			if !has {
 				return false, fmt.Errorf("couldn't get 'controlVarVal' in Scope, and it is expected")
@@ -49,7 +49,7 @@ func NewCondControlVarExpr(scanner parser.Scanner, controlVar Expr, dictExpr Exp
 }
 
 // String returns a string representation of the expression.
-func (e *CondControlVarExpr) String() string {
+func (e CondControlVarExpr) String() string {
 	var b bytes.Buffer
 	b.WriteByte('(')
 	fmt.Fprintf(&b, "(control_var: %v)", e.controlVarExpr.String())
@@ -63,7 +63,7 @@ func (e *CondControlVarExpr) String() string {
 
 // Eval returns the value of valid condition and whose value equals to the control var value,
 // or the value of default condition.
-func (e *CondControlVarExpr) Eval(local Scope) (Value, error) {
+func (e CondControlVarExpr) Eval(local Scope) (Value, error) {
 	controlVarVal, err := e.controlVarExpr.Eval(local)
 	if err != nil {
 		return nil, err

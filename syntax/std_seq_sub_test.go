@@ -2,7 +2,7 @@ package syntax
 
 import "testing"
 
-func TestStrSub(t *testing.T) {
+func TestStrSub(t *testing.T) { //nolint:dupl
 	t.Parallel()
 	AssertCodesEvalToSameValue(t, `" BC"`, `//seq.sub( "A", " ","ABC")`)
 	AssertCodesEvalToSameValue(t, `"this is not a test"`, `//seq.sub("aaa", "is", "this is not a test")`)
