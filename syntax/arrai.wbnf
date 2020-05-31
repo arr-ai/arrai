@@ -53,7 +53,7 @@ tail   -> get
                 ):",",
             ")");
 safe_tail -> first_safe=(tail "?") ops=(safe=(tail "?") | tail)* ":" fall=expr;
-pattern -> extra | %!patternterms(pattern|expr) | IDENT | NUM | C* "(" exprpattern=expr:",",? ")" C*;
+pattern -> extra | %!patternterms(pattern|expr) | IDENT | NUM | C* "(" exprpattern=expr:",",? ")" C* | C* exprpattern=STR C*;
 extra -> ("..." ident=IDENT?);
 
 ARROW  -> /{:>|=>|>>|orderby|order|where|sum|max|mean|median|min};

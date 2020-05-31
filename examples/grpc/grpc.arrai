@@ -1,17 +1,17 @@
 (
     type: //fn.fix(\type \t
         t.type cond {
-            ('primitive'): t.primitive cond {
-                ('DECIMAL'):  'double',
-                ('INT'):      'int64',
-                ('FLOAT'):    'double',
-                ('STRING'):   'string',
-                ('STRING_8'): 'string',
-                ('BOOL'):     'bool',
-                ('DATE'):     'string',
-                ('DATETIME'): 'string',
+            'primitive': t.primitive cond {
+                'DECIMAL':  'double',
+                'INT':      'int64',
+                'FLOAT':    'double',
+                'STRING':   'string',
+                'STRING_8': 'string',
+                'BOOL':     'bool',
+                'DATE':     'string',
+                'DATETIME': 'string',
             },
-            ('sequence'): 'repeated ' + type(t.sequence),
+            'sequence': 'repeated ' + type(t.sequence),
             _: cond {
                 //seq.contains("google-protobuf", t.type_ref): //seq.sub("-", ".", t.type_ref),
                 _: t.type_ref,
