@@ -70,7 +70,7 @@ safe_tail -> first_safe=(tail "?") ops=(safe=(tail "?") | tail)* ":" fall=expr;
 pattern -> extra | %!patternterms(pattern|expr) | IDENT | NUM | C* "(" exprpattern=expr:",",? ")" C* | C* exprpattern=STR C*;
 extra -> ("..." ident=IDENT?);
 
-ARROW  -> /{:>|=>|>>|orderby|order|where|sum|max|mean|median|min};
+ARROW  -> /{:>|=>|>>|orderby|order|rank|where|sum|max|mean|median|min};
 IDENT  -> /{ \. | [$@A-Za-z_][0-9$@A-Za-z_]* };
 PKGPATH -> /{ (?: \\ | [^\\}] )* };
 STR    -> /{ " (?: \\. | [^\\"] )* "

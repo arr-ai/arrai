@@ -212,6 +212,23 @@ func NewOrderExpr(scanner parser.Scanner, a, key Expr) Expr {
 		})
 }
 
+// NewRankExpr evaluates a rank tuplef, given a relation lhs, returning a new
+// relation with each lhs tuple augmented by the tuplef attrs containing the
+// corresponding rank.
+func NewRankExpr(scanner parser.Scanner, a, key Expr) Expr {
+	key = ExprAsFunction(key)
+	return newBinExpr(scanner, a, key, "rank", "(%s rank %s)",
+		func(a, tuplef Value, local Scope) (Value, error) {
+			if x, ok := a.(Set); ok {
+				if l, ok := tuplef.(Closure); ok {
+					return Rank(x, func(v Tuple) Tuple { return SetCall(l, v).(Tuple) })
+				}
+				return nil, errors.Errorf("'order' rhs must be a Fn, not %T", a)
+			}
+			return nil, errors.Errorf("'order' lhs must be a Set, not %T", a)
+		})
+}
+
 func Call(a, b Value, local Scope) (Value, error) {
 	if x, ok := a.(Set); ok {
 		return SetCall(x, b), nil
