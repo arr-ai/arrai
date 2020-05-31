@@ -95,6 +95,8 @@ func TestEvalCondWithControlVar(t *testing.T) {
 	AssertCodesEvalToSameValue(t, `{}`, `let a = 3; a cond {1 :1, 2 :2 + 1}`)
 	AssertCodesEvalToSameValue(t, `{}`, `let a = 3; let b = a cond {1 :1, 2 :2 + 1}; b`)
 	AssertCodesEvalToSameValue(t, `{}`, `let a = 3; let b = a + 10 cond {1 :1, 2 :2 + 1}; b`)
+
+	AssertCodesEvalToSameValue(t, `1`, `let x = 1; 2 cond { 2: x }`)
 }
 
 func TestEvalCondWithControlVarMulti(t *testing.T) {
