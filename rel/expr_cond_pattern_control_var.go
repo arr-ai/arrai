@@ -49,9 +49,9 @@ func (expr CondPatternControlVarExpr) Eval(local Scope) (Value, error) {
 	}
 
 	for _, conditionPair := range expr.conditionPairs {
-		local, err = conditionPair.Bind(local, varVal)
+		bindings, err := conditionPair.Bind(local, varVal)
 		if err == nil {
-			val, err := conditionPair.Eval(local)
+			val, err := conditionPair.Eval(local.MatchedUpdate(bindings))
 			if err != nil {
 				return nil, err
 			}
