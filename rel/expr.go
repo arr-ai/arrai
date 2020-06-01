@@ -56,11 +56,6 @@ func (c ContextErr) GetLastScope() Scope {
 }
 
 func wrapContext(err error, expr Expr, scope Scope) error {
-	// removes stdlib
-	scope = scope.Without(".")
-	if _, isContextErr := err.(ContextErr); isContextErr {
-		return ContextErr{err, expr.Source(), EmptyScope}
-	}
 	return ContextErr{err, expr.Source(), scope}
 }
 
