@@ -266,16 +266,19 @@ func (e *BinExpr) String() string {
 
 // Eval returns the subject
 func (e *BinExpr) Eval(local Scope) (_ Value, err error) {
-	defer wrapPanic(e, &err)
+	defer wrapPanic(e, &err, local)
 	a, err := e.a.Eval(local)
 	if err != nil {
-		return nil, wrapContext(err, e)
+		return nil, wrapContext(err, e, local)
 	}
 
 	b, err := e.b.Eval(local)
 	if err != nil {
-		return nil, wrapContext(err, e)
+		return nil, wrapContext(err, e, local)
 	}
-
-	return e.eval(a, b, local)
+	val, err := e.eval(a, b, local)
+	if err != nil {
+		return nil, wrapContext(err, e, local)
+	}
+	return val, nil
 }

@@ -4,6 +4,7 @@ import (
 	"os"
 	"path"
 
+	"github.com/arr-ai/arrai/rel"
 	"github.com/arr-ai/arrai/syntax"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
@@ -77,6 +78,9 @@ VERSION:
 
 	err := app.Run(args)
 	if err != nil {
-		logrus.Fatal(err)
+		logrus.Info(err)
+		if _, isContextErr := err.(rel.ContextErr); isContextErr {
+			logrus.Info(createDebuggerShell(err))
+		}
 	}
 }
