@@ -55,111 +55,111 @@ $ arrai eval '{(a:1, b:2), (a:2, b:3), (a:2, b:4)} where .a!=2'
 #### Standard Cases
 
 ```bash
-$ arrai eval 'cond ( 2 > 1 : 1, 2 > 3 : 2)'
+$ arrai eval 'cond { 2 > 1 : 1, 2 > 3 : 2}'
 1
 ```
 Note: Trailing comma is allowed
 ```bash
-$ arrai eval 'cond (
+$ arrai eval 'cond {
     2 > 1 : 1,
     2 > 3 : 2,
-)'
+}'
 1
 ```
 
 ```bash
-$ arrai eval 'cond ( 2 > 1 : 1, 2 > 3 : 2, * : 3)'
+$ arrai eval 'cond { 2 > 1 : 1, 2 > 3 : 2, _ : 3}'
 1
 ```
 
 ```bash
-$ arrai eval 'cond ( 2 < 1 : 1, 2 > 3 : 2, * : 3)'
+$ arrai eval 'cond { 2 < 1 : 1, 2 > 3 : 2, _ : 3}'
 3
 ```
 
 ```bash
-$ arrai eval 'let a = cond ( 2 > 1 : 1, 2 > 3 : 2, * : 3);a * 3'
+$ arrai eval 'let a = cond { 2 > 1 : 1, 2 > 3 : 2, _ : 3};a * 3'
 3
 ```
 
 ```bash
-$ arrai eval 'let a = cond ( 2 < 1 : 1, 2 > 3 : 2, * : 3);a * 3'
+$ arrai eval 'let a = cond { 2 < 1 : 1, 2 > 3 : 2, _ : 3};a * 3'
 9
 ```
 
 ```bash
-$ arrai eval 'let a = cond ( 1 < 2 : 1, 2 > 3 : 2, * : 3);a * 3'
+$ arrai eval 'let a = cond { 1 < 2 : 1, 2 > 3 : 2, _ : 3};a * 3'
 3
 ```
 
 ```bash
-$ arrai eval 'let a = cond ( 2 < 1 : 1, 2 < 3 : 2, * : 3);a * 3'
+$ arrai eval 'let a = cond { 2 < 1 : 1, 2 < 3 : 2, _ : 3};a * 3'
 6
 ```
 
 ```bash
-$ arrai eval 'let a = cond ( 2 < 1 || 1 > 0 : 1, 2 < 3 : 2, * : 3);a * 3'
+$ arrai eval 'let a = cond { 2 < 1 || 1 > 0 : 1, 2 < 3 : 2, _ : 3};a * 3'
 3
 ```
 
 ```bash
-$ arrai eval 'let a = cond ( 2 < 1 || 1 > 2 : 1, 2 < 3 && 1 > 0 : 2, * : 3);a * 3'
+$ arrai eval 'let a = cond { 2 < 1 || 1 > 2 : 1, 2 < 3 && 1 > 0 : 2, _ : 3};a * 3'
 6
 ```
 
 ```bash
-$ arrai eval 'cond (cond (1 > 0 : 1) > 0 : 1, 2 < 3: 2, *:1 + 2)'
+$ arrai eval 'cond {cond {1 > 0 : 1} > 0 : 1, 2 < 3: 2, _:1 + 2}'
 1
 ```
 
 ```bash
-$ arrai eval 'cond (cond (1 > 2 : 1, * : 11) < 2 : 1, 2 < 3: 2, *:1 + 2)'
+$ arrai eval 'cond {cond {1 > 2 : 1, _ : 11} < 2 : 1, 2 < 3: 2, _:1 + 2}'
 2
 ```
 
 #### Control Var Cases
 ```bash
-$ arrai eval 'let a = 1; a cond (1 :1, 2 :2, *:1 + 2)'
+$ arrai eval 'let a = 1; a cond {1 :1, 2 :2, _:1 + 2}'
 1
 ```
 
 ```bash
-$ arrai eval 'let a = 1; a cond (1 :1 + 10, 2 : 2, *:1 + 2)'
+$ arrai eval 'let a = 1; a cond {1 :1 + 10, 2 : 2, _:1 + 2}'
 11
 ```
 
 ```bash
-$ arrai eval 'let a = 1; a cond (2 :2, *:1 + 2)'
+$ arrai eval 'let a = 1; a cond {2 :2, _:1 + 2}'
 3
 ```
 
 ```bash
-$ arrai eval 'let a = 1; let b = a cond (1 :1, 2 :2, *:1 + 2); b * 100'
+$ arrai eval 'let a = 1; let b = a cond {1 :1, 2 :2, _:1 + 2}; b * 100'
 100
 ```
 
 ```bash
-$ arrai eval 'let a = 1; (a + 1) cond (1 :1, 2 :2, *:1 + 2)'
+$ arrai eval 'let a = 1; a + 1 cond {1 :1, 2 :2, _:1 + 2}'
 2
 ```
 
 ```bash
-$ arrai eval 'let a = 2; a cond ( 1: "A", (2, 3): "B", *: "C")'
+$ arrai eval 'let a = 2; a cond { 1: "A", (2, 3): "B", _: "C"}'
 B
 ```
 
 ```bash
-$ arrai eval 'let a = 2; a cond ( a cond ((1,2) : 1): "A", (2, 3): "B", *: "C")'
+$ arrai eval 'let a = 2; a cond { (a cond {(1,2) : 1}): "A", (2, 3): "B", _: "C"}'
 B
 ```
 
 ```bash
-$ arrai eval 'let a = 1; a cond ( cond (2 > 1 : 1): "A", (2, 3): "B", *: "C")'
+$ arrai eval 'let a = 1; a cond { (cond {2 > 1 : 1}): "A", (2, 3): "B", _: "C"}'
 A
 ```
 
 ```bash
-$ arrai eval 'let a = 1; cond ( a cond (1 : 1) : "A", 2: "B", *: "C")'
+$ arrai eval 'let a = 1; cond { a cond {1 : 1} : "A", 2: "B", _: "C"}'
 A
 ```
 
