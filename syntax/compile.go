@@ -270,6 +270,7 @@ func (pc ParseContext) compileDictPattern(b ast.Branch) rel.Pattern {
 
 func (pc ParseContext) compileArrow(b ast.Branch, name string, c ast.Children) rel.Expr {
 	expr := pc.CompileExpr(b[exprTag].(ast.One).Node.(ast.Branch))
+	source := c.Scanner()
 	if arrows, has := b["arrow"]; has {
 		for _, arrow := range arrows.(ast.Many) {
 			branch := arrow.(ast.Branch)
@@ -285,18 +286,17 @@ func (pc ParseContext) compileArrow(b ast.Branch, name string, c ast.Children) r
 				expr = f(op, expr, pc.CompileExpr(arrow.(ast.Branch)[exprTag].(ast.One).Node.(ast.Branch)))
 			case "binding":
 				rhs := pc.CompileExpr(arrow.(ast.Branch)[exprTag].(ast.One).Node.(ast.Branch))
-				scanner := rhs.Source()
-				if ident := arrow.One("IDENT"); ident != nil {
-					rhs = rel.NewFunction(c.Scanner(), rel.NewIdentExpr(ident.Scanner(), ident.Scanner().String()), rhs)
-					scanner = ident.Scanner()
+				if pattern := arrow.One("pattern"); pattern != nil {
+					p := pc.compilePattern(pattern.(ast.Branch))
+					rhs = rel.NewFunction(source, p, rhs)
 				}
-				expr = binops["->"](scanner, expr, rhs)
+				expr = binops["->"](source, expr, rhs)
 			}
 		}
 	}
 	if name == "amp" {
 		for range c.(ast.Many) {
-			expr = rel.NewFunction(c.Scanner(), rel.NewIdentExpr(*parser.NewScanner("-"), "-"), expr)
+			expr = rel.NewFunction(source, rel.NewIdentExpr(*parser.NewScanner("-"), "-"), expr)
 		}
 	}
 	return expr
