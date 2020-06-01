@@ -111,7 +111,11 @@ func (e *UnaryExpr) String() string {
 func (e *UnaryExpr) Eval(local Scope) (Value, error) {
 	a, err := e.a.Eval(local)
 	if err != nil {
-		return nil, wrapContext(err, e)
+		return nil, wrapContext(err, e, local)
 	}
-	return e.eval(a, local)
+	val, err := e.eval(a, local)
+	if err != nil {
+		return nil, wrapContext(err, e, local)
+	}
+	return val, nil
 }

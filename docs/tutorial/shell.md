@@ -35,6 +35,32 @@ $ _
 
 In Windows, TODO.
 
+## Shell as debugger
+
+When you evaluate an arrai script and the script fails, the `arrai` program will
+drop into the `arrai` interactive shell with the scope near the point of failure
+available to the interactive shell as a tuple.
+
+The values in the scope can be accessed through the `@locals` variable.
+
+```bash
+$ arrai e 'let x = 1; (\a a + b)(x)'
+INFO[0000] Name "b" not found in {a, x}
+
+.:1:20:
+let x = 1; (\a a + b)(x)
+
+.:1:16:
+let x = 1; (\a a + b)(x)
+
+.:1:22:
+let x = 1; (\a a + b)(x)
+@> @locals.x
+1
+@> @locals.
+.a .x
+```
+
 ## Evaluating expressions
 
 To evaluate an expression in the shell, simply type it in and press enter.

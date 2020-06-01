@@ -57,7 +57,7 @@ func (e ArrayExpr) Eval(local Scope) (Value, error) {
 			var err error
 			value, err = expr.Eval(local)
 			if err != nil {
-				return nil, wrapContext(err, e)
+				return nil, wrapContext(err, e, local)
 			}
 		}
 		values = append(values, value)

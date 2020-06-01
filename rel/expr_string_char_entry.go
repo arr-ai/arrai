@@ -30,14 +30,14 @@ func (e StringCharTupleExpr) String() string {
 
 // Eval returns the subject
 func (e StringCharTupleExpr) Eval(local Scope) (_ Value, err error) {
-	defer wrapPanic(e, &err)
+	defer wrapPanic(e, &err, local)
 	at, err := e.at.Eval(local)
 	if err != nil {
-		return nil, wrapContext(err, e)
+		return nil, wrapContext(err, e, local)
 	}
 	char, err := e.char.Eval(local)
 	if err != nil {
-		return nil, wrapContext(err, e)
+		return nil, wrapContext(err, e, local)
 	}
 	return NewStringCharTuple(int(at.(Number).Float64()), rune(char.(Number).Float64())), nil
 }

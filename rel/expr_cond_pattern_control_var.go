@@ -45,15 +45,16 @@ func (expr CondPatternControlVarExpr) String() string {
 func (expr CondPatternControlVarExpr) Eval(local Scope) (Value, error) {
 	varVal, err := expr.controlVarExpr.Eval(local)
 	if err != nil {
-		return nil, wrapContext(err, expr.controlVarExpr)
+		return nil, wrapContext(err, expr.controlVarExpr, local)
 	}
 
 	for _, conditionPair := range expr.conditionPairs {
 		bindings, err := conditionPair.Bind(local, varVal)
 		if err == nil {
-			val, err := conditionPair.Eval(local.MatchedUpdate(bindings))
+			l := local.MatchedUpdate(bindings)
+			val, err := conditionPair.Eval(l)
 			if err != nil {
-				return nil, err
+				return nil, wrapContext(err, expr.controlVarExpr, l)
 			}
 			return val, nil
 		}
