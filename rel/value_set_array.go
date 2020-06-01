@@ -168,6 +168,12 @@ func (a Array) String() string {
 	return sb.String()
 }
 
+// Shift increments the Array's offset
+func (a Array) Shift(offset int) Array {
+	a.offset += offset
+	return a
+}
+
 // Eval returns the string.
 func (a Array) Eval(_ Scope) (Value, error) {
 	return a, nil
