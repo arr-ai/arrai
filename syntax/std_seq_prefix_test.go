@@ -32,7 +32,6 @@ func TestArrayHasPrefix(t *testing.T) { //nolint:dupl
 	AssertCodesEvalToSameValue(t, `false`, `//seq.has_prefix(['B'],['A','B','C','D','E'])`)
 	AssertCodesEvalToSameValue(t, `false`, `//seq.has_prefix(['B','C'],['A','B','C','D','E'])`)
 	AssertCodesEvalToSameValue(t, `false`, `//seq.has_prefix(['A','B','C','D','E','F'],['A','B','C','D','E'])`)
-	AssertCodesEvalToSameValue(t, `false`, `//seq.has_prefix(['A','B','C','D','E','F'],['A','B','C','D','E'])`)
 
 	AssertCodesEvalToSameValue(t, `true`, `//seq.has_prefix([1, 2],[1, 2, 3])`)
 	AssertCodesEvalToSameValue(t, `true`, `//seq.has_prefix([[1, 2]],[[1, 2], [3]])`)
@@ -96,9 +95,6 @@ func TestArrayTrimPrefix(t *testing.T) { //nolint:dupl
 	AssertCodesEvalToSameValue(t,
 		`['A','B','C','D','E']`,
 		`//seq.trim_prefix(['A','B','C','D','E','F'],['A','B','C','D','E'])`)
-	AssertCodesEvalToSameValue(t,
-		`['A','B','C','D','E']`,
-		`//seq.trim_prefix(['A','B','C','D','E','F'],['A','B','C','D','E'])`)
 
 	AssertCodesEvalToSameValue(t, `[3]`, `//seq.trim_prefix([1, 2],[1, 2, 3])`)
 	AssertCodesEvalToSameValue(t, `[[3]]`, `//seq.trim_prefix([[1, 2]],[[1, 2], [3]])`)
@@ -124,4 +120,7 @@ func TestBytesTrimPrefix(t *testing.T) {
 	AssertCodesEvalToSameValue(t, `<<>> `, `//seq.trim_prefix(<<>>, <<>>)       `)
 	AssertCodesEvalToSameValue(t, `<<>>`, `//seq.trim_prefix(<<'o'>>, <<>>)    `)
 	AssertCodesEvalToSameValue(t, `<<'hello'>> `, `//seq.trim_prefix(<<>>, <<'hello'>>)`)
+
+	AssertCodeErrors(t, `//seq.trim_prefix(1, <<'hello'>>)`, "")
+	AssertCodeErrors(t, `//seq.trim_prefix("he", <<'hello'>>)`, "")
 }

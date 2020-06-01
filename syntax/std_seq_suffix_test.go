@@ -114,4 +114,7 @@ func TestBytesTrimSuffix(t *testing.T) {
 	AssertCodesEvalToSameValue(t, `<<>>`, `//seq.trim_suffix(<<>>, <<>>)       `)
 	AssertCodesEvalToSameValue(t, `<<>>`, `//seq.trim_suffix(<<'o'>>, <<>>)    `)
 	AssertCodesEvalToSameValue(t, `<<'hello'>>`, `//seq.trim_suffix(<<>>, <<'hello'>>)`)
+
+	AssertCodeErrors(t, `//seq.trim_suffix(1, <<'hello'>>)`, "")
+	AssertCodeErrors(t, `//seq.trim_suffix('he', <<'hello'>>)`, "")
 }

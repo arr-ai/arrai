@@ -91,3 +91,10 @@ func mustAsString(v rel.Value) string {
 	}
 	panic("value is not a string")
 }
+
+func mustAsBytes(v rel.Value) string {
+	if b, ok := rel.AsBytes(v.(rel.Set)); ok {
+		return b.String()
+	}
+	panic("value is not a byte array")
+}

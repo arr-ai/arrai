@@ -146,13 +146,11 @@ func arrayHasSuffix(suffix rel.Value, subject rel.Array) rel.Value {
 
 func arrayTrimPrefix(prefix rel.Value, subject rel.Array) rel.Value {
 	if prefix.IsTrue() && subject.IsTrue() && arrayHasPrefix(prefix, subject).IsTrue() {
-		if prefixLen := prefix.(rel.Array).Count(); prefixLen <= subject.Count() {
-			switch result := rel.Difference(subject, prefix.(rel.Array)).(type) {
-			case rel.Array:
-				return result.Shift(-prefixLen)
-			case rel.Set:
-				return result
-			}
+		switch result := rel.Difference(subject, prefix.(rel.Array)).(type) {
+		case rel.Array:
+			return result.Shift(-prefix.(rel.Array).Count())
+		case rel.Set:
+			return result
 		}
 	}
 	return subject
@@ -160,11 +158,8 @@ func arrayTrimPrefix(prefix rel.Value, subject rel.Array) rel.Value {
 
 func arrayTrimSuffix(suffix rel.Value, subject rel.Array) rel.Value {
 	if suffix.IsTrue() && subject.IsTrue() && arrayHasSuffix(suffix, subject).IsTrue() {
-		suffixLen := suffix.(rel.Array).Count()
-		subjectLen := subject.Count()
-		if suffixLen <= subjectLen {
-			return rel.Difference(subject, suffix.(rel.Array).Shift(subjectLen-suffixLen))
-		}
+		suffix := suffix.(rel.Array)
+		return rel.Difference(subject, suffix.Shift(subject.Count()-suffix.Count()))
 	}
 	return subject
 }
