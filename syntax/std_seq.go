@@ -226,15 +226,47 @@ func stdSeqSplit(delimiter, subject rel.Value) rel.Value {
 	panic(fmt.Errorf("split: unsupported args: %s, %s", delimiter, subject))
 }
 
+func stdSeqTrimPrefix(prefix, subject rel.Value) rel.Value {
+	if stdSeqHasPrefix(prefix, subject).IsTrue() {
+		switch subject := subject.(type) {
+		case rel.String:
+			return rel.NewString([]rune(mustAsString(subject)[len(mustAsString(prefix)):]))
+		case rel.Array:
+			return arrayTrimPrefix(prefix, subject)
+		case rel.Bytes:
+			return rel.NewBytes([]byte(asString(subject)[len(asString(prefix)):]))
+		}
+	}
+	return subject
+}
+
+func stdSeqTrimSuffix(suffix, subject rel.Value) rel.Value {
+	if stdSeqHasSuffix(suffix, subject).IsTrue() {
+		switch subject := subject.(type) {
+		case rel.String:
+			subjectStr := mustAsString(subject)
+			return rel.NewString([]rune(subjectStr[:len(subjectStr)-len(mustAsString(suffix))]))
+		case rel.Array:
+			return arrayTrimSuffix(suffix, subject)
+		case rel.Bytes:
+			subjectStr := asString(subject)
+			return rel.NewBytes([]byte(subjectStr[:len(subjectStr)-len(asString(suffix))]))
+		}
+	}
+	return subject
+}
+
 func stdSeq() rel.Attr {
 	return rel.NewTupleAttr("seq",
 		rel.NewNativeFunctionAttr("concat", stdSeqConcat),
 		createFunc2Attr("contains", stdSeqContains),
 		createFunc2Attr("has_prefix", stdSeqHasPrefix),
 		createFunc2Attr("has_suffix", stdSeqHasSuffix),
+		createFunc2Attr("join", stdSeqJoin),
 		rel.NewNativeFunctionAttr("repeat", stdSeqRepeat),
 		createFunc3Attr("sub", stdSeqSub),
 		createFunc2Attr("split", stdSeqSplit),
-		createFunc2Attr("join", stdSeqJoin),
+		createFunc2Attr("trim_prefix", stdSeqTrimPrefix),
+		createFunc2Attr("trim_suffix", stdSeqTrimSuffix),
 	)
 }
