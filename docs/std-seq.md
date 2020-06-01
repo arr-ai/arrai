@@ -99,3 +99,29 @@ Usage:
 | example | equals |
 |:-|:-|
 | `//seq.repeat(2, "hots")` | `"hotshots"` |
+
+## `//seq.trim_prefix(prefix <: array, subject <: array) <: array` <br/> `//seq.trim_prefix(prefix <: string, subject <: string) <: string`
+
+`trim_prefix` checks whether the sequence `subject` is prefixed by sequence `prefix` and returns `subject` with `prefix` removed, otherwise it returns `subject` unmodified. It will only remove one copy of `prefix`.
+
+Usage:
+| example | equals |
+|:-|:-|
+| `//seq.trim_prefix("I'm", "I'm running out of stuff to write")` | `" running out of stuff to write"` |
+| `//seq.trim_prefix("to write", "I'm running out of stuff to write")` | `"I'm running out of stuff to write"` |
+| `//seq.trim_prefix(['A'],['A','B','C'])` | `['B','C']` |
+| `//seq.trim_prefix([1, 2],[1, 2, 3])` | `[3]` |
+| `//seq.trim_prefix([[1, 2]],[[1, 2], [3]])` | `[[3]]` |
+
+
+## `//seq.trim_suffix(suffix <: array, subject <: array) <: array` <br/> `//seq.trim_suffix(suffix <: string, subject <: string) <: string` 
+
+`trim_suffix` checks whether the sequence `subject` is suffixed by sequence `suffix` and returns `subject` with `suffix` removed, otherwise it returns `subject` unmodified. It will only remove one copy of `suffix`.
+
+Usage:
+| example | equals |
+|:-|:-|
+| `//seq.trim_suffix("I'm", "I'm running out of stuff to write")` | `"I'm running out of stuff to write"` |
+| `//seq.trim_suffix("to write", "I'm running out of stuff to write")` | `"I'm running out of stuff "` |
+| `//seq.trim_suffix(['E'],['A','B','C','D','E'])` | `['A','B','C','D']` |
+| `//seq.trim_suffix([[3, 4]],[[1 ,2], [3, 4]])` | `[[1 ,2]]` |
