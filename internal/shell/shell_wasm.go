@@ -2,6 +2,8 @@
 
 package shell
 
-func Shell() error {
+import "github.com/arr-ai/arrai/rel"
+
+func Shell(_ rel.Scope) error {
 	panic("not implemented")
 }

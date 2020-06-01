@@ -24,12 +24,12 @@ func (r RecursionExpr) Eval(local Scope) (Value, error) {
 	var name IdentExpr
 	var isIdent bool
 	if name, isIdent = exprs[0].(IdentExpr); !isIdent || len(exprs) != 1 {
-		return nil, errors.Errorf("Does not evaluate to a variable name: %v", r.name)
+		return nil, wrapContext(errors.Errorf("Does not evaluate to a variable name: %v", r.name), r, local)
 	}
 
 	val, err := r.fn.Eval(local)
 	if err != nil {
-		return nil, err
+		return nil, wrapContext(err, r, local)
 	}
 
 	argName := NewIdentExpr(name.Source(), name.String())
@@ -44,13 +44,13 @@ func (r RecursionExpr) Eval(local Scope) (Value, error) {
 				f = f.With(attr, NewClosure(local, NewFunction(fn.Source(), argName, fn.f).(*Function)))
 				continue
 			}
-			return nil, errors.Errorf("Recursion requires a tuple of functions: %v", t.String())
+			return nil, wrapContext(errors.Errorf("Recursion requires a tuple of functions: %v", t.String()), r, local)
 		}
 		return Call(r.fixt, f, local)
 	case Closure:
 		return Call(r.fix, NewClosure(local, NewFunction(f.Source(), argName, f.f).(*Function)), local)
 	}
-	return nil, errors.Errorf("Recursion does not support %T", val)
+	return nil, wrapContext(errors.Errorf("Recursion does not support %T", val), r, local)
 }
 
 func (r RecursionExpr) String() string {

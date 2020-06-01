@@ -54,7 +54,7 @@ func (e *SetExpr) Eval(local Scope) (Value, error) {
 	for _, expr := range e.elements {
 		value, err := EvalExpr(expr, local)
 		if err != nil {
-			return nil, wrapContext(err, e)
+			return nil, wrapContext(err, e, local)
 		}
 		values = append(values, value)
 	}

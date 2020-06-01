@@ -32,5 +32,5 @@ func evalFile(path string, w io.Writer) error {
 	if _, err := f.Read(buf); err != nil {
 		return err
 	}
-	return evalExpr(path, string(buf), w)
+	return createDebuggerShell(evalExpr(path, string(buf), w))
 }
