@@ -80,7 +80,9 @@ VERSION:
 	if err != nil {
 		logrus.Info(err)
 		if _, isContextErr := err.(rel.ContextErr); isContextErr {
-			logrus.Info(createDebuggerShell(err))
+			if err = createDebuggerShell(err); err != nil {
+				logrus.Info(err)
+			}
 		}
 	}
 }
