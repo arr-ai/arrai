@@ -20,7 +20,7 @@ func TestStrHasPrefix(t *testing.T) {
 	AssertCodeErrors(t, `//seq.has_prefix(1,"ABC")`, "")
 }
 
-func TestArrayHasPrefix(t *testing.T) {
+func TestArrayHasPrefix(t *testing.T) { //nolint:dupl
 	t.Parallel()
 	AssertCodesEvalToSameValue(t, `true`, `//seq.has_prefix(['A'],['A'])`)
 	AssertCodesEvalToSameValue(t, `true`, `//seq.has_prefix(['A','B'],['A','B'])`)
@@ -82,7 +82,7 @@ func TestStrTrimPrefix(t *testing.T) {
 	AssertCodeErrors(t, `//seq.trim_prefix(1,"ABC")`, "")
 }
 
-func TestArrayTrimPrefix(t *testing.T) {
+func TestArrayTrimPrefix(t *testing.T) { //nolint:dupl
 	t.Parallel()
 	AssertCodesEvalToSameValue(t, `[]`, `//seq.trim_prefix(['A'],['A'])`)
 	AssertCodesEvalToSameValue(t, `[]`, `//seq.trim_prefix(['A','B'],['A','B'])`)

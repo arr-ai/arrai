@@ -18,7 +18,7 @@ func TestStrHasSuffix(t *testing.T) {
 	AssertCodeErrors(t, `//seq.has_suffix(1,"ABC")`, "")
 }
 
-func TestArrayHasSuffix(t *testing.T) {
+func TestArrayHasSuffix(t *testing.T) { //nolint:dupl
 	t.Parallel()
 	AssertCodesEvalToSameValue(t, `true`, `//seq.has_suffix(['A','B'],['A','B'])`)
 
@@ -74,7 +74,7 @@ func TestStrTrimSuffix(t *testing.T) {
 	AssertCodeErrors(t, `//seq.trim_suffix(1,"ABC")`, "")
 }
 
-func TestArrayTrimSuffix(t *testing.T) {
+func TestArrayTrimSuffix(t *testing.T) { //nolint:dupl
 	t.Parallel()
 	AssertCodesEvalToSameValue(t, `[]`, `//seq.trim_suffix(['A','B'],['A','B'])`)
 
