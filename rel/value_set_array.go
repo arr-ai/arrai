@@ -212,7 +212,7 @@ func (a Array) Less(v Value) bool {
 		return a.offset < b.offset
 	}
 	n := len(a.values)
-	if n < len(b.values) {
+	if n > len(b.values) {
 		n = len(b.values)
 	}
 	for i, av := range a.values[:n] {
