@@ -42,6 +42,11 @@ func (c ContextErr) Error() string {
 	return fmt.Sprintf("%s\n%s", c.err.Error(), c.source.Context(parser.DefaultLimit))
 }
 
+// NextErr returns the error contained in ContextErr
+func (c ContextErr) NextErr() error {
+	return c.err
+}
+
 // GetLastScope gets the scope nearest to the error
 func (c ContextErr) GetLastScope() Scope {
 	ctxErr := c

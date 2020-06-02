@@ -71,9 +71,8 @@ func (x *DotExpr) Eval(local Scope) (_ Value, err error) {
 				}
 			}
 		}
-		return nil, MissingAttrError{
-			wrapContext(errors.Errorf("Missing attr %q (available: %v)", x.attr, t.Names()), x, local),
-		}
+		return nil, wrapContext(MissingAttrError{errors.Errorf("Missing attr %q (available: %v)", x.attr, t.Names())},
+			x, local)
 	}
 
 	switch t := a.(type) {
