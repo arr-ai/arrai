@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"fmt"
 
+	"github.com/go-errors/errors"
+
 	"github.com/arr-ai/wbnf/parser"
 )
 
@@ -49,7 +51,7 @@ func (expr CondPatternControlVarExpr) Eval(local Scope) (Value, error) {
 	}
 
 	for _, conditionPair := range expr.conditionPairs {
-		bindings, err := conditionPair.Bind(local, varVal)
+		bindings, err := expr.binding(conditionPair, local, varVal)
 		if err == nil {
 			l := local.MatchedUpdate(bindings)
 			val, err := conditionPair.Eval(l)
@@ -61,4 +63,23 @@ func (expr CondPatternControlVarExpr) Eval(local Scope) (Value, error) {
 	}
 
 	return None, nil
+}
+
+// binding will recover and return EmptyScope and Error whose error message is raised by panic.
+// Added this method as some `Bind` will execute panic.
+func (expr CondPatternControlVarExpr) binding(conditionPair PatternExpr,
+	scope Scope, controlVarVal Value) (rtScope Scope, err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			rtScope = EmptyScope
+			switch r := r.(type) {
+			case string:
+				err = errors.Errorf(r)
+			default:
+				err = errors.Errorf("calling to method Bind was failed")
+			}
+		}
+	}()
+
+	return conditionPair.Bind(scope, controlVarVal)
 }
