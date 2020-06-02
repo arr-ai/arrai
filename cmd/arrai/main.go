@@ -87,7 +87,7 @@ VERSION:
 				}
 			}
 		} else {
-			logrus.Info("Shell can not be started as you are not using a terminal")
+			logrus.Info("unable to start debug shell: standard input is not a terminal")
 		}
 	}
 }
