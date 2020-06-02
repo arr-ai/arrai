@@ -41,7 +41,7 @@ When you evaluate an arrai script and the script fails, the `arrai` program will
 drop into the `arrai` interactive shell with the scope near the point of failure
 available to the interactive shell as a tuple.
 
-The values in the scope can be accessed through the `@locals` variable.
+The values in the scope can be accessed through the `@` variable.
 
 ```bash
 $ arrai e 'let x = 1; (\a a + b)(x)'
@@ -55,9 +55,9 @@ let x = 1; (\a a + b)(x)
 
 .:1:22:
 let x = 1; (\a a + b)(x)
-@> @locals.x
+@> @.x
 1
-@> @locals.
+@> @.
 .a .x
 ```
 
