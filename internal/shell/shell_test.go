@@ -333,7 +333,7 @@ func TestAddLocalScope(t *testing.T) {
 		With("more", rel.NewNumber(1))
 	resultScope := addLocalScope(scope)
 
-	locals, hasLocals := resultScope.Get("@locals")
+	locals, hasLocals := resultScope.Get("@")
 	assert.True(t, hasLocals)
 
 	expectedTuple := rel.EmptyTuple.
@@ -342,6 +342,6 @@ func TestAddLocalScope(t *testing.T) {
 	assert.True(t, locals.(rel.Tuple).Equal(expectedTuple))
 
 	resultScope = addLocalScope(rel.EmptyScope)
-	_, hasLocals = resultScope.Get("@locals")
+	_, hasLocals = resultScope.Get("@")
 	assert.False(t, hasLocals)
 }
