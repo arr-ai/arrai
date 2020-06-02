@@ -53,7 +53,7 @@ func addLocalScope(initialScope rel.Scope) rel.Scope {
 		}
 	}
 	if len(attrs) > 0 {
-		scope = syntax.StdScope().With("@locals", rel.NewTuple(attrs...))
+		scope = syntax.StdScope().With("@", rel.NewTuple(attrs...))
 	}
 	return scope
 }
