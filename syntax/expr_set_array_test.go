@@ -44,5 +44,6 @@ func TestArrayWithHoles(t *testing.T) {
 }
 
 func TestSetOfArrays(t *testing.T) {
-	AssertCodesEvalToSameValue(t, `'{[1, 1], [1]}'`, `$'${{[1, 1], [1]}}'`)
+	// This tests an error when stringifying sets of arrays.
+	AssertCodesEvalToSameValue(t, `'{[1], [1, 1]}'`, `$'${{[1, 1], [1]}}'`)
 }
