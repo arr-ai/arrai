@@ -14,6 +14,7 @@ require (
 	github.com/cpuguy83/go-md2man/v2 v2.0.0 // indirect
 	github.com/go-errors/errors v1.0.1
 	github.com/gorilla/websocket v1.4.1
+	github.com/mattn/go-isatty v0.0.12
 	github.com/pkg/errors v0.9.1
 	github.com/rjeczalik/notify v0.9.2
 	github.com/sirupsen/logrus v1.4.2
@@ -21,7 +22,7 @@ require (
 	github.com/tealeg/xlsx v1.0.5
 	github.com/urfave/cli/v2 v2.1.1
 	golang.org/x/net v0.0.0-20200114155413-6afb5195e5aa // indirect
-	golang.org/x/sys v0.0.0-20200223170610-d5e6a3e2c0ae // indirect
+	golang.org/x/sys v0.0.0-20200523222454-059865788121 // indirect
 	golang.org/x/text v0.3.2 // indirect
 	google.golang.org/genproto v0.0.0-20200128133413-58ce757ed39b // indirect
 	google.golang.org/grpc v1.27.0
