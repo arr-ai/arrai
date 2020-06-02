@@ -170,6 +170,7 @@ func TestEvalCondPatternMatchingWithControlVar(t *testing.T) {
 	AssertCodesEvalToSameValue(t, `42`, `{'a': {'z': 10}} cond {{'a': {'b': b}}: b, _:42}`)
 	AssertCodesEvalToSameValue(t, `10`, `(a: (b: 10)) cond {(a: (:b)): b, _:42}`)
 	AssertCodesEvalToSameValue(t, `42`, `(a: (z: 10)) cond {(a: (:b)): b, _:42}`)
+
 	AssertCodesEvalToSameValue(t, `42`, `[] cond {[b]: b, _:42}`)
 	AssertCodesEvalToSameValue(t, `42`, `(a: []) cond {(a: [b]): b, _:42}`)
 
