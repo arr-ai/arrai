@@ -150,26 +150,26 @@ func TestEvalCondWithControlVarMultiStr(t *testing.T) {
 }
 
 func TestEvalCondPatternMatchingWithControlVar(t *testing.T) {
-	// t.Parallel()
-	// AssertCodesEvalToSameValue(t, `2`, `let a = 'A' ; a cond {'A':2}`)
-	// AssertCodesEvalToSameValue(t, `2`, `let a = 'ABC' ; a cond {'ABC':2}`)
-	// AssertCodesEvalToSameValue(t, `2`, `let a = "A" ; a cond {"A":2}`)
-	// AssertCodesEvalToSameValue(t, `2`, `let a = "ABC" ; a cond {"ABC":2}`)
-	// AssertCodesEvalToSameValue(t, `2`, `let [a,b,c] = [10,100,1000]; 1100 cond {(b + c):2}`)
+	t.Parallel()
+	AssertCodesEvalToSameValue(t, `2`, `let a = 'A' ; a cond {'A':2}`)
+	AssertCodesEvalToSameValue(t, `2`, `let a = 'ABC' ; a cond {'ABC':2}`)
+	AssertCodesEvalToSameValue(t, `2`, `let a = "A" ; a cond {"A":2}`)
+	AssertCodesEvalToSameValue(t, `2`, `let a = "ABC" ; a cond {"ABC":2}`)
+	AssertCodesEvalToSameValue(t, `2`, `let [a,b,c] = [10,100,1000]; 1100 cond {(b + c):2}`)
 
-	// AssertCodesEvalToSameValue(t, `2`, `let a = [1, 2]; a cond {[1, 2]: 2}`)
-	// AssertCodesEvalToSameValue(t, `2`, `let a = ['a', 'b']; a cond {['a', 'b']: 2}`)
-	// AssertCodesEvalToSameValue(t, `6`, `let a = (x:4); a cond {(x:x): x + 2}`)
-	// AssertCodesEvalToSameValue(t, `6`, `(x:4) cond {(x:x): x + 2}`)
+	AssertCodesEvalToSameValue(t, `2`, `let a = [1, 2]; a cond {[1, 2]: 2}`)
+	AssertCodesEvalToSameValue(t, `2`, `let a = ['a', 'b']; a cond {['a', 'b']: 2}`)
+	AssertCodesEvalToSameValue(t, `6`, `let a = (x:4); a cond {(x:x): x + 2}`)
+	AssertCodesEvalToSameValue(t, `6`, `(x:4) cond {(x:x): x + 2}`)
 
-	// AssertCodesEvalToSameValue(t, `8`, `let a = (a:3); a cond {(a:x): x + 5,_:2}`)
-	// AssertCodesEvalToSameValue(t, `8`, `let a = {"a":3}; a cond {{"a":x}: x + 5,_:2}`)
-	// AssertCodesEvalToSameValue(t, `2`, `let a = {"a":3}; a cond {1 : x + 5,_:2}`)
+	AssertCodesEvalToSameValue(t, `8`, `let a = (a:3); a cond {(a:x): x + 5,_:2}`)
+	AssertCodesEvalToSameValue(t, `8`, `let a = {"a":3}; a cond {{"a":x}: x + 5,_:2}`)
+	AssertCodesEvalToSameValue(t, `2`, `let a = {"a":3}; a cond {1 : x + 5,_:2}`)
 
-	// AssertCodesEvalToSameValue(t, `10`, `{'a': {'b': 10}} cond {{'a': {'b': b}}: b, _:42}`)
-	// AssertCodesEvalToSameValue(t, `42`, `{'a': {'z': 10}} cond {{'a': {'b': b}}: b, _:42}`)
-	// AssertCodesEvalToSameValue(t, `10`, `(a: (b: 10)) cond {(a: (:b)): b, _:42}`)
-	// AssertCodesEvalToSameValue(t, `42`, `(a: (z: 10)) cond {(a: (:b)): b, _:42}`)
+	AssertCodesEvalToSameValue(t, `10`, `{'a': {'b': 10}} cond {{'a': {'b': b}}: b, _:42}`)
+	AssertCodesEvalToSameValue(t, `42`, `{'a': {'z': 10}} cond {{'a': {'b': b}}: b, _:42}`)
+	AssertCodesEvalToSameValue(t, `10`, `(a: (b: 10)) cond {(a: (:b)): b, _:42}`)
+	AssertCodesEvalToSameValue(t, `42`, `(a: (z: 10)) cond {(a: (:b)): b, _:42}`)
 	AssertCodesEvalToSameValue(t, `42`, `[] cond {[b]: b, _:42}`)
 	AssertCodesEvalToSameValue(t, `42`, `(a: []) cond {(a: [b]): b, _:42}`)
 
