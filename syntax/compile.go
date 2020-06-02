@@ -589,12 +589,15 @@ func (pc ParseContext) compileSafeTails(base rel.Expr, tail ast.Node) rel.Expr {
 			return func(v rel.Value, local rel.Scope) (rel.Value, error) {
 				val, err := tailFunc(v, local)
 				if err != nil {
-					switch err.(type) {
-					case rel.MissingAttrError, rel.NoReturnError:
+					switch e := err.(type) {
+					case rel.NoReturnError:
 						return nil, nil
-					default:
-						return nil, err
+					case rel.ContextErr:
+						if _, isMissingAttrError := e.NextErr().(rel.MissingAttrError); isMissingAttrError {
+							return nil, nil
+						}
 					}
+					return nil, err
 				}
 				return val, nil
 			}
