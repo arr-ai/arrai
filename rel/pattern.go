@@ -207,7 +207,10 @@ func (p TuplePattern) Bind(local Scope, value Value) (Scope, error) {
 			result = result.MatchedUpdate(scope)
 			continue
 		}
-		tupleExpr := tuple.MustGet(attr.name)
+		tupleExpr, found := tuple.Get(attr.name)
+		if !found {
+			return EmptyScope, errors.Errorf("couldn't find %s in tuple %s", attr.name, tuple)
+		}
 		scope, err := attr.pattern.Bind(local, tupleExpr)
 		if err != nil {
 			return EmptyScope, err
@@ -316,7 +319,10 @@ func (p DictPattern) Bind(local Scope, value Value) (Scope, error) {
 
 			continue
 		}
-		dictValue := m.MustGet(entry.at)
+		dictValue, found := m.Get(entry.at)
+		if !found {
+			return EmptyScope, errors.Errorf("couldn't find %s in dict %s", entry.at, m)
+		}
 		scope, err := entry.value.Bind(local, dictValue.(Value))
 		if err != nil {
 			return EmptyScope, err
