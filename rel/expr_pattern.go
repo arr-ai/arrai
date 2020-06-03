@@ -2,25 +2,26 @@ package rel
 
 import "fmt"
 
-type PatternExpr struct {
+// PatternExprPair a Pattern/Expr pair
+type PatternExprPair struct {
 	pattern Pattern
 	expr    Expr
 }
 
-// NewPatternExpr returns a new PatternExpr.
-func NewPatternExpr(pattern Pattern, expr Expr) PatternExpr {
-	return PatternExpr{pattern, expr}
+// NewPatternExprPair returns a new PatternExprPair.
+func NewPatternExprPair(pattern Pattern, expr Expr) PatternExprPair {
+	return PatternExprPair{pattern, expr}
 }
 
 // String returns a string representation of a PatternPair.
-func (pt PatternExpr) String() string {
+func (pt PatternExprPair) String() string {
 	return fmt.Sprintf("%s:%s", pt.pattern, pt.expr)
 }
 
-func (pt PatternExpr) Bind(local Scope, value Value) (Scope, error) {
+func (pt PatternExprPair) Bind(local Scope, value Value) (Scope, error) {
 	return pt.pattern.Bind(local, value)
 }
 
-func (pt PatternExpr) Eval(local Scope) (Value, error) {
+func (pt PatternExprPair) Eval(local Scope) (Value, error) {
 	return pt.expr.Eval(local)
 }

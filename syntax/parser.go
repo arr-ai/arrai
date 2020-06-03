@@ -24,7 +24,6 @@ expr   -> C* amp="&"* @ C* arrow=(
         > C* @:binop="&&" C*
         > C* @:compare=/{!?(?:<:|=|<=?|>=?|\((?:<=?|>=?|<>=?)\))} C*
         > C* @ if=("if" t=expr ("else" f=expr)?)* C*
-        > C* @ cond=("cond" "{" (condition=pattern ":" value=expr):SEQ_COMMENT,? "}")? C*
         > C* @:binop=/{\+\+|[+|]|-%?} C*
         > C* @:binop=/{&~|&|~~?|[-<][-&][->]} C*
         > C* @:binop=/{//|[*/%]|\\} C*
@@ -35,6 +34,7 @@ expr   -> C* amp="&"* @ C* arrow=(
         > C* (get | @) tail_op=(safe_tail | tail)* C*
         > %!patternterms(expr)
         | C* cond=("cond" "{" (key=@ ":" value=@):SEQ_COMMENT,? "}") C*
+        | C* cond=("cond" controlVar=expr "{" (condition=pattern ":" value=@):SEQ_COMMENT,? "}") C*
         | C* "{:" C* embed=(grammar=@ ":" subgrammar=%%ast) ":}" C*
         | C* op="\\\\" @ C*
         | C* fn="\\" IDENT @ C*

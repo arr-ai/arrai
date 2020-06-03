@@ -11,11 +11,11 @@ import (
 type CondPatternControlVarExpr struct {
 	ExprScanner
 	controlVarExpr Expr
-	conditionPairs []PatternExpr
+	conditionPairs []PatternExprPair
 }
 
 // NewCondPatternControlVarExpr returns a new CondPatternControlVarExpr.
-func NewCondPatternControlVarExpr(scanner parser.Scanner, controlVar Expr, patternExprs ...PatternExpr) Expr {
+func NewCondPatternControlVarExpr(scanner parser.Scanner, controlVar Expr, patternExprs ...PatternExprPair) Expr {
 	return CondPatternControlVarExpr{ExprScanner{scanner}, controlVar, patternExprs}
 }
 
