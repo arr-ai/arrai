@@ -905,6 +905,12 @@ func which(b ast.Branch, names ...string) (string, ast.Children) {
 	return "", nil
 }
 
+func dotUnary(f binOpFunc) unOpFunc {
+	return func(scanner parser.Scanner, e rel.Expr) rel.Expr {
+		return f(scanner, rel.DotIdent, e)
+	}
+}
+
 type unOpFunc func(scanner parser.Scanner, e rel.Expr) rel.Expr
 
 var unops = map[string]unOpFunc{
@@ -914,6 +920,9 @@ var unops = map[string]unOpFunc{
 	"!":  rel.NewNotExpr,
 	"*":  rel.NewEvalExpr,
 	"//": NewPackageExpr,
+	"=>": dotUnary(rel.NewMapExpr),
+	">>": dotUnary(rel.NewSequenceMapExpr),
+	":>": dotUnary(rel.NewTupleMapExpr),
 }
 
 type binOpFunc func(scanner parser.Scanner, a, b rel.Expr) rel.Expr
