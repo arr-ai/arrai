@@ -520,7 +520,7 @@ func (pc ParseContext) compileTail(base rel.Expr, tail ast.Node) rel.Expr {
 				exprs = append(exprs, arg.One(exprTag))
 			}
 			for _, arg := range pc.compileExprs(exprs...) {
-				base = rel.NewCallExpr(call.Scanner(), base, arg)
+				base = rel.NewCallExpr(handleAccessScanners(base.Source(), call.Scanner()), base, arg)
 			}
 		}
 		base = pc.compileGet(base, tail.One("get"))
@@ -543,6 +543,7 @@ func (pc ParseContext) compileTailFunc(tail ast.Node) rel.SafeTailCallback {
 					if err != nil {
 						return nil, err
 					}
+					//TODO: scanner won't highlight calls properly in safe call
 					v, err = rel.SafeSetCall(v.(rel.Set), a)
 					if err != nil {
 						return nil, err
@@ -563,7 +564,7 @@ func (pc ParseContext) compileTailFunc(tail ast.Node) rel.SafeTailCallback {
 				attr = parseArraiString(scanner.String())
 			}
 			return func(v rel.Value, local rel.Scope) (rel.Value, error) {
-				return rel.NewDotExpr(scanner, v, attr).Eval(local)
+				return rel.NewDotExpr(handleAccessScanners(v.Source(), scanner), v, attr).Eval(local)
 			}
 		}
 	}
@@ -572,14 +573,17 @@ func (pc ParseContext) compileTailFunc(tail ast.Node) rel.SafeTailCallback {
 
 func (pc ParseContext) compileGet(base rel.Expr, get ast.Node) rel.Expr {
 	if get != nil {
+		var scanner parser.Scanner
+		var attr string
 		if ident := get.One("IDENT"); ident != nil {
-			scanner := ident.One("").(ast.Leaf).Scanner()
-			base = rel.NewDotExpr(scanner, base, scanner.String())
+			scanner = ident.One("").(ast.Leaf).Scanner()
+			attr = scanner.String()
 		}
 		if str := get.One("STR"); str != nil {
-			s := str.One("").Scanner()
-			base = rel.NewDotExpr(s, base, parseArraiString(s.String()))
+			scanner = str.One("").Scanner()
+			attr = parseArraiString(scanner.String())
 		}
+		base = rel.NewDotExpr(handleAccessScanners(base.Source(), scanner), base, attr)
 	}
 	return base
 }
@@ -622,6 +626,21 @@ func (pc ParseContext) compileSafeTails(base rel.Expr, tail ast.Node) rel.Expr {
 	}
 	//TODO: panic?
 	return base
+}
+
+func handleAccessScanners(base, access parser.Scanner) parser.Scanner {
+	if len(base.String()) == 0 {
+		return access
+	}
+	// handles .a
+	if base.String() == "." {
+		return *access.Skip(-1)
+	}
+	scanner, err := parser.MergeScanners(base, access)
+	if err != nil {
+		panic(err)
+	}
+	return scanner
 }
 
 func (pc ParseContext) compileRelation(c ast.Children) rel.Expr {
