@@ -346,6 +346,7 @@ func (p DictPattern) String() string {
 	return b.String()
 }
 
+// ExprsPattern a wrapper represents Expr as Pattern, then Expr can be compiled to Pattern too.
 type ExprsPattern struct {
 	exprs []Expr
 }
