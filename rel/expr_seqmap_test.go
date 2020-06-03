@@ -9,7 +9,7 @@ import (
 func TestSequenceMapExprAccessors(t *testing.T) {
 	t.Parallel()
 
-	lhs := NewArray(NewNumber(float64(1)))
+	lhs := NewArray(NewNumber(1))
 	fn := NewNumber(2)
 
 	expr := NewSequenceMapExpr(*parser.NewScanner(""), lhs, fn).(*SequenceMapExpr)
