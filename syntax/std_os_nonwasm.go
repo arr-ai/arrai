@@ -17,6 +17,9 @@ func stdOsGetArgs() rel.Value {
 	default:
 		if RunOmitted {
 			offset = 1
+		} else if len(os.Args) == 1 {
+			// to handle running script from syntax library
+			return rel.NewArray()
 		} else {
 			offset = 2
 		}
