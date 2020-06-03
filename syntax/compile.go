@@ -901,7 +901,7 @@ type binOpFunc func(scanner parser.Scanner, a, b rel.Expr) rel.Expr
 
 var binops = map[string]binOpFunc{
 	"->":      rel.NewArrowExpr,
-	"=>":      rel.NewMapExpr,
+	"=>":      rel.NewDArrowExpr,
 	">>":      rel.NewSequenceMapExpr,
 	">>>":     rel.NewIndexedSequenceMapExpr,
 	":>":      rel.NewTupleMapExpr,
