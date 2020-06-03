@@ -20,5 +20,5 @@ func TestEvalNotExistingFile(t *testing.T) {
 		evalFile("version", nil).Error())
 
 	require.Equal(t, `"`+string([]rune{'.', os.PathSeparator})+`version": file not found`,
-		evalFile("./version", nil).Error())
+		evalFile(string([]rune{'.', os.PathSeparator})+"version", nil).Error())
 }
