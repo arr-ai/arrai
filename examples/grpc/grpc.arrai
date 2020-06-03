@@ -1,7 +1,7 @@
 (
     type: //fn.fix(\type \t
-        t.type cond {
-            'primitive': t.primitive cond {
+        cond t.type {
+            'primitive': cond t.primitive {
                 'DECIMAL':  'double',
                 'INT':      'int64',
                 'FLOAT':    'double',

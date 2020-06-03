@@ -119,47 +119,47 @@ $ arrai eval 'cond {cond {1 > 2 : 1, _ : 11} < 2 : 1, 2 < 3: 2, _:1 + 2}'
 
 #### Control Var Cases
 ```bash
-$ arrai eval 'let a = 1; a cond {1 :1, 2 :2, _:1 + 2}'
+$ arrai eval 'let a = 1; cond a {1 :1, 2 :2, _:1 + 2}'
 1
 ```
 
 ```bash
-$ arrai eval 'let a = 1; a cond {1 :1 + 10, 2 : 2, _:1 + 2}'
+$ arrai eval 'let a = 1; cond a {1 :1 + 10, 2 : 2, _:1 + 2}'
 11
 ```
 
 ```bash
-$ arrai eval 'let a = 1; a cond {2 :2, _:1 + 2}'
+$ arrai eval 'let a = 1; cond a {2 :2, _:1 + 2}'
 3
 ```
 
 ```bash
-$ arrai eval 'let a = 1; let b = a cond {1 :1, 2 :2, _:1 + 2}; b * 100'
+$ arrai eval 'let a = 1; let b = cond a {1 :1, 2 :2, _:1 + 2}; b * 100'
 100
 ```
 
 ```bash
-$ arrai eval 'let a = 1; a + 1 cond {1 :1, 2 :2, _:1 + 2}'
+$ arrai eval 'let a = 1; cond a + 1 {1 :1, 2 :2, _:1 + 2}'
 2
 ```
 
 ```bash
-$ arrai eval 'let a = 2; a cond { 1: "A", (2, 3): "B", _: "C"}'
+$ arrai eval 'let a = 2; cond a { 1: "A", (2, 3): "B", _: "C"}'
 B
 ```
 
 ```bash
-$ arrai eval 'let a = 2; a cond { (a cond {(1,2) : 1}): "A", (2, 3): "B", _: "C"}'
+$ arrai eval 'let a = 2; cond a { (cond a {(1,2) : 1}): "A", (2, 3): "B", _: "C"}'
 B
 ```
 
 ```bash
-$ arrai eval 'let a = 1; a cond { (cond {2 > 1 : 1}): "A", (2, 3): "B", _: "C"}'
+$ arrai eval 'let a = 1; cond a { (cond {2 > 1 : 1}): "A", (2, 3): "B", _: "C"}'
 A
 ```
 
 ```bash
-$ arrai eval 'let a = 1; cond { a cond {1 : 1} : "A", 2: "B", _: "C"}'
+$ arrai eval 'let a = 1; cond { cond a {1 : 1} : "A", 2: "B", _: "C"}'
 A
 ```
 
