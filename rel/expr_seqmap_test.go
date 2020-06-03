@@ -6,23 +6,14 @@ import (
 	"github.com/arr-ai/wbnf/parser"
 )
 
-func TestSequenceMapExprIdent(t *testing.T) {
+func TestSequenceMapExprAccessors(t *testing.T) {
 	t.Parallel()
 
-	AssertExprsEvalToSameValue(t,
-		NewSequenceMapExpr(
-			*parser.NewScanner(""),
-			NewArray(
-				NewNumber(float64(1)),
-				NewNumber(float64(2)),
-				NewNumber(float64(3)),
-			),
-			NewIdentExpr(*parser.NewScanner("."), "."),
-		),
-		NewArray(
-			NewNumber(float64(1)),
-			NewNumber(float64(2)),
-			NewNumber(float64(3)),
-		),
-	)
+	lhs := NewArray(NewNumber(float64(1)))
+	fn := NewNumber(float64(2))
+
+	expr := NewSequenceMapExpr(*parser.NewScanner(""), lhs, fn).(*SequenceMapExpr)
+
+	AssertExprsEvalToSameValue(t, lhs, expr.LHS())
+	AssertExprsEvalToSameValue(t, fn, expr.Fn())
 }
