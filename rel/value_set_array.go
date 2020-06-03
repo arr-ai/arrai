@@ -168,6 +168,12 @@ func (a Array) String() string {
 	return sb.String()
 }
 
+// Shift increments the Array's offset
+func (a Array) Shift(offset int) Array {
+	a.offset += offset
+	return a
+}
+
 // Eval returns the string.
 func (a Array) Eval(_ Scope) (Value, error) {
 	return a, nil
@@ -206,7 +212,7 @@ func (a Array) Less(v Value) bool {
 		return a.offset < b.offset
 	}
 	n := len(a.values)
-	if n < len(b.values) {
+	if n > len(b.values) {
 		n = len(b.values)
 	}
 	for i, av := range a.values[:n] {

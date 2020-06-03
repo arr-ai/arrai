@@ -90,11 +90,10 @@ func arrayJoin(joiner rel.Value, subject rel.Array) rel.Value {
 
 // Check if array subject starts with prefix.
 func arrayHasPrefix(prefix rel.Value, subject rel.Array) rel.Value {
-	prefixArray := convert2Array(prefix)
-
-	if !prefixArray.IsTrue() && subject.IsTrue() {
+	if !prefix.IsTrue() {
 		return rel.NewBool(true)
 	}
+	prefixArray := convert2Array(prefix)
 	if subject.Count() < prefixArray.Count() {
 		return rel.NewBool(false)
 	}
@@ -120,7 +119,7 @@ func arrayHasPrefix(prefix rel.Value, subject rel.Array) rel.Value {
 func arrayHasSuffix(suffix rel.Value, subject rel.Array) rel.Value {
 	suffixArray := convert2Array(suffix)
 
-	if !suffixArray.IsTrue() && subject.IsTrue() {
+	if !suffixArray.IsTrue() {
 		return rel.NewBool(true)
 	}
 	if subject.Count() < suffixArray.Count() {
@@ -145,15 +144,30 @@ func arrayHasSuffix(suffix rel.Value, subject rel.Array) rel.Value {
 	return rel.NewBool(true)
 }
 
-func convert2Array(val rel.Value) rel.Array {
-	switch val := val.(type) {
-	case rel.Array:
-		return val
-	case rel.GenericSet:
-		valArray, _ := rel.AsArray(val)
-		return valArray
+func arrayTrimPrefix(prefix rel.Value, subject rel.Array) rel.Value {
+	if prefix.IsTrue() && subject.IsTrue() && arrayHasPrefix(prefix, subject).IsTrue() {
+		switch result := rel.Difference(subject, prefix.(rel.Array)).(type) {
+		case rel.Array:
+			return result.Shift(-prefix.(rel.Array).Count())
+		case rel.Set:
+			return result
+		}
 	}
+	return subject
+}
 
+func arrayTrimSuffix(suffix rel.Value, subject rel.Array) rel.Value {
+	if suffix.IsTrue() && subject.IsTrue() && arrayHasSuffix(suffix, subject).IsTrue() {
+		suffix := suffix.(rel.Array)
+		return rel.Difference(subject, suffix.Shift(subject.Count()-suffix.Count()))
+	}
+	return subject
+}
+
+func convert2Array(val rel.Value) rel.Array {
+	if array, is := rel.AsArray(val.(rel.Set)); is {
+		return array
+	}
 	panic("it supports types rel.Array and rel.GenericSet only.")
 }
 

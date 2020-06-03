@@ -43,9 +43,24 @@ func shellFilterInputRune(r rune) (rune, bool) {
 	return r, true
 }
 
-func Shell() error {
+func addLocalScope(initialScope rel.Scope) rel.Scope {
+	scope := syntax.StdScope()
+	attrs := make([]rel.Attr, 0)
+	for e := initialScope.Enumerator(); e.MoveNext(); {
+		name, val := e.Current()
+		if v, isValue := val.(rel.Value); isValue {
+			attrs = append(attrs, rel.NewAttr(name, v))
+		}
+	}
+	if len(attrs) > 0 {
+		scope = syntax.StdScope().With("@", rel.NewTuple(attrs...))
+	}
+	return scope
+}
+
+func Shell(local rel.Scope) error {
 	ctx := log.WithConfigs(log.SetVerboseMode(true)).Onto(context.Background())
-	sh := newShellInstance(newLineCollector(), syntax.StdScope())
+	sh := newShellInstance(newLineCollector(), addLocalScope(local))
 	l, err := readline.NewEx(&readline.Config{
 		Prompt:              shellPrompt,
 		HistoryFile:         os.ExpandEnv("${HOME}/.arrai_history"),

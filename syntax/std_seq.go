@@ -226,15 +226,59 @@ func stdSeqSplit(delimiter, subject rel.Value) rel.Value {
 	panic(fmt.Errorf("split: unsupported args: %s, %s", delimiter, subject))
 }
 
+func stdSeqTrimPrefix(prefix, subject rel.Value) rel.Value {
+	if stdSeqHasPrefix(prefix, subject).IsTrue() {
+		switch subject := subject.(type) {
+		case rel.String:
+			prefixStr := mustAsString(prefix)
+			subjectStr := mustAsString(subject)
+			if strings.HasPrefix(subjectStr, prefixStr) {
+				return rel.NewString([]rune(subjectStr[len(prefixStr):]))
+			}
+		case rel.Array:
+			return arrayTrimPrefix(prefix, subject)
+		case rel.Bytes:
+			prefixStr := mustAsBytes(prefix)
+			subjectStr := mustAsBytes(subject)
+			if strings.HasPrefix(subjectStr, prefixStr) {
+				return rel.NewBytes([]byte(subjectStr[len(prefixStr):]))
+			}
+		}
+	}
+	return subject
+}
+
+func stdSeqTrimSuffix(suffix, subject rel.Value) rel.Value {
+	switch subject := subject.(type) {
+	case rel.String:
+		suffixStr := mustAsString(suffix)
+		subjectStr := mustAsString(subject)
+		if strings.HasSuffix(subjectStr, suffixStr) {
+			return rel.NewString([]rune(subjectStr[:len(subjectStr)-len(suffixStr)]))
+		}
+	case rel.Array:
+		return arrayTrimSuffix(suffix, subject)
+	case rel.Bytes:
+		suffixStr := mustAsBytes(suffix)
+		subjectStr := mustAsBytes(subject)
+		if strings.HasSuffix(subjectStr, suffixStr) {
+			return rel.NewBytes([]byte(subjectStr[:len(subjectStr)-len(suffixStr)]))
+		}
+	}
+	return subject
+}
+
 func stdSeq() rel.Attr {
 	return rel.NewTupleAttr("seq",
 		rel.NewNativeFunctionAttr("concat", stdSeqConcat),
 		createFunc2Attr("contains", stdSeqContains),
 		createFunc2Attr("has_prefix", stdSeqHasPrefix),
 		createFunc2Attr("has_suffix", stdSeqHasSuffix),
+		createFunc2Attr("join", stdSeqJoin),
 		rel.NewNativeFunctionAttr("repeat", stdSeqRepeat),
 		createFunc3Attr("sub", stdSeqSub),
 		createFunc2Attr("split", stdSeqSplit),
-		createFunc2Attr("join", stdSeqJoin),
+		createFunc2Attr("trim_prefix", stdSeqTrimPrefix),
+		createFunc2Attr("trim_suffix", stdSeqTrimSuffix),
 	)
 }

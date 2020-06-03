@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/arr-ai/frozen"
-	"github.com/go-errors/errors"
 )
 
 // Pattern can be inside an Expr, Expr can be a Pattern.
@@ -67,32 +66,32 @@ func (p ArrayPattern) Bind(local Scope, value Value) (Scope, error) {
 			if len(p.items) == 0 {
 				return EmptyScope, nil
 			}
-			panic(fmt.Sprintf("value [] is empty but pattern %s is not", p))
+			return EmptyScope, fmt.Errorf("value [] is empty but pattern %s is not", p)
 		}
-		panic(fmt.Sprintf("value %s is not an array", value))
+		return EmptyScope, fmt.Errorf("value %s is not an array", value)
 	}
 
 	array, is := value.(Array)
 	if !is {
-		panic(fmt.Sprintf("value %s is not an array", value))
+		return EmptyScope, fmt.Errorf("value %s is not an array", value)
 	}
 
 	extraElements := make(map[int]int)
 	for i, item := range p.items {
 		if _, is := item.(ExtraElementPattern); is {
 			if len(extraElements) == 1 {
-				panic("multiple ... not supported yet")
+				return EmptyScope, fmt.Errorf("multiple ... not supported yet")
 			}
 			extraElements[i] = array.Count() - len(p.items)
 		}
 	}
 
 	if len(p.items) > array.Count()+len(extraElements) {
-		panic(fmt.Sprintf("length of array %s shorter than array pattern %s", array, p))
+		return EmptyScope, fmt.Errorf("length of array %s shorter than array pattern %s", array, p)
 	}
 
 	if len(extraElements) == 0 && len(p.items) < array.Count() {
-		panic(fmt.Sprintf("length of array %s longer than array pattern %s", array, p))
+		return EmptyScope, fmt.Errorf("length of array %s longer than array pattern %s", array, p)
 	}
 
 	result := EmptyScope
@@ -171,25 +170,25 @@ func NewTuplePattern(attrs ...TuplePatternAttr) TuplePattern {
 func (p TuplePattern) Bind(local Scope, value Value) (Scope, error) {
 	tuple, is := value.(Tuple)
 	if !is {
-		panic(fmt.Sprintf("%s is not a tuple", value))
+		return EmptyScope, fmt.Errorf("%s is not a tuple", value)
 	}
 
 	extraElements := make(map[int]int)
 	for i, attr := range p.attrs {
 		if _, is := attr.pattern.(ExtraElementPattern); is {
 			if len(extraElements) == 1 {
-				panic("multiple ... not supported yet")
+				return EmptyScope, fmt.Errorf("multiple ... not supported yet")
 			}
 			extraElements[i] = tuple.Count() - len(p.attrs)
 		}
 	}
 
 	if len(p.attrs) > tuple.Count()+len(extraElements) {
-		panic(fmt.Sprintf("length of tuple %s shorter than tuple pattern %s", tuple, p))
+		return EmptyScope, fmt.Errorf("length of tuple %s shorter than tuple pattern %s", tuple, p)
 	}
 
 	if len(extraElements) == 0 && len(p.attrs) < tuple.Count() {
-		panic(fmt.Sprintf("length of tuple %s longer than tuple pattern %s", tuple, p))
+		return EmptyScope, fmt.Errorf("length of tuple %s longer than tuple pattern %s", tuple, p)
 	}
 
 	result := EmptyScope
@@ -198,7 +197,7 @@ func (p TuplePattern) Bind(local Scope, value Value) (Scope, error) {
 		if _, is := attr.pattern.(ExtraElementPattern); is {
 			tupleExpr := tuple.Project(names)
 			if tupleExpr == nil {
-				panic(fmt.Sprintf("tuple %s cannot match tuple pattern %s", tuple, p))
+				return EmptyScope, fmt.Errorf("tuple %s cannot match tuple pattern %s", tuple, p)
 			}
 			scope, err := attr.pattern.Bind(local, tupleExpr)
 			if err != nil {
@@ -207,7 +206,10 @@ func (p TuplePattern) Bind(local Scope, value Value) (Scope, error) {
 			result = result.MatchedUpdate(scope)
 			continue
 		}
-		tupleExpr := tuple.MustGet(attr.name)
+		tupleExpr, found := tuple.Get(attr.name)
+		if !found {
+			return EmptyScope, fmt.Errorf("couldn't find %s in tuple %s", attr.name, tuple)
+		}
 		scope, err := attr.pattern.Bind(local, tupleExpr)
 		if err != nil {
 			return EmptyScope, err
@@ -275,25 +277,25 @@ func NewDictPattern(entries ...DictPatternEntry) DictPattern {
 func (p DictPattern) Bind(local Scope, value Value) (Scope, error) {
 	dict, is := value.(Dict)
 	if !is {
-		panic(fmt.Sprintf("%s is not a dict", value))
+		return EmptyScope, fmt.Errorf("%s is not a dict", value)
 	}
 
 	extraElements := make(map[int]int)
 	for i, entry := range p.entries {
 		if _, is := entry.value.(ExtraElementPattern); is {
 			if len(extraElements) == 1 {
-				panic("multiple ... not supported yet")
+				return EmptyScope, fmt.Errorf("multiple ... not supported yet")
 			}
 			extraElements[i] = dict.Count() - len(p.entries)
 		}
 	}
 
 	if len(p.entries) > dict.Count()+len(extraElements) {
-		panic(fmt.Sprintf("length of dict %s shorter than dict pattern %s", dict, p))
+		return EmptyScope, fmt.Errorf("length of dict %s shorter than dict pattern %s", dict, p)
 	}
 
 	if len(extraElements) == 0 && len(p.entries) < dict.Count() {
-		panic(fmt.Sprintf("length of dict %s longer than dict pattern %s", dict, p))
+		return EmptyScope, fmt.Errorf("length of dict %s longer than dict pattern %s", dict, p)
 	}
 
 	result := EmptyScope
@@ -316,7 +318,10 @@ func (p DictPattern) Bind(local Scope, value Value) (Scope, error) {
 
 			continue
 		}
-		dictValue := m.MustGet(entry.at)
+		dictValue, found := m.Get(entry.at)
+		if !found {
+			return EmptyScope, fmt.Errorf("couldn't find %s in dict %s", entry.at, m)
+		}
 		scope, err := entry.value.Bind(local, dictValue.(Value))
 		if err != nil {
 			return EmptyScope, err
@@ -351,7 +356,7 @@ func NewExprsPattern(exprs ...Expr) ExprsPattern {
 
 func (ep ExprsPattern) Bind(scope Scope, value Value) (Scope, error) {
 	if len(ep.exprs) == 0 {
-		return EmptyScope, errors.Errorf("there is not any rel.Expr in rel.ExprsPattern")
+		return EmptyScope, fmt.Errorf("there is not any rel.Expr in rel.ExprsPattern")
 	}
 
 	if pe, isPattern := ep.exprs[0].(Pattern); len(ep.exprs) == 1 && isPattern {
@@ -374,7 +379,7 @@ func (ep ExprsPattern) Bind(scope Scope, value Value) (Scope, error) {
 		}
 	}
 
-	return EmptyScope, errors.Errorf("didn't find matched value")
+	return EmptyScope, fmt.Errorf("didn't find matched value")
 }
 
 func (ep ExprsPattern) String() string {

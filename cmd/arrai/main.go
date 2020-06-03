@@ -4,7 +4,9 @@ import (
 	"os"
 	"path"
 
+	"github.com/arr-ai/arrai/rel"
 	"github.com/arr-ai/arrai/syntax"
+	"github.com/mattn/go-isatty"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
 )
@@ -77,6 +79,20 @@ VERSION:
 
 	err := app.Run(args)
 	if err != nil {
-		logrus.Fatal(err)
+		logrus.Info(err)
+		if isTerminal() {
+			if _, isContextErr := err.(rel.ContextErr); isContextErr {
+				if err = createDebuggerShell(err); err != nil {
+					logrus.Info(err)
+				}
+			}
+		} else {
+			logrus.Info("unable to start debug shell: standard input is not a terminal")
+		}
 	}
+}
+
+func isTerminal() bool {
+	return (isatty.IsTerminal(os.Stdin.Fd()) && isatty.IsTerminal(os.Stdout.Fd())) ||
+		(isatty.IsCygwinTerminal(os.Stdin.Fd()) && isatty.IsCygwinTerminal(os.Stdout.Fd()))
 }

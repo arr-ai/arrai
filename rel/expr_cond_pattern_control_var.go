@@ -42,18 +42,19 @@ func (expr CondPatternControlVarExpr) String() string {
 }
 
 // Eval evaluates to find the first valid condition and return its value.
-func (expr CondPatternControlVarExpr) Eval(local Scope) (Value, error) {
-	varVal, err := expr.controlVarExpr.Eval(local)
+func (expr CondPatternControlVarExpr) Eval(scope Scope) (Value, error) {
+	varVal, err := expr.controlVarExpr.Eval(scope)
 	if err != nil {
-		return nil, wrapContext(err, expr.controlVarExpr)
+		return nil, wrapContext(err, expr.controlVarExpr, scope)
 	}
 
 	for _, conditionPair := range expr.conditionPairs {
-		bindings, err := conditionPair.Bind(local, varVal)
+		bindings, err := conditionPair.Bind(scope, varVal)
 		if err == nil {
-			val, err := conditionPair.Eval(local.MatchedUpdate(bindings))
+			l := scope.MatchedUpdate(bindings)
+			val, err := conditionPair.Eval(l)
 			if err != nil {
-				return nil, err
+				return nil, wrapContext(err, expr.controlVarExpr, l)
 			}
 			return val, nil
 		}

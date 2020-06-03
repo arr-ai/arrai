@@ -36,10 +36,10 @@ func (e *SequenceMapExpr) String() string {
 
 // Eval returns the lhs
 func (e *SequenceMapExpr) Eval(local Scope) (_ Value, err error) {
-	defer wrapPanic(e, &err)
+	defer wrapPanic(e, &err, local)
 	value, err := e.lhs.Eval(local)
 	if err != nil {
-		return nil, wrapContext(err, e)
+		return nil, wrapContext(err, e, local)
 	}
 	// TODO: implement directly for String, Array and Dict.
 	if set, ok := value.(Set); ok {
@@ -51,15 +51,15 @@ func (e *SequenceMapExpr) Eval(local Scope) (_ Value, err error) {
 			item, _ := t.Get(attr)
 			scope, err := e.fn.arg.Bind(local, item)
 			if err != nil {
-				return nil, err
+				return nil, wrapContext(err, e, local)
 			}
 			v, err := e.fn.body.Eval(local.Update(scope))
 			if err != nil {
-				return nil, wrapContext(err, e)
+				return nil, wrapContext(err, e, local)
 			}
 			values = append(values, NewTuple(Attr{"@", pos}, Attr{attr, v}))
 		}
 		return NewSet(values...), nil
 	}
-	return nil, wrapContext(errors.Errorf(">> not applicable to %T", value), e)
+	return nil, wrapContext(errors.Errorf(">> not applicable to %T", value), e, local)
 }
