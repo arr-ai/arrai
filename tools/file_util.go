@@ -2,7 +2,7 @@ package tools
 
 import "os"
 
-// FileExists returns if a file is existing.
+// FileExists returns true if a file is existing.
 func FileExists(file string) bool {
 	if len(file) == 0 {
 		return false
