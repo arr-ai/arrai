@@ -25,5 +25,5 @@ func evalExpr(v rel.Value) rel.Value {
 		}
 		return evaluated
 	}
-	panic(fmt.Sprintf("eval.value only takes byte array or string: %T", v))
+	panic(fmt.Sprintf("eval.value only takes byte array or string, received %T", v))
 }
