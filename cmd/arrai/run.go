@@ -1,8 +1,12 @@
 package main
 
 import (
+	"fmt"
 	"io"
 	"os"
+	"strings"
+
+	"github.com/arr-ai/arrai/tools"
 
 	"github.com/urfave/cli/v2"
 )
@@ -20,6 +24,13 @@ func run(c *cli.Context) error {
 }
 
 func evalFile(path string, w io.Writer) error {
+	if !tools.FileExists(path) {
+		if !strings.Contains(path, string([]rune{os.PathSeparator})) {
+			return fmt.Errorf(`"%s": not a command and not found as a file in the current directory`, path)
+		}
+		return fmt.Errorf(`"%s": file not found`, path)
+	}
+
 	f, err := os.Open(path)
 	if err != nil {
 		return err
