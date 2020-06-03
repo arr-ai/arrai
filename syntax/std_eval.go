@@ -1,6 +1,10 @@
 package syntax
 
-import "github.com/arr-ai/arrai/rel"
+import (
+	"fmt"
+
+	"github.com/arr-ai/arrai/rel"
+)
 
 func stdEval() rel.Attr {
 	return rel.NewTupleAttr("eval",
@@ -13,9 +17,13 @@ func stdEval() rel.Attr {
 }
 
 func evalExpr(v rel.Value) rel.Value {
-	evaluated, err := EvaluateExpr(".", v.(rel.String).String())
-	if err != nil {
-		panic(err)
+	switch val := v.(type) {
+	case rel.String, rel.Bytes:
+		evaluated, err := EvaluateExpr(".", val.String())
+		if err != nil {
+			panic(err)
+		}
+		return evaluated
 	}
-	return evaluated
+	panic(fmt.Sprintf("eval.value only takes byte array or string: %T", v))
 }
