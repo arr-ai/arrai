@@ -171,6 +171,9 @@ func TestEvalCondPatternMatchingWithControlVar(t *testing.T) {
 	AssertCodesEvalToSameValue(t, `10`, `(a: (b: 10)) cond {(a: (:b)): b, _:42}`)
 	AssertCodesEvalToSameValue(t, `42`, `(a: (z: 10)) cond {(a: (:b)): b, _:42}`)
 
-	AssertCodeErrors(t, `let a = 2; a cond {[1,2,3]: 6}`, "")
-	AssertCodeErrors(t, `let a = {"a":3}; a cond {(a:x): x + 5,_:2}`, "")
+	AssertCodesEvalToSameValue(t, `42`, `[] cond {[b]: b, _:42}`)
+	AssertCodesEvalToSameValue(t, `42`, `(a: []) cond {(a: [b]): b, _:42}`)
+
+	AssertCodesEvalToSameValue(t, `{}`, `let a = 2; a cond {[1,2,3]: 6}`)
+	AssertCodesEvalToSameValue(t, `2`, `let a = {"a":3}; a cond {(a:x): x + 5,_:2}`)
 }
