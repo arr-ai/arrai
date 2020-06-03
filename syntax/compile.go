@@ -98,7 +98,7 @@ func (pc ParseContext) CompileExpr(b ast.Branch) rel.Expr {
 	case "if":
 		return pc.compileIf(b, c)
 	case "cond":
-		return pc.compileCond(b, c)
+		return pc.compileCond(c)
 	case "postfix", "touch":
 		return pc.compilePostfixAndTouch(b, c)
 	case "get", "tail_op":
@@ -412,14 +412,14 @@ func (pc ParseContext) compileIf(b ast.Branch, c ast.Children) rel.Expr {
 	return result
 }
 
-func (pc ParseContext) compileCond(b ast.Branch, c ast.Children) rel.Expr {
-	if controlVarNode := b.One(exprTag); controlVarNode != nil {
-		return pc.compileCondWithControlVar(b, c)
+func (pc ParseContext) compileCond(c ast.Children) rel.Expr {
+	if controlVar := c.(ast.One).Node.(ast.Branch)["controlVar"]; controlVar != nil {
+		return pc.compileCondWithControlVar(c)
 	}
 	return pc.compileCondWithoutControlVar(c)
 }
 
-func (pc ParseContext) compileCondWithControlVar(b ast.Branch, c ast.Children) rel.Expr {
+func (pc ParseContext) compileCondWithControlVar(c ast.Children) rel.Expr {
 	conditions := pc.compileCondElements(c.(ast.One).Node.(ast.Branch)["condition"].(ast.Many)...)
 	values := pc.compileCondExprs(c.(ast.One).Node.(ast.Branch)["value"].(ast.Many)...)
 
@@ -427,12 +427,14 @@ func (pc ParseContext) compileCondWithControlVar(b ast.Branch, c ast.Children) r
 		panic("mismatch between conditions and values")
 	}
 
-	conditionPairs := []rel.PatternExpr{}
+	conditionPairs := []rel.PatternExprPair{}
 	for i, condition := range conditions {
-		conditionPairs = append(conditionPairs, rel.NewPatternExpr(condition, values[i]))
+		conditionPairs = append(conditionPairs, rel.NewPatternExprPair(condition, values[i]))
 	}
 
-	return rel.NewCondPatternControlVarExpr(c.(ast.One).Node.Scanner(), pc.CompileExpr(b.One(exprTag).(ast.Branch)),
+	controlVar := c.(ast.One).Node.(ast.Branch)["controlVar"]
+	return rel.NewCondPatternControlVarExpr(c.(ast.One).Node.Scanner(),
+		pc.CompileExpr(controlVar.(ast.One).Node.(ast.Branch)),
 		conditionPairs...)
 }
 
