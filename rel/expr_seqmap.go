@@ -14,12 +14,12 @@ type SequenceMapExpr struct {
 	fn  *Function
 }
 
-// NewAngleArrowExpr returns a new AtArrowExpr.
+// NewSequenceMapExpr returns a new SequenceMapExpr.
 func NewSequenceMapExpr(scanner parser.Scanner, lhs Expr, fn Expr) Expr {
 	return &SequenceMapExpr{ExprScanner{scanner}, lhs, ExprAsFunction(fn)}
 }
 
-// LHS returns the LHS of the AtArrowExpr.
+// LHS returns the LHS of the SequenceMapExpr.
 func (e *SequenceMapExpr) LHS() Expr {
 	return e.lhs
 }
