@@ -1,10 +1,10 @@
 package rel
 
 import (
-	"github.com/stretchr/testify/assert"
 	"testing"
 
 	"github.com/arr-ai/wbnf/parser"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestDotExprAccessors(t *testing.T) {

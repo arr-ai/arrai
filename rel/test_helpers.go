@@ -1,10 +1,10 @@
 package rel
 
 import (
-	"github.com/go-errors/errors"
 	"reflect"
 	"testing"
 
+	"github.com/go-errors/errors"
 	"github.com/stretchr/testify/assert"
 )
 
