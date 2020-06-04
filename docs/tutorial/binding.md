@@ -181,7 +181,7 @@ Both let-bindings and function parameters support pattern matching. This is a
 very powerful mechanism to extract elements from a complex structure and also
 restrict what values may be used as input.
 
-The bare literals are obviously allowed:
+The bare literals are supported:
 
 ```arrai
 @> let 42 = 42; 1
