@@ -27,6 +27,8 @@ func main() {
 	app := cli.NewApp()
 	// logrus.SetLevel(logrus.InfoLevel)
 
+	var debug bool
+
 	app.EnableBashCompletion = true
 	args := os.Args
 	switch path.Base(args[0]) {
@@ -42,6 +44,15 @@ func main() {
 		app.Name = "arrai"
 		app.Usage = "the ultimate data engine"
 		app.Commands = cmds
+		app.Flags = []cli.Flag{
+			&cli.BoolFlag{
+				Name:        "debug",
+				Aliases:     []string{"d"},
+				Usage:       "When evaluation fails, arrai will drop into the interactive shell with the last scope",
+				Destination: &debug,
+				EnvVars:     []string{"ARRAI_DEBUG"},
+			},
+		}
 		if len(os.Args) > 1 {
 			if execCmd := fetchCommand(args[1:]); execCmd != "" && !isExecCommand(execCmd, app.Commands) {
 				tmpArgs := append(make([]string, 0, 1+len(args)), args[0], "run")
@@ -81,7 +92,7 @@ VERSION:
 	if err != nil {
 		logrus.Info(err)
 		if isTerminal() {
-			if _, isContextErr := err.(rel.ContextErr); isContextErr {
+			if _, isContextErr := err.(rel.ContextErr); isContextErr && debug {
 				if err = createDebuggerShell(err); err != nil {
 					logrus.Info(err)
 				}
@@ -96,3 +107,7 @@ func isTerminal() bool {
 	return (isatty.IsTerminal(os.Stdin.Fd()) && isatty.IsTerminal(os.Stdout.Fd())) ||
 		(isatty.IsCygwinTerminal(os.Stdin.Fd()) && isatty.IsCygwinTerminal(os.Stdout.Fd()))
 }
+
+// func dropIntoShell(debugFlag bool) bool {
+// 	os.env
+// }
