@@ -61,7 +61,7 @@ let x = 1; (\a a + b)(x)
 @> a
 1
 @> <tab>
-a x //
+a x
 ```
 
 ## Evaluating expressions
