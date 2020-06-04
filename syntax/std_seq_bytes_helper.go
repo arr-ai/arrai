@@ -29,7 +29,8 @@ func bytesSplit(delimiter rel.Value, subject rel.Bytes) rel.Value {
 	case rel.GenericSet:
 		splitted = strings.Split(subject.String(), mustAsString(delimiter))
 	default:
-		panic(`the delimiter of api is not an array of byte, it can try '<<>>' to generate byte array`)
+		panic(`the delimiter of api //seq.split(delimiter, subject) is not an array of byte, ` +
+			`it can try '<<>>' to generate byte array`)
 	}
 
 	result := make([]rel.Value, 0, len(splitted))
