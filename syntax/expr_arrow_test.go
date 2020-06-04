@@ -21,3 +21,17 @@ func TestApplyExprWithPattern(t *testing.T) {
 	AssertCodesEvalToSameValue(t, `[3, [3, 4]]`, `[1, 2, 3, 4] -> \[x, y, ...t] [x + y, t]`)
 	AssertCodeErrors(t, `1 -> \x let [(x), y] = [2, 2]; y`, "")
 }
+
+func TestUnaryArrows(t *testing.T) {
+	// This tests an error when stringifying sets of arrays.
+	AssertCodesEvalToSameValue(t, `{{2, 4}, {8, 16}}`, `{{1, 2}, {3, 4}} => => 2 ^ .`)
+	AssertCodesEvalToSameValue(t, `{[2, 4], [8, 16]}`, `{[1, 2], [3, 4]} => >> 2 ^ .`)
+	AssertCodesEvalToSameValue(t, `{{'a':2, 'b':4}, {'c':8, 'd':16}}`, `{{'a':1, 'b':2}, {'c':3, 'd':4}} => >> 2 ^ .`)
+	AssertCodesEvalToSameValue(t, `{(a:2, b:4), (c:8, d:16)}`, `{(a:1, b:2), (c:3, d:4)} => :> 2 ^ .`)
+
+	AssertCodesEvalToSameValue(t, `[{2, 4}, {8, 16}]`, `[{1, 2}, {3, 4}] >> => 2 ^ .`)
+
+	AssertCodesEvalToSameValue(t,
+		`(a:{[2, 4], [8]}, b:{[16], [32, 64]})`,
+		`(a:{[1, 2], [3]}, b:{[4], [5, 6]}) :> => >> 2 ^ .`)
+}
