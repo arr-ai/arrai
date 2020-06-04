@@ -152,6 +152,9 @@ func (pc ParseContext) compilePattern(b ast.Branch) rel.Pattern {
 	if dict := b.One("dict"); dict != nil {
 		return pc.compileDictPattern(dict.(ast.Branch))
 	}
+	if set := b.One("set"); set != nil {
+		return pc.compileSetPattern(set.(ast.Branch))
+	}
 	if extra := b.One("extra"); extra != nil {
 		return pc.compileExtraElementPattern(extra.(ast.Branch))
 	}
@@ -167,8 +170,7 @@ func (pc ParseContext) compilePattern(b ast.Branch) rel.Pattern {
 		return rel.NewExprsPattern(elements...)
 	}
 
-	expr := pc.CompileExpr(b)
-	return rel.NewExprsPattern(expr)
+	return rel.NewExprPattern(pc.CompileExpr(b))
 }
 
 func (pc ParseContext) compileExtraElementPattern(b ast.Branch) rel.Pattern {
@@ -266,6 +268,13 @@ func (pc ParseContext) compileDictPattern(b ast.Branch) rel.Pattern {
 		panic("mismatch between dict keys and values")
 	}
 	return rel.NewDictPattern()
+}
+
+func (pc ParseContext) compileSetPattern(b ast.Branch) rel.Pattern {
+	if elts := b["elt"]; elts != nil {
+		return rel.NewSetPattern(pc.compilePatterns(elts.(ast.Many)...)...)
+	}
+	return rel.NewSetPattern()
 }
 
 func (pc ParseContext) compileArrow(b ast.Branch, name string, c ast.Children) rel.Expr {
@@ -905,6 +914,12 @@ func which(b ast.Branch, names ...string) (string, ast.Children) {
 	return "", nil
 }
 
+func dotUnary(f binOpFunc) unOpFunc {
+	return func(scanner parser.Scanner, e rel.Expr) rel.Expr {
+		return f(scanner, rel.DotIdent, e)
+	}
+}
+
 type unOpFunc func(scanner parser.Scanner, e rel.Expr) rel.Expr
 
 var unops = map[string]unOpFunc{
@@ -914,6 +929,9 @@ var unops = map[string]unOpFunc{
 	"!":  rel.NewNotExpr,
 	"*":  rel.NewEvalExpr,
 	"//": NewPackageExpr,
+	"=>": dotUnary(rel.NewMapExpr),
+	">>": dotUnary(rel.NewSequenceMapExpr),
+	":>": dotUnary(rel.NewTupleMapExpr),
 }
 
 type binOpFunc func(scanner parser.Scanner, a, b rel.Expr) rel.Expr

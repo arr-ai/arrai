@@ -39,25 +39,56 @@ func (s *shellInstance) Do(line []rune, pos int) (newLine [][]rune, length int) 
 			newLine = append(newLine, predictions...)
 		}
 	default:
-		currentExpr := strings.Join(s.collector.withLine(string(line[:pos])).lines, "\n")
-		realExpr, residue := s.trimExpr(currentExpr)
-		if residue != "" {
-			val, err := tryEval(realExpr, s.scope)
-			if err != nil {
-				return
-			}
-			toAdd := formatPredictions(predictFromValue(val), residue)
-			if !(len(toAdd) == 1 && len(toAdd[0]) == 0) {
-				newLine = append(newLine, formatPredictions(predictFromValue(val), residue)...)
-				length = len(residue)
-			}
+		notAttachedToExpr := pos > 0 && line[pos-1] == ' '
+
+		// checks if it's not attached to any token or starts at pos 0
+		if pos == 0 || l != "" || notAttachedToExpr {
+			newLine, length = s.globalCompletions(l)
 		}
-		val, err := tryEval(currentExpr, s.scope)
-		if err == nil {
-			newLine = append(newLine, formatPredictions(predictFromValue(val), "")...)
+
+		// no need to check partial expr if not attached to token
+		if notAttachedToExpr {
+			return
 		}
+		partialExprPreds, residueLen := s.partialExprPredictions(string(line[:pos]))
+		if len(newLine) == 0 || residueLen < length {
+			length = residueLen
+		}
+		newLine = append(newLine, partialExprPreds...)
 	}
 	return newLine, length
+}
+
+func (s *shellInstance) globalCompletions(prefix string) (newLine [][]rune, length int) {
+	predictions := make([][]rune, 0)
+	for _, p := range formatPredictions(s.scope.OrderedNames(), prefix) {
+		if string(p) == "." || string(p) == "" {
+			continue
+		}
+		predictions = append(predictions, p)
+	}
+	return predictions, len(prefix)
+}
+
+func (s *shellInstance) partialExprPredictions(currentLine string) (newLine [][]rune, length int) {
+	currentExpr := strings.Join(s.collector.withLine(currentLine).lines, "\n")
+	realExpr, residue := s.trimExpr(currentExpr)
+	if residue != "" {
+		val, err := tryEval(realExpr, s.scope)
+		if err != nil {
+			return
+		}
+		toAdd := formatPredictions(predictFromValue(val), residue)
+		if !(len(toAdd) == 1 && len(toAdd[0]) == 0) {
+			newLine = append(newLine, formatPredictions(predictFromValue(val), residue)...)
+			length = len(residue)
+		}
+	}
+	val, err := tryEval(currentExpr, s.scope)
+	if err == nil {
+		newLine = append(newLine, formatPredictions(predictFromValue(val), "")...)
+	}
+	return
 }
 
 //TODO: maybe needed for more advance predictions

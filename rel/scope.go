@@ -96,7 +96,7 @@ func (s Scope) MatchedWith(name string, expr Expr) Scope {
 
 	if v, exists := s.Get(name); exists {
 		if v.String() != expr.String() {
-			panic(fmt.Sprintf("%s is redefined differently", name))
+			panic(fmt.Sprintf("%s is redefined differently %s vs %s", name, v, expr))
 		}
 	}
 
