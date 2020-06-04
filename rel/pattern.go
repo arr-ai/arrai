@@ -385,7 +385,6 @@ func (p SetPattern) Bind(local Scope, value Value) (Scope, error) {
 				extraElements[i] = set.Count() - len(p.patterns)
 			}
 		}
-
 	}
 
 	if len(p.patterns) > set.Count()+len(extraElements) {
@@ -425,12 +424,11 @@ func (p SetPattern) Bind(local Scope, value Value) (Scope, error) {
 			return EmptyScope, fmt.Errorf("%s not supported yet", t)
 		}
 	}
-	for i, _ := range extraElements {
+	for i := range extraElements {
 		var scope Scope
 		var err error
 		if _, is := p.patterns[i].(ExtraElementPattern); is {
 			scope, err = p.patterns[i].Bind(local, set)
-
 		} else {
 			if set.Count() != 1 {
 				return EmptyScope, fmt.Errorf("the length of set %s is wrong", set)
