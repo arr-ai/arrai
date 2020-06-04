@@ -42,7 +42,9 @@ func (e ArrayExpr) String() string {
 		if i > 0 {
 			b.WriteString(", ")
 		}
-		b.WriteString(expr.String())
+		if expr != nil {
+			b.WriteString(expr.String())
+		}
 	}
 	b.WriteByte(']')
 	return b.String()
