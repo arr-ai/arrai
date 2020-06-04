@@ -3,7 +3,6 @@ package rel
 import (
 	"bytes"
 	"fmt"
-	"reflect"
 
 	"github.com/go-errors/errors"
 )
@@ -25,8 +24,6 @@ func (p ExprPattern) Bind(scope Scope, value Value) (Scope, error) {
 			if t.IsTrue() == value.IsTrue() {
 				return EmptyScope, nil
 			}
-			fmt.Println(reflect.TypeOf(p.expr))
-			fmt.Println(reflect.TypeOf(value))
 			return EmptyScope, errors.Errorf("%s doesn't equal to %s", t, value)
 		}
 		return EmptyScope, fmt.Errorf("%s is not a Pattern", t)
