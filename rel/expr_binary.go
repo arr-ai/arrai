@@ -249,11 +249,6 @@ func NewCallExprCurry(scanner parser.Scanner, f Expr, args ...Expr) Expr {
 	return f
 }
 
-// LHS returns the left hand side of the BinExpr.
-func (e *BinExpr) LHS() Expr {
-	return e.a
-}
-
 // RHS returns the right hand side of the BinExpr.
 func (e *BinExpr) RHS() Expr {
 	return e.b

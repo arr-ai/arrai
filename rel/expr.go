@@ -6,11 +6,6 @@ import (
 	"github.com/arr-ai/wbnf/parser"
 )
 
-// LHSExpr represents any Expr that has a LHS component.
-type LHSExpr interface {
-	LHS() Expr
-}
-
 // GetStringValue returns the string value for expr or false if not a string.
 func GetStringValue(expr Expr) (string, bool) {
 	if set, ok := expr.(Set); ok {

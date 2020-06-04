@@ -19,11 +19,6 @@ func NewIfElseExpr(scanner parser.Scanner, ifTrue, cond, ifFalse Expr) Expr {
 	return &IfElseExpr{ExprScanner{scanner}, ifTrue, cond, ifFalse}
 }
 
-// LHS returns the LHS of the IfElseExpr.
-func (e *IfElseExpr) LHS() Expr {
-	return e.ifTrue
-}
-
 // Cond returns the condition of the IfElseExpr.
 func (e *IfElseExpr) Cond() Expr {
 	return e.cond
