@@ -181,6 +181,17 @@ Both let-bindings and function parameters support pattern matching. This is a
 very powerful mechanism to extract elements from a complex structure and also
 restrict what values may be used as input.
 
+The bare literals are obviously allowed:
+
+```arrai
+@> let 42 = 42; 1
+@> let "hello" = "hello"; 1
+@> let 3 = 1 + 2; 5
+@> let (1 + 2) = 3; 5
+@> let true = true; 3
+@> let true = {()}; 3
+```
+
 Try out the following examples to use pattern with arrays:
 
 ```arrai
@@ -211,6 +222,7 @@ and with sets:
 ```arrai
 @> let {} = {}; 1
 @> let {a, 42} = {3, 42}; a
+@> let {a, b} = {3, 42}; [a, b]        # should fail because it is a non-deterministic situation
 ```
 
 Also, nested patterns are supported as:
