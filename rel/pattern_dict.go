@@ -48,7 +48,7 @@ func (p DictPattern) Bind(local Scope, value Value) (Scope, error) {
 	for i, entry := range p.entries {
 		if _, is := entry.value.(ExtraElementPattern); is {
 			if len(extraElements) == 1 {
-				return EmptyScope, fmt.Errorf("multiple ... not supported yet")
+				return EmptyScope, fmt.Errorf("non-deterministic pattern is not supported yet")
 			}
 			extraElements[i] = dict.Count() - len(p.entries)
 		}

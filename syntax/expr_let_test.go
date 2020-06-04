@@ -99,6 +99,8 @@ func TestExprLetSetPattern(t *testing.T) {
 	AssertCodeErrors(t, `let {1} = {}; 1`, "")
 	AssertCodeErrors(t, `let {42} = {2}; 1`, "")
 	AssertCodeErrors(t, `let {42, 43}={41, 42}; 1`, "")
+	AssertCodeErrors(t, `let {x, y}={41, 42}; 1`, "")
+	AssertCodeErrors(t, `let {x, ...t}={41, 42}; 1`, "")
 	AssertCodeErrors(t, `let x = 1; let y = 42; let {(x), (y)} = {1, 4}; 2`, "")
 }
 

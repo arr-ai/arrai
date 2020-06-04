@@ -33,7 +33,7 @@ func (p ArrayPattern) Bind(local Scope, value Value) (Scope, error) {
 	for i, item := range p.items {
 		if _, is := item.(ExtraElementPattern); is {
 			if len(extraElements) == 1 {
-				return EmptyScope, fmt.Errorf("multiple ... not supported yet")
+				return EmptyScope, fmt.Errorf("non-deterministic pattern is not supported yet")
 			}
 			extraElements[i] = array.Count() - len(p.items)
 		}

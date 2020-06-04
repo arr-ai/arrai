@@ -49,7 +49,7 @@ func (p TuplePattern) Bind(local Scope, value Value) (Scope, error) {
 	for i, attr := range p.attrs {
 		if _, is := attr.pattern.(ExtraElementPattern); is {
 			if len(extraElements) == 1 {
-				return EmptyScope, fmt.Errorf("multiple ... not supported yet")
+				return EmptyScope, fmt.Errorf("non-deterministic pattern is not supported yet")
 			}
 			extraElements[i] = tuple.Count() - len(p.attrs)
 		}

@@ -24,14 +24,14 @@ func NewSetPattern(patterns ...Pattern) SetPattern {
 func (p SetPattern) Bind(local Scope, value Value) (Scope, error) {
 	set, is := value.(GenericSet)
 	if !is {
-		panic(fmt.Sprintf("value %s is not a set", value))
+		return EmptyScope, fmt.Errorf("value %s is not a set", value)
 	}
 
 	extraElements := make(map[int]int)
 	for i, ptn := range p.patterns {
 		if _, is := ptn.(ExtraElementPattern); is {
 			if len(extraElements) == 1 {
-				panic("multiple ... not supported yet")
+				return EmptyScope, fmt.Errorf("non-deterministic pattern is not supported yet")
 			}
 			extraElements[i] = set.Count() - len(p.patterns)
 			continue
@@ -39,7 +39,7 @@ func (p SetPattern) Bind(local Scope, value Value) (Scope, error) {
 		if t, is := ptn.(ExprPattern); is {
 			if _, is = t.expr.(IdentExpr); is {
 				if len(extraElements) == 1 {
-					panic("multiple idents not supported yet")
+					return EmptyScope, fmt.Errorf("non-deterministic pattern is not supported yet")
 				}
 				extraElements[i] = set.Count() - len(p.patterns)
 			}
@@ -47,11 +47,11 @@ func (p SetPattern) Bind(local Scope, value Value) (Scope, error) {
 	}
 
 	if len(p.patterns) > set.Count()+len(extraElements) {
-		panic(fmt.Sprintf("length of set %s shorter than set pattern %s", set, p))
+		return EmptyScope, fmt.Errorf("length of set %s shorter than set pattern %s", set, p)
 	}
 
 	if len(extraElements) == 0 && len(p.patterns) < set.Count() {
-		panic(fmt.Sprintf("length of set %s longer than set pattern %s", set, p))
+		return EmptyScope, fmt.Errorf("length of set %s longer than set pattern %s", set, p)
 	}
 
 	result := EmptyScope
