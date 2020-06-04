@@ -84,5 +84,6 @@ func TestBytesSplit(t *testing.T) {
 	AssertCodesEvalToSameValue(t, `[<<>>]                   `, `//seq.split(<<",">>,<<>>)  `)
 
 	AssertCodeErrors(t, `//seq.split(",", <<"hello">>)`,
-		"unexpected panic: delimiter and subject have to be of the same type, currently: delimiter: rel.String, subject: rel.Bytes")
+		"unexpected panic: delimiter and subject have to be of the same type, "+
+			"currently: delimiter: rel.String, subject: rel.Bytes")
 }
