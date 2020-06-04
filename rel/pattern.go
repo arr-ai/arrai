@@ -346,61 +346,121 @@ func (p DictPattern) String() string {
 	return b.String()
 }
 
-// ExprsPattern a wrapper represents Expr as Pattern, then Expr can be compiled to Pattern too.
-type ExprsPattern struct {
-	exprs []Expr
+type SetPattern struct {
+	patterns []Pattern
 }
 
-func NewExprsPattern(exprs ...Expr) ExprsPattern {
-	return ExprsPattern{exprs: exprs}
+func NewSetPattern(patterns ...Pattern) SetPattern {
+	m := make(map[string]struct{})
+	for _, v := range patterns {
+		if _, exists := m[v.String()]; exists {
+			panic(fmt.Sprintf("item %s is duplicated", v))
+		}
+
+		m[v.String()] = struct{}{}
+	}
+	return SetPattern{patterns}
 }
 
-func (ep ExprsPattern) Bind(scope Scope, value Value) (Scope, error) {
-	if len(ep.exprs) == 0 {
-		return EmptyScope, fmt.Errorf("there is not any rel.Expr in rel.ExprsPattern")
+func (p SetPattern) Bind(local Scope, value Value) (Scope, error) {
+	set, is := value.(GenericSet)
+	if !is {
+		panic(fmt.Sprintf("value %s is not a set", value))
 	}
 
-	if pe, isPattern := ep.exprs[0].(Pattern); len(ep.exprs) == 1 && isPattern {
-		// Support patterns IDENT and NUM
-		return pe.Bind(scope, value)
+	extraElements := make(map[int]int)
+	for i, ptn := range p.patterns {
+		if _, is := ptn.(ExtraElementPattern); is {
+			if len(extraElements) == 1 {
+				panic("multiple ... not supported yet")
+			}
+			extraElements[i] = set.Count() - len(p.patterns)
+			continue
+		}
+		if t, is := ptn.(ExprPattern); is {
+			if _, is = t.expr.(IdentExpr); is {
+				if len(extraElements) == 1 {
+					panic("multiple idents not supported yet")
+				}
+				extraElements[i] = set.Count() - len(p.patterns)
+			}
+		}
+
 	}
 
-	incomingVal, err := value.Eval(scope)
-	if err != nil {
-		return EmptyScope, err
+	if len(p.patterns) > set.Count()+len(extraElements) {
+		panic(fmt.Sprintf("length of set %s shorter than set pattern %s", set, p))
 	}
 
-	for _, e := range ep.exprs {
-		val, err := e.Eval(scope)
+	if len(extraElements) == 0 && len(p.patterns) < set.Count() {
+		panic(fmt.Sprintf("length of set %s longer than set pattern %s", set, p))
+	}
+
+	result := EmptyScope
+	for _, ptn := range p.patterns {
+		if _, is := ptn.(ExtraElementPattern); is {
+			continue
+		}
+		switch t := ptn.(type) {
+		case ExprPattern:
+			v, is := t.expr.(Value)
+			if is {
+				if !set.Has(v) {
+					return EmptyScope, fmt.Errorf("item %s is not included in set %s", v, value)
+				}
+				set = set.Without(v).(GenericSet)
+				continue
+			}
+
+			if _, is := t.expr.(IdentExpr); !is {
+				return EmptyScope, fmt.Errorf("item type %s is not supported yet", t)
+			}
+		case IdentPattern:
+			v := local.MustGet(t.ident).(Value)
+			if !set.Has(v) {
+				return EmptyScope, fmt.Errorf("item %s is not included in set %s", v, value)
+			}
+			set = set.Without(v).(GenericSet)
+		default:
+			return EmptyScope, fmt.Errorf("%s not supported yet", t)
+		}
+	}
+	for i, _ := range extraElements {
+		var scope Scope
+		var err error
+		if _, is := p.patterns[i].(ExtraElementPattern); is {
+			scope, err = p.patterns[i].Bind(local, set)
+
+		} else {
+			if set.Count() != 1 {
+				return EmptyScope, fmt.Errorf("the length of set %s is wrong", set)
+			}
+
+			scope, err = p.patterns[i].Bind(local, set.set.Any().(Value))
+			if err != nil {
+				return EmptyScope, err
+			}
+		}
 		if err != nil {
 			return EmptyScope, err
 		}
-		if incomingVal.Equal(val) {
-			return scope, nil
-		}
+
+		result = result.MatchedUpdate(scope)
 	}
 
-	return EmptyScope, fmt.Errorf("didn't find matched value")
+	return result, nil
 }
 
-func (ep ExprsPattern) String() string {
-	if len(ep.exprs) == 0 {
-		panic("there is not any rel.Expr in rel.ExprsPattern")
-	}
-
-	if len(ep.exprs) == 1 {
-		// it processes cases IDENT and NUM as syntax, otherwise `let (:x) = (x: 1); x` will fail.
-		return ep.exprs[0].String()
-	}
-
-	var b bytes.Buffer
-	b.WriteByte('[')
-	for i, e := range ep.exprs {
-		if i > 0 {
-			b.WriteString(", ")
+func (p SetPattern) String() string {
+	elts := p.patterns
+	var buf bytes.Buffer
+	buf.WriteString("{")
+	for i, value := range elts {
+		if i != 0 {
+			buf.WriteString(", ")
 		}
-		fmt.Fprintf(&b, "%v", e.String())
+		buf.WriteString(value.String())
 	}
-	b.WriteByte(']')
-	return b.String()
+	buf.WriteString("}")
+	return buf.String()
 }
