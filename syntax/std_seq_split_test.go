@@ -82,4 +82,6 @@ func TestBytesSplit(t *testing.T) {
 	AssertCodesEvalToSameValue(t, `<<>>                     `, `//seq.split(<<>>,<<>>)     `)
 	AssertCodesEvalToSameValue(t, `[<<"A">>,<<"B">>,<<"C">>]`, `//seq.split(<<>>,<<"ABC">>)`)
 	AssertCodesEvalToSameValue(t, `[<<>>]                   `, `//seq.split(<<",">>,<<>>)  `)
+
+	AssertCodeErrors(t, `//seq.split(",", <<"hello">>)`, "")
 }
