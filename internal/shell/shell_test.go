@@ -285,6 +285,8 @@ func TestCompletionCurrentExpr(t *testing.T) {
 	assertTabCompletion(t, []string{`.a`}, 0, "x\t", map[string]string{"x": `(a: {"b": (c: 3)})`})
 	assertTabCompletion(t, []string{`('b')`}, 0, "x.a\t", map[string]string{"x": `(a: {"b": (c: 3)})`})
 	assertTabCompletion(t, []string{`.c`}, 0, "x.a(`b`)\t", map[string]string{"x": `(a: {"b": (c: 3)})`})
+
+	assertTabCompletion(t, []string{}, 0, "let x = (a: 1); x \t", nil)
 }
 
 func assertTabCompletionWithPrefix(
@@ -323,4 +325,21 @@ func assertTabCompletion(t *testing.T,
 	}
 	assert.Equal(t, expectedPredictions, strPredictions)
 	assert.Equal(t, expectedLength, length)
+}
+
+func TestGlobalPredictions(t *testing.T) {
+	t.Parallel()
+
+	globalValues := map[string]string{
+		"abc": "123",
+		"aac": "321",
+		"bca": "121",
+		"xyz": "323",
+	}
+
+	assertTabCompletion(t, []string{"aac", "abc", "bca", "xyz"}, 0, "(a: \t)", globalValues)
+	assertTabCompletion(t, []string{"aac", "abc", "bca", "xyz"}, 0, "\t", globalValues)
+	assertTabCompletion(t, []string{"ac", "bc"}, 0, "(a: 1) + a\t", globalValues)
+	assertTabCompletion(t, []string{"ac", "bc"}, 0, "a\t", globalValues)
+	assertTabCompletion(t, []string{}, 0, "y\t", globalValues)
 }
