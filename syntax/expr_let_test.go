@@ -13,7 +13,7 @@ func TestExprLet(t *testing.T) {
 	AssertCodesEvalToSameValue(t, `(x: 1, y: 2)`, `let x = 1; (:x, y: 2)`)
 }
 
-func TestExprLetExprPattern(t *testing.T) {
+func TestExprLetExprPattern(t *testing.T) { //nolint:dupl
 	t.Parallel()
 	AssertCodesEvalToSameValue(t, `42`, `let 42 = 42; 42`)
 	AssertCodesEvalToSameValue(t, `42`, `let (42) = 42; 42`)
