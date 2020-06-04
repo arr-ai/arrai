@@ -4,6 +4,7 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/go-errors/errors"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -72,7 +73,20 @@ func AssertExprEvalsToType(t *testing.T, expected interface{}, expr Expr) bool {
 	return true
 }
 
-// AssertExprPanics asserts that the expr panics when evaluates.
+// AssertExprErrors asserts that the expr returns an error when evaluated.
+func AssertExprErrors(t *testing.T, expr Expr) bool {
+	_, err := expr.Eval(EmptyScope)
+	return assert.Error(t, err)
+}
+
+// AssertExprErrorEquals asserts that the expr returns an error with the given message when evaluated.
+func AssertExprErrorEquals(t *testing.T, expr Expr, msg string) bool {
+	_, err := expr.Eval(EmptyScope)
+
+	return assert.EqualError(t, err, wrapContext(errors.Errorf(msg), expr, EmptyScope).Error())
+}
+
+// AssertExprPanics asserts that the expr panics when evaluated.
 func AssertExprPanics(t *testing.T, expr Expr) bool {
 	return assert.Panics(t, func() { expr.Eval(EmptyScope) }) //nolint:errcheck
 }
