@@ -2,6 +2,7 @@ package rel
 
 import (
 	"fmt"
+	"math"
 	"reflect"
 	"strings"
 
@@ -69,43 +70,38 @@ func AsArray(s Set) (Array, bool) {
 }
 
 func asArray(s Set) (Array, bool) {
-	if i := s.Enumerator(); i.MoveNext() {
+	if s.Count() == 0 {
+		return Array{}, true
+	}
+
+	minIndex := math.MaxInt32
+	maxIndex := math.MinInt32
+	i := s.Enumerator()
+	for i.MoveNext() {
 		t, is := i.Current().(ArrayItemTuple)
 		if !is {
 			return Array{}, false
 		}
 
-		middleIndex := s.Count()
-		items := make([]Value, 2*middleIndex)
-		items[middleIndex] = t.item
-		anchorOffset, minOffset := t.at, t.at
-		lowestIndex, highestIndex := middleIndex, middleIndex
-		for i.MoveNext() {
-			if t, is = i.Current().(ArrayItemTuple); !is {
-				return Array{}, false
-			}
-			if t.at < minOffset {
-				minOffset = t.at
-			}
-			sliceIndex := middleIndex - (anchorOffset - t.at)
-			items[sliceIndex] = t.item
-
-			if sliceIndex < lowestIndex {
-				lowestIndex = sliceIndex
-			}
-
-			if sliceIndex > highestIndex {
-				highestIndex = sliceIndex
-			}
+		if t.at < minIndex {
+			minIndex = t.at
 		}
-
-		return Array{
-			values: items[lowestIndex : highestIndex+1],
-			offset: minOffset,
-			count:  s.Count(),
-		}, true
+		if t.at > maxIndex {
+			maxIndex = t.at
+		}
 	}
-	return Array{}, true
+	items := make([]Value, maxIndex-minIndex+1)
+
+	i = s.Enumerator()
+	for i.MoveNext() {
+		t := i.Current().(ArrayItemTuple)
+		items[t.at] = t.item
+	}
+	return Array{
+		values: items,
+		offset: minIndex,
+		count:  s.Count(),
+	}, true
 }
 
 func (a Array) clone() Array {
