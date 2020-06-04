@@ -210,7 +210,6 @@ with dictionaries:
 and with sets:
 ```arrai
 @> let {} = {}; 1
-@> let {a, b, c} = {1, 2, 3}; a
 @> let {a, 42} = {3, 42}; a
 ```
 
@@ -235,6 +234,7 @@ A name within parentheses like `(x)` refers to the value bound to the name `x`.
 @> let x = 3; let [b, (x)] = [2, 3]; b
 @> let x = 3; let [_, b, (x)] = [1, 2, 3]; b
 @> let x = 1; [1, 2] -> \[(x), y] y
+@> let x = 1; let y = 42; let {(x), (y)} = {42, 1}; 5
 @> let x = 3; let [b, (x)] = [2, 4]; b     # should fail because (x) != 4
 @> let [(x)] = [2]; x                      # should fail because `x` isn't in scope
 ```
@@ -258,5 +258,7 @@ that weren't explicitly matched by other patterns.
 @> let [x, ...t, y] = [1, 2, 3, 4, 5, 6]; [x, y, t]
 @> let (m: x, n: y, ...t) = (m: 1, n: 2, j: 3, k: 4); [x, y, t]
 @> let {"m": x, "n": y, ...t} = {"m": 1, "n": 2, "j": 3, "k": 4}; [x, y, t]
+@> let {1, 2, 3, ...t} = {1, 2, 3, 42, 43}; t
+@> let x = 1; let y = 42; let {(x), (y), ...t} = {1, 42, 5, 6}; t
 @> [1, 2, 3, 4] -> \[x, y, ...t] [x + y, t]
 ```

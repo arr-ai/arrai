@@ -10,6 +10,7 @@ import (
 	"sync"
 
 	"github.com/arr-ai/arrai/rel"
+	"github.com/arr-ai/arrai/tools"
 	"github.com/arr-ai/arrai/tools/module"
 	"github.com/arr-ai/arrai/translate"
 )
@@ -117,7 +118,7 @@ func findRootFromModule(modulePath string) (string, error) {
 
 	// Keep walking up the directories to find nearest root marker
 	for {
-		exists := fileExists(filepath.Join(currentPath, arraiRootMarker))
+		exists := tools.FileExists(filepath.Join(currentPath, arraiRootMarker))
 		reachedRoot := currentPath == systemRoot || (err != nil && os.IsPermission(err))
 		switch {
 		case exists:
@@ -129,14 +130,6 @@ func findRootFromModule(modulePath string) (string, error) {
 		}
 		currentPath = filepath.Dir(currentPath)
 	}
-}
-
-func fileExists(filename string) bool {
-	info, err := os.Stat(filename)
-	if os.IsNotExist(err) {
-		return false
-	}
-	return !info.IsDir()
 }
 
 func importURL(url string) (rel.Value, error) {
