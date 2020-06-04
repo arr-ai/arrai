@@ -21,6 +21,7 @@ var cmds = []*cli.Command{
 	syncCommand,
 	transformCommand,
 	updateCommand,
+	versionCommand,
 }
 
 func main() {
