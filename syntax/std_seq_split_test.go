@@ -83,5 +83,7 @@ func TestBytesSplit(t *testing.T) {
 	AssertCodesEvalToSameValue(t, `[<<"A">>,<<"B">>,<<"C">>]`, `//seq.split(<<>>,<<"ABC">>)`)
 	AssertCodesEvalToSameValue(t, `[<<>>]                   `, `//seq.split(<<",">>,<<>>)  `)
 
-	AssertCodeErrors(t, `//seq.split(",", <<"hello">>)`, "")
+	AssertCodeErrors(t, `//seq.split(",", <<"hello">>)`,
+		"unexpected panic: the delimiter of api //seq.split(delimiter, subject) is not an array of byte, "+
+			"it can try <<delimiter>> to generate byte array")
 }
