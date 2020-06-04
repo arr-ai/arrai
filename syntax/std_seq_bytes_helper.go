@@ -1,6 +1,7 @@
 package syntax
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/arr-ai/arrai/rel"
@@ -29,8 +30,7 @@ func bytesSplit(delimiter rel.Value, subject rel.Bytes) rel.Value {
 	case rel.GenericSet:
 		splitted = strings.Split(subject.String(), mustAsString(delimiter))
 	default:
-		panic(`the delimiter of api //seq.split(delimiter, subject) is not an array of byte, ` +
-			`it can try <<delimiter>> to generate byte array`)
+		panic(fmt.Sprintf("delimiter and subject have to be of the same type, currently: delimiter: %T, subject: %T", delimiter, subject))
 	}
 
 	result := make([]rel.Value, 0, len(splitted))
