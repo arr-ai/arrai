@@ -929,7 +929,7 @@ var unops = map[string]unOpFunc{
 	"!":  rel.NewNotExpr,
 	"*":  rel.NewEvalExpr,
 	"//": NewPackageExpr,
-	"=>": dotUnary(rel.NewMapExpr),
+	"=>": dotUnary(rel.NewDArrowExpr),
 	">>": dotUnary(rel.NewSequenceMapExpr),
 	":>": dotUnary(rel.NewTupleMapExpr),
 }
