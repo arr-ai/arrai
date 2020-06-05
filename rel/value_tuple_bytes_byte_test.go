@@ -246,9 +246,10 @@ func TestBytesByteTuple_HasName(t *testing.T) {
 
 func TestBytesByteTuple_Attributes(t *testing.T) {
 	t.Parallel()
-	assert.Equal(t,
-		map[string]Value{"@": NewNumber(1), "@byte": NewNumber('a')},
-		NewBytesByteTuple(1, 'a').Attributes())
+
+	tuple := NewBytesByteTuple(1, 'a')
+	assert.Equal(t, NewNumber(1), tuple.MustGet("@"))
+	assert.Equal(t, NewNumber('a'), tuple.MustGet("@byte"))
 }
 
 func TestBytesByteTuple_Names(t *testing.T) {
