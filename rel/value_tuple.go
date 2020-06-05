@@ -345,16 +345,6 @@ func (t *GenericTuple) HasName(name string) bool {
 	return found
 }
 
-// Attributes returns attributes as a map.
-func (t *GenericTuple) Attributes() map[string]Value {
-	attrs := make(map[string]Value, t.Count())
-	for e := t.Enumerator(); e.MoveNext(); {
-		name, value := e.Current()
-		attrs[name] = value
-	}
-	return attrs
-}
-
 // Names returns the attribute names.
 func (t *GenericTuple) Names() Names {
 	var b frozen.SetBuilder

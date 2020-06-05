@@ -74,6 +74,17 @@ func (pc ParseContext) Parse(s *parser.Scanner) (ast.Branch, error) {
 			identStr := "."
 			if _, ident, has := pscope.GetVal("IDENT"); has {
 				identStr = ident.(parser.Scanner).String()
+			} else if _, pattern, has := pscope.GetVal("pattern"); has {
+				patNode := ast.FromParserNode(arraiParsers.Grammar(), pattern)
+				pat := pc.compilePattern(patNode)
+				if epat, is := pat.(rel.ExprPattern); is {
+					if identExpr, is := epat.Expr.(rel.IdentExpr); is {
+						identStr = identExpr.Ident()
+					}
+				}
+				if identStr == "" {
+					return nil, nil
+				}
 			}
 
 			_, exprElt, has := pscope.GetVal("expr@1")

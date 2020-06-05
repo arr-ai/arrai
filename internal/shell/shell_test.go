@@ -343,24 +343,3 @@ func TestGlobalPredictions(t *testing.T) {
 	assertTabCompletion(t, []string{"ac", "bc"}, 0, "a\t", globalValues)
 	assertTabCompletion(t, []string{}, 0, "y\t", globalValues)
 }
-
-func TestAddLocalScope(t *testing.T) {
-	t.Parallel()
-
-	scope := rel.EmptyScope.
-		With("random", rel.NewString([]rune("scope"))).
-		With("more", rel.NewNumber(1))
-	resultScope := addLocalScope(scope)
-
-	locals, hasLocals := resultScope.Get("@")
-	assert.True(t, hasLocals)
-
-	expectedTuple := rel.EmptyTuple.
-		With("random", rel.NewString([]rune("scope"))).
-		With("more", rel.NewNumber(1))
-	assert.True(t, locals.(rel.Tuple).Equal(expectedTuple))
-
-	resultScope = addLocalScope(rel.EmptyScope)
-	_, hasLocals = resultScope.Get("@")
-	assert.False(t, hasLocals)
-}
