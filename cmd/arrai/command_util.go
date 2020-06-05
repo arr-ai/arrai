@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/urfave/cli/v2"
@@ -29,13 +30,21 @@ func fetchCommand(args []string) string {
 	return ""
 }
 
+// insertRunCommand adds a run command on file evaluation commands that does not
+// contain the `run` command by adding the `run` command manually.
+//
+// e.g. `arrai path/to/file.arrai`
 func insertRunCommand(globalFlags []cli.Flag, args []string) []string {
+	if len(args) < 2 {
+		panic(fmt.Errorf("need at least 2 arguments, program and arrai file, received %v", args))
+	}
+
 	globalFlagsEndIndex := 1
-	globalFlagsMap := make(map[string]struct{})
+	globalFlagsMap := make(map[string]bool)
 
 	for _, f := range globalFlags {
 		for _, n := range f.Names() {
-			globalFlagsMap[n] = struct{}{}
+			globalFlagsMap[n] = true
 		}
 	}
 

@@ -65,4 +65,10 @@ func TestInsertRunCommand(t *testing.T) {
 		[]string{"arrai", "--debug", "run", "--subcommand-flag", "file.arrai"},
 		insertRunCommand(flags, []string{"arrai", "--debug", "--subcommand-flag", "file.arrai"}),
 	)
+	assert.Equal(t,
+		[]string{"arrai", "run", "file.arrai"},
+		insertRunCommand(flags, []string{"arrai", "file.arrai"}),
+	)
+
+	assert.Panics(t, func() { insertRunCommand(flags, []string{"arrai"}) })
 }
