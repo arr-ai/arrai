@@ -13,6 +13,7 @@ build:
   ldflags:
     - -s -w -X main.Version={{.Version}}
     - -X main.GitCommit={{.ShortCommit}}
+    - -X main.GitFullCommit={{.FullCommit}}
     - -X main.BuildDate={{.Date}}
     - -X main.BuildOS={{.Os}}/{{.Arch}}
     - -s -w -X "main.GoVersion={{.Env.GOVERSION}}"
