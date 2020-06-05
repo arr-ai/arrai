@@ -60,8 +60,9 @@ func TestInsertRunCommand(t *testing.T) {
 		[]string{"arrai", "-d", "--stuff", "run", "file.arrai"},
 		insertRunCommand(flags, []string{"arrai", "-d", "--stuff", "file.arrai"}),
 	)
+	// separating global flags and subcommand flags
 	assert.Equal(t,
-		[]string{"arrai", "--debug", "run", "-v", "file.arrai"},
-		insertRunCommand(flags, []string{"arrai", "--debug", "-v", "file.arrai"}),
+		[]string{"arrai", "--debug", "run", "--subcommand-flag", "file.arrai"},
+		insertRunCommand(flags, []string{"arrai", "--debug", "--subcommand-flag", "file.arrai"}),
 	)
 }
