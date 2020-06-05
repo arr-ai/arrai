@@ -241,9 +241,10 @@ func TestStringCharTuple_HasName(t *testing.T) {
 
 func TestStringCharTuple_Attributes(t *testing.T) {
 	t.Parallel()
-	assert.Equal(t,
-		map[string]Value{"@": NewNumber(1), "@char": NewNumber('a')},
-		NewStringCharTuple(1, 'a').Attributes())
+
+	tuple := NewStringCharTuple(1, 'a')
+	assert.Equal(t, NewNumber(1), tuple.MustGet("@"))
+	assert.Equal(t, NewNumber('a'), tuple.MustGet("@char"))
 }
 
 func TestStringCharTuple_Names(t *testing.T) {

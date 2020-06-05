@@ -177,14 +177,6 @@ func (t BytesByteTuple) HasName(name string) bool {
 	return name == "@" || name == BytesByteAttr
 }
 
-// Attributes returns attributes as a map.
-func (t BytesByteTuple) Attributes() map[string]Value {
-	return map[string]Value{
-		"@":           NewNumber(float64(t.at)),
-		BytesByteAttr: NewNumber(float64(t.byteval)),
-	}
-}
-
 // Names returns the attribute names.
 func (t BytesByteTuple) Names() Names {
 	return NewNames("@", BytesByteAttr)
