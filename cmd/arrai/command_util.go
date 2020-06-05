@@ -51,7 +51,7 @@ func insertRunCommand(globalFlags []cli.Flag, args []string) []string {
 	for i, a := range args[1:] {
 		if strings.HasPrefix(a, "-") {
 			name := strings.TrimLeft(a, "-")
-			if _, isGlobalFlag := globalFlagsMap[name]; isGlobalFlag {
+			if globalFlagsMap[name] {
 				globalFlagsEndIndex = i + 2
 			} else {
 				break
