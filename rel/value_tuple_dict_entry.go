@@ -163,14 +163,6 @@ func (t DictEntryTuple) HasName(name string) bool {
 	return name == "@" || name == DictValueAttr
 }
 
-// Attributes returns attributes as a map.
-func (t DictEntryTuple) Attributes() map[string]Value {
-	return map[string]Value{
-		"@":           t.at,
-		DictValueAttr: t.value,
-	}
-}
-
 // Names returns the attribute names.
 func (t DictEntryTuple) Names() Names {
 	return NewNames("@", DictValueAttr)

@@ -18,16 +18,6 @@ func NewTupleMapExpr(scanner parser.Scanner, lhs Expr, fn Expr) Expr {
 	return &TupleMapExpr{ExprScanner{scanner}, lhs, ExprAsFunction(fn)}
 }
 
-// LHS returns the LHS of the AtArrowExpr.
-func (e *TupleMapExpr) LHS() Expr {
-	return e.lhs
-}
-
-// Fn returns the function to be applied to the LHS.
-func (e *TupleMapExpr) Fn() *Function {
-	return e.fn
-}
-
 // String returns a string representation of the expression.
 func (e *TupleMapExpr) String() string {
 	return fmt.Sprintf("(%s :> %s)", e.lhs, e.fn)

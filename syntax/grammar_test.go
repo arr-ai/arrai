@@ -100,16 +100,23 @@ func TestGrammarParseParseScopeVar(t *testing.T) {
 		{`a -> "1" "2";`, "a", `12`},
 		{`expr -> @:"+" > @:"*" > \d;`, "expr", `1+2*3`},
 	}
-	for _, s := range scenarios {
+	bindForms := []string{
+		`{://grammar.lang.wbnf.grammar:%s:} -> {:.%s:%s:}`,
+		`let g = {://grammar.lang.wbnf.grammar:%s:}; {:g.%s:%s:}`,
+	}
+	for i, s := range scenarios {
 		s := s
-		t.Run(s.text, func(t *testing.T) {
-			parse := fmt.Sprintf(
-				"//grammar -> (.parse(.lang.wbnf, 'grammar', `%s`) -> \\g .parse(g, '%s', `%s`))",
-				s.grammar, s.rule, s.text)
-			AssertCodesEvalToSameValue(t,
-				parse,
-				fmt.Sprintf(`{://grammar.lang.wbnf.grammar:%s:} -> {:.%s:%s:}`, s.grammar, s.rule, s.text))
-		})
+		for j, form := range bindForms {
+			form := form
+			t.Run(fmt.Sprintf("%d.%d", i, j), func(t *testing.T) {
+				parse := fmt.Sprintf(
+					"//grammar -> (.parse(.lang.wbnf, 'grammar', `%s`) -> \\g .parse(g, '%s', `%s`))",
+					s.grammar, s.rule, s.text)
+				AssertCodesEvalToSameValue(t,
+					parse,
+					fmt.Sprintf(form, s.grammar, s.rule, s.text))
+			})
+		}
 	}
 }
 
