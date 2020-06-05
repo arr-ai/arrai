@@ -238,9 +238,10 @@ func TestArrayItemTuple_HasName(t *testing.T) {
 
 func TestArrayItemTuple_Attributes(t *testing.T) {
 	t.Parallel()
-	assert.Equal(t,
-		map[string]Value{"@": NewNumber(1), "@item": None},
-		NewArrayItemTuple(1, None).Attributes())
+
+	tuple := NewArrayItemTuple(1, None)
+	assert.Equal(t, NewNumber(1), tuple.MustGet("@"))
+	assert.Equal(t, None, tuple.MustGet("@item"))
 }
 
 func TestArrayItemTuple_Names(t *testing.T) {

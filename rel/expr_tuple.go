@@ -47,16 +47,6 @@ func (e *AttrExpr) IsWildcard() bool {
 	return e.name == "*"
 }
 
-// Name returns the AttrExpr's name.
-func (e *AttrExpr) Name() string {
-	return e.name
-}
-
-// Expr returns the AttrExpr's expr.
-func (e *AttrExpr) Expr() Expr {
-	return e.expr
-}
-
 // Apply applies the AttrExpr to the Tuple.
 func (e *AttrExpr) Apply(
 	local Scope, tuple Tuple,
@@ -124,11 +114,6 @@ func NewTupleExprFromMap(scanner parser.Scanner, attrMap map[string]Expr) Expr {
 	return NewTuple(attrValues...)
 }
 
-// Attrs returns a Tuple's attrs.
-func (e *TupleExpr) Attrs() []AttrExpr {
-	return e.attrs
-}
-
 // String returns a string representation of the expression.
 func (e *TupleExpr) String() string {
 	var b bytes.Buffer
@@ -164,9 +149,4 @@ func (e *TupleExpr) Eval(local Scope) (Value, error) {
 	}
 	// TODO: Construct new tuple directly
 	return tuple.(*GenericTuple).Canonical(), nil
-}
-
-// Get returns the Expr for the given name or nil if not found.
-func (e *TupleExpr) Get(name string) Expr {
-	return e.attrMap[name]
 }

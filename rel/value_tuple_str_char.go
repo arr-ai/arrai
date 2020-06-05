@@ -174,14 +174,6 @@ func (t StringCharTuple) HasName(name string) bool {
 	return name == "@" || name == StringCharAttr
 }
 
-// Attributes returns attributes as a map.
-func (t StringCharTuple) Attributes() map[string]Value {
-	return map[string]Value{
-		"@":            NewNumber(float64(t.at)),
-		StringCharAttr: NewNumber(float64(t.char)),
-	}
-}
-
 // Names returns the attribute names.
 func (t StringCharTuple) Names() Names {
 	return NewNames("@", StringCharAttr)

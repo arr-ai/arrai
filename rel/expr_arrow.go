@@ -18,16 +18,6 @@ func NewArrowExpr(scanner parser.Scanner, lhs, fn Expr) Expr {
 	return &ArrowExpr{ExprScanner{scanner}, lhs, ExprAsFunction(fn)}
 }
 
-// LHS returns the LHS of the ArrowExpr.
-func (e *ArrowExpr) LHS() Expr {
-	return e.lhs
-}
-
-// Fn returns the function to be applied to the LHS.
-func (e *ArrowExpr) Fn() *Function {
-	return e.fn
-}
-
 // String returns a string representation of the expression.
 func (e *ArrowExpr) String() string {
 	if e.fn.Arg() == "." {
