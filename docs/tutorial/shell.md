@@ -41,11 +41,12 @@ When you evaluate an arrai script and the script fails, the `arrai` program will
 drop into the `arrai` interactive shell with the scope near the point of failure
 available to the interactive shell as a tuple.
 
-The values in the scope can be accessed through the `@` variable.
+The values in the scope can be accessed through the variables with their
+corresponding names.
 
 ```bash
 $ arrai e 'let x = 1; (\a a + b)(x)'
-INFO[0000] Name "b" not found in {a, x}
+INFO[0000] Name "b" not found in {x, a}
 
 .:1:20:
 let x = 1; (\a a + b)(x)
@@ -53,12 +54,14 @@ let x = 1; (\a a + b)(x)
 .:1:16:
 let x = 1; (\a a + b)(x)
 
-.:1:22:
+.:1:13:
 let x = 1; (\a a + b)(x)
-@> @.x
+@> x
 1
-@> @.
-.a .x
+@> a
+1
+@> <tab>
+a x
 ```
 
 ## Evaluating expressions
