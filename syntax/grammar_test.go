@@ -75,41 +75,48 @@ func TestGrammarParseParseLiteral(t *testing.T) {
 }
 
 func TestGrammarParseParseScopeVar(t *testing.T) {
-	AssertCodesEvalToSameValue(t,
-		`(
-			@rule: "x",
-			'': ["1", "2"],
-		)`,
-		`//grammar -> (.parse(.lang.wbnf, "grammar", "x -> '1' '2';") -> \x .parse(x, "x", "12"))`)
+	// AssertCodesEvalToSameValue(t,
+	// 	`(
+	// 		@rule: "x",
+	// 		'': ["1", "2"],
+	// 	)`,
+	// 	`//grammar -> (.parse(.lang.wbnf, "grammar", "x -> '1' '2';") -> \x .parse(x, "x", "12"))`)
 
-	AssertCodesEvalToSameValue(t,
-		`(
-			"": ["+"],
-			@rule: "expr",
-			expr: [
-				(expr: [("": "1")]),
-				(
-					"": ["*"],
-					expr: [("": "2"), ("": "3")]
-				)
-			]
-		)`,
-		`//grammar -> (.parse(.lang.wbnf, "grammar", "expr -> @:'+' > @:'*' > \\d+;") -> \x .parse(x, "expr", "1+2*3"))`)
+	// AssertCodesEvalToSameValue(t,
+	// 	`(
+	// 		"": ["+"],
+	// 		@rule: "expr",
+	// 		expr: [
+	// 			(expr: [("": "1")]),
+	// 			(
+	// 				"": ["*"],
+	// 				expr: [("": "2"), ("": "3")]
+	// 			)
+	// 		]
+	// 	)`,
+	// 	`//grammar -> (.parse(.lang.wbnf, "grammar", "expr -> @:'+' > @:'*' > \\d+;") -> \x .parse(x, "expr", "1+2*3"))`)
 
 	scenarios := []struct{ grammar, rule, text string }{
 		{`a -> "1" "2";`, "a", `12`},
 		{`expr -> @:"+" > @:"*" > \d;`, "expr", `1+2*3`},
 	}
-	for _, s := range scenarios {
+	bindForms := []string{
+		`{://grammar.lang.wbnf.grammar:%s:} -> {:.%s:%s:}`,
+		`let g = {://grammar.lang.wbnf.grammar:%s:}; {:g.%s:%s:}`,
+	}
+	for i, s := range scenarios {
 		s := s
-		t.Run(s.text, func(t *testing.T) {
-			parse := fmt.Sprintf(
-				"//grammar -> (.parse(.lang.wbnf, 'grammar', `%s`) -> \\g .parse(g, '%s', `%s`))",
-				s.grammar, s.rule, s.text)
-			AssertCodesEvalToSameValue(t,
-				parse,
-				fmt.Sprintf(`{://grammar.lang.wbnf.grammar:%s:} -> {:.%s:%s:}`, s.grammar, s.rule, s.text))
-		})
+		for j, form := range bindForms {
+			form := form
+			t.Run(fmt.Sprintf("%d.%d", i, j), func(t *testing.T) {
+				parse := fmt.Sprintf(
+					"//grammar -> (.parse(.lang.wbnf, 'grammar', `%s`) -> \\g .parse(g, '%s', `%s`))",
+					s.grammar, s.rule, s.text)
+				AssertCodesEvalToSameValue(t,
+					parse,
+					fmt.Sprintf(form, s.grammar, s.rule, s.text))
+			})
+		}
 	}
 }
 
