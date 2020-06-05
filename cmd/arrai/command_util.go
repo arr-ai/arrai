@@ -28,3 +28,30 @@ func fetchCommand(args []string) string {
 	}
 	return ""
 }
+
+func insertRunCommand(globalFlags []cli.Flag, args []string) []string {
+	globalFlagsEndIndex := 1
+	globalFlagsMap := make(map[string]struct{})
+
+	for _, f := range globalFlags {
+		for _, n := range f.Names() {
+			globalFlagsMap[n] = struct{}{}
+		}
+	}
+
+	for i, a := range args[1:] {
+		if strings.HasPrefix(a, "-") {
+			name := strings.TrimLeftFunc(a, func(r rune) bool { return r == '-' })
+			if _, isGlobalFlag := globalFlagsMap[name]; isGlobalFlag {
+				globalFlagsEndIndex = i + 2
+			} else {
+				break
+			}
+		}
+	}
+
+	tmpArgs := append(make([]string, 0, globalFlagsEndIndex), args[:globalFlagsEndIndex]...)
+	tmpArgs = append(tmpArgs, "run")
+	args = append(tmpArgs, args[globalFlagsEndIndex:]...)
+	return args
+}

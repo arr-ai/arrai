@@ -55,8 +55,7 @@ func main() {
 		}
 		if len(os.Args) > 1 {
 			if execCmd := fetchCommand(args[1:]); execCmd != "" && !isExecCommand(execCmd, app.Commands) {
-				tmpArgs := append(make([]string, 0, 1+len(args)), args[0], "run")
-				args = append(tmpArgs, args[1:]...)
+				args = insertRunCommand(app.Flags, os.Args)
 				syntax.RunOmitted = true
 			}
 		}
@@ -107,7 +106,3 @@ func isTerminal() bool {
 	return (isatty.IsTerminal(os.Stdin.Fd()) && isatty.IsTerminal(os.Stdout.Fd())) ||
 		(isatty.IsCygwinTerminal(os.Stdin.Fd()) && isatty.IsCygwinTerminal(os.Stdout.Fd()))
 }
-
-// func dropIntoShell(debugFlag bool) bool {
-// 	os.env
-// }
