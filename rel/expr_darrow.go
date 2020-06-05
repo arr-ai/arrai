@@ -15,18 +15,8 @@ type DArrowExpr struct {
 }
 
 // NewDArrowExpr returns a new DArrowExpr.
-func NewMapExpr(scanner parser.Scanner, lhs Expr, fn Expr) Expr {
+func NewDArrowExpr(scanner parser.Scanner, lhs Expr, fn Expr) Expr {
 	return &DArrowExpr{ExprScanner{scanner}, lhs, ExprAsFunction(fn)}
-}
-
-// LHS returns the LHS of the DArrowExpr.
-func (e *DArrowExpr) LHS() Expr {
-	return e.lhs
-}
-
-// Fn returns the function to be applied to the LHS.
-func (e *DArrowExpr) Fn() *Function {
-	return e.fn
 }
 
 // String returns a string representation of the expression.

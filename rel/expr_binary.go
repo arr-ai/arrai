@@ -229,7 +229,7 @@ func NewRankExpr(scanner parser.Scanner, a, key Expr) Expr {
 		})
 }
 
-func Call(a, b Value, local Scope) (Value, error) {
+func Call(a, b Value, _ Scope) (Value, error) {
 	if x, ok := a.(Set); ok {
 		return SetCall(x, b), nil
 	}
@@ -247,16 +247,6 @@ func NewCallExprCurry(scanner parser.Scanner, f Expr, args ...Expr) Expr {
 		f = NewCallExpr(scanner, f, arg)
 	}
 	return f
-}
-
-// LHS returns the left hand side of the BinExpr.
-func (e *BinExpr) LHS() Expr {
-	return e.a
-}
-
-// RHS returns the right hand side of the BinExpr.
-func (e *BinExpr) RHS() Expr {
-	return e.b
 }
 
 // String returns a string representation of the expression.

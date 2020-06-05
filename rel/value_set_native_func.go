@@ -34,11 +34,6 @@ func (f *NativeFunction) Name() string {
 	return f.name
 }
 
-// Fn returns a native function's implementation.
-func (f *NativeFunction) Fn() func(Value) Value {
-	return f.fn
-}
-
 // Hash computes a hash for a NativeFunction.
 func (f *NativeFunction) Hash(seed uintptr) uintptr {
 	return hash.String(f.String(), hash.Uintptr(9714745597188477233>>(64-8*unsafe.Sizeof(uintptr(0))), seed))
