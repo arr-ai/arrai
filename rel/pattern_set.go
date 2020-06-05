@@ -37,7 +37,7 @@ func (p SetPattern) Bind(local Scope, value Value) (Scope, error) {
 			continue
 		}
 		if t, is := ptn.(ExprPattern); is {
-			if _, is = t.expr.(IdentExpr); is {
+			if _, is = t.Expr.(IdentExpr); is {
 				if len(extraElements) == 1 {
 					return EmptyScope, fmt.Errorf("non-deterministic pattern is not supported yet")
 				}
@@ -61,7 +61,7 @@ func (p SetPattern) Bind(local Scope, value Value) (Scope, error) {
 		}
 		switch t := ptn.(type) {
 		case ExprPattern:
-			v, is := t.expr.(Value)
+			v, is := t.Expr.(Value)
 			if is {
 				if !set.Has(v) {
 					return EmptyScope, fmt.Errorf("item %s is not included in set %s", v, value)
@@ -70,7 +70,7 @@ func (p SetPattern) Bind(local Scope, value Value) (Scope, error) {
 				continue
 			}
 
-			if _, is := t.expr.(IdentExpr); !is {
+			if _, is := t.Expr.(IdentExpr); !is {
 				return EmptyScope, fmt.Errorf("item type %s is not supported yet", t)
 			}
 		case IdentPattern:
