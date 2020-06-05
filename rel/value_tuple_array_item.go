@@ -8,6 +8,7 @@ import (
 	"github.com/arr-ai/wbnf/parser"
 )
 
+const ArrayIndexAttr = "@"
 const ArrayItemAttr = "@item"
 
 // ArrayItemTuple represents a tuple of the form (@: at, @item: item).
@@ -26,8 +27,8 @@ func newArrayItemTupleFromTuple(t Tuple) (ArrayItemTuple, bool) {
 	var item Value
 	m := NewTupleMatcher(
 		map[string]Matcher{
-			"@":           MatchInt(func(i int) { at = i }),
-			ArrayItemAttr: Let(func(v Value) { item = v }),
+			ArrayIndexAttr: MatchInt(func(i int) { at = i }),
+			ArrayItemAttr:  Let(func(v Value) { item = v }),
 		},
 		Lit(EmptyTuple),
 	)
@@ -46,7 +47,7 @@ func maybeNewArrayItemTupleFromTuple(t Tuple) Tuple {
 
 func (t ArrayItemTuple) asGenericTuple() Tuple {
 	return newTuple(
-		NewIntAttr("@", t.at),
+		NewIntAttr(ArrayIndexAttr, t.at),
 		NewAttr(ArrayItemAttr, t.item),
 	)
 }
@@ -67,7 +68,7 @@ func (t ArrayItemTuple) Equal(v interface{}) bool {
 
 // String returns a string representation of a Tuple.
 func (t ArrayItemTuple) String() string {
-	return fmt.Sprintf("(@: %d, %s: %v)", t.at, ArrayItemAttr, t.item)
+	return fmt.Sprintf("(%s: %d, %s: %v)", ArrayIndexAttr, t.at, ArrayItemAttr, t.item)
 }
 
 // Eval returns the tuple.
@@ -112,8 +113,8 @@ func (t ArrayItemTuple) Negate() Value {
 // Export exports a Tuple.
 func (t ArrayItemTuple) Export() interface{} {
 	return map[string]interface{}{
-		"@":           t.at,
-		ArrayItemAttr: t.item.Export(),
+		ArrayIndexAttr: t.at,
+		ArrayItemAttr:  t.item.Export(),
 	}
 }
 
@@ -125,7 +126,7 @@ func (t ArrayItemTuple) Count() int {
 // Get returns the Value associated with a name, and true iff it was found.
 func (t ArrayItemTuple) Get(name string) (Value, bool) {
 	switch name {
-	case "@":
+	case ArrayIndexAttr:
 		return NewNumber(float64(t.at)), true
 	case ArrayItemAttr:
 		return t.item, true
@@ -150,7 +151,7 @@ func (t ArrayItemTuple) With(name string, value Value) Tuple {
 // Without returns a Tuple with all name/Value pairs in t exception the one of
 // the given name.
 func (t ArrayItemTuple) Without(name string) Tuple {
-	if name == "@" || name == ArrayItemAttr {
+	if name == ArrayIndexAttr || name == ArrayItemAttr {
 		return t.asGenericTuple().Without(name)
 	}
 	return t
@@ -169,26 +170,26 @@ func (t ArrayItemTuple) Map(f func(Value) Value) Tuple {
 
 // HasName returns true iff the Tuple has an attribute with the given name.
 func (t ArrayItemTuple) HasName(name string) bool {
-	return name == "@" || name == ArrayItemAttr
+	return name == ArrayIndexAttr || name == ArrayItemAttr
 }
 
 // Attributes returns attributes as a map.
 func (t ArrayItemTuple) Attributes() map[string]Value {
 	return map[string]Value{
-		"@":           NewNumber(float64(t.at)),
-		ArrayItemAttr: t.item,
+		ArrayIndexAttr: NewNumber(float64(t.at)),
+		ArrayItemAttr:  t.item,
 	}
 }
 
 // Names returns the attribute names.
 func (t ArrayItemTuple) Names() Names {
-	return NewNames("@", ArrayItemAttr)
+	return NewNames(ArrayIndexAttr, ArrayItemAttr)
 }
 
 // Project returns a tuple with the given names from this tuple, or nil if any
 // name wasn't found.
 func (t ArrayItemTuple) Project(names Names) Tuple {
-	if names.Has("@") && names.Has(ArrayItemAttr) {
+	if names.Has(ArrayIndexAttr) && names.Has(ArrayItemAttr) {
 		return t
 	}
 	return t.asGenericTuple().Project(names)
@@ -213,7 +214,7 @@ func (e *arrayItemTupleEnumerator) MoveNext() bool {
 	e.i++
 	switch e.i {
 	case 0:
-		e.name = "@"
+		e.name = ArrayIndexAttr
 		e.value = NewNumber(float64(e.t.at))
 	case 1:
 		e.name = ArrayItemAttr
