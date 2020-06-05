@@ -1,9 +1,9 @@
 package rel
 
 import (
-	"github.com/arr-ai/wbnf/parser"
 	"testing"
 
+	"github.com/arr-ai/wbnf/parser"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -19,9 +19,10 @@ func TestDictEntryTupleExprEval(t *testing.T) {
 	t.Parallel()
 
 	e := NewDictEntryTupleExpr(*parser.NewScanner(""), NewNumber(1), NewNumber(2))
-	val, _ := e.Eval(EmptyScope)
+	val, err := e.Eval(EmptyScope)
 
 	assert.Equal(t, NewDictEntryTuple(NewNumber(1), NewNumber(2)), val)
+	assert.NoError(t, err)
 }
 
 func TestDictEntryTupleExprEvalErrorOnAtEvalError(t *testing.T) {
