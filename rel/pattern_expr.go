@@ -8,24 +8,24 @@ import (
 )
 
 type ExprPattern struct {
-	expr Expr
+	Expr Expr
 }
 
 func NewExprPattern(expr Expr) ExprPattern {
-	return ExprPattern{expr: expr}
+	return ExprPattern{Expr: expr}
 }
 
 func (p ExprPattern) Bind(scope Scope, value Value) (Scope, error) {
-	switch p.expr.(type) {
-	case IdentExpr, Number:
-		return p.expr.(Pattern).Bind(EmptyScope, value)
+	switch t := p.Expr.(type) {
+	case IdentExpr, Number, GenericSet:
+		return t.(Pattern).Bind(EmptyScope, value)
 	default:
-		return EmptyScope, fmt.Errorf("%s is not a Pattern", p.expr)
+		return EmptyScope, fmt.Errorf("%s is not a Pattern", t)
 	}
 }
 
 func (p ExprPattern) String() string {
-	return p.expr.String()
+	return p.Expr.String()
 }
 
 type ExprsPattern struct {

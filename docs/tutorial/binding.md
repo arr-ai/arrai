@@ -181,6 +181,16 @@ Both let-bindings and function parameters support pattern matching. This is a
 very powerful mechanism to extract elements from a complex structure and also
 restrict what values may be used as input.
 
+Bare literals are supported and will simply match their own value:
+
+```arrai
+@> let 42 = 42; 1
+@> let "hello" = "hello"; 1
+@> let 3 = 1 + 2; 5
+@> let true = true; 3
+@> let true = {()}; 3
+```
+
 Try out the following examples to use pattern with arrays:
 
 ```arrai
@@ -211,6 +221,7 @@ and with sets:
 ```arrai
 @> let {} = {}; 1
 @> let {a, 42} = {3, 42}; a
+@> let {a, b} = {3, 42}; [a, b]        # should fail because it is a non-deterministic situation
 ```
 
 Also, nested patterns are supported as:
@@ -243,6 +254,11 @@ A name within parentheses like `(x)` refers to the value bound to the name `x`.
 but `let a = 56; let {"x": a, "y": (a)} = {"x": 42, "y": 42}; a` should fail. 
 Using the same name in an expression, `(a)`, and a newly bound name, `a`, is
 confusing and should be avoided.
+
+Complex expressions are supported and will also match their own value. However, they must be enclosed in parentheses, `(...)`:
+```arrai
+@> let (1 + 2) = 3; 5
+```
 
 What's more, arr.ai allows extra elements `...` or `...x` in addition to 
 the explicitly bound ones and binds name `x` to any additional elements 
