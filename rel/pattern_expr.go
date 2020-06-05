@@ -16,7 +16,7 @@ func NewExprPattern(expr Expr) ExprPattern {
 }
 
 func (p ExprPattern) Bind(scope Scope, value Value) (Scope, error) {
-	switch t := p.expr.(type) {
+	switch t := p.Expr.(type) {
 	case IdentExpr, Number, GenericSet:
 		return t.(Pattern).Bind(EmptyScope, value)
 	default:
