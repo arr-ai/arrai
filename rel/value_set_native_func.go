@@ -24,7 +24,7 @@ func NewNativeLambda(fn func(Value) Value) Value {
 	return NewNativeFunction("", fn)
 }
 
-// NewNativeFunction returns a new function.
+// NewNativeFunctionAttr returns a new Attr with a named key and NativeFunction value.
 func NewNativeFunctionAttr(name string, fn func(Value) Value) Attr {
 	return NewAttr(name, NewNativeFunction(name, fn))
 }
