@@ -97,11 +97,6 @@ func NewSingleExpr(scanner parser.Scanner, a Expr) Expr {
 		})
 }
 
-// Arg returns the UnaryExpr's arg.
-func (e *UnaryExpr) Arg() Expr {
-	return e.a
-}
-
 // String returns a string representation of the expression.
 func (e *UnaryExpr) String() string {
 	return fmt.Sprintf(e.format, e.a)

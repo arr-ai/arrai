@@ -19,11 +19,6 @@ func NewUnnestExpr(scanner parser.Scanner, lhs Expr, attr string) Expr {
 	return &UnnestExpr{ExprScanner{scanner}, lhs, attr}
 }
 
-// LHS returns the LHS of the UnnestExpr.
-func (e *UnnestExpr) LHS() Expr {
-	return e.lhs
-}
-
 // AttrToUnnest returns the attr name to unnest.
 func (e *UnnestExpr) AttrToUnnest() string {
 	return e.attr

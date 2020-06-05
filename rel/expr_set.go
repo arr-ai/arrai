@@ -27,13 +27,6 @@ func NewSetExpr(scanner parser.Scanner, elements ...Expr) Expr {
 	return NewSet(values...)
 }
 
-// Elements returns a Set's elements.
-func (e *SetExpr) Elements() []Expr {
-	elements := make([]Expr, len(e.elements))
-	copy(elements, e.elements)
-	return elements
-}
-
 // String returns a string representation of the expression.
 func (e *SetExpr) String() string {
 	var b bytes.Buffer

@@ -27,13 +27,6 @@ func NewArrayExpr(scanner parser.Scanner, elements ...Expr) Expr {
 	return NewArray(values...)
 }
 
-// Elements returns a Set's elements.
-func (e ArrayExpr) Elements() []Expr {
-	elements := make([]Expr, len(e.elements))
-	copy(elements, e.elements)
-	return elements
-}
-
 // String returns a string representation of the expression.
 func (e ArrayExpr) String() string {
 	var b bytes.Buffer

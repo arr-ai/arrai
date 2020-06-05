@@ -172,14 +172,6 @@ func (t ArrayItemTuple) HasName(name string) bool {
 	return name == "@" || name == ArrayItemAttr
 }
 
-// Attributes returns attributes as a map.
-func (t ArrayItemTuple) Attributes() map[string]Value {
-	return map[string]Value{
-		"@":           NewNumber(float64(t.at)),
-		ArrayItemAttr: t.item,
-	}
-}
-
 // Names returns the attribute names.
 func (t ArrayItemTuple) Names() Names {
 	return NewNames("@", ArrayItemAttr)
