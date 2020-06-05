@@ -19,7 +19,7 @@ func NewRecursionExpr(scanner parser.Scanner, name Pattern, fn Expr, fix, fixt V
 }
 
 func (r RecursionExpr) Eval(local Scope) (Value, error) {
-	name, isIdent := r.name.(ExprPattern).expr.(IdentExpr)
+	name, isIdent := r.name.(ExprPattern).Expr.(IdentExpr)
 	if !isIdent {
 		return nil, wrapContext(errors.Errorf("Does not evaluate to a variable name: %v", r.name), r, local)
 	}

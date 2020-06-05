@@ -8,11 +8,11 @@ import (
 )
 
 type ExprPattern struct {
-	expr Expr
+	Expr Expr
 }
 
 func NewExprPattern(expr Expr) ExprPattern {
-	return ExprPattern{expr: expr}
+	return ExprPattern{Expr: expr}
 }
 
 func (p ExprPattern) Bind(scope Scope, value Value) (Scope, error) {
@@ -25,7 +25,7 @@ func (p ExprPattern) Bind(scope Scope, value Value) (Scope, error) {
 }
 
 func (p ExprPattern) String() string {
-	return p.expr.String()
+	return p.Expr.String()
 }
 
 type ExprsPattern struct {
