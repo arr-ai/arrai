@@ -24,11 +24,6 @@ func (e *IfElseExpr) Cond() Expr {
 	return e.cond
 }
 
-// RHS returns the RHS of the IfElseExpr.
-func (e *IfElseExpr) RHS() Expr {
-	return e.ifFalse
-}
-
 // String returns a string representation of the expression.
 func (e *IfElseExpr) String() string {
 	return fmt.Sprintf("(%s if %s else %s)", e.ifTrue, e.cond, e.ifFalse)
