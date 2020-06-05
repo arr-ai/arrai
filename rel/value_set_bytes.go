@@ -6,7 +6,10 @@ import (
 	"github.com/arr-ai/wbnf/parser"
 )
 
-// BytesByteAttr is the standard name for the value-attr of a character tuple.
+// BytesIndexAttr is the standard name for the index-attr of a BytesByteTuple.
+const BytesIndexAttr = "@"
+
+// BytesByteAttr is the standard name for the value-attr of a BytesByteTuple.
 const BytesByteAttr = "@byte"
 
 // Bytes is a set of Values.
@@ -268,7 +271,7 @@ func (b Bytes) ArrayEnumerator() (OffsetValueEnumerator, bool) {
 
 func newBytesTuple(index int, b byte) Tuple {
 	return NewTuple(
-		NewIntAttr("@", index),
+		NewIntAttr(BytesIndexAttr, index),
 		NewIntAttr(BytesByteAttr, int(b)),
 	)
 }
@@ -290,8 +293,8 @@ func bytesTupleMatcher(match func(index int, b byte)) TupleMatcher {
 	}
 	return NewTupleMatcher(
 		map[string]Matcher{
-			"@":           MatchInt(func(i int) { index = i; check() }),
-			BytesByteAttr: MatchInt(func(i int) { b = byte(i); check() }),
+			BytesIndexAttr: MatchInt(func(i int) { index = i; check() }),
+			BytesByteAttr:  MatchInt(func(i int) { b = byte(i); check() }),
 		},
 		Lit(EmptyTuple),
 	)
