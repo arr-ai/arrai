@@ -6,18 +6,6 @@ import (
 	"github.com/arr-ai/wbnf/parser"
 )
 
-// GetStringValue returns the string value for expr or false if not a string.
-func GetStringValue(expr Expr) (string, bool) {
-	if set, ok := expr.(Set); ok {
-		s := set.String()
-		if s[:1] == `"` {
-			// TODO: Fix this dirty hack. Maybe enhance Set.Export.
-			return s[1 : len(s)-1], true
-		}
-	}
-	return "", false
-}
-
 type ExprScanner struct {
 	Src parser.Scanner
 }
