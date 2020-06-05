@@ -19,11 +19,6 @@ func NewSequenceMapExpr(scanner parser.Scanner, lhs Expr, fn Expr) Expr {
 	return &SequenceMapExpr{ExprScanner{scanner}, lhs, ExprAsFunction(fn)}
 }
 
-// Fn returns the function to be applied to the LHS.
-func (e *SequenceMapExpr) Fn() *Function {
-	return e.fn
-}
-
 // String returns a string representation of the expression.
 func (e *SequenceMapExpr) String() string {
 	return fmt.Sprintf("(%s >> %s)", e.lhs, e.fn)
