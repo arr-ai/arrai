@@ -19,11 +19,6 @@ func NewIfElseExpr(scanner parser.Scanner, ifTrue, cond, ifFalse Expr) Expr {
 	return &IfElseExpr{ExprScanner{scanner}, ifTrue, cond, ifFalse}
 }
 
-// Cond returns the condition of the IfElseExpr.
-func (e *IfElseExpr) Cond() Expr {
-	return e.cond
-}
-
 // String returns a string representation of the expression.
 func (e *IfElseExpr) String() string {
 	return fmt.Sprintf("(%s if %s else %s)", e.ifTrue, e.cond, e.ifFalse)
