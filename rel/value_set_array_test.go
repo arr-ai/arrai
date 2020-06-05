@@ -12,6 +12,16 @@ func TestAsArray(t *testing.T) {
 	)
 }
 
+func TestAsArrayHoles(t *testing.T) {
+	AssertEqualValues(t,
+		NewArray(NewNumber(1), nil, nil, NewNumber(2)),
+		NewSet(
+			NewArrayItemTuple(0, NewNumber(1)),
+			NewArrayItemTuple(3, NewNumber(2)),
+		),
+	)
+}
+
 func TestArrayWithout(t *testing.T) {
 	three := NewArray(NewNumber(10), NewNumber(11), NewNumber(12))
 

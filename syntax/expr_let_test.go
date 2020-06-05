@@ -13,12 +13,30 @@ func TestExprLet(t *testing.T) {
 	AssertCodesEvalToSameValue(t, `(x: 1, y: 2)`, `let x = 1; (:x, y: 2)`)
 }
 
-func TestExprLetValuePattern(t *testing.T) {
+func TestExprLetExprPattern(t *testing.T) { //nolint:dupl
 	t.Parallel()
 	AssertCodesEvalToSameValue(t, `42`, `let 42 = 42; 42`)
+	AssertCodesEvalToSameValue(t, `42`, `let (42) = 42; 42`)
 	AssertCodesEvalToSameValue(t, `1`, `let 42 = 42; 1`)
+	AssertCodesEvalToSameValue(t, `1`, `let "hello" = "hello"; 1`)
+	AssertCodesEvalToSameValue(t, `5`, `let 3 = 1 + 2; 5`)
+	AssertCodesEvalToSameValue(t, `5`, `let (1 + 2) = 3; 5`)
+	AssertCodesEvalToSameValue(t, `3`, `let a = 1 + 2; a`)
+	AssertCodesEvalToSameValue(t, `3`, `let a = 3; let a = 1 + 2; a`)
+	AssertCodesEvalToSameValue(t, `3`, `let true = true; 3`)
+	AssertCodesEvalToSameValue(t, `3`, `let false = false; 3`)
+	AssertCodesEvalToSameValue(t, `3`, `let true = {()}; 3`)
+	AssertCodesEvalToSameValue(t, `3`, `let false = {}; 3`)
+	AssertCodesEvalToSameValue(t, `3`, `let true = {()}; 3`)
+
 	AssertCodeErrors(t, `let 42 = 1; 42`, "")
 	AssertCodeErrors(t, `let 42 = 1; 1`, "")
+	AssertCodeErrors(t, `let "hello" = "hi"; 1`, "")
+	AssertCodeErrors(t, `let 1 = 1 + 2; 5`, "")
+	AssertCodeErrors(t, `let (1 + 2) = 6; 5`, "")
+	AssertCodeErrors(t, `let a = 5; let (a) = 1 + 2; a`, "")
+	AssertCodeErrors(t, `let true = false; 3`, "")
+	AssertCodeErrors(t, `let true = {}; 3`, "")
 }
 
 func TestExprLetArrayPattern(t *testing.T) { //nolint:dupl
