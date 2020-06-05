@@ -23,6 +23,8 @@ func TestSetCompare(t *testing.T) {
 			j := j
 			b := intSet(j)
 			t.Run(fmt.Sprintf("%v.%v", a, b), func(t *testing.T) {
+				t.Parallel()
+
 				assertComparison := func(op string, result bool) bool { //nolint:unparam
 					var expected string
 					if result {
