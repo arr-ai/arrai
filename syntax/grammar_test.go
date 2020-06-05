@@ -75,26 +75,26 @@ func TestGrammarParseParseLiteral(t *testing.T) {
 }
 
 func TestGrammarParseParseScopeVar(t *testing.T) {
-	// AssertCodesEvalToSameValue(t,
-	// 	`(
-	// 		@rule: "x",
-	// 		'': ["1", "2"],
-	// 	)`,
-	// 	`//grammar -> (.parse(.lang.wbnf, "grammar", "x -> '1' '2';") -> \x .parse(x, "x", "12"))`)
+	AssertCodesEvalToSameValue(t,
+		`(
+			@rule: "x",
+			'': ["1", "2"],
+		)`,
+		`//grammar -> (.parse(.lang.wbnf, "grammar", "x -> '1' '2';") -> \x .parse(x, "x", "12"))`)
 
-	// AssertCodesEvalToSameValue(t,
-	// 	`(
-	// 		"": ["+"],
-	// 		@rule: "expr",
-	// 		expr: [
-	// 			(expr: [("": "1")]),
-	// 			(
-	// 				"": ["*"],
-	// 				expr: [("": "2"), ("": "3")]
-	// 			)
-	// 		]
-	// 	)`,
-	// 	`//grammar -> (.parse(.lang.wbnf, "grammar", "expr -> @:'+' > @:'*' > \\d+;") -> \x .parse(x, "expr", "1+2*3"))`)
+	AssertCodesEvalToSameValue(t,
+		`(
+			"": ["+"],
+			@rule: "expr",
+			expr: [
+				(expr: [("": "1")]),
+				(
+					"": ["*"],
+					expr: [("": "2"), ("": "3")]
+				)
+			]
+		)`,
+		`//grammar -> (.parse(.lang.wbnf, "grammar", "expr -> @:'+' > @:'*' > \\d+;") -> \x .parse(x, "expr", "1+2*3"))`)
 
 	scenarios := []struct{ grammar, rule, text string }{
 		{`a -> "1" "2";`, "a", `12`},
