@@ -18,6 +18,8 @@ github.com/arr-ai/proto v0.0.0-20180422074755-2ffbedebee50 h1:IKdl2NU9J9dt4qtet3
 github.com/arr-ai/proto v0.0.0-20180422074755-2ffbedebee50/go.mod h1:zMLnTY/7fre6NJw4N46s23kehuIHx4MdXx1fdaEG9Ss=
 github.com/arr-ai/wbnf v0.16.0 h1:AeUKh5F0LvoBUZq0OpbzxUQ8x4lf/XhUWzD1V0dpKnU=
 github.com/arr-ai/wbnf v0.16.0/go.mod h1:WRCWNNBAGJU3JwitK7FwbOA68f0/yr4m/Iq64/wyqCo=
+github.com/arr-ai/wbnf v0.18.0 h1:JFZ76L0oe20Xtinvq2e4B6G9y3HWf2sjNqljxsjDGmY=
+github.com/arr-ai/wbnf v0.18.0/go.mod h1:WRCWNNBAGJU3JwitK7FwbOA68f0/yr4m/Iq64/wyqCo=
 github.com/census-instrumentation/opencensus-proto v0.2.1/go.mod h1:f6KPmirojxKA12rnyqOA5BBL4O983OfeGPqjHWSTneU=
 github.com/chzyer/logex v1.1.10 h1:Swpa1K6QvQznwJRcfTfQJmTE72DqScAa40E+fbHEXEE=
 github.com/chzyer/logex v1.1.10/go.mod h1:+Ywpsq7O8HXn0nuIou7OrIPyXbp3wmkHB+jjWRnGsAI=

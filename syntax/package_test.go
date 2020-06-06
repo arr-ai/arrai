@@ -3,10 +3,12 @@ package syntax
 import "testing"
 
 func TestPackageE(t *testing.T) {
+	t.Parallel()
 	AssertCodesEvalToSameValue(t, `2.718281828459045`, `//math.e`)
 }
 
 func TestPackagePi(t *testing.T) {
+	t.Parallel()
 	AssertCodesEvalToSameValue(t, `3.141592653589793`, `//math.pi`)
 }
 
@@ -23,22 +25,27 @@ func TestPackagePi(t *testing.T) {
 // }
 
 func TestPackageImport(t *testing.T) {
+	t.Parallel()
 	AssertCodesEvalToSameValue(t, `{1, 4, 9, 16}`, `//{./examples/simple/simple}`)
 }
 
 func TestPackageImportFromRoot(t *testing.T) {
+	t.Parallel()
 	AssertCodesEvalToSameValue(t, `{1, 4, 9, 16}`, `//{/examples/simple/simple}`)
 }
 
 func TestJsonPackageImportFromModuleRoot(t *testing.T) {
+	t.Parallel()
 	AssertCodesEvalToSameValue(t, `{'location': (s: 'Melbourne'), 'name': (s: 'foo')}`, `//{/examples/json/foo.json}`)
 }
 
 func TestJsonPackageImport(t *testing.T) {
+	t.Parallel()
 	AssertCodesEvalToSameValue(t, `{'location': (s: 'Melbourne'), 'name': (s: 'foo')}`, `//{./examples/json/foo.json}`)
 }
 
 func TestJsonPackageImportNotExists(t *testing.T) {
+	t.Parallel()
 	AssertCodeErrors(t, `//{./examples/json/fooooo.json}`, "")
 }
 

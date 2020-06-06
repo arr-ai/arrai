@@ -8,6 +8,8 @@ import (
 )
 
 func TestHandleAccessScanners(t *testing.T) {
+	t.Parallel()
+
 	base := parser.NewScanner(".")
 	access := parser.NewScannerAt(".a.b", 1, 2)
 

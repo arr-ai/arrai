@@ -37,6 +37,8 @@ func TestFetchCommand(t *testing.T) {
 }
 
 func TestInsertRunCommand(t *testing.T) {
+	t.Parallel()
+
 	flags := []cli.Flag{
 		&cli.BoolFlag{
 			Name:    "stuff",
