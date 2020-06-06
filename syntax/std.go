@@ -105,7 +105,6 @@ func StdScope() rel.Scope {
 				stdSeq(),
 				stdStr(),
 				stdTest(),
-				stdUnicode(),
 				stdBits(),
 			))
 	})
