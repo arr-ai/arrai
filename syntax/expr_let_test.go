@@ -63,7 +63,7 @@ func TestExprLetArrayPattern(t *testing.T) { //nolint:dupl
 	AssertCodeErrors(t, `let [x, y] = [1]; x`, "")
 	AssertCodeErrors(t, `let [x, x] = [1, 2]; x`, "")
 	AssertCodeErrors(t, `let [_] = [1]; _`,
-		"Name \"_\" not found in {}\n\n\x1b[1;37m:1:16:\x1b[0m\nlet [_]")
+		"name \"_\" not found in {}\n\n\x1b[1;37m:1:16:\x1b[0m\nlet [_]")
 	AssertCodeErrors(t, `let x = 3; let [b, (x)] = [2, 1]; b`, "")
 }
 
