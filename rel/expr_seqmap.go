@@ -81,7 +81,7 @@ func (e *SeqArrowExpr) Eval(local Scope) (_ Value, err error) {
 					continue
 				}
 			}
-			return nil, wrapContext(fmt.Errorf("bytes %s ... must produce valid chars", e.op), e, local)
+			return nil, wrapContext(fmt.Errorf("bytes %s ... must produce valid bytes", e.op), e, local)
 		}
 		return NewOffsetBytes(bytes, value.offset), nil
 	case Array:
