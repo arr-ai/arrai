@@ -30,11 +30,13 @@ func TestTupleGet(t *testing.T) {
 }
 
 func TestTupleCallGet(t *testing.T) {
+	t.Parallel()
 	AssertCodesEvalToSameValue(t, `2`, `(a: \x (b: x)).a(2).b`)
 	AssertCodesEvalToSameValue(t, `2`, `let t = (a: \x (b: x)); t.a(2).b`)
 }
 
 func TestTupleLiteral(t *testing.T) {
+	t.Parallel()
 	AssertCodesEvalToSameValue(t, `(x: 1, y: 2)`, `let x = 1; let y = 2; (x: x, y: y)`)
 	AssertCodesEvalToSameValue(t, `(x: 1, y: 2)`, `let x = 1; let y = 2; (:x, :y)`)
 	AssertCodesEvalToSameValue(t, `(x: 1, y: 2)`, `let t = (x: 1, y: 2); (:t.x, :t.y)`)

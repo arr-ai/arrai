@@ -3,11 +3,14 @@ package syntax
 import "testing"
 
 func TestApplyExpr(t *testing.T) {
+	t.Parallel()
 	AssertCodesEvalToSameValue(t, `42`, `6 -> 7 * .`)
 	AssertCodesEvalToSameValue(t, `42`, `6 -> \x 7 * x`)
 }
 
 func TestSeqArrow(t *testing.T) {
+	t.Parallel()
+
 	AssertCodesEvalToSameValue(t, `'HELLO'`, `'hello' >> . - 32`)
 	AssertCodesEvalToSameValue(t, `10\'HELLO'`, `10\'hello' >> . - 32`)
 
@@ -22,6 +25,8 @@ func TestSeqArrow(t *testing.T) {
 }
 
 func TestISeqArrow(t *testing.T) {
+	t.Parallel()
+
 	AssertCodesEvalToSameValue(t, `'ACE'`, `'abc' >>> \i \. . - 32 + i`)
 	AssertCodesEvalToSameValue(t, `2\'CEG'`, `2\'abc' >>> \i \. . - 32 + i`)
 
@@ -49,11 +54,13 @@ func TestISeqArrow(t *testing.T) {
 }
 
 func TestApplyExprInsideMapExpr(t *testing.T) {
+	t.Parallel()
 	AssertCodesEvalToSameValue(t, `{2, 4, 8}`, `{1, 2, 3} => (2 -> \y y ^ .)`)
 	AssertCodesEvalToSameValue(t, `{2, 4, 8}`, `(\z {1, 2, 3} => (z -> \y y ^ .))(2)`)
 }
 
 func TestApplyExprWithPattern(t *testing.T) {
+	t.Parallel()
 	AssertCodesEvalToSameValue(t, `2`, `1 -> \x let [(x), y] = [1, 2]; y`)
 	AssertCodesEvalToSameValue(t, `3`, `[1, 2] -> \[x, y] x + y`)
 	AssertCodesEvalToSameValue(t, `3`, `(m: 1, n: 2) -> \(m: x, n: y) x + y`)
@@ -64,6 +71,8 @@ func TestApplyExprWithPattern(t *testing.T) {
 }
 
 func TestUnaryArrows(t *testing.T) {
+	t.Parallel()
+
 	// This tests an error when stringifying sets of arrays.
 	AssertCodesEvalToSameValue(t, `{{2, 4}, {8, 16}}`, `{{1, 2}, {3, 4}} => => 2 ^ .`)
 	AssertCodesEvalToSameValue(t, `{[2, 4], [8, 16]}`, `{[1, 2], [3, 4]} => >> 2 ^ .`)

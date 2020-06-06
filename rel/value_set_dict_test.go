@@ -7,6 +7,7 @@ import (
 )
 
 func TestDictEntryTupleLess(t *testing.T) {
+	t.Parallel()
 	// Test for a panic when comparing Strings using !=.
 	assert.NotPanics(t, func() {
 		NewDict(false,
@@ -17,6 +18,8 @@ func TestDictEntryTupleLess(t *testing.T) {
 }
 
 func TestDictEntryTupleOrdered(t *testing.T) {
+	t.Parallel()
+
 	entries := NewDict(true,
 		NewDictEntryTuple(NewString([]rune("b")), NewNumber(2)),
 		NewDictEntryTuple(NewString([]rune("a")), NewNumber(2)),
@@ -31,6 +34,8 @@ func TestDictEntryTupleOrdered(t *testing.T) {
 }
 
 func TestDictLess(t *testing.T) {
+	t.Parallel()
+
 	kv := func(k, v float64) DictEntryTuple {
 		return NewDictEntryTuple(NewNumber(k), NewNumber(v))
 	}

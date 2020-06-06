@@ -3,6 +3,7 @@ package syntax
 import "testing"
 
 func TestConcat(t *testing.T) {
+	t.Parallel()
 	AssertCodesEvalToSameValue(t, `"abcdef"`, `"abc" ++ "def"`)
 	AssertCodesEvalToSameValue(t, `   "def"`, `""    ++ "def"`)
 	AssertCodesEvalToSameValue(t, `"abc"   `, `"abc" ++ ""   `)
