@@ -60,7 +60,7 @@ func jsonEscapeExpr(expr Expr) interface{} {
 		return array("->", x.lhs, x.fn)
 	case *DArrowExpr:
 		return array("=>", x.lhs, x.fn)
-	case *SequenceMapExpr:
+	case *SeqArrowExpr:
 		return array(">>", x.lhs, x.fn)
 	case *TupleMapExpr:
 		return array(":>", x.lhs, x.fn)

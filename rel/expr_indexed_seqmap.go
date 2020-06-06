@@ -7,17 +7,17 @@ import (
 	"github.com/go-errors/errors"
 )
 
-type IndexedSequenceMapExpr struct {
+type ISeqArrowExpr struct {
 	ExprScanner
 	lhs Expr
 	fn  *Function
 }
 
 func NewISeqArrowExpr(scanner parser.Scanner, lhs, rhs Expr) Expr {
-	return &IndexedSequenceMapExpr{ExprScanner{scanner}, lhs, ExprAsFunction(rhs)}
+	return &ISeqArrowExpr{ExprScanner{scanner}, lhs, ExprAsFunction(rhs)}
 }
 
-func (is *IndexedSequenceMapExpr) Eval(local Scope) (Value, error) {
+func (is *ISeqArrowExpr) Eval(local Scope) (Value, error) {
 	value, err := is.lhs.Eval(local)
 	if err != nil {
 		return nil, wrapContext(err, is, local)
@@ -51,6 +51,6 @@ func (is *IndexedSequenceMapExpr) Eval(local Scope) (Value, error) {
 }
 
 // String returns a string representation of the expression.
-func (is *IndexedSequenceMapExpr) String() string {
+func (is *ISeqArrowExpr) String() string {
 	return fmt.Sprintf("(%s >>> %s)", is.lhs, is.fn)
 }

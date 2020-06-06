@@ -7,8 +7,8 @@ import (
 	"github.com/go-errors/errors"
 )
 
-// SequenceMapExpr returns the tuple applied to a function.
-type SequenceMapExpr struct {
+// SeqArrowExpr returns the tuple applied to a function.
+type SeqArrowExpr struct {
 	ExprScanner
 	lhs Expr
 	fn  *Function
@@ -16,16 +16,16 @@ type SequenceMapExpr struct {
 
 // NewSequenceMapExpr returns a new SequenceMapExpr.
 func NewSeqArrowExpr(scanner parser.Scanner, lhs Expr, fn Expr) Expr {
-	return &SequenceMapExpr{ExprScanner{scanner}, lhs, ExprAsFunction(fn)}
+	return &SeqArrowExpr{ExprScanner{scanner}, lhs, ExprAsFunction(fn)}
 }
 
 // String returns a string representation of the expression.
-func (e *SequenceMapExpr) String() string {
+func (e *SeqArrowExpr) String() string {
 	return fmt.Sprintf("(%s >> %s)", e.lhs, e.fn)
 }
 
 // Eval returns the lhs
-func (e *SequenceMapExpr) Eval(local Scope) (_ Value, err error) {
+func (e *SeqArrowExpr) Eval(local Scope) (_ Value, err error) {
 	defer wrapPanic(e, &err, local)
 	value, err := e.lhs.Eval(local)
 	if err != nil {
