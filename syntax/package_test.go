@@ -2,10 +2,6 @@ package syntax
 
 import "testing"
 
-// func TestPackageStd(t *testing.T) {
-// 	AssertCodesEvalToSameValue(t, `3.141592653589793`, `//.`)
-// }
-
 func TestPackageE(t *testing.T) {
 	AssertCodesEvalToSameValue(t, `2.718281828459045`, `//math.e`)
 }
@@ -15,11 +11,11 @@ func TestPackagePi(t *testing.T) {
 }
 
 // func TestPackageRelativeImport(t *testing.T) {
-// 	AssertCodesEvalToSameValue(t, ``, `//./myutil/work(42)`)
+// 	AssertCodesEvalToSameValue(t, ``, `//{./myutil/work}(42)`)
 // }
 
 // func TestPackageYaml(t *testing.T) {
-// 	AssertCodesEvalToSameValue(t, ``, `//./'myutil/work.yaml'`)
+// 	AssertCodesEvalToSameValue(t, ``, `//{./'myutil/work.yaml}'`)
 // }
 
 // func TestPackageRootImport(t *testing.T) {
