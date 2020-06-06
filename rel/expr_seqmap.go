@@ -62,7 +62,7 @@ func (e *SeqArrowExpr) Eval(local Scope) (_ Value, err error) {
 					continue
 				}
 			}
-			return nil, fmt.Errorf("string >> expr must produce valid chars")
+			return nil, wrapContext(fmt.Errorf("string >> expr must produce valid chars"), e, local)
 		}
 		return NewOffsetString(runes, value.offset), nil
 	case Bytes:
@@ -75,7 +75,7 @@ func (e *SeqArrowExpr) Eval(local Scope) (_ Value, err error) {
 					continue
 				}
 			}
-			return nil, fmt.Errorf("string >> expr must produce valid chars")
+			return nil, wrapContext(fmt.Errorf("string >> expr must produce valid chars"), e, local)
 		}
 		return NewOffsetBytes(bytes, value.offset), nil
 	case Array:
