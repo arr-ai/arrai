@@ -930,7 +930,7 @@ var unops = map[string]unOpFunc{
 	"*":  rel.NewEvalExpr,
 	"//": NewPackageExpr,
 	"=>": dotUnary(rel.NewDArrowExpr),
-	">>": dotUnary(rel.NewSequenceMapExpr),
+	">>": dotUnary(rel.NewSeqArrowExpr),
 	":>": dotUnary(rel.NewTupleMapExpr),
 }
 
@@ -939,8 +939,8 @@ type binOpFunc func(scanner parser.Scanner, a, b rel.Expr) rel.Expr
 var binops = map[string]binOpFunc{
 	"->":      rel.NewArrowExpr,
 	"=>":      rel.NewDArrowExpr,
-	">>":      rel.NewSequenceMapExpr,
-	">>>":     rel.NewIndexedSequenceMapExpr,
+	">>":      rel.NewSeqArrowExpr,
+	">>>":     rel.NewISeqArrowExpr,
 	":>":      rel.NewTupleMapExpr,
 	"orderby": rel.NewOrderByExpr,
 	"order":   rel.NewOrderExpr,

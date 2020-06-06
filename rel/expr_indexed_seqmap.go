@@ -13,7 +13,7 @@ type IndexedSequenceMapExpr struct {
 	fn  *Function
 }
 
-func NewIndexedSequenceMapExpr(scanner parser.Scanner, lhs, rhs Expr) Expr {
+func NewISeqArrowExpr(scanner parser.Scanner, lhs, rhs Expr) Expr {
 	return &IndexedSequenceMapExpr{ExprScanner{scanner}, lhs, ExprAsFunction(rhs)}
 }
 

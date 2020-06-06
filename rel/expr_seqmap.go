@@ -15,7 +15,7 @@ type SequenceMapExpr struct {
 }
 
 // NewSequenceMapExpr returns a new SequenceMapExpr.
-func NewSequenceMapExpr(scanner parser.Scanner, lhs Expr, fn Expr) Expr {
+func NewSeqArrowExpr(scanner parser.Scanner, lhs Expr, fn Expr) Expr {
 	return &SequenceMapExpr{ExprScanner{scanner}, lhs, ExprAsFunction(fn)}
 }
 
