@@ -260,6 +260,8 @@ Array of Bytes can be expressed in arr.ai. The syntactic sugar is in the form of
 `<< expr1, expr2, expr3, ... >>`.
 It only accepts expressions that are evaluated to either a `Number` whose values
 range from 0-255 inclusive or a `String` with `0` offset.
+Any complicated expressions need to be surrounded by parentheses `(expr)`,
+except literal values such as `Number`, `String`, `Char`, and variables.
 Any other values and the expression will fail.
 A `Number` is appended to the array while each characters of a `String` is
 appended to the array.
@@ -268,8 +270,9 @@ The result is an array of Bytes and each Byte is represented as a `Number`.
 Example of usages:
 
 ```arrai
-<<"hello", 10>> = <<"hello\n">>
-<<97, 98, 99>>  = <<"abc">>
+<<"hello", 10>>      = <<"hello\n">>
+<<97, 98, 99>>       = <<"abc">>
+<<("abc" >> . + 1)>> = <<"bcd">>
 ```
 
 ##### Expression string syntax
