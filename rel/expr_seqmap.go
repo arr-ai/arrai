@@ -13,16 +13,22 @@ type SeqArrowExpr struct {
 	lhs    Expr
 	fn     *Function
 	withAt bool
+	op     string
 }
 
 // NewSequenceMapExpr returns a new SequenceMapExpr.
 func NewSeqArrowExpr(withAt bool) func(scanner parser.Scanner, lhs Expr, fn Expr) Expr {
+	op := ">>"
+	if withAt {
+		op = ">>>"
+	}
 	return func(scanner parser.Scanner, lhs Expr, fn Expr) Expr {
 		return &SeqArrowExpr{
 			ExprScanner: ExprScanner{scanner},
 			lhs:         lhs,
 			fn:          ExprAsFunction(fn),
 			withAt:      withAt,
+			op:          op,
 		}
 	}
 }
@@ -62,7 +68,7 @@ func (e *SeqArrowExpr) Eval(local Scope) (_ Value, err error) {
 					continue
 				}
 			}
-			return nil, wrapContext(fmt.Errorf("string >> expr must produce valid chars"), e, local)
+			return nil, wrapContext(fmt.Errorf("string %s ... must produce valid chars", e.op), e, local)
 		}
 		return NewOffsetString(runes, value.offset), nil
 	case Bytes:
@@ -75,7 +81,7 @@ func (e *SeqArrowExpr) Eval(local Scope) (_ Value, err error) {
 					continue
 				}
 			}
-			return nil, wrapContext(fmt.Errorf("string >> expr must produce valid chars"), e, local)
+			return nil, wrapContext(fmt.Errorf("string %s ... must produce valid chars", e.op), e, local)
 		}
 		return NewOffsetBytes(bytes, value.offset), nil
 	case Array:
@@ -100,7 +106,7 @@ func (e *SeqArrowExpr) Eval(local Scope) (_ Value, err error) {
 			t := i.Current().(Tuple)
 			at, has := t.Get("@")
 			if !has {
-				return nil, wrapContext(errors.Errorf(">>> not applicable to unindexed type %v", value), e, local)
+				return nil, wrapContext(errors.Errorf("%s not applicable to unindexed type %v", e.op, value), e, local)
 			}
 			attr := t.Names().Without("@").Any()
 			item, _ := t.Get(attr)
@@ -109,5 +115,5 @@ func (e *SeqArrowExpr) Eval(local Scope) (_ Value, err error) {
 		}
 		return NewSet(values...), nil
 	}
-	return nil, wrapContext(errors.Errorf(">> not applicable to %T", value), e, local)
+	return nil, wrapContext(errors.Errorf("%s not applicable to %T", e.op, value), e, local)
 }
