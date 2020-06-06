@@ -31,23 +31,24 @@ func (e *SeqArrowExpr) Eval(local Scope) (_ Value, err error) {
 	if err != nil {
 		return nil, wrapContext(err, e, local)
 	}
+	closure := NewClosure(local, e.fn)
+
 	// TODO: implement directly for String, Array and Dict.
-	if set, ok := value.(Set); ok {
+	switch value := value.(type) {
+	// case Array:
+	// 	values := value.clone().values
+	// 	for i, item := range values {
+	// 		values[i] =
+	// 	}
+	case Set:
 		values := []Value{}
-		for i := set.Enumerator(); i.MoveNext(); {
+		for i := value.Enumerator(); i.MoveNext(); {
 			t := i.Current().(Tuple)
 			pos, _ := t.Get("@")
 			attr := t.Names().Without("@").Any()
 			item, _ := t.Get(attr)
-			scope, err := e.fn.arg.Bind(local, item)
-			if err != nil {
-				return nil, wrapContext(err, e, local)
-			}
-			v, err := e.fn.body.Eval(local.Update(scope))
-			if err != nil {
-				return nil, wrapContext(err, e, local)
-			}
-			values = append(values, NewTuple(Attr{"@", pos}, Attr{attr, v}))
+			newItem := SetCall(closure, item)
+			values = append(values, NewTuple(Attr{"@", pos}, Attr{attr, newItem}))
 		}
 		return NewSet(values...), nil
 	}
