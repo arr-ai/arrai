@@ -6,19 +6,6 @@ import (
 	"github.com/arr-ai/wbnf/parser"
 )
 
-// IdentLookupFailed represents failure to lookup a scope variable.
-type IdentLookupFailed struct {
-	scope Scope
-	expr  IdentExpr
-}
-
-func (e IdentLookupFailed) Error() string {
-	return fmt.Sprintf("Name %q not found in %v \n%s",
-		e.expr.ident,
-		e.scope.m.Keys(),
-		e.expr.Source().Context(parser.DefaultLimit))
-}
-
 // IdentExpr returns the variable referenced by ident.
 type IdentExpr struct {
 	ExprScanner
@@ -54,7 +41,7 @@ func (e IdentExpr) Eval(local Scope) (Value, error) {
 	if a, found := local.Get(e.ident); found && a != nil {
 		return a.Eval(local)
 	}
-	return nil, IdentLookupFailed{local, e}
+	return nil, wrapContext(fmt.Errorf("Name %q not found in %v", e.ident, local.m.Keys()), e, local)
 }
 
 func (e IdentExpr) Bind(scope Scope, value Value) (Scope, error) {
