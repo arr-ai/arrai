@@ -19,6 +19,7 @@ expr   -> C* amp="&"* @ C* arrow=(
               binding="->" C* "\\" C* pattern C* %%bind C* @ |
               binding="->" C* %%bind @
           )* C*
+        > C* @:binop=">>>" C*
         > C* unop=/{:>|=>|>>}* @ C*
         > C* @:binop=("without" | "with") C*
         > C* @:binop="||" C*
@@ -30,7 +31,6 @@ expr   -> C* amp="&"* @ C* arrow=(
         > C* @:binop=/{//|[*/%]|\\} C*
         > C* @:rbinop="^" C*
         > C* unop=/{[-+!*^]}* @ C*
-        > C* @:binop=">>>" C*
         > C* @ postfix=/{count|single}? C* touch? C*
         > C* (get | @) tail_op=(
             safe_tail=(first_safe=(tail "?") ops=(safe=(tail "?") | tail)* ":" fall=@)

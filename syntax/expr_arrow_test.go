@@ -7,6 +7,47 @@ func TestApplyExpr(t *testing.T) {
 	AssertCodesEvalToSameValue(t, `42`, `6 -> \x 7 * x`)
 }
 
+func TestSeqArrow(t *testing.T) {
+	AssertCodesEvalToSameValue(t, `'HELLO'`, `'hello' >> . - 32`)
+	AssertCodesEvalToSameValue(t, `10\'HELLO'`, `10\'hello' >> . - 32`)
+
+	AssertCodesEvalToSameValue(t, `<<'HELLO'>>`, `(<<'hello'>>) >> . - 32`)
+	AssertCodesEvalToSameValue(t, `10\<<'HELLO'>>`, `(10\<<'hello'>>) >> . - 32`)
+
+	AssertCodesEvalToSameValue(t, `[2, 4, 8]`, `[1, 2, 3] >> 2 ^ .`)
+	AssertCodesEvalToSameValue(t, `[2, , 8]`, `[1, , 3] >> 2 ^ .`)
+	AssertCodesEvalToSameValue(t, `1\[4, 8]`, `1\[2, 3] >> 2 ^ .`)
+
+	AssertCodesEvalToSameValue(t, `{'a': 42, 'b': 54}`, `{'a': 7, 'b': 9} >> 6 * .`)
+}
+
+func TestISeqArrow(t *testing.T) {
+	AssertCodesEvalToSameValue(t, `'ACE'`, `'abc' >>> \i \. . - 32 + i`)
+	AssertCodesEvalToSameValue(t, `2\'CEG'`, `2\'abc' >>> \i \. . - 32 + i`)
+
+	AssertCodesEvalToSameValue(t, `<<'ABC'>>`, `(<<'ace'>>) >>> \i \. . - 32 - i`)
+	AssertCodesEvalToSameValue(t, `2\<<'AAA'>>`, `(2\<<'cde'>>) >>> \i \. . - 32 - i`)
+
+	AssertCodesEvalToSameValue(t, `[2, 8, 32]`, `[1, 2, 3] >>> \i \. 2 ^ (. + i)`)
+	AssertCodesEvalToSameValue(t, `[2, , 32]`, `[1, , 3] >>> \i \. 2 ^ (. + i)`)
+	AssertCodesEvalToSameValue(t, `1\[8, 32]`, `1\[2, 3] >>> \i \. 2 ^ (. + i)`)
+
+	AssertCodesEvalToSameValue(t, `{1: 42, 2: 54}`, `{1: 6, 2: 7} >>> \i \. 6 * (. + i)`)
+
+	AssertCodesEvalToSameValue(t,
+		`{
+			3      : ( "key": 3      , "val": (2)      ),
+			"ten"  : ( "key": "ten"  , "val": 10       ),
+			"stuff": ( "key": "stuff", "val": "random" ),
+		}`,
+		`{"stuff": "random", "ten": 10, 3: (2)} >>> \i \n ("key": i, "val": n)`,
+	)
+	AssertCodeErrors(t,
+		`{("a": "z"), ("b": "y")} >>> \i \n (i ++ n)`,
+		`>>> not applicable to unindexed type {(a: z), (b: y)}`,
+	)
+}
+
 func TestApplyExprInsideMapExpr(t *testing.T) {
 	AssertCodesEvalToSameValue(t, `{2, 4, 8}`, `{1, 2, 3} => (2 -> \y y ^ .)`)
 	AssertCodesEvalToSameValue(t, `{2, 4, 8}`, `(\z {1, 2, 3} => (z -> \y y ^ .))(2)`)
