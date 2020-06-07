@@ -162,7 +162,7 @@ func TestGetLastToken(t *testing.T) {
 
 func TestTabCompletionStdlib(t *testing.T) {
 	t.Parallel()
-	stdlib := syntax.StdScope().MustGet(".").(rel.Tuple)
+	stdlib := syntax.StdScope().MustGet("//").(rel.Tuple)
 	stdlibNames := stdlib.Names().OrderedNames()
 
 	assertTabCompletion(t, append(stdlibNames, "{"), 0, "//\t", nil)
@@ -286,7 +286,7 @@ func TestCompletionCurrentExpr(t *testing.T) {
 	assertTabCompletion(t, []string{`('b')`}, 0, "x.a\t", map[string]string{"x": `(a: {"b": (c: 3)})`})
 	assertTabCompletion(t, []string{`.c`}, 0, "x.a(`b`)\t", map[string]string{"x": `(a: {"b": (c: 3)})`})
 
-	assertTabCompletion(t, []string{}, 0, "let x = (a: 1); x \t", nil)
+	assertTabCompletion(t, []string{"//"}, 0, "let x = (a: 1); x \t", nil)
 }
 
 func assertTabCompletionWithPrefix(
@@ -337,8 +337,8 @@ func TestGlobalPredictions(t *testing.T) {
 		"xyz": "323",
 	}
 
-	assertTabCompletion(t, []string{"aac", "abc", "bca", "xyz"}, 0, "(a: \t)", globalValues)
-	assertTabCompletion(t, []string{"aac", "abc", "bca", "xyz"}, 0, "\t", globalValues)
+	assertTabCompletion(t, []string{"//", "aac", "abc", "bca", "xyz"}, 0, "(a: \t)", globalValues)
+	assertTabCompletion(t, []string{"//", "aac", "abc", "bca", "xyz"}, 0, "\t", globalValues)
 	assertTabCompletion(t, []string{"ac", "bc"}, 0, "(a: 1) + a\t", globalValues)
 	assertTabCompletion(t, []string{"ac", "bc"}, 0, "a\t", globalValues)
 	assertTabCompletion(t, []string{}, 0, "y\t", globalValues)

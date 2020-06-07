@@ -82,16 +82,20 @@ func (p DictPattern) Bind(local Scope, value Value) (Scope, error) {
 
 			continue
 		}
-		dictValue, found := m.Get(entry.at)
+		key := entry.at
+		if lit, is := key.(LiteralExpr); is {
+			key = lit.Literal()
+		}
+		dictValue, found := m.Get(key)
 		if !found {
-			return EmptyScope, fmt.Errorf("couldn't find %s in dict %s", entry.at, m)
+			return EmptyScope, fmt.Errorf("couldn't find %s in dict %s", key, m)
 		}
 		scope, err := entry.value.Bind(local, dictValue.(Value))
 		if err != nil {
 			return EmptyScope, err
 		}
 		result = result.MatchedUpdate(scope)
-		m = m.Without(frozen.NewSet(entry.at))
+		m = m.Without(frozen.NewSet(key))
 	}
 
 	return result, nil

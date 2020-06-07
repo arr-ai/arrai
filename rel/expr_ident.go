@@ -12,15 +12,13 @@ type IdentExpr struct {
 	ident string
 }
 
-// DotIdent represents the special identifier '.'.
-var DotIdent = IdentExpr{ExprScanner: ExprScanner{Src: *parser.NewScanner(".")}, ident: "."}
-
 // NewIdentExpr returns a new identifier.
 func NewIdentExpr(scanner parser.Scanner, ident string) IdentExpr {
-	if ident == "." {
-		return DotIdent
-	}
 	return IdentExpr{ExprScanner{scanner}, ident}
+}
+
+func NewDotIdent(source parser.Scanner) IdentExpr {
+	return NewIdentExpr(source, ".")
 }
 
 // Ident returns the ident for the IdentExpr.

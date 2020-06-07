@@ -31,7 +31,7 @@ func StdScope() rel.Scope {
 	stdScopeOnce.Do(func() {
 		fixFn, fixtFn := FixFuncs()
 		stdScopeVar = rel.EmptyScope.
-			With(".", rel.NewTuple(
+			With("//", rel.NewTuple(
 				rel.NewNativeFunctionAttr("dict", func(value rel.Value) rel.Value {
 					if t, ok := value.(rel.Tuple); ok {
 						if !t.IsTrue() {
