@@ -79,7 +79,7 @@ SEQ_COMMENT -> "," C*;
   | C* "{" C* dict=((ext=extra|key=expr ":" value=top):SEQ_COMMENT,?) "}" C*
   | C* "[" C* array=(%!sparse_sequence(top)?) C* "]" C*
   | C* "<<" C* bytes=(item=(STR|NUM|CHAR|IDENT|"("top")"):SEQ_COMMENT,?) C* ">>" C*
-  | C* "(" tuple=(pairs=(extra|name? ":" v=top):SEQ_COMMENT,?) ")" C*
+  | C* "(" tuple=(pairs=(extra | ((rec="rec"? name| name?) ":" v=top)):SEQ_COMMENT,?) ")" C*
   | C* "(" identpattern=IDENT ")" C*
 };
 
