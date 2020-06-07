@@ -81,38 +81,24 @@ func TestPackageExternalImportModule(t *testing.T) {
 	cmd := exec.Command("go", "mod", "init", "github.com/arr-ai/arrai/fake")
 	require.NoError(t, cmd.Run())
 
-	repo := "github.com/ChloePlanet/arrai-examples"
+	t.Run("", func(t *testing.T) {
+		run := func(name string, f func(t *testing.T)) {
+			t.Run(name, func(t *testing.T) {
+				t.Parallel()
+				f(t)
+			})
+		}
 
-	t.Run("Module", func(t *testing.T) {
-		t.Parallel()
-		AssertCodesEvalToSameValue(t, `3`, `//{`+repo+`/add}`)
-	})
-	t.Run("ModuleWithExt", func(t *testing.T) {
-		t.Parallel()
-		AssertCodesEvalToSameValue(t, `3`, `//{`+repo+`/add.arrai}`)
-	})
-	t.Run("ModuleJson", func(t *testing.T) {
-		t.Parallel()
-		AssertCodesEvalToSameValue(t, `{}`, `//{`+repo+`/empty.json}`)
-	})
+		repo := "github.com/ChloePlanet/arrai-examples"
+		run("Module", func(t *testing.T) { AssertCodesEvalToSameValue(t, `3`, `//{`+repo+`/add}`) })
+		run("ModuleExt", func(t *testing.T) { AssertCodesEvalToSameValue(t, `3`, `//{`+repo+`/add.arrai}`) })
+		run("ModuleJson", func(t *testing.T) { AssertCodesEvalToSameValue(t, `{}`, `//{`+repo+`/empty.json}`) })
 
-	raw := "raw.githubusercontent.com/ChloePlanet/arrai-examples/master"
-
-	t.Run("URLArrai", func(t *testing.T) {
-		t.Parallel()
-		AssertCodesEvalToSameValue(t, `3`, `//{https://`+raw+`/add.arrai}`) // nolint:lll
-	})
-	t.Run("URLArraiWithoutHTTPS", func(t *testing.T) {
-		t.Parallel()
-		AssertCodesEvalToSameValue(t, `3`, `//{`+raw+`/add.arrai}`)
-	})
-	t.Run("URLJson", func(t *testing.T) {
-		t.Parallel()
-		AssertCodesEvalToSameValue(t, `{}`, `//{https://`+raw+`/empty.json}`) // nolint:lll
-	})
-	t.Run("URLJsonWithoutHTTPS", func(t *testing.T) {
-		t.Parallel()
-		AssertCodesEvalToSameValue(t, `{}`, `//{`+raw+`/empty.json}`)
+		raw := "raw.githubusercontent.com/ChloePlanet/arrai-examples/master"
+		run("URLArraiHttps", func(t *testing.T) { AssertCodesEvalToSameValue(t, `3`, `//{https://`+raw+`/add.arrai}`) })
+		run("URLArraiNoHttps", func(t *testing.T) { AssertCodesEvalToSameValue(t, `3`, `//{`+raw+`/add.arrai}`) })
+		run("URLJsonHttps", func(t *testing.T) { AssertCodesEvalToSameValue(t, `{}`, `//{https://`+raw+`/empty.json}`) })
+		run("URLJsonNoHttps", func(t *testing.T) { AssertCodesEvalToSameValue(t, `{}`, `//{`+raw+`/empty.json}`) })
 	})
 }
 
