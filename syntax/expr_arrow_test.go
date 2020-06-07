@@ -14,8 +14,8 @@ func TestSeqArrow(t *testing.T) {
 	AssertCodesEvalToSameValue(t, `'HELLO'`, `'hello' >> . - 32`)
 	AssertCodesEvalToSameValue(t, `10\'HELLO'`, `10\'hello' >> . - 32`)
 
-	AssertCodesEvalToSameValue(t, `<<'HELLO'>>`, `(<<'hello'>>) >> . - 32`)
-	AssertCodesEvalToSameValue(t, `10\<<'HELLO'>>`, `(10\<<'hello'>>) >> . - 32`)
+	AssertCodesEvalToSameValue(t, `<<'HELLO'>>`, `<<'hello'>> >> . - 32`)
+	AssertCodesEvalToSameValue(t, `10\<<'HELLO'>>`, `10\<<'hello'>> >> . - 32`)
 
 	AssertCodesEvalToSameValue(t, `[2, 4, 8]`, `[1, 2, 3] >> 2 ^ .`)
 	AssertCodesEvalToSameValue(t, `[2, , 8]`, `[1, , 3] >> 2 ^ .`)
@@ -30,8 +30,8 @@ func TestISeqArrow(t *testing.T) {
 	AssertCodesEvalToSameValue(t, `'ACE'`, `'abc' >>> \i \. . - 32 + i`)
 	AssertCodesEvalToSameValue(t, `2\'CEG'`, `2\'abc' >>> \i \. . - 32 + i`)
 
-	AssertCodesEvalToSameValue(t, `<<'ABC'>>`, `(<<'ace'>>) >>> \i \. . - 32 - i`)
-	AssertCodesEvalToSameValue(t, `2\<<'AAA'>>`, `(2\<<'cde'>>) >>> \i \. . - 32 - i`)
+	AssertCodesEvalToSameValue(t, `<<'ABC'>>`, `<<'ace'>> >>> \i \. . - 32 - i`)
+	AssertCodesEvalToSameValue(t, `2\<<'AAA'>>`, `2\<<'cde'>> >>> \i \. . - 32 - i`)
 
 	AssertCodesEvalToSameValue(t, `[2, 8, 32]`, `[1, 2, 3] >>> \i \. 2 ^ (. + i)`)
 	AssertCodesEvalToSameValue(t, `[2, , 32]`, `[1, , 3] >>> \i \. 2 ^ (. + i)`)
