@@ -843,7 +843,16 @@ func (pc ParseContext) compileTuple(c ast.Children) rel.Expr {
 					panic(fmt.Errorf("unnamed attr expression must be name or end in .name: %T(%[1]v)", v))
 				}
 			}
-			attr, err := rel.NewAttrExpr(pair.One("v").(ast.Branch).Scanner(), k, v)
+			scanner := pair.One("v").(ast.Branch).Scanner()
+			if pair.One("rec") != nil {
+				fix, fixt := FixFuncs()
+				v = rel.NewRecursionExpr(
+					scanner,
+					rel.NewExprPattern(rel.NewIdentExpr(pair.One("name").Scanner(), k)),
+					v, fix, fixt,
+				)
+			}
+			attr, err := rel.NewAttrExpr(scanner, k, v)
 			if err != nil {
 				panic(err)
 			}

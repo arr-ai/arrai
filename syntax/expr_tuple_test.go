@@ -42,3 +42,40 @@ func TestTupleLiteral(t *testing.T) {
 	AssertCodesEvalToSameValue(t, `(x: 1, y: 2)`, `let t = (x: 1, y: 2); (:t.x, :t.y)`)
 	AssertCodesEvalToSameValue(t, `(x: 1, y: 2)`, `(x: 1, y: 2) -> (:.x, :.y)`)
 }
+
+func TestTupleRec(t *testing.T) {
+	t.Parallel()
+	AssertCodesEvalToSameValue(t,
+		`120`,
+		`
+		let t = (
+			rec fact: \n cond n {(0, 1): 1, n: n * fact(n - 1)},
+			n       : 5,
+		);
+		t.fact(t.n)
+		`,
+	)
+	AssertCodesEvalToSameValue(t,
+		`false`,
+		`
+		let t = (
+			rec eo: (
+				even: \n n = 0 || eo.odd(n - 1),
+				odd:  \n n != 0 && eo.even(n - 1),
+			),
+			n     : 5,
+		);
+		t.eo.even(t.n)
+		`,
+	)
+	AssertCodesEvalToSameValue(t,
+		`120`,
+		`
+		let t = (
+			rec fact: \n cond n {(0, 1): 1, n: n * fact(n - 1)},
+			rec     : 5,
+		);
+		t.fact(t.rec)
+		`,
+	)
+}

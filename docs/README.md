@@ -471,6 +471,16 @@ let rec oe = (
 oe.even(6)
 ```
 
+It is also possible to use the same syntax in a tuple.
+
+```arrai
+let t = (
+   rec fact: \n cond n ((0, 1): 1, n: n * fact(n - 1)),
+   n       : 5
+);
+t.rec(t.n)
+```
+
 This syntactic sugar only works with expression that evaluates to either a
 function or a tuple of functions. Anything else and the expression will fail.
 
