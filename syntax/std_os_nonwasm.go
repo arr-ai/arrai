@@ -5,6 +5,7 @@ package syntax
 import (
 	"io/ioutil"
 	"os"
+	"strings"
 
 	"github.com/arr-ai/arrai/rel"
 )
@@ -21,10 +22,19 @@ func stdOsGetArgs() rel.Value {
 			// to handle running script from syntax library
 			return rel.NewArray()
 		} else {
-			offset = 2
+			offset = lookupCommandOffset()
 		}
 	}
 	return strArrToRelArr(os.Args[offset:])
+}
+
+func lookupCommandOffset() int {
+	for index, item := range os.Args[1:] {
+		if !strings.HasPrefix(item, "-") {
+			return index + 2
+		}
+	}
+	return 2
 }
 
 func stdOsGetEnv(value rel.Value) rel.Value {
