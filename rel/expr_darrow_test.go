@@ -20,11 +20,11 @@ func TestDArrowExprErrorOnFnEvalError(t *testing.T) {
 
 	ident := NewIdentExpr(*parser.NewScanner("."), ".")
 	// This will fail to eval, as in the previous test.
-	badFn := NewDArrowExpr(*parser.NewScanner(""), NewTuple(), ident)
+	badFn := NewDArrowExpr(*parser.NewScanner("() => ."), NewTuple(), ident)
 	_, err := badFn.Eval(EmptyScope)
 
 	// When this fails, it will propagate the err above, wrapped in expr's context.
-	wrapper := NewDArrowExpr(*parser.NewScanner(""), NewSet(NewNumber(1)), badFn)
+	wrapper := NewDArrowExpr(*parser.NewScanner("{1} => () => ."), NewSet(NewNumber(1)), badFn)
 
 	AssertExprErrorEquals(t, wrapper, err.Error())
 }

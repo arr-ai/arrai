@@ -12,6 +12,9 @@ type ExprPattern struct {
 }
 
 func NewExprPattern(expr Expr) ExprPattern {
+	if value, is := exprIsValue(expr); is {
+		return ExprPattern{Expr: value}
+	}
 	return ExprPattern{Expr: expr}
 }
 

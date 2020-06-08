@@ -21,8 +21,6 @@ The following standard packages are available:
 - [`//seq`](std-seq.md): Sequence utilities
 - [`//str`](std-str.md): String utilities
 - [`//test`](std-test.md): String utilities
-- `//unicode`
-  - [`//unicode.utf8`](std-unicode-utf8.md): Interoperate with UTF-8 encoding
 
 ## Core functions
 

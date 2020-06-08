@@ -32,6 +32,8 @@ func evalExpr(path, source string, w io.Writer) error {
 	switch v := value.(type) {
 	case rel.String:
 		s = v.String()
+	case rel.Bytes:
+		s = v.String()
 	case rel.Set:
 		if !v.IsTrue() {
 			s = ""

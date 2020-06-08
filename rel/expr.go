@@ -22,6 +22,13 @@ type ContextErr struct {
 }
 
 func (c ContextErr) Error() string {
+	if cerr, is := c.err.(ContextErr); is {
+		errString := cerr.Error()
+		if c.source.Contains(cerr.source) {
+			return errString
+		}
+		return fmt.Sprintf("%s\n%s", errString, c.source.Context(parser.DefaultLimit))
+	}
 	return fmt.Sprintf("%s\n%s", c.err.Error(), c.source.Context(parser.DefaultLimit))
 }
 

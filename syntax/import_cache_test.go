@@ -13,6 +13,8 @@ import (
 )
 
 func TestImportCache(t *testing.T) {
+	t.Parallel()
+
 	msgs := []string{}
 	var m sync.Mutex
 	start := time.Now()

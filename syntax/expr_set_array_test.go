@@ -7,6 +7,7 @@ import (
 )
 
 func TestArrayToString(t *testing.T) {
+	t.Parallel()
 	AssertCodesEvalToSameValue(t, `"hello"`, `[104, 101, 108, 108, 111] => (@:.@, @char:.@item)`)
 	AssertCodeEvalsToType(t, rel.String{}, `[104, 101, 108, 108, 111] => (@:.@, @char:.@item)`)
 }
@@ -28,6 +29,7 @@ func TestArrayType(t *testing.T) {
 }
 
 func TestArrayWhere(t *testing.T) {
+	t.Parallel()
 	AssertCodesEvalToSameValue(t, `[1, 2]`, `[1, 2] where .@ < 10`)
 	AssertCodesEvalToSameValue(t, `[1, 2]`, `[1, 2] where .@item < 10`)
 	AssertCodesEvalToSameValue(t, `[1]`, `[1, 2] where .@ < 1`)
@@ -37,13 +39,15 @@ func TestArrayWhere(t *testing.T) {
 }
 
 func TestArrayWithHoles(t *testing.T) {
-	// TODO: Use holey array syntax when available.
+	t.Parallel()
 	AssertCodesEvalToSameValue(t, `[10] | 2\[12]`, `[10, , 12]`)
 	AssertCodesEvalToSameValue(t, `[10, 11, 12]`, `[10, , 12] with (@: 1, @item: 11)`)
 	AssertCodesEvalToSameValue(t, `[10, 11, 12]`, `[10, , 12, , , ] with (@: 1, @item: 11)`)
 }
 
 func TestSetOfArrays(t *testing.T) {
+	t.Parallel()
+
 	// This tests an error when stringifying sets of arrays.
 	AssertCodesEvalToSameValue(t, `'{[1], [1, 1]}'`, `$'${{[1, 1], [1]}}'`)
 }

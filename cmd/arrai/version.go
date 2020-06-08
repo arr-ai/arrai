@@ -27,8 +27,7 @@ func version(c *cli.Context) error {
 		fmt.Printf("OS/arch    : %s\n", BuildOS)
 		fmt.Printf("Go version : %s\n", GoVersion)
 	} else {
-		fmt.Printf("Version    : %s\n", Version)
-		fmt.Printf("OS/arch    : %s\n", BuildOS)
+		fmt.Printf("arrai version %s %s\n", Version, BuildOS)
 	}
 
 	return nil
