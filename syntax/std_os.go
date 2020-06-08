@@ -39,16 +39,16 @@ func (d *stdOsStdin) reset(r io.Reader) {
 	d.bytes = nil
 }
 
-func (d *stdOsStdin) read(_ rel.Value) rel.Value {
+func (d *stdOsStdin) read(_ rel.Value) (rel.Value, error) {
 	d.mutex.Lock()
 	defer d.mutex.Unlock()
 	if d.bytes != nil {
-		return d.bytes
+		return d.bytes, nil
 	}
 	f, err := ioutil.ReadAll(stdOsStdinVar.reader)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 	d.bytes = rel.NewBytes(f)
-	return d.bytes
+	return d.bytes, nil
 }

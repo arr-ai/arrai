@@ -16,14 +16,14 @@ func stdEval() rel.Attr {
 	)
 }
 
-func evalExpr(v rel.Value) rel.Value {
+func evalExpr(v rel.Value) (rel.Value, error) {
 	switch val := v.(type) {
 	case rel.String, rel.Bytes:
 		evaluated, err := EvaluateExpr(".", val.String())
 		if err != nil {
 			panic(err)
 		}
-		return evaluated
+		return evaluated, nil
 	}
-	panic(fmt.Sprintf("eval.value only takes byte array or string, received %T", v))
+	return nil, fmt.Errorf("//eval.value: not a byte array or string: %v", v)
 }

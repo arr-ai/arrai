@@ -206,23 +206,27 @@ func (s String) Map(f func(v Value) Value) Set {
 }
 
 // Where returns a new String with all the Values satisfying predicate p.
-func (s String) Where(p func(v Value) bool) Set {
+func (s String) Where(p func(v Value) (bool, error)) (Set, error) {
 	values := make([]Value, 0, s.Count())
 	for e := s.Enumerator(); e.MoveNext(); {
 		value := e.Current()
-		if p(value) {
+		matches, err := p(value)
+		if err != nil {
+			return nil, err
+		}
+		if matches {
 			values = append(values, value)
 		}
 	}
-	return NewSet(values...)
+	return NewSet(values...), nil
 }
 
-func (s String) CallAll(arg Value) Set {
+func (s String) CallAll(arg Value) (Set, error) {
 	i := int(arg.(Number).Float64()) - s.offset
 	if i < 0 || i >= len(s.s) {
-		return None
+		return None, nil
 	}
-	return NewSet(NewNumber(float64(string(s.s)[i])))
+	return NewSet(NewNumber(float64(string(s.s)[i]))), nil
 }
 
 func (s String) index(pos int) int {
