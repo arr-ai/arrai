@@ -35,15 +35,15 @@ var loggingOnce sync.Once
 
 // Compile compiles source string.
 func Compile(filepath, source string) (_ rel.Expr, err error) {
-	// defer func() {
-	// 	if r := recover(); r != nil {
-	// 		if e, ok := r.(error); ok {
-	// 			err = e
-	// 		} else {
-	// 			err = fmt.Errorf("error compiling %q: %v", filepath, r)
-	// 		}
-	// 	}
-	// }()
+	defer func() {
+		if r := recover(); r != nil {
+			if e, ok := r.(error); ok {
+				err = e
+			} else {
+				err = fmt.Errorf("error compiling %q: %v", filepath, r)
+			}
+		}
+	}()
 	return MustCompile(filepath, source), nil
 }
 
