@@ -15,5 +15,6 @@ func sum(nums []float64) float64 {
 }
 
 func TestNumberULP(t *testing.T) {
+	t.Parallel()
 	assert.Equal(t, "0.3", NewNumber(sum([]float64{0.1, 0.1, 0.1})).String())
 }

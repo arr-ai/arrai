@@ -25,6 +25,7 @@ func TestStringType(t *testing.T) {
 }
 
 func TestStringWhere(t *testing.T) {
+	t.Parallel()
 	AssertCodesEvalToSameValue(t, `"abc"`, `"abc" where .@ < 10`)
 	AssertCodesEvalToSameValue(t, `"abc"`, `"abc" where .@char < 100`)
 	AssertCodesEvalToSameValue(t, `"ab"`, `"abc" where .@ < 2`)
@@ -33,6 +34,7 @@ func TestStringWhere(t *testing.T) {
 }
 
 func TestStringManipulation(t *testing.T) {
+	t.Parallel()
 	AssertCodesEvalToSameValue(t, `"Foo"`, `(\s //str.upper(s where .@=0) | (s where .@>0))("foo")`)
 }
 
@@ -53,17 +55,20 @@ func TestDictType(t *testing.T) {
 }
 
 func TestDictWhere(t *testing.T) {
+	t.Parallel()
 	AssertCodesEvalToSameValue(t, `{"a": "b"}`, `{"a": "b"} where .@ = "a"`)
 	AssertCodesEvalToSameValue(t, `{}`, `{"a": "b"} where .@ = "b"`)
 }
 
 func TestDictUnion(t *testing.T) {
+	t.Parallel()
 	AssertCodesEvalToSameValue(t,
 		`{"a": "a",    "b": "a"} | {"a": "b"}`,
 		`{"a": "a"} | {"b": "a",    "a": "b"}`)
 }
 
 func TestDictExpand(t *testing.T) {
+	t.Parallel()
 	AssertCodesEvalToSameValue(t,
 		`"{'a': 'a', 'a': 'b', 'b': 'a'}"`,
 		`//str.expand("", {"b": "a", "a": "b"} | {"a": "a"}, "", "")`)

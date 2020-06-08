@@ -10,6 +10,7 @@ import (
 const hello = "hello"
 
 func TestIsStringTuple(t *testing.T) {
+	t.Parallel()
 	for e := NewString([]rune(hello)).Enumerator(); e.MoveNext(); {
 		tuple, is := e.Current().(StringCharTuple)
 		if assert.True(t, is) {

@@ -16,6 +16,7 @@ func TestEvalFile(t *testing.T) {
 }
 
 func TestEvalNotExistingFile(t *testing.T) {
+	t.Parallel()
 	require.Equal(t, `"version": not a command and not found as a file in the current directory`,
 		evalFile("version", nil).Error())
 
