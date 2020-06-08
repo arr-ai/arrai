@@ -11,7 +11,7 @@ func arrayContains(sub rel.Value, subject rel.Array) (rel.Value, error) {
 	if subArray, is := rel.AsArray(sub); is {
 		return rel.NewBool(search(subject.Values(), subArray.Values()) > -1), nil
 	}
-	return nil, fmt.Errorf("contains: sub not an array: %v", sub)
+	return nil, fmt.Errorf("//seq.contains: sub not an array: %v", sub)
 }
 
 // Substitutes all old in subject with new.
@@ -19,11 +19,11 @@ func arraySub(old, new rel.Value, subject rel.Array) (rel.Value, error) {
 	// Convert to array to facilitate process
 	oldArray, is := rel.AsArray(old)
 	if !is {
-		return nil, fmt.Errorf("sub: old not an array: %v", old)
+		return nil, fmt.Errorf("//seq.sub: old not an array: %v", old)
 	}
 	newArray, is := rel.AsArray(new)
 	if !is {
-		return nil, fmt.Errorf("sub: new not an array: %v", new)
+		return nil, fmt.Errorf("//seq.sub: new not an array: %v", new)
 	}
 
 	result := make([]rel.Value, 0, subject.Count())
@@ -52,7 +52,7 @@ func arraySub(old, new rel.Value, subject rel.Array) (rel.Value, error) {
 func arraySplit(delimiter rel.Value, subject rel.Array) (rel.Value, error) {
 	delimiterArray, is := rel.AsArray(delimiter)
 	if !is {
-		return nil, fmt.Errorf("split: delimiter not an array: %v", delimiter)
+		return nil, fmt.Errorf("//seq.split: delimiter not an array: %v", delimiter)
 	}
 	var result []rel.Value
 
@@ -85,7 +85,7 @@ func arraySplit(delimiter rel.Value, subject rel.Array) (rel.Value, error) {
 func arrayJoin(joiner rel.Value, subject rel.Array) (rel.Value, error) {
 	joinerArray, is := rel.AsArray(joiner)
 	if !is {
-		return nil, fmt.Errorf("join: joiner not an array: %v", joiner)
+		return nil, fmt.Errorf("//seq.join: joiner not an array: %v", joiner)
 	}
 
 	result := make([]rel.Value, 0, subject.Count())
@@ -97,7 +97,7 @@ func arrayJoin(joiner rel.Value, subject rel.Array) (rel.Value, error) {
 		case rel.Array:
 			result = append(result, vArray.Values()...)
 		case rel.Value:
-			return nil, fmt.Errorf("the type of subject element must be rel.Array")
+			return nil, fmt.Errorf("//seq.join: the type of subject element must be rel.Array")
 		}
 	}
 
@@ -111,7 +111,7 @@ func arrayHasPrefix(prefix rel.Value, subject rel.Array) (rel.Value, error) {
 	}
 	prefixArray, is := rel.AsArray(prefix)
 	if !is {
-		return nil, fmt.Errorf("has_prefix: prefix not an array: %v", prefix)
+		return nil, fmt.Errorf("//seq.has_prefix: prefix not an array: %v", prefix)
 	}
 	if subject.Count() < prefixArray.Count() {
 		return rel.NewBool(false), nil
@@ -138,7 +138,7 @@ func arrayHasPrefix(prefix rel.Value, subject rel.Array) (rel.Value, error) {
 func arrayHasSuffix(suffix rel.Value, subject rel.Array) (rel.Value, error) {
 	suffixArray, is := rel.AsArray(suffix)
 	if !is {
-		return nil, fmt.Errorf("has_suffix: suffix not an array: %v", suffix)
+		return nil, fmt.Errorf("//seq.has_suffix: suffix not an array: %v", suffix)
 	}
 
 	if !suffixArray.IsTrue() {

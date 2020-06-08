@@ -34,7 +34,7 @@ func bytesSplit(delimiter rel.Value, subject rel.Bytes) (rel.Value, error) {
 		}
 		splitted = strings.Split(subject.String(), delimStr)
 	default:
-		return nil, fmt.Errorf("delimiter and subject different types: "+
+		return nil, fmt.Errorf("//seq.split: delimiter and subject different types: "+
 			"delimiter: %T, subject: %T", delimiter, subject)
 	}
 

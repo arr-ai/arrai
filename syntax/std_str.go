@@ -36,7 +36,7 @@ var (
 	stdStrExpand = mustCreateNestedFunc("expand", 4, func(args ...rel.Value) (rel.Value, error) {
 		format, is := valueAsString(args[0])
 		if !is {
-			return nil, fmt.Errorf("expand: format not a string: %v", args[0])
+			return nil, fmt.Errorf("//str.expand: format not a string: %v", args[0])
 		}
 		if format != "" {
 			format = "%" + format
@@ -47,7 +47,7 @@ var (
 		var s string
 		delim, is := valueAsString(args[2])
 		if !is {
-			return nil, fmt.Errorf("expand: delim not a string: %v", args[2])
+			return nil, fmt.Errorf("//str.expand: delim not a string: %v", args[2])
 		}
 		if strings.HasPrefix(delim, ":") {
 			if array, is := rel.AsArray(args[1].(rel.Set)); is {
@@ -60,7 +60,7 @@ var (
 				}
 				s = sb.String()
 			} else {
-				return nil, fmt.Errorf("arg not an array in ${arg::}: %v", args[1])
+				return nil, fmt.Errorf("//str..expand: arg not an array in ${arg::}: %v", args[1])
 			}
 		} else {
 			s = formatValue(format, args[1])
@@ -68,7 +68,7 @@ var (
 		if s != "" {
 			tail, is := valueAsString(args[3])
 			if !is {
-				return nil, fmt.Errorf("expand: tail not a string: %v", args[3])
+				return nil, fmt.Errorf("//str.expand: tail not a string: %v", args[3])
 			}
 			s += tail
 		}
