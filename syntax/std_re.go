@@ -13,7 +13,10 @@ var (
 		if !is {
 			return nil, fmt.Errorf("//re.compile: re not a string: %v", re)
 		}
-		regex := regexp.MustCompile(reStr)
+		regex, err := regexp.Compile(reStr)
+		if err != nil {
+			return nil, fmt.Errorf("//re.compile: %s", err)
+		}
 		return rel.NewTuple(
 			rel.NewNativeFunctionAttr("match", func(str rel.Value) (rel.Value, error) {
 				s, is := valueAsString(str)
