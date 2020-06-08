@@ -95,32 +95,32 @@ func (c Closure) Export() interface{} {
 	}
 }
 
-func (c Closure) Count() int {
-	panic("unimplemented")
+func (Closure) Count() int {
+	panic("Closure.Count unimplemented")
 }
 
-func (c Closure) Has(v Value) bool {
-	panic("unimplemented")
+func (Closure) Has(v Value) bool {
+	panic("Closure.Has unimplemented")
 }
 
-func (c Closure) Enumerator() ValueEnumerator {
-	panic("unimplemented")
+func (Closure) Enumerator() ValueEnumerator {
+	panic("Closure.Enumerator unimplemented")
 }
 
-func (c Closure) With(v Value) Set {
-	panic("unimplemented")
+func (Closure) With(v Value) Set {
+	panic("Closure.With unimplemented")
 }
 
-func (c Closure) Without(v Value) Set {
-	panic("unimplemented")
+func (Closure) Without(v Value) Set {
+	panic("Closure.Without unimplemented")
 }
 
-func (c Closure) Map(f func(Value) Value) Set {
-	panic("unimplemented")
+func (Closure) Map(f func(Value) Value) Set {
+	panic("Closure.Map unimplemented")
 }
 
-func (c Closure) Where(p func(v Value) (bool, error)) (Set, error) {
-	panic("unimplemented")
+func (Closure) Where(p func(v Value) (bool, error)) (Set, error) {
+	panic("Closure.Where unimplemented")
 }
 
 func (c Closure) CallAll(arg Value) (Set, error) {
@@ -145,6 +145,6 @@ func (c Closure) CallAll(arg Value) (Set, error) {
 	return NewSet(val), nil
 }
 
-func (c Closure) ArrayEnumerator() (OffsetValueEnumerator, bool) {
-	panic("unimplemented")
+func (Closure) ArrayEnumerator() (OffsetValueEnumerator, bool) {
+	panic("Closure.ArrayEnumerator unimplemented")
 }

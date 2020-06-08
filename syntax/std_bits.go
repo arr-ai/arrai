@@ -37,7 +37,7 @@ func setInt(v int) (bitmask []rel.Value) {
 }
 
 func maskFloat(v float64) (bitmask []rel.Value) {
-	panic("unimplemented")
+	panic("maskFloat unimplemented")
 }
 
 func mask(v rel.Value) (rel.Value, error) {

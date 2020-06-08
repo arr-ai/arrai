@@ -94,34 +94,34 @@ func (ExprClosure) Count() int {
 }
 
 func (ExprClosure) Has(Value) bool {
-	panic("unimplemented")
+	panic("ExprClosure.Has unimplemented")
 }
 
 func (ExprClosure) Enumerator() ValueEnumerator {
-	panic("unimplemented")
+	panic("ExprClosure.Enumerator unimplemented")
 }
 
-func (c ExprClosure) With(Value) Set {
-	panic("unimplemented")
+func (ExprClosure) With(Value) Set {
+	panic("ExprClosure.With unimplemented")
 }
 
 func (ExprClosure) Without(Value) Set {
-	panic("unimplemented")
+	panic("ExprClosure.Without unimplemented")
 }
 
 func (ExprClosure) Map(func(Value) Value) Set {
-	panic("unimplemented")
+	panic("ExprClosure.Map unimplemented")
 }
 
 func (ExprClosure) Where(p func(v Value) (bool, error)) (Set, error) {
-	panic("unimplemented")
+	panic("ExprClosure.Where unimplemented")
 }
 
-func (c ExprClosure) CallAll(arg Value) (Set, error) {
+func (ExprClosure) CallAll(arg Value) (Set, error) {
 	//TODO: CallAll
-	panic("unimplemented")
+	panic("ExprClosure.CallAll unimplemented")
 }
 
 func (ExprClosure) ArrayEnumerator() (OffsetValueEnumerator, bool) {
-	panic("unimplemented")
+	panic("ExprClosure.ArrayEnumerator unimplemented")
 }

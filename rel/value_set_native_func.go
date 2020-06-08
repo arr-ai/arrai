@@ -98,27 +98,27 @@ func (*NativeFunction) Count() int {
 }
 
 func (*NativeFunction) Has(Value) bool {
-	panic("unimplemented")
+	panic("NativeFunction.Has unimplemented")
 }
 
 func (*NativeFunction) Enumerator() ValueEnumerator {
-	panic("unimplemented")
+	panic("NativeFunction.Enumerator unimplemented")
 }
 
 func (*NativeFunction) With(Value) Set {
-	panic("unimplemented")
+	panic("NativeFunction.With unimplemented")
 }
 
 func (*NativeFunction) Without(Value) Set {
-	panic("unimplemented")
+	panic("NativeFunction.Without unimplemented")
 }
 
 func (*NativeFunction) Map(func(Value) Value) Set {
-	panic("unimplemented")
+	panic("NativeFunction.Map unimplemented")
 }
 
 func (*NativeFunction) Where(p func(v Value) (bool, error)) (Set, error) {
-	panic("unimplemented")
+	panic("NativeFunction.Where unimplemented")
 }
 
 // Call calls the NativeFunction with the given parameter.
@@ -131,5 +131,5 @@ func (f *NativeFunction) CallAll(arg Value) (Set, error) {
 }
 
 func (*NativeFunction) ArrayEnumerator() (OffsetValueEnumerator, bool) {
-	panic("unimplemented")
+	panic("NativeFunction.ArrayEnumerator unimplemented")
 }
