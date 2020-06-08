@@ -8,8 +8,11 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// assertCompileScanner checks that the expr resulting from an arr.ai expression
+// shrinkwraps it.
 func assertCompileScanner(t *testing.T, source string) bool { //nolint:unparam
 	pc := ParseContext{SourceDir: ".."}
+	// Add some space padding, which should not become part of the source.
 	ast, err := pc.Parse(parser.NewScanner(" " + source + " "))
 	require.NoError(t, err, "%s", source)
 	expr := pc.CompileExpr(ast)
