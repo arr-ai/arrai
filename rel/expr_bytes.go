@@ -16,9 +16,11 @@ type BytesExpr struct {
 func NewBytesExpr(scanner parser.Scanner, elements ...Expr) Expr {
 	bytes := make([]byte, 0, len(elements))
 	for _, expr := range elements {
-		if byteNum, ok := expr.(Number); ok && isByteNumber(byteNum) {
-			bytes = append(bytes, byte(int(byteNum)))
-			continue
+		if value, is := exprIsValue(expr); is {
+			if byteNum, is := value.(Number); is && isByteNumber(byteNum) {
+				bytes = append(bytes, byte(int(byteNum)))
+				continue
+			}
 		}
 		return BytesExpr{ExprScanner{scanner}, elements}
 	}

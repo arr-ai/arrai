@@ -15,13 +15,15 @@ type DictExpr struct {
 }
 
 // NewDictExpr returns a new DictExpr from pairs.
-func NewDictExpr(scanner parser.Scanner,
-	allowDupKeys bool, dictExprAlways bool, entryExprs ...DictEntryTupleExpr) Expr {
+func NewDictExpr(
+	scanner parser.Scanner,
+	allowDupKeys bool, dictExprAlways bool, entryExprs ...DictEntryTupleExpr,
+) Expr {
 	entries := make([]DictEntryTuple, 0, len(entryExprs))
 	for _, expr := range entryExprs {
 		if !dictExprAlways {
-			if at, ok := expr.at.(Value); ok {
-				if value, ok := expr.value.(Value); ok {
+			if at, is := exprIsValue(expr.at); is {
+				if value, is := exprIsValue(expr.value); is {
 					entries = append(entries, NewDictEntryTuple(at, value))
 					continue
 				}
@@ -29,7 +31,7 @@ func NewDictExpr(scanner parser.Scanner,
 		}
 		return DictExpr{ExprScanner: ExprScanner{Src: scanner}, entryExprs: entryExprs, allowDupKeys: allowDupKeys}
 	}
-	return NewDict(allowDupKeys, entries...)
+	return NewLiteralExpr(scanner, NewDict(allowDupKeys, entries...))
 }
 
 // String returns a string representation of the expression.

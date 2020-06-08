@@ -42,8 +42,8 @@ expr   -> C* amp="&"* @ C* arrow=(
         | C* "{:" C* embed=(grammar=@ ":" subgrammar=%%ast) ":}" C*
         | C* op="\\\\" @ C*
         | C* fn="\\" IDENT @ C*
-        | C* "//" pkg=( "{" dot="."? PKGPATH "}" | std=IDENT?)
-        | C* "(" @ ")" C*
+        | C* import="//" pkg=( "{" dot="."? PKGPATH "}" | std=IDENT?)
+        | C* odelim="(" @ cdelim=")" C*
         | C* let=("let" C* rec="rec"? pattern C* "=" C* @ %%bind C* ";" C* @) C*
         | C* xstr C*
         | C* IDENT C*
@@ -81,20 +81,20 @@ STR    -> /{ " (?: \\. | [^\\"] )* "
            | ‵ (?: ‵‵  | [^‵  ] )* ‵
            };
 NUM    -> /{ (?: \d+(?:\.\d*)? | \.\d+ ) (?: [Ee][-+]?\d+ )? };
-CHAR   -> /{%(\\.|.)};
+CHAR   -> /{%(?:\\.|.)};
 C      -> /{ # .* $ };
 SEQ_COMMENT -> "," C*;
 
 .wrapRE -> /{\s*()\s*};
 
 .macro patternterms(top) {
-    C* "{" C* rel=(names tuple=("(" v=top:SEQ_COMMENT, ")"):SEQ_COMMENT,?) "}" C*
-  | C* "{" C* set=(elt=top:SEQ_COMMENT,?) "}" C*
-  | C* "{" C* dict=((ext=extra|key=expr ":" value=top):SEQ_COMMENT,?) "}" C*
-  | C* "[" C* array=(%!sparse_sequence(top)?) C* "]" C*
-  | C* "<<" C* bytes=(item=(STR|NUM|CHAR|IDENT|"("top")"):SEQ_COMMENT,?) C* ">>" C*
-  | C* "(" tuple=(pairs=(extra | ((rec="rec"? name| name?) ":" v=top)):SEQ_COMMENT,?) ")" C*
-  | C* "(" identpattern=IDENT ")" C*
+    C* odelim="{" C* rel=(names tuple=("(" v=top:SEQ_COMMENT, ")"):SEQ_COMMENT,?) cdelim="}" C*
+  | C* odelim="{" C* set=(elt=top:SEQ_COMMENT,?) cdelim="}" C*
+  | C* odelim="{" C* dict=((ext=extra|key=expr ":" value=top):SEQ_COMMENT,?) cdelim="}" C*
+  | C* odelim="[" C* array=(%!sparse_sequence(top)?) C* cdelim="]" C*
+  | C* odelim="<<" C* bytes=(item=(STR|NUM|CHAR|IDENT|"("top")"):SEQ_COMMENT,?) C* cdelim=">>" C*
+  | C* odelim="(" tuple=(pairs=(extra | ((rec="rec"? name| name?) ":" v=top)):SEQ_COMMENT,?) cdelim=")" C*
+  | C* odelim="(" identpattern=IDENT cdelim=")" C*
 };
 
 .macro sparse_sequence(top) {

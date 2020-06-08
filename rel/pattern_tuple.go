@@ -93,7 +93,7 @@ func (p TuplePattern) Bind(local Scope, value Value) (Scope, error) {
 	return result, nil
 }
 
-func (p TuplePattern) String() string {
+func (p TuplePattern) String() string { //nolint:dupl
 	var b bytes.Buffer
 	b.WriteByte('(')
 	for i, attr := range p.attrs {
@@ -101,7 +101,7 @@ func (p TuplePattern) String() string {
 			b.WriteString(", ")
 		}
 		if attr.IsWildcard() {
-			if attr.pattern != DotIdent {
+			if ident, is := attr.pattern.(IdentExpr); !is || ident.Ident() != "." {
 				b.WriteString(attr.pattern.String())
 			}
 			b.WriteString(".*")

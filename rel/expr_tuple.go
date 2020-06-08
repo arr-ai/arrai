@@ -80,7 +80,7 @@ type TupleExpr struct {
 func NewTupleExpr(scanner parser.Scanner, attrs ...AttrExpr) Expr {
 	attrValues := make([]Attr, len(attrs))
 	for i, attr := range attrs {
-		if value, ok := attr.expr.(Value); ok {
+		if value, is := exprIsValue(attr.expr); is {
 			attrValues[i] = Attr{attr.name, value}
 		} else {
 			attrMap := make(map[string]Expr, len(attrs))
@@ -90,7 +90,7 @@ func NewTupleExpr(scanner parser.Scanner, attrs ...AttrExpr) Expr {
 			return &TupleExpr{ExprScanner{scanner}, attrs, attrMap}
 		}
 	}
-	return NewTuple(attrValues...)
+	return NewLiteralExpr(scanner, NewTuple(attrValues...))
 }
 
 // NewTupleExprFromMap returns a new TupleExpr from a map[string]Expr.
@@ -115,7 +115,7 @@ func NewTupleExprFromMap(scanner parser.Scanner, attrMap map[string]Expr) Expr {
 }
 
 // String returns a string representation of the expression.
-func (e *TupleExpr) String() string {
+func (e *TupleExpr) String() string { //nolint:dupl
 	var b bytes.Buffer
 	b.WriteByte('(')
 	for i, attr := range e.attrs {
@@ -123,7 +123,7 @@ func (e *TupleExpr) String() string {
 			b.WriteString(", ")
 		}
 		if attr.IsWildcard() {
-			if attr.expr != DotIdent {
+			if ident, is := attr.expr.(IdentExpr); !is || ident.Ident() != "." {
 				b.WriteString(attr.expr.String())
 			}
 			b.WriteString(".*")
