@@ -20,6 +20,8 @@ func assertCompileScanner(t *testing.T, source string) bool { //nolint:unparam
 }
 
 func TestCompileScannerAtom(t *testing.T) {
+	t.Parallel()
+
 	assertCompileScanner(t, `x`)
 	assertCompileScanner(t, `1`)
 	assertCompileScanner(t, `'abc'`)
@@ -28,6 +30,8 @@ func TestCompileScannerAtom(t *testing.T) {
 }
 
 func TestCompileScannerCompositeLiteral(t *testing.T) {
+	t.Parallel()
+
 	assertCompileScanner(t, `[]`)
 	assertCompileScanner(t, `[1, 2, 3]`)
 	assertCompileScanner(t, `(a: 1, b: 2)`)
@@ -35,10 +39,14 @@ func TestCompileScannerCompositeLiteral(t *testing.T) {
 }
 
 func TestCompileScannerParenExpr(t *testing.T) {
+	t.Parallel()
+
 	assertCompileScanner(t, `(a + b)`)
 }
 
 func TestCompileScannerCompositeExpr(t *testing.T) {
+	t.Parallel()
+
 	assertCompileScanner(t, `[a, b, c]`)
 	assertCompileScanner(t, `(:a, :b, :c)`)
 	assertCompileScanner(t, `{a, b, c}`)
@@ -46,12 +54,16 @@ func TestCompileScannerCompositeExpr(t *testing.T) {
 }
 
 func TestCompileScannerUnExpr(t *testing.T) {
+	t.Parallel()
+
 	assertCompileScanner(t, `-b`)
 	assertCompileScanner(t, `+b`)
 	assertCompileScanner(t, `>> (x / 3)`)
 }
 
 func TestCompileScannerBinExpr(t *testing.T) {
+	t.Parallel()
+
 	assertCompileScanner(t, `a + b`)
 	assertCompileScanner(t, `() ++ b`)
 	assertCompileScanner(t, `() ++ {}`)
@@ -68,21 +80,29 @@ func TestCompileScannerBinExpr(t *testing.T) {
 }
 
 func TestCompileScannerCompare(t *testing.T) {
+	t.Parallel()
+
 	assertCompileScanner(t, `a < b`)
 	assertCompileScanner(t, `a <= b < (c + 2)`)
 }
 
 func TestCompileScannerDot(t *testing.T) {
+	t.Parallel()
+
 	assertCompileScanner(t, `a.b`)
 	assertCompileScanner(t, `().b`)
 	assertCompileScanner(t, `().b.c`)
 }
 
 func TestCompileScannerCond(t *testing.T) {
+	t.Parallel()
+
 	assertCompileScanner(t, `cond {a: b}`)
 	assertCompileScanner(t, `cond () {b: c}`)
 }
 
 func TestCompileScannerLet(t *testing.T) {
+	t.Parallel()
+
 	assertCompileScanner(t, `let x = 1; x + (y / (z - w))`)
 }
