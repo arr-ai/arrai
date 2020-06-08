@@ -3,7 +3,6 @@ package tools
 import (
 	"os"
 
-	"github.com/arr-ai/frozen"
 	"github.com/mattn/go-isatty"
 	"github.com/urfave/cli/v2"
 )
@@ -16,7 +15,7 @@ func IsTerminal() bool {
 //SetArgs set context arguments, for example command line `arrai -d r file.arrai arg1 arg2 arg3` will
 //save `file.arrai arg1 arg2 arg3` as a slice to Arguments.
 func SetArgs(c *cli.Context) {
-	Arguments = Arguments.With("Arguments", c.Args().Slice())
+	Arguments = c.Args().Slice()
 }
 
-var Arguments = frozen.NewMap([]frozen.KeyValue{}...)
+var Arguments []string
