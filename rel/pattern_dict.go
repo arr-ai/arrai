@@ -31,6 +31,7 @@ func NewDictPattern(entries ...DictPatternEntry) DictPattern {
 	names := make(map[string]bool)
 	for _, entry := range entries {
 		if names[entry.at.String()] {
+			// TODO: Return a runtime error
 			panic(fmt.Sprintf("name %s is duplicated in dict", entry.at))
 		}
 	}
