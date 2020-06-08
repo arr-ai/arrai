@@ -60,6 +60,8 @@ func main() {
 				syntax.RunOmitted = true
 			}
 		}
+
+		app.Version = Version
 		//nolint:lll
 		cli.AppHelpTemplate = `NAME:
    {{.Name}} - {{.Usage}}
@@ -78,12 +80,12 @@ COMMANDS:
 {{range .Commands}}{{if not .HideHelp}}   {{join .Names ", "}}{{ "\t"}}{{.Usage}}{{ "\n" }}{{end}}{{end}}{{end}}{{if .VisibleFlags}}
 GLOBAL OPTIONS:
    {{range .VisibleFlags}}{{.}}
-   {{end}}{{end}}{{if .Copyright }}
+   {{end}}{{end}}{{if .Copyright }}  
 COPYRIGHT:
    {{.Copyright}}
    {{end}}{{if .Version}}
 VERSION:
-   v{{.Version}}
+   {{.Version}}
    {{end}}
 `
 	}
