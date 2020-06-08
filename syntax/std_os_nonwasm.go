@@ -6,14 +6,16 @@ import (
 	"io/ioutil"
 	"os"
 
-	"github.com/arr-ai/arrai/tools"
-
 	"github.com/arr-ai/arrai/rel"
+	"github.com/arr-ai/arrai/tools"
 )
 
 func stdOsGetArgs() rel.Value {
-	args := tools.Arguments.MustGet("Arguments")
-	return strArrToRelArr(args.([]string))
+	args, found := tools.Arguments.Get("Arguments")
+	if found {
+		return strArrToRelArr(args.([]string))
+	}
+	return rel.NewArray()
 }
 
 func stdOsGetEnv(value rel.Value) (rel.Value, error) {
