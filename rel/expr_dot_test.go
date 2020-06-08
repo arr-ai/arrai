@@ -30,11 +30,11 @@ func TestDotExprErrorOnEvalError(t *testing.T) {
 	t.Parallel()
 
 	// This will fail to eval, as in the previous test.
-	lhs := NewDotExpr(*parser.NewScanner(""), NewTuple(), "*")
+	lhs := NewDotExpr(*parser.NewScanner("().*"), NewTuple(), "*")
 	_, err := lhs.Eval(EmptyScope)
 
 	// When this fails, it will propagate the err above, wrapped in expr's context.
-	expr := NewDotExpr(*parser.NewScanner(""), lhs, "a")
+	expr := NewDotExpr(*parser.NewScanner("().*.a"), lhs, "a")
 
 	AssertExprErrorEquals(t, expr, err.Error())
 }

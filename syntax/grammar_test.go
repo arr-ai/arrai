@@ -6,6 +6,8 @@ import (
 )
 
 func TestGrammarToValueExpr(t *testing.T) {
+	t.Parallel()
+
 	expected := `(
 		@rule: "grammar",
 		stmt: [
@@ -42,6 +44,8 @@ func TestGrammarToValueExpr(t *testing.T) {
 }
 
 func TestGrammarParseParseLiteral(t *testing.T) {
+	t.Parallel()
+
 	expected := `(
 		"": ["+"],
 		@rule: "expr",
@@ -75,6 +79,8 @@ func TestGrammarParseParseLiteral(t *testing.T) {
 }
 
 func TestGrammarParseParseScopeVar(t *testing.T) {
+	t.Parallel()
+
 	AssertCodesEvalToSameValue(t,
 		`(
 			@rule: "x",
@@ -121,6 +127,7 @@ func TestGrammarParseParseScopeVar(t *testing.T) {
 }
 
 // func TestGrammarParseWithEscape(t *testing.T) {
+// 	t.Parallel()
 // 	AssertCodesEvalToSameValue(t,
 // 		`(
 // 			"": ["+"],

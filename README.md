@@ -42,14 +42,13 @@ are included in arr.ai.
 $ arrai i
 @> 6 * 7
 42
-@> //.<tab>
-archive  dict     encoding eval     fn       grammar  log      math
-net      os       re       reflect  rel      seq      str      tuple
-unicode
-@> //.str.<tab>
-contains   expand     has_prefix has_suffix join       lower      repr
-split      sub        title      upper
-@> //.str.upper("hello")
+@> //<tab>
+archive  bits     dict     encoding eval     fn       grammar  log
+math     net      os       re       reflect  rel      seq      str
+test     tuple    unicode  {
+@> //str.<tab>
+expand lower  repr   title  upper  
+@> //str.upper("hello")
 'HELLO'
 ```
 

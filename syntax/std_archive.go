@@ -45,7 +45,7 @@ func createArchive(v rel.Value, creator func(io.Writer) (io.Closer, func(string,
 	closer, create := creator(&b)
 	d, ok := v.(rel.Dict)
 	if !ok {
-		panic(fmt.Errorf("//.archive.zip.zip arg not a dict: %v", v))
+		panic(fmt.Errorf("//archive.zip.zip arg not a dict: %v", v))
 	}
 	if err := writeDictToArchive(d, create, ""); err != nil {
 		panic(err)

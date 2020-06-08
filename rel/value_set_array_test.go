@@ -3,6 +3,7 @@ package rel
 import "testing"
 
 func TestAsArray(t *testing.T) {
+	t.Parallel()
 	AssertEqualValues(t,
 		NewArray(NewNumber(10), NewNumber(11)),
 		NewSet(
@@ -13,6 +14,7 @@ func TestAsArray(t *testing.T) {
 }
 
 func TestAsArrayHoles(t *testing.T) {
+	t.Parallel()
 	AssertEqualValues(t,
 		NewArray(NewNumber(1), nil, nil, NewNumber(2)),
 		NewSet(
@@ -23,6 +25,8 @@ func TestAsArrayHoles(t *testing.T) {
 }
 
 func TestArrayWithout(t *testing.T) {
+	t.Parallel()
+
 	three := NewArray(NewNumber(10), NewNumber(11), NewNumber(12))
 
 	AssertEqualValues(t,
