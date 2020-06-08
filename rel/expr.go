@@ -56,16 +56,5 @@ func wrapContext(err error, expr Expr, scope Scope) error {
 
 func EvalExpr(expr Expr, local Scope) (_ Value, err error) {
 	//TODO: this is only the initial scope, how to get the last scope?
-	defer wrapPanic(expr, &err, local)
 	return expr.Eval(local)
-}
-
-func wrapPanic(expr Expr, err *error, scope Scope) {
-	switch r := recover().(type) {
-	case nil:
-	case error:
-		*err = wrapContext(r, expr, scope)
-	default:
-		*err = wrapContext(fmt.Errorf("unexpected panic: %v", r), expr, scope)
-	}
 }

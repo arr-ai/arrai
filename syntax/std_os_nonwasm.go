@@ -27,8 +27,8 @@ func stdOsGetArgs() rel.Value {
 	return strArrToRelArr(os.Args[offset:])
 }
 
-func stdOsGetEnv(value rel.Value) rel.Value {
-	return rel.NewString([]rune(os.Getenv(value.(rel.String).String())))
+func stdOsGetEnv(value rel.Value) (rel.Value, error) {
+	return rel.NewString([]rune(os.Getenv(value.(rel.String).String()))), nil
 }
 
 func stdOsPathSeparator() rel.Value {
@@ -47,12 +47,12 @@ func stdOsCwd() rel.Value {
 	return rel.NewString([]rune(wd))
 }
 
-func stdOsFile(v rel.Value) rel.Value {
+func stdOsFile(v rel.Value) (rel.Value, error) {
 	f, err := ioutil.ReadFile(v.(rel.String).String())
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
-	return rel.NewBytes(f)
+	return rel.NewBytes(f), nil
 }
 
 var stdOsStdinVar = newStdOsStdin(os.Stdin)

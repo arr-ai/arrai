@@ -249,36 +249,40 @@ func (d Dict) Map(m func(Value) Value) Set {
 	return GenericSet{set: sb.Finish()}
 }
 
-func (d Dict) Where(pred func(Value) bool) Set {
+func (d Dict) Where(p func(v Value) (bool, error)) (Set, error) {
 	var mb frozen.MapBuilder
 	for e := d.Enumerator(); e.MoveNext(); {
 		t := e.Current().(DictEntryTuple)
-		if pred(t) {
+		match, err := p(t)
+		if err != nil {
+			return nil, err
+		}
+		if match {
 			mb.Put(t.at, t.value)
 		}
 	}
 	m := mb.Finish()
 	if m.IsEmpty() {
-		return None
+		return None, nil
 	}
-	return Dict{m: m}
+	return Dict{m: m}, nil
 }
 
-func (d Dict) CallAll(arg Value) Set {
+func (d Dict) CallAll(arg Value) (Set, error) {
 	val, exists := d.m.Get(arg)
 	if exists {
 		switch v := val.(type) {
 		case Value:
-			return NewSet(v)
+			return NewSet(v), nil
 		case multipleValues:
 			values := make([]Value, 0, frozen.Set(v).Count())
 			for e := frozen.Set(v).Range(); e.Next(); {
 				values = append(values, e.Value().(Value))
 			}
-			return NewSet(values...)
+			return NewSet(values...), nil
 		}
 	}
-	return None
+	return None, nil
 }
 
 func (d Dict) ArrayEnumerator() (OffsetValueEnumerator, bool) {

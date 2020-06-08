@@ -5,14 +5,18 @@ import (
 )
 
 // Rank ...
-func Rank(s Set, rankerf func(v Tuple) Tuple) (Set, error) {
+func Rank(s Set, rankerf func(v Tuple) (Tuple, error)) (Set, error) {
 	if !s.IsTrue() {
 		return None, nil
 	}
 	entries := []rankerEntry{}
 	for e := s.Enumerator(); e.MoveNext(); {
 		input := e.Current().(Tuple)
-		entries = append(entries, rankerEntry{input, rankerf(input)})
+		rankers, err := rankerf(input)
+		if err != nil {
+			return nil, err
+		}
+		entries = append(entries, rankerEntry{input, rankers})
 	}
 	ranker := newRanker(entries)
 	for _, attr := range entries[0].ranker.Names().Names() {
