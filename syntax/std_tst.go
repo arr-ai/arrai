@@ -7,22 +7,22 @@ import (
 )
 
 func createTestCompareFuncAttr(name string, ok func(a, b rel.Value) bool, message string) rel.Attr {
-	return createNestedFuncAttr(name, 2, func(args ...rel.Value) rel.Value {
+	return createNestedFuncAttr(name, 2, func(args ...rel.Value) (rel.Value, error) {
 		expected := args[0]
 		actual := args[1]
 		if !ok(expected, actual) {
-			panic(fmt.Errorf("%s\nexpected: %v\nactual:   %v", message, expected, actual))
+			return nil, fmt.Errorf("%s\nexpected: %v\nactual:   %v", message, expected, actual)
 		}
-		return rel.None
+		return rel.None, nil
 	})
 }
 
 func createTestCheckFuncAttr(name string, ok func(v rel.Value) bool) rel.Attr {
-	return rel.NewNativeFunctionAttr(name, func(value rel.Value) rel.Value {
-		if !ok(value) {
-			panic(fmt.Errorf("not %s\nvalue: %v", name, value))
+	return rel.NewNativeFunctionAttr(name, func(value rel.Value) (rel.Value, error) {
+		if ok(value) {
+			return rel.None, nil
 		}
-		return rel.None
+		return nil, fmt.Errorf("not %s\nvalue: %v", name, value)
 	})
 }
 

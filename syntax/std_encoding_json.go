@@ -10,7 +10,7 @@ import (
 func stdEncodingJSON() rel.Attr {
 	return rel.NewTupleAttr(
 		"json",
-		rel.NewNativeFunctionAttr("decode", func(v rel.Value) rel.Value {
+		rel.NewNativeFunctionAttr("decode", func(v rel.Value) (rel.Value, error) {
 			var bytes []byte
 			switch v := v.(type) {
 			case rel.String:
@@ -23,14 +23,14 @@ func stdEncodingJSON() rel.Attr {
 	)
 }
 
-func bytesJSONToArrai(bytes []byte) rel.Value {
+func bytesJSONToArrai(bytes []byte) (rel.Value, error) {
 	var data interface{}
 	var err error
 	if err = json.Unmarshal(bytes, &data); err == nil {
 		var d rel.Value
 		if d, err = translate.ToArrai(data); err == nil {
-			return d
+			return d, nil
 		}
 	}
-	panic(err)
+	return nil, err
 }

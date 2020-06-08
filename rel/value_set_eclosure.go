@@ -81,7 +81,11 @@ func (c ExprClosure) Negate() Value {
 // Export exports a ExprClosure.
 func (c ExprClosure) Export() interface{} {
 	return func(v Value) Value {
-		return SetCall(c, v)
+		result, err := SetCall(c, v)
+		if err != nil {
+			panic(err)
+		}
+		return result
 	}
 }
 
@@ -109,11 +113,11 @@ func (ExprClosure) Map(func(Value) Value) Set {
 	panic("unimplemented")
 }
 
-func (ExprClosure) Where(func(Value) bool) Set {
+func (ExprClosure) Where(p func(v Value) (bool, error)) (Set, error) {
 	panic("unimplemented")
 }
 
-func (c ExprClosure) CallAll(arg Value) Set {
+func (c ExprClosure) CallAll(arg Value) (Set, error) {
 	//TODO: CallAll
 	panic("unimplemented")
 }

@@ -560,7 +560,7 @@ func (pc ParseContext) compileTailFunc(tail ast.Node) rel.SafeTailCallback {
 						return nil, err
 					}
 					//TODO: scanner won't highlight calls properly in safe call
-					v, err = rel.SafeSetCall(v.(rel.Set), a)
+					v, err = rel.SetCall(v.(rel.Set), a)
 					if err != nil {
 						return nil, err
 					}

@@ -75,7 +75,10 @@ func (p TuplePattern) Bind(local Scope, value Value) (Scope, error) {
 			if err != nil {
 				return EmptyScope, err
 			}
-			result = result.MatchedUpdate(scope)
+			result, err = result.MatchedUpdate(scope)
+			if err != nil {
+				return EmptyScope, err
+			}
 			continue
 		}
 		tupleExpr, found := tuple.Get(attr.name)
@@ -86,7 +89,10 @@ func (p TuplePattern) Bind(local Scope, value Value) (Scope, error) {
 		if err != nil {
 			return EmptyScope, err
 		}
-		result = result.MatchedUpdate(scope)
+		result, err = result.MatchedUpdate(scope)
+		if err != nil {
+			return EmptyScope, err
+		}
 		names = names.Without(attr.name)
 	}
 

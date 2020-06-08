@@ -30,7 +30,6 @@ func (e ArrayItemTupleExpr) String() string {
 
 // Eval returns the subject.
 func (e ArrayItemTupleExpr) Eval(local Scope) (_ Value, err error) {
-	defer wrapPanic(e, &err, local)
 	at, err := e.at.Eval(local)
 	if err != nil {
 		return nil, wrapContext(err, e, local)
