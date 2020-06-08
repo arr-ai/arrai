@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"path"
 
@@ -21,7 +22,7 @@ var cmds = []*cli.Command{
 	syncCommand,
 	transformCommand,
 	updateCommand,
-	versionCommand,
+	infoCommand,
 }
 
 func main() {
@@ -60,6 +61,9 @@ func main() {
 				syntax.RunOmitted = true
 			}
 		}
+
+		setupVersion(app)
+
 		//nolint:lll
 		cli.AppHelpTemplate = `NAME:
    {{.Name}} - {{.Usage}}
@@ -106,4 +110,12 @@ VERSION:
 func isTerminal() bool {
 	return (isatty.IsTerminal(os.Stdin.Fd()) && isatty.IsTerminal(os.Stdout.Fd())) ||
 		(isatty.IsCygwinTerminal(os.Stdin.Fd()) && isatty.IsCygwinTerminal(os.Stdout.Fd()))
+}
+
+func setupVersion(app *cli.App) {
+	app.Version = Version
+
+	cli.VersionPrinter = func(c *cli.Context) {
+		fmt.Printf("arrai %s %s\n", Version, BuildOS)
+	}
 }
