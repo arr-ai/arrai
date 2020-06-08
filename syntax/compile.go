@@ -258,7 +258,7 @@ func (pc ParseContext) compileDictPattern(b ast.Branch) rel.Pattern {
 				entryPtns = append(
 					entryPtns,
 					rel.NewDictPatternEntry(
-						// TODO: ???
+						// TODO: Why is this a "."?
 						rel.NewDotIdent(*parser.NewScanner(".")),
 						pc.compileExtraElementPattern(extra.(ast.Many)[0].One("extra").(ast.Branch)),
 					),
