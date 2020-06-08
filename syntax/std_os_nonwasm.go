@@ -5,36 +5,15 @@ package syntax
 import (
 	"io/ioutil"
 	"os"
-	"strings"
+
+	"github.com/arr-ai/arrai/tools"
 
 	"github.com/arr-ai/arrai/rel"
 )
 
 func stdOsGetArgs() rel.Value {
-	var offset int
-	switch os.Args[0] {
-	case "ai", "ax":
-		offset = 1
-	default:
-		if RunOmitted {
-			offset = 1
-		} else if len(os.Args) == 1 {
-			// to handle running script from syntax library
-			return rel.NewArray()
-		} else {
-			offset = lookupCommandOffset()
-		}
-	}
-	return strArrToRelArr(os.Args[offset:])
-}
-
-func lookupCommandOffset() int {
-	for index, item := range os.Args[1:] {
-		if !strings.HasPrefix(item, "-") {
-			return index + 2
-		}
-	}
-	return 2
+	args := tools.Arguments.MustGet("Arguments")
+	return strArrToRelArr(args.([]string))
 }
 
 func stdOsGetEnv(value rel.Value) (rel.Value, error) {
