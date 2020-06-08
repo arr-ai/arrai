@@ -138,7 +138,6 @@ func (e *ReduceExpr) String() string {
 
 // Eval returns the subject
 func (e *ReduceExpr) Eval(local Scope) (_ Value, err error) {
-	defer wrapPanic(e, &err, local)
 	a, err := e.a.Eval(local)
 	if err != nil {
 		return nil, wrapContext(err, e, local)
@@ -153,7 +152,11 @@ func (e *ReduceExpr) Eval(local Scope) (_ Value, err error) {
 			if err != nil {
 				return nil, wrapContext(err, e, local)
 			}
-			acc, err = e.reduce(acc, SetCall(f.(Closure), i.Current()))
+			v, err := SetCall(f.(Closure), i.Current())
+			if err != nil {
+				return nil, wrapContext(err, e, local)
+			}
+			acc, err = e.reduce(acc, v)
 			if err != nil {
 				return nil, wrapContext(err, e, local)
 			}

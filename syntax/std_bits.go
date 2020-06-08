@@ -1,6 +1,7 @@
 package syntax
 
 import (
+	"fmt"
 	"math"
 	"math/bits"
 
@@ -14,10 +15,10 @@ func stdBits() rel.Attr {
 	)
 }
 
-func set(v rel.Value) rel.Value {
+func set(v rel.Value) (rel.Value, error) {
 	n, isNumber := v.(rel.Number)
 	if !isNumber || float64(n) < 0 {
-		panic("argument has to be non-negative number")
+		return nil, fmt.Errorf("argument not a non-negative number: %v", v)
 	}
 	var bitmask []rel.Value
 	if float64(n) == float64(int(n)) {
@@ -25,7 +26,7 @@ func set(v rel.Value) rel.Value {
 	} else {
 		bitmask = maskFloat(float64(n))
 	}
-	return rel.NewSet(bitmask...)
+	return rel.NewSet(bitmask...), nil
 }
 
 func setInt(v int) (bitmask []rel.Value) {
@@ -39,13 +40,17 @@ func maskFloat(v float64) (bitmask []rel.Value) {
 	panic("unimplemented")
 }
 
-func mask(v rel.Value) rel.Value {
+func mask(v rel.Value) (rel.Value, error) {
 	if s, isSet := v.(rel.Set); isSet {
-		var n float64
+		var total float64
 		for e := s.Enumerator(); e.MoveNext(); {
-			n += math.Pow(2, float64(e.Current().(rel.Number)))
+			n, is := e.Current().(rel.Number)
+			if !is {
+				return nil, fmt.Errorf("//bits.mask: element not a number: %v", e.Current())
+			}
+			total += math.Pow(2, n.Float64())
 		}
-		return rel.NewNumber(n)
+		return rel.NewNumber(total), nil
 	}
-	panic("argument has to be a Set")
+	return nil, fmt.Errorf("mask: arg not a Set: %v", v)
 }

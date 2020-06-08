@@ -89,18 +89,18 @@ func (s Scope) With(name string, expr Expr) Scope {
 
 // MatchedWith returns a new scope. New keys are added as With,
 // but existing keys fail unless the new value equals the existing value
-func (s Scope) MatchedWith(name string, expr Expr) Scope {
+func (s Scope) MatchedWith(name string, expr Expr) (Scope, error) {
 	if name == "_" {
-		return s
+		return s, nil
 	}
 
 	if v, exists := s.Get(name); exists {
 		if v.String() != expr.String() {
-			panic(fmt.Sprintf("%s is redefined differently %s vs %s", name, v, expr))
+			return Scope{}, fmt.Errorf("%s is redefined differently %s vs %s", name, v, expr)
 		}
 	}
 
-	return s.With(name, expr)
+	return s.With(name, expr), nil
 }
 
 // Without returns a new scope with with all the old bindings except the ones
@@ -117,18 +117,18 @@ func (s Scope) Update(t Scope) Scope {
 
 // MatchedUpdate merges s and t. New keys are added as Update,
 // but existing keys fail unless the new value equals the existing value
-func (s Scope) MatchedUpdate(t Scope) Scope {
+func (s Scope) MatchedUpdate(t Scope) (Scope, error) {
 	t = t.Without("_")
 	for e := s.Enumerator(); e.MoveNext(); {
 		name, v := e.Current()
 		if expr, exists := t.Get(name); exists {
 			if expr.String() != v.String() {
-				panic(fmt.Sprintf("the value of %s is different in both scopes", name))
+				return Scope{}, fmt.Errorf("the value of %s is different in both scopes", name)
 			}
 		}
 	}
 
-	return s.Update(t)
+	return s.Update(t), nil
 }
 
 // Project returns a new scope with just names from the input scope.

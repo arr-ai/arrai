@@ -10,7 +10,7 @@ func stdOsGetArgs() rel.Value {
 	panic("not implemented")
 }
 
-func stdOsGetEnv(value rel.Value) rel.Value {
+func stdOsGetEnv(value rel.Value) (rel.Value, error) {
 	panic("not implemented")
 }
 
@@ -26,7 +26,7 @@ func stdOsCwd() rel.Value {
 	panic("not implemented")
 }
 
-func stdOsFile(rel.Value) rel.Value {
+func stdOsFile(rel.Value) (rel.Value, error) {
 	panic("not implemented")
 }
 
