@@ -15,6 +15,13 @@ func TestAsArray(t *testing.T) {
 			NewArrayItemTuple(1, NewNumber(11)),
 		),
 	)
+	AssertEqualValues(t,
+		NewOffsetArray(2, NewNumber(10), NewNumber(11)),
+		NewSet(
+			NewArrayItemTuple(2, NewNumber(10)),
+			NewArrayItemTuple(3, NewNumber(11)),
+		),
+	)
 }
 
 func TestAsArrayHoles(t *testing.T) {
@@ -24,6 +31,13 @@ func TestAsArrayHoles(t *testing.T) {
 		NewSet(
 			NewArrayItemTuple(0, NewNumber(1)),
 			NewArrayItemTuple(3, NewNumber(2)),
+		),
+	)
+	AssertEqualValues(t,
+		NewOffsetArray(2, NewNumber(1), nil, nil, NewNumber(2)),
+		NewSet(
+			NewArrayItemTuple(2, NewNumber(1)),
+			NewArrayItemTuple(5, NewNumber(2)),
 		),
 	)
 }
