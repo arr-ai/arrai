@@ -14,7 +14,7 @@ type Closure struct {
 }
 
 // NewFunction returns a new function.
-func NewClosure(scope Scope, f *Function) Value {
+func NewClosure(scope Scope, f *Function) Closure {
 	return Closure{scope: scope, f: f}
 }
 

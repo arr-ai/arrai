@@ -14,7 +14,7 @@ var trailingWSRE = regexp.MustCompile(`[\t ]*\z`)
 var lastWSRE = regexp.MustCompile(`\n[\t ]+\z`)
 var expansionRE = regexp.MustCompile(`(?::([-+#*\.\_0-9a-z]*))(:(?:\\.|[^\\:}])*)?(?::((?:\\.|[^\\:}])*))?`)
 
-func (pc ParseContext) compileExpandableString(c ast.Children) rel.Expr {
+func (pc ParseContext) compileExpandableString(b ast.Branch, c ast.Children) rel.Expr {
 	scanner := c.(ast.One).Node.One("quote").Scanner()
 	quote := scanner.String()
 	parts := []interface{}{}
@@ -123,7 +123,7 @@ func (pc ParseContext) compileExpandableString(c ast.Children) rel.Expr {
 		}
 	}
 	// TODO: Use a more direct approach to invoke concat implementation.
-	return rel.NewCallExpr(scanner,
+	return rel.NewCallExpr(b.Scanner(),
 		rel.NewNativeFunction("concat", stdSeqConcat),
-		rel.NewArrayExpr(scanner, exprs...))
+		rel.NewArrayExpr(b.Scanner(), exprs...))
 }

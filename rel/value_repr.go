@@ -67,7 +67,15 @@ func reprString(str String, w io.Writer) {
 
 func reprBytes(b Bytes, w io.Writer) {
 	reprOffset(b.offset, w)
-	fmt.Fprint(w, b.String())
+	fmt.Fprint(w, "<<")
+	s := string(b.b)
+	switch {
+	case !strings.Contains(s, "'"):
+		reprEscape(s, '\'', w)
+	default:
+		reprEscape(s, '"', w)
+	}
+	fmt.Fprint(w, ">>")
 }
 
 func reprArray(a Array, w io.Writer) {

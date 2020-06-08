@@ -48,16 +48,18 @@ func assertASTNodeToValueToNode(t *testing.T, p parser.Parsers, rule, src string
 }
 
 func TestNodeToValueSimple(t *testing.T) {
+	t.Parallel()
 	assertASTNodeToValueToNode(t, wbnf.Core(), "grammar", `expr -> "+"|"*";`)
 }
 
 func TestGrammarToValueExpr(t *testing.T) {
+	t.Parallel()
 	assertASTNodeToValueToNode(t, wbnf.Core(), "grammar", `x->@:"+" > @:"*" > "1";`)
 }
 
 func TestNodeToValueExpr(t *testing.T) {
+	t.Parallel()
 	grammar := `expr -> @:op="+" > @:op="*" > n=[0-9];`
-
 	exprP, err := wbnf.Compile(grammar, nil)
 	require.NoError(t, err)
 	assertASTNodeToValueToNode(t, exprP, "expr", `1+2*3`)

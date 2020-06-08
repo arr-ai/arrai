@@ -46,7 +46,7 @@ corresponding names.
 
 ```bash
 $ arrai e 'let x = 1; (\a a + b)(x)'
-INFO[0000] Name "b" not found in {x, a}
+INFO[0000] name "b" not found in {x, a}
 
 .:1:20:
 let x = 1; (\a a + b)(x)

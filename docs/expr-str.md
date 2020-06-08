@@ -101,7 +101,7 @@ The elements are as follows:
    formatting string. If sep is omitted, *format* is applied to *expr* directly.
    If absence, `%v` is assumed.
 
-   **Example:** `$"=${//.math.pi:06.3f}="` equals `"=03.142="`.
+   **Example:** `$"=${//math.pi:06.3f}="` equals `"=03.142="`.
 
 3. If *sep* is present, *expr* is treated as an array, and *format* is applied
    to each element. The formatted results are concatenated, with *sep* used as a

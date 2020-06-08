@@ -50,6 +50,16 @@ func intfValueLess(a, b interface{}) bool {
 	return a.(Value).Less(b.(Value))
 }
 
+func exprIsValue(expr Expr) (Value, bool) {
+	switch expr := expr.(type) {
+	case Value:
+		return expr, true
+	case LiteralExpr:
+		return expr.literal, true
+	}
+	return nil, false
+}
+
 // Attr is a name/Value pair used to construct a Tuple.
 type Attr struct {
 	Name  string
