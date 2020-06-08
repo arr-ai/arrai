@@ -60,14 +60,20 @@ func (p ArrayPattern) Bind(local Scope, value Value) (Scope, error) {
 			if err != nil {
 				return EmptyScope, err
 			}
-			result = result.MatchedUpdate(scope)
+			result, err = result.MatchedUpdate(scope)
+			if err != nil {
+				return Scope{}, err
+			}
 			continue
 		}
 		scope, err := item.Bind(local, array.Values()[i+offset])
 		if err != nil {
 			return EmptyScope, err
 		}
-		result = result.MatchedUpdate(scope)
+		result, err = result.MatchedUpdate(scope)
+		if err != nil {
+			return Scope{}, err
+		}
 	}
 
 	return result, nil

@@ -2,7 +2,11 @@ package syntax
 
 import "testing"
 
-func TestReMatch(t *testing.T) {
+func TestStdRe(t *testing.T) {
+	AssertCodeErrors(t, "//re.compile(`x(y))`)", "//re.compile")
+}
+
+func TestStdReMatch(t *testing.T) {
 	t.Parallel()
 
 	AssertCodesEvalToSameValue(t,
@@ -11,9 +15,12 @@ func TestReMatch(t *testing.T) {
 	AssertCodesEvalToSameValue(t,
 		`{}`,
 		"//re.compile(`x(\\d)`).match('a1b2c3')")
+	AssertCodesEvalToSameValue(t,
+		`{}`,
+		"//re.compile(`x(\\d)`).match('a1b2c3')")
 }
 
-func TestReMismatch(t *testing.T) {
+func TestStdReMismatch(t *testing.T) {
 	t.Parallel()
 
 	AssertCodesEvalToSameValue(t,
@@ -21,7 +28,7 @@ func TestReMismatch(t *testing.T) {
 		"//re.compile(`[a-z](~)?(\\d)`).match('a1b~2c3')")
 }
 
-func TestReSub(t *testing.T) {
+func TestStdReSub(t *testing.T) {
 	t.Parallel()
 
 	AssertCodesEvalToSameValue(t,
@@ -32,7 +39,7 @@ func TestReSub(t *testing.T) {
 		"//re.compile(`x(\\d)`).sub(`-$1`, 'a1b2c3')")
 }
 
-func TestReSubf(t *testing.T) {
+func TestStdReSubf(t *testing.T) {
 	t.Parallel()
 
 	AssertCodesEvalToSameValue(t,

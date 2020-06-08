@@ -59,7 +59,7 @@ func NewEvalExpr(scanner parser.Scanner, a Expr) Expr {
 	return newUnaryExpr(scanner, a, "*", "(*%s)",
 		func(a Value, local Scope) (Value, error) {
 			if x, ok := a.(Closure); ok {
-				return SetCall(x, None), nil
+				return SetCall(x, None)
 			}
 			return nil, errors.Errorf("eval arg must be a Function, not %T", a)
 		})
