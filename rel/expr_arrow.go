@@ -28,7 +28,6 @@ func (e *ArrowExpr) String() string {
 
 // Eval returns the lhs
 func (e *ArrowExpr) Eval(local Scope) (_ Value, err error) {
-	defer wrapPanic(e, &err, local)
 	value, err := e.lhs.Eval(local)
 	if err != nil {
 		return nil, wrapContext(err, e, local)

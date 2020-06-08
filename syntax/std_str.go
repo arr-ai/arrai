@@ -84,14 +84,23 @@ func stdStr() rel.Attr {
 	return rel.NewTupleAttr("str",
 		rel.NewAttr("expand", stdStrExpand),
 		createNestedFuncAttr("lower", 1, func(args ...rel.Value) (rel.Value, error) {
-			return rel.NewString([]rune(strings.ToLower(mustValueAsString(args[0])))), nil
+			if s, is := valueAsString(args[0]); is {
+				return rel.NewString([]rune(strings.ToLower(s))), nil
+			}
+			return nil, fmt.Errorf("//str.lower: arg not a string: %v", args[0])
 		}),
 		rel.NewAttr("repr", stdStrRepr),
 		createNestedFuncAttr("title", 1, func(args ...rel.Value) (rel.Value, error) {
-			return rel.NewString([]rune(strings.Title(mustValueAsString(args[0])))), nil
+			if s, is := valueAsString(args[0]); is {
+				return rel.NewString([]rune(strings.Title(s))), nil
+			}
+			return nil, fmt.Errorf("//str.title: arg not a string: %v", args[0])
 		}),
 		createNestedFuncAttr("upper", 1, func(args ...rel.Value) (rel.Value, error) {
-			return rel.NewString([]rune(strings.ToUpper(mustValueAsString(args[0])))), nil
+			if s, is := valueAsString(args[0]); is {
+				return rel.NewString([]rune(strings.ToUpper(s))), nil
+			}
+			return nil, fmt.Errorf("//str.upper: arg not a string: %v", args[0])
 		}),
 	)
 }
@@ -106,14 +115,6 @@ func valueAsString(v rel.Value) (string, bool) {
 	return "", false
 }
 
-// TODO: Remove
-func mustValueAsString(v rel.Value) string {
-	if s, is := valueAsString(v); is {
-		return s
-	}
-	panic(fmt.Errorf("value not a string: %v", v))
-}
-
 func valueAsBytes(v rel.Value) ([]byte, bool) {
 	switch v := v.(type) {
 	case rel.Bytes:
@@ -122,12 +123,4 @@ func valueAsBytes(v rel.Value) ([]byte, bool) {
 		return nil, !v.IsTrue()
 	}
 	return nil, false
-}
-
-// TODO: Remove
-func mustValueAsBytes(v rel.Value) []byte {
-	if b, is := valueAsBytes(v); is {
-		return b
-	}
-	panic(fmt.Errorf("value not a byte array: %v", v))
 }

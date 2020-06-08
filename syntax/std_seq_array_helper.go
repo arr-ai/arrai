@@ -97,7 +97,7 @@ func arrayJoin(joiner rel.Value, subject rel.Array) (rel.Value, error) {
 		case rel.Array:
 			result = append(result, vArray.Values()...)
 		case rel.Value:
-			panic("the type of subject element must be rel.Array")
+			return nil, fmt.Errorf("the type of subject element must be rel.Array")
 		}
 	}
 

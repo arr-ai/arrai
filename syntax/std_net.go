@@ -1,6 +1,7 @@
 package syntax
 
 import (
+	"fmt"
 	"io/ioutil"
 	"net/http"
 
@@ -13,7 +14,11 @@ func stdNet() rel.Attr {
 		rel.NewTupleAttr(
 			"http",
 			rel.NewNativeFunctionAttr("get", func(v rel.Value) (rel.Value, error) {
-				resp, err := http.Get(mustValueAsString(v))
+				url, is := valueAsString(v)
+				if !is {
+					return nil, fmt.Errorf("//net.http.get: url not a string: %v", url)
+				}
+				resp, err := http.Get(url) //nolint:gosec
 				if err != nil {
 					return nil, err
 				}

@@ -42,11 +42,15 @@ func maskFloat(v float64) (bitmask []rel.Value) {
 
 func mask(v rel.Value) (rel.Value, error) {
 	if s, isSet := v.(rel.Set); isSet {
-		var n float64
+		var total float64
 		for e := s.Enumerator(); e.MoveNext(); {
-			n += math.Pow(2, float64(e.Current().(rel.Number)))
+			n, is := e.Current().(rel.Number)
+			if !is {
+				return nil, fmt.Errorf("//bits.mask: element not a number: %v", e.Current())
+			}
+			total += math.Pow(2, n.Float64())
 		}
-		return rel.NewNumber(n), nil
+		return rel.NewNumber(total), nil
 	}
 	return nil, fmt.Errorf("mask: arg not a Set: %v", v)
 }

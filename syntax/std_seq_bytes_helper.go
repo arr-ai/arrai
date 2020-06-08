@@ -21,22 +21,26 @@ func bytesJoin(joiner, subject rel.Bytes) rel.Value {
 }
 
 // Splits byte array subject by delimiter.
-func bytesSplit(delimiter rel.Value, subject rel.Bytes) rel.Value {
+func bytesSplit(delimiter rel.Value, subject rel.Bytes) (rel.Value, error) {
 	var splitted []string
 
 	switch delimiter := delimiter.(type) {
 	case rel.Bytes:
 		splitted = strings.Split(subject.String(), delimiter.String())
 	case rel.GenericSet:
-		splitted = strings.Split(subject.String(), mustValueAsString(delimiter))
+		delimStr, is := valueAsString(delimiter)
+		if !is {
+			return nil, fmt.Errorf("//seq.split: delim not a string: %v", delimiter)
+		}
+		splitted = strings.Split(subject.String(), delimStr)
 	default:
-		panic(fmt.Sprintf("delimiter and subject have to be of the same type, "+
-			"currently: delimiter: %T, subject: %T", delimiter, subject))
+		return nil, fmt.Errorf("delimiter and subject different types: "+
+			"delimiter: %T, subject: %T", delimiter, subject)
 	}
 
 	result := make([]rel.Value, 0, len(splitted))
 	for _, s := range splitted {
 		result = append(result, rel.NewBytes([]byte(s)).(rel.Value))
 	}
-	return rel.NewArray(result...)
+	return rel.NewArray(result...), nil
 }

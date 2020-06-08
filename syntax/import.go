@@ -161,9 +161,9 @@ func fileValue(filename string) (rel.Value, error) {
 	}
 	switch filepath.Ext(filename) {
 	case ".json":
-		return bytesJSONToArrai(bytes), nil
+		return bytesJSONToArrai(bytes)
 	case ".yml", ".yaml":
-		return translate.BytesYamlToArrai(bytes), nil
+		return translate.BytesYamlToArrai(bytes)
 	}
 	return bytesValue(filename, bytes), nil
 }

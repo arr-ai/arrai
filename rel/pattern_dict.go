@@ -71,13 +71,19 @@ func (p DictPattern) Bind(local Scope, value Value) (Scope, error) {
 				if err != nil {
 					return EmptyScope, err
 				}
-				result = result.MatchedUpdate(scope)
+				result, err = result.MatchedUpdate(scope)
+				if err != nil {
+					return EmptyScope, err
+				}
 			} else {
 				scope, err := entry.value.Bind(local, Dict{m: m})
 				if err != nil {
 					return EmptyScope, err
 				}
-				result = result.MatchedUpdate(scope)
+				result, err = result.MatchedUpdate(scope)
+				if err != nil {
+					return EmptyScope, err
+				}
 			}
 
 			continue
@@ -94,7 +100,10 @@ func (p DictPattern) Bind(local Scope, value Value) (Scope, error) {
 		if err != nil {
 			return EmptyScope, err
 		}
-		result = result.MatchedUpdate(scope)
+		result, err = result.MatchedUpdate(scope)
+		if err != nil {
+			return EmptyScope, err
+		}
 		m = m.Without(frozen.NewSet(key))
 	}
 
