@@ -84,5 +84,5 @@ func TestBytesSplit(t *testing.T) {
 	AssertCodesEvalToSameValue(t, `[<<>>]                   `, `//seq.split(<<",">>,<<>>)  `)
 
 	AssertCodeErrors(t, `//seq.split(",", <<"hello">>)`,
-		"delimiter and subject different types: delimiter: rel.String, subject: rel.Bytes")
+		"//seq.split: delimiter and subject different types: delimiter: rel.String, subject: rel.Bytes")
 }
