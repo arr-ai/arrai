@@ -83,7 +83,7 @@ COPYRIGHT:
    {{.Copyright}}
    {{end}}{{if .Version}}
 VERSION:
-   {{.Version}}
+   v{{.Version}}
    {{end}}
 `
 	}
