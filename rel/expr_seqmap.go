@@ -46,22 +46,29 @@ func (e *SeqArrowExpr) Eval(local Scope) (_ Value, err error) {
 		return nil, wrapContext(err, e, local)
 	}
 	var closure Set = NewClosure(local, e.fn)
-	var call func(at, v Value) Value
+	var call func(at, v Value) (Value, error)
 	if e.withAt {
-		call = func(at, v Value) Value {
-			return SetCall(SetCall(closure, at).(Set), v)
+		call = func(at, v Value) (Value, error) {
+			s, err := SetCall(closure, at)
+			if err != nil {
+				return nil, wrapContext(err, e, local)
+			}
+			return SetCall(s.(Set), v)
 		}
 	} else {
-		call = func(_, v Value) Value {
+		call = func(_, v Value) (Value, error) {
 			return SetCall(closure, v)
 		}
 	}
 
 	switch value := value.(type) {
-	case String:
+	case String: //nolint:dupl
 		runes := make([]rune, len(value.s))
 		for at, char := range value.s {
-			newChar := call(NewNumber(float64(value.offset+at)), NewNumber(float64(char)))
+			newChar, err := call(NewNumber(float64(value.offset+at)), NewNumber(float64(char)))
+			if err != nil {
+				return nil, wrapContext(err, e, local)
+			}
 			if n, is := newChar.(Number); is {
 				if r := rune(n.Float64()); float64(r) == n.Float64() {
 					runes[at] = r
@@ -71,10 +78,13 @@ func (e *SeqArrowExpr) Eval(local Scope) (_ Value, err error) {
 			return nil, wrapContext(fmt.Errorf("string %s ... must produce valid chars", e.op), e, local)
 		}
 		return NewOffsetString(runes, value.offset), nil
-	case Bytes:
+	case Bytes: //nolint:dupl
 		bytes := make([]byte, len(value.b))
 		for at, byt := range value.b {
-			newByte := call(NewNumber(float64(value.offset+at)), NewNumber(float64(byt)))
+			newByte, err := call(NewNumber(float64(value.offset+at)), NewNumber(float64(byt)))
+			if err != nil {
+				return nil, wrapContext(err, e, local)
+			}
 			if n, is := newByte.(Number); is {
 				if b := byte(n.Float64()); float64(b) == n.Float64() {
 					bytes[at] = b
@@ -88,7 +98,10 @@ func (e *SeqArrowExpr) Eval(local Scope) (_ Value, err error) {
 		items := make([]Value, len(value.values))
 		for at, item := range value.values {
 			if item != nil {
-				items[at] = call(NewNumber(float64(value.offset+at)), item)
+				items[at], err = call(NewNumber(float64(value.offset+at)), item)
+				if err != nil {
+					return nil, wrapContext(err, e, local)
+				}
 			}
 		}
 		return NewOffsetArray(value.offset, items...), nil
@@ -96,7 +109,10 @@ func (e *SeqArrowExpr) Eval(local Scope) (_ Value, err error) {
 		entries := make([]DictEntryTuple, 0, value.m.Count())
 		for i := value.Enumerator(); i.MoveNext(); {
 			entry := i.Current().(DictEntryTuple)
-			newValue := call(entry.at, entry.value)
+			newValue, err := call(entry.at, entry.value)
+			if err != nil {
+				return nil, wrapContext(err, e, local)
+			}
 			entries = append(entries, NewDictEntryTuple(entry.at, newValue))
 		}
 		return NewDict(true, entries...), nil
@@ -110,7 +126,10 @@ func (e *SeqArrowExpr) Eval(local Scope) (_ Value, err error) {
 			}
 			attr := t.Names().Without("@").Any()
 			item, _ := t.Get(attr)
-			newItem := call(at, item)
+			newItem, err := call(at, item)
+			if err != nil {
+				return nil, wrapContext(err, e, local)
+			}
 			values = append(values, NewTuple(Attr{"@", at}, Attr{attr, newItem}))
 		}
 		return NewSet(values...), nil

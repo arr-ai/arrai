@@ -23,21 +23,21 @@ var cache *importCache = newCache()
 
 func importLocalFile(fromRoot bool) rel.Value {
 	importLocalFileOnce.Do(func() {
-		importLocalFileVar = rel.NewNativeFunction("//./", func(v rel.Value) rel.Value {
+		importLocalFileVar = rel.NewNativeFunction("//./", func(v rel.Value) (rel.Value, error) {
 			s, ok := rel.AsString(v.(rel.Set))
 			if !ok {
-				panic(fmt.Errorf("cannot convert %#v to string", v))
+				return nil, fmt.Errorf("cannot convert %#v to string", v)
 			}
 
 			filename := s.String()
 			if fromRoot {
 				pwd, err := os.Getwd()
 				if err != nil {
-					panic(err)
+					return nil, err
 				}
 				rootPath, err := findRootFromModule(pwd)
 				if err != nil {
-					panic(err)
+					return nil, err
 				}
 				if !strings.HasPrefix(filename, "/") {
 					filename = rootPath + "/" + strings.ReplaceAll(filename, "../", "")
@@ -46,10 +46,10 @@ func importLocalFile(fromRoot bool) rel.Value {
 
 			v, err := fileValue(filename)
 			if err != nil {
-				panic(err)
+				return nil, err
 			}
 
-			return v
+			return v, nil
 		})
 	})
 	return importLocalFileVar
@@ -60,10 +60,10 @@ var importExternalContentVar rel.Value
 
 func importExternalContent() rel.Value {
 	importExternalContentOnce.Do(func() {
-		importExternalContentVar = rel.NewNativeFunction("//", func(v rel.Value) rel.Value {
+		importExternalContentVar = rel.NewNativeFunction("//", func(v rel.Value) (rel.Value, error) {
 			s, ok := rel.AsString(v.(rel.Set))
 			if !ok {
-				panic(fmt.Errorf("cannot convert %#v to string", v))
+				return nil, fmt.Errorf("cannot convert %#v to string", v)
 			}
 			importpath := s.String()
 
@@ -72,7 +72,7 @@ func importExternalContent() rel.Value {
 			if !strings.HasPrefix(importpath, "http://") && !strings.HasPrefix(importpath, "https://") {
 				v, err := importModuleFile(importpath)
 				if err == nil {
-					return v
+					return v, nil
 				}
 				moduleErr = err
 
@@ -83,12 +83,12 @@ func importExternalContent() rel.Value {
 			v, err := importURL(importpath)
 			if err != nil {
 				if moduleErr != nil {
-					panic(fmt.Errorf("failed to import %s - %s, and %s", importpath, moduleErr.Error(), err.Error()))
+					return nil, fmt.Errorf("failed to import %s - %s, and %s", importpath, moduleErr.Error(), err.Error())
 				}
-				panic(err)
+				return nil, err
 			}
 
-			return v
+			return v, nil
 		})
 	})
 	return importExternalContentVar

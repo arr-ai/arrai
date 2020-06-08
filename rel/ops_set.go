@@ -13,7 +13,11 @@ func Intersect(a, b Set) Set {
 			return GenericSet{set: ga.set.Intersection(gb.set)}
 		}
 	}
-	return a.Where(func(v Value) bool { return b.Has(v) })
+	result, err := a.Where(func(v Value) (bool, error) { return b.Has(v), nil })
+	if err != nil {
+		panic(err)
+	}
+	return result
 }
 
 func NIntersect(a Set, bs ...Set) Set {
@@ -51,7 +55,11 @@ func Difference(a, b Set) Set {
 			return GenericSet{set: ga.set.Difference(gb.set)}
 		}
 	}
-	return a.Where(func(v Value) bool { return !b.Has(v) })
+	result, err := a.Where(func(v Value) (bool, error) { return !b.Has(v), nil })
+	if err != nil {
+		panic(err)
+	}
+	return result
 }
 
 // SymmetricDifference returns Values in either Set, but not in both.

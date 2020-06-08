@@ -1,48 +1,42 @@
 package syntax
 
 import (
+	"bytes"
 	"fmt"
 	"strings"
 
 	"github.com/arr-ai/arrai/rel"
 )
 
-func strJoin(joiner, subject rel.Value) rel.Value {
+func strJoin(joiner, subject rel.Value) (rel.Value, error) {
 	strs := subject.(rel.Set)
 	toJoin := make([]string, 0, strs.Count())
 	for i, ok := strs.(rel.Set).ArrayEnumerator(); ok && i.MoveNext(); {
-		toJoin = append(toJoin, mustAsString(i.Current()))
+		toJoin = append(toJoin, mustValueAsString(i.Current()))
 	}
-	return rel.NewString([]rune(strings.Join(toJoin, mustAsString(joiner))))
+	if j, is := valueAsString(joiner); is {
+		return rel.NewString([]rune(strings.Join(toJoin, j))), nil
+	}
+	return nil, fmt.Errorf("join: sep not a string: %v", joiner)
 }
 
-func asString(val rel.Value) string {
-	switch val := val.(type) {
-	case rel.Bytes:
-		return val.String()
-	case rel.Set:
-		return mustAsString(val)
-	}
-	panic("value can't be converted to a string")
-}
-
-func stdSeqConcat(seq rel.Value) rel.Value {
+func stdSeqConcat(seq rel.Value) (rel.Value, error) {
 	if set, is := seq.(rel.Set); is {
 		if !set.IsTrue() {
-			return rel.None
+			return rel.None, nil
 		}
 	}
 	values := seq.(rel.Array).Values()
 	if len(values) == 0 {
-		return rel.None
+		return rel.None, nil
 	}
 	switch v0 := values[0].(type) {
 	case rel.String:
 		var sb strings.Builder
 		for _, value := range values {
-			sb.WriteString(mustAsString(value))
+			sb.WriteString(mustValueAsString(value))
 		}
-		return rel.NewString([]rune(sb.String()))
+		return rel.NewString([]rune(sb.String())), nil
 	case rel.Set:
 		result := v0
 		for _, value := range values[1:] {
@@ -52,28 +46,34 @@ func stdSeqConcat(seq rel.Value) rel.Value {
 				panic(err)
 			}
 		}
-		return result
+		return result, nil
 	}
-	panic(fmt.Errorf("concat: incompatible value: %v", values[0]))
+	return nil, fmt.Errorf("concat: incompatible value: %v", values[0])
 }
 
-func stdSeqContains(sub, subject rel.Value) rel.Value { //nolint:dupl
+func stdSeqContains(sub, subject rel.Value) (rel.Value, error) { //nolint:dupl
 	switch subject := subject.(type) {
 	case rel.String:
-		return rel.NewBool(strings.Contains(mustAsString(subject), mustAsString(sub)))
+		if subStr, is := valueAsString(sub); is {
+			return rel.NewBool(strings.Contains(subject.String(), subStr)), nil
+		}
+		return nil, fmt.Errorf("//seq.contains: sub not a string")
 	case rel.Array:
 		return arrayContains(sub, subject)
 	case rel.Bytes:
-		return rel.NewBool(strings.Contains(asString(subject), asString(sub)))
+		if subStr, is := valueAsBytes(sub); is {
+			return rel.NewBool(bytes.Contains(subject.Bytes(), subStr)), nil
+		}
+		return nil, fmt.Errorf("//seq.contains: sub not a byte array")
 	case rel.GenericSet:
 		emptySet, isSet := sub.(rel.GenericSet)
-		return rel.NewBool(isSet && !emptySet.IsTrue())
+		return rel.NewBool(isSet && !emptySet.IsTrue()), nil
 	}
 
-	return rel.NewBool(false)
+	return rel.NewBool(false), nil
 }
 
-func stdSeqJoin(joiner, subject rel.Value) rel.Value {
+func stdSeqJoin(joiner, subject rel.Value) (rel.Value, error) {
 	switch subject := subject.(type) {
 	case rel.Array:
 		switch subject.Values()[0].(type) {
@@ -88,184 +88,185 @@ func stdSeqJoin(joiner, subject rel.Value) rel.Value {
 		}
 	case rel.Bytes:
 		if _, isSet := joiner.(rel.GenericSet); isSet {
-			return subject
+			return subject, nil
 		}
-		return bytesJoin(joiner.(rel.Bytes), subject)
+		return bytesJoin(joiner.(rel.Bytes), subject), nil
 	case rel.GenericSet:
 		switch joiner.(type) {
 		case rel.String:
 			// if joiner is rel.String
 			return strJoin(joiner, subject)
 		case rel.Array, rel.GenericSet, rel.Bytes:
-			return subject
+			return subject, nil
 		}
 	}
 
 	panic(fmt.Errorf("join: unsupported args: %s, %s", joiner, subject))
 }
 
-func stdSeqHasPrefix(prefix, subject rel.Value) rel.Value {
+func stdSeqHasPrefix(prefix, subject rel.Value) (rel.Value, error) { //nolint:dupl
 	switch subject := subject.(type) {
 	case rel.String:
-		return rel.NewBool(strings.HasPrefix(mustAsString(subject), mustAsString(prefix)))
+		return rel.NewBool(strings.HasPrefix(mustValueAsString(subject), mustValueAsString(prefix))), nil
 	case rel.Array:
 		return arrayHasPrefix(prefix, subject)
 	case rel.Bytes:
-		return rel.NewBool(strings.HasPrefix(asString(subject), asString(prefix)))
+		return rel.NewBool(bytes.HasPrefix(mustValueAsBytes(subject), mustValueAsBytes(prefix))), nil
 	case rel.GenericSet:
 		emptySet, isSet := prefix.(rel.GenericSet)
-		return rel.NewBool(isSet && !emptySet.IsTrue())
+		return rel.NewBool(isSet && !emptySet.IsTrue()), nil
 	}
 
-	return rel.NewBool(false)
+	return rel.NewBool(false), nil
 }
 
-func stdSeqHasSuffix(suffix, subject rel.Value) rel.Value {
+func stdSeqHasSuffix(suffix, subject rel.Value) (rel.Value, error) { //nolint:dupl
 	switch subject := subject.(type) {
 	case rel.String:
-		return rel.NewBool(strings.HasSuffix(mustAsString(subject), mustAsString(suffix)))
+		return rel.NewBool(strings.HasSuffix(mustValueAsString(subject), mustValueAsString(suffix))), nil
 	case rel.Array:
 		return arrayHasSuffix(suffix, subject)
 	case rel.Bytes:
-		return rel.NewBool(strings.HasSuffix(asString(subject), asString(suffix)))
+		return rel.NewBool(bytes.HasSuffix(mustValueAsBytes(subject), mustValueAsBytes(suffix))), nil
 	case rel.GenericSet:
 		emptySet, isSet := suffix.(rel.GenericSet)
-		return rel.NewBool(isSet && !emptySet.IsTrue())
+		return rel.NewBool(isSet && !emptySet.IsTrue()), nil
 	}
 
-	return rel.NewBool(false)
+	return rel.NewBool(false), nil
 }
 
-func stdSeqRepeat(arg rel.Value) rel.Value {
+func stdSeqRepeat(arg rel.Value) (rel.Value, error) {
 	n := int(arg.(rel.Number))
-	return rel.NewNativeFunction("repeat(n)", func(arg rel.Value) rel.Value {
+	return rel.NewNativeFunction("repeat(n)", func(arg rel.Value) (rel.Value, error) {
 		switch seq := arg.(type) {
 		case rel.String:
-			return rel.NewString([]rune(strings.Repeat(seq.String(), n)))
+			return rel.NewString([]rune(strings.Repeat(seq.String(), n))), nil
 		case rel.Array:
 			values := []rel.Value{}
 			seqValues := seq.Values()
 			for i := 0; i < n; i++ {
 				values = append(values, seqValues...)
 			}
-			return rel.NewArray(values...)
+			return rel.NewArray(values...), nil
 		case rel.Set:
 			if !seq.IsTrue() {
-				return rel.None
+				return rel.None, nil
 			}
 		}
-		panic(fmt.Errorf("repeat: unsupported value: %v", arg))
-	})
+		return nil, fmt.Errorf("repeat: unsupported value: %v", arg)
+	}), nil
 }
 
-func stdSeqSub(old, new, subject rel.Value) rel.Value {
+func stdSeqSub(old, new, subject rel.Value) (rel.Value, error) {
 	switch subject := subject.(type) {
 	case rel.String:
 		return rel.NewString(
 			[]rune(
 				strings.ReplaceAll(
-					mustAsString(subject),
-					mustAsString(old),
-					mustAsString(new),
+					mustValueAsString(subject),
+					mustValueAsString(old),
+					mustValueAsString(new),
 				),
 			),
-		)
+		), nil
 	case rel.Array:
 		return arraySub(old, new, subject)
 	case rel.Bytes:
 		_, oldIsSet := old.(rel.GenericSet)
 		_, newIsSet := new.(rel.GenericSet)
 		if !oldIsSet && newIsSet {
-			return rel.NewBytes([]byte(strings.ReplaceAll(subject.String(),
-				old.String(), "")))
+			return rel.NewBytes([]byte(strings.ReplaceAll(subject.String(), old.String(), ""))), nil
 		} else if oldIsSet && !newIsSet {
-			return rel.NewBytes([]byte(strings.ReplaceAll(subject.String(),
-				"", new.String())))
+			return rel.NewBytes([]byte(strings.ReplaceAll(subject.String(), "", new.String()))), nil
 		}
-		return rel.NewBytes([]byte(strings.ReplaceAll(subject.String(),
-			old.String(), new.String())))
+		return rel.NewBytes([]byte(strings.ReplaceAll(subject.String(), old.String(), new.String()))), nil
 	case rel.GenericSet:
 		_, oldIsSet := old.(rel.GenericSet)
 		_, newIsSet := new.(rel.GenericSet)
 		if oldIsSet && newIsSet {
-			return subject
+			return subject, nil
 		} else if oldIsSet && !newIsSet {
-			return new
+			return new, nil
 		} else if !oldIsSet && newIsSet {
-			return subject
+			return subject, nil
 		}
 	}
 
 	panic(fmt.Errorf("sub: unsupported args: %s, %s, %s", old, new, subject))
 }
 
-func stdSeqSplit(delimiter, subject rel.Value) rel.Value {
+func stdSeqSplit(delimiter, subject rel.Value) (rel.Value, error) {
 	switch subject := subject.(type) {
 	case rel.String:
-		splitted := strings.Split(mustAsString(subject), mustAsString(delimiter))
+		splitted := strings.Split(mustValueAsString(subject), mustValueAsString(delimiter))
 		vals := make([]rel.Value, 0, len(splitted))
 		for _, s := range splitted {
 			vals = append(vals, rel.NewString([]rune(s)))
 		}
-		return rel.NewArray(vals...)
+		return rel.NewArray(vals...), nil
 	case rel.Array:
 		return arraySplit(delimiter, subject)
 	case rel.Bytes:
-		return bytesSplit(delimiter, subject)
+		return bytesSplit(delimiter, subject), nil
 	case rel.GenericSet:
 		switch delimiter.(type) {
 		case rel.String:
-			return rel.NewArray(subject)
+			return rel.NewArray(subject), nil
 		case rel.Array, rel.Bytes:
-			return rel.NewArray(rel.NewArray())
+			return rel.NewArray(rel.NewArray()), nil
 		case rel.GenericSet:
-			return subject
+			return subject, nil
 		}
 	}
 
 	panic(fmt.Errorf("split: unsupported args: %s, %s", delimiter, subject))
 }
 
-func stdSeqTrimPrefix(prefix, subject rel.Value) rel.Value {
-	if stdSeqHasPrefix(prefix, subject).IsTrue() {
+func stdSeqTrimPrefix(prefix, subject rel.Value) (rel.Value, error) {
+	hasPrefix, err := stdSeqHasPrefix(prefix, subject)
+	if err != nil {
+		return nil, err
+	}
+	if hasPrefix.IsTrue() {
 		switch subject := subject.(type) {
 		case rel.String:
-			prefixStr := mustAsString(prefix)
-			subjectStr := mustAsString(subject)
+			prefixStr := mustValueAsString(prefix)
+			subjectStr := mustValueAsString(subject)
 			if strings.HasPrefix(subjectStr, prefixStr) {
-				return rel.NewString([]rune(subjectStr[len(prefixStr):]))
+				return rel.NewString([]rune(subjectStr[len(prefixStr):])), nil
 			}
 		case rel.Array:
 			return arrayTrimPrefix(prefix, subject)
 		case rel.Bytes:
-			prefixStr := mustAsBytes(prefix)
-			subjectStr := mustAsBytes(subject)
-			if strings.HasPrefix(subjectStr, prefixStr) {
-				return rel.NewBytes([]byte(subjectStr[len(prefixStr):]))
+			prefixStr := mustValueAsBytes(prefix)
+			subjectStr := mustValueAsBytes(subject)
+			if bytes.HasPrefix(subjectStr, prefixStr) {
+				return rel.NewBytes(subjectStr[len(prefixStr):]), nil
 			}
 		}
 	}
-	return subject
+	return subject, nil
 }
 
-func stdSeqTrimSuffix(suffix, subject rel.Value) rel.Value {
+func stdSeqTrimSuffix(suffix, subject rel.Value) (rel.Value, error) {
 	switch subject := subject.(type) {
 	case rel.String:
-		suffixStr := mustAsString(suffix)
-		subjectStr := mustAsString(subject)
+		suffixStr := mustValueAsString(suffix)
+		subjectStr := mustValueAsString(subject)
 		if strings.HasSuffix(subjectStr, suffixStr) {
-			return rel.NewString([]rune(subjectStr[:len(subjectStr)-len(suffixStr)]))
+			return rel.NewString([]rune(subjectStr[:len(subjectStr)-len(suffixStr)])), nil
 		}
 	case rel.Array:
 		return arrayTrimSuffix(suffix, subject)
 	case rel.Bytes:
-		suffixStr := mustAsBytes(suffix)
-		subjectStr := mustAsBytes(subject)
-		if strings.HasSuffix(subjectStr, suffixStr) {
-			return rel.NewBytes([]byte(subjectStr[:len(subjectStr)-len(suffixStr)]))
+		suffixStr := mustValueAsBytes(suffix)
+		subjectStr := mustValueAsBytes(subject)
+		if bytes.HasSuffix(subjectStr, suffixStr) {
+			return rel.NewBytes(subjectStr[:len(subjectStr)-len(suffixStr)]), nil
 		}
 	}
-	return subject
+	return subject, nil
 }
 
 func stdSeq() rel.Attr {

@@ -12,15 +12,15 @@ func stdNet() rel.Attr {
 		"net",
 		rel.NewTupleAttr(
 			"http",
-			rel.NewNativeFunctionAttr("get", func(v rel.Value) rel.Value {
-				resp, err := http.Get(mustAsString(v))
+			rel.NewNativeFunctionAttr("get", func(v rel.Value) (rel.Value, error) {
+				resp, err := http.Get(mustValueAsString(v))
 				if err != nil {
-					panic(err)
+					return nil, err
 				}
 
 				buf, err := ioutil.ReadAll(resp.Body)
 				if err != nil {
-					panic(err)
+					return nil, err
 				}
 				defer resp.Body.Close()
 
@@ -38,7 +38,7 @@ func stdNet() rel.Attr {
 					rel.NewAttr("status_code", rel.NewNumber(float64(resp.StatusCode))),
 					rel.NewAttr("header", header),
 					rel.NewAttr("body", rel.NewBytes(buf)),
-				)
+				), nil
 			}),
 		),
 	)

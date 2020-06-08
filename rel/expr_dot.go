@@ -63,9 +63,9 @@ func (x *DotExpr) Eval(local Scope) (_ Value, err error) {
 				//TODO: add tupleScope self to allow accessing itself
 				switch f := value.(type) {
 				case Closure:
-					return SetCall(f, nil), nil
+					return SetCall(f, nil)
 				case *NativeFunction:
-					return SetCall(f, nil), nil
+					return SetCall(f, nil)
 				default:
 					panic(fmt.Errorf("not a function: %v", f))
 				}

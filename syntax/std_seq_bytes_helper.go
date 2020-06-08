@@ -28,7 +28,7 @@ func bytesSplit(delimiter rel.Value, subject rel.Bytes) rel.Value {
 	case rel.Bytes:
 		splitted = strings.Split(subject.String(), delimiter.String())
 	case rel.GenericSet:
-		splitted = strings.Split(subject.String(), mustAsString(delimiter))
+		splitted = strings.Split(subject.String(), mustValueAsString(delimiter))
 	default:
 		panic(fmt.Sprintf("delimiter and subject have to be of the same type, "+
 			"currently: delimiter: %T, subject: %T", delimiter, subject))
