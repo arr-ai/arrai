@@ -64,8 +64,8 @@ let x = 1; (\a a + b)(x)
 a x
 ```
 
-It is also possible to navigate through the frames by using the `/up` and
-`/down`, or `/u` and `/d` which are shorthand for the commands.
+It is also possible to navigate through the frames by using the `/up` (or
+`/u`) and `/down` (or `/d`) commands.
 
 Running the following script:
 ```arrai
