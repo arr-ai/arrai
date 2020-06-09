@@ -806,10 +806,9 @@ func (pc ParseContext) compileCondExprs(exprs ...ast.Node) []rel.Expr {
 }
 
 func (pc ParseContext) compileFunction(b ast.Branch) rel.Expr {
-	ident := b.One("IDENT")
+	p := pc.compilePattern(b)
 	expr := pc.CompileExpr(b.One(exprTag).(ast.Branch))
-	source := ident.One("").Scanner()
-	return rel.NewFunction(b.Scanner(), rel.NewIdentExpr(source, source.String()), expr)
+	return rel.NewFunction(b.Scanner(), p, expr)
 }
 
 func (pc ParseContext) compilePackage(b ast.Branch, c ast.Children) rel.Expr {
