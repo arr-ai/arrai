@@ -560,7 +560,11 @@ func (pc ParseContext) compileTailFunc(tail ast.Node) rel.SafeTailCallback {
 						return nil, err
 					}
 					//TODO: scanner won't highlight calls properly in safe call
-					v, err = rel.SetCall(v.(rel.Set), a)
+					set, is := v.(rel.Set)
+					if !is {
+						return nil, fmt.Errorf("not a set: %v", v)
+					}
+					v, err = rel.SetCall(set, a)
 					if err != nil {
 						return nil, err
 					}
@@ -802,10 +806,9 @@ func (pc ParseContext) compileCondExprs(exprs ...ast.Node) []rel.Expr {
 }
 
 func (pc ParseContext) compileFunction(b ast.Branch) rel.Expr {
-	ident := b.One("IDENT")
+	p := pc.compilePattern(b)
 	expr := pc.CompileExpr(b.One(exprTag).(ast.Branch))
-	source := ident.One("").Scanner()
-	return rel.NewFunction(b.Scanner(), rel.NewIdentExpr(source, source.String()), expr)
+	return rel.NewFunction(b.Scanner(), p, expr)
 }
 
 func (pc ParseContext) compilePackage(b ast.Branch, c ast.Children) rel.Expr {
@@ -1012,26 +1015,38 @@ var binops = map[string]binOpFunc{
 }
 
 var compareOps = map[string]rel.CompareFunc{
-	"<:":  func(a, b rel.Value) bool { return b.(rel.Set).Has(a) },
-	"!<:": func(a, b rel.Value) bool { return !b.(rel.Set).Has(a) },
-	"=":   func(a, b rel.Value) bool { return a.Equal(b) },
-	"!=":  func(a, b rel.Value) bool { return !a.Equal(b) },
-	"<":   func(a, b rel.Value) bool { return a.Less(b) },
-	">":   func(a, b rel.Value) bool { return b.Less(a) },
-	"<=":  func(a, b rel.Value) bool { return !b.Less(a) },
-	">=":  func(a, b rel.Value) bool { return !a.Less(b) },
+	"<:": func(a, b rel.Value) (bool, error) {
+		set, is := b.(rel.Set)
+		if !is {
+			return false, fmt.Errorf("<: rhs not a set: %v", b)
+		}
+		return set.Has(a), nil
+	},
+	"!<:": func(a, b rel.Value) (bool, error) {
+		set, is := b.(rel.Set)
+		if !is {
+			return false, fmt.Errorf("!<: rhs not a set: %v", b)
+		}
+		return !set.Has(a), nil
+	},
+	"=":  func(a, b rel.Value) (bool, error) { return a.Equal(b), nil },
+	"!=": func(a, b rel.Value) (bool, error) { return !a.Equal(b), nil },
+	"<":  func(a, b rel.Value) (bool, error) { return a.Less(b), nil },
+	">":  func(a, b rel.Value) (bool, error) { return b.Less(a), nil },
+	"<=": func(a, b rel.Value) (bool, error) { return !b.Less(a), nil },
+	">=": func(a, b rel.Value) (bool, error) { return !a.Less(b), nil },
 
-	"(<)":   func(a, b rel.Value) bool { return subset(a, b) },
-	"(>)":   func(a, b rel.Value) bool { return subset(b, a) },
-	"(<=)":  func(a, b rel.Value) bool { return subsetOrEqual(a, b) },
-	"(>=)":  func(a, b rel.Value) bool { return subsetOrEqual(b, a) },
-	"(<>)":  func(a, b rel.Value) bool { return subsetOrSuperset(a, b) },
-	"(<>=)": func(a, b rel.Value) bool { return subsetSupersetOrEqual(b, a) },
+	"(<)":   func(a, b rel.Value) (bool, error) { return subset(a, b), nil },
+	"(>)":   func(a, b rel.Value) (bool, error) { return subset(b, a), nil },
+	"(<=)":  func(a, b rel.Value) (bool, error) { return subsetOrEqual(a, b), nil },
+	"(>=)":  func(a, b rel.Value) (bool, error) { return subsetOrEqual(b, a), nil },
+	"(<>)":  func(a, b rel.Value) (bool, error) { return subsetOrSuperset(a, b), nil },
+	"(<>=)": func(a, b rel.Value) (bool, error) { return subsetSupersetOrEqual(b, a), nil },
 
-	"!(<)":   func(a, b rel.Value) bool { return !subset(a, b) },
-	"!(>)":   func(a, b rel.Value) bool { return !subset(b, a) },
-	"!(<=)":  func(a, b rel.Value) bool { return !subsetOrEqual(a, b) },
-	"!(>=)":  func(a, b rel.Value) bool { return !subsetOrEqual(b, a) },
-	"!(<>)":  func(a, b rel.Value) bool { return !subsetOrSuperset(a, b) },
-	"!(<>=)": func(a, b rel.Value) bool { return !subsetSupersetOrEqual(b, a) },
+	"!(<)":   func(a, b rel.Value) (bool, error) { return !subset(a, b), nil },
+	"!(>)":   func(a, b rel.Value) (bool, error) { return !subset(b, a), nil },
+	"!(<=)":  func(a, b rel.Value) (bool, error) { return !subsetOrEqual(a, b), nil },
+	"!(>=)":  func(a, b rel.Value) (bool, error) { return !subsetOrEqual(b, a), nil },
+	"!(<>)":  func(a, b rel.Value) (bool, error) { return !subsetOrSuperset(a, b), nil },
+	"!(<>=)": func(a, b rel.Value) (bool, error) { return !subsetSupersetOrEqual(b, a), nil },
 }

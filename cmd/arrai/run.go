@@ -19,6 +19,7 @@ var runCommand = &cli.Command{
 }
 
 func run(c *cli.Context) error {
+	tools.SetArgs(c)
 	file := c.Args().Get(0)
 	return evalFile(file, os.Stdout)
 }

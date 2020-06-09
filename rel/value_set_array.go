@@ -95,7 +95,7 @@ func asArray(s Set) (Array, bool) {
 	i = s.Enumerator()
 	for i.MoveNext() {
 		t := i.Current().(ArrayItemTuple)
-		items[t.at] = t.item
+		items[t.at-minIndex] = t.item
 	}
 	return Array{
 		values: items,

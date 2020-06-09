@@ -6,25 +6,13 @@ import (
 	"io/ioutil"
 	"os"
 
+	"github.com/arr-ai/arrai/tools"
+
 	"github.com/arr-ai/arrai/rel"
 )
 
 func stdOsGetArgs() rel.Value {
-	var offset int
-	switch os.Args[0] {
-	case "ai", "ax":
-		offset = 1
-	default:
-		if RunOmitted {
-			offset = 1
-		} else if len(os.Args) == 1 {
-			// to handle running script from syntax library
-			return rel.NewArray()
-		} else {
-			offset = 2
-		}
-	}
-	return strArrToRelArr(os.Args[offset:])
+	return strArrToRelArr(tools.Arguments)
 }
 
 func stdOsGetEnv(value rel.Value) (rel.Value, error) {

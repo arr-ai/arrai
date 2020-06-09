@@ -39,6 +39,10 @@ func TestExprLetExprPattern(t *testing.T) { //nolint:dupl
 	AssertCodeErrors(t, `let true = {}; 3`, "")
 }
 
+func TestExprLetIdentPattern(t *testing.T) {
+	AssertCodesEvalToSameValue(t, `3`, `let f = \[x, y] x + y; f([1, 2])`)
+}
+
 func TestExprLetArrayPattern(t *testing.T) { //nolint:dupl
 	t.Parallel()
 	AssertCodesEvalToSameValue(t, `1`, `let [] = []; 1`)

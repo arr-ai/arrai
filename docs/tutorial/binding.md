@@ -200,6 +200,9 @@ Try out the following examples to use pattern with arrays:
 @> let [x, x] = [1, 1]; x
 @> let [x, x] = [1, 2]; x                  # should fail
 @> [1, 2] -> \[x, y] x + y
+@> let f = \[x, y] x + y; f([1, 2])
+@> (\[x, y] x + y)([1, 2])
+@> (\z \[x, y] z/(x + y))(9, [1, 2])
 ```
 
 with tuples:

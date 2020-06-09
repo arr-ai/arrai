@@ -7,7 +7,7 @@ import (
 
 	"github.com/arr-ai/arrai/rel"
 	"github.com/arr-ai/arrai/syntax"
-	"github.com/mattn/go-isatty"
+	"github.com/arr-ai/arrai/tools"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
 )
@@ -95,7 +95,7 @@ VERSION:
 	err := app.Run(args)
 	if err != nil {
 		logrus.Info(err)
-		if isTerminal() {
+		if tools.IsTerminal() {
 			if _, isContextErr := err.(rel.ContextErr); isContextErr && debug {
 				if err = createDebuggerShell(err); err != nil {
 					logrus.Info(err)
@@ -107,9 +107,12 @@ VERSION:
 	}
 }
 
-func isTerminal() bool {
-	return (isatty.IsTerminal(os.Stdin.Fd()) && isatty.IsTerminal(os.Stdout.Fd())) ||
-		(isatty.IsCygwinTerminal(os.Stdin.Fd()) && isatty.IsCygwinTerminal(os.Stdout.Fd()))
+func setupVersion(app *cli.App) {
+	app.Version = Version
+
+	cli.VersionPrinter = func(c *cli.Context) {
+		fmt.Printf("arrai %s %s\n", Version, BuildOS)
+	}
 }
 
 func setupVersion(app *cli.App) {
