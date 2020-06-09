@@ -24,7 +24,13 @@ build:
 	
 ########
 versionVal=$(shell git describe --tags)
-Version=$(firstword $(subst -,  ,$(versionVal)))
+ifeq (-, $(findstring -, $(versionVal))) #it is in branch
+Version=$(join $(join $(FullCommit), =), $(firstword $(subst -,  ,$(versionVal))))
+else
+# it is in tag
+Version=$(versionVal)
+endif
+
 FullCommit=$(shell git log --pretty=format:"%H" -1)
 GoVersion=$(strip $(subst  go version, ,$(shell go version)))
 BuildDate=$(shell date -u +'%Y-%m-%dT%H:%M:%SZ')
