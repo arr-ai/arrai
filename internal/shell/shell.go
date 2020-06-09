@@ -43,9 +43,9 @@ func shellFilterInputRune(r rune) (rune, bool) {
 	return r, true
 }
 
-func Shell(local rel.Scope) error {
+func Shell(frames []rel.ContextErr) error {
 	ctx := log.WithConfigs(log.SetVerboseMode(true)).Onto(context.Background())
-	sh := newShellInstance(newLineCollector(), syntax.StdScope().Update(local))
+	sh := newShellInstance(newLineCollector(), frames)
 	l, err := readline.NewEx(&readline.Config{
 		Prompt:              shellPrompt,
 		HistoryFile:         os.ExpandEnv("${HOME}/.arrai_history"),
@@ -83,13 +83,24 @@ func Shell(local rel.Scope) error {
 }
 
 type shellInstance struct {
-	collector *lineCollector
-	scope     rel.Scope
-	cmds      map[string]shellCmd
+	collector         *lineCollector
+	scope             rel.Scope
+	cmds              map[string]shellCmd
+	frames            []rel.ContextErr
+	currentFrameIndex int
 }
 
-func newShellInstance(c *lineCollector, initialScope rel.Scope) *shellInstance {
-	return &shellInstance{c, initialScope, initCommands()}
+func newShellInstance(c *lineCollector, frames []rel.ContextErr) *shellInstance {
+	if len(frames) == 0 {
+		return &shellInstance{c, syntax.StdScope(), initCommands(), frames, -1}
+	}
+	return &shellInstance{
+		c,
+		syntax.StdScope().Update(frames[len(frames)-1].GetScope()),
+		initCommands(),
+		frames,
+		len(frames) - 1,
+	}
 }
 
 func (s *shellInstance) parseCmd(line string, l *readline.Instance) error {
