@@ -41,7 +41,7 @@ expr   -> C* amp="&"* @ C* arrow=(
         | C* cond=("cond" controlVar=expr "{" (condition=pattern ":" value=@):SEQ_COMMENT,? "}") C*
         | C* "{:" C* embed=(grammar=@ ":" subgrammar=%%ast) ":}" C*
         | C* op="\\\\" @ C*
-        | C* fn="\\" IDENT @ C*
+        | C* fn="\\" pattern @ C*
         | C* import="//" pkg=( "{" dot="."? PKGPATH "}" | std=IDENT?)
         | C* odelim="(" @ cdelim=")" C*
         | C* let=("let" C* rec="rec"? pattern C* "=" C* @ %%bind C* ";" C* @) C*
