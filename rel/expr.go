@@ -21,6 +21,10 @@ type ContextErr struct {
 	scope  Scope
 }
 
+func NewContextErr(err error, source parser.Scanner, scope Scope) ContextErr {
+	return ContextErr{err, source, scope}
+}
+
 func (c ContextErr) Error() string {
 	if cerr, is := c.err.(ContextErr); is {
 		errString := cerr.Error()
@@ -48,6 +52,25 @@ func (c ContextErr) GetLastScope() Scope {
 		}
 		ctxErr = currentErr
 	}
+}
+
+func (c ContextErr) GetImportantFrames() []ContextErr {
+	if cerr, is := c.err.(ContextErr); is {
+		currScope := cerr.GetImportantFrames()
+		if c.source.Contains(cerr.source) {
+			return currScope
+		}
+		return append([]ContextErr{c}, currScope...)
+	}
+	return []ContextErr{c}
+}
+
+func (c ContextErr) GetScope() Scope {
+	return c.scope
+}
+
+func (c ContextErr) GetSource() parser.Scanner {
+	return c.source
 }
 
 func wrapContext(err error, expr Expr, scope Scope) error {

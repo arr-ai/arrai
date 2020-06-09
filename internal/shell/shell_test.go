@@ -185,7 +185,7 @@ func TestTabCompletionStdlib(t *testing.T) {
 func TestTrimExpr(t *testing.T) {
 	t.Parallel()
 
-	sh := newShellInstance(newLineCollector(), syntax.StdScope())
+	sh := newShellInstance(newLineCollector(), []rel.ContextErr{})
 
 	realExpr, residue := sh.trimExpr(`x.`)
 	assert.Equal(t, "x", realExpr)
@@ -317,7 +317,8 @@ func assertTabCompletion(t *testing.T,
 		require.NoError(t, err)
 		scope = scope.With(name, val)
 	}
-	sh := newShellInstance(newLineCollector(), scope)
+	sh := newShellInstance(newLineCollector(), []rel.ContextErr{})
+	sh.scope = scope
 	predictions, length := sh.Do([]rune(line), strings.Index(line, "\t"))
 	strPredictions := make([]string, 0, len(predictions))
 	for _, p := range predictions {

@@ -6,6 +6,7 @@ import (
 
 	"github.com/arr-ai/arrai/rel"
 	"github.com/arr-ai/arrai/syntax"
+	"github.com/arr-ai/wbnf/parser"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -20,7 +21,7 @@ func TestIsCommand(t *testing.T) {
 func TestTryRunCommand(t *testing.T) {
 	t.Parallel()
 
-	sh := newShellInstance(newLineCollector(), rel.EmptyScope)
+	sh := newShellInstance(newLineCollector(), []rel.ContextErr{})
 	assert.NoError(t, tryRunCommand(`/set a = 1 + 2`, sh))
 	assert.NoError(t, tryRunCommand(`/unset a`, sh))
 
@@ -32,9 +33,9 @@ func TestSetCmd(t *testing.T) {
 	t.Parallel()
 
 	set := &setCmd{}
-	assert.Equal(t, "set", set.name())
+	assert.Equal(t, []string{"set"}, set.names())
 
-	sh := newShellInstance(newLineCollector(), rel.EmptyScope)
+	sh := newShellInstance(newLineCollector(), []rel.ContextErr{})
 
 	setCmdAssertion(t, "a", `{"hello": 123}`, set, sh)
 	setCmdAssertion(t, "a123", "123", set, sh)
@@ -57,10 +58,10 @@ func TestUnsetCmd(t *testing.T) {
 	t.Parallel()
 
 	unset := &unsetCmd{}
-	assert.Equal(t, "unset", unset.name())
+	assert.Equal(t, []string{"unset"}, unset.names())
 
-	sh := newShellInstance(newLineCollector(), rel.EmptyScope)
-	require.True(t, sh.scope.Count() == 0)
+	sh := newShellInstance(newLineCollector(), []rel.ContextErr{})
+	require.True(t, sh.scope.Count() == syntax.StdScope().Count())
 	assert.NoError(t, unset.process("x", sh))
 
 	sh.scope = sh.scope.With("a", rel.NewNumber(123))
@@ -73,4 +74,81 @@ func TestUnsetCmd(t *testing.T) {
 	assert.False(t, exists)
 
 	assert.EqualError(t, unset.process("123", sh), "/unset command error, usage: /unset <name>")
+}
+
+func TestUpFrameCmd(t *testing.T) {
+	t.Parallel()
+
+	up := &upFrameCmd{}
+	assert.Equal(t, []string{"up", "u"}, up.names())
+
+	sh := newShellInstance(newLineCollector(), []rel.ContextErr{})
+	assert.EqualError(t, up.process("", sh), "frame index out of range, frame length: 0")
+	assertEqualScope(t, syntax.StdScope(), sh.scope)
+
+	ctxErrs := createContextErrs()
+	sh = newShellInstance(newLineCollector(), ctxErrs)
+	assertCurrScope(t, sh, 2, ctxErrs)
+	require.NoError(t, up.process("", sh))
+	assertCurrScope(t, sh, 1, ctxErrs)
+	require.NoError(t, up.process("", sh))
+	assertCurrScope(t, sh, 0, ctxErrs)
+	assert.EqualError(t, up.process("", sh), "frame index out of range, frame length: 3")
+}
+
+func TestDownFrameCmd(t *testing.T) {
+	t.Parallel()
+
+	down := &downFrameCmd{}
+	assert.Equal(t, []string{"down", "d"}, down.names())
+
+	sh := newShellInstance(newLineCollector(), []rel.ContextErr{})
+	assert.EqualError(t, down.process("", sh), "frame index out of range, frame length: 0")
+	assertEqualScope(t, syntax.StdScope(), sh.scope)
+
+	ctxErrs := createContextErrs()
+	sh = newShellInstance(newLineCollector(), ctxErrs)
+	sh.currentFrameIndex = 0
+	sh.scope = syntax.StdScope().Update(ctxErrs[0].GetScope())
+
+	assertCurrScope(t, sh, 0, ctxErrs)
+	require.NoError(t, down.process("", sh))
+	assertCurrScope(t, sh, 1, ctxErrs)
+	require.NoError(t, down.process("", sh))
+	assertCurrScope(t, sh, 2, ctxErrs)
+	assert.EqualError(t, down.process("", sh), "frame index out of range, frame length: 3")
+}
+
+func assertCurrScope(t *testing.T, sh *shellInstance, index int, frames []rel.ContextErr) {
+	assert.Equal(t, index, sh.currentFrameIndex)
+	assertEqualScope(t, syntax.StdScope().Update(frames[index].GetScope()), sh.scope)
+}
+
+func createContextErrs() []rel.ContextErr {
+	baseErr := rel.NewContextErr(
+		fmt.Errorf("random"),
+		*parser.NewScannerAt("random", 5, 1),
+		rel.EmptyScope.With("random", rel.NewNumber(1)),
+	)
+	nextErr := rel.NewContextErr(
+		baseErr,
+		*parser.NewScannerAt("random", 3, 1),
+		rel.EmptyScope.With("random", rel.NewNumber(2)),
+	)
+	nextErr2 := rel.NewContextErr(
+		nextErr,
+		*parser.NewScannerAt("random", 1, 1),
+		rel.EmptyScope.With("random", rel.NewNumber(3)),
+	)
+	return nextErr2.GetImportantFrames()
+}
+
+func assertEqualScope(t *testing.T, expected, actual rel.Scope) {
+	assert.Equal(t, expected.Count(), actual.Count())
+	for e := expected.Enumerator(); e.MoveNext(); {
+		name, v1 := e.Current()
+		v2, exists := actual.Get(name)
+		assert.True(t, exists)
+		assert.True(t, v1.(rel.Value).Equal(v2))
+	}
 }
