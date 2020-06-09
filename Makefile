@@ -21,11 +21,12 @@ parser:
 
 build:
 	go build -ldflags=$(LDFLAGS) ./cmd/arrai
-
+	
 ########
-Version=$(shell git describe --tags)
+versionVal=$(shell git describe --tags)
+Version=$(firstword $(subst -,  ,$(versionVal)))
 FullCommit=$(shell git log --pretty=format:"%H" -1)
-GoVersion=$(shell go version)
+GoVersion=$(strip $(subst  go version, ,$(shell go version)))
 BuildDate=$(shell date -u +'%Y-%m-%dT%H:%M:%SZ')
 BuildOS=$(shell echo $(join $(join $(shell uname -s) , /), $(shell uname -p)) | tr A-Z a-z)
 
