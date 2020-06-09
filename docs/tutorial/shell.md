@@ -115,6 +115,10 @@ test.arrai:7:5:
 // a  b  x  y  z
 ```
 
+Stack number represents which stack is currently being used. Low stack number
+is closer to the first point of execution. The higher the stack number, the
+closer it is to the point of failure.
+
 ## Evaluating expressions
 
 To evaluate an expression in the shell, simply type it in and press enter.

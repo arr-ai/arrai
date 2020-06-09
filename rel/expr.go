@@ -15,6 +15,7 @@ func (e ExprScanner) Source() parser.Scanner {
 	return e.Src
 }
 
+// ContextErr represents the whole stack frame of an error from arrai script.
 type ContextErr struct {
 	err    error
 	source parser.Scanner
@@ -54,6 +55,9 @@ func (c ContextErr) GetLastScope() Scope {
 	}
 }
 
+// GetImportantFrames returns an array of important frames whose last element
+// is the last frame near the point of failure.
+// Important frames are frames that don't contain the frame under it.
 func (c ContextErr) GetImportantFrames() []ContextErr {
 	if cerr, is := c.err.(ContextErr); is {
 		currScope := cerr.GetImportantFrames()
