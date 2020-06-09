@@ -18,3 +18,15 @@ wasm:
 
 parser:
 	go generate .
+
+build:
+	go build -ldflags=$(LDFLAGS) ./cmd/arrai
+
+########
+Version=$(shell git describe --tags)
+FullCommit=$(shell git log --pretty=format:"%H" -1)
+GoVersion=$(shell go version)
+BuildDate=$(shell date -u +'%Y-%m-%dT%H:%M:%SZ')
+BuildOS=$(shell echo $(join $(join $(shell uname -s) , /), $(shell uname -p)) | tr A-Z a-z)
+
+LDFLAGS='-X "main.Version=$(Version)" -X "main.GitFullCommit=$(FullCommit)" -X "main.BuildDate=$(BuildDate)" -X "main.GoVersion=$(GoVersion)" -X "main.BuildOS=$(BuildOS)"'

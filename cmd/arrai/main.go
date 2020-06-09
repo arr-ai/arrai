@@ -114,11 +114,3 @@ func setupVersion(app *cli.App) {
 		fmt.Printf("arrai %s %s\n", Version, BuildOS)
 	}
 }
-
-func setupVersion(app *cli.App) {
-	app.Version = Version
-
-	cli.VersionPrinter = func(c *cli.Context) {
-		fmt.Printf("arrai %s %s\n", Version, BuildOS)
-	}
-}
