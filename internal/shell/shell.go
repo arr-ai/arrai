@@ -252,7 +252,12 @@ func (l *lineCollector) isBalanced() bool {
 		return false
 	}
 
-	if strings.HasSuffix(lastLine, ";") || strings.HasSuffix(lastLine, ":") || strings.HasSuffix(lastLine, ".") {
+	// allows single `.` but still not allowing x.
+	if regexp.MustCompile(`[\w\d]\.$`).Match([]byte(lastLine)) {
+		return false
+	}
+
+	if strings.HasSuffix(lastLine, ";") || strings.HasSuffix(lastLine, ":") {
 		return false
 	}
 
