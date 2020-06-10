@@ -31,7 +31,7 @@ tagName= $(firstword $(subst -,  ,$(originalVersion)))
 diffLogs = $(foreach item, $(shell git log --pretty=format:"%h" $(tagName)..HEAD),$(item))
 
 ifeq (true, $(words $(diffLogs)) > 0 || $(shell git status -s) != ) # no changes
-ifeq (true, $(words $(diffLogs)) = 0 && $(shell git status -s) != )
+ifeq (, $(shell git status -s))
 Version=$(FullCommit)~$(words $(diffLogs)) = $(tagName)
 else
 Version=DIRTY-$(FullCommit)~$(words $(diffLogs)) = $(tagName)
