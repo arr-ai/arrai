@@ -29,12 +29,21 @@ originalVersion=$(shell git describe --tags)
 ifeq (-, $(findstring -, $(originalVersion))) #it is in 
 tagName= $(firstword $(subst -,  ,$(originalVersion)))
 diffLogs = $(foreach item, $(shell git log --pretty=format:"%h" $(tagName)..HEAD),$(item))
-ifeq (true, $(shell git status -s) = && $(words $(diffLogs)) = 0) # no changes
+hasDiffCommit = $(words $(diffLogs)) = 0
+hasLocalChange = $(shell git status -s) = 
+
+ifeq (true, hasDiffCommit || hasLocalChange) # no changes
+ifeq (true, hasDiffCommit = true && hasLocalChange = false)
+Version=$(FullCommit)~$(words $(diffLogs)) = $(tagName)
+else
+Version=DIRTY-$(FullCommit)~$(words $(diffLogs)) = $(tagName)
+endif
 Version=$(versionWithCommit)
 else
 ### has local changes
 Version=DIRTY-$(FullCommit)~$(words $(diffLogs)) = $(tagName)
 endif
+
 else
 # it is in tag
 ifeq (,$(shell git status -s)) # no changes
