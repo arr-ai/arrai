@@ -11,13 +11,6 @@ func unfakeBackquote(s string) string {
 	return strings.ReplaceAll(s, "‵", "`")
 }
 
-var timeParsers = wbnf.MustCompile(`
-default -> ymd;
-ymd     -> year=NUM "-" month=NUM "-" day=NUM;
-NUM		-> \d+;
-.wrapRE -> /{\s*()\s*};
-`, nil)
-
 var arraiParsers = wbnf.MustCompile(unfakeBackquote(`
 expr   -> C* amp="&"* @ C* arrow=(
               nest |

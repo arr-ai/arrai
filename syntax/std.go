@@ -27,17 +27,6 @@ func FixFuncs() (rel.Value, rel.Value) {
 	return fix, fixt
 }
 
-func stdTime() rel.Attr {
-	t := rel.NewTuple(
-		rel.NewAttr("@grammar", rel.ASTNodeToValue(timeParsers.Node().(ast.Node))),
-		rel.NewAttr("@transform", rel.NewTuple(
-			rel.NewAttr("default", parseLit(`
-				\ast ast.ymd -> (year: .year, month: .month, day: .day) :> //eval.value(.NUM.'')`)),
-		)),
-	)
-	return rel.NewAttr("time", t)
-}
-
 func StdScope() rel.Scope {
 	stdScopeOnce.Do(func() {
 		fixFn, fixtFn := FixFuncs()
@@ -116,7 +105,6 @@ func StdScope() rel.Scope {
 				stdSeq(),
 				stdStr(),
 				stdTest(),
-				stdTime(),
 				stdUnicode(),
 				stdBits(),
 			))
