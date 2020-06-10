@@ -71,22 +71,6 @@ func (pc ParseContext) Parse(s *parser.Scanner) (ast.Branch, error) {
 	rscopes := []rel.Scope{{}}
 	v, err := arraiParsers.ParseWithExternals(parser.Rule("expr"), s, parser.ExternalRefs{
 		"bind": func(pscope parser.Scope, _ *parser.Scanner) (parser.TreeElement, error) {
-			identStr := "."
-			if _, ident, has := pscope.GetVal("IDENT"); has {
-				identStr = ident.(parser.Scanner).String()
-			} else if _, pattern, has := pscope.GetVal("pattern"); has {
-				patNode := ast.FromParserNode(arraiParsers.Grammar(), pattern)
-				pat := pc.compilePattern(patNode)
-				if epat, is := pat.(rel.ExprPattern); is {
-					if identExpr, is := epat.Expr.(rel.IdentExpr); is {
-						identStr = identExpr.Ident()
-					}
-				}
-				if identStr == "" {
-					return nil, nil
-				}
-			}
-
 			_, exprElt, has := pscope.GetVal("expr@1")
 			if !has {
 				_, exprElt, has = pscope.GetVal("expr")
@@ -96,11 +80,31 @@ func (pc ParseContext) Parse(s *parser.Scanner) (ast.Branch, error) {
 					panic("wat?")
 				}
 			}
-
 			exprNode := ast.FromParserNode(arraiParsers.Grammar(), exprElt)
 			expr := pc.CompileExpr(exprNode)
+			source := expr.Source()
 			expr = rel.NewExprClosure(rscopes[len(rscopes)-1], expr)
+
+			identStr := "."
+			if _, ident, has := pscope.GetVal("IDENT"); has {
+				identStr = ident.(parser.Scanner).String()
+			}
 			rscopes = append(rscopes, rscopes[len(rscopes)-1].With(identStr, expr))
+
+			if _, pattern, has := pscope.GetVal("pattern"); has {
+				patNode := ast.FromParserNode(arraiParsers.Grammar(), pattern)
+				pat := pc.compilePattern(patNode)
+				bindings := pat.Bindings()
+				for _, b := range bindings {
+					input := fmt.Sprintf("let %s = (let %s = %s; %s); %s", b, pat, source, b, b)
+					e, err := Compile(NoPath, input)
+					if err != nil {
+						return nil, err
+					}
+					rscopes = append(rscopes, rscopes[len(rscopes)-1].With(b, e))
+				}
+			}
+
 			return nil, nil
 		},
 		"ast": func(scope parser.Scope, input *parser.Scanner) (parser.TreeElement, error) {
