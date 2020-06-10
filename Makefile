@@ -26,20 +26,17 @@ build:
 ########
 originalVersion=$(shell git describe --tags)
 
-ifeq (-, $(findstring -, $(originalVersion))) #it is in 
+ifeq (-, $(findstring -, $(originalVersion))) #it is in branch
 tagName= $(firstword $(subst -,  ,$(originalVersion)))
 diffLogs = $(foreach item, $(shell git log --pretty=format:"%h" $(tagName)..HEAD),$(item))
-
-ifeq (true, $(words $(diffLogs)) > 0 || $(shell git status -s) != ) # no changes
+ifeq (true, $(words $(diffLogs)) = 0 || $(shell git status -s) = ) # no changes
+Version=$(tagName)
+else
 ifeq (, $(shell git status -s))
 Version=$(FullCommit)~$(words $(diffLogs)) = $(tagName)
 else
 Version=DIRTY-$(FullCommit)~$(words $(diffLogs)) = $(tagName)
 endif
-Version=$(versionWithCommit)
-else
-### has local changes
-Version=DIRTY-$(FullCommit)~$(words $(diffLogs)) = $(tagName)
 endif
 
 else
