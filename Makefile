@@ -28,7 +28,7 @@ versionWithCommit=$(join $(join $(FullCommit), =), $(firstword $(subst -,  ,$(ve
 
 ifeq (-, $(findstring -, $(versionVal))) #it is in branch
 ifeq (,$(shell git status -s)) # no changes
-Version=$(versionWithCommit))
+Version=$(versionWithCommit)
 else
 ### 
 Version=$(join DIRTY-, $(versionWithCommit))
