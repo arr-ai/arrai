@@ -76,7 +76,7 @@ func (pc ParseContext) CompileExpr(b ast.Branch) rel.Expr {
 	name, c := which(b,
 		"amp", "arrow", "let", "unop", "binop", "compare", "rbinop", "if", "get",
 		"tail_op", "postfix", "touch", "get", "rel", "set", "dict", "array", "bytes",
-		"embed", "macroembed", "op", "fn", "pkg", "tuple", "xstr", "IDENT", "STR", "NUM", "CHAR",
+		"embed", "op", "fn", "pkg", "tuple", "xstr", "IDENT", "STR", "NUM", "CHAR",
 		"cond", exprTag,
 	)
 	if c == nil {
