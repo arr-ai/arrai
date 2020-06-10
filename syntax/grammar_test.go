@@ -5,8 +5,7 @@ import (
 	"testing"
 )
 
-func TestGrammarToValueExpr(t *testing.T) {
-	expected := `(
+const expected = `(
 		@rule: "grammar",
 		stmt: [
 			(
@@ -22,10 +21,31 @@ func TestGrammarToValueExpr(t *testing.T) {
 			)
 		]
 	)`
-	AssertCodesEvalToSameValue(t, expected, `//grammar.parse(//grammar.lang.wbnf, "grammar", "a -> '1';")`)
-	AssertCodesEvalToSameValue(t, expected, `//grammar -> .parse(.lang.wbnf, "grammar", "a -> '1';")`)
-	AssertCodesEvalToSameValue(t, expected, `{://grammar.lang.wbnf.grammar: a -> '1'; :}`)
 
+const macroexpected = `(year: 2020, month: 06, day: 09)`
+
+func TestGrammarToValueExprQualified(t *testing.T) {
+	AssertCodesEvalToSameValue(t, expected, `//grammar.parse(//grammar.lang.wbnf, "grammar", "a -> '1';")`)
+}
+
+func TestGrammarToValueExprScoped(t *testing.T) {
+	AssertCodesEvalToSameValue(t, expected, `//grammar -> .parse(.lang.wbnf, "grammar", "a -> '1';")`)
+}
+
+func TestGrammarToValueExprInline(t *testing.T) {
+	AssertCodesEvalToSameValue(t, expected, `{://grammar.lang.wbnf.grammar: a -> '1'; :}`)
+}
+
+func TestGrammarToValueCall(t *testing.T) {
+	AssertCodesEvalToSameValue(t, expected, `(\x x){1}`)
+}
+
+func TestMacroToValueInline(t *testing.T) {
+	// TODO: Remove the .@grammar and use implicitly.
+	AssertCodesEvalToSameValue(t, macroexpected, `{%//time.default: 2020-06-09 %}`)
+}
+
+func TestGrammarToValueExprScopedAndInline(t *testing.T) {
 	exprs := []string{
 		`a -> '1';`,
 		`expr -> @:"+" > @:"*" > \d;`,
@@ -33,6 +53,7 @@ func TestGrammarToValueExpr(t *testing.T) {
 	for _, expr := range exprs {
 		expr := expr
 		t.Run(expr, func(t *testing.T) {
+			t.Parallel()
 			AssertCodesEvalToSameValue(t,
 				"//grammar -> .parse(.lang.wbnf, 'grammar', `"+expr+"`)",
 				`{://grammar.lang.wbnf.grammar:`+expr+`:}`,

@@ -76,7 +76,7 @@ func (pc ParseContext) CompileExpr(b ast.Branch) rel.Expr {
 	name, c := which(b,
 		"amp", "arrow", "let", "unop", "binop", "compare", "rbinop", "if", "get",
 		"tail_op", "postfix", "touch", "get", "rel", "set", "dict", "array", "bytes",
-		"embed", "op", "fn", "pkg", "tuple", "xstr", "IDENT", "STR", "NUM", "CHAR",
+		"embed", "macroembed", "op", "fn", "pkg", "tuple", "xstr", "IDENT", "STR", "NUM", "CHAR",
 		"cond", exprTag,
 	)
 	if c == nil {
@@ -115,6 +115,8 @@ func (pc ParseContext) CompileExpr(b ast.Branch) rel.Expr {
 		return pc.compileBytes(c)
 	case "embed":
 		return rel.ASTNodeToValue(b.One("embed").One("subgrammar").One("ast"))
+	case "macroembed":
+		return pc.compileMacro(b)
 	case "fn":
 		return pc.compileFunction(b)
 	case "pkg":
@@ -131,6 +133,8 @@ func (pc ParseContext) CompileExpr(b ast.Branch) rel.Expr {
 		return pc.compileNumber(c)
 	case "CHAR":
 		return pc.compileChar(c)
+	case "extrefmacro":
+		return c.(rel.Value)
 	case exprTag:
 		if result := pc.compileExpr(c); result != nil {
 			return result
@@ -796,6 +800,10 @@ func (pc ParseContext) compileFunction(b ast.Branch) rel.Expr {
 	expr := pc.CompileExpr(b.One(exprTag).(ast.Branch))
 	source := ident.One("").Scanner()
 	return rel.NewFunction(b.Scanner(), rel.NewIdentExpr(source, source.String()), expr)
+}
+
+func (pc ParseContext) compileMacro(b ast.Branch) rel.Expr {
+	return b.One("macroembed").One("subgrammar").One("macro").One("value").(ast.Extra).Data.(rel.Expr)
 }
 
 func (pc ParseContext) compilePackage(c ast.Children) rel.Expr {

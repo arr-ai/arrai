@@ -11,6 +11,13 @@ func unfakeBackquote(s string) string {
 	return strings.ReplaceAll(s, "‵", "`")
 }
 
+var timeParsers = wbnf.MustCompile(`
+default -> ymd;
+ymd     -> year=NUM "-" month=NUM "-" day=NUM;
+NUM		-> \d+;
+.wrapRE -> /{\s*()\s*};
+`, nil)
+
 var arraiParsers = wbnf.MustCompile(unfakeBackquote(`
 expr   -> C* amp="&"* @ C* arrow=(
               nest |
@@ -40,6 +47,7 @@ expr   -> C* amp="&"* @ C* arrow=(
         | C* cond=("cond" "{" (key=@ ":" value=@):SEQ_COMMENT,? "}") C*
         | C* cond=("cond" controlVar=expr "{" (condition=pattern ":" value=@):SEQ_COMMENT,? "}") C*
         | C* "{:" C* embed=(grammar=@ ":" subgrammar=%%ast) ":}" C*
+        | C* "{%" C* macroembed=(macro=@ ":" subgrammar=%%macro) "%}" C*
         | C* op="\\\\" @ C*
         | C* fn="\\" IDENT @ C*
         | C* "//" pkg=( "{" dot="."? PKGPATH "}" | std=IDENT?)
