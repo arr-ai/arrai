@@ -137,7 +137,10 @@ func (c Closure) CallAll(arg Value) (Set, error) {
 		}
 		return NewSet(val), nil
 	}
-	scope, _ := c.f.arg.Bind(c.scope, arg) //nolint: errcheck
+	scope, err := c.f.arg.Bind(c.scope, arg)
+	if err != nil {
+		return nil, err
+	}
 	val, err := c.f.body.Eval(c.scope.Update(scope))
 	if err != nil {
 		return nil, err
