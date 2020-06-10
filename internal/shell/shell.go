@@ -86,18 +86,20 @@ type shellInstance struct {
 	collector         *lineCollector
 	scope             rel.Scope
 	cmds              map[string]shellCmd
+	cmdPredictions    []string
 	frames            []rel.ContextErr
 	currentFrameIndex int
 }
 
 func newShellInstance(c *lineCollector, frames []rel.ContextErr) *shellInstance {
+	cmdMap, cmdPreds := initCommands()
 	if len(frames) == 0 {
-		return &shellInstance{c, syntax.StdScope(), initCommands(), frames, -1}
+		return &shellInstance{c, syntax.StdScope(), cmdMap, cmdPreds, frames, -1}
 	}
 	return &shellInstance{
 		c,
 		syntax.StdScope().Update(frames[len(frames)-1].GetScope()),
-		initCommands(),
+		cmdMap, cmdPreds,
 		frames,
 		len(frames) - 1,
 	}

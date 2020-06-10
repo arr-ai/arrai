@@ -61,7 +61,7 @@ func (s *shellInstance) Do(line []rune, pos int) (newLine [][]rune, length int) 
 
 func (s *shellInstance) globalCompletions(prefix string) (newLine [][]rune, length int) {
 	predictions := make([][]rune, 0)
-	for _, p := range formatPredictions(s.scope.OrderedNames(), prefix) {
+	for _, p := range formatPredictions(append(s.cmdPredictions, s.scope.OrderedNames()...), prefix) {
 		if string(p) == "." || string(p) == "" {
 			continue
 		}
