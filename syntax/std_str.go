@@ -10,13 +10,16 @@ import (
 // TODO: Make this more robust.
 func formatValue(format string, value rel.Value) string {
 	var v interface{}
-	if set, ok := value.(rel.Set); ok {
+	switch set := value.(type) {
+	case rel.Set:
 		if s, is := rel.AsString(set); is {
 			v = s
 		} else {
 			v = rel.Repr(set)
 		}
-	} else {
+	case nil:
+		panic(fmt.Errorf("unable to format nil value"))
+	default:
 		v = value.Export()
 	}
 	switch format[len(format)-1] {
@@ -56,7 +59,9 @@ var (
 					if i > 0 {
 						sb.WriteString(delim[1:])
 					}
-					sb.WriteString(formatValue(format, value))
+					if value != nil {
+						sb.WriteString(formatValue(format, value))
+					}
 				}
 				s = sb.String()
 			} else {
