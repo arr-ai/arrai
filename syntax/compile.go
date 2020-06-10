@@ -114,8 +114,6 @@ func (pc ParseContext) CompileExpr(b ast.Branch) rel.Expr {
 	case "bytes":
 		return pc.compileBytes(c)
 	case "embed":
-		return rel.ASTNodeToValue(b.One("embed").One("subgrammar").One("ast"))
-	case "macroembed":
 		return pc.compileMacro(b)
 	case "fn":
 		return pc.compileFunction(b)
@@ -803,7 +801,12 @@ func (pc ParseContext) compileFunction(b ast.Branch) rel.Expr {
 }
 
 func (pc ParseContext) compileMacro(b ast.Branch) rel.Expr {
-	return b.One("macroembed").One("subgrammar").One("macro").One("value").(ast.Extra).Data.(rel.Expr)
+	childast := b.One("embed").One("subgrammar").One("ast")
+	if value := childast.One("value"); value != nil {
+		return value.(ast.Extra).Data.(rel.Expr)
+	} else {
+		return rel.ASTNodeToValue(childast)
+	}
 }
 
 func (pc ParseContext) compilePackage(c ast.Children) rel.Expr {

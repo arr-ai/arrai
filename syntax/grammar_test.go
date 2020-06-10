@@ -22,8 +22,6 @@ const expected = `(
 		]
 	)`
 
-const macroexpected = `(year: 2020, month: 06, day: 09)`
-
 func TestGrammarToValueExprQualified(t *testing.T) {
 	AssertCodesEvalToSameValue(t, expected, `//grammar.parse(//grammar.lang.wbnf, "grammar", "a -> '1';")`)
 }
@@ -33,16 +31,13 @@ func TestGrammarToValueExprScoped(t *testing.T) {
 }
 
 func TestGrammarToValueExprInline(t *testing.T) {
-	AssertCodesEvalToSameValue(t, expected, `{://grammar.lang.wbnf.grammar: a -> '1'; :}`)
-}
-
-func TestGrammarToValueCall(t *testing.T) {
-	AssertCodesEvalToSameValue(t, expected, `(\x x){1}`)
+	AssertCodesEvalToSameValue(t, expected, `{://grammar.lang.wbnf[grammar]: a -> '1'; :}`)
 }
 
 func TestMacroToValueInline(t *testing.T) {
-	// TODO: Remove the .@grammar and use implicitly.
-	AssertCodesEvalToSameValue(t, macroexpected, `{%//time.default: 2020-06-09 %}`)
+	AssertCodesEvalToSameValue(t,
+		`(year: 2020, month: 06, day: 09)`,
+		`{://time[default]: 2020-06-09 :}`)
 }
 
 func TestGrammarToValueExprScopedAndInline(t *testing.T) {
@@ -56,7 +51,7 @@ func TestGrammarToValueExprScopedAndInline(t *testing.T) {
 			t.Parallel()
 			AssertCodesEvalToSameValue(t,
 				"//grammar -> .parse(.lang.wbnf, 'grammar', `"+expr+"`)",
-				`{://grammar.lang.wbnf.grammar:`+expr+`:}`,
+				`{://grammar.lang.wbnf[grammar]:`+expr+`:}`,
 			)
 		})
 	}
@@ -90,7 +85,7 @@ func TestGrammarParseParseLiteral(t *testing.T) {
 				s.grammar, s.rule, s.text)
 			AssertCodesEvalToSameValue(t,
 				parse,
-				fmt.Sprintf(`{:{://grammar.lang.wbnf.grammar:%s:}.%s:%s:}`, s.grammar, s.rule, s.text))
+				fmt.Sprintf(`{:{://grammar.lang.wbnf[grammar]:%s:}[%s]:%s:}`, s.grammar, s.rule, s.text))
 		})
 	}
 }
@@ -122,8 +117,8 @@ func TestGrammarParseParseScopeVar(t *testing.T) {
 		{`expr -> @:"+" > @:"*" > \d;`, "expr", `1+2*3`},
 	}
 	bindForms := []string{
-		`{://grammar.lang.wbnf.grammar:%s:} -> {:.%s:%s:}`,
-		`let g = {://grammar.lang.wbnf.grammar:%s:}; {:g.%s:%s:}`,
+		`{://grammar.lang.wbnf[grammar]:%s:} -> {:.[%s]:%s:}`,
+		`let g = {://grammar.lang.wbnf[grammar]:%s:}; {:g[%s]:%s:}`,
 	}
 	for i, s := range scenarios {
 		s := s
@@ -154,6 +149,6 @@ func TestGrammarParseParseScopeVar(t *testing.T) {
 // 				)
 // 			]
 // 		)`,
-// 		`{://grammar.lang.wbnf.grammar: expr -> @:'+' > @:'*' > \d+; :} -> {:.expr:1+:{'2'}:*3:}`,
+// 		`{://grammar.lang.wbnf[grammar]: expr -> @:'+' > @:'*' > \d+; :} -> {:.expr:1+:{'2'}:*3:}`,
 // 	)
 // }

@@ -110,74 +110,35 @@ func (pc ParseContext) Parse(s *parser.Scanner) (ast.Branch, error) {
 			return nil, nil
 		},
 		"ast": func(scope parser.Scope, input *parser.Scanner) (parser.TreeElement, error) {
-			_, elt, ok := scope.GetVal("grammar")
-			if !ok {
-				panic("wat?")
+			ruleName := "default"
+			if _, ruleElt, ok := scope.GetVal("rule"); ok && ruleElt.(parser.Node).Count() > 0 {
+				ruleNode := ast.FromParserNode(arraiParsers.Grammar(), ruleElt.(parser.Node).Get(0))
+				ruleName = ruleNode.One("rulename").Scanner().String()
 			}
-			// elt is a raw ast representing and expression
-			// convert it into a Node with metadata about the content
-			astNode := ast.FromParserNode(arraiParsers.Grammar(), elt)
-			//
-			dotExpr := pc.CompileExpr(astNode).(*rel.DotExpr)
-			astExpr := dotExpr.Subject()
-			astValue, err := astExpr.Eval(rscopes[len(rscopes)-1])
-			if err != nil {
-				return nil, err
-			}
-			astValueNode := rel.ASTNodeFromValue(astValue).(ast.Branch)
-			subg := wbnf.NewFromAst(astValueNode)
-			rule := parser.Rule(dotExpr.Attr())
-			parsers := subg.Compile(subg)
-			childast, err := parsers.ParseWithExternals(rule, input, parser.ExternalRefs{
-				"*:{()}:": func(scope parser.Scope, _ *parser.Scanner) (parser.TreeElement, error) {
-					childast, err := pc.Parse(input)
-					switch err.(type) {
-					case nil, parser.UnconsumedInputError:
-					default:
-						return nil, err
-					}
-					// log.Printf("ast: %v", ast)
-					node := ast.ToParserNode(arraiParsers.Grammar(), childast)
-					return node, nil
-				},
-			})
-			if err != nil {
-				if unconsumed, ok := err.(parser.UnconsumedInputError); ok {
-					childast = unconsumed.Result()
-					input = unconsumed.Residue()
-				} else {
-					return nil, err
-				}
-			}
-			return ast.NewExtRefTreeElement(parsers.Grammar(), childast), nil
-		},
-		"macro": func(scope parser.Scope, input *parser.Scanner) (parser.TreeElement, error) {
+
 			_, elt, ok := scope.GetVal("macro")
 			if !ok {
 				panic("wat?")
 			}
 
-			// Use the arrai grammar to parse the macro's head to a raw AST.
 			astNode := ast.FromParserNode(arraiParsers.Grammar(), elt)
-			// Compile the AST down to an arrai DotExpr (macro.rule).
-			dotExpr := pc.CompileExpr(astNode).(*rel.DotExpr)
-			// Get the LHS of the DotExpr (the macro object).
-			// TODO: This is currently the .@grammar element. That should be implicit and got here.
-			astExpr := dotExpr.Subject()
-			// Select the root rule from the RHS of the DotExpr.
-			rule := parser.Rule(dotExpr.Attr())
-			// Eval the grammar object to resolve references and construct an AST tuple and transform.
-			macroValue, err := astExpr.Eval(rscopes[len(rscopes)-1])
-			astValue := macroValue.(*rel.GenericTuple).MustGet("@grammar")
-			transformMap := macroValue.(*rel.GenericTuple).MustGet("@transform").(*rel.GenericTuple)
+			astExpr := pc.CompileExpr(astNode).(rel.Expr)
+			astValue, err := astExpr.Eval(rscopes[len(rscopes)-1])
 			if err != nil {
 				return nil, err
 			}
-			// Convert the grammar tuple back into a wbnf AST Branch.
+
+			transform := rel.NewSet()
+			if macroGrammar, ok := astValue.(*rel.GenericTuple).Get("@grammar"); ok {
+				if transforms, ok := astValue.(*rel.GenericTuple).Get("@transform"); ok {
+					transform = transforms.(*rel.GenericTuple).MustGet(ruleName).(rel.Set)
+				}
+				astValue = macroGrammar
+			}
+
 			astValueNode := rel.ASTNodeFromValue(astValue).(ast.Branch)
-			// Create a wbnf grammar from the AST to parse the macro's body.
 			subg := wbnf.NewFromAst(astValueNode)
-			// Augment the parsers struct with parsers for the new grammar.
+			rule := parser.Rule(ruleName)
 			parsers := subg.Compile(subg)
 
 			childast, err := parsers.ParseWithExternals(rule, input, parser.ExternalRefs{
@@ -201,24 +162,21 @@ func (pc ParseContext) Parse(s *parser.Scanner) (ast.Branch, error) {
 					return nil, err
 				}
 			}
-
-			childastNode := ast.FromParserNode(subg, childast)
-			childNodeValue := rel.ASTNodeToValue(childastNode)
-			transform := transformMap.MustGet("default").(rel.Set)
-			bodyValue := rel.SetCall(transform, childNodeValue)
-
-			//mr := MacroResult{bodyValue}
-			result := ast.Branch{}
-			result["@rule"] = ast.One{Node: ast.Extra{parser.Rule("default")}}
-			result["value"] = ast.One{Node: ast.Extra{bodyValue}}
-
-			extref := parser.Node{
-				Tag:      "extrefmacro",
-				Extra:    result,
-				Children: nil,
+			if !transform.IsTrue() {
+				return ast.NewExtRefTreeElement(parsers.Grammar(), childast), nil
 			}
 
-			return extref, nil
+			childastValue := rel.ASTNodeToValue(ast.FromParserNode(subg, childast))
+			bodyValue := rel.SetCall(transform, childastValue)
+
+			result := ast.Branch{}
+			result["@rule"] = ast.One{Node: ast.Extra{parser.Rule(ruleName)}}
+			result["value"] = ast.One{Node: ast.Extra{bodyValue}}
+			return parser.Node{
+				Tag:      "extref",
+				Extra:    result,
+				Children: nil,
+			}, nil
 		},
 	})
 	//log.Printf("Parse: v = %v", v)
