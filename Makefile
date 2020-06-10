@@ -21,24 +21,26 @@ parser:
 
 build:
 	go build -ldflags=$(LDFLAGS) ./cmd/arrai
-	
-########
-versionVal=$(shell git describe --tags)
-versionWithCommit=$(join $(join $(FullCommit), =), $(firstword $(subst -,  ,$(versionVal))))
 
-ifeq (-, $(findstring -, $(versionVal))) #it is in branch
-ifeq (,$(shell git status -s)) # no changes
+
+########
+originalVersion=$(shell git describe --tags)
+
+ifeq (-, $(findstring -, $(originalVersion))) #it is in 
+tagName= $(firstword $(subst -,  ,$(originalVersion)))
+diffLogs = $(foreach item, $(shell git log --pretty=format:"%h" $(tagName)..HEAD),$(item))
+ifeq (true, $(shell git status -s) = && $(words $(diffLogs)) = 0) # no changes
 Version=$(versionWithCommit)
 else
-### 
-Version=$(join DIRTY-, $(versionWithCommit))
+### has local changes
+Version=DIRTY-$(FullCommit)~$(words $(diffLogs)) = $(tagName)
 endif
 else
 # it is in tag
 ifeq (,$(shell git status -s)) # no changes
 Version=$(versionVal)
 else
-Version=$(join DIRTY-, $(versionVal))
+Version=DIRTY-$(originalVersion)
 endif
 endif
 
