@@ -45,3 +45,7 @@ func (e IdentExpr) Eval(local Scope) (Value, error) {
 func (e IdentExpr) Bind(scope Scope, value Value) (Scope, error) {
 	return EmptyScope.With(e.ident, value), nil
 }
+
+func (e IdentExpr) Bindings() []string {
+	return []string{e.ident}
+}

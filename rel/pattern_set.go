@@ -127,3 +127,11 @@ func (p SetPattern) String() string {
 	buf.WriteString("}")
 	return buf.String()
 }
+
+func (p SetPattern) Bindings() []string {
+	bindings := make([]string, len(p.patterns))
+	for i, v := range p.patterns {
+		bindings[i] = v.String()
+	}
+	return bindings
+}

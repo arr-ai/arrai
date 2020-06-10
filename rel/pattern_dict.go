@@ -123,3 +123,11 @@ func (p DictPattern) String() string {
 	b.WriteByte('}')
 	return b.String()
 }
+
+func (p DictPattern) Bindings() []string {
+	bindings := make([]string, len(p.entries))
+	for i, v := range p.entries {
+		bindings[i] = v.value.String()
+	}
+	return bindings
+}
