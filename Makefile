@@ -24,11 +24,22 @@ build:
 	
 ########
 versionVal=$(shell git describe --tags)
+versionWithCommit=$(join $(join $(FullCommit), =), $(firstword $(subst -,  ,$(versionVal))))
+
 ifeq (-, $(findstring -, $(versionVal))) #it is in branch
-Version=$(join $(join $(FullCommit), =), $(firstword $(subst -,  ,$(versionVal))))
+ifeq (,$(shell git status -s)) # no changes
+Version=$(versionWithCommit))
+else
+### 
+Version=$(join DIRTY-, $(versionWithCommit))
+endif
 else
 # it is in tag
+ifeq (,$(shell git status -s)) # no changes
 Version=$(versionVal)
+else
+Version=$(join DIRTY-, $(versionVal))
+endif
 endif
 
 FullCommit=$(shell git log --pretty=format:"%H" -1)
