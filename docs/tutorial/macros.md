@@ -7,22 +7,28 @@ runtime. This means they can be used to introduce and embed new syntax within
 
 ## Usage
 
-> **(⛔ NYI)**: Current syntax is `{:macro:content:}`.
+> **(⛔ NYI)**: Current syntax is `{:macro[rule]?:content:}`.
 
-Macros are invoked via the syntax `macro{content}`. The `content` inside the
-macro invocation is subject to a grammar defined by the macro itself, not
-regular arr.ai syntax. Each macro can support its own grammar for the kind of
-content it supports.
+Macros are invoked via the syntax `macro[rule]?{content}`. In reverse order:
 
-The `macro` part of the invocation is either a [grammar](grammars.md) AST
-itself, or a tuple with an `@grammar` key corresponding to the grammar AST. That
-grammar will then be used to parse the `content` into an AST.
-
-In the tuple form, the macro may also contain a `@transform` key corresponding
-to a tuple of transform functions, keyed by the rules of the grammar to which
-they apply. When the macro is invoked, `content` is parsed into an AST, which is
-then passed to the transform function. The output of the transform will replace
-the entire macro invocation before parsing continues.
+* `content` inside the macro invocation is subject to a grammar defined by the
+  macro itself, not regular arr.ai syntax.
+* `[rule]`, if provided, specifies which rule of the grammar to use as the root.
+* `macro` is either a [grammar](grammars.md) AST, or a tuple with an `@grammar` 
+  key corresponding to a grammar AST. Thus each macro can define its own 
+  grammar with which to parse the `content`.
+  
+  In the tuple form, `macro` may also contain a `@transform` key corresponding
+  to a tuple. In that tuple, each root rule of the grammar corresponds to a
+  function that will be applied to the AST produced by parsing `content` with
+  `rule` of the macro's grammar.
+  
+  If no `@transform` tuple is provided, the macro will simply produce an AST of
+  the `content`.
+  
+The macro invocation will be evaluated during the parsing of the arr.ai program,
+and its output will effectively replace the invocation in the code before
+parsing continues.
 
 ## Examples **(⛔ NYI)**
 
