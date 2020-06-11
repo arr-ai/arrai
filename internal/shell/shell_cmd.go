@@ -6,6 +6,7 @@ import (
 	"context"
 	"fmt"
 	"regexp"
+	"sort"
 	"strings"
 
 	"github.com/anz-bank/pkg/log"
@@ -122,13 +123,16 @@ func changeFrame(i int, sh *shellInstance) error {
 	return nil
 }
 
-func initCommands() map[string]shellCmd {
+func initCommands() (map[string]shellCmd, []string) {
 	cmds := []shellCmd{&setCmd{}, &unsetCmd{}, &exitCommand{}, &upFrameCmd{}, &downFrameCmd{}}
 	cmdMap := make(map[string]shellCmd)
+	var preds []string
 	for _, cmd := range cmds {
 		for _, n := range cmd.names() {
 			cmdMap[n] = cmd
+			preds = append(preds, fmt.Sprintf("/%s ", n))
 		}
 	}
-	return cmdMap
+	sort.Strings(preds)
+	return cmdMap, preds
 }
