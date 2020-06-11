@@ -347,8 +347,10 @@ func TestGlobalPredictions(t *testing.T) {
 		"xyz": "323",
 	}
 
+	_, cmdpreds := initCommands()
+
 	assertTabCompletion(t, []string{"//", "aac", "abc", "bca", "xyz"}, 0, "(a: \t)", globalValues)
-	assertTabCompletion(t, []string{"//", "aac", "abc", "bca", "xyz"}, 0, "\t", globalValues)
+	assertTabCompletion(t, append([]string{"//", "aac", "abc", "bca", "xyz"}, cmdpreds...), 0, "\t", globalValues)
 	assertTabCompletion(t, []string{"ac", "bc"}, 0, "(a: 1) + a\t", globalValues)
 	assertTabCompletion(t, []string{"ac", "bc"}, 0, "a\t", globalValues)
 	assertTabCompletion(t, []string{}, 0, "y\t", globalValues)
