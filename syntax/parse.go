@@ -82,26 +82,23 @@ func (pc ParseContext) Parse(s *parser.Scanner) (ast.Branch, error) {
 			}
 			exprNode := ast.FromParserNode(arraiParsers.Grammar(), exprElt)
 			expr := pc.CompileExpr(exprNode)
-			source := expr.Source()
-			expr = rel.NewExprClosure(rscopes[len(rscopes)-1], expr)
+			exprClosure := rel.NewExprClosure(rscopes[len(rscopes)-1], expr)
 
 			identStr := "."
 			if _, ident, has := pscope.GetVal("IDENT"); has {
 				identStr = ident.(parser.Scanner).String()
 			}
-			rscopes = append(rscopes, rscopes[len(rscopes)-1].With(identStr, expr))
+			rscopes = append(rscopes, rscopes[len(rscopes)-1].With(identStr, exprClosure))
 
 			if _, pattern, has := pscope.GetVal("pattern"); has {
+				source := expr.Source()
+
 				patNode := ast.FromParserNode(arraiParsers.Grammar(), pattern)
 				pat := pc.compilePattern(patNode)
 				bindings := pat.Bindings()
 				for _, b := range bindings {
-					input := fmt.Sprintf("let %s = (let %s = %s; %s); %s", b, pat, source, b, b)
-					e, err := Compile(NoPath, input)
-					if err != nil {
-						return nil, err
-					}
-					rscopes = append(rscopes, rscopes[len(rscopes)-1].With(b, e))
+					rhs := rel.NewFunction(*parser.NewScanner(fmt.Sprintf("let %s = %s; %s", pat, source, b)), pat, rel.NewIdentExpr(*parser.NewScanner(b), b))
+					rscopes = append(rscopes, rscopes[len(rscopes)-1].With(b, binops["->"](source, expr, rhs)))
 				}
 			}
 

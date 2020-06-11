@@ -381,3 +381,12 @@ func (s GenericSet) Bind(scope Scope, value Value) (Scope, error) {
 	}
 	return EmptyScope, fmt.Errorf("%s is not a Pattern", s)
 }
+
+func (s GenericSet) Bindings() []string {
+	values := s.OrderedValues()
+	bindings := make([]string, len(values))
+	for i, v := range values {
+		bindings[i] = v.String()
+	}
+	return bindings
+}

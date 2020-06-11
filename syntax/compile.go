@@ -312,8 +312,8 @@ func (pc ParseContext) compileArrow(b ast.Branch, name string, c ast.Children) r
 	return expr
 }
 
-// let PATTERN                     = EXPR1; EXPR2
-// let c.(ast.One).Node.One("...") = expr;  rhs
+// let PATTERN                     = EXPR1;      EXPR2
+// let c.(ast.One).Node.One("...") = expr(lhs);  rhs
 // EXPR1 -> \PATTERN EXPR2
 func (pc ParseContext) compileLet(c ast.Children) rel.Expr {
 	exprs := c.(ast.One).Node.Many(exprTag)
@@ -329,8 +329,7 @@ func (pc ParseContext) compileLet(c ast.Children) rel.Expr {
 		expr = rel.NewRecursionExpr(c.Scanner(), p, expr, fix, fixt)
 	}
 
-	expr = binops["->"](source, expr, rhs)
-	return expr
+	return binops["->"](source, expr, rhs)
 }
 
 func (pc ParseContext) compileUnop(b ast.Branch, c ast.Children) rel.Expr {

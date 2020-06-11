@@ -59,6 +59,10 @@ func TestExprLetArrayPattern(t *testing.T) { //nolint:dupl
 	AssertCodesEvalToSameValue(t, `2`, `let x = 3; let [b, (x)] = [2, 3]; b`)
 	AssertCodesEvalToSameValue(t, `2`, `let x = 3; let [_, b, (x)] = [1, 2, 3]; b`)
 	AssertCodesEvalToSameValue(t, `2`, `let x = 3; let [x] = [2]; x`)
+	AssertCodesEvalToSameValue(t, `('': [88\'+'], @rule: 'expr', expr: [(expr: [('': 87\'1')]), ('': [90\'*'], expr: [('': 89\'2'), ('': 91\'3')])])`,
+		`let [g] = [{://grammar.lang.wbnf.grammar: expr -> @:[-+] > @:[/*] > \d+; :}]; {:g.expr:1+2*3:}`)
+	AssertCodesEvalToSameValue(t, `('': [88\'+'], @rule: 'expr', expr: [(expr: [('': 87\'1')]), ('': [90\'*'], expr: [('': 89\'2'), ('': 91\'3')])])`,
+		`let (a: g, b: x) = (a: {://grammar.lang.wbnf.grammar: expr -> @:[-+] > @:[/*] > \d+; :}, b: 42); {:g.expr:1+2*3:}`)
 
 	AssertCodeErrors(t, `let [(x)] = [2]; x`, "")
 	AssertCodeErrors(t, `let x = 3; let [(x)] = [2]; x`, "")
