@@ -804,9 +804,8 @@ func (pc ParseContext) compileMacro(b ast.Branch) rel.Expr {
 	childast := b.One("embed").One("subgrammar").One("ast")
 	if value := childast.One("value"); value != nil {
 		return value.(ast.Extra).Data.(rel.Expr)
-	} else {
-		return rel.ASTNodeToValue(childast)
 	}
+	return rel.ASTNodeToValue(childast)
 }
 
 func (pc ParseContext) compilePackage(c ast.Children) rel.Expr {
