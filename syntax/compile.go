@@ -131,8 +131,6 @@ func (pc ParseContext) CompileExpr(b ast.Branch) rel.Expr {
 		return pc.compileNumber(c)
 	case "CHAR":
 		return pc.compileChar(c)
-	case "extrefmacro":
-		return c.(rel.Value)
 	case exprTag:
 		if result := pc.compileExpr(c); result != nil {
 			return result
@@ -803,7 +801,7 @@ func (pc ParseContext) compileFunction(b ast.Branch) rel.Expr {
 func (pc ParseContext) compileMacro(b ast.Branch) rel.Expr {
 	childast := b.One("embed").One("subgrammar").One("ast")
 	if value := childast.One("value"); value != nil {
-		return value.(ast.Extra).Data.(rel.Expr)
+		return value.(MacroValue).SubExpr()
 	}
 	return rel.ASTNodeToValue(childast)
 }

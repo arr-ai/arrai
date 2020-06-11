@@ -11,22 +11,6 @@ import (
 	"github.com/arr-ai/wbnf/parser"
 )
 
-type MacroResult struct {
-	Data rel.Value
-}
-
-func (MacroResult) IsExtra() {}
-
-// type noParseType struct{}
-
-// type parseFunc func(v interface{}) (rel.Expr, error)
-
-// func (*noParseType) Error() string {
-// 	return "No parse"
-// }
-
-// var noParse = &noParseType{}
-
 type ParseContext struct {
 	SourceDir string
 }
@@ -166,12 +150,13 @@ func (pc ParseContext) Parse(s *parser.Scanner) (ast.Branch, error) {
 				return ast.NewExtRefTreeElement(parsers.Grammar(), childast), nil
 			}
 
-			childastValue := rel.ASTNodeToValue(ast.FromParserNode(subg, childast))
+			childastNode := ast.FromParserNode(subg, childast)
+			childastValue := rel.ASTNodeToValue(childastNode)
 			bodyValue := rel.SetCall(transform, childastValue)
 
 			result := ast.Branch{}
-			result["@rule"] = ast.One{Node: ast.Extra{parser.Rule(ruleName)}}
-			result["value"] = ast.One{Node: ast.Extra{bodyValue}}
+			result["@rule"] = ast.One{Node: ast.Extra{Data: parser.Rule(ruleName)}}
+			result["value"] = ast.One{Node: NewMacroValue(bodyValue, childastNode.Scanner())}
 			return parser.Node{
 				Tag:      "extref",
 				Extra:    result,
@@ -191,17 +176,6 @@ func (pc ParseContext) Parse(s *parser.Scanner) (ast.Branch, error) {
 	return result, nil
 }
 
-//func FromParserNode(g parser.Grammar, v parser.Extra) ast.Branch {
-//	rule := parser.Rule("default")
-//	term := g[rule]
-//	result := ast.Branch{}
-//	extra := v
-//	result["@rule"] = ast.One{Node: extra}
-//	ctrs := newCounters(term)
-//	result.fromParserNode(g, term, ctrs, e)
-//	return result.collapse(0).(ast.Branch)
-//}
-
 func parseNest(lhs rel.Expr, branch ast.Branch) rel.Expr {
 	attr := branch.One("IDENT").One("").Scanner()
 	names := branch["names"].(ast.One).Node.(ast.Branch)["IDENT"].(ast.Many)
@@ -210,4 +184,26 @@ func parseNest(lhs rel.Expr, branch ast.Branch) rel.Expr {
 		namestrings[i] = name.One("").Scanner().String()
 	}
 	return rel.NewNestExpr(attr, lhs, rel.NewNames(namestrings...), attr.String())
+}
+
+// MacroValue is an Extra node with an Expr value and a Scanner for the macro source.
+type MacroValue struct {
+	ast.Extra
+	expr    rel.Expr
+	scanner parser.Scanner
+}
+
+// NewMacroValue returns a MacroValue with a given Expr and Scanner.
+func NewMacroValue(expr rel.Expr, scanner parser.Scanner) MacroValue {
+	return MacroValue{expr: expr, scanner: scanner}
+}
+
+// Scanner returns a scanner of the source that was replaced by the macro.
+func (m MacroValue) Scanner() parser.Scanner {
+	return m.scanner
+}
+
+// SubExpr returns the Expr resulting from evaluating the macro.
+func (m MacroValue) SubExpr() rel.Expr {
+	return m.expr
 }

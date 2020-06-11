@@ -35,9 +35,15 @@ func TestGrammarToValueExprInline(t *testing.T) {
 }
 
 func TestMacroToValueInline(t *testing.T) {
-	AssertCodesEvalToSameValue(t,
-		`(year: 2020, month: 06, day: 09)`,
-		`{://time[default]: 2020-06-09 :}`)
+	AssertCodesEvalToSameValue(t, `(year: 2020, month: 06, day: 09)`, `
+		let time = (
+			@grammar: {://grammar.lang.wbnf[grammar]: 
+				default -> year=\d{4} "-" month=\d{2} "-" day=\d{2};:},
+			@transform:
+				(default: \ast ast -> (year: .year, month: .month, day: .day) :> //eval.value(.''))
+		);
+		{:time:2020-06-09:}
+	`)
 }
 
 func TestGrammarToValueExprScopedAndInline(t *testing.T) {
