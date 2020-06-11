@@ -34,7 +34,7 @@ ifeq (true, $(words $(diffLogs)) = 0 || $(shell git status -s) = ) # no changes
 Version=$(tagName)
 else
 
-ifeq (, $(shell git status -s)) # it doesn't have uncommitted or untrakced changes
+ifeq (, $(shell git status -s)) # it doesn't have uncommitted or untracked changes
 Version=$(FullCommit)~$(words $(diffLogs)) = $(tagName)
 else
 Version=DIRTY-$(FullCommit)~$(words $(diffLogs)) = $(tagName)
@@ -46,7 +46,7 @@ else
 
 # it is in tag
 ifeq (,$(shell git status -s)) # no changes
-Version=$(versionVal)
+Version=$(originalVersion)
 else
 Version=DIRTY-$(originalVersion)
 endif
