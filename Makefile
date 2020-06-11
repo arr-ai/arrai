@@ -35,9 +35,9 @@ Version=$(tagName)
 else
 
 ifeq (, $(shell git status -s)) # it doesn't have uncommitted or untracked changes
-Version=$(FullCommit)~$(words $(diffLogs)) = $(tagName)
+Version=$(FullCommit) (~$(words $(diffLogs)) = $(tagName))
 else
-Version=DIRTY-$(FullCommit)~$(words $(diffLogs)) = $(tagName)
+Version=DIRTY-$(FullCommit) (~$(words $(diffLogs)) = $(tagName))
 endif
 
 endif
