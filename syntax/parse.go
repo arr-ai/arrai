@@ -97,7 +97,7 @@ func (pc ParseContext) Parse(s *parser.Scanner) (ast.Branch, error) {
 			ruleName := "default"
 			if _, ruleElt, ok := scope.GetVal("rule"); ok && ruleElt.(parser.Node).Count() > 0 {
 				ruleNode := ast.FromParserNode(arraiParsers.Grammar(), ruleElt.(parser.Node).Get(0))
-				ruleName = ruleNode.One("rulename").Scanner().String()
+				ruleName = ruleNode.One("name").Scanner().String()
 			}
 
 			_, elt, ok := scope.GetVal("macro")
@@ -112,9 +112,15 @@ func (pc ParseContext) Parse(s *parser.Scanner) (ast.Branch, error) {
 				return nil, err
 			}
 
+			// astValue can be a grammar AST, or a tuple with a @grammar key containing an AST.
+			// Such a tuple may also have an @transform key specifying transformations to apply to
+			// the input after parsing it with the grammar.
 			transform := rel.NewSet()
 			if macroGrammar, ok := astValue.(*rel.GenericTuple).Get("@grammar"); ok {
 				if transforms, ok := astValue.(*rel.GenericTuple).Get("@transform"); ok {
+					// If @transform is present but there is no named transform for ruleName, fail
+					// loudly rather than falling back on the default rule or nothing. A macro's
+					// rule transforms should be as well-specified as the grammar.
 					transform = transforms.(*rel.GenericTuple).MustGet(ruleName).(rel.Set)
 				}
 				astValue = macroGrammar
@@ -154,14 +160,10 @@ func (pc ParseContext) Parse(s *parser.Scanner) (ast.Branch, error) {
 			childastValue := rel.ASTNodeToValue(childastNode)
 			bodyValue := rel.SetCall(transform, childastValue)
 
-			result := ast.Branch{}
-			result["@rule"] = ast.One{Node: ast.Extra{Data: parser.Rule(ruleName)}}
-			result["value"] = ast.One{Node: NewMacroValue(bodyValue, childastNode.Scanner())}
-			return parser.Node{
-				Tag:      "extref",
-				Extra:    result,
-				Children: nil,
-			}, nil
+			return parser.Node{Tag: "extref", Children: nil, Extra: ast.Branch{
+				"@rule": ast.One{Node: ast.Extra{Data: parser.Rule(ruleName)}},
+				"value": ast.One{Node: NewMacroValue(bodyValue, childastNode.Scanner())},
+			}}, nil
 		},
 	})
 	//log.Printf("Parse: v = %v", v)

@@ -50,7 +50,7 @@ expr   -> C* amp="&"* @ C* arrow=(
         | C* STR C*
         | C* NUM C*
         | C* CHAR C*;
-rule   -> C* "[" C* rulename=name C* "]" C*;
+rule   -> C* "[" C* name C* "]" C*;
 nest   -> C* "nest" names IDENT C*;
 unnest -> C* "unnest" IDENT C*;
 touch  -> C* ("->*" ("&"? IDENT | STR))+ "(" expr:"," ","? ")" C*;
