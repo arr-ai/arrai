@@ -97,7 +97,8 @@ func (pc ParseContext) Parse(s *parser.Scanner) (ast.Branch, error) {
 				pat := pc.compilePattern(patNode)
 				bindings := pat.Bindings()
 				for _, b := range bindings {
-					rhs := rel.NewFunction(*parser.NewScanner(fmt.Sprintf("let %s = %s; %s", pat, source, b)), pat, rel.NewIdentExpr(*parser.NewScanner(b), b))
+					rhs := rel.NewFunction(*parser.NewScanner(fmt.Sprintf("let %s = %s; %s", pat, source, b)),
+						pat, rel.NewIdentExpr(*parser.NewScanner(b), b))
 					rscopes = append(rscopes, rscopes[len(rscopes)-1].With(b, binops["->"](source, expr, rhs)))
 				}
 			}
