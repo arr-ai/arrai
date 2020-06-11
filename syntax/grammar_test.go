@@ -46,6 +46,13 @@ func TestMacroToValueInline(t *testing.T) {
 	`)
 }
 
+func TestMacroToArraiValueInline(t *testing.T) {
+	AssertCodesEvalToSameValue(t,
+		`1`,
+		`{:(@grammar://grammar.lang.arrai, @transform:(default:\ast 1)):1:}`,
+	)
+}
+
 func TestGrammarToValueExprScopedAndInline(t *testing.T) {
 	exprs := []string{
 		`a -> '1';`,
