@@ -3,9 +3,15 @@
 package shell
 
 import (
+	"context"
+	"fmt"
 	"regexp"
+	"sort"
 	"strings"
 
+	"github.com/anz-bank/pkg/log"
+	"github.com/arr-ai/arrai/syntax"
+	"github.com/arr-ai/wbnf/parser"
 	"github.com/go-errors/errors"
 )
 
@@ -30,14 +36,14 @@ func tryRunCommand(line string, shellData *shellInstance) error {
 }
 
 type shellCmd interface {
-	name() string
+	names() []string
 	process(line string, shellData *shellInstance) error
 }
 
 type setCmd struct{}
 
-func (sc *setCmd) name() string {
-	return "set"
+func (sc *setCmd) names() []string {
+	return []string{"set"}
 }
 
 func (sc *setCmd) process(line string, shellData *shellInstance) error {
@@ -58,8 +64,8 @@ func (sc *setCmd) process(line string, shellData *shellInstance) error {
 
 type unsetCmd struct{}
 
-func (uc *unsetCmd) name() string {
-	return "unset"
+func (uc *unsetCmd) names() []string {
+	return []string{"unset"}
 }
 
 func (uc *unsetCmd) process(line string, shellData *shellInstance) error {
@@ -79,19 +85,54 @@ func (exitError) Error() string {
 
 type exitCommand struct{}
 
-func (*exitCommand) name() string {
-	return "exit"
+func (*exitCommand) names() []string {
+	return []string{"exit"}
 }
 
 func (ec *exitCommand) process(_ string, _ *shellInstance) error {
 	return exitError{}
 }
 
-func initCommands() map[string]shellCmd {
-	cmds := []shellCmd{&setCmd{}, &unsetCmd{}, &exitCommand{}}
-	cmdMap := make(map[string]shellCmd)
-	for _, cmd := range cmds {
-		cmdMap[cmd.name()] = cmd
+type upFrameCmd struct{}
+
+func (*upFrameCmd) names() []string {
+	return []string{"up", "u"}
+}
+
+func (*upFrameCmd) process(_ string, sh *shellInstance) error {
+	return changeFrame(sh.currentFrameIndex-1, sh)
+}
+
+type downFrameCmd struct{}
+
+func (d *downFrameCmd) names() []string {
+	return []string{"down", "d"}
+}
+
+func (*downFrameCmd) process(_ string, sh *shellInstance) error {
+	return changeFrame(sh.currentFrameIndex+1, sh)
+}
+
+func changeFrame(i int, sh *shellInstance) error {
+	if i < 0 || i >= len(sh.frames) {
+		return fmt.Errorf("frame index out of range, frame length: %d", len(sh.frames))
 	}
-	return cmdMap
+	sh.currentFrameIndex = i
+	log.Infof(context.Background(), "Stack: %d\n%s\n", i, sh.frames[i].GetSource().Context(parser.DefaultLimit))
+	sh.scope = syntax.StdScope().Update(sh.frames[i].GetScope())
+	return nil
+}
+
+func initCommands() (map[string]shellCmd, []string) {
+	cmds := []shellCmd{&setCmd{}, &unsetCmd{}, &exitCommand{}, &upFrameCmd{}, &downFrameCmd{}}
+	cmdMap := make(map[string]shellCmd)
+	var preds []string
+	for _, cmd := range cmds {
+		for _, n := range cmd.names() {
+			cmdMap[n] = cmd
+			preds = append(preds, fmt.Sprintf("/%s ", n))
+		}
+	}
+	sort.Strings(preds)
+	return cmdMap, preds
 }

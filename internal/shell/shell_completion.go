@@ -43,7 +43,8 @@ func (s *shellInstance) Do(line []rune, pos int) (newLine [][]rune, length int) 
 
 		// checks if it's not attached to any token or starts at pos 0
 		if pos == 0 || l != "" || notAttachedToExpr {
-			newLine, length = s.globalCompletions(l)
+			trimmed := strings.TrimSpace(string(line[:pos]))
+			newLine, length = s.globalCompletions(l, trimmed == "" || trimmed == "/")
 		}
 
 		// no need to check partial expr if not attached to token
@@ -59,9 +60,14 @@ func (s *shellInstance) Do(line []rune, pos int) (newLine [][]rune, length int) 
 	return newLine, length
 }
 
-func (s *shellInstance) globalCompletions(prefix string) (newLine [][]rune, length int) {
+func (s *shellInstance) globalCompletions(prefix string, startOfLine bool) (newLine [][]rune, length int) {
 	predictions := make([][]rune, 0)
-	for _, p := range formatPredictions(s.scope.OrderedNames(), prefix) {
+	names := s.scope.OrderedNames()
+	if startOfLine {
+		names = append(names, s.cmdPredictions...)
+	}
+
+	for _, p := range formatPredictions(names, prefix) {
 		if string(p) == "." || string(p) == "" {
 			continue
 		}

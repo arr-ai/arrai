@@ -108,6 +108,15 @@ func TestIsBalanced(t *testing.T) {
 	c.appendLine("\\.")
 	assert.False(t, c.isBalanced())
 
+	c.appendLine(".")
+	assert.True(t, c.isBalanced())
+
+	c.appendLine("x.")
+	assert.False(t, c.isBalanced())
+
+	c.appendLine("1.")
+	assert.False(t, c.isBalanced())
+
 	c.appendLine("\\a random")
 	assert.True(t, c.isBalanced())
 
@@ -185,7 +194,7 @@ func TestTabCompletionStdlib(t *testing.T) {
 func TestTrimExpr(t *testing.T) {
 	t.Parallel()
 
-	sh := newShellInstance(newLineCollector(), syntax.StdScope())
+	sh := newShellInstance(newLineCollector(), []rel.ContextErr{})
 
 	realExpr, residue := sh.trimExpr(`x.`)
 	assert.Equal(t, "x", realExpr)
@@ -317,7 +326,8 @@ func assertTabCompletion(t *testing.T,
 		require.NoError(t, err)
 		scope = scope.With(name, val)
 	}
-	sh := newShellInstance(newLineCollector(), scope)
+	sh := newShellInstance(newLineCollector(), []rel.ContextErr{})
+	sh.scope = scope
 	predictions, length := sh.Do([]rune(line), strings.Index(line, "\t"))
 	strPredictions := make([]string, 0, len(predictions))
 	for _, p := range predictions {
@@ -337,8 +347,10 @@ func TestGlobalPredictions(t *testing.T) {
 		"xyz": "323",
 	}
 
+	_, cmdpreds := initCommands()
+
 	assertTabCompletion(t, []string{"//", "aac", "abc", "bca", "xyz"}, 0, "(a: \t)", globalValues)
-	assertTabCompletion(t, []string{"//", "aac", "abc", "bca", "xyz"}, 0, "\t", globalValues)
+	assertTabCompletion(t, append([]string{"//", "aac", "abc", "bca", "xyz"}, cmdpreds...), 0, "\t", globalValues)
 	assertTabCompletion(t, []string{"ac", "bc"}, 0, "(a: 1) + a\t", globalValues)
 	assertTabCompletion(t, []string{"ac", "bc"}, 0, "a\t", globalValues)
 	assertTabCompletion(t, []string{}, 0, "y\t", globalValues)
