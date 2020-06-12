@@ -34,7 +34,7 @@ func NewCondControlVarExpr(scanner parser.Scanner, controlVar Expr, dictExpr Exp
 					if !has {
 						return false, fmt.Errorf("%s", err.Error())
 					}
-					return false, wrapContext(err, currentExpr, local)
+					return false, WrapContext(err, currentExpr, local)
 				}
 				for _, exprVal := range condition.Values() {
 					if exprVal.Equal(varVal) {
@@ -66,7 +66,7 @@ func (e CondControlVarExpr) String() string {
 func (e CondControlVarExpr) Eval(local Scope) (Value, error) {
 	controlVarVal, err := e.controlVarExpr.Eval(local)
 	if err != nil {
-		return nil, wrapContext(err, e, local)
+		return nil, WrapContext(err, e, local)
 	}
 
 	local = local.With("controlVarVal", controlVarVal).With("currentExpr", e)

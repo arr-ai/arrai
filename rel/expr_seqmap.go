@@ -42,7 +42,7 @@ func (e *SeqArrowExpr) String() string {
 func (e *SeqArrowExpr) Eval(local Scope) (_ Value, err error) {
 	value, err := e.lhs.Eval(local)
 	if err != nil {
-		return nil, wrapContext(err, e, local)
+		return nil, WrapContext(err, e, local)
 	}
 	var closure Set = NewClosure(local, e.fn)
 	var call func(at, v Value) (Value, error)
@@ -50,7 +50,7 @@ func (e *SeqArrowExpr) Eval(local Scope) (_ Value, err error) {
 		call = func(at, v Value) (Value, error) {
 			s, err := SetCall(closure, at)
 			if err != nil {
-				return nil, wrapContext(err, e, local)
+				return nil, WrapContext(err, e, local)
 			}
 			return SetCall(s.(Set), v)
 		}
@@ -66,7 +66,7 @@ func (e *SeqArrowExpr) Eval(local Scope) (_ Value, err error) {
 		for at, char := range value.s {
 			newChar, err := call(NewNumber(float64(value.offset+at)), NewNumber(float64(char)))
 			if err != nil {
-				return nil, wrapContext(err, e, local)
+				return nil, WrapContext(err, e, local)
 			}
 			if n, is := newChar.(Number); is {
 				if r := rune(n.Float64()); float64(r) == n.Float64() {
@@ -74,7 +74,7 @@ func (e *SeqArrowExpr) Eval(local Scope) (_ Value, err error) {
 					continue
 				}
 			}
-			return nil, wrapContext(fmt.Errorf("string %s ... must produce valid chars", e.op), e, local)
+			return nil, WrapContext(fmt.Errorf("string %s ... must produce valid chars", e.op), e, local)
 		}
 		return NewOffsetString(runes, value.offset), nil
 	case Bytes: //nolint:dupl
@@ -82,7 +82,7 @@ func (e *SeqArrowExpr) Eval(local Scope) (_ Value, err error) {
 		for at, byt := range value.b {
 			newByte, err := call(NewNumber(float64(value.offset+at)), NewNumber(float64(byt)))
 			if err != nil {
-				return nil, wrapContext(err, e, local)
+				return nil, WrapContext(err, e, local)
 			}
 			if n, is := newByte.(Number); is {
 				if b := byte(n.Float64()); float64(b) == n.Float64() {
@@ -90,7 +90,7 @@ func (e *SeqArrowExpr) Eval(local Scope) (_ Value, err error) {
 					continue
 				}
 			}
-			return nil, wrapContext(fmt.Errorf("bytes %s ... must produce valid bytes", e.op), e, local)
+			return nil, WrapContext(fmt.Errorf("bytes %s ... must produce valid bytes", e.op), e, local)
 		}
 		return NewOffsetBytes(bytes, value.offset), nil
 	case Array:
@@ -99,7 +99,7 @@ func (e *SeqArrowExpr) Eval(local Scope) (_ Value, err error) {
 			if item != nil {
 				items[at], err = call(NewNumber(float64(value.offset+at)), item)
 				if err != nil {
-					return nil, wrapContext(err, e, local)
+					return nil, WrapContext(err, e, local)
 				}
 			}
 		}
@@ -110,7 +110,7 @@ func (e *SeqArrowExpr) Eval(local Scope) (_ Value, err error) {
 			entry := i.Current().(DictEntryTuple)
 			newValue, err := call(entry.at, entry.value)
 			if err != nil {
-				return nil, wrapContext(err, e, local)
+				return nil, WrapContext(err, e, local)
 			}
 			entries = append(entries, NewDictEntryTuple(entry.at, newValue))
 		}
@@ -121,17 +121,17 @@ func (e *SeqArrowExpr) Eval(local Scope) (_ Value, err error) {
 			t := i.Current().(Tuple)
 			at, has := t.Get("@")
 			if !has {
-				return nil, wrapContext(errors.Errorf("%s not applicable to unindexed type %v", e.op, value), e, local)
+				return nil, WrapContext(errors.Errorf("%s not applicable to unindexed type %v", e.op, value), e, local)
 			}
 			attr := t.Names().Without("@").Any()
 			item, _ := t.Get(attr)
 			newItem, err := call(at, item)
 			if err != nil {
-				return nil, wrapContext(err, e, local)
+				return nil, WrapContext(err, e, local)
 			}
 			values = append(values, NewTuple(Attr{"@", at}, Attr{attr, newItem}))
 		}
 		return NewSet(values...), nil
 	}
-	return nil, wrapContext(errors.Errorf("%s not applicable to %T", e.op, value), e, local)
+	return nil, WrapContext(errors.Errorf("%s not applicable to %T", e.op, value), e, local)
 }

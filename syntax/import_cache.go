@@ -22,7 +22,7 @@ func newCache() *importCache {
 // getOrAdd tries to get the value for key. If not present, and another
 // goroutine is currently computing a value for key, this goroutine will wait
 // till it's ready.
-func (service *importCache) getOrAdd(key string, add func() rel.Value) rel.Value {
+func (service *importCache) getOrAdd(key string, add func() (rel.Value, error)) (rel.Value, error) {
 	adding := false
 
 	service.mutex.Lock()
@@ -39,7 +39,7 @@ func (service *importCache) getOrAdd(key string, add func() rel.Value) rel.Value
 	for {
 		if val, has := service.cache[key]; has {
 			if val != nil {
-				return val
+				return val, nil
 			}
 			// Another goroutine is adding an entry.
 			service.cond.Wait()
@@ -54,7 +54,10 @@ func (service *importCache) getOrAdd(key string, add func() rel.Value) rel.Value
 	// Free the lock while we work.
 	service.mutex.Unlock()
 	adding = true
-	val := add()
+	val, err := add()
+	if err != nil {
+		return nil, err
+	}
 	adding = false
 	service.mutex.Lock()
 
@@ -64,5 +67,5 @@ func (service *importCache) getOrAdd(key string, add func() rel.Value) rel.Value
 		delete(service.cache, key)
 	}
 	service.cond.Broadcast()
-	return val
+	return val, nil
 }
