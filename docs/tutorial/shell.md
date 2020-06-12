@@ -149,11 +149,11 @@ further input. Here's a more complex example.
 ```arrai
 @> let v = (x: 1, y: 2, z: 3);
  > let length = (v.x^2 + v.y^2 + v.z^2)^0.5;
- > cond (
+ > cond {
  >     length > 1: "too big",
  >     length < 1: "too small",
  >     _: "just right"
- > )
+ > }
 ```
 
 Caution: The current approach to detection uses some simple heuristics such as
