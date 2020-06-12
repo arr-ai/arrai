@@ -33,10 +33,10 @@ func (e *UnnestExpr) String() string {
 func (e *UnnestExpr) Eval(local Scope) (Value, error) {
 	value, err := e.lhs.Eval(local)
 	if err != nil {
-		return nil, wrapContext(err, e, local)
+		return nil, WrapContext(err, e, local)
 	}
 	if set, ok := value.(Set); ok {
 		return Unnest(set, e.attr), nil
 	}
-	return nil, wrapContext(errors.Errorf("unnest not applicable to %T", value), e, local)
+	return nil, WrapContext(errors.Errorf("unnest not applicable to %T", value), e, local)
 }

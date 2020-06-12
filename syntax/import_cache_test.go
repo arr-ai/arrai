@@ -30,11 +30,11 @@ func TestImportCache(t *testing.T) {
 		go func() {
 			defer wg.Done()
 			time.Sleep(time.Until(start.Add(time.Duration(whenMs) * time.Millisecond)))
-			actual := cache.getOrAdd(key, func() rel.Value {
+			actual, _ := cache.getOrAdd(key, func() (rel.Value, error) {
 				log("> %s", descr)
 				time.Sleep(time.Duration(sleepMs) * time.Millisecond)
 				log("< %s", descr)
-				return value
+				return value, nil
 			})
 			rel.AssertEqualValues(t, actual, value)
 		}()

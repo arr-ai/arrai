@@ -144,8 +144,8 @@ func importURL(url string) (rel.Value, error) {
 		if err != nil {
 			return nil, err
 		}
-		val := cache.getOrAdd(url, func() rel.Value { return bytesValue(NoPath, data) })
-		return val, nil
+		val, err := cache.getOrAdd(url, func() (rel.Value, error) { return bytesValue(NoPath, data) })
+		return val, err
 	}
 	return nil, fmt.Errorf("request %s failed: %s", url, resp.Status)
 }
@@ -165,20 +165,20 @@ func fileValue(filename string) (rel.Value, error) {
 	case ".yml", ".yaml":
 		return translate.BytesYamlToArrai(bytes)
 	}
-	return bytesValue(filename, bytes), nil
+	return bytesValue(filename, bytes)
 }
 
-func bytesValue(filename string, data []byte) rel.Value {
-	eval := func() rel.Value {
+func bytesValue(filename string, data []byte) (rel.Value, error) {
+	eval := func() (rel.Value, error) {
 		expr, err := Compile(filename, string(data))
 		if err != nil {
-			panic(err)
+			return nil, err
 		}
 		value, err := expr.Eval(rel.EmptyScope)
 		if err != nil {
-			panic(err)
+			return nil, rel.WrapContext(err, expr, rel.EmptyScope)
 		}
-		return value
+		return value, nil
 	}
 	if filename != NoPath {
 		return cache.getOrAdd(filename, eval)

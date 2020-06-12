@@ -140,25 +140,25 @@ func (e *ReduceExpr) String() string {
 func (e *ReduceExpr) Eval(local Scope) (_ Value, err error) {
 	a, err := e.a.Eval(local)
 	if err != nil {
-		return nil, wrapContext(err, e, local)
+		return nil, WrapContext(err, e, local)
 	}
 	if s, ok := a.(Set); ok {
 		acc, err := e.init(s)
 		if err != nil {
-			return nil, wrapContext(err, e, local)
+			return nil, WrapContext(err, e, local)
 		}
 		for i := s.Enumerator(); i.MoveNext(); {
 			f, err := e.f.Eval(local)
 			if err != nil {
-				return nil, wrapContext(err, e, local)
+				return nil, WrapContext(err, e, local)
 			}
 			v, err := SetCall(f.(Closure), i.Current())
 			if err != nil {
-				return nil, wrapContext(err, e, local)
+				return nil, WrapContext(err, e, local)
 			}
 			acc, err = e.reduce(acc, v)
 			if err != nil {
-				return nil, wrapContext(err, e, local)
+				return nil, WrapContext(err, e, local)
 			}
 		}
 		return e.output(acc)
