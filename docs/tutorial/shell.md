@@ -152,7 +152,7 @@ further input. Here's a more complex example.
  > cond (
  >     length > 1: "too big",
  >     length < 1: "too small",
- >     *: "just right"
+ >     _: "just right"
  > )
 ```
 
