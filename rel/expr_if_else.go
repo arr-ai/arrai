@@ -28,7 +28,7 @@ func (e *IfElseExpr) String() string {
 func (e *IfElseExpr) Eval(local Scope) (Value, error) {
 	cond, err := e.cond.Eval(local)
 	if err != nil {
-		return nil, wrapContext(err, e, local)
+		return nil, WrapContext(err, e, local)
 	}
 	if cond.IsTrue() {
 		return e.ifTrue.Eval(local)

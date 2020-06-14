@@ -39,7 +39,7 @@ func (e IdentExpr) Eval(local Scope) (Value, error) {
 	if a, found := local.Get(e.ident); found && a != nil {
 		return a.Eval(local)
 	}
-	return nil, wrapContext(fmt.Errorf("name %q not found in %v", e.ident, local.m.Keys()), e, local)
+	return nil, WrapContext(fmt.Errorf("name %q not found in %v", e.ident, local.m.Keys()), e, local)
 }
 
 func (e IdentExpr) Bind(scope Scope, value Value) (Scope, error) {

@@ -54,11 +54,11 @@ func (e DictExpr) Eval(local Scope) (Value, error) {
 	for _, expr := range e.entryExprs {
 		at, err := expr.at.Eval(local)
 		if err != nil {
-			return nil, wrapContext(err, e, local)
+			return nil, WrapContext(err, e, local)
 		}
 		value, err := expr.value.Eval(local)
 		if err != nil {
-			return nil, wrapContext(err, e, local)
+			return nil, WrapContext(err, e, local)
 		}
 		entryExprs = append(entryExprs, NewDictEntryTuple(at, value))
 	}

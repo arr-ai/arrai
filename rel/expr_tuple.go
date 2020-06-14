@@ -144,7 +144,7 @@ func (e *TupleExpr) Eval(local Scope) (Value, error) {
 	for _, attr := range e.attrs {
 		tuple, err = attr.Apply(local, tuple)
 		if err != nil {
-			return nil, wrapContext(err, e, local)
+			return nil, WrapContext(err, e, local)
 		}
 	}
 	// TODO: Construct new tuple directly

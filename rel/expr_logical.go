@@ -22,7 +22,7 @@ func (e AndExpr) String() string {
 func (e AndExpr) Eval(local Scope) (Value, error) {
 	a, err := e.a.Eval(local)
 	if err != nil {
-		return nil, wrapContext(err, e, local)
+		return nil, WrapContext(err, e, local)
 	}
 	if !a.IsTrue() {
 		return a, nil
@@ -30,7 +30,7 @@ func (e AndExpr) Eval(local Scope) (Value, error) {
 
 	b, err := e.b.Eval(local)
 	if err != nil {
-		return nil, wrapContext(err, e, local)
+		return nil, WrapContext(err, e, local)
 	}
 
 	return b, nil
@@ -52,7 +52,7 @@ func (e OrExpr) String() string {
 func (e OrExpr) Eval(local Scope) (Value, error) {
 	a, err := e.a.Eval(local)
 	if err != nil {
-		return nil, wrapContext(err, e, local)
+		return nil, WrapContext(err, e, local)
 	}
 	if a.IsTrue() {
 		return a, nil
@@ -60,7 +60,7 @@ func (e OrExpr) Eval(local Scope) (Value, error) {
 
 	b, err := e.b.Eval(local)
 	if err != nil {
-		return nil, wrapContext(err, e, local)
+		return nil, WrapContext(err, e, local)
 	}
 
 	return b, nil
