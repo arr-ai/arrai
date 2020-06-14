@@ -23,3 +23,7 @@ func (p IdentPattern) Bind(scope Scope, value Value) (Scope, error) {
 func (p IdentPattern) String() string {
 	return p.ident
 }
+
+func (p IdentPattern) Bindings() []string {
+	return []string{p.ident}
+}

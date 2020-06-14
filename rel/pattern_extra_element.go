@@ -18,3 +18,7 @@ func (p ExtraElementPattern) Bind(scope Scope, value Value) (Scope, error) {
 func (p ExtraElementPattern) String() string {
 	return "..." + p.ident
 }
+
+func (p ExtraElementPattern) Bindings() []string {
+	return []string{p.ident}
+}

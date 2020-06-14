@@ -120,3 +120,11 @@ func (p TuplePattern) String() string { //nolint:dupl
 	b.WriteByte(')')
 	return b.String()
 }
+
+func (p TuplePattern) Bindings() []string {
+	bindings := make([]string, len(p.attrs))
+	for i, v := range p.attrs {
+		bindings[i] = v.pattern.String()
+	}
+	return bindings
+}

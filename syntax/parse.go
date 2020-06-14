@@ -71,22 +71,6 @@ func (pc ParseContext) Parse(s *parser.Scanner) (ast.Branch, error) {
 	rscopes := []rel.Scope{{}}
 	v, err := arraiParsers.ParseWithExternals(parser.Rule("expr"), s, parser.ExternalRefs{
 		"bind": func(pscope parser.Scope, _ *parser.Scanner) (parser.TreeElement, error) {
-			identStr := "."
-			if _, ident, has := pscope.GetVal("IDENT"); has {
-				identStr = ident.(parser.Scanner).String()
-			} else if _, pattern, has := pscope.GetVal("pattern"); has {
-				patNode := ast.FromParserNode(arraiParsers.Grammar(), pattern)
-				pat := pc.compilePattern(patNode)
-				if epat, is := pat.(rel.ExprPattern); is {
-					if identExpr, is := epat.Expr.(rel.IdentExpr); is {
-						identStr = identExpr.Ident()
-					}
-				}
-				if identStr == "" {
-					return nil, nil
-				}
-			}
-
 			_, exprElt, has := pscope.GetVal("expr@1")
 			if !has {
 				_, exprElt, has = pscope.GetVal("expr")
@@ -96,11 +80,29 @@ func (pc ParseContext) Parse(s *parser.Scanner) (ast.Branch, error) {
 					panic("wat?")
 				}
 			}
-
 			exprNode := ast.FromParserNode(arraiParsers.Grammar(), exprElt)
 			expr := pc.CompileExpr(exprNode)
-			expr = rel.NewExprClosure(rscopes[len(rscopes)-1], expr)
-			rscopes = append(rscopes, rscopes[len(rscopes)-1].With(identStr, expr))
+			exprClosure := rel.NewExprClosure(rscopes[len(rscopes)-1], expr)
+
+			identStr := "."
+			if _, ident, has := pscope.GetVal("IDENT"); has {
+				identStr = ident.(parser.Scanner).String()
+			}
+			rscopes = append(rscopes, rscopes[len(rscopes)-1].With(identStr, exprClosure))
+
+			if _, pattern, has := pscope.GetVal("pattern"); has {
+				source := expr.Source()
+
+				patNode := ast.FromParserNode(arraiParsers.Grammar(), pattern)
+				pat := pc.compilePattern(patNode)
+				bindings := pat.Bindings()
+				for _, b := range bindings {
+					rhs := rel.NewFunction(*parser.NewScanner(fmt.Sprintf("let %s = %s; %s", pat, source, b)),
+						pat, rel.NewIdentExpr(*parser.NewScanner(b), b))
+					rscopes = append(rscopes, rscopes[len(rscopes)-1].With(b, binops["->"](source, expr, rhs)))
+				}
+			}
+
 			return nil, nil
 		},
 		"ast": func(scope parser.Scope, input *parser.Scanner) (parser.TreeElement, error) {

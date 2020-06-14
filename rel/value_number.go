@@ -118,3 +118,7 @@ func (n Number) Bind(scope Scope, value Value) (Scope, error) {
 
 	return EmptyScope, nil
 }
+
+func (n Number) Bindings() []string {
+	return []string{n.String()}
+}

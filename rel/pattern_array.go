@@ -91,3 +91,11 @@ func (p ArrayPattern) String() string {
 	b.WriteByte(']')
 	return b.String()
 }
+
+func (p ArrayPattern) Bindings() []string {
+	bindings := make([]string, len(p.items))
+	for i, v := range p.items {
+		bindings[i] = v.String()
+	}
+	return bindings
+}

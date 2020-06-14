@@ -31,6 +31,10 @@ func (p ExprPattern) String() string {
 	return p.Expr.String()
 }
 
+func (p ExprPattern) Bindings() []string {
+	return []string{p.Expr.String()}
+}
+
 type ExprsPattern struct {
 	exprs []Expr
 }
@@ -87,4 +91,12 @@ func (p ExprsPattern) String() string {
 	}
 	b.WriteByte(']')
 	return b.String()
+}
+
+func (p ExprsPattern) Bindings() []string {
+	bindings := make([]string, len(p.exprs))
+	for i, v := range p.exprs {
+		bindings[i] = v.String()
+	}
+	return bindings
 }
