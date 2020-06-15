@@ -4,6 +4,7 @@ import "testing"
 
 func TestStrSub(t *testing.T) { //nolint:dupl
 	t.Parallel()
+
 	AssertCodesEvalToSameValue(t, `" BC"`, `//seq.sub( "A", " ","ABC")`)
 	AssertCodesEvalToSameValue(t, `"this is not a test"`, `//seq.sub("aaa", "is", "this is not a test")`)
 	AssertCodesEvalToSameValue(t, `"this is a test"`, `//seq.sub("is not", "is", "this is not a test")`)
@@ -25,6 +26,7 @@ func TestStrSub(t *testing.T) { //nolint:dupl
 
 func TestArraySub(t *testing.T) {
 	t.Parallel()
+
 	AssertCodesEvalToSameValue(t, `['T', 'B', 'T', 'C', 'D', 'E']`,
 		`//seq.sub(['A'], ['T'], ['A', 'B', 'A', 'C', 'D', 'E'])`)
 	AssertCodesEvalToSameValue(t, `[['A', 'B'], ['T','C'],['A','D']]`,
@@ -37,6 +39,8 @@ func TestArraySub(t *testing.T) {
 }
 
 func TestArraySubEdgeCases(t *testing.T) {
+	t.Parallel()
+
 	AssertCodesEvalToSameValue(t, `[]`, `//seq.sub( [],[], [])`)
 	AssertCodesEvalToSameValue(t, `[1]`, `//seq.sub( [],[1], [])`)
 	AssertCodesEvalToSameValue(t, `[1,2]`, `//seq.sub( [],[1,2], [])`)
@@ -52,6 +56,7 @@ func TestArraySubEdgeCases(t *testing.T) {
 
 func TestBytesSub(t *testing.T) {
 	t.Parallel()
+
 	// hello bytes - 104 101 108 108 111
 	AssertCodesEvalToSameValue(t, `<<'oello'>>`, `//seq.sub(<<104>>,<<111>>,<<'hello'>>)`)
 	AssertCodesEvalToSameValue(t, `<<'hehho'>>`, `//seq.sub(<<108>>,<<104>>,<<'hello'>>)`)

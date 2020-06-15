@@ -46,7 +46,7 @@ corresponding names.
 
 ```bash
 $ arrai e 'let x = 1; (\a a + b)(x)'
-INFO[0000] Name "b" not found in {x, a}
+INFO[0000] name "b" not found in {x, a}
 
 .:1:20:
 let x = 1; (\a a + b)(x)
@@ -63,6 +63,61 @@ let x = 1; (\a a + b)(x)
 @> <tab>
 a x
 ```
+
+It is also possible to navigate through the frames by using the `/up` (or
+`/u`) and `/down` (or `/d`) commands.
+
+Running the following script:
+```arrai
+let a = {"a": {"b": {"c": 1}}};
+let x = "b";
+let y = "d";
+let d = (
+    \z
+    let b = a("a");
+    b(z)(y)
+);
+d(x)
+```
+
+Will drop into this shell.
+
+```bash
+INFO[0000] Call: no return values from set {c: 1}
+
+test.arrai:7:5:
+    let b = a("a");
+    b(z)(y)
+
+test.arrai:9:1:
+);
+d(x)
+
+@> <tab>
+// a  b  x  y  z
+@> /u
+2020-06-09T12:50:58.306199+10:00 INFO Stack: 0
+
+test.arrai:9:1:
+);
+d(x)
+
+@> <tab>
+// a  d  x  y
+@> /d
+2020-06-09T12:52:15.393629+10:00 INFO Stack: 1
+
+test.arrai:7:5:
+    let b = a("a");
+    b(z)(y)
+
+@> <tab>
+// a  b  x  y  z
+```
+
+Stack number represents which stack is currently being used. Low stack number
+is closer to the first point of execution. The higher the stack number, the
+closer it is to the point of failure.
 
 ## Evaluating expressions
 
@@ -94,11 +149,11 @@ further input. Here's a more complex example.
 ```arrai
 @> let v = (x: 1, y: 2, z: 3);
  > let length = (v.x^2 + v.y^2 + v.z^2)^0.5;
- > cond (
+ > cond {
  >     length > 1: "too big",
  >     length < 1: "too small",
- >     *: "just right"
- > )
+ >     _: "just right"
+ > }
 ```
 
 Caution: The current approach to detection uses some simple heuristics such as

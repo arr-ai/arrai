@@ -74,11 +74,14 @@ func (p SetPattern) Bind(local Scope, value Value) (Scope, error) {
 				return EmptyScope, fmt.Errorf("item type %s is not supported yet", t)
 			}
 		case IdentPattern:
-			v := local.MustGet(t.ident).(Value)
-			if !set.Has(v) {
+			v, has := local.Get(t.ident)
+			if !has {
+				return EmptyScope, fmt.Errorf("%q not in scope", t.ident)
+			}
+			if !set.Has(v.(Value)) {
 				return EmptyScope, fmt.Errorf("item %s is not included in set %s", v, value)
 			}
-			set = set.Without(v).(GenericSet)
+			set = set.Without(v.(Value)).(GenericSet)
 		default:
 			return EmptyScope, fmt.Errorf("%s not supported yet", t)
 		}
@@ -102,7 +105,10 @@ func (p SetPattern) Bind(local Scope, value Value) (Scope, error) {
 			return EmptyScope, err
 		}
 
-		result = result.MatchedUpdate(scope)
+		result, err = result.MatchedUpdate(scope)
+		if err != nil {
+			return EmptyScope, err
+		}
 	}
 
 	return result, nil
@@ -120,4 +126,12 @@ func (p SetPattern) String() string {
 	}
 	buf.WriteString("}")
 	return buf.String()
+}
+
+func (p SetPattern) Bindings() []string {
+	bindings := make([]string, len(p.patterns))
+	for i, v := range p.patterns {
+		bindings[i] = v.String()
+	}
+	return bindings
 }

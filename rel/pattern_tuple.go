@@ -75,7 +75,10 @@ func (p TuplePattern) Bind(local Scope, value Value) (Scope, error) {
 			if err != nil {
 				return EmptyScope, err
 			}
-			result = result.MatchedUpdate(scope)
+			result, err = result.MatchedUpdate(scope)
+			if err != nil {
+				return EmptyScope, err
+			}
 			continue
 		}
 		tupleExpr, found := tuple.Get(attr.name)
@@ -86,14 +89,17 @@ func (p TuplePattern) Bind(local Scope, value Value) (Scope, error) {
 		if err != nil {
 			return EmptyScope, err
 		}
-		result = result.MatchedUpdate(scope)
+		result, err = result.MatchedUpdate(scope)
+		if err != nil {
+			return EmptyScope, err
+		}
 		names = names.Without(attr.name)
 	}
 
 	return result, nil
 }
 
-func (p TuplePattern) String() string {
+func (p TuplePattern) String() string { //nolint:dupl
 	var b bytes.Buffer
 	b.WriteByte('(')
 	for i, attr := range p.attrs {
@@ -101,7 +107,7 @@ func (p TuplePattern) String() string {
 			b.WriteString(", ")
 		}
 		if attr.IsWildcard() {
-			if attr.pattern != DotIdent {
+			if ident, is := attr.pattern.(IdentExpr); !is || ident.Ident() != "." {
 				b.WriteString(attr.pattern.String())
 			}
 			b.WriteString(".*")
@@ -113,4 +119,12 @@ func (p TuplePattern) String() string {
 	}
 	b.WriteByte(')')
 	return b.String()
+}
+
+func (p TuplePattern) Bindings() []string {
+	bindings := make([]string, len(p.attrs))
+	for i, v := range p.attrs {
+		bindings[i] = v.pattern.String()
+	}
+	return bindings
 }

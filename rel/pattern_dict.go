@@ -31,6 +31,7 @@ func NewDictPattern(entries ...DictPatternEntry) DictPattern {
 	names := make(map[string]bool)
 	for _, entry := range entries {
 		if names[entry.at.String()] {
+			// TODO: Return a runtime error
 			panic(fmt.Sprintf("name %s is duplicated in dict", entry.at))
 		}
 	}
@@ -71,27 +72,40 @@ func (p DictPattern) Bind(local Scope, value Value) (Scope, error) {
 				if err != nil {
 					return EmptyScope, err
 				}
-				result = result.MatchedUpdate(scope)
+				result, err = result.MatchedUpdate(scope)
+				if err != nil {
+					return EmptyScope, err
+				}
 			} else {
 				scope, err := entry.value.Bind(local, Dict{m: m})
 				if err != nil {
 					return EmptyScope, err
 				}
-				result = result.MatchedUpdate(scope)
+				result, err = result.MatchedUpdate(scope)
+				if err != nil {
+					return EmptyScope, err
+				}
 			}
 
 			continue
 		}
-		dictValue, found := m.Get(entry.at)
+		key := entry.at
+		if lit, is := key.(LiteralExpr); is {
+			key = lit.Literal()
+		}
+		dictValue, found := m.Get(key)
 		if !found {
-			return EmptyScope, fmt.Errorf("couldn't find %s in dict %s", entry.at, m)
+			return EmptyScope, fmt.Errorf("couldn't find %s in dict %s", key, m)
 		}
 		scope, err := entry.value.Bind(local, dictValue.(Value))
 		if err != nil {
 			return EmptyScope, err
 		}
-		result = result.MatchedUpdate(scope)
-		m = m.Without(frozen.NewSet(entry.at))
+		result, err = result.MatchedUpdate(scope)
+		if err != nil {
+			return EmptyScope, err
+		}
+		m = m.Without(frozen.NewSet(key))
 	}
 
 	return result, nil
@@ -108,4 +122,12 @@ func (p DictPattern) String() string {
 	}
 	b.WriteByte('}')
 	return b.String()
+}
+
+func (p DictPattern) Bindings() []string {
+	bindings := make([]string, len(p.entries))
+	for i, v := range p.entries {
+		bindings[i] = v.value.String()
+	}
+	return bindings
 }

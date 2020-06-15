@@ -7,7 +7,7 @@ import (
 	"github.com/arr-ai/wbnf/parser"
 )
 
-type CompareFunc func(a, b Value) bool
+type CompareFunc func(a, b Value) (bool, error)
 
 // CompareExpr represents a range of operators.
 type CompareExpr struct {
@@ -36,14 +36,18 @@ func (e CompareExpr) String() string {
 func (e CompareExpr) Eval(local Scope) (Value, error) {
 	lhs, err := e.args[0].Eval(local)
 	if err != nil {
-		return nil, wrapContext(err, e, local)
+		return nil, WrapContext(err, e, local)
 	}
 	for i, arg := range e.args[1:] {
 		rhs, err := arg.Eval(local)
 		if err != nil {
-			return nil, wrapContext(err, e, local)
+			return nil, WrapContext(err, e, local)
 		}
-		if !e.comps[i](lhs, rhs) {
+		sat, err := e.comps[i](lhs, rhs)
+		if err != nil {
+			return nil, err
+		}
+		if !sat {
 			return False, nil
 		}
 		lhs = rhs

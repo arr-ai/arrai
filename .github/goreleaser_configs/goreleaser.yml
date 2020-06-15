@@ -11,8 +11,9 @@ build:
   id: arrai
   main: ./cmd/arrai
   ldflags:
-    - -s -w -X main.Version={{.Version}}
+    - -s -w -X main.Version=v{{.Version}}
     - -X main.GitCommit={{.ShortCommit}}
+    - -X main.GitFullCommit={{.FullCommit}}
     - -X main.BuildDate={{.Date}}
     - -X main.BuildOS={{.Os}}/{{.Arch}}
     - -s -w -X "main.GoVersion={{.Env.GOVERSION}}"
@@ -33,13 +34,13 @@ archives:
   format_overrides:
     - goos: windows
       format: zip
-  name_template: "{{.ProjectName}}_{{.Version}}_{{.Os}}-{{.Arch}}"
+  name_template: "{{.ProjectName}}_v{{.Version}}_{{.Os}}-{{.Arch}}"
   files:
     - README.md
     - LICENSE
 
 checksum:
-  name_template: '{{.ProjectName}}_{{.Version}}_checksums.txt'
+  name_template: '{{.ProjectName}}_v{{.Version}}_checksums.txt'
 snapshot:
 changelog:
   sort: asc

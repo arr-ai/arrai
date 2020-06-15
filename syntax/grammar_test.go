@@ -23,22 +23,32 @@ const expected = `(
 	)`
 
 func TestGrammarToValueExprQualified(t *testing.T) {
+	t.Parallel()
+
 	AssertCodesEvalToSameValue(t, expected, `//grammar.parse(//grammar.lang.wbnf, "grammar", "a -> '1';")`)
 }
 
 func TestGrammarToValueExprScoped(t *testing.T) {
+	t.Parallel()
+
 	AssertCodesEvalToSameValue(t, expected, `//grammar -> .parse(.lang.wbnf, "grammar", "a -> '1';")`)
 }
 
 func TestGrammarToValueExprInline(t *testing.T) {
+	t.Parallel()
+
 	AssertCodesEvalToSameValue(t, expected, `{://grammar.lang.wbnf[grammar]: a -> '1'; :}`)
 }
 
 func TestGrammarToValueExprInlineDefault(t *testing.T) {
+	t.Parallel()
+
 	AssertCodesEvalToSameValue(t, expected, `{://grammar.lang.wbnf: a -> '1'; :}`)
 }
 
 func TestMacroToValueInline(t *testing.T) {
+	t.Parallel()
+
 	AssertCodesEvalToSameValue(t, `(year: 2020, month: 06, day: 09)`, `
 		let time = (
 			@grammar: {://grammar.lang.wbnf: date -> year=\d{4} "-" month=\d{2} "-" day=\d{2};:},
@@ -49,6 +59,8 @@ func TestMacroToValueInline(t *testing.T) {
 }
 
 func TestArraiGrammarMacroEquality(t *testing.T) {
+	t.Parallel()
+
 	AssertCodesEvalToSameValue(t,
 		`//grammar.parse(//grammar.lang.arrai)("expr", "1")`,
 		`{://grammar.lang.arrai:1:}`,
@@ -57,11 +69,15 @@ func TestArraiGrammarMacroEquality(t *testing.T) {
 
 // TODO(ladeo): Figure out why this fails and fix it.
 //func TestArraiGrammarGrammarEquality(t *testing.T) {
+//	t.Parallel()
+//
 //	AssertCodeEvalsToGrammar(t, arraiParsers.Grammar(), `//grammar.lang.arrai`)
 //}
 
 // TODO(ladeo): Figure out why this fails and fix it.
 //func TestMacroToArraiValueInline(t *testing.T) {
+//	t.Parallel()
+//
 //	AssertCodesEvalToSameValue(t,
 //		`1`,
 //		`{:(@grammar://grammar.lang.arrai, @transform:(expr:\ast 1)):1:}`,
@@ -77,6 +93,7 @@ func TestGrammarToValueExprScopedAndInline(t *testing.T) {
 		expr := expr
 		t.Run(expr, func(t *testing.T) {
 			t.Parallel()
+
 			AssertCodesEvalToSameValue(t,
 				"//grammar -> .parse(.lang.wbnf, 'grammar', `"+expr+"`)",
 				`{://grammar.lang.wbnf[grammar]:`+expr+`:}`,
@@ -86,6 +103,8 @@ func TestGrammarToValueExprScopedAndInline(t *testing.T) {
 }
 
 func TestGrammarParseParseLiteral(t *testing.T) {
+	t.Parallel()
+
 	expected := `(
 		"": ["+"],
 		@rule: "expr",
@@ -119,6 +138,8 @@ func TestGrammarParseParseLiteral(t *testing.T) {
 }
 
 func TestGrammarParseParseScopeVar(t *testing.T) {
+	t.Parallel()
+
 	AssertCodesEvalToSameValue(t,
 		`(
 			@rule: "x",
@@ -165,6 +186,7 @@ func TestGrammarParseParseScopeVar(t *testing.T) {
 }
 
 // func TestGrammarParseWithEscape(t *testing.T) {
+// 	t.Parallel()
 // 	AssertCodesEvalToSameValue(t,
 // 		`(
 // 			"": ["+"],

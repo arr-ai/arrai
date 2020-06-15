@@ -24,12 +24,12 @@ func NewSafeTailExpr(scanner parser.Scanner, fallback, base Expr, tailExprs []Sa
 func (s *SafeTailExpr) Eval(local Scope) (value Value, err error) {
 	value, err = s.base.Eval(local)
 	if err != nil {
-		return nil, wrapContext(err, s, local)
+		return nil, WrapContext(err, s, local)
 	}
 	for _, t := range s.tailExprs {
 		value, err = t(value, local)
 		if err != nil {
-			return nil, wrapContext(err, s, local)
+			return nil, WrapContext(err, s, local)
 		}
 		if value == nil {
 			return s.fallbackValue.Eval(local)

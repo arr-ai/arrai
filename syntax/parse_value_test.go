@@ -9,9 +9,12 @@ import (
 )
 
 func assertParse(t *testing.T, expected rel.Value, input string) bool { //nolint:unparam
-	value, err := Compile(NoPath, input)
+	expr, err := Compile(NoPath, input)
+	if lit, is := expr.(rel.LiteralExpr); is {
+		expr = lit.Literal()
+	}
 	return assert.NoError(t, err) &&
-		assert.True(t, expected.Equal(value), "%s == \n%s", expected, value)
+		assert.True(t, expected.Equal(expr), "%s == \n%s", expected, expr)
 }
 
 // func assertParseError(t *testing.T, input string) bool {

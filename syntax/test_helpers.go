@@ -82,6 +82,7 @@ func AssertCodeEvalsToGrammar(t *testing.T, expected parser.Grammar, code string
 }
 
 // AssertCodePanics asserts that code panics when executed.
+// TODO: Remove this. Should only intentionally panic for implementation bugs.
 func AssertCodePanics(t *testing.T, code string) bool {
 	return assert.Panics(t, func() {
 		pc := ParseContext{SourceDir: ".."}

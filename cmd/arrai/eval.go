@@ -8,6 +8,7 @@ import (
 
 	"github.com/arr-ai/arrai/rel"
 	"github.com/arr-ai/arrai/syntax"
+	"github.com/arr-ai/arrai/tools"
 	"github.com/urfave/cli/v2"
 )
 
@@ -32,6 +33,8 @@ func evalExpr(path, source string, w io.Writer) error {
 	switch v := value.(type) {
 	case rel.String:
 		s = v.String()
+	case rel.Bytes:
+		s = v.String()
 	case rel.Set:
 		if !v.IsTrue() {
 			s = ""
@@ -52,6 +55,7 @@ func evalExpr(path, source string, w io.Writer) error {
 }
 
 func eval(c *cli.Context) error {
+	tools.SetArgs(c)
 	source := c.Args().Get(0)
 	return evalImpl(source, os.Stdout)
 }

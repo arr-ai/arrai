@@ -7,6 +7,7 @@ import (
 )
 
 func TestDictEntryTupleLess(t *testing.T) {
+	t.Parallel()
 	// Test for a panic when comparing Strings using !=.
 	assert.NotPanics(t, func() {
 		NewDict(false,
@@ -17,6 +18,8 @@ func TestDictEntryTupleLess(t *testing.T) {
 }
 
 func TestDictEntryTupleOrdered(t *testing.T) {
+	t.Parallel()
+
 	entries := NewDict(true,
 		NewDictEntryTuple(NewString([]rune("b")), NewNumber(2)),
 		NewDictEntryTuple(NewString([]rune("a")), NewNumber(2)),
@@ -31,6 +34,8 @@ func TestDictEntryTupleOrdered(t *testing.T) {
 }
 
 func TestDictLess(t *testing.T) {
+	t.Parallel()
+
 	kv := func(k, v float64) DictEntryTuple {
 		return NewDictEntryTuple(NewNumber(k), NewNumber(v))
 	}
@@ -60,15 +65,15 @@ func TestDictCallAll(t *testing.T) {
 	}
 	dict := NewDict(false, kv(1, 10), kv(2, 20), kv(3, 30))
 
-	AssertEqualValues(t, NewSet(NewNumber(10)), dict.CallAll(NewNumber(1)))
-	AssertEqualValues(t, NewSet(NewNumber(20)), dict.CallAll(NewNumber(2)))
-	AssertEqualValues(t, NewSet(NewNumber(30)), dict.CallAll(NewNumber(3)))
-	AssertEqualValues(t, None, dict.CallAll(NewNumber(4)))
+	AssertEqualValues(t, NewSet(NewNumber(10)), MustCallAll(dict, NewNumber(1)))
+	AssertEqualValues(t, NewSet(NewNumber(20)), MustCallAll(dict, NewNumber(2)))
+	AssertEqualValues(t, NewSet(NewNumber(30)), MustCallAll(dict, NewNumber(3)))
+	AssertEqualValues(t, None, MustCallAll(dict, NewNumber(4)))
 
 	dict = NewDict(true, kv(1, 10), kv(1, 11), kv(2, 20), kv(3, 30))
 
-	AssertEqualValues(t, NewSet(NewNumber(10), NewNumber(11)), dict.CallAll(NewNumber(1)))
-	AssertEqualValues(t, NewSet(NewNumber(20)), dict.CallAll(NewNumber(2)))
-	AssertEqualValues(t, NewSet(NewNumber(30)), dict.CallAll(NewNumber(3)))
-	AssertEqualValues(t, None, dict.CallAll(NewNumber(4)))
+	AssertEqualValues(t, NewSet(NewNumber(10), NewNumber(11)), MustCallAll(dict, NewNumber(1)))
+	AssertEqualValues(t, NewSet(NewNumber(20)), MustCallAll(dict, NewNumber(2)))
+	AssertEqualValues(t, NewSet(NewNumber(30)), MustCallAll(dict, NewNumber(3)))
+	AssertEqualValues(t, None, MustCallAll(dict, NewNumber(4)))
 }

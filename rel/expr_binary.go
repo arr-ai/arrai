@@ -152,9 +152,13 @@ func NewWhereExpr(scanner parser.Scanner, a, pred Expr) Expr {
 		func(a, pred Value, local Scope) (Value, error) {
 			if x, ok := a.(Set); ok {
 				if p, ok := pred.(Closure); ok {
-					return x.Where(func(v Value) bool {
-						return SetCall(p, v).IsTrue()
-					}), nil
+					return x.Where(func(v Value) (bool, error) {
+						r, err := SetCall(p, v)
+						if err != nil {
+							return false, err
+						}
+						return r.IsTrue(), nil
+					})
 				}
 				return nil, errors.Errorf("'where' rhs must be a Fn, not %T", a)
 			}
@@ -171,7 +175,7 @@ func NewOrderByExpr(scanner parser.Scanner, a, key Expr) Expr {
 				if k, ok := key.(Closure); ok {
 					values, err := OrderBy(x,
 						func(value Value) (Value, error) {
-							return SetCall(k, value), nil
+							return SetCall(k, value)
 						},
 						func(a, b Value) bool {
 							return a.Less(b)
@@ -199,7 +203,15 @@ func NewOrderExpr(scanner parser.Scanner, a, key Expr) Expr {
 							return value, nil
 						},
 						func(a, b Value) bool {
-							return SetCall(SetCall(l, a).(Closure), b).IsTrue()
+							c, err := SetCall(l, a)
+							if err != nil {
+								panic(err)
+							}
+							less, err := SetCall(c.(Closure), b)
+							if err != nil {
+								panic(err)
+							}
+							return less.IsTrue()
 						})
 					if err != nil {
 						return nil, err
@@ -221,7 +233,13 @@ func NewRankExpr(scanner parser.Scanner, a, key Expr) Expr {
 		func(a, tuplef Value, local Scope) (Value, error) {
 			if x, ok := a.(Set); ok {
 				if l, ok := tuplef.(Closure); ok {
-					return Rank(x, func(v Tuple) Tuple { return SetCall(l, v).(Tuple) })
+					return Rank(x, func(v Tuple) (Tuple, error) {
+						result, err := SetCall(l, v)
+						if err != nil {
+							return nil, err
+						}
+						return result.(Tuple), nil
+					})
 				}
 				return nil, errors.Errorf("'order' rhs must be a Fn, not %T", a)
 			}
@@ -231,7 +249,7 @@ func NewRankExpr(scanner parser.Scanner, a, key Expr) Expr {
 
 func Call(a, b Value, _ Scope) (Value, error) {
 	if x, ok := a.(Set); ok {
-		return SetCall(x, b), nil
+		return SetCall(x, b)
 	}
 	return nil, errors.Errorf(
 		"call lhs must be a function, not %T", a)
@@ -256,19 +274,18 @@ func (e *BinExpr) String() string {
 
 // Eval returns the subject
 func (e *BinExpr) Eval(local Scope) (_ Value, err error) {
-	defer wrapPanic(e, &err, local)
 	a, err := e.a.Eval(local)
 	if err != nil {
-		return nil, wrapContext(err, e, local)
+		return nil, WrapContext(err, e, local)
 	}
 
 	b, err := e.b.Eval(local)
 	if err != nil {
-		return nil, wrapContext(err, e, local)
+		return nil, WrapContext(err, e, local)
 	}
 	val, err := e.eval(a, b, local)
 	if err != nil {
-		return nil, wrapContext(err, e, local)
+		return nil, WrapContext(err, e, local)
 	}
 	return val, nil
 }

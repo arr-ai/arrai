@@ -18,13 +18,13 @@ type SetExpr struct {
 func NewSetExpr(scanner parser.Scanner, elements ...Expr) Expr {
 	values := make([]Value, len(elements))
 	for i, expr := range elements {
-		value, ok := expr.(Value)
-		if !ok {
+		value, is := exprIsValue(expr)
+		if !is {
 			return &SetExpr{ExprScanner{scanner}, elements}
 		}
 		values[i] = value
 	}
-	return NewSet(values...)
+	return NewLiteralExpr(scanner, NewSet(values...))
 }
 
 // String returns a string representation of the expression.
@@ -47,7 +47,7 @@ func (e *SetExpr) Eval(local Scope) (Value, error) {
 	for _, expr := range e.elements {
 		value, err := EvalExpr(expr, local)
 		if err != nil {
-			return nil, wrapContext(err, e, local)
+			return nil, WrapContext(err, e, local)
 		}
 		values = append(values, value)
 	}

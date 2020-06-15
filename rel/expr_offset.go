@@ -20,19 +20,18 @@ func NewOffsetExpr(scanner parser.Scanner, n, s Expr) Expr {
 }
 
 func (o *OffsetExpr) Eval(local Scope) (_ Value, err error) {
-	defer wrapPanic(o, &err, local)
 	offset, err := o.offset.Eval(local)
 	if err != nil {
-		return nil, wrapContext(err, o, local)
+		return nil, WrapContext(err, o, local)
 	}
 	_, isNumber := offset.(Number)
 	if !isNumber {
-		return nil, wrapContext(errors.Errorf("\\ not applicable to %T", offset), o, local)
+		return nil, WrapContext(errors.Errorf("\\ not applicable to %T", offset), o, local)
 	}
 
 	array, err := o.array.Eval(local)
 	if err != nil {
-		return nil, wrapContext(err, o, local)
+		return nil, WrapContext(err, o, local)
 	}
 	switch a := array.(type) {
 	case Array:
@@ -42,7 +41,7 @@ func (o *OffsetExpr) Eval(local Scope) (_ Value, err error) {
 	case String:
 		return NewOffsetString(a.s, a.offset+int(offset.(Number))), nil
 	}
-	return nil, wrapContext(errors.Errorf("\\ not applicable to %T", array), o, local)
+	return nil, WrapContext(errors.Errorf("\\ not applicable to %T", array), o, local)
 }
 
 func (o *OffsetExpr) String() string {

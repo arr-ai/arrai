@@ -16,9 +16,11 @@ type BytesExpr struct {
 func NewBytesExpr(scanner parser.Scanner, elements ...Expr) Expr {
 	bytes := make([]byte, 0, len(elements))
 	for _, expr := range elements {
-		if byteNum, ok := expr.(Number); ok && isByteNumber(byteNum) {
-			bytes = append(bytes, byte(int(byteNum)))
-			continue
+		if value, is := exprIsValue(expr); is {
+			if byteNum, is := value.(Number); is && isByteNumber(byteNum) {
+				bytes = append(bytes, byte(int(byteNum)))
+				continue
+			}
 		}
 		return BytesExpr{ExprScanner{scanner}, elements}
 	}
@@ -30,30 +32,30 @@ func (b BytesExpr) Eval(local Scope) (Value, error) {
 	for _, expr := range b.elements {
 		value, err := expr.Eval(local)
 		if err != nil {
-			return nil, wrapContext(err, b, local)
+			return nil, WrapContext(err, b, local)
 		}
 		switch v := value.(type) {
 		case Number:
 			if !isByteNumber(v) {
-				return nil, wrapContext(errors.Errorf("BytesExpr.Eval: Number does not represent a byte: %v", v), b, local)
+				return nil, WrapContext(errors.Errorf("BytesExpr.Eval: Number does not represent a byte: %v", v), b, local)
 			}
 			bytes = append(bytes, byte(v))
 		case String:
 			if err := b.handleOffset(v); err != nil {
-				return nil, wrapContext(err, b, local)
+				return nil, WrapContext(err, b, local)
 			}
 			bytes = append(bytes, []byte(string(v.s))...)
 		case GenericSet:
 			if s, isString := AsString(v); isString {
 				if err := b.handleOffset(s); err != nil {
-					return nil, wrapContext(err, b, local)
+					return nil, WrapContext(err, b, local)
 				}
 				bytes = append(bytes, []byte(string(s.s))...)
 				continue
 			}
-			return nil, wrapContext(errors.Errorf("BytesExpr.Eval: Set %v is not supported", expr), b, local)
+			return nil, WrapContext(errors.Errorf("BytesExpr.Eval: Set %v is not supported", expr), b, local)
 		default:
-			return nil, wrapContext(errors.Errorf("BytesExpr.Eval: %T is not supported", v), b, local)
+			return nil, WrapContext(errors.Errorf("BytesExpr.Eval: %T is not supported", v), b, local)
 		}
 	}
 	return NewBytes(bytes), nil

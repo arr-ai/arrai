@@ -6,29 +6,17 @@ import (
 	"io/ioutil"
 	"os"
 
+	"github.com/arr-ai/arrai/tools"
+
 	"github.com/arr-ai/arrai/rel"
 )
 
 func stdOsGetArgs() rel.Value {
-	var offset int
-	switch os.Args[0] {
-	case "ai", "ax":
-		offset = 1
-	default:
-		if RunOmitted {
-			offset = 1
-		} else if len(os.Args) == 1 {
-			// to handle running script from syntax library
-			return rel.NewArray()
-		} else {
-			offset = 2
-		}
-	}
-	return strArrToRelArr(os.Args[offset:])
+	return strArrToRelArr(tools.Arguments)
 }
 
-func stdOsGetEnv(value rel.Value) rel.Value {
-	return rel.NewString([]rune(os.Getenv(value.(rel.String).String())))
+func stdOsGetEnv(value rel.Value) (rel.Value, error) {
+	return rel.NewString([]rune(os.Getenv(value.(rel.String).String()))), nil
 }
 
 func stdOsPathSeparator() rel.Value {
@@ -47,12 +35,12 @@ func stdOsCwd() rel.Value {
 	return rel.NewString([]rune(wd))
 }
 
-func stdOsFile(v rel.Value) rel.Value {
+func stdOsFile(v rel.Value) (rel.Value, error) {
 	f, err := ioutil.ReadFile(v.(rel.String).String())
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
-	return rel.NewBytes(f)
+	return rel.NewBytes(f), nil
 }
 
 var stdOsStdinVar = newStdOsStdin(os.Stdin)

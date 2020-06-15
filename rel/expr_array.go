@@ -17,14 +17,14 @@ func NewArrayExpr(scanner parser.Scanner, elements ...Expr) Expr {
 	values := make([]Value, 0, len(elements))
 	for _, expr := range elements {
 		if expr != nil {
-			if value, ok := expr.(Value); ok {
+			if value, is := exprIsValue(expr); is {
 				values = append(values, value)
 				continue
 			}
 		}
 		return ArrayExpr{ExprScanner{scanner}, elements}
 	}
-	return NewArray(values...)
+	return NewLiteralExpr(scanner, NewArray(values...))
 }
 
 // String returns a string representation of the expression.
@@ -52,7 +52,7 @@ func (e ArrayExpr) Eval(local Scope) (Value, error) {
 			var err error
 			value, err = expr.Eval(local)
 			if err != nil {
-				return nil, wrapContext(err, e, local)
+				return nil, WrapContext(err, e, local)
 			}
 		}
 		values = append(values, value)

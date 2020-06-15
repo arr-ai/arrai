@@ -1,5 +1,7 @@
 package rel
 
+import "fmt"
+
 type IdentPattern struct {
 	ident string
 }
@@ -9,11 +11,19 @@ func NewIdentPattern(ident string) IdentPattern {
 }
 
 func (p IdentPattern) Bind(scope Scope, value Value) (Scope, error) {
-	scope.MustGet(p.ident)
-	scope.MatchedWith(p.ident, value)
+	if _, has := scope.Get(p.ident); !has {
+		return EmptyScope, fmt.Errorf("%q not in scope", p.ident)
+	}
+	if _, err := scope.MatchedWith(p.ident, value); err != nil {
+		return Scope{}, err
+	}
 	return EmptyScope.With(p.ident, value), nil
 }
 
 func (p IdentPattern) String() string {
 	return p.ident
+}
+
+func (p IdentPattern) Bindings() []string {
+	return []string{p.ident}
 }
