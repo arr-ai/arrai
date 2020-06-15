@@ -3,13 +3,13 @@ package syntax
 import (
 	"errors"
 	"fmt"
-	"github.com/arr-ai/wbnf/ast"
-	"github.com/arr-ai/wbnf/wbnf"
 	"strings"
 	"testing"
 
 	"github.com/arr-ai/arrai/rel"
+	"github.com/arr-ai/wbnf/ast"
 	"github.com/arr-ai/wbnf/parser"
+	"github.com/arr-ai/wbnf/wbnf"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
