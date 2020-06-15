@@ -140,7 +140,10 @@ func (pc ParseContext) Parse(s *parser.Scanner) (ast.Branch, error) {
 
 			childastNode := ast.FromParserNode(subg, childast)
 			childastValue := rel.ASTNodeToValue(childastNode)
-			bodyValue := rel.SetCall(macro.transform, childastValue)
+			bodyValue, err := rel.SetCall(macro.transform, childastValue)
+			if err != nil {
+				return nil, err
+			}
 
 			return parser.Node{Tag: "extref", Children: nil, Extra: ast.Branch{
 				"@rule": ast.One{Node: ast.Extra{Data: parser.Rule(macro.ruleName)}},
