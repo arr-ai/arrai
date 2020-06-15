@@ -94,7 +94,7 @@ SEQ_COMMENT -> "," C*;
   | C* odelim="[" C* array=(%!sparse_sequence(top)?) C* cdelim="]" C*
   | C* odelim="<<" C* bytes=(item=(STR|NUM|CHAR|IDENT|"("top")"):SEQ_COMMENT,?) C* cdelim=">>" C*
   | C* odelim="(" tuple=(pairs=(extra | ((rec="rec"? name| name?) ":" v=top)):SEQ_COMMENT,?) cdelim=")" C*
-  | C* odelim="(" identpattern=IDENT cdelim=")" C*
+  | C* odelim="(" identpattern=[$@A-Za-z_][0-9$@A-Za-z_]* cdelim=")" C*
 };
 
 .macro sparse_sequence(top) {
