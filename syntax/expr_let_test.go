@@ -12,7 +12,13 @@ func TestExprLet(t *testing.T) {
 	AssertCodesEvalToSameValue(t, `(x: 1, y: 2)`, `let x = 1; let y = 2; (:x, :y)`)
 	AssertCodesEvalToSameValue(t, `(x: 1, y: 2)`, `let x = 1; (:x, y: 2)`)
 
-	AssertCodeErrors(t, `let (x) = 5;x`, "")
+	AssertCodesEvalToSameValue(t, `1`, `let a = 1;(a)`) // (a) is an expression
+	AssertCodesEvalToSameValue(t, `4`, `let x = 4; let (x) = 4;x`)
+	AssertCodesEvalToSameValue(t, `4`, `let x = 4; let (x) = (4);x`)
+	AssertCodesEvalToSameValue(t, `4`, `let x = 4; let (x) =(4 + 0);x`)
+	AssertCodesEvalToSameValue(t, `1`, `let [a,b] = [1,2];let (b) = (a + 1);a`)
+
+	AssertCodeErrors(t, `let (x) = 5;x`, "") // (x) should be parsed as an expression and fail because x isn't bound.
 }
 
 func TestExprLetExprPattern(t *testing.T) { //nolint:dupl
