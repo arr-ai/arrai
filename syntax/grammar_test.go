@@ -34,13 +34,15 @@ func TestGrammarToValueExprInline(t *testing.T) {
 	AssertCodesEvalToSameValue(t, expected, `{://grammar.lang.wbnf[grammar]: a -> '1'; :}`)
 }
 
+func TestGrammarToValueExprInlineDefault(t *testing.T) {
+	AssertCodesEvalToSameValue(t, expected, `{://grammar.lang.wbnf: a -> '1'; :}`)
+}
+
 func TestMacroToValueInline(t *testing.T) {
 	AssertCodesEvalToSameValue(t, `(year: 2020, month: 06, day: 09)`, `
 		let time = (
-			@grammar: {://grammar.lang.wbnf[grammar]: 
-				default -> year=\d{4} "-" month=\d{2} "-" day=\d{2};:},
-			@transform:
-				(default: \ast ast -> (year: .year, month: .month, day: .day) :> //eval.value(.''))
+			@grammar: {://grammar.lang.wbnf: date -> year=\d{4} "-" month=\d{2} "-" day=\d{2};:},
+			@transform: (date: \ast ast -> (year: .year, month: .month, day: .day) :> //eval.value(.''))
 		);
 		{:time:2020-06-09:}
 	`)
@@ -49,9 +51,21 @@ func TestMacroToValueInline(t *testing.T) {
 func TestMacroToArraiValueInline(t *testing.T) {
 	AssertCodesEvalToSameValue(t,
 		`1`,
-		`{:(@grammar://grammar.lang.arrai, @transform:(default:\ast 1)):1:}`,
+		`{:(@grammar://grammar.lang.arrai, @transform:(expr:\ast 1)):1:}`,
 	)
 }
+
+func TestArraiGrammarMacroEquality(t *testing.T) {
+	AssertCodesEvalToSameValue(t,
+		`//grammar.parse(//grammar.lang.arrai)("expr", "1")`,
+		`{://grammar.lang.arrai:1:}`,
+	)
+}
+
+// TODO(ladeo): Figure out why this fails and fix it.
+//func TestArraiGrammarGrammarEquality(t *testing.T) {
+//	AssertCodeEvalsToGrammar(t, arraiParsers.Grammar(), `//grammar.lang.arrai`)
+//}
 
 func TestGrammarToValueExprScopedAndInline(t *testing.T) {
 	exprs := []string{

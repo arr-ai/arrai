@@ -94,41 +94,13 @@ func (pc ParseContext) Parse(s *parser.Scanner) (ast.Branch, error) {
 			return nil, nil
 		},
 		"ast": func(scope parser.Scope, input *parser.Scanner) (parser.TreeElement, error) {
-			ruleName := "default"
-			if _, ruleElt, ok := scope.GetVal("rule"); ok && ruleElt.(parser.Node).Count() > 0 {
-				ruleNode := ast.FromParserNode(arraiParsers.Grammar(), ruleElt.(parser.Node).Get(0))
-				ruleName = ruleNode.One("name").Scanner().String()
-			}
-
-			_, elt, ok := scope.GetVal("macro")
-			if !ok {
-				panic("wat?")
-			}
-
-			astNode := ast.FromParserNode(arraiParsers.Grammar(), elt)
-			astExpr := pc.CompileExpr(astNode).(rel.Expr)
-			astValue, err := astExpr.Eval(rscopes[len(rscopes)-1])
+			macro, err := pc.unpackMacro(scope, rscopes[len(rscopes)-1])
 			if err != nil {
 				return nil, err
 			}
 
-			// astValue can be a grammar AST, or a tuple with a @grammar key containing an AST.
-			// Such a tuple may also have an @transform key specifying transformations to apply to
-			// the input after parsing it with the grammar.
-			transform := rel.NewSet()
-			if macroGrammar, ok := astValue.(*rel.GenericTuple).Get("@grammar"); ok {
-				if transforms, ok := astValue.(*rel.GenericTuple).Get("@transform"); ok {
-					// If @transform is present but there is no named transform for ruleName, fail
-					// loudly rather than falling back on the default rule or nothing. A macro's
-					// rule transforms should be as well-specified as the grammar.
-					transform = transforms.(*rel.GenericTuple).MustGet(ruleName).(rel.Set)
-				}
-				astValue = macroGrammar
-			}
-
-			astValueNode := rel.ASTNodeFromValue(astValue).(ast.Branch)
-			subg := wbnf.NewFromAst(astValueNode)
-			rule := parser.Rule(ruleName)
+			subg := wbnf.NewFromAst(rel.ASTNodeFromValue(macro.grammar))
+			rule := parser.Rule(macro.ruleName)
 			parsers := subg.Compile(subg)
 
 			childast, err := parsers.ParseWithExternals(rule, input, parser.ExternalRefs{
@@ -139,7 +111,6 @@ func (pc ParseContext) Parse(s *parser.Scanner) (ast.Branch, error) {
 					default:
 						return nil, err
 					}
-					// log.Printf("ast: %v", ast)
 					node := ast.ToParserNode(arraiParsers.Grammar(), childast)
 					return node, nil
 				},
@@ -152,16 +123,16 @@ func (pc ParseContext) Parse(s *parser.Scanner) (ast.Branch, error) {
 					return nil, err
 				}
 			}
-			if !transform.IsTrue() {
+			if !macro.transform.IsTrue() {
 				return ast.NewExtRefTreeElement(parsers.Grammar(), childast), nil
 			}
 
 			childastNode := ast.FromParserNode(subg, childast)
 			childastValue := rel.ASTNodeToValue(childastNode)
-			bodyValue := rel.SetCall(transform, childastValue)
+			bodyValue := rel.SetCall(macro.transform, childastValue)
 
 			return parser.Node{Tag: "extref", Children: nil, Extra: ast.Branch{
-				"@rule": ast.One{Node: ast.Extra{Data: parser.Rule(ruleName)}},
+				"@rule": ast.One{Node: ast.Extra{Data: parser.Rule(macro.ruleName)}},
 				"value": ast.One{Node: NewMacroValue(bodyValue, childastNode.Scanner())},
 			}}, nil
 		},
@@ -186,6 +157,69 @@ func parseNest(lhs rel.Expr, branch ast.Branch) rel.Expr {
 		namestrings[i] = name.One("").Scanner().String()
 	}
 	return rel.NewNestExpr(attr, lhs, rel.NewNames(namestrings...), attr.String())
+}
+
+// Macro represents the "header" of a macro invocation: the grammar and rule to parse with, and the
+// transform to apply to the parsed body.
+type Macro struct {
+	ruleName  string
+	grammar   rel.Tuple
+	transform rel.Set
+}
+
+// unpackMacro processes the current parser scope when a macro invocation is detected. It extracts
+// the details of the macro to invoke, and returns them as a Macro.
+func (pc ParseContext) unpackMacro(parseScope parser.Scope, relScope rel.Scope) (Macro, error) {
+	_, elt, ok := parseScope.GetVal("macro")
+	if !ok {
+		panic("wat?")
+	}
+	macroNode := ast.FromParserNode(arraiParsers.Grammar(), elt)
+	macroExpr := pc.CompileExpr(macroNode).(rel.Expr)
+	macroValue, err := macroExpr.Eval(relScope)
+	if err != nil {
+		return Macro{ruleName: ""}, err
+	}
+	macroTuple := macroValue.(rel.Tuple)
+
+	grammar := macroTuple
+	if macroTuple.HasName("@grammar") {
+		grammar = macroTuple.MustGet("@grammar").(rel.Tuple)
+	}
+
+	var ruleName string
+	_, ruleElt, ok := parseScope.GetVal("rule")
+	ruleNode := ruleElt.(parser.Node)
+	if ruleNode.Count() > 0 {
+		ruleNode := ast.FromParserNode(arraiParsers.Grammar(), ruleElt.(parser.Node).Get(0))
+		ruleName = ruleNode.One("name").Scanner().String()
+	} else {
+		ruleName = getFirstRuleName(grammar)
+	}
+
+	transform := rel.NewSet()
+	if transforms, ok := macroTuple.Get("@transform"); ok {
+		// If @transform is present but there is no named transform for ruleName, fail
+		// loudly rather than falling back on the default rule or nothing. A macro's
+		// rule transforms should be as well-specified as the grammar.
+		if transformValue, ok := transforms.(rel.Tuple).Get(ruleName); ok {
+			transform = transformValue.(rel.Set)
+		} else {
+			panic(fmt.Errorf("transform for rule %q not found", ruleName))
+		}
+	}
+	return Macro{ruleName, grammar, transform}, nil
+}
+
+// getFirstRuleName finds the first rule declared in grammar and returns its name.
+func getFirstRuleName(grammar rel.Tuple) string {
+	stmts := grammar.MustGet("stmt").(rel.Array).Values()
+	for _, stmt := range stmts {
+		if prod, ok := stmt.(rel.Tuple).Get("prod"); ok {
+			return prod.(rel.Tuple).MustGet("IDENT").(rel.Tuple).MustGet("").String()
+		}
+	}
+	panic("no prod rule found in grammar")
 }
 
 // MacroValue is an Extra node with an Expr value and a Scanner for the macro source.
