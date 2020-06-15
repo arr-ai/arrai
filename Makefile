@@ -23,3 +23,4 @@ parser:
 
 build:
 	go build -ldflags=$(LDFLAGS) ./cmd/arrai
+ 
