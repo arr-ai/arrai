@@ -36,8 +36,8 @@ func (pc ParseContext) unpackMacro(macroElt parser.Node, ruleElt parser.Node, re
 	if ruleElt.Count() > 0 {
 		ruleNode := ast.FromParserNode(arraiParsers.Grammar(), ruleElt.Get(0))
 		ruleName = ruleNode.One("name").Scanner().String()
-	} else {
-		ruleName = getFirstRuleName(grammar)
+	} else if ruleName, err = getFirstRuleName(grammar); err != nil {
+		return Macro{ruleName: ruleName}, err
 	}
 
 	transform := rel.NewSet()
@@ -48,21 +48,21 @@ func (pc ParseContext) unpackMacro(macroElt parser.Node, ruleElt parser.Node, re
 		if transformValue, ok := transforms.(rel.Tuple).Get(ruleName); ok {
 			transform = transformValue.(rel.Set)
 		} else {
-			panic(fmt.Errorf("transform for rule %q not found", ruleName))
+			return Macro{ruleName: ruleName}, fmt.Errorf("transform for rule %q not found", ruleName)
 		}
 	}
 	return Macro{ruleName, grammar, transform}, nil
 }
 
 // getFirstRuleName finds the first rule declared in grammar and returns its name.
-func getFirstRuleName(grammar rel.Tuple) string {
+func getFirstRuleName(grammar rel.Tuple) (string, error) {
 	stmts := grammar.MustGet("stmt").(rel.Array).Values()
 	for _, stmt := range stmts {
 		if prod, ok := stmt.(rel.Tuple).Get("prod"); ok {
-			return prod.(rel.Tuple).MustGet("IDENT").(rel.Tuple).MustGet("").String()
+			return prod.(rel.Tuple).MustGet("IDENT").(rel.Tuple).MustGet("").String(), nil
 		}
 	}
-	panic("no prod rule found in grammar")
+	return "", fmt.Errorf("no prod rule found in grammar")
 }
 
 // MacroValue is an Extra node with an Expr value and a Scanner for the macro source.

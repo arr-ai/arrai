@@ -151,12 +151,10 @@ func (pc ParseContext) Parse(s *parser.Scanner) (ast.Branch, error) {
 			}}, nil
 		},
 	})
-	//log.Printf("Parse: v = %v", v)
 	if err != nil {
 		return nil, err
 	}
 	result := ast.FromParserNode(arraiParsers.Grammar(), v)
-	//log.Printf("Parse: result = %v", result)
 	if s.String() != "" {
 		return result, parser.UnconsumedInput(*s, v)
 	}
