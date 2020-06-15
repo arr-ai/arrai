@@ -114,7 +114,7 @@ func (pc ParseContext) CompileExpr(b ast.Branch) rel.Expr {
 	case "bytes":
 		return pc.compileBytes(b, c)
 	case "embed":
-		return rel.ASTNodeToValue(b.One("embed").One("subgrammar").One("ast"))
+		return pc.compileMacro(b)
 	case "fn":
 		return pc.compileFunction(b)
 	case "pkg":
@@ -808,6 +808,14 @@ func (pc ParseContext) compileFunction(b ast.Branch) rel.Expr {
 	p := pc.compilePattern(b)
 	expr := pc.CompileExpr(b.One(exprTag).(ast.Branch))
 	return rel.NewFunction(b.Scanner(), p, expr)
+}
+
+func (pc ParseContext) compileMacro(b ast.Branch) rel.Expr {
+	childast := b.One("embed").One("subgrammar").One("ast")
+	if value := childast.One("value"); value != nil {
+		return value.(MacroValue).SubExpr()
+	}
+	return rel.ASTNodeToValue(childast)
 }
 
 func (pc ParseContext) compilePackage(b ast.Branch, c ast.Children) rel.Expr {
