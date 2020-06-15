@@ -11,6 +11,8 @@ func TestExprLet(t *testing.T) {
 	AssertCodesEvalToSameValue(t, `(x: 1)`, `let x = 1; (:x)`)
 	AssertCodesEvalToSameValue(t, `(x: 1, y: 2)`, `let x = 1; let y = 2; (:x, :y)`)
 	AssertCodesEvalToSameValue(t, `(x: 1, y: 2)`, `let x = 1; (:x, y: 2)`)
+
+	AssertCodeErrors(t, `let (x) = 5;x`, "")
 }
 
 func TestExprLetExprPattern(t *testing.T) { //nolint:dupl

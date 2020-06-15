@@ -56,7 +56,13 @@ tail   -> get
                     |     ":" end=expr  (":" step=expr)?
                 ):SEQ_COMMENT,
             ")");
-pattern -> extra | %!patternterms(pattern|expr) | IDENT | NUM | C* "(" exprpattern=expr:SEQ_COMMENT,? ")" C* | C* exprpattern=STR C*;
+pattern -> extra 
+        | %!patternterms(pattern|expr)
+        | C* odelim="(" identpattern=IDENT cdelim=")" C*
+        | IDENT
+        | NUM 
+        | C* "(" exprpattern=expr:SEQ_COMMENT,? ")" C* 
+        | C* exprpattern=STR C*;
 extra -> ("..." ident=IDENT?);
 
 ARROW  -> /{:>|=>|>>|orderby|order|rank|where|sum|max|mean|median|min};
