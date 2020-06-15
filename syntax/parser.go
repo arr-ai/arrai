@@ -12,7 +12,6 @@ func unfakeBackquote(s string) string {
 }
 
 var arraiParsers = wbnf.MustCompile(unfakeBackquote(`
-default -> expr;
 expr   -> C* amp="&"* @ C* arrow=(
               nest |
               unnest |
