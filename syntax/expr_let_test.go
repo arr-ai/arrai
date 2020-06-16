@@ -2,7 +2,7 @@ package syntax
 
 import "testing"
 
-func TestExprLet(t *testing.T) {
+func TestExprLet(t *testing.T) { //nolint:dupl
 	t.Parallel()
 	AssertCodesEvalToSameValue(t, `7`, `let x = 6; 7`)
 	AssertCodesEvalToSameValue(t, `42`, `let x = 6; x * 7`)
@@ -19,7 +19,9 @@ func TestExprLet(t *testing.T) {
 
 	AssertCodesEvalToSameValue(t, `1`, `let a = 1;a`)
 	AssertCodesEvalToSameValue(t, `1`, `let a = 1;(a)`) // (a) is an expression
-	AssertCodeErrors(t, `let (x) = 5;x`, "")            // (x) should be parsed as an expression and fail because x isn't bound.
+
+	// (x) should be parsed as an expression and fail because x isn't bound.
+	AssertCodeErrors(t, `let (x) = 5;x`, "")
 	AssertCodeErrors(t, `let (x) = 5;(x)`, "")
 }
 
@@ -122,7 +124,7 @@ func TestExprLetDictPattern(t *testing.T) {
 	AssertCodePanics(t, `let {"x": a, "x": a} = {"x": 4, "x": 4}; a`)
 }
 
-func TestExprLetSetPattern(t *testing.T) {
+func TestExprLetSetPattern(t *testing.T) { //nolint:dupl
 	t.Parallel()
 	AssertCodesEvalToSameValue(t, `1`, `let {} = {}; 1`)
 	AssertCodesEvalToSameValue(t, `1`, `let {42} = {42}; 1`)
