@@ -42,7 +42,7 @@ chapters.
 13. (TODO) [Expression strings](exprstr.md)
 14. (TODO) [Templating with expression strings](templating.md)
 15. (TODO) [Grammars](grammars.md)
-16. (TODO) [Macros](macros.md)
+16. [Macros](macros.md)
 
 ## Arr.ai command line
 

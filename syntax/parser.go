@@ -39,7 +39,7 @@ expr   -> C* amp="&"* @ C* arrow=(
         > %!patternterms(expr)
         | C* cond=("cond" "{" (key=@ ":" value=@):SEQ_COMMENT,? "}") C*
         | C* cond=("cond" controlVar=expr "{" (condition=pattern ":" value=@):SEQ_COMMENT,? "}") C*
-        | C* "{:" C* embed=(grammar=@ ":" subgrammar=%%ast) ":}" C*
+        | C* "{:" C* embed=(macro=@ rule? ":" subgrammar=%%ast) ":}" C*
         | C* op="\\\\" @ C*
         | C* fn="\\" pattern @ C*
         | C* import="//" pkg=( "{" dot="."? PKGPATH "}" | std=IDENT?)
@@ -50,6 +50,7 @@ expr   -> C* amp="&"* @ C* arrow=(
         | C* STR C*
         | C* NUM C*
         | C* CHAR C*;
+rule   -> C* "[" C* name C* "]" C*;
 nest   -> C* "nest" names IDENT C*;
 unnest -> C* "unnest" IDENT C*;
 touch  -> C* ("->*" ("&"? IDENT | STR))+ "(" expr:"," ","? ")" C*;

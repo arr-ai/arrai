@@ -7,7 +7,9 @@ import (
 	"testing"
 
 	"github.com/arr-ai/arrai/rel"
+	"github.com/arr-ai/wbnf/ast"
 	"github.com/arr-ai/wbnf/parser"
+	"github.com/arr-ai/wbnf/wbnf"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -64,6 +66,19 @@ func AssertCodeEvalsToType(t *testing.T, expected interface{}, code string) bool
 		return false
 	}
 	return true
+}
+
+// AssertCodeEvalsToGrammar asserts that code evaluates to a grammar equal to expected.
+func AssertCodeEvalsToGrammar(t *testing.T, expected parser.Grammar, code string) {
+	pc := ParseContext{SourceDir: ".."}
+	astElt := pc.MustParseString(code)
+	astExpr := pc.CompileExpr(astElt)
+	astValue, err := astExpr.Eval(rel.EmptyScope)
+	assert.NoError(t, err, "parsing code: %s", code)
+	astNode := rel.ASTNodeFromValue(astValue).(ast.Branch)
+	astGrammar := wbnf.NewFromAst(astNode)
+
+	assert.EqualValues(t, expected, astGrammar)
 }
 
 // AssertCodePanics asserts that code panics when executed.
