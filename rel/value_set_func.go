@@ -27,7 +27,7 @@ func ExprAsFunction(expr Expr) *Function {
 	if fn, ok := expr.(*Function); ok {
 		return fn
 	}
-	return NewFunction(expr.Source(), NewIdentPattern(""), expr).(*Function)
+	return NewFunction(expr.Source(), NewIdentPattern("."), expr).(*Function)
 }
 
 // Arg returns a function's formal argument.
