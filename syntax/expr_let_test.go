@@ -49,7 +49,6 @@ func TestExprLetExprPattern(t *testing.T) { //nolint:dupl
 	AssertCodeErrors(t, `let a = 5; let (a) = 1 + 2; a`, "")
 	AssertCodeErrors(t, `let true = false; 3`, "")
 	AssertCodeErrors(t, `let true = {}; 3`, "")
-	AssertCodeErrors(t, `let (x) = 2; x`, "")
 }
 
 func TestExprLetIdentPattern(t *testing.T) {
