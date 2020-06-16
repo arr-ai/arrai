@@ -158,17 +158,17 @@ func (pc ParseContext) compilePattern(b ast.Branch) rel.Pattern {
 	if extra := b.One("extra"); extra != nil {
 		return pc.compileExtraElementPattern(extra.(ast.Branch))
 	}
-	if ident := b.One("IDENT"); ident != nil {
-		name := ident.Scanner().String()
-		switch name {
-		case "false":
-			return rel.NewExprPattern(rel.False)
-		case "true":
-			return rel.NewExprPattern(rel.True)
-		default:
-			return rel.NewIdentPattern(name)
-		}
-	}
+	// if ident := b.One("IDENT"); ident != nil {
+	// 	name := ident.Scanner().String()
+	// 	switch name {
+	// 	case "false":
+	// 		return rel.NewExprPattern(rel.False)
+	// 	case "true":
+	// 		return rel.NewExprPattern(rel.True)
+	// 	default:
+	// 		return rel.NewIdentPattern(name)
+	// 	}
+	// }
 	if expr := b.Many("exprpattern"); expr != nil {
 		var elements []rel.Expr
 		for _, e := range expr {

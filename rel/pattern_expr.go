@@ -19,6 +19,17 @@ func NewExprPattern(expr Expr) ExprPattern {
 }
 
 func (p ExprPattern) Bind(scope Scope, value Value) (Scope, error) {
+	switch exprType := p.Expr.(type) {
+	case IdentExpr:
+		return Scope{}.With(exprType.ident, value), nil
+	case Number:
+		if !exprType.Equal(value) {
+			return EmptyScope, errors.Errorf("%s doesn't equal to %s, cannot bind these two numbers", exprType, value)
+		}
+		return EmptyScope, nil
+	default:
+	}
+
 	v, err := p.Expr.Eval(scope)
 	if err != nil {
 		return Scope{}, err
