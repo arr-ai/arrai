@@ -158,8 +158,16 @@ func (pc ParseContext) compilePattern(b ast.Branch) rel.Pattern {
 	if extra := b.One("extra"); extra != nil {
 		return pc.compileExtraElementPattern(extra.(ast.Branch))
 	}
-	if ident := b.One("identpattern"); ident != nil {
-		return rel.NewIdentPattern(ident.Scanner().String())
+	if ident := b.One("IDENT"); ident != nil {
+		name := ident.Scanner().String()
+		switch name {
+		case "false":
+			return rel.NewExprPattern(rel.False)
+		case "true":
+			return rel.NewExprPattern(rel.True)
+		default:
+			return rel.NewIdentPattern(name)
+		}
 	}
 	if expr := b.Many("exprpattern"); expr != nil {
 		var elements []rel.Expr
@@ -306,7 +314,7 @@ func (pc ParseContext) compileArrow(b ast.Branch, name string, c ast.Children) r
 	}
 	if name == "amp" {
 		for range c.(ast.Many) {
-			expr = rel.NewFunction(source, rel.NewIdentExpr(*parser.NewScanner("-"), "-"), expr)
+			expr = rel.NewFunction(source, rel.NewIdentPattern("-"), expr)
 		}
 	}
 	return expr
@@ -326,7 +334,8 @@ func (pc ParseContext) compileLet(c ast.Children) rel.Expr {
 
 	if c.(ast.One).Node.One("rec") != nil {
 		fix, fixt := FixFuncs()
-		expr = rel.NewRecursionExpr(c.Scanner(), p, expr, fix, fixt)
+		name := p.(rel.ExprPattern).Expr.(rel.IdentExpr)
+		expr = rel.NewRecursionExpr(c.Scanner(), name, expr, fix, fixt)
 	}
 
 	return binops["->"](source, expr, rhs)
@@ -874,7 +883,7 @@ func (pc ParseContext) compileTuple(b ast.Branch, c ast.Children) rel.Expr {
 				fix, fixt := FixFuncs()
 				v = rel.NewRecursionExpr(
 					scanner,
-					rel.NewExprPattern(rel.NewIdentExpr(pair.One("name").Scanner(), k)),
+					rel.NewIdentExpr(pair.One("name").Scanner(), k),
 					v, fix, fixt,
 				)
 			}

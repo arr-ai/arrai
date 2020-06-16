@@ -107,7 +107,13 @@ func (p TuplePattern) String() string { //nolint:dupl
 			b.WriteString(", ")
 		}
 		if attr.IsWildcard() {
-			if ident, is := attr.pattern.(IdentExpr); !is || ident.Ident() != "." {
+			isDot := false
+			if exprpat, is := attr.pattern.(ExprPattern); is {
+				if ident, is := exprpat.Expr.(IdentExpr); is {
+					isDot = ident.Ident() == "."
+				}
+			}
+			if !isDot {
 				b.WriteString(attr.pattern.String())
 			}
 			b.WriteString(".*")
