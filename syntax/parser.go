@@ -71,7 +71,13 @@ tail   -> get
                     |     ":" end=expr  (":" step=expr)?
                 ):SEQ_COMMENT,
             ")");
-pattern -> extra | %!patternterms(pattern|expr) | IDENT | NUM | C* "(" exprpattern=expr:SEQ_COMMENT,? ")" C* | C* exprpattern=STR C*;
+pattern -> extra 
+        | %!patternterms(pattern|expr)
+        | C* odelim="(" identpattern=IDENT cdelim=")" C*
+        | IDENT
+        | NUM 
+        | C* "(" exprpattern=expr:SEQ_COMMENT,? ")" C* 
+        | C* exprpattern=STR C*;
 extra -> ("..." ident=IDENT?);
 
 ARROW  -> /{:>|=>|>>|orderby|order|rank|where|sum|max|mean|median|min};
@@ -95,7 +101,6 @@ SEQ_COMMENT -> "," C*;
   | C* odelim="[" C* array=(%!sparse_sequence(top)?) C* cdelim="]" C*
   | C* odelim="<<" C* bytes=(item=(STR|NUM|CHAR|IDENT|"("top")"):SEQ_COMMENT,?) C* cdelim=">>" C*
   | C* odelim="(" tuple=(pairs=(extra | ((rec="rec"? name| name?) ":" v=top)):SEQ_COMMENT,?) cdelim=")" C*
-  | C* odelim="(" identpattern=IDENT cdelim=")" C*
 };
 
 .macro sparse_sequence(top) {
