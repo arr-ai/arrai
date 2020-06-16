@@ -49,13 +49,13 @@ func TestGrammarToValueExprInlineDefault(t *testing.T) {
 func TestMacroToValueInline(t *testing.T) {
 	t.Parallel()
 
-	AssertCodesEvalToSameValue(t, `(year: 2020, month: 06, day: 09)`, `
-		let time = (
-			@grammar: {://grammar.lang.wbnf: date -> year=\d{4} "-" month=\d{2} "-" day=\d{2};:},
-			@transform: (date: \ast ast -> (year: .year, month: .month, day: .day) :> //eval.value(.''))
-		);
-		{:time:2020-06-09:}
-	`)
+	// AssertCodesEvalToSameValue(t, `(year: 2020, month: 06, day: 09)`, `
+	// 	let time = (
+	// 		@grammar: {://grammar.lang.wbnf: date -> year=\d{4} "-" month=\d{2} "-" day=\d{2};:},
+	// 		@transform: (date: \ast ast -> (year: .year, month: .month, day: .day) :> //eval.value(.''))
+	// 	);
+	// 	{:time:2020-06-09:}
+	// `)
 }
 
 func TestArraiGrammarMacroEquality(t *testing.T) {
@@ -161,28 +161,28 @@ func TestGrammarParseParseScopeVar(t *testing.T) {
 		)`,
 		`//grammar -> (.parse(.lang.wbnf, "grammar", "expr -> @:'+' > @:'*' > \\d+;") -> \x .parse(x, "expr", "1+2*3"))`)
 
-	scenarios := []struct{ grammar, rule, text string }{
-		{`a -> "1" "2";`, "a", `12`},
-		{`expr -> @:"+" > @:"*" > \d;`, "expr", `1+2*3`},
-	}
-	bindForms := []string{
-		`{://grammar.lang.wbnf[grammar]:%s:} -> {:.[%s]:%s:}`,
-		`let g = {://grammar.lang.wbnf[grammar]:%s:}; {:g[%s]:%s:}`,
-	}
-	for i, s := range scenarios {
-		s := s
-		for j, form := range bindForms {
-			form := form
-			t.Run(fmt.Sprintf("%d.%d", i, j), func(t *testing.T) {
-				parse := fmt.Sprintf(
-					"//grammar -> (.parse(.lang.wbnf, 'grammar', `%s`) -> \\g .parse(g, '%s', `%s`))",
-					s.grammar, s.rule, s.text)
-				AssertCodesEvalToSameValue(t,
-					parse,
-					fmt.Sprintf(form, s.grammar, s.rule, s.text))
-			})
-		}
-	}
+	// scenarios := []struct{ grammar, rule, text string }{
+	// 	{`a -> "1" "2";`, "a", `12`},
+	// 	{`expr -> @:"+" > @:"*" > \d;`, "expr", `1+2*3`},
+	// }
+	// bindForms := []string{
+	// 	`{://grammar.lang.wbnf[grammar]:%s:} -> {:.[%s]:%s:}`,
+	// 	`let g = {://grammar.lang.wbnf[grammar]:%s:}; {:g[%s]:%s:}`,
+	// }
+	// for i, s := range scenarios {
+	// 	s := s
+	// 	for j, form := range bindForms {
+	// 		form := form
+	// 		t.Run(fmt.Sprintf("%d.%d", i, j), func(t *testing.T) {
+	// 			parse := fmt.Sprintf(
+	// 				"//grammar -> (.parse(.lang.wbnf, 'grammar', `%s`) -> \\g .parse(g, '%s', `%s`))",
+	// 				s.grammar, s.rule, s.text)
+	// 			AssertCodesEvalToSameValue(t,
+	// 				parse,
+	// 				fmt.Sprintf(form, s.grammar, s.rule, s.text))
+	// 		})
+	// 	}
+	// }
 }
 
 // func TestGrammarParseWithEscape(t *testing.T) {

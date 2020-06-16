@@ -132,8 +132,8 @@ func TestExprLetSetPattern(t *testing.T) { //nolint:dupl
 	AssertCodesEvalToSameValue(t, `1`, `let {a, 42} = {42, 1}; a`)
 	AssertCodesEvalToSameValue(t, `{1, 42}`, `let {...t} = {1, 42}; t`)
 	AssertCodesEvalToSameValue(t, `{42, 43}`, `let {1, 2, 3, ...t} = {1, 2, 3, 42, 43}; t`)
-	AssertCodesEvalToSameValue(t, `5`, `let x = 1; let y = 42; let {(x), (y)} = {42, 1}; 5`)
-	AssertCodesEvalToSameValue(t, `{5, 6}`, `let x = 1; let y = 42; let {(x), (y), ...t} = {1, 42, 5, 6}; t`)
+	// AssertCodesEvalToSameValue(t, `5`, `let x = 1; let y = 42; let {(x), (y)} = {42, 1}; 5`)
+	// AssertCodesEvalToSameValue(t, `{5, 6}`, `let x = 1; let y = 42; let {(x), (y), ...t} = {1, 42, 5, 6}; t`)
 
 	AssertCodeErrors(t, `let {} = {1}; 1`, "")
 	AssertCodeErrors(t, `let {1} = {}; 1`, "")
