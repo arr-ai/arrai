@@ -19,25 +19,25 @@ const arraiRootMarker = "go.mod"
 
 var importLocalFileOnce sync.Once
 var importLocalFileVar rel.Value
-var cache *importCache = newCache()
+var cache = newCache()
 
 func importLocalFile(fromRoot bool) rel.Value {
 	importLocalFileOnce.Do(func() {
-		importLocalFileVar = rel.NewNativeFunction("//./", func(v rel.Value) rel.Value {
+		importLocalFileVar = rel.NewNativeFunction("//./", func(v rel.Value) (rel.Value, error) {
 			s, ok := rel.AsString(v.(rel.Set))
 			if !ok {
-				panic(fmt.Errorf("cannot convert %#v to string", v))
+				return nil, fmt.Errorf("cannot convert %#v to string", v)
 			}
 
 			filename := s.String()
 			if fromRoot {
 				pwd, err := os.Getwd()
 				if err != nil {
-					panic(err)
+					return nil, err
 				}
 				rootPath, err := findRootFromModule(pwd)
 				if err != nil {
-					panic(err)
+					return nil, err
 				}
 				if !strings.HasPrefix(filename, "/") {
 					filename = rootPath + "/" + strings.ReplaceAll(filename, "../", "")
@@ -46,10 +46,10 @@ func importLocalFile(fromRoot bool) rel.Value {
 
 			v, err := fileValue(filename)
 			if err != nil {
-				panic(err)
+				return nil, err
 			}
 
-			return v
+			return v, nil
 		})
 	})
 	return importLocalFileVar
@@ -60,10 +60,10 @@ var importExternalContentVar rel.Value
 
 func importExternalContent() rel.Value {
 	importExternalContentOnce.Do(func() {
-		importExternalContentVar = rel.NewNativeFunction("//", func(v rel.Value) rel.Value {
+		importExternalContentVar = rel.NewNativeFunction("//", func(v rel.Value) (rel.Value, error) {
 			s, ok := rel.AsString(v.(rel.Set))
 			if !ok {
-				panic(fmt.Errorf("cannot convert %#v to string", v))
+				return nil, fmt.Errorf("cannot convert %#v to string", v)
 			}
 			importpath := s.String()
 
@@ -72,7 +72,7 @@ func importExternalContent() rel.Value {
 			if !strings.HasPrefix(importpath, "http://") && !strings.HasPrefix(importpath, "https://") {
 				v, err := importModuleFile(importpath)
 				if err == nil {
-					return v
+					return v, nil
 				}
 				moduleErr = err
 
@@ -83,12 +83,12 @@ func importExternalContent() rel.Value {
 			v, err := importURL(importpath)
 			if err != nil {
 				if moduleErr != nil {
-					panic(fmt.Errorf("failed to import %s - %s, and %s", importpath, moduleErr.Error(), err.Error()))
+					return nil, fmt.Errorf("failed to import %s - %s, and %s", importpath, moduleErr.Error(), err.Error())
 				}
-				panic(err)
+				return nil, err
 			}
 
-			return v
+			return v, nil
 		})
 	})
 	return importExternalContentVar
@@ -144,8 +144,8 @@ func importURL(url string) (rel.Value, error) {
 		if err != nil {
 			return nil, err
 		}
-		val := cache.getOrAdd(url, func() rel.Value { return bytesValue(NoPath, data) })
-		return val, nil
+		val, err := cache.getOrAdd(url, func() (rel.Value, error) { return bytesValue(NoPath, data) })
+		return val, err
 	}
 	return nil, fmt.Errorf("request %s failed: %s", url, resp.Status)
 }
@@ -161,24 +161,24 @@ func fileValue(filename string) (rel.Value, error) {
 	}
 	switch filepath.Ext(filename) {
 	case ".json":
-		return bytesJSONToArrai(bytes), nil
+		return bytesJSONToArrai(bytes)
 	case ".yml", ".yaml":
-		return translate.BytesYamlToArrai(bytes), nil
+		return translate.BytesYamlToArrai(bytes)
 	}
-	return bytesValue(filename, bytes), nil
+	return bytesValue(filename, bytes)
 }
 
-func bytesValue(filename string, data []byte) rel.Value {
-	eval := func() rel.Value {
+func bytesValue(filename string, data []byte) (rel.Value, error) {
+	eval := func() (rel.Value, error) {
 		expr, err := Compile(filename, string(data))
 		if err != nil {
-			panic(err)
+			return nil, err
 		}
 		value, err := expr.Eval(rel.EmptyScope)
 		if err != nil {
-			panic(err)
+			return nil, rel.WrapContext(err, expr, rel.EmptyScope)
 		}
-		return value
+		return value, nil
 	}
 	if filename != NoPath {
 		return cache.getOrAdd(filename, eval)

@@ -50,6 +50,16 @@ func intfValueLess(a, b interface{}) bool {
 	return a.(Value).Less(b.(Value))
 }
 
+func exprIsValue(expr Expr) (Value, bool) {
+	switch expr := expr.(type) {
+	case Value:
+		return expr, true
+	case LiteralExpr:
+		return expr.literal, true
+	}
+	return nil, false
+}
+
 // Attr is a name/Value pair used to construct a Tuple.
 type Attr struct {
 	Name  string
@@ -107,8 +117,8 @@ type Set interface {
 	With(Value) Set
 	Without(Value) Set
 	Map(func(Value) Value) Set
-	Where(func(Value) bool) Set
-	CallAll(Value) Set
+	Where(func(Value) (bool, error)) (Set, error)
+	CallAll(Value) (Set, error)
 
 	ArrayEnumerator() (OffsetValueEnumerator, bool)
 }
@@ -119,27 +129,28 @@ func (n NoReturnError) Error() string {
 	return fmt.Sprintf("Call: no return values from set %v", n.s)
 }
 
-// SetCall does a CallAll to a Set and panics when there's less or more than 1 value.
-func SetCall(s Set, arg Value) Value {
-	//TODO: this should return error when set doesn't return anything
-	result, err := SafeSetCall(s, arg)
+func SetCall(s Set, arg Value) (Value, error) {
+	result, err := s.CallAll(arg)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
-	return result
-}
-
-func SafeSetCall(s Set, arg Value) (Value, error) {
-	result := s.CallAll(arg)
 	if !result.IsTrue() {
 		return nil, NoReturnError{s}
 	}
 	for i, e := 1, result.Enumerator(); e.MoveNext(); i++ {
 		if i > 1 {
-			panic(fmt.Sprintf("Call: too many return values from set %v: %v", s, result))
+			return nil, fmt.Errorf("call: too many return values from set %v: %v", s, result)
 		}
 	}
 	return SetAny(result), nil
+}
+
+func MustCallAll(s Set, v Value) Value {
+	result, err := s.CallAll(v)
+	if err != nil {
+		panic(err)
+	}
+	return result
 }
 
 func SetAny(s Set) Value {

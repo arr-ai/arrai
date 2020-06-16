@@ -14,7 +14,7 @@ type Closure struct {
 }
 
 // NewFunction returns a new function.
-func NewClosure(scope Scope, f *Function) Value {
+func NewClosure(scope Scope, f *Function) Closure {
 	return Closure{scope: scope, f: f}
 }
 
@@ -80,10 +80,18 @@ func (c Closure) Negate() Value {
 // Export exports a Closure.
 func (c Closure) Export() interface{} {
 	if c.f.Arg() == "-" {
-		return SetCall(c, None)
+		result, err := SetCall(c, None)
+		if err != nil {
+			panic(err)
+		}
+		return result.Export()
 	}
 	return func(arg Value) Value {
-		return SetCall(c, arg)
+		result, err := SetCall(c, None)
+		if err != nil {
+			panic(err)
+		}
+		return result
 	}
 }
 
@@ -111,11 +119,11 @@ func (c Closure) Map(f func(Value) Value) Set {
 	panic("unimplemented")
 }
 
-func (c Closure) Where(f func(Value) bool) Set {
+func (c Closure) Where(p func(v Value) (bool, error)) (Set, error) {
 	panic("unimplemented")
 }
 
-func (c Closure) CallAll(arg Value) Set {
+func (c Closure) CallAll(arg Value) (Set, error) {
 	niladic := c.f.Arg() == "-"
 	noArg := arg == nil
 	if niladic != noArg {
@@ -125,16 +133,19 @@ func (c Closure) CallAll(arg Value) Set {
 	if niladic {
 		val, err := c.f.body.Eval(c.scope)
 		if err != nil {
-			panic(err)
+			return nil, err
 		}
-		return NewSet(val)
+		return NewSet(val), nil
 	}
-	scope, _ := c.f.arg.Bind(c.scope, arg) //nolint: errcheck
+	scope, err := c.f.arg.Bind(c.scope, arg)
+	if err != nil {
+		return nil, err
+	}
 	val, err := c.f.body.Eval(c.scope.Update(scope))
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
-	return NewSet(val)
+	return NewSet(val), nil
 }
 
 func (c Closure) ArrayEnumerator() (OffsetValueEnumerator, bool) {

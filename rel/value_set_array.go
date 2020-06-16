@@ -59,12 +59,12 @@ func NewOffsetArray(offset int, values ...Value) Set {
 	return Array{values: values, offset: offset, count: n}
 }
 
-func AsArray(s Set) (Array, bool) {
-	switch s := s.(type) {
+func AsArray(v Value) (Array, bool) {
+	switch v := v.(type) {
 	case Array:
-		return s, true
+		return v, true
 	case Set:
-		return Array{}, !s.IsTrue()
+		return Array{}, !v.IsTrue()
 	}
 	return Array{}, false
 }
@@ -95,7 +95,7 @@ func asArray(s Set) (Array, bool) {
 	i = s.Enumerator()
 	for i.MoveNext() {
 		t := i.Current().(ArrayItemTuple)
-		items[t.at] = t.item
+		items[t.at-minIndex] = t.item
 	}
 	return Array{
 		values: items,
@@ -336,18 +336,22 @@ func (a Array) Map(f func(v Value) Value) Set {
 }
 
 // Where returns a new Array with all the Values satisfying predicate p.
-func (a Array) Where(p func(v Value) bool) Set {
+func (a Array) Where(p func(v Value) (bool, error)) (Set, error) {
 	result := a.clone()
 	for i, v := range a.values {
 		if v != nil {
-			if !p(NewArrayItemTuple(a.offset+i, v)) {
+			match, err := p(NewArrayItemTuple(a.offset+i, v))
+			if err != nil {
+				return nil, err
+			}
+			if !match {
 				result.values[i] = nil
 				result.count--
 			}
 		}
 	}
 	if result.count == 0 {
-		return None
+		return None, nil
 	}
 	// Trim leading nils.
 	for i, v := range result.values {
@@ -368,18 +372,18 @@ func (a Array) Where(p func(v Value) bool) Set {
 			break
 		}
 	}
-	return result
+	return result, nil
 }
 
-func (a Array) CallAll(arg Value) Set {
+func (a Array) CallAll(arg Value) (Set, error) {
 	i := int(arg.(Number).Float64()) - a.offset
 	if i < 0 || i >= len(a.values) {
-		return None
+		return None, nil
 	}
 	if v := a.values[i]; v != nil {
-		return NewSet(v)
+		return NewSet(v), nil
 	}
-	return None
+	return None, nil
 }
 
 // Enumerator returns an enumerator over the Values in the Array.

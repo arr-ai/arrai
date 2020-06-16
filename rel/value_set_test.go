@@ -52,9 +52,9 @@ func TestGenericSetCallAll(t *testing.T) {
 		),
 	)
 
-	AssertEqualValues(t, NewSet(NewNumber(42), NewNumber(24)), set.CallAll(NewNumber(1)))
-	assert.Panics(t, func() { set.CallAll(NewNumber(2)) })
-	assert.Panics(t, func() { set.CallAll(NewNumber(3)) })
-	AssertEqualValues(t, NewSet(NewNumber(5)), set.CallAll(NewNumber(4)))
-	AssertEqualValues(t, None, set.CallAll(NewNumber(5)))
+	AssertEqualValues(t, NewSet(NewNumber(42), NewNumber(24)), MustCallAll(set, NewNumber(1)))
+	assert.Panics(t, func() { MustCallAll(set, NewNumber(2)) })
+	assert.Panics(t, func() { MustCallAll(set, NewNumber(3)) })
+	AssertEqualValues(t, NewSet(NewNumber(5)), MustCallAll(set, NewNumber(4)))
+	AssertEqualValues(t, None, MustCallAll(set, NewNumber(5)))
 }

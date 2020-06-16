@@ -25,10 +25,9 @@ func (e *TupleMapExpr) String() string {
 
 // Eval returns the lhs
 func (e *TupleMapExpr) Eval(local Scope) (_ Value, err error) {
-	defer wrapPanic(e, &err, local)
 	value, err := e.lhs.Eval(local)
 	if err != nil {
-		return nil, wrapContext(err, e, local)
+		return nil, WrapContext(err, e, local)
 	}
 	defer func() {
 		if r := recover(); r != nil {

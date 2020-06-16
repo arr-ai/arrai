@@ -11,21 +11,21 @@ import (
 // NativeFunction represents a binary relation uniquely mapping inputs to outputs.
 type NativeFunction struct {
 	name string
-	fn   func(Value) Value
+	fn   func(Value) (Value, error)
 }
 
 // NewNativeFunction returns a new function.
-func NewNativeFunction(name string, fn func(Value) Value) Value {
+func NewNativeFunction(name string, fn func(Value) (Value, error)) Value {
 	return &NativeFunction{"⦑" + name + "⦒", fn}
 }
 
 // NewNativeLambda returns a nameless function.
-func NewNativeLambda(fn func(Value) Value) Value {
+func NewNativeLambda(fn func(Value) (Value, error)) Value {
 	return NewNativeFunction("", fn)
 }
 
 // NewNativeFunctionAttr returns a new Attr with a named key and NativeFunction value.
-func NewNativeFunctionAttr(name string, fn func(Value) Value) Attr {
+func NewNativeFunctionAttr(name string, fn func(Value) (Value, error)) Attr {
 	return NewAttr(name, NewNativeFunction(name, fn))
 }
 
@@ -117,13 +117,17 @@ func (*NativeFunction) Map(func(Value) Value) Set {
 	panic("unimplemented")
 }
 
-func (*NativeFunction) Where(func(Value) bool) Set {
+func (*NativeFunction) Where(p func(v Value) (bool, error)) (Set, error) {
 	panic("unimplemented")
 }
 
 // Call calls the NativeFunction with the given parameter.
-func (f *NativeFunction) CallAll(arg Value) Set {
-	return NewSet(f.fn(arg))
+func (f *NativeFunction) CallAll(arg Value) (Set, error) {
+	v, err := f.fn(arg)
+	if err != nil {
+		return nil, err
+	}
+	return NewSet(v), nil
 }
 
 func (*NativeFunction) ArrayEnumerator() (OffsetValueEnumerator, bool) {

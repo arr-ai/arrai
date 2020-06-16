@@ -3,6 +3,7 @@ package syntax
 import "testing"
 
 func TestExprSetWith(t *testing.T) {
+	t.Parallel()
 	AssertCodesEvalToSameValue(t, `{{}}`, `{} with {}`)
 	AssertCodesEvalToSameValue(t, `{{}}`, `{{}} with {}`)
 	AssertCodesEvalToSameValue(t, `{{}, 1}`, `{1} with {}`)
@@ -14,6 +15,7 @@ func TestExprSetWith(t *testing.T) {
 }
 
 func TestExprSetWithout(t *testing.T) {
+	t.Parallel()
 	AssertCodesEvalToSameValue(t, `{}`, `{} without {}`)
 	AssertCodesEvalToSameValue(t, `{}`, `{{}} without {}`)
 	AssertCodesEvalToSameValue(t, `{1}`, `{1} without {}`)

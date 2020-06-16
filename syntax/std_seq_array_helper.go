@@ -1,20 +1,30 @@
 package syntax
 
 import (
+	"fmt"
+
 	"github.com/arr-ai/arrai/rel"
 )
 
 // Checks if array subject contains sub.
-func arrayContains(sub rel.Value, subject rel.Array) rel.Value {
-	subArray := convert2Array(sub)
-	return rel.NewBool(search(subject.Values(), subArray.Values()) > -1)
+func arrayContains(sub rel.Value, subject rel.Array) (rel.Value, error) {
+	if subArray, is := rel.AsArray(sub); is {
+		return rel.NewBool(search(subject.Values(), subArray.Values()) > -1), nil
+	}
+	return nil, fmt.Errorf("//seq.contains: sub not an array: %v", sub)
 }
 
 // Substitutes all old in subject with new.
-func arraySub(old, new rel.Value, subject rel.Array) rel.Value {
+func arraySub(old, new rel.Value, subject rel.Array) (rel.Value, error) {
 	// Convert to array to facilitate process
-	oldArray := convert2Array(old)
-	newArray := convert2Array(new)
+	oldArray, is := rel.AsArray(old)
+	if !is {
+		return nil, fmt.Errorf("//seq.sub: old not an array: %v", old)
+	}
+	newArray, is := rel.AsArray(new)
+	if !is {
+		return nil, fmt.Errorf("//seq.sub: new not an array: %v", new)
+	}
 
 	result := make([]rel.Value, 0, subject.Count())
 	if !old.IsTrue() {
@@ -35,12 +45,15 @@ func arraySub(old, new rel.Value, subject rel.Array) rel.Value {
 		}
 	}
 
-	return rel.NewArray(result...)
+	return rel.NewArray(result...), nil
 }
 
 // Splits array subject by delimiter.
-func arraySplit(delimiter rel.Value, subject rel.Array) rel.Value {
-	delimiterArray := convert2Array(delimiter)
+func arraySplit(delimiter rel.Value, subject rel.Array) (rel.Value, error) {
+	delimiterArray, is := rel.AsArray(delimiter)
+	if !is {
+		return nil, fmt.Errorf("//seq.split: delimiter not an array: %v", delimiter)
+	}
 	var result []rel.Value
 
 	if !delimiterArray.IsTrue() {
@@ -60,7 +73,7 @@ func arraySplit(delimiter rel.Value, subject rel.Array) rel.Value {
 		}
 	}
 
-	return rel.NewArray(result...)
+	return rel.NewArray(result...), nil
 }
 
 // Joins array joiner to subject.
@@ -69,8 +82,11 @@ func arraySplit(delimiter rel.Value, subject rel.Array) rel.Value {
 //  `//seq.join([0], [1, 2])`, it can return [1, 0, 2] or [1, 2],
 //  `//seq.join([], [1, [2, 3]])`, it can return [1, 2, 3] or [1, [2, 3]].
 // All of the results make sense. It can see the output can't be sure in above cases, it is not good.
-func arrayJoin(joiner rel.Value, subject rel.Array) rel.Value {
-	joinerArray := convert2Array(joiner)
+func arrayJoin(joiner rel.Value, subject rel.Array) (rel.Value, error) {
+	joinerArray, is := rel.AsArray(joiner)
+	if !is {
+		return nil, fmt.Errorf("//seq.join: joiner not an array: %v", joiner)
+	}
 
 	result := make([]rel.Value, 0, subject.Count())
 	for i, value := range subject.Values() {
@@ -81,21 +97,24 @@ func arrayJoin(joiner rel.Value, subject rel.Array) rel.Value {
 		case rel.Array:
 			result = append(result, vArray.Values()...)
 		case rel.Value:
-			panic("the type of subject element must be rel.Array")
+			return nil, fmt.Errorf("//seq.join: the type of subject element must be rel.Array")
 		}
 	}
 
-	return rel.NewArray(result...)
+	return rel.NewArray(result...), nil
 }
 
-// Check if array subject starts with prefix.
-func arrayHasPrefix(prefix rel.Value, subject rel.Array) rel.Value {
+// Check if array subject starts with suffix.
+func arrayHasPrefix(prefix rel.Value, subject rel.Array) (rel.Value, error) {
 	if !prefix.IsTrue() {
-		return rel.NewBool(true)
+		return rel.NewBool(true), nil
 	}
-	prefixArray := convert2Array(prefix)
+	prefixArray, is := rel.AsArray(prefix)
+	if !is {
+		return nil, fmt.Errorf("//seq.has_prefix: prefix not an array: %v", prefix)
+	}
 	if subject.Count() < prefixArray.Count() {
-		return rel.NewBool(false)
+		return rel.NewBool(false), nil
 	}
 
 	prefixVals := prefixArray.Values()
@@ -108,22 +127,25 @@ func arrayHasPrefix(prefix rel.Value, subject rel.Array) rel.Value {
 				break
 			}
 		} else {
-			return rel.NewBool(false)
+			return rel.NewBool(false), nil
 		}
 	}
 
-	return rel.NewBool(true)
+	return rel.NewBool(true), nil
 }
 
 // Check if array subject ends with suffix.
-func arrayHasSuffix(suffix rel.Value, subject rel.Array) rel.Value {
-	suffixArray := convert2Array(suffix)
+func arrayHasSuffix(suffix rel.Value, subject rel.Array) (rel.Value, error) {
+	suffixArray, is := rel.AsArray(suffix)
+	if !is {
+		return nil, fmt.Errorf("//seq.has_suffix: suffix not an array: %v", suffix)
+	}
 
 	if !suffixArray.IsTrue() {
-		return rel.NewBool(true)
+		return rel.NewBool(true), nil
 	}
 	if subject.Count() < suffixArray.Count() {
-		return rel.NewBool(false)
+		return rel.NewBool(false), nil
 	}
 
 	subjectVals := subject.Values()
@@ -137,38 +159,43 @@ func arrayHasSuffix(suffix rel.Value, subject rel.Array) rel.Value {
 				break
 			}
 		} else {
-			return rel.NewBool(false)
+			return rel.NewBool(false), nil
 		}
 	}
 
-	return rel.NewBool(true)
+	return rel.NewBool(true), nil
 }
 
-func arrayTrimPrefix(prefix rel.Value, subject rel.Array) rel.Value {
-	if prefix.IsTrue() && subject.IsTrue() && arrayHasPrefix(prefix, subject).IsTrue() {
-		switch result := rel.Difference(subject, prefix.(rel.Array)).(type) {
-		case rel.Array:
-			return result.Shift(-prefix.(rel.Array).Count())
-		case rel.Set:
-			return result
+func arrayTrimPrefix(prefix rel.Value, subject rel.Array) (rel.Value, error) {
+	if prefix.IsTrue() && subject.IsTrue() {
+		hasPrefix, err := arrayHasPrefix(prefix, subject)
+		if err != nil {
+			return nil, err
+		}
+		if hasPrefix.IsTrue() {
+			switch result := rel.Difference(subject, prefix.(rel.Array)).(type) {
+			case rel.Array:
+				return result.Shift(-prefix.(rel.Array).Count()), nil
+			case rel.Set:
+				return result, nil
+			}
 		}
 	}
-	return subject
+	return subject, nil
 }
 
-func arrayTrimSuffix(suffix rel.Value, subject rel.Array) rel.Value {
-	if suffix.IsTrue() && subject.IsTrue() && arrayHasSuffix(suffix, subject).IsTrue() {
-		suffix := suffix.(rel.Array)
-		return rel.Difference(subject, suffix.Shift(subject.Count()-suffix.Count()))
+func arrayTrimSuffix(suffix rel.Value, subject rel.Array) (rel.Value, error) {
+	if suffix.IsTrue() && subject.IsTrue() {
+		hasSuffix, err := arrayHasSuffix(suffix, subject)
+		if err != nil {
+			return nil, err
+		}
+		if hasSuffix.IsTrue() {
+			suffixArray := suffix.(rel.Array)
+			return rel.Difference(subject, suffixArray.Shift(subject.Count()-suffixArray.Count())), nil
+		}
 	}
-	return subject
-}
-
-func convert2Array(val rel.Value) rel.Array {
-	if array, is := rel.AsArray(val.(rel.Set)); is {
-		return array
-	}
-	panic("it supports types rel.Array and rel.GenericSet only.")
+	return subject, nil
 }
 
 // Searches array sub in subject and return the first indedx if found, or return -1.

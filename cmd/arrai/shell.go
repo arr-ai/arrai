@@ -14,13 +14,13 @@ var shellCommand = &cli.Command{
 }
 
 func iShell(_ *cli.Context) error {
-	return shell.Shell(rel.EmptyScope)
+	return shell.Shell([]rel.ContextErr{})
 }
 
 func createDebuggerShell(err error) error {
 	if err != nil {
 		if ctxErr, isContextError := err.(rel.ContextErr); isContextError {
-			return shell.Shell(ctxErr.GetLastScope())
+			return shell.Shell(ctxErr.GetImportantFrames())
 		}
 		return err
 	}

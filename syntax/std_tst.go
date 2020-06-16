@@ -7,22 +7,22 @@ import (
 )
 
 func createTestCompareFuncAttr(name string, ok func(a, b rel.Value) bool, message string) rel.Attr {
-	return createNestedFuncAttr(name, 2, func(args ...rel.Value) rel.Value {
+	return createNestedFuncAttr(name, 2, func(args ...rel.Value) (rel.Value, error) {
 		expected := args[0]
 		actual := args[1]
 		if !ok(expected, actual) {
-			panic(fmt.Errorf("%s\nexpected: %v\nactual:   %v", message, expected, actual))
+			return nil, fmt.Errorf("%s\nexpected: %v\nactual:   %v", message, expected, actual)
 		}
-		return rel.None
+		return rel.None, nil
 	})
 }
 
 func createTestCheckFuncAttr(name string, ok func(v rel.Value) bool) rel.Attr {
-	return rel.NewNativeFunctionAttr(name, func(value rel.Value) rel.Value {
-		if !ok(value) {
-			panic(fmt.Errorf("not %s\nvalue: %v", name, value))
+	return rel.NewNativeFunctionAttr(name, func(value rel.Value) (rel.Value, error) {
+		if ok(value) {
+			return rel.None, nil
 		}
-		return rel.None
+		return nil, fmt.Errorf("not %s\nvalue: %v", name, value)
 	})
 }
 
@@ -52,9 +52,9 @@ func stdTest() rel.Attr {
 		// 					switch r := recover().(type) {
 		// 					case nil:
 		// 					case error:
-		// 						err = wrapContext(r, elt)
+		// 						err = WrapContext(r, elt)
 		// 					default:
-		// 						panic(wrapContext(fmt.Errorf("unexpected panic: %v", r), expr))
+		// 						panic(WrapContext(fmt.Errorf("unexpected panic: %v", r), expr))
 		// 					}
 		// 				}()
 		// 				_, err = elt.Eval(local)
@@ -80,6 +80,6 @@ func stdTest() rel.Attr {
 	)
 }
 
-// func wrapContext(err error, expr rel.Expr) error {
+// func WrapContext(err error, expr rel.Expr) error {
 // 	return fmt.Errorf("%s\n%s", err.Error(), expr.Source().Context(parser.DefaultLimit))
 // }

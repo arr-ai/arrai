@@ -213,23 +213,27 @@ func (b Bytes) Map(f func(v Value) Value) Set {
 }
 
 // Where returns a new Bytes with all the Values satisfying predicate p.
-func (b Bytes) Where(p func(v Value) bool) Set {
+func (b Bytes) Where(p func(v Value) (bool, error)) (Set, error) {
 	result := Set(b)
 	for e := b.Enumerator(); e.MoveNext(); {
 		value := e.Current()
-		if !p(value) {
+		match, err := p(value)
+		if err != nil {
+			return nil, err
+		}
+		if !match {
 			result = result.Without(value)
 		}
 	}
-	return result
+	return result, nil
 }
 
-func (b Bytes) CallAll(arg Value) Set {
+func (b Bytes) CallAll(arg Value) (Set, error) {
 	i := int(arg.(Number).Float64()) - b.offset
 	if i < 0 || i >= len(b.Bytes()) {
-		return None
+		return None, nil
 	}
-	return NewSet(NewNumber(float64(string(b.b)[i])))
+	return NewSet(NewNumber(float64(string(b.b)[i]))), nil
 }
 
 func (b Bytes) index(pos int) int {

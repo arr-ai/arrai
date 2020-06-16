@@ -275,12 +275,22 @@ func (s GenericSet) Map(f func(v Value) Value) Set {
 }
 
 // Where returns a new genericSet with all the Values satisfying predicate p.
-func (s GenericSet) Where(p func(v Value) bool) Set {
-	s.set = s.set.Where(func(elem interface{}) bool { return p(elem.(Value)) })
-	return s
+func (s GenericSet) Where(p func(v Value) (bool, error)) (_ Set, err error) {
+	s.set = s.set.Where(func(elem interface{}) bool {
+		if err != nil {
+			return false
+		}
+		match, err2 := p(elem.(Value))
+		if err2 != nil {
+			err = err2
+			return false
+		}
+		return match
+	})
+	return s, err
 }
 
-func (s GenericSet) CallAll(arg Value) Set {
+func (s GenericSet) CallAll(arg Value) (Set, error) {
 	var t Tuple
 	var at Value
 	tm := NewTupleMatcher(map[string]Matcher{"@": Bind(&at)}, Bind(&t))
@@ -296,7 +306,7 @@ func (s GenericSet) CallAll(arg Value) Set {
 			}
 		}
 	}
-	return set
+	return set, nil
 }
 
 // Enumerator returns an enumerator over the Values in the genericSet.
@@ -370,4 +380,13 @@ func (s GenericSet) Bind(scope Scope, value Value) (Scope, error) {
 		return EmptyScope, errors.Errorf("%s doesn't equal to %s", s, value)
 	}
 	return EmptyScope, fmt.Errorf("%s is not a Pattern", s)
+}
+
+func (s GenericSet) Bindings() []string {
+	values := s.OrderedValues()
+	bindings := make([]string, len(values))
+	for i, v := range values {
+		bindings[i] = v.String()
+	}
+	return bindings
 }

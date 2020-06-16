@@ -11,16 +11,6 @@ import (
 	"github.com/arr-ai/wbnf/parser"
 )
 
-// type noParseType struct{}
-
-// type parseFunc func(v interface{}) (rel.Expr, error)
-
-// func (*noParseType) Error() string {
-// 	return "No parse"
-// }
-
-// var noParse = &noParseType{}
-
 type ParseContext struct {
 	SourceDir string
 }
@@ -71,22 +61,6 @@ func (pc ParseContext) Parse(s *parser.Scanner) (ast.Branch, error) {
 	rscopes := []rel.Scope{{}}
 	v, err := arraiParsers.ParseWithExternals(parser.Rule("expr"), s, parser.ExternalRefs{
 		"bind": func(pscope parser.Scope, _ *parser.Scanner) (parser.TreeElement, error) {
-			identStr := "."
-			if _, ident, has := pscope.GetVal("IDENT"); has {
-				identStr = ident.(parser.Scanner).String()
-			} else if _, pattern, has := pscope.GetVal("pattern"); has {
-				patNode := ast.FromParserNode(arraiParsers.Grammar(), pattern)
-				pat := pc.compilePattern(patNode)
-				if epat, is := pat.(rel.ExprPattern); is {
-					if identExpr, is := epat.Expr.(rel.IdentExpr); is {
-						identStr = identExpr.Ident()
-					}
-				}
-				if identStr == "" {
-					return nil, nil
-				}
-			}
-
 			_, exprElt, has := pscope.GetVal("expr@1")
 			if !has {
 				_, exprElt, has = pscope.GetVal("expr")
@@ -96,29 +70,50 @@ func (pc ParseContext) Parse(s *parser.Scanner) (ast.Branch, error) {
 					panic("wat?")
 				}
 			}
-
 			exprNode := ast.FromParserNode(arraiParsers.Grammar(), exprElt)
 			expr := pc.CompileExpr(exprNode)
-			expr = rel.NewExprClosure(rscopes[len(rscopes)-1], expr)
-			rscopes = append(rscopes, rscopes[len(rscopes)-1].With(identStr, expr))
+			exprClosure := rel.NewExprClosure(rscopes[len(rscopes)-1], expr)
+
+			identStr := "."
+			if _, ident, has := pscope.GetVal("IDENT"); has {
+				identStr = ident.(parser.Scanner).String()
+			}
+			rscopes = append(rscopes, rscopes[len(rscopes)-1].With(identStr, exprClosure))
+
+			if _, pattern, has := pscope.GetVal("pattern"); has {
+				source := expr.Source()
+
+				patNode := ast.FromParserNode(arraiParsers.Grammar(), pattern)
+				pat := pc.compilePattern(patNode)
+				bindings := pat.Bindings()
+				for _, b := range bindings {
+					rhs := rel.NewFunction(*parser.NewScanner(fmt.Sprintf("let %s = %s; %s", pat, source, b)),
+						pat, rel.NewIdentExpr(*parser.NewScanner(b), b))
+					rscopes = append(rscopes, rscopes[len(rscopes)-1].With(b, binops["->"](source, expr, rhs)))
+				}
+			}
+
 			return nil, nil
 		},
 		"ast": func(scope parser.Scope, input *parser.Scanner) (parser.TreeElement, error) {
-			_, elt, ok := scope.GetVal("grammar")
+			_, elt, ok := scope.GetVal("macro")
 			if !ok {
 				panic("wat?")
 			}
-			astNode := ast.FromParserNode(arraiParsers.Grammar(), elt)
-			dotExpr := pc.CompileExpr(astNode).(*rel.DotExpr)
-			astExpr := dotExpr.Subject()
-			astValue, err := astExpr.Eval(rscopes[len(rscopes)-1])
+			_, ruleElt, ok := scope.GetVal("rule")
+			if !ok {
+				panic("wat?")
+			}
+			relScope := rscopes[len(rscopes)-1]
+			macro, err := pc.unpackMacro(elt.(parser.Node), ruleElt.(parser.Node), relScope)
 			if err != nil {
 				return nil, err
 			}
-			astValueNode := rel.ASTNodeFromValue(astValue).(ast.Branch)
-			subg := wbnf.NewFromAst(astValueNode)
-			rule := parser.Rule(dotExpr.Attr())
+
+			subg := wbnf.NewFromAst(rel.ASTNodeFromValue(macro.grammar))
+			rule := parser.Rule(macro.ruleName)
 			parsers := subg.Compile(subg)
+
 			childast, err := parsers.ParseWithExternals(rule, input, parser.ExternalRefs{
 				"*:{()}:": func(scope parser.Scope, _ *parser.Scanner) (parser.TreeElement, error) {
 					childast, err := pc.Parse(input)
@@ -127,7 +122,6 @@ func (pc ParseContext) Parse(s *parser.Scanner) (ast.Branch, error) {
 					default:
 						return nil, err
 					}
-					// log.Printf("ast: %v", ast)
 					node := ast.ToParserNode(arraiParsers.Grammar(), childast)
 					return node, nil
 				},
@@ -140,15 +134,27 @@ func (pc ParseContext) Parse(s *parser.Scanner) (ast.Branch, error) {
 					return nil, err
 				}
 			}
-			return ast.NewExtRefTreeElement(parsers.Grammar(), childast), nil
+			if !macro.transform.IsTrue() {
+				return ast.NewExtRefTreeElement(parsers.Grammar(), childast), nil
+			}
+
+			childastNode := ast.FromParserNode(subg, childast)
+			childastValue := rel.ASTNodeToValue(childastNode)
+			bodyValue, err := rel.SetCall(macro.transform, childastValue)
+			if err != nil {
+				return nil, err
+			}
+
+			return parser.Node{Tag: "extref", Children: nil, Extra: ast.Branch{
+				"@rule": ast.One{Node: ast.Extra{Data: parser.Rule(macro.ruleName)}},
+				"value": ast.One{Node: NewMacroValue(bodyValue, childastNode.Scanner())},
+			}}, nil
 		},
 	})
-	// log.Printf("Parse: v = %v", v)
 	if err != nil {
 		return nil, err
 	}
 	result := ast.FromParserNode(arraiParsers.Grammar(), v)
-	// log.Printf("Parse: result = %v", result)
 	if s.String() != "" {
 		return result, parser.UnconsumedInput(*s, v)
 	}

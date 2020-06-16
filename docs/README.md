@@ -260,6 +260,8 @@ Array of Bytes can be expressed in arr.ai. The syntactic sugar is in the form of
 `<< expr1, expr2, expr3, ... >>`.
 It only accepts expressions that are evaluated to either a `Number` whose values
 range from 0-255 inclusive or a `String` with `0` offset.
+Any complicated expressions need to be surrounded by parentheses `(expr)`,
+except literal values such as `Number`, `String`, `Char`, and variables.
 Any other values and the expression will fail.
 A `Number` is appended to the array while each characters of a `String` is
 appended to the array.
@@ -268,8 +270,9 @@ The result is an array of Bytes and each Byte is represented as a `Number`.
 Example of usages:
 
 ```arrai
-<<"hello", 10>> = <<"hello\n">>
-<<97, 98, 99>>  = <<"abc">>
+<<"hello", 10>>      = <<"hello\n">>
+<<97, 98, 99>>       = <<"abc">>
+<<("abc" >> . + 1)>> = <<"bcd">>
 ```
 
 ##### Expression string syntax
@@ -468,6 +471,16 @@ let rec oe = (
 oe.even(6)
 ```
 
+It is also possible to use the same syntax in a tuple.
+
+```arrai
+let t = (
+   rec fact: \n cond n ((0, 1): 1, n: n * fact(n - 1)),
+   n       : 5
+);
+t.rec(t.n)
+```
+
 This syntactic sugar only works with expression that evaluates to either a
 function or a tuple of functions. Anything else and the expression will fail.
 
@@ -587,7 +600,7 @@ $ arrai e '//grammar.lang.wbnf{expr -> @:[-+] > @:[/*] > \d+;}{1+2*3}'
 ```
 
 (Above syntax **⛔ NYI**. Current syntax is
-`{://grammar.lang.wbnf.grammar: expr -> @:[-+] > @:[/*] > \d+; :} -> {:.expr:1+2*3:}`.)
+`{://grammar.lang.wbnf: expr -> @:[-+] > @:[/*] > \d+; :} -> {:.:1+2*3:}`.)
 
 The primary use of grammars is in the macro system. However, grammars are
 themselves data structures, and can be transformed as such, allowing interesting

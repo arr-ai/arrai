@@ -12,6 +12,9 @@ type ExprPattern struct {
 }
 
 func NewExprPattern(expr Expr) ExprPattern {
+	if value, is := exprIsValue(expr); is {
+		return ExprPattern{Expr: value}
+	}
 	return ExprPattern{Expr: expr}
 }
 
@@ -26,6 +29,10 @@ func (p ExprPattern) Bind(scope Scope, value Value) (Scope, error) {
 
 func (p ExprPattern) String() string {
 	return p.Expr.String()
+}
+
+func (p ExprPattern) Bindings() []string {
+	return []string{p.Expr.String()}
 }
 
 type ExprsPattern struct {
@@ -84,4 +91,12 @@ func (p ExprsPattern) String() string {
 	}
 	b.WriteByte(']')
 	return b.String()
+}
+
+func (p ExprsPattern) Bindings() []string {
+	bindings := make([]string, len(p.exprs))
+	for i, v := range p.exprs {
+		bindings[i] = v.String()
+	}
+	return bindings
 }

@@ -10,13 +10,16 @@ import (
 // TODO: Make this more robust.
 func formatValue(format string, value rel.Value) string {
 	var v interface{}
-	if set, ok := value.(rel.Set); ok {
+	switch set := value.(type) {
+	case rel.Set:
 		if s, is := rel.AsString(set); is {
 			v = s
 		} else {
 			v = rel.Repr(set)
 		}
-	} else {
+	case nil:
+		panic(fmt.Errorf("unable to format nil value"))
+	default:
 		v = value.Export()
 	}
 	switch format[len(format)-1] {
@@ -33,8 +36,11 @@ func formatValue(format string, value rel.Value) string {
 }
 
 var (
-	stdStrExpand = createNestedFunc("expand", 4, func(args ...rel.Value) rel.Value {
-		format := mustAsString(args[0])
+	stdStrExpand = mustCreateNestedFunc("expand", 4, func(args ...rel.Value) (rel.Value, error) {
+		format, is := valueAsString(args[0])
+		if !is {
+			return nil, fmt.Errorf("//str.expand: format not a string: %v", args[0])
+		}
 		if format != "" {
 			format = "%" + format
 		} else {
@@ -42,59 +48,84 @@ var (
 		}
 
 		var s string
-		if delim := mustAsString(args[2]); strings.HasPrefix(delim, ":") {
+		delim, is := valueAsString(args[2])
+		if !is {
+			return nil, fmt.Errorf("//str.expand: delim not a string: %v", args[2])
+		}
+		if strings.HasPrefix(delim, ":") {
 			if array, is := rel.AsArray(args[1].(rel.Set)); is {
 				var sb strings.Builder
 				for i, value := range array.Values() {
 					if i > 0 {
 						sb.WriteString(delim[1:])
 					}
-					sb.WriteString(formatValue(format, value))
+					if value != nil {
+						sb.WriteString(formatValue(format, value))
+					}
 				}
 				s = sb.String()
 			} else {
-				panic(fmt.Errorf("arg not an array in ${arg::}: %v", args[1]))
+				return nil, fmt.Errorf("//str..expand: arg not an array in ${arg::}: %v", args[1])
 			}
 		} else {
 			s = formatValue(format, args[1])
 		}
 		if s != "" {
-			s += mustAsString(args[3])
+			tail, is := valueAsString(args[3])
+			if !is {
+				return nil, fmt.Errorf("//str.expand: tail not a string: %v", args[3])
+			}
+			s += tail
 		}
-		return rel.NewString([]rune(s))
+		return rel.NewString([]rune(s)), nil
 	})
 
-	stdStrRepr = rel.NewNativeFunction("repr", func(value rel.Value) rel.Value {
-		return rel.NewString([]rune(rel.Repr(value)))
+	stdStrRepr = rel.NewNativeFunction("repr", func(value rel.Value) (rel.Value, error) {
+		return rel.NewString([]rune(rel.Repr(value))), nil
 	})
 )
 
 func stdStr() rel.Attr {
 	return rel.NewTupleAttr("str",
 		rel.NewAttr("expand", stdStrExpand),
-		createNestedFuncAttr("lower", 1, func(args ...rel.Value) rel.Value {
-			return rel.NewString([]rune(strings.ToLower(mustAsString(args[0]))))
+		createNestedFuncAttr("lower", 1, func(args ...rel.Value) (rel.Value, error) {
+			if s, is := valueAsString(args[0]); is {
+				return rel.NewString([]rune(strings.ToLower(s))), nil
+			}
+			return nil, fmt.Errorf("//str.lower: arg not a string: %v", args[0])
 		}),
 		rel.NewAttr("repr", stdStrRepr),
-		createNestedFuncAttr("title", 1, func(args ...rel.Value) rel.Value {
-			return rel.NewString([]rune(strings.Title(mustAsString(args[0]))))
+		createNestedFuncAttr("title", 1, func(args ...rel.Value) (rel.Value, error) {
+			if s, is := valueAsString(args[0]); is {
+				return rel.NewString([]rune(strings.Title(s))), nil
+			}
+			return nil, fmt.Errorf("//str.title: arg not a string: %v", args[0])
 		}),
-		createNestedFuncAttr("upper", 1, func(args ...rel.Value) rel.Value {
-			return rel.NewString([]rune(strings.ToUpper(mustAsString(args[0]))))
+		createNestedFuncAttr("upper", 1, func(args ...rel.Value) (rel.Value, error) {
+			if s, is := valueAsString(args[0]); is {
+				return rel.NewString([]rune(strings.ToUpper(s))), nil
+			}
+			return nil, fmt.Errorf("//str.upper: arg not a string: %v", args[0])
 		}),
 	)
 }
 
-func mustAsString(v rel.Value) string {
-	if s, ok := rel.AsString(v.(rel.Set)); ok {
-		return s.String()
+func valueAsString(v rel.Value) (string, bool) {
+	switch v := v.(type) {
+	case rel.String:
+		return v.String(), true
+	case rel.GenericSet:
+		return "", !v.IsTrue()
 	}
-	panic("value is not a string")
+	return "", false
 }
 
-func mustAsBytes(v rel.Value) string {
-	if b, ok := rel.AsBytes(v.(rel.Set)); ok {
-		return b.String()
+func valueAsBytes(v rel.Value) ([]byte, bool) {
+	switch v := v.(type) {
+	case rel.Bytes:
+		return v.Bytes(), true
+	case rel.GenericSet:
+		return nil, !v.IsTrue()
 	}
-	panic("value is not a byte array")
+	return nil, false
 }

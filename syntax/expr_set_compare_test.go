@@ -9,6 +9,8 @@ import (
 )
 
 func TestSetCompare(t *testing.T) {
+	t.Parallel()
+
 	intSet := func(i int) rel.Set {
 		set := rel.None
 		for ; i != 0; i &= i - 1 {

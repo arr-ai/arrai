@@ -30,3 +30,9 @@ func TestStrTitle(t *testing.T) {
 	AssertCodesEvalToSameValue(t, `"This Is A Test"`, `//str.title("this is a test")`)
 	AssertCodeErrors(t, `//str.title(123)`, "")
 }
+
+func TestStrExprStr(t *testing.T) {
+	t.Parallel()
+	AssertCodesEvalToSameValue(t, `"/a+b+c/"`, `let arr = ['a', 'b', 'c']; $'/${arr::+}/'`)
+	AssertCodesEvalToSameValue(t, `"/a++b+c/"`, `let arr = ['a', , 'b', 'c']; $'/${arr::+}/'`)
+}

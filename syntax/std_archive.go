@@ -14,7 +14,7 @@ import (
 func stdArchive() rel.Attr {
 	return rel.NewTupleAttr("archive",
 		rel.NewTupleAttr("tar",
-			rel.NewNativeFunctionAttr("tar", func(v rel.Value) rel.Value {
+			rel.NewNativeFunctionAttr("tar", func(v rel.Value) (rel.Value, error) {
 				return createArchive(v, func(w io.Writer) (io.Closer, func(string, []byte) (io.Writer, error)) {
 					aw := tar.NewWriter(w)
 					return aw, func(path string, data []byte) (io.Writer, error) {
@@ -28,7 +28,7 @@ func stdArchive() rel.Attr {
 			}),
 		),
 		rel.NewTupleAttr("zip",
-			rel.NewNativeFunctionAttr("zip", func(v rel.Value) rel.Value {
+			rel.NewNativeFunctionAttr("zip", func(v rel.Value) (rel.Value, error) {
 				return createArchive(v, func(w io.Writer) (io.Closer, func(string, []byte) (io.Writer, error)) {
 					aw := zip.NewWriter(w)
 					return aw, func(path string, _ []byte) (io.Writer, error) {
@@ -40,20 +40,23 @@ func stdArchive() rel.Attr {
 	)
 }
 
-func createArchive(v rel.Value, creator func(io.Writer) (io.Closer, func(string, []byte) (io.Writer, error))) rel.Set {
+func createArchive(
+	v rel.Value,
+	creator func(io.Writer) (io.Closer, func(string, []byte) (io.Writer, error)),
+) (rel.Set, error) {
 	var b bytes.Buffer
 	closer, create := creator(&b)
 	d, ok := v.(rel.Dict)
 	if !ok {
-		panic(fmt.Errorf("//.archive.zip.zip arg not a dict: %v", v))
+		return nil, fmt.Errorf("//archive.zip.zip arg not a dict: %v", v)
 	}
 	if err := writeDictToArchive(d, create, ""); err != nil {
-		panic(err)
+		return nil, err
 	}
 	if err := closer.Close(); err != nil {
-		panic(err)
+		return nil, err
 	}
-	return rel.NewBytes(b.Bytes())
+	return rel.NewBytes(b.Bytes()), nil
 }
 
 func writeDictToArchive(d rel.Dict, w func(string, []byte) (io.Writer, error), parent string) error {
