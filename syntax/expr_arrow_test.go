@@ -6,6 +6,9 @@ func TestApplyExpr(t *testing.T) {
 	t.Parallel()
 	AssertCodesEvalToSameValue(t, `42`, `6 -> 7 * .`)
 	AssertCodesEvalToSameValue(t, `42`, `6 -> \x 7 * x`)
+
+	AssertCodesEvalToSameValue(t, `[1,2,3]`, `[1,2,3] -> (.)`)
+	AssertCodesEvalToSameValue(t, `[1,2,3]`, `[1,2,3] -> .`)
 }
 
 func TestSeqArrow(t *testing.T) {

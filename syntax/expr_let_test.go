@@ -2,7 +2,7 @@ package syntax
 
 import "testing"
 
-func TestExprLet(t *testing.T) {
+func TestExprLet(t *testing.T) { //nolint:dupl
 	t.Parallel()
 	AssertCodesEvalToSameValue(t, `7`, `let x = 6; 7`)
 	AssertCodesEvalToSameValue(t, `42`, `let x = 6; x * 7`)
@@ -11,6 +11,18 @@ func TestExprLet(t *testing.T) {
 	AssertCodesEvalToSameValue(t, `(x: 1)`, `let x = 1; (:x)`)
 	AssertCodesEvalToSameValue(t, `(x: 1, y: 2)`, `let x = 1; let y = 2; (:x, :y)`)
 	AssertCodesEvalToSameValue(t, `(x: 1, y: 2)`, `let x = 1; (:x, y: 2)`)
+
+	AssertCodesEvalToSameValue(t, `4`, `let x = 4; let (x) = 4;x`)
+	AssertCodesEvalToSameValue(t, `4`, `let x = 4; let (x) = (4);x`)
+	AssertCodesEvalToSameValue(t, `4`, `let x = 4; let (x) =(4 + 0);x`)
+	AssertCodesEvalToSameValue(t, `1`, `let [a,b] = [1,2];let (b) = (a + 1);a`)
+
+	AssertCodesEvalToSameValue(t, `1`, `let a = 1;a`)
+	AssertCodesEvalToSameValue(t, `1`, `let a = 1;(a)`) // (a) is an expression
+
+	// (x) should be parsed as an expression and fail because x isn't bound.
+	AssertCodeErrors(t, `let (x) = 5;x`, "")
+	AssertCodeErrors(t, `let (x) = 5;(x)`, "")
 }
 
 func TestExprLetExprPattern(t *testing.T) { //nolint:dupl
@@ -112,7 +124,7 @@ func TestExprLetDictPattern(t *testing.T) {
 	AssertCodePanics(t, `let {"x": a, "x": a} = {"x": 4, "x": 4}; a`)
 }
 
-func TestExprLetSetPattern(t *testing.T) {
+func TestExprLetSetPattern(t *testing.T) { //nolint:dupl
 	t.Parallel()
 	AssertCodesEvalToSameValue(t, `1`, `let {} = {}; 1`)
 	AssertCodesEvalToSameValue(t, `1`, `let {42} = {42}; 1`)
