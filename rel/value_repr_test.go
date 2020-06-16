@@ -24,7 +24,7 @@ func TestReprString(t *testing.T) {
 func TestReprBytes(t *testing.T) {
 	t.Parallel()
 
-	assert.Equal(t, "\n", Repr(NewBytes([]byte{'\n'})))
+	assert.Equal(t, "<<'\\n'>>", Repr(NewBytes([]byte{'\n'})))
 }
 
 func TestReprStringCharTuple(t *testing.T) {

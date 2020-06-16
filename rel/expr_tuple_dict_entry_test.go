@@ -1,6 +1,7 @@
 package rel
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/arr-ai/wbnf/parser"
@@ -31,10 +32,11 @@ func TestDictEntryTupleExprEvalErrorOnAtEvalError(t *testing.T) {
 	// On Eval, this will return an error that will be propagated.
 	badExpr := NewDotExpr(*parser.NewScanner(""), NewNumber(0), "*")
 	_, err := badExpr.Eval(EmptyScope)
+	msg := strings.Split(err.Error(), "\n")[0]
 
 	e := NewDictEntryTupleExpr(*parser.NewScanner(""), badExpr, NewNumber(2))
 
-	AssertExprErrorEquals(t, e, err.Error())
+	AssertExprErrorEquals(t, e, msg)
 }
 
 func TestDictEntryTupleExprEvalErrorOnValueEvalError(t *testing.T) {
@@ -43,8 +45,9 @@ func TestDictEntryTupleExprEvalErrorOnValueEvalError(t *testing.T) {
 	// On Eval, this will return an error that will be propagated.
 	badExpr := NewDotExpr(*parser.NewScanner(""), NewNumber(0), "*")
 	_, err := badExpr.Eval(EmptyScope)
+	msg := strings.Split(err.Error(), "\n")[0]
 
 	e := NewDictEntryTupleExpr(*parser.NewScanner(""), NewNumber(1), badExpr)
 
-	AssertExprErrorEquals(t, e, err.Error())
+	AssertExprErrorEquals(t, e, msg)
 }
