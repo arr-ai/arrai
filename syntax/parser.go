@@ -73,7 +73,6 @@ tail   -> get
             ")");
 pattern -> extra 
         | %!patternterms(pattern|expr)
-        | C* odelim="(" identpattern=IDENT cdelim=")" C*
         | IDENT
         | NUM 
         | C* "(" exprpattern=expr:SEQ_COMMENT,? ")" C* 
