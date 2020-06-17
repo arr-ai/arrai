@@ -73,15 +73,17 @@ func (p SetPattern) Bind(local Scope, value Value) (Scope, error) {
 			if _, is := t.Expr.(IdentExpr); !is {
 				return EmptyScope, fmt.Errorf("item type %s is not supported yet", t)
 			}
-		case IdentPattern:
-			v, has := local.Get(t.ident)
-			if !has {
-				return EmptyScope, fmt.Errorf("%q not in scope", t.ident)
+		case ExprsPattern:
+			if identExpr, is := t.exprs[0].(IdentExpr); is {
+				v, has := local.Get(identExpr.ident)
+				if !has {
+					return EmptyScope, fmt.Errorf("%q not in scope", identExpr.ident)
+				}
+				if !set.Has(v.(Value)) {
+					return EmptyScope, fmt.Errorf("item %s is not included in set %s", v, value)
+				}
+				set = set.Without(v.(Value)).(GenericSet)
 			}
-			if !set.Has(v.(Value)) {
-				return EmptyScope, fmt.Errorf("item %s is not included in set %s", v, value)
-			}
-			set = set.Without(v.(Value)).(GenericSet)
 		default:
 			return EmptyScope, fmt.Errorf("%s not supported yet", t)
 		}
