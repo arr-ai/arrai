@@ -19,6 +19,10 @@ func NewExprPattern(expr Expr) ExprPattern {
 }
 
 func (p ExprPattern) Bind(scope Scope, value Value) (Scope, error) {
+	if identExpr, is := p.Expr.(IdentExpr); is {
+		return Scope{}.With(identExpr.ident, value), nil
+	}
+
 	v, err := p.Expr.Eval(scope)
 	if err != nil {
 		return Scope{}, err

@@ -158,17 +158,6 @@ func (pc ParseContext) compilePattern(b ast.Branch) rel.Pattern {
 	if extra := b.One("extra"); extra != nil {
 		return pc.compileExtraElementPattern(extra.(ast.Branch))
 	}
-	if ident := b.One("IDENT"); ident != nil {
-		name := ident.Scanner().String()
-		switch name {
-		case "false":
-			return rel.NewExprPattern(rel.False)
-		case "true":
-			return rel.NewExprPattern(rel.True)
-		default:
-			return rel.NewIdentPattern(name)
-		}
-	}
 	if expr := b.Many("exprpattern"); expr != nil {
 		var elements []rel.Expr
 		for _, e := range expr {
@@ -334,7 +323,7 @@ func (pc ParseContext) compileLet(c ast.Children) rel.Expr {
 
 	if c.(ast.One).Node.One("rec") != nil {
 		fix, fixt := FixFuncs()
-		name := p.(rel.ExprPattern).Expr.(rel.IdentExpr)
+		name := p.(rel.ExprPattern).Expr
 		expr = rel.NewRecursionExpr(c.Scanner(), name, expr, fix, fixt)
 	}
 
