@@ -34,6 +34,34 @@ func TestMixedIntersect(t *testing.T) {
 	AssertEqualValues(t, c, Intersect(a, b))
 }
 
+func TestTrivialNIntersect(t *testing.T) {
+	t.Parallel()
+	a := intSet()
+	b := intSet()
+	AssertEqualValues(t, a, NIntersect(a, b))
+}
+
+func TestOneSidedNIntersect(t *testing.T) {
+	t.Parallel()
+	a := intSet()
+	AssertEqualValues(t, a, NIntersect(a, intSet(42, 43), intSet(44, 45)))
+}
+
+func TestEqualNIntersect(t *testing.T) {
+	t.Parallel()
+	a := intSet(42, 43)
+	AssertEqualValues(t, a, NIntersect(a, a, a))
+}
+
+func TestMixedNIntersect(t *testing.T) {
+	t.Parallel()
+	a := intSet(42, 43, 44)
+	b := intSet(41, 42)
+	c := intSet(42, 43)
+	d := intSet(42)
+	AssertEqualValues(t, intSet(42), NIntersect(a, b, c, d))
+}
+
 func TestTrivialUnion(t *testing.T) {
 	t.Parallel()
 	a := intSet()
