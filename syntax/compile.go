@@ -281,7 +281,7 @@ func (pc ParseContext) compileArrow(b ast.Branch, name string, c ast.Children) r
 	if arrows, has := b["arrow"]; has {
 		for _, arrow := range arrows.(ast.Many) {
 			branch := arrow.(ast.Branch)
-			part, d := which(branch, "nest", "unnest", "ARROW", "binding")
+			part, d := which(branch, "nest", "unnest", "ARROW", "binding", "FILTER")
 			switch part {
 			case "nest":
 				expr = parseNest(expr, branch["nest"].(ast.One).Node.(ast.Branch))
@@ -298,6 +298,10 @@ func (pc ParseContext) compileArrow(b ast.Branch, name string, c ast.Children) r
 					rhs = rel.NewFunction(source, p, rhs)
 				}
 				expr = binops["->"](source, expr, rhs)
+			case "FILTER":
+				pred := pc.CompileExpr(arrow.(ast.Branch))
+				lhs := rel.NewWhereExpr(source, expr, pred)
+				expr = rel.NewDArrowExpr(source, lhs, pred)
 			}
 		}
 	}
