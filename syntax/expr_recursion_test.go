@@ -34,8 +34,8 @@ func TestRecursionExpr(t *testing.T) {
 		`let rec random = 1; random`,
 		`Recursion does not support rel.Number`,
 	)
-	// AssertCodeErrors(t,
-	// 	`let rec 1 = 1; 2`,
-	// 	`Does not evaluate to a variable name: 1`,
-	// )
+	AssertCodeErrors(t,
+		`let rec 1 = 1; 2`,
+		`Recursion does not support rel.Number`,
+	)
 }

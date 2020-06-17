@@ -14,7 +14,7 @@ type RecursionExpr struct {
 	fix, fixt Value
 }
 
-func NewRecursionExpr(scanner parser.Scanner, name IdentExpr, fn Expr, fix, fixt Value) Expr {
+func NewRecursionExpr(scanner parser.Scanner, name Expr, fn Expr, fix, fixt Value) Expr {
 	return RecursionExpr{ExprScanner{scanner}, NewExprPattern(name), fn, fix, fixt}
 }
 

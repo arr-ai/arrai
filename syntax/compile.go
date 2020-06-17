@@ -323,7 +323,7 @@ func (pc ParseContext) compileLet(c ast.Children) rel.Expr {
 
 	if c.(ast.One).Node.One("rec") != nil {
 		fix, fixt := FixFuncs()
-		name := p.(rel.ExprPattern).Expr.(rel.IdentExpr)
+		name := p.(rel.ExprPattern).Expr
 		expr = rel.NewRecursionExpr(c.Scanner(), name, expr, fix, fixt)
 	}
 
