@@ -38,7 +38,7 @@ func (p ExprPattern) String() string {
 }
 
 func (p ExprPattern) Bindings() []string {
-	return []string{}
+	return []string{p.Expr.String()}
 }
 
 type ExprsPattern struct {
