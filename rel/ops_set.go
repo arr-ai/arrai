@@ -20,6 +20,7 @@ func Intersect(a, b Set) Set {
 	return result
 }
 
+// NIntersect returns every Value from a that is also in all bs.
 func NIntersect(a Set, bs ...Set) Set {
 	for _, b := range bs {
 		a = Intersect(a, b)

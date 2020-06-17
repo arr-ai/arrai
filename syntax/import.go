@@ -19,7 +19,7 @@ const arraiRootMarker = "go.mod"
 
 var importLocalFileOnce sync.Once
 var importLocalFileVar rel.Value
-var cache *importCache = newCache()
+var cache = newCache()
 
 func importLocalFile(fromRoot bool) rel.Value {
 	importLocalFileOnce.Do(func() {

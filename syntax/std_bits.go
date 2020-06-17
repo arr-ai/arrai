@@ -30,7 +30,7 @@ func set(v rel.Value) (rel.Value, error) {
 }
 
 func setInt(v int) (bitmask []rel.Value) {
-	for ; v != 0; v &= (v - 1) {
+	for ; v != 0; v &= v - 1 {
 		bitmask = append(bitmask, rel.NewNumber(float64(bits.TrailingZeros64(uint64(v)))))
 	}
 	return
