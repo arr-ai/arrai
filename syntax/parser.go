@@ -16,6 +16,7 @@ expr   -> C* amp="&"* @ C* arrow=(
               nest |
               unnest |
               ARROW @ |
+              FILTER cond=(controlVar=@ "{" (condition=pattern ":" value=@):SEQ_COMMENT,? "}") |
               binding="->" C* "\\" C* pattern C* %%bind C* @ |
               binding="->" C* %%bind @
           )* C*
@@ -80,7 +81,8 @@ pattern -> extra
         | C* exprpattern=STR C*;
 extra -> ("..." ident=IDENT?);
 
-ARROW  -> /{:>|=>|>>|orderby|order|rank|where|sum|max|mean|median|min} | "filter" expr;
+ARROW  -> /{:>|=>|>>|orderby|order|rank|where|sum|max|mean|median|min};
+FILTER -> /{filter};
 IDENT  -> /{ \. | [$@A-Za-z_][0-9$@A-Za-z_]* };
 PKGPATH -> /{ (?: \\ | [^\\}] )* };
 STR    -> /{ " (?: \\. | [^\\"] )* "
