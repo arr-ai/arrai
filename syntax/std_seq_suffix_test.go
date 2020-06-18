@@ -15,7 +15,7 @@ func TestStrHasSuffix(t *testing.T) {
 	AssertCodesEvalToSameValue(t, `true`, `//seq.has_suffix("","")`)
 	AssertCodesEvalToSameValue(t, `true`, `//seq.has_suffix("","ABCDE")`)
 
-	AssertCodeErrors(t, `//seq.has_suffix(1,"ABC")`, "")
+	AssertCodeErrors(t, "", `//seq.has_suffix(1,"ABC")`)
 }
 
 func TestArrayHasSuffix(t *testing.T) { //nolint:dupl
@@ -39,8 +39,8 @@ func TestArrayHasSuffix(t *testing.T) { //nolint:dupl
 	AssertCodesEvalToSameValue(t, `true`, `//seq.has_suffix([], [])`)
 	AssertCodesEvalToSameValue(t, `false`, `//seq.has_suffix(['D','E'],[])`)
 
-	AssertCodeErrors(t, `//seq.has_suffix(1,[1,2])`, "")
-	AssertCodeErrors(t, `//seq.has_suffix('A',['A','B'])`, "")
+	AssertCodeErrors(t, "", `//seq.has_suffix(1,[1,2])`)
+	AssertCodeErrors(t, "", `//seq.has_suffix('A',['A','B'])`)
 }
 
 func TestBytesHasSuffix(t *testing.T) {
@@ -71,7 +71,7 @@ func TestStrTrimSuffix(t *testing.T) {
 	AssertCodesEvalToSameValue(t, `""`, `//seq.trim_suffix("","")`)
 	AssertCodesEvalToSameValue(t, `"ABCDE"`, `//seq.trim_suffix("","ABCDE")`)
 
-	AssertCodeErrors(t, `//seq.trim_suffix(1,"ABC")`, "")
+	AssertCodeErrors(t, "", `//seq.trim_suffix(1,"ABC")`)
 }
 
 func TestArrayTrimSuffix(t *testing.T) { //nolint:dupl
@@ -97,8 +97,8 @@ func TestArrayTrimSuffix(t *testing.T) { //nolint:dupl
 	AssertCodesEvalToSameValue(t, `[]`, `//seq.trim_suffix([], [])`)
 	AssertCodesEvalToSameValue(t, `[]`, `//seq.trim_suffix(['D','E'],[])`)
 
-	AssertCodeErrors(t, `//seq.trim_suffix(1,[1,2])`, "")
-	AssertCodeErrors(t, `//seq.trim_suffix('A',['A','B'])`, "")
+	AssertCodeErrors(t, "", `//seq.trim_suffix(1,[1,2])`)
+	AssertCodeErrors(t, "", `//seq.trim_suffix('A',['A','B'])`)
 }
 
 func TestBytesTrimSuffix(t *testing.T) {
@@ -115,6 +115,6 @@ func TestBytesTrimSuffix(t *testing.T) {
 	AssertCodesEvalToSameValue(t, `<<>>`, `//seq.trim_suffix(<<'o'>>, <<>>)    `)
 	AssertCodesEvalToSameValue(t, `<<'hello'>>`, `//seq.trim_suffix(<<>>, <<'hello'>>)`)
 
-	AssertCodeErrors(t, `//seq.trim_suffix(1, <<'hello'>>)`, "")
-	AssertCodeErrors(t, `//seq.trim_suffix('he', <<'hello'>>)`, "")
+	AssertCodeErrors(t, "", `//seq.trim_suffix(1, <<'hello'>>)`)
+	AssertCodeErrors(t, "", `//seq.trim_suffix('he', <<'hello'>>)`)
 }

@@ -15,7 +15,7 @@ func TestSetCount(t *testing.T) {
 func TestSetSingle(t *testing.T) {
 	t.Parallel()
 	AssertCodesEvalToSameValue(t, `42`, `{42} single`)
-	AssertCodeErrors(t, `{} single`, "")
-	AssertCodeErrors(t, `{1, 2} single`, "")
-	AssertCodeErrors(t, `{1, 2, {3, 4}} single`, "")
+	AssertCodeErrors(t, "", `{} single`)
+	AssertCodeErrors(t, "", `{1, 2} single`)
+	AssertCodeErrors(t, "", `{1, 2, {3, 4}} single`)
 }

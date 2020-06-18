@@ -96,7 +96,7 @@ func AssertCodePanics(t *testing.T, code string) bool {
 
 // AssertCodeErrors asserts that code fails with a certain
 // message when executed.
-func AssertCodeErrors(t *testing.T, code, errString string) bool {
+func AssertCodeErrors(t *testing.T, errString, code string) bool {
 	pc := ParseContext{SourceDir: ".."}
 	ast, err := pc.Parse(parser.NewScanner(code))
 	if assert.NoError(t, err, "parsing code: %s", code) {

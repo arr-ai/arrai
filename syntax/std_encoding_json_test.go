@@ -4,7 +4,7 @@ import "testing"
 
 func TestJSONDecode(t *testing.T) {
 	t.Parallel()
-	AssertCodeErrors(t, `//encoding.json.decode(123)`, "")
+	AssertCodeErrors(t, "", `//encoding.json.decode(123)`)
 
 	expected := `{
 		"a": (s: "string"),

@@ -17,7 +17,7 @@ func TestStrHasPrefix(t *testing.T) {
 	AssertCodesEvalToSameValue(t, `false`, `//seq.has_prefix("A","")`)
 	AssertCodesEvalToSameValue(t, `true`, `//seq.has_prefix("","A")`)
 
-	AssertCodeErrors(t, `//seq.has_prefix(1,"ABC")`, "")
+	AssertCodeErrors(t, "", `//seq.has_prefix(1,"ABC")`)
 }
 
 func TestArrayHasPrefix(t *testing.T) { //nolint:dupl
@@ -40,8 +40,8 @@ func TestArrayHasPrefix(t *testing.T) { //nolint:dupl
 	AssertCodesEvalToSameValue(t, `false`, `//seq.has_prefix(['A','B','C','D','E','F'],[])`)
 	AssertCodesEvalToSameValue(t, `true`, `//seq.has_prefix([],['A','B','C','D','E'])`)
 
-	AssertCodeErrors(t, `//seq.has_prefix(1,[1,2,3])`, "")
-	AssertCodeErrors(t, `//seq.has_prefix('A',['A','B','C'])`, "")
+	AssertCodeErrors(t, "", `//seq.has_prefix(1,[1,2,3])`)
+	AssertCodeErrors(t, "", `//seq.has_prefix('A',['A','B','C'])`)
 }
 
 func TestBytesHasPrefix(t *testing.T) {
@@ -78,7 +78,7 @@ func TestStrTrimPrefix(t *testing.T) {
 	AssertCodesEvalToSameValue(t, `""`, `//seq.trim_prefix("A","")`)
 	AssertCodesEvalToSameValue(t, `"A"`, `//seq.trim_prefix("","A")`)
 
-	AssertCodeErrors(t, `//seq.trim_prefix(1,"ABC")`, "")
+	AssertCodeErrors(t, "", `//seq.trim_prefix(1,"ABC")`)
 }
 
 func TestArrayTrimPrefix(t *testing.T) { //nolint:dupl
@@ -103,8 +103,8 @@ func TestArrayTrimPrefix(t *testing.T) { //nolint:dupl
 	AssertCodesEvalToSameValue(t, `[]`, `//seq.trim_prefix(['A','B','C','D','E','F'],[])`)
 	AssertCodesEvalToSameValue(t, `['A','B','C','D','E']`, `//seq.trim_prefix([],['A','B','C','D','E'])`)
 
-	AssertCodeErrors(t, `//seq.trim_prefix(1,[1,2,3])`, "")
-	AssertCodeErrors(t, `//seq.trim_prefix('A',['A','B','C'])`, "")
+	AssertCodeErrors(t, "", `//seq.trim_prefix(1,[1,2,3])`)
+	AssertCodeErrors(t, "", `//seq.trim_prefix('A',['A','B','C'])`)
 }
 
 func TestBytesTrimPrefix(t *testing.T) {
@@ -121,6 +121,6 @@ func TestBytesTrimPrefix(t *testing.T) {
 	AssertCodesEvalToSameValue(t, `<<>>`, `//seq.trim_prefix(<<'o'>>, <<>>)    `)
 	AssertCodesEvalToSameValue(t, `<<'hello'>> `, `//seq.trim_prefix(<<>>, <<'hello'>>)`)
 
-	AssertCodeErrors(t, `//seq.trim_prefix(1, <<'hello'>>)`, "")
-	AssertCodeErrors(t, `//seq.trim_prefix("he", <<'hello'>>)`, "")
+	AssertCodeErrors(t, "", `//seq.trim_prefix(1, <<'hello'>>)`)
+	AssertCodeErrors(t, "", `//seq.trim_prefix("he", <<'hello'>>)`)
 }

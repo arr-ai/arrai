@@ -51,8 +51,8 @@ func TestISeqArrow(t *testing.T) {
 		`{"stuff": "random", "ten": 10, 3: (2)} >>> \i \n ("key": i, "val": n)`,
 	)
 	AssertCodeErrors(t,
-		`{("a": "z"), ("b": "y")} >>> \i \n (i ++ n)`,
 		`>>> not applicable to unindexed type {(a: z), (b: y)}`,
+		`{("a": "z"), ("b": "y")} >>> \i \n (i ++ n)`,
 	)
 }
 
@@ -70,7 +70,7 @@ func TestApplyExprWithPattern(t *testing.T) {
 	AssertCodesEvalToSameValue(t, `3`, `{"m": 1, "n": 2} -> \{"m": x, "n": y} x + y`)
 	AssertCodesEvalToSameValue(t, `6`, `[1, [2, 3]] -> \[x, [y, z]] x + y + z`)
 	AssertCodesEvalToSameValue(t, `[3, [3, 4]]`, `[1, 2, 3, 4] -> \[x, y, ...t] [x + y, t]`)
-	AssertCodeErrors(t, `1 -> \x let [(x), y] = [2, 2]; y`, "")
+	AssertCodeErrors(t, "", `1 -> \x let [(x), y] = [2, 2]; y`)
 }
 
 func TestUnaryArrows(t *testing.T) {

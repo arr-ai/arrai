@@ -155,7 +155,7 @@ func TestEvalCondWithControlVarMultiStr(t *testing.T) {
 	AssertEvalExprString(t, "((control_var:2),{1:(1+10),[2,3]:2,_:(1+2)})", "cond (2) {(1) :1 + 10, (2,3) : 2, _:1 + 2}")
 }
 
-func TestEvalCondPatternMatchingWithControlVar(t *testing.T) {
+func TestEvalCondPatternMatchingWithControlVar(t *testing.T) { //nolint:dupl
 	t.Parallel()
 
 	AssertCodesEvalToSameValue(t, `2`, `let a = 'A' ; cond a {'A':2}`)

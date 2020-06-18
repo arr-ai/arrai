@@ -11,7 +11,7 @@ func TestStrSplit(t *testing.T) {
 	AssertCodesEvalToSameValue(t, `["this", "is", "a", "test"]`, `//seq.split(" ","this is a test") `)
 	AssertCodesEvalToSameValue(t, `["this is a test"]         `, `//seq.split(",","this is a test") `)
 	AssertCodesEvalToSameValue(t, `["th", " ", " a test"]     `, `//seq.split("is","this is a test")`)
-	AssertCodeErrors(t, `//seq.split(1, "this is a test")`, "")
+	AssertCodeErrors(t, "", `//seq.split(1, "this is a test")`)
 
 	AssertCodesEvalToSameValue(t,
 		`["t", "h", "i", "s", " ", "i", "s", " ", "a", " ", "t", "e", "s", "t"]`,
@@ -24,7 +24,7 @@ func TestStrSplit(t *testing.T) {
 
 	AssertCodesEvalToSameValue(t, `[""]`, `//seq.split(",","") `)
 
-	AssertCodeErrors(t, `//seq.split(1,"ABC")`, "")
+	AssertCodeErrors(t, "", `//seq.split(1,"ABC")`)
 }
 
 func TestArraySplit(t *testing.T) { //nolint:dupl
@@ -63,8 +63,8 @@ func TestArraySplit(t *testing.T) { //nolint:dupl
 	AssertCodesEvalToSameValue(t, `[]`, `//seq.split([],[])`)
 	AssertCodesEvalToSameValue(t, `[[]]`, `//seq.split(['A'],[])`)
 
-	AssertCodeErrors(t, `//seq.split(1,[1,2,3])`, "")
-	AssertCodeErrors(t, `//seq.split('A',['A','B'])`, "")
+	AssertCodeErrors(t, "", `//seq.split(1,[1,2,3])`)
+	AssertCodeErrors(t, "", `//seq.split('A',['A','B'])`)
 }
 
 func TestBytesSplit(t *testing.T) {
@@ -83,6 +83,6 @@ func TestBytesSplit(t *testing.T) {
 	AssertCodesEvalToSameValue(t, `[<<"A">>,<<"B">>,<<"C">>]`, `//seq.split(<<>>,<<"ABC">>)`)
 	AssertCodesEvalToSameValue(t, `[<<>>]                   `, `//seq.split(<<",">>,<<>>)  `)
 
-	AssertCodeErrors(t, `//seq.split(",", <<"hello">>)`,
-		"//seq.split: delimiter and subject different types: delimiter: rel.String, subject: rel.Bytes")
+	AssertCodeErrors(t, "//seq.split: delimiter and subject different types: delimiter: rel.String, subject: rel.Bytes",
+		`//seq.split(",", <<"hello">>)`)
 }
