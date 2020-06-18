@@ -54,11 +54,6 @@ func (p ExprsPattern) Bind(scope Scope, value Value) (Scope, error) {
 		return EmptyScope, errors.Errorf("there is not any rel.Expr in rel.ExprsPattern")
 	}
 
-	if pe, isPattern := p.exprs[0].(Pattern); len(p.exprs) == 1 && isPattern {
-		// Support patterns IDENT and NUM
-		return pe.Bind(scope, value)
-	}
-
 	incomingVal, err := value.Eval(scope)
 	if err != nil {
 		return EmptyScope, err
@@ -83,7 +78,6 @@ func (p ExprsPattern) String() string {
 	}
 
 	if len(p.exprs) == 1 {
-		// it processes cases IDENT and NUM as syntax, otherwise `let (:x) = (x: 1); x` will fail.
 		return p.exprs[0].String()
 	}
 
