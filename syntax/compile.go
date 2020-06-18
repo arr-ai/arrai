@@ -309,7 +309,7 @@ func (pc ParseContext) compileArrow(b ast.Branch, name string, c ast.Children) r
 	}
 	if name == "amp" {
 		for range c.(ast.Many) {
-			expr = rel.NewFunction(source, rel.NewIdentPattern("-"), expr)
+			expr = rel.NewFunction(source, rel.NewExprPattern(rel.NewIdentExpr(source, "-")), expr)
 		}
 	}
 	return expr
