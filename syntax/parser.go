@@ -33,10 +33,6 @@ expr   -> C* amp="&"* @ C* arrow=(
         > C* @:rbinop="^" C*
         > C* unop=/{[-+!*^]}* @ C*
         > C* @ postfix=/{count|single}? C* touch? C*
-        > C* (get | @) tail_op=(
-            safe_tail=(first_safe=(tail "?") ops=(safe=(tail "?") | tail)* ":" fall=@)
-            | tail
-          )* C*
         > %!patternterms(expr)
         | C* cond=("cond" "{" (key=@ ":" value=@):SEQ_COMMENT,? "}") C*
         | C* cond=("cond" controlVar=expr "{" (condition=pattern ":" value=@):SEQ_COMMENT,? "}") C*
@@ -102,6 +98,10 @@ SEQ_COMMENT -> "," C*;
   | C* odelim="[" C* array=(%!sparse_sequence(top)?) C* cdelim="]" C*
   | C* odelim="<<" C* bytes=(item=(STR|NUM|CHAR|IDENT|"("top")"):SEQ_COMMENT,?) C* cdelim=">>" C*
   | C* odelim="(" tuple=(pairs=(extra | ((rec="rec"? name| name?) ":" v=top)):SEQ_COMMENT,?) cdelim=")" C*
+  | C* (get | expr) tail_op=(
+    safe_tail=(first_safe=(tail "?") ops=(safe=(tail "?") | tail)* ":" fall=expr)
+    | tail
+  )* C*
 };
 
 .macro sparse_sequence(top) {
