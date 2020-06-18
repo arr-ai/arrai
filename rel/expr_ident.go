@@ -41,11 +41,3 @@ func (e IdentExpr) Eval(local Scope) (Value, error) {
 	}
 	return nil, WrapContext(fmt.Errorf("name %q not found in %v", e.ident, local.m.Keys()), e, local)
 }
-
-func (e IdentExpr) Bind(scope Scope, value Value) (Scope, error) {
-	return EmptyScope.With(e.ident, value), nil
-}
-
-func (e IdentExpr) Bindings() []string {
-	return []string{e.ident}
-}
