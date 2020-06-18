@@ -76,7 +76,7 @@ func (p SetPattern) Bind(local Scope, value Value) (Scope, error) {
 		case ExprsPattern:
 			// Support cases:
 			// AssertCodesEvalToSameValue(t, `{5, 6}`, `let x = 1; let y = 42; let {(x), (y), ...t} = {1, 42, 5, 6}; t`)
-			// AssertCodeErrors(t, `let x = 1; let y = 42; let {(x), (y)} = {1, 4}; 2`, "")
+			// AssertCodeErrors(t, "", `let x = 1; let y = 42; let {(x), (y)} = {1, 4}; 2`)
 			if identExpr, is := t.exprs[0].(IdentExpr); is {
 				v, has := local.Get(identExpr.ident)
 				if !has {
