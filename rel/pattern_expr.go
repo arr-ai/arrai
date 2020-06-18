@@ -20,6 +20,7 @@ func NewExprPattern(expr Expr) ExprPattern {
 
 func (p ExprPattern) Bind(scope Scope, value Value) (Scope, error) {
 	if identExpr, is := p.Expr.(IdentExpr); is {
+		// Bind value for identexpr in Pattern, like `let (a: x, b: y) = (a: 4, b: 7); x`
 		return Scope{}.With(identExpr.ident, value), nil
 	}
 
