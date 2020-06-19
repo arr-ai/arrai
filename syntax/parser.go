@@ -79,6 +79,7 @@ pattern -> extra
         | C* "(" exprpattern=expr:SEQ_COMMENT,? ")" C* 
         | C* exprpattern=STR C*;
 extra -> ("..." ident=IDENT?);
+fallback -> ("?"? ":" fall=expr);
 
 ARROW  -> /{:>|=>|>>|orderby|order|rank|where|sum|max|mean|median|min};
 FILTER -> /{filter};
@@ -99,7 +100,7 @@ SEQ_COMMENT -> "," C*;
     C* odelim="{" C* rel=(names tuple=("(" v=top:SEQ_COMMENT, ")"):SEQ_COMMENT,?) cdelim="}" C*
   | C* odelim="{" C* set=(elt=top:SEQ_COMMENT,?) cdelim="}" C*
   | C* odelim="{" C* dict=(pairs=((extra|key=(expr tail=("?")?) ":" value=(top fall=(":" expr)?))):SEQ_COMMENT,?) cdelim="}" C*
-  | C* odelim="[" C* array=(%!sparse_sequence(top)?) C* cdelim="]" C*
+  | C* odelim="[" C* array=(%!sparse_sequence(top fallback?)?) C* cdelim="]" C*
   | C* odelim="<<" C* bytes=(item=(STR|NUM|CHAR|IDENT|"("top")"):SEQ_COMMENT,?) C* cdelim=">>" C*
   | C* odelim="(" tuple=(pairs=(extra | ((rec="rec"? name | name?) ":" v=top)):SEQ_COMMENT,?) cdelim=")" C*
 };
