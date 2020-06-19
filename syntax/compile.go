@@ -243,7 +243,7 @@ func (pc ParseContext) compileDictPattern(b ast.Branch) rel.Pattern {
 	if pairs := b.Many("pairs"); pairs != nil {
 		entryPtns := make([]rel.DictPatternEntry, 0, len(pairs))
 		for _, pair := range pairs {
-			if extra := pair.One("ext"); extra != nil {
+			if extra := pair.One("extra"); extra != nil {
 				p := pc.compileExtraElementPattern(extra.(ast.Branch))
 				entryPtns = append(entryPtns, rel.NewDictPatternEntry(nil, p, nil))
 				continue

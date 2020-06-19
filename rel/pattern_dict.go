@@ -35,7 +35,7 @@ type DictPattern struct {
 func NewDictPattern(entries ...DictPatternEntry) DictPattern {
 	names := make(map[string]bool)
 	for _, entry := range entries {
-		if names[entry.at.String()] {
+		if entry.at != nil && names[entry.at.String()] {
 			// TODO: Return a runtime error
 			panic(fmt.Sprintf("name %s is duplicated in dict", entry.at))
 		}
@@ -100,13 +100,16 @@ func (p DictPattern) Bind(local Scope, value Value) (Scope, error) {
 			key = lit.Literal()
 		}
 		var dictValue Value
-		var err error
 		dictExpr, found := m.Get(key)
 		if !found {
 			if entry.fallback == nil {
 				return EmptyScope, fmt.Errorf("couldn't find %s in dict %s", key, m)
 			}
+			var err error
 			dictValue, err = entry.fallback.Eval(local)
+			if err != nil {
+				return EmptyScope, err
+			}
 		} else {
 			dictValue = dictExpr.(Value)
 		}
