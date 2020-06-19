@@ -9,15 +9,15 @@ func TestExprDotOnTupleSet(t *testing.T) {
 
 func TestExprDotErrorOnEmptySet(t *testing.T) {
 	t.Parallel()
-	AssertCodeErrors(t, `{}.foo`, `Cannot get attr "foo" from empty set`)
+	AssertCodeErrors(t, `Cannot get attr "foo" from empty set`, `{}.foo`)
 }
 
 func TestExprDotErrorOnMultipletSet(t *testing.T) {
 	t.Parallel()
-	AssertCodeErrors(t, `{1, 2, 3}.foo`, `Too many elts to get attr "foo" from set`)
+	AssertCodeErrors(t, `Too many elts to get attr "foo" from set`, `{1, 2, 3}.foo`)
 }
 
 func TestExprDotErrorOnNonTupleSet(t *testing.T) {
 	t.Parallel()
-	AssertCodeErrors(t, `{1}.foo`, `Cannot get attr "foo" from non-tuple set elt`)
+	AssertCodeErrors(t, `Cannot get attr "foo" from non-tuple set elt`, `{1}.foo`)
 }

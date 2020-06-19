@@ -11,8 +11,8 @@ func TestBitsSetInt(t *testing.T) {
 	AssertCodesEvalToSameValue(t, `{0}      `, `//bits.set(1)                `)
 	AssertCodesEvalToSameValue(t, `{}       `, `//bits.set(0)                `)
 
-	AssertCodeErrors(t, `//bits.set({})`, "")
-	AssertCodeErrors(t, `//bits.set(-1)`, "")
+	AssertCodeErrors(t, "", `//bits.set({})`)
+	AssertCodeErrors(t, "", `//bits.set(-1)`)
 }
 
 func TestBitsMask(t *testing.T) {
@@ -24,6 +24,6 @@ func TestBitsMask(t *testing.T) {
 	AssertCodesEvalToSameValue(t, `1                `, `//bits.mask({0})      `)
 	AssertCodesEvalToSameValue(t, `0                `, `//bits.mask({})       `)
 
-	AssertCodeErrors(t, `//bits.mask({"number"})`, "")
-	AssertCodeErrors(t, `//bits.mask(3)         `, "")
+	AssertCodeErrors(t, "", `//bits.mask({"number"})`)
+	AssertCodeErrors(t, "", `//bits.mask(3)         `)
 }
