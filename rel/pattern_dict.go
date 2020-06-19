@@ -8,19 +8,24 @@ import (
 )
 
 type DictPatternEntry struct {
-	at    Expr
-	value Pattern
+	at       Expr
+	value    Pattern
+	fallback Expr
 }
 
-func NewDictPatternEntry(at Expr, value Pattern) DictPatternEntry {
+func NewDictPatternEntry(at Expr, value Pattern, fallback Expr) DictPatternEntry {
 	return DictPatternEntry{
-		at:    at,
-		value: value,
+		at:       at,
+		value:    value,
+		fallback: fallback,
 	}
 }
 
 func (p DictPatternEntry) String() string {
-	return fmt.Sprintf("%s:%s", p.at, p.value)
+	if p.fallback == nil {
+		return fmt.Sprintf("%s: %s", p.at, p.value)
+	}
+	return fmt.Sprintf("%s?: %s:%s", p.at, p.value, p.fallback)
 }
 
 type DictPattern struct {
@@ -30,7 +35,7 @@ type DictPattern struct {
 func NewDictPattern(entries ...DictPatternEntry) DictPattern {
 	names := make(map[string]bool)
 	for _, entry := range entries {
-		if names[entry.at.String()] {
+		if entry.at != nil && names[entry.at.String()] {
 			// TODO: Return a runtime error
 			panic(fmt.Sprintf("name %s is duplicated in dict", entry.at))
 		}
@@ -66,38 +71,36 @@ func (p DictPattern) Bind(local Scope, value Value) (Scope, error) {
 	result := EmptyScope
 	m := dict.m
 	for _, entry := range p.entries {
+		var dictValue Value
 		if _, is := entry.value.(ExtraElementPattern); is {
 			if m.IsEmpty() {
-				scope, err := entry.value.Bind(local, None)
-				if err != nil {
-					return EmptyScope, err
+				dictValue = None
+			} else {
+				dictValue = Dict{m: m}
+			}
+		} else {
+			key := entry.at
+			if lit, is := key.(LiteralExpr); is {
+				key = lit.Literal()
+			}
+
+			dictExpr, found := m.Get(key)
+			if !found {
+				if entry.fallback == nil {
+					return EmptyScope, fmt.Errorf("couldn't find %s in dict %s", key, m)
 				}
-				result, err = result.MatchedUpdate(scope)
+				var err error
+				dictValue, err = entry.fallback.Eval(local)
 				if err != nil {
 					return EmptyScope, err
 				}
 			} else {
-				scope, err := entry.value.Bind(local, Dict{m: m})
-				if err != nil {
-					return EmptyScope, err
-				}
-				result, err = result.MatchedUpdate(scope)
-				if err != nil {
-					return EmptyScope, err
-				}
+				dictValue = dictExpr.(Value)
+				m = m.Without(frozen.NewSet(key))
 			}
+		}
 
-			continue
-		}
-		key := entry.at
-		if lit, is := key.(LiteralExpr); is {
-			key = lit.Literal()
-		}
-		dictValue, found := m.Get(key)
-		if !found {
-			return EmptyScope, fmt.Errorf("couldn't find %s in dict %s", key, m)
-		}
-		scope, err := entry.value.Bind(local, dictValue.(Value))
+		scope, err := entry.value.Bind(local, dictValue)
 		if err != nil {
 			return EmptyScope, err
 		}
@@ -105,7 +108,6 @@ func (p DictPattern) Bind(local Scope, value Value) (Scope, error) {
 		if err != nil {
 			return EmptyScope, err
 		}
-		m = m.Without(frozen.NewSet(key))
 	}
 
 	return result, nil
@@ -118,7 +120,7 @@ func (p DictPattern) String() string {
 		if i > 0 {
 			b.WriteString(", ")
 		}
-		fmt.Fprintf(&b, "%v: %v", expr.at.String(), expr.value.String())
+		fmt.Fprintf(&b, "%s", expr)
 	}
 	b.WriteByte('}')
 	return b.String()

@@ -281,3 +281,12 @@ that weren't explicitly matched by other patterns.
 @> let x = 1; let y = 42; let {(x), (y), ...t} = {1, 42, 5, 6}; t
 @> [1, 2, 3, 4] -> \[x, y, ...t] [x + y, t]
 ```
+
+(Conditional Accessor Syntax)[../README.md] is also supported in pattern matching:
+```arrai
+@> let {"a"?: x:42} = {"a": 1}; x = 1
+@> let {"b"?: x:42} = {"a": 1}; x = 42
+@> let (b?: x:42) = (a: 1); x = 42
+@> let [x, y, z?:0] = [1, 2]; [x, y, z] = [1, 2, 0]
+@> let {"b"?: x:42, ...t} = {"a": 1}; [x, t] = [42, {"a": 1}]
+```
