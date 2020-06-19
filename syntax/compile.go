@@ -240,32 +240,30 @@ func (pc ParseContext) compileTuplePattern(b ast.Branch) rel.Pattern {
 }
 
 func (pc ParseContext) compileDictPattern(b ast.Branch) rel.Pattern {
-	keys := b["key"]
-	values := b["value"]
-	if (keys != nil) != (values != nil) {
-		panic("mismatch between dict keys and values")
-	}
-	if (keys != nil) && (values != nil) {
-		keyExprs := pc.compileExprs(keys.(ast.Many)...)
-		valuePtns := pc.compilePatterns(values.(ast.Many)...)
-		if len(keyExprs) == len(valuePtns) {
-			entryPtns := make([]rel.DictPatternEntry, 0, len(keyExprs))
-			for i, keyExpr := range keyExprs {
-				entryPtns = append(entryPtns, rel.NewDictPatternEntry(keyExpr, valuePtns[i]))
+	if pairs := b.Many("pairs"); pairs != nil {
+		entryPtns := make([]rel.DictPatternEntry, 0, len(pairs))
+		for _, pair := range pairs {
+			if extra := pair.One("ext"); extra != nil {
+				p := pc.compileExtraElementPattern(extra.(ast.Branch))
+				entryPtns = append(entryPtns, rel.NewDictPatternEntry(nil, p, nil))
+				continue
 			}
-			if extra := b["ext"]; extra != nil {
-				entryPtns = append(
-					entryPtns,
-					rel.NewDictPatternEntry(
-						// TODO: Why is this a "."?
-						rel.NewDotIdent(*parser.NewScanner(".")),
-						pc.compileExtraElementPattern(extra.(ast.Many)[0].One("extra").(ast.Branch)),
-					),
-				)
+			key := pair.One("key")
+			value := pair.One("value")
+			keyExpr := pc.CompileExpr(key.(ast.Branch))
+			valuePtn := pc.compilePattern(value.(ast.Branch))
+
+			tail := key.One("tail")
+			fall := value.One("fall")
+			if tail == nil && fall == nil {
+				entryPtns = append(entryPtns, rel.NewDictPatternEntry(keyExpr, valuePtn, nil))
+			} else if tail != nil && fall != nil {
+				entryPtns = append(entryPtns, rel.NewDictPatternEntry(keyExpr, valuePtn, pc.CompileExpr(fall.(ast.Branch))))
+			} else {
+				panic("fallback item does not match")
 			}
-			return rel.NewDictPattern(entryPtns...)
 		}
-		panic("mismatch between dict keys and values")
+		return rel.NewDictPattern(entryPtns...)
 	}
 	return rel.NewDictPattern()
 }
@@ -475,19 +473,13 @@ func (pc ParseContext) compileCondElements(elements ...ast.Node) []rel.Pattern {
 }
 
 func (pc ParseContext) compileCondWithoutControlVar(c ast.Children) rel.Expr {
-	keys := c.(ast.One).Node.(ast.Branch)["key"]
-	values := c.(ast.One).Node.(ast.Branch)["value"]
 	var result rel.Expr
-	if keys != nil && values != nil {
-		keyExprs := pc.compileCondExprs(keys.(ast.Many)...)
-		valueExprs := pc.compileCondExprs(values.(ast.Many)...)
-		entryExprs := pc.compileDictEntryExprs(c, keyExprs, valueExprs)
-		if entryExprs != nil {
-			// Generates type DictExpr always to make sure it is easy to do Eval, only process type DictExpr.
-			result = rel.NewDictExpr(c.(ast.One).Node.Scanner(), false, true, entryExprs...)
-		} else {
-			result = rel.NewDict(false)
-		}
+	entryExprs := pc.compileDictEntryExprs(c.(ast.One).Node.(ast.Branch))
+	if entryExprs != nil {
+		// Generates type DictExpr always to make sure it is easy to do Eval, only process type DictExpr.
+		result = rel.NewDictExpr(c.(ast.One).Node.Scanner(), false, true, entryExprs...)
+	} else {
+		result = rel.NewDict(false)
 	}
 
 	// Note, the default case `_:expr` which can match anything is parsed to condition/value pairs by current syntax.
@@ -694,7 +686,7 @@ func (pc ParseContext) compileSet(b ast.Branch, c ast.Children) rel.Expr {
 
 func (pc ParseContext) compileDict(b ast.Branch, c ast.Children) rel.Expr {
 	scanner := delimsScanner(b)
-	entryExprs := pc.compileDictEntryExprs(c, nil, nil)
+	entryExprs := pc.compileDictEntryExprs(c.(ast.One).Node.(ast.Branch))
 	if entryExprs != nil {
 		return rel.NewDictExpr(scanner, false, false, entryExprs...)
 	}
@@ -702,29 +694,17 @@ func (pc ParseContext) compileDict(b ast.Branch, c ast.Children) rel.Expr {
 	return rel.NewLiteralExpr(scanner, rel.NewDict(false))
 }
 
-func (pc ParseContext) compileDictEntryExprs(c ast.Children, keyExprs []rel.Expr,
-	valueExprs []rel.Expr) []rel.DictEntryTupleExpr {
-	// C* "{" C* dict=((key=@ ":" value=@):",",?) "}" C*
-	keys := c.(ast.One).Node.(ast.Branch)["key"]
-	values := c.(ast.One).Node.(ast.Branch)["value"]
-	if (keys != nil) || (values != nil) {
-		if (keys != nil) && (values != nil) {
-			if keyExprs == nil {
-				keyExprs = pc.compileExprs(keys.(ast.Many)...)
-			}
-			if valueExprs == nil {
-				valueExprs = pc.compileExprs(values.(ast.Many)...)
-			}
-			if len(keyExprs) == len(valueExprs) {
-				entryExprs := make([]rel.DictEntryTupleExpr, 0, len(keyExprs))
-				for i, keyExpr := range keyExprs {
-					valueExpr := valueExprs[i]
-					entryExprs = append(entryExprs, rel.NewDictEntryTupleExpr(keys.Scanner(), keyExpr, valueExpr))
-				}
-				return entryExprs
-			}
+func (pc ParseContext) compileDictEntryExprs(b ast.Branch) []rel.DictEntryTupleExpr {
+	if pairs := b.Many("pairs"); pairs != nil {
+		entryExprs := make([]rel.DictEntryTupleExpr, 0, len(pairs))
+		for _, pair := range pairs {
+			key := pair.One("key")
+			value := pair.One("value")
+			keyExpr := pc.CompileExpr(key.(ast.Branch))
+			valueExpr := pc.CompileExpr(value.(ast.Branch))
+			entryExprs = append(entryExprs, rel.NewDictEntryTupleExpr(pair.Scanner(), keyExpr, valueExpr))
 		}
-		panic("mismatch between dict keys and values")
+		return entryExprs
 	}
 	return nil
 }

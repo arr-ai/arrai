@@ -33,8 +33,12 @@ expr   -> C* amp="&"* @ C* arrow=(
         > C* @:rbinop="^" C*
         > C* unop=/{[-+!*^]}* @ C*
         > C* @ postfix=/{count|single}? C* touch? C*
+        > C* (get | @) tail_op=(
+            safe_tail=(first_safe=(tail "?") ops=(safe=(tail "?") | tail)* ":" fall=@)
+            | tail
+          )* C*
         > %!patternterms(expr)
-        | C* cond=("cond" "{" (key=@ ":" value=@):SEQ_COMMENT,? "}") C*
+        | C* cond=("cond" "{" pairs=(key=@ ":" value=@):SEQ_COMMENT,? "}") C*
         | C* cond=("cond" controlVar=expr "{" (condition=pattern ":" value=@):SEQ_COMMENT,? "}") C*
         | C* "{:" C* embed=(macro=@ rule? ":" subgrammar=%%ast) ":}" C*
         | C* op="\\\\" @ C*
@@ -94,14 +98,10 @@ SEQ_COMMENT -> "," C*;
 .macro patternterms(top) {
     C* odelim="{" C* rel=(names tuple=("(" v=top:SEQ_COMMENT, ")"):SEQ_COMMENT,?) cdelim="}" C*
   | C* odelim="{" C* set=(elt=top:SEQ_COMMENT,?) cdelim="}" C*
-  | C* odelim="{" C* dict=((ext=extra|key=expr ":" value=top):SEQ_COMMENT,?) cdelim="}" C*
+  | C* odelim="{" C* dict=(pairs=((ext=extra|key=(expr tail=("?")?) ":" value=(top fall=(":" expr)?))):SEQ_COMMENT,?) cdelim="}" C*
   | C* odelim="[" C* array=(%!sparse_sequence(top)?) C* cdelim="]" C*
   | C* odelim="<<" C* bytes=(item=(STR|NUM|CHAR|IDENT|"("top")"):SEQ_COMMENT,?) C* cdelim=">>" C*
-  | C* odelim="(" tuple=(pairs=(extra | ((rec="rec"? name| name?) ":" v=top)):SEQ_COMMENT,?) cdelim=")" C*
-  | C* (get | expr) tail_op=(
-    safe_tail=(first_safe=(tail "?") ops=(safe=(tail "?") | tail)* ":" fall=expr)
-    | tail
-  )* C*
+  | C* odelim="(" tuple=(pairs=(extra | ((rec="rec"? name | name?) ":" v=top)):SEQ_COMMENT,?) cdelim=")" C*
 };
 
 .macro sparse_sequence(top) {

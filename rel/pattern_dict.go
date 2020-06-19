@@ -8,19 +8,24 @@ import (
 )
 
 type DictPatternEntry struct {
-	at    Expr
-	value Pattern
+	at       Expr
+	value    Pattern
+	fallback Expr
 }
 
-func NewDictPatternEntry(at Expr, value Pattern) DictPatternEntry {
+func NewDictPatternEntry(at Expr, value Pattern, fallback Expr) DictPatternEntry {
 	return DictPatternEntry{
-		at:    at,
-		value: value,
+		at:       at,
+		value:    value,
+		fallback: fallback,
 	}
 }
 
 func (p DictPatternEntry) String() string {
-	return fmt.Sprintf("%s:%s", p.at, p.value)
+	if p.fallback == nil {
+		return fmt.Sprintf("%s: %s", p.at, p.value)
+	}
+	return fmt.Sprintf("%s?: %s:%s", p.at, p.value, p.fallback)
 }
 
 type DictPattern struct {
@@ -89,15 +94,24 @@ func (p DictPattern) Bind(local Scope, value Value) (Scope, error) {
 
 			continue
 		}
+
 		key := entry.at
 		if lit, is := key.(LiteralExpr); is {
 			key = lit.Literal()
 		}
-		dictValue, found := m.Get(key)
+		var dictValue Value
+		var err error
+		dictExpr, found := m.Get(key)
 		if !found {
-			return EmptyScope, fmt.Errorf("couldn't find %s in dict %s", key, m)
+			if entry.fallback == nil {
+				return EmptyScope, fmt.Errorf("couldn't find %s in dict %s", key, m)
+			}
+			dictValue, err = entry.fallback.Eval(local)
+		} else {
+			dictValue = dictExpr.(Value)
 		}
-		scope, err := entry.value.Bind(local, dictValue.(Value))
+
+		scope, err := entry.value.Bind(local, dictValue)
 		if err != nil {
 			return EmptyScope, err
 		}
@@ -118,7 +132,7 @@ func (p DictPattern) String() string {
 		if i > 0 {
 			b.WriteString(", ")
 		}
-		fmt.Fprintf(&b, "%v: %v", expr.at.String(), expr.value.String())
+		fmt.Fprintf(&b, "%s", expr)
 	}
 	b.WriteByte('}')
 	return b.String()
