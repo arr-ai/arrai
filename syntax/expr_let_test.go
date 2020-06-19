@@ -199,6 +199,7 @@ func TestExprLetGetPattern(t *testing.T) {
 	AssertCodesEvalToSameValue(t, `42`, `let {"b"?: x:42} = {"a": 1}; x`)
 	AssertCodesEvalToSameValue(t, `[1, 2]`, `let {'ids'?: ids:[]} = {'ids': [1, 2]}; ids`)
 	AssertCodesEvalToSameValue(t, `1`, `let (a?: x:42) = (a: 1); x`)
+	AssertCodesEvalToSameValue(t, `42`, `let (b?: x:42) = (a: 1); x`)
 	AssertCodesEvalToSameValue(t, `[1, 2, 0]`, `let [x, y, z?:0] = [1, 2]; [x, y, z]`)
 	AssertCodesEvalToSameValue(t, `[1, 2, 3]`, `let [x, y, z?:0] = [1, 2, 3]; [x, y, z]`)
 	AssertCodesEvalToSameValue(t, `[42, {"a": 1}]`, `let {"b"?: x:42, ...t} = {"a": 1}; [x, t]`)

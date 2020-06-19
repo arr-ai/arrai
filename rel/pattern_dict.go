@@ -71,47 +71,33 @@ func (p DictPattern) Bind(local Scope, value Value) (Scope, error) {
 	result := EmptyScope
 	m := dict.m
 	for _, entry := range p.entries {
+		var dictValue Value
 		if _, is := entry.value.(ExtraElementPattern); is {
 			if m.IsEmpty() {
-				scope, err := entry.value.Bind(local, None)
-				if err != nil {
-					return EmptyScope, err
+				dictValue = None
+			} else {
+				dictValue = Dict{m: m}
+			}
+		} else {
+			key := entry.at
+			if lit, is := key.(LiteralExpr); is {
+				key = lit.Literal()
+			}
+
+			dictExpr, found := m.Get(key)
+			if !found {
+				if entry.fallback == nil {
+					return EmptyScope, fmt.Errorf("couldn't find %s in dict %s", key, m)
 				}
-				result, err = result.MatchedUpdate(scope)
+				var err error
+				dictValue, err = entry.fallback.Eval(local)
 				if err != nil {
 					return EmptyScope, err
 				}
 			} else {
-				scope, err := entry.value.Bind(local, Dict{m: m})
-				if err != nil {
-					return EmptyScope, err
-				}
-				result, err = result.MatchedUpdate(scope)
-				if err != nil {
-					return EmptyScope, err
-				}
+				dictValue = dictExpr.(Value)
+				m = m.Without(frozen.NewSet(key))
 			}
-
-			continue
-		}
-
-		key := entry.at
-		if lit, is := key.(LiteralExpr); is {
-			key = lit.Literal()
-		}
-		var dictValue Value
-		dictExpr, found := m.Get(key)
-		if !found {
-			if entry.fallback == nil {
-				return EmptyScope, fmt.Errorf("couldn't find %s in dict %s", key, m)
-			}
-			var err error
-			dictValue, err = entry.fallback.Eval(local)
-			if err != nil {
-				return EmptyScope, err
-			}
-		} else {
-			dictValue = dictExpr.(Value)
 		}
 
 		scope, err := entry.value.Bind(local, dictValue)
@@ -122,7 +108,6 @@ func (p DictPattern) Bind(local Scope, value Value) (Scope, error) {
 		if err != nil {
 			return EmptyScope, err
 		}
-		m = m.Without(frozen.NewSet(key))
 	}
 
 	return result, nil

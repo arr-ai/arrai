@@ -88,7 +88,7 @@ SEQ_COMMENT -> "," C*;
   | C* odelim="{" C* dict=(pairs=((extra|key=(expr tail=("?")?) ":" value=(top fall=(":" expr)?))):SEQ_COMMENT,?) cdelim="}" C*
   | C* odelim="[" C* array=(%!sparse_sequence(top fallback?)?) C* cdelim="]" C*
   | C* odelim="<<" C* bytes=(item=(STR|NUM|CHAR|IDENT|"("top")"):SEQ_COMMENT,?) C* cdelim=">>" C*
-  | C* odelim="(" tuple=(pairs=(extra | ((rec="rec"? name | name?) ":" v=top)):SEQ_COMMENT,?) cdelim=")" C*
+  | C* odelim="(" tuple=(pairs=(extra | (((name tail="?") | rec="rec"? name | name?) ":" v=(top fall=(":" expr)?))):SEQ_COMMENT,?) cdelim=")" C*
 };
 
 .macro sparse_sequence(top) {
