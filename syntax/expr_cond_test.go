@@ -186,3 +186,25 @@ func TestEvalCondPatternMatchingWithControlVar(t *testing.T) { //nolint:dupl
 	AssertCodesEvalToSameValue(t, `{}`, `let a = 2; cond a {[1,2,3]: 6}`)
 	AssertCodesEvalToSameValue(t, `2`, `let a = {"a":3}; cond a {(a:x): x + 5,_:2}`)
 }
+
+func TestCondEvalWithWhere(t *testing.T) {
+	t.Parallel()
+
+	AssertCodesEvalToSameValue(t, "{111,222,333}",
+		"{1, 2, 3} where cond . {1:11 , 2:22, 3:33} => cond . {1:111, 2:222, 3:333}")
+	AssertCodesEvalToSameValue(t, "{111,222,{}}",
+		"{1, 2, 3} where cond . {1:11 , 2:22, 3:33} => cond . {1:111, 2:222}")
+
+	AssertCodesEvalToSameValue(t, "{1,5}",
+		"{1, [2, 3]} where cond . {k: true, [a, b]: true} => cond . {[a, b]: a + b, k: k}")
+	AssertCodesEvalToSameValue(t, "{1,5,4,11}",
+		"{1, [2, 3], 4, [5, 6]} where cond . {k: true, [a, b]: true} => cond . {[a, b]: a + b, k:k}")
+
+	AssertCodesEvalToSameValue(t, "{9,5}",
+		"{[2,3,4], [2, 3]} where cond . {[a,b,c]: true, [a, b]: true} => cond . {[a,b,c]:a+b+c, [a, b]: a + b}")
+	AssertCodesEvalToSameValue(t, "{9,5}",
+		"{[2,3,4], [2, 3]} where cond . {[a,b,c]: true, [a, b]: true} => cond . {[a, b]: a + b , [a,b,c]:a+b+c}")
+
+	// AssertCodesEvalToSameValue(t, "{1,5}",
+	// 	"{1, [2, 3]} where cond . {k: true, [a, b]: true} => cond . { k: k , [a, b]: a + b}")
+}

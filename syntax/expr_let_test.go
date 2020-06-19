@@ -6,6 +6,7 @@ func TestExprLet(t *testing.T) { //nolint:dupl
 	t.Parallel()
 	AssertCodesEvalToSameValue(t, `7`, `let x = 6; 7`)
 	AssertCodesEvalToSameValue(t, `42`, `let x = 6; x * 7`)
+	AssertCodesEvalToSameValue(t, "[1, 2, 3]", "let k = [1, 2, 3]; k")
 	AssertCodesEvalToSameValue(t, `[1, 2]`, `let x = 1; [x, 2]`)
 	AssertCodesEvalToSameValue(t, `2`, `let x = 1; let x = x + 1; x`)
 	AssertCodesEvalToSameValue(t, `(x: 1)`, `let x = 1; (:x)`)
