@@ -205,6 +205,6 @@ func TestCondEvalWithWhere(t *testing.T) {
 	AssertCodesEvalToSameValue(t, "{9,5}",
 		"{[2,3,4], [2, 3]} where cond . {[a,b,c]: true, [a, b]: true} => cond . {[a, b]: a + b , [a,b,c]:a+b+c}")
 
-	// AssertCodesEvalToSameValue(t, "{1,5}",
-	// 	"{1, [2, 3]} where cond . {k: true, [a, b]: true} => cond . { k: k , [a, b]: a + b}")
+	AssertCodesEvalToSameValue(t, "{1, [2,3]}",
+		"{1, [2, 3]} where cond . {k: true, [a, b]: true} => cond . { k: k , [a, b]: a + b}")
 }

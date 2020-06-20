@@ -2,9 +2,13 @@ package rel
 
 import (
 	"bytes"
+	"context"
 	"fmt"
+	"sync"
 
+	"github.com/anz-bank/pkg/log"
 	"github.com/arr-ai/wbnf/parser"
+	"github.com/pkg/errors"
 )
 
 // CondPatternControlVarExpr which is used for `cond` pattern matching.
@@ -48,6 +52,19 @@ func (expr CondPatternControlVarExpr) Eval(scope Scope) (Value, error) {
 		return nil, WrapContext(err, expr.controlVarExpr, scope)
 	}
 
+	// cond is order dependent. It tries patterns from left to right and stops at the first match.
+	// If the first pattern is ident, it can't reach the subsequent patterns.
+	// So print out an error message to remind user if the order of cond patterns is correct.
+	if len(expr.conditionPairs) > 1 {
+		if ident, isIdent := expr.conditionPairs[0].expr.(IdentExpr); isIdent {
+			loggingOnce.Do(func() {
+				log.Error(context.Background(),
+					errors.Errorf("the first cond pattern is %s, it is causing subsequent patterns are unreachable, "+
+						"please make sure if the order of pattern is correct.", ident))
+			})
+		}
+	}
+
 	for _, conditionPair := range expr.conditionPairs {
 		bindings, err := conditionPair.Bind(scope, varVal)
 		if err == nil {
@@ -65,3 +82,5 @@ func (expr CondPatternControlVarExpr) Eval(scope Scope) (Value, error) {
 
 	return None, nil
 }
+
+var loggingOnce sync.Once
