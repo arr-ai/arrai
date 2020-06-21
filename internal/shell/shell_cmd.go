@@ -5,11 +5,13 @@ package shell
 import (
 	"context"
 	"fmt"
+	"os"
 	"regexp"
 	"sort"
 	"strings"
 
 	"github.com/anz-bank/pkg/log"
+	"github.com/arr-ai/arrai/rel"
 	"github.com/arr-ai/arrai/syntax"
 	"github.com/arr-ai/wbnf/parser"
 	"github.com/go-errors/errors"
@@ -56,7 +58,13 @@ func (sc *setCmd) process(line string, shellData *shellInstance) error {
 	expr := identRe.ReplaceAllString(line, "")
 	val, err := shellEval(expr, shellData.scope)
 	if err != nil {
-		return err
+		switch e := err.(type) {
+		case rel.ReprErr:
+			val = e.GetValue()
+			fmt.Fprintf(os.Stdout, "%s\n", e.GetValue())
+		default:
+			return err
+		}
 	}
 	shellData.scope = shellData.scope.With(name, val)
 	return nil

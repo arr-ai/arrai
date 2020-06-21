@@ -128,12 +128,16 @@ func (s *shellInstance) parseCmd(line string, l *readline.Instance) error {
 func shellEval(lines string, scope rel.Scope) (_ rel.Value, err error) {
 	defer func() {
 		if r := recover(); r != nil {
-			err = fmt.Errorf("unexpected panic: %v", r)
+			if i, is := r.(rel.ReprErr); is {
+				err = i
+			} else {
+				err = fmt.Errorf("unexpected panic: %v", r)
+			}
 		}
 	}()
 	value, err := tryEval(lines, scope)
 	if err != nil {
-		return nil, err
+		return value, err
 	}
 	fmt.Fprintf(os.Stdout, "%s\n", rel.Repr(value))
 	return value, nil

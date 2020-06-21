@@ -150,6 +150,18 @@ func reprNumber(n Number, w io.Writer) {
 	fmt.Fprint(w, n.String())
 }
 
+type ReprErr struct {
+	val Value
+}
+
+func (r ReprErr) Error() string {
+	return fmt.Sprintf("Repr(): unexpected Value type %T: %[1]v", r.val)
+}
+
+func (r ReprErr) GetValue() Value {
+	return r.val
+}
+
 func reprValue(v Value, w io.Writer) {
 	switch v := v.(type) {
 	case String:
@@ -173,7 +185,7 @@ func reprValue(v Value, w io.Writer) {
 	case Number:
 		reprNumber(v, w)
 	default:
-		panic(fmt.Errorf("Repr(): unexpected Value type %T: %[1]v", v)) //nolint:golint
+		panic(ReprErr{v}) //nolint:golint
 	}
 }
 
