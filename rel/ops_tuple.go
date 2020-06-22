@@ -52,17 +52,17 @@ func CombineNames(a, b Tuple, op CombineOp) Names {
 // Merge returns the merger of a and b, if possible or nil otherwise.
 // Success requires that common names map to equal values.
 func Merge(a, b Tuple) Tuple {
-	t := NewTuple()
+	attrs := []Attr{}
 	for name, pair := range Combine(a, b, AllPairs) {
 		if pair.a == nil {
-			t = t.With(name, pair.b)
+			attrs = append(attrs, NewAttr(name, pair.b))
 		} else if pair.b == nil || pair.a.Equal(pair.b) {
-			t = t.With(name, pair.a)
+			attrs = append(attrs, NewAttr(name, pair.a))
 		} else {
 			return nil
 		}
 	}
-	return t
+	return NewTuple(attrs...)
 }
 
 // MergeLeftToRight returns the merger of a and b. Key from tuples to the right
