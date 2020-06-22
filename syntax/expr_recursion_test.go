@@ -21,21 +21,21 @@ func TestRecursionExpr(t *testing.T) {
    		eo.even(6)`,
 	)
 	AssertCodeErrors(t,
+		"Recursion requires a tuple of functions: "+
+			"(even: ⦇(\\n ((n  = 0)) || («(eo.odd)»((n - 1))))⦈, num: 6, odd: ⦇(\\n ((n  != 0)) && («(eo.even)»((n - 1))))⦈)",
 		`let rec eo = (
      		even: \n n = 0 || eo.odd(n - 1),
 			odd:  \n n != 0 && eo.even(n - 1),
 			num: 6
    		);
 		eo.even(eo.num)`,
-		"Recursion requires a tuple of functions: "+
-			"(even: ⦇(\\n ((n  = 0)) || («(eo.odd)»((n - 1))))⦈, num: 6, odd: ⦇(\\n ((n  != 0)) && («(eo.even)»((n - 1))))⦈)",
 	)
 	AssertCodeErrors(t,
-		`let rec random = 1; random`,
 		`Recursion does not support rel.Number`,
+		`let rec random = 1; random`,
 	)
 	AssertCodeErrors(t,
+		`Recursion does not support rel.Number`,
 		`let rec 1 = 1; 2`,
-		`Does not evaluate to a variable name: 1`,
 	)
 }

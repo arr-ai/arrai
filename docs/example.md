@@ -178,6 +178,24 @@ $ echo {0..10} | ax '2^.'
 ```
 -->
 
+### Filter a collection of values with Control Var cases
+
+```bash
+$ arrai eval '{1, [2, 3], 4, [5, 6]} filter . {[a, b]: a + b}'
+{5, 11}
+```
+
+```bash
+$ arrai eval '{1, [2, 3], 4, [5, 6], [7, 8, 9]} filter . {[a, ..., b]: a + b}'
+{5, 11, 16}
+```
+
+```bash
+$ arrai eval '{1, [2, 3], 4, [5, 6]} filter . {[_, _]: 42}'
+{42}
+```
+
+
 ### Transform json and filter value from it
 
 Filter out value of `a` from json 

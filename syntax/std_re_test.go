@@ -3,7 +3,7 @@ package syntax
 import "testing"
 
 func TestStdRe(t *testing.T) {
-	AssertCodeErrors(t, "//re.compile(`x(y))`)", "//re.compile")
+	AssertCodeErrors(t, "//re.compile", "//re.compile(`x(y))`)")
 }
 
 func TestStdReMatch(t *testing.T) {

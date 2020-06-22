@@ -9,8 +9,8 @@ func TestStdTuple(t *testing.T) {
 	AssertCodesEvalToSameValue(t, `(a:1)`, `//tuple({"a":1})`)
 	AssertCodesEvalToSameValue(t, `(a:1, b:2)`, `//tuple({"a":1, "b":2})`)
 
-	AssertCodeErrors(t, `//tuple((a:1))`, "")
-	AssertCodeErrors(t, `//tuple(42)`, "")
+	AssertCodeErrors(t, "", `//tuple((a:1))`)
+	AssertCodeErrors(t, "", `//tuple(42)`)
 }
 
 func TestStdDict(t *testing.T) {
@@ -20,6 +20,6 @@ func TestStdDict(t *testing.T) {
 	AssertCodesEvalToSameValue(t, `{"a":1}`, `//dict((a:1))`)
 	AssertCodesEvalToSameValue(t, `{"a":1, "b":2}`, `//dict((a:1, b:2))`)
 
-	AssertCodeErrors(t, `//dict({42:43})`, "")
-	AssertCodeErrors(t, `//dict(42)`, "")
+	AssertCodeErrors(t, "", `//dict({42:43})`)
+	AssertCodeErrors(t, "", `//dict(42)`)
 }
