@@ -57,6 +57,15 @@ func TestJoinIntersect2(t *testing.T) {
 		intPairs("a", "b", []intPair{{1, 4}, {3, 4}, {5, 4}}...))
 }
 
+func TestJoinSpecialSet(t *testing.T) {
+	t.Parallel()
+	assertJoin(t,
+		NewString([]rune("do")),
+		NewString([]rune("dots")),
+		NewSet(NewTuple(NewAttr("@", NewNumber(0))), NewTuple(NewAttr("@", NewNumber(1)))),
+	)
+}
+
 // Helpers
 
 func intRel(name string, values ...int) Set {
