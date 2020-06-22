@@ -37,7 +37,7 @@ chapters.
 8. (TODO) [Transforms](transforms.md)
 9. (TODO) [Standard library](stdlib.md)
 10. (TODO) [Importing external code and data](import.md)
-11. (TODO) [Transforms](transforms.md)
+11. [Transforms](transforms.md)
 12. [Writing tests](testing.md)
 13. (TODO) [Expression strings](exprstr.md)
 14. (TODO) [Templating with expression strings](templating.md)
