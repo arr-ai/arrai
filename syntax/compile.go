@@ -425,7 +425,7 @@ func (pc ParseContext) compileIf(b ast.Branch, c ast.Children) rel.Expr {
 	loggingOnce.Do(func() {
 		log.Error(context.Background(),
 			errors.New("operator if is deprecated and will be removed soon, please use operator cond instead. "+
-				"Operator cond sample: let a = cond ( 2 > 1 : 1, 2 > 3 :2, * : 3)"))
+				"Operator cond sample: let a = cond {2 > 1: 1, 2 > 3: 2, _: 3}"))
 	})
 
 	result := pc.CompileExpr(b.One(exprTag).(ast.Branch))
