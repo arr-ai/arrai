@@ -1,8 +1,8 @@
 syntax = "proto3";
 
-package pb;
+package sysl;
 
-option go_package = "pb";
+option go_package = "sysl";
 
 // Deltas are diff annotations set for each major element in a model.
 // TODO: Is this really needed? Investigate protobuf diff tools.
