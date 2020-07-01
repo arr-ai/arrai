@@ -43,13 +43,21 @@ func TransformProtoBufToTuple(definition []byte, data []byte, rootMessage string
 		return nil, err
 	}
 
+	return rel.NewTuple(travel(message)...), nil
+}
+
+func travel(message *dynamicpb.Message) []rel.Attr {
 	attrs := []rel.Attr{}
 
-	message.Range(func(descriptor pr.FieldDescriptor, value pr.Value) bool {
-		attr := rel.NewAttr(string(descriptor.Name()), rel.NewString([]rune("Test")))
-		attrs = append(attrs, attr)
+	message.Range(func(desc pr.FieldDescriptor, val pr.Value) bool {
+		if desc.IsMap() {
+			val.Map().Range(func(key pr.MapKey, value pr.Value) bool {
+				attrs = append(attrs, rel.NewAttr(key.String(), rel.NewString([]rune(value.String()))))
+				return true
+			})
+		}
 		return true
 	})
 
-	return rel.NewTuple(attrs...), nil
+	return attrs
 }
