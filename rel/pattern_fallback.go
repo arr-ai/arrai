@@ -7,10 +7,10 @@ import (
 
 type FallbackPattern struct {
 	pattern  Pattern
-	fallback Pattern
+	fallback Expr
 }
 
-func NewFallbackPattern(pattern, fallback Pattern) FallbackPattern {
+func NewFallbackPattern(pattern Pattern, fallback Expr) FallbackPattern {
 	return FallbackPattern{
 		pattern:  pattern,
 		fallback: fallback,
@@ -25,11 +25,13 @@ func (p FallbackPattern) Bind(local Scope, value Value) (Scope, error) {
 	if p.fallback == nil {
 		return EmptyScope, errors.New("no value and no fallback")
 	}
-	scope, err := p.fallback.Bind(local, value)
+
+	var err error
+	value, err = p.fallback.Eval(local)
 	if err != nil {
 		return EmptyScope, err
 	}
-	return p.pattern.Bind(scope, value)
+	return p.pattern.Bind(EmptyScope, value)
 }
 
 func (f FallbackPattern) String() string {

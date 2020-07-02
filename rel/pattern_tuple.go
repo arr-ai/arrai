@@ -6,24 +6,22 @@ import (
 )
 
 type TuplePatternAttr struct {
-	name     string
-	pattern  Pattern
-	fallback Expr
+	name    string
+	pattern FallbackPattern
 }
 
-func NewTuplePatternAttr(name string, pattern Pattern, fallback Expr) TuplePatternAttr {
+func NewTuplePatternAttr(name string, pattern FallbackPattern) TuplePatternAttr {
 	return TuplePatternAttr{
-		name:     name,
-		pattern:  pattern,
-		fallback: fallback,
+		name:    name,
+		pattern: pattern,
 	}
 }
 
 func (a TuplePatternAttr) String() string {
-	if a.fallback == nil {
+	if a.pattern.fallback == nil {
 		return fmt.Sprintf("%s: %s", a.name, a.pattern)
 	}
-	return fmt.Sprintf("%s?: %s:%s", a.name, a.pattern, a.fallback)
+	return fmt.Sprintf("%s?: %s:%s", a.name, a.pattern, a.pattern.fallback)
 }
 
 func (a *TuplePatternAttr) IsWildcard() bool {
@@ -52,7 +50,13 @@ func (p TuplePattern) Bind(local Scope, value Value) (Scope, error) {
 
 	extraElements := make(map[int]int)
 	for i, attr := range p.attrs {
-		if _, is := attr.pattern.(ExtraElementPattern); is {
+		if _, is := attr.pattern.pattern.(ExtraElementPattern); is {
+			if len(extraElements) == 1 {
+				return EmptyScope, fmt.Errorf("non-deterministic pattern is not supported yet")
+			}
+			extraElements[i] = tuple.Count() - len(p.attrs)
+		}
+		if attr.pattern.fallback != nil {
 			if len(extraElements) == 1 {
 				return EmptyScope, fmt.Errorf("non-deterministic pattern is not supported yet")
 			}
@@ -72,7 +76,7 @@ func (p TuplePattern) Bind(local Scope, value Value) (Scope, error) {
 	names := tuple.Names()
 	for _, attr := range p.attrs {
 		var tupleValue Value
-		if _, is := attr.pattern.(ExtraElementPattern); is {
+		if _, is := attr.pattern.pattern.(ExtraElementPattern); is {
 			tupleValue = tuple.Project(names)
 			if tupleValue == nil {
 				return EmptyScope, fmt.Errorf("tuple %s cannot match tuple pattern %s", tuple, p)
@@ -81,11 +85,11 @@ func (p TuplePattern) Bind(local Scope, value Value) (Scope, error) {
 			var found bool
 			tupleValue, found = tuple.Get(attr.name)
 			if !found {
-				if attr.fallback == nil {
+				if attr.pattern.fallback == nil {
 					return EmptyScope, fmt.Errorf("couldn't find %s in tuple %s", attr.name, tuple)
 				}
 				var err error
-				tupleValue, err = attr.fallback.Eval(local)
+				tupleValue, err = attr.pattern.fallback.Eval(local)
 				if err != nil {
 					return EmptyScope, err
 				}
@@ -114,7 +118,7 @@ func (p TuplePattern) String() string { //nolint:dupl
 		}
 		if attr.IsWildcard() {
 			isDot := false
-			if exprpat, is := attr.pattern.(ExprPattern); is {
+			if exprpat, is := attr.pattern.pattern.(ExprPattern); is {
 				if ident, is := exprpat.Expr.(IdentExpr); is {
 					isDot = ident.Ident() == "."
 				}

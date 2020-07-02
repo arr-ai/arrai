@@ -228,7 +228,7 @@ func (pc ParseContext) compileTuplePattern(b ast.Branch) rel.Pattern {
 
 			if extra := pair.One("extra"); extra != nil {
 				v = pc.compilePattern(pair.(ast.Branch))
-				attrs = append(attrs, rel.NewTuplePatternAttr(k, v, nil))
+				attrs = append(attrs, rel.NewTuplePatternAttr(k, rel.NewFallbackPattern(v, nil)))
 			} else {
 				v = pc.compilePattern(pair.One("v").(ast.Branch))
 				if name := pair.One("name"); name != nil {
@@ -239,10 +239,10 @@ func (pc ParseContext) compileTuplePattern(b ast.Branch) rel.Pattern {
 
 				tail := pair.One("tail")
 				fall := pair.One("v").One("fall")
-				if tail == nil && fall == nil {
-					attrs = append(attrs, rel.NewTuplePatternAttr(k, v, nil))
+				if fall == nil {
+					attrs = append(attrs, rel.NewTuplePatternAttr(k, rel.NewFallbackPattern(v, nil)))
 				} else if tail != nil && fall != nil {
-					attrs = append(attrs, rel.NewTuplePatternAttr(k, v, pc.CompileExpr(fall.(ast.Branch))))
+					attrs = append(attrs, rel.NewTuplePatternAttr(k, rel.NewFallbackPattern(v, pc.CompileExpr(fall.(ast.Branch)))))
 				} else {
 					panic("fallback item does not match")
 				}
