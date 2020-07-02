@@ -272,7 +272,8 @@ func (pc ParseContext) compileDictPattern(b ast.Branch) rel.Pattern {
 			if fall == nil {
 				entryPtns = append(entryPtns, rel.NewDictPatternEntry(keyExpr, rel.NewFallbackPattern(valuePtn, nil)))
 			} else if tail != nil && fall != nil {
-				entryPtns = append(entryPtns, rel.NewDictPatternEntry(keyExpr, rel.NewFallbackPattern(valuePtn, pc.CompileExpr(fall.(ast.Branch)))))
+				entryPtns = append(entryPtns, rel.NewDictPatternEntry(keyExpr,
+					rel.NewFallbackPattern(valuePtn, pc.CompileExpr(fall.(ast.Branch)))))
 			} else {
 				panic("fallback item does not match")
 			}

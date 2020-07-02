@@ -34,9 +34,9 @@ func (p FallbackPattern) Bind(local Scope, value Value) (Scope, error) {
 	return p.pattern.Bind(EmptyScope, value)
 }
 
-func (f FallbackPattern) String() string {
-	if f.fallback == nil {
-		return f.pattern.String()
+func (p FallbackPattern) String() string {
+	if p.fallback == nil {
+		return p.pattern.String()
 	}
-	return fmt.Sprintf("%s:%s", f.pattern, f.fallback)
+	return fmt.Sprintf("%s:%s", p.pattern, p.fallback)
 }
