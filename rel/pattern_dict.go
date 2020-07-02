@@ -8,24 +8,22 @@ import (
 )
 
 type DictPatternEntry struct {
-	at       Expr
-	value    Pattern
-	fallback Expr
+	at      Expr
+	pattern FallbackPattern
 }
 
-func NewDictPatternEntry(at Expr, value Pattern, fallback Expr) DictPatternEntry {
+func NewDictPatternEntry(at Expr, pattern FallbackPattern) DictPatternEntry {
 	return DictPatternEntry{
-		at:       at,
-		value:    value,
-		fallback: fallback,
+		at:      at,
+		pattern: pattern,
 	}
 }
 
 func (p DictPatternEntry) String() string {
-	if p.fallback == nil {
-		return fmt.Sprintf("%s: %s", p.at, p.value)
+	if p.pattern.fallback == nil {
+		return fmt.Sprintf("%s: %s", p.at, p.pattern)
 	}
-	return fmt.Sprintf("%s?: %s:%s", p.at, p.value, p.fallback)
+	return fmt.Sprintf("%s?: %s", p.at, p.pattern)
 }
 
 type DictPattern struct {
@@ -52,7 +50,13 @@ func (p DictPattern) Bind(local Scope, value Value) (Scope, error) {
 
 	extraElements := make(map[int]int)
 	for i, entry := range p.entries {
-		if _, is := entry.value.(ExtraElementPattern); is {
+		if _, is := entry.pattern.pattern.(ExtraElementPattern); is {
+			if len(extraElements) == 1 {
+				return EmptyScope, fmt.Errorf("non-deterministic pattern is not supported yet")
+			}
+			extraElements[i] = dict.Count() - len(p.entries)
+		}
+		if entry.pattern.fallback != nil {
 			if len(extraElements) == 1 {
 				return EmptyScope, fmt.Errorf("non-deterministic pattern is not supported yet")
 			}
@@ -72,7 +76,7 @@ func (p DictPattern) Bind(local Scope, value Value) (Scope, error) {
 	m := dict.m
 	for _, entry := range p.entries {
 		var dictValue Value
-		if _, is := entry.value.(ExtraElementPattern); is {
+		if _, is := entry.pattern.pattern.(ExtraElementPattern); is {
 			if m.IsEmpty() {
 				dictValue = None
 			} else {
@@ -86,11 +90,11 @@ func (p DictPattern) Bind(local Scope, value Value) (Scope, error) {
 
 			dictExpr, found := m.Get(key)
 			if !found {
-				if entry.fallback == nil {
+				if entry.pattern.fallback == nil {
 					return EmptyScope, fmt.Errorf("couldn't find %s in dict %s", key, m)
 				}
 				var err error
-				dictValue, err = entry.fallback.Eval(local)
+				dictValue, err = entry.pattern.fallback.Eval(local)
 				if err != nil {
 					return EmptyScope, err
 				}
@@ -100,7 +104,7 @@ func (p DictPattern) Bind(local Scope, value Value) (Scope, error) {
 			}
 		}
 
-		scope, err := entry.value.Bind(local, dictValue)
+		scope, err := entry.pattern.pattern.Bind(local, dictValue)
 		if err != nil {
 			return EmptyScope, err
 		}
@@ -129,7 +133,7 @@ func (p DictPattern) String() string {
 func (p DictPattern) Bindings() []string {
 	bindings := make([]string, len(p.entries))
 	for i, v := range p.entries {
-		bindings[i] = v.value.String()
+		bindings[i] = v.pattern.pattern.String()
 	}
 	return bindings
 }
