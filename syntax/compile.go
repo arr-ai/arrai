@@ -259,7 +259,7 @@ func (pc ParseContext) compileDictPattern(b ast.Branch) rel.Pattern {
 		for _, pair := range pairs {
 			if extra := pair.One("extra"); extra != nil {
 				p := pc.compileExtraElementPattern(extra.(ast.Branch))
-				entryPtns = append(entryPtns, rel.NewDictPatternEntry(nil, p, nil))
+				entryPtns = append(entryPtns, rel.NewDictPatternEntry(nil, rel.NewFallbackPattern(p, nil)))
 				continue
 			}
 			key := pair.One("key")
@@ -269,10 +269,10 @@ func (pc ParseContext) compileDictPattern(b ast.Branch) rel.Pattern {
 
 			tail := key.One("tail")
 			fall := value.One("fall")
-			if tail == nil && fall == nil {
-				entryPtns = append(entryPtns, rel.NewDictPatternEntry(keyExpr, valuePtn, nil))
+			if fall == nil {
+				entryPtns = append(entryPtns, rel.NewDictPatternEntry(keyExpr, rel.NewFallbackPattern(valuePtn, nil)))
 			} else if tail != nil && fall != nil {
-				entryPtns = append(entryPtns, rel.NewDictPatternEntry(keyExpr, valuePtn, pc.CompileExpr(fall.(ast.Branch))))
+				entryPtns = append(entryPtns, rel.NewDictPatternEntry(keyExpr, rel.NewFallbackPattern(valuePtn, pc.CompileExpr(fall.(ast.Branch)))))
 			} else {
 				panic("fallback item does not match")
 			}

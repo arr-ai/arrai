@@ -21,7 +21,7 @@ func (a TuplePatternAttr) String() string {
 	if a.pattern.fallback == nil {
 		return fmt.Sprintf("%s: %s", a.name, a.pattern)
 	}
-	return fmt.Sprintf("%s?: %s:%s", a.name, a.pattern, a.pattern.fallback)
+	return fmt.Sprintf("%s?: %s", a.name, a.pattern)
 }
 
 func (a *TuplePatternAttr) IsWildcard() bool {

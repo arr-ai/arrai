@@ -38,5 +38,5 @@ func (f FallbackPattern) String() string {
 	if f.fallback == nil {
 		return f.pattern.String()
 	}
-	return fmt.Sprintf("%s?:%s", f.pattern, f.fallback)
+	return fmt.Sprintf("%s:%s", f.pattern, f.fallback)
 }
