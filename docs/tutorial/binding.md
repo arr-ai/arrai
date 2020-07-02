@@ -289,4 +289,7 @@ that weren't explicitly matched by other patterns.
 @> let (b?: x:42) = (a: 1); x = 42
 @> let [x, y, z?:0] = [1, 2]; [x, y, z] = [1, 2, 0]
 @> let {"b"?: x:42, ...t} = {"a": 1}; [x, t] = [42, {"a": 1}]
+@> let (x?: (y: (k?: w:42))) = (x: (y: (z: 1))); w
+@> let {"a"?: {"b": {"c"?: x:42}}} = {"a": {"b": {"k": 1}}}; x
+@> let [x, [y, z?:0]] = [1, [2]]; [x, y, z]
 ```
