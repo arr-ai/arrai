@@ -205,9 +205,9 @@ func (pc ParseContext) compileSparsePatterns(b ast.Branch) []rel.FallbackPattern
 			continue
 		}
 		ptn := pc.compilePattern(expr.(ast.Branch))
-		if fallback := expr.One("fallback"); fallback != nil {
-			fall := pc.CompileExpr(fallback.One("fall").(ast.Branch))
-			result = append(result, rel.NewFallbackPattern(ptn, fall))
+		if fall := expr.One("fall"); fall != nil {
+			fallback := pc.CompileExpr(fall.(ast.Branch))
+			result = append(result, rel.NewFallbackPattern(ptn, fallback))
 			continue
 		}
 		result = append(result, rel.NewFallbackPattern(ptn, nil))
