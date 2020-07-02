@@ -188,7 +188,7 @@ func (pc ParseContext) compilePatterns(exprs ...ast.Node) []rel.Pattern {
 	return result
 }
 
-func (pc ParseContext) compileSparsePatterns(b ast.Branch) []rel.PatternFallback {
+func (pc ParseContext) compileSparsePatterns(b ast.Branch) []rel.FallbackPattern {
 	var nodes []ast.Node
 	if firstItem, exists := b["first_item"]; exists {
 		nodes = []ast.Node{firstItem.(ast.One).Node}
@@ -198,19 +198,19 @@ func (pc ParseContext) compileSparsePatterns(b ast.Branch) []rel.PatternFallback
 			}
 		}
 	}
-	result := make([]rel.PatternFallback, 0, len(nodes))
+	result := make([]rel.FallbackPattern, 0, len(nodes))
 	for _, expr := range nodes {
 		if expr.One("empty") != nil {
-			result = append(result, rel.NewPatternFallback(nil, nil))
+			result = append(result, rel.NewFallbackPattern(nil, nil))
 			continue
 		}
 		ptn := pc.compilePattern(expr.(ast.Branch))
 		if fallback := expr.One("fallback"); fallback != nil {
 			fall := pc.CompileExpr(fallback.One("fall").(ast.Branch))
-			result = append(result, rel.NewPatternFallback(ptn, fall))
+			result = append(result, rel.NewFallbackPattern(ptn, fall))
 			continue
 		}
-		result = append(result, rel.NewPatternFallback(ptn, nil))
+		result = append(result, rel.NewFallbackPattern(ptn, nil))
 	}
 	return result
 }

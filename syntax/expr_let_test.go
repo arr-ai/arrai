@@ -188,7 +188,9 @@ func TestExprLetExtraElementsInPattern(t *testing.T) {
 
 func TestExprLetNestedPattern(t *testing.T) {
 	t.Parallel()
-	AssertCodesEvalToSameValue(t, `[1, 2, 3]`, `let [[x, y], z] = [[1, 2], 3]; [x, y, z]`)
+	AssertCodesEvalToSameValue(t, `[1, 2, 3]`, `let [[[x], y], z] = [[[1], 2], 3]; [x, y, z]`)
+	AssertCodesEvalToSameValue(t, `1`, `let {"a": {"b": {"c": x}}} = {"a": {"b": {"c": 1}}}; x`)
+	AssertCodesEvalToSameValue(t, `1`, `let (x: (y: (z: w))) = (x: (y: (z: 1))); w`)
 	AssertCodesEvalToSameValue(t, `[1, 2, 3]`, `let [{"a": x}, (b: y), z] = [{"a": 1}, (b: 2), 3]; [x, y, z]`)
 	AssertCodeErrors(t, "", `let [[x]] = []; 42`)
 }
@@ -205,5 +207,11 @@ func TestExprLetGetPattern(t *testing.T) {
 	AssertCodesEvalToSameValue(t, `[42, {"a": 1}]`, `let {"b"?: x:42, ...t} = {"a": 1}; [x, t]`)
 	AssertCodesEvalToSameValue(t, `1`, `let (x?: (y: (z?: w:42))) = (x: (y: (z: 1))); w`)
 	AssertCodesEvalToSameValue(t, `42`, `let (x?: (y: (k?: w:42))) = (x: (y: (z: 1))); w`)
+
+	AssertCodesEvalToSameValue(t, `[1, 2, 0]`, `let [x, y, z?:0] = [1, 2]; [x, y, z]`)
+	AssertCodesEvalToSameValue(t, `[1, 2, 3]`, `let [x, y, z?:0] = [1, 2, 3]; [x, y, z]`)
+	AssertCodesEvalToSameValue(t, `[1, 2, 0]`, `let [x, [y, z?:0]] = [1, [2]]; [x, y, z]`)
+	AssertCodesEvalToSameValue(t, `[1, 2, 3]`, `let [x, [y, z?:0]] = [1, [2, 3]]; [x, y, z]`)
+
 	AssertCodeErrors(t, "", `let (x?: (k: (z?: w:42))) = (x: (y: (z: 1))); w`)
 }
