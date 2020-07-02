@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestTransformProtoBufToTuple(t *testing.T) {
+func TestTransformProtoBufToTupleFlow(t *testing.T) {
 	code := "//encoding.proto.decode(//os.file('../pb/test/sysl.pb'), //os.file('../pb/test/petshop'), 'Module')"
 	pc := ParseContext{SourceDir: ".."}
 	ast, err := pc.Parse(parser.NewScanner(code))
@@ -20,6 +20,21 @@ func TestTransformProtoBufToTuple(t *testing.T) {
 	assert.NoError(t, err)
 	tuple, _ := val.(rel.Tuple)
 	apps, _ := tuple.Get("apps")
-	// assert.Equal(t, "Test", apps)
+
 	assert.NotNil(t, apps)
+}
+
+func TestTransformProtoBufToTupleCompareResult(t *testing.T) {
+	code := "//encoding.proto.decode(//os.file('../pb/test/sysl.pb'), //os.file('../pb/test/petshop'), 'Module')"
+	pc := ParseContext{SourceDir: ".."}
+	ast, err := pc.Parse(parser.NewScanner(code))
+	assert.NoError(t, err)
+
+	codeExpr := pc.CompileExpr(ast)
+	val, err := codeExpr.Eval(rel.EmptyScope)
+
+	assert.NoError(t, err)
+	tuple, _ := val.(rel.Tuple)
+
+	assert.NotNil(t, tuple)
 }
