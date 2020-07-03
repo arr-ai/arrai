@@ -72,7 +72,7 @@ func WalkThroughMessageToBuildValue(val pr.Value) (rel.Value, error) {
 			item, err := WalkThroughMessageToBuildValue(message.Get(i))
 			if err != nil {
 				list = append(list, rel.NewArrayItemTuple(i,
-					rel.NewString([]rune(err.Error()))))
+					rel.NewString([]rune("@error:"+err.Error()))))
 			} else {
 				list = append(list, rel.NewArrayItemTuple(i, item))
 			}
@@ -89,11 +89,14 @@ func WalkThroughMessageToBuildValue(val pr.Value) (rel.Value, error) {
 			return nil, err
 		}
 		return val, nil
-	case []byte:
-		return rel.NewTuple(), nil
-	case pr.Enum, pr.EnumNumber:
-		return rel.NewTuple(), nil
+	case pr.EnumNumber:
+		val, err := rel.NewValue(int32(message))
+		if err != nil {
+			return nil, err
+		}
+		return val, nil
 	default:
+		// []byte and protoreflect.EnumNumber etc.
 		return rel.NewTuple(rel.NewStringAttr("@error",
 			[]rune(fmt.Errorf("%T is not supported data type", message).Error()))), nil
 	}
