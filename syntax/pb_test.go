@@ -9,7 +9,7 @@ import (
 )
 
 func TestTransformProtoBufToTupleFlow(t *testing.T) {
-	code := "//encoding.proto.decode(//os.file('../pb/test/sysl.pb'), //os.file('../pb/test/petshop'), 'Module')"
+	code := "//encoding.proto.decode(//os.file('../pb/test/sysl.pb'), 'Module', //os.file('../pb/test/petshop.pb'))"
 	pc := ParseContext{SourceDir: ".."}
 	ast, err := pc.Parse(parser.NewScanner(code))
 	assert.NoError(t, err)
@@ -25,7 +25,7 @@ func TestTransformProtoBufToTupleFlow(t *testing.T) {
 }
 
 func TestTransformProtoBufToTupleCompareResult(t *testing.T) {
-	code := "//encoding.proto.decode(//os.file('../pb/test/sysl.pb'), //os.file('../pb/test/petshop'), 'Module')"
+	code := "//encoding.proto.decode(//os.file('../pb/test/sysl.pb'), 'Module', //os.file('../pb/test/petshop.pb'))"
 	pc := ParseContext{SourceDir: ".."}
 	ast, err := pc.Parse(parser.NewScanner(code))
 	assert.NoError(t, err)

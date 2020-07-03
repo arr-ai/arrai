@@ -22,7 +22,7 @@ func stdEncodingProto() rel.Attr {
 	)
 }
 
-func stdProtobufDecode(definition, data, rootMessageName rel.Value) (rel.Value, error) {
+func stdProtobufDecode(definition, rootMessageName, data rel.Value) (rel.Value, error) {
 	definitionBytes, is := definition.(rel.Bytes)
 	if !is {
 		return nil, fmt.Errorf("//encoding.proto.decode: definition not bytes")
