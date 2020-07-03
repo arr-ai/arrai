@@ -8,8 +8,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestTransformProtoBufToTupleFlow(t *testing.T) {
-	code := "//encoding.proto.decode(//os.file('../pb/test/sysl.pb'), 'Module', //os.file('../pb/test/petshop.pb'))"
+func TestTransformProtobufToTupleFlow(t *testing.T) {
+	code := "//encoding.proto.decode(//os.file('../translate/pb/test/sysl.pb'), 'Module', //os.file('../translate/pb/test/petshop.pb'))"
 	pc := ParseContext{SourceDir: ".."}
 	ast, err := pc.Parse(parser.NewScanner(code))
 	assert.NoError(t, err)
@@ -24,8 +24,8 @@ func TestTransformProtoBufToTupleFlow(t *testing.T) {
 	assert.NotNil(t, apps)
 }
 
-func TestTransformProtoBufToTupleCompareResult(t *testing.T) {
-	code := "//encoding.proto.decode(//os.file('../pb/test/sysl.pb'), 'Module', //os.file('../pb/test/petshop.pb'))"
+func TestTransformProtobufToTupleCompareResult(t *testing.T) {
+	code := "//encoding.proto.decode(//os.file('../translate/pb/test/sysl.pb'), 'Module', //os.file('../translate/pb/test/petshop.pb'))"
 	pc := ParseContext{SourceDir: ".."}
 	ast, err := pc.Parse(parser.NewScanner(code))
 	assert.NoError(t, err)

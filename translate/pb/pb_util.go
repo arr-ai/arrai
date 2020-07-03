@@ -13,7 +13,7 @@ import (
 	"google.golang.org/protobuf/types/dynamicpb"
 )
 
-func getFileDescriptor(definition []byte) (pr.FileDescriptor, error) {
+func decodeFileDescriptor(definition []byte) (pr.FileDescriptor, error) {
 	fdSet := new(descriptorpb.FileDescriptorSet)
 	if err := proto.Unmarshal(definition, fdSet); err != nil {
 		return nil, err
@@ -31,9 +31,9 @@ func getFileDescriptor(definition []byte) (pr.FileDescriptor, error) {
 	return fd1, nil
 }
 
-//TransformProtoBufToTuple transforms the protocol buffer message to a tuple.
-func TransformProtoBufToTuple(definition []byte, data []byte, rootMessage string) (rel.Value, error) {
-	fd, err := getFileDescriptor(definition)
+//TransformProtobufToTuple transforms the protocol buffer message to a tuple.
+func TransformProtobufToTuple(definition []byte, data []byte, rootMessage string) (rel.Value, error) {
+	fd, err := decodeFileDescriptor(definition)
 	if err != nil {
 		return nil, err
 	}
@@ -45,7 +45,7 @@ func TransformProtoBufToTuple(definition []byte, data []byte, rootMessage string
 		return nil, err
 	}
 
-	tuple, err := walkThroughMessage(pr.ValueOf(message.ProtoReflect()))
+	tuple, err := walkThroughMessageToBuildValue(pr.ValueOf(message.ProtoReflect()))
 	if err != nil {
 		return nil, err
 	}
@@ -53,13 +53,13 @@ func TransformProtoBufToTuple(definition []byte, data []byte, rootMessage string
 	return tuple, nil
 }
 
-func walkThroughMessage(val pr.Value) (rel.Value, error) {
+func walkThroughMessageToBuildValue(val pr.Value) (rel.Value, error) {
 	switch message := val.Interface().(type) {
 	case pr.Message:
 		// Only Message type is built to Tuple
 		attrs := []rel.Attr{}
 		message.Range(func(desc pr.FieldDescriptor, val pr.Value) bool {
-			item, err := walkThroughMessage(val)
+			item, err := walkThroughMessageToBuildValue(val)
 			if err != nil {
 				attrs = append(attrs, rel.NewAttr("@error_"+string(desc.Name()),
 					rel.NewString([]rune(err.Error()))))
@@ -73,7 +73,7 @@ func walkThroughMessage(val pr.Value) (rel.Value, error) {
 	case pr.Map:
 		entries := []rel.DictEntryTuple{}
 		val.Map().Range(func(key pr.MapKey, value pr.Value) bool {
-			val, err := walkThroughMessage(value)
+			val, err := walkThroughMessageToBuildValue(value)
 			if err != nil {
 				entries = append(entries, rel.NewDictEntryTuple(
 					rel.NewString([]rune("@error_"+key.String())),
@@ -91,7 +91,7 @@ func walkThroughMessage(val pr.Value) (rel.Value, error) {
 		list := []rel.Value{}
 		len := message.Len()
 		for i := 0; i < len; i++ {
-			item, err := walkThroughMessage(message.Get(i))
+			item, err := walkThroughMessageToBuildValue(message.Get(i))
 			if err != nil {
 				list = append(list, rel.NewArrayItemTuple(i,
 					rel.NewString([]rune(err.Error()))))

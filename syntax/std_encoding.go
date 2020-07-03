@@ -3,7 +3,7 @@ package syntax
 import (
 	"fmt"
 
-	"github.com/arr-ai/arrai/pb"
+	"github.com/arr-ai/arrai/translate/pb"
 
 	"github.com/arr-ai/arrai/rel"
 )
@@ -33,15 +33,10 @@ func stdProtobufDecode(definition, rootMessageName, data rel.Value) (rel.Value, 
 		return nil, fmt.Errorf("//encoding.proto.decode: data not bytes")
 	}
 
-	rootMessageNameStr, is := rootMessageName.(rel.String)
-	if !is {
-		return nil, fmt.Errorf("//encoding.proto.decode: rootMessageName not string")
-	}
-
-	str, isStr := valueAsString(rootMessageNameStr)
+	str, isStr := valueAsString(rootMessageName)
 	if !isStr {
 		return nil, fmt.Errorf("//encoding.proto.decode: rootMessageName not string")
 	}
 
-	return pb.TransformProtoBufToTuple(definitionBytes.Bytes(), dataBytes.Bytes(), str)
+	return pb.TransformProtobufToTuple(definitionBytes.Bytes(), dataBytes.Bytes(), str)
 }
