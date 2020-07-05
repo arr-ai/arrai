@@ -9,6 +9,8 @@ import (
 )
 
 func TestTransformProtobufToTupleFlow(t *testing.T) {
+	t.Parallel()
+
 	code := "//encoding.proto.decode(//os.file('../translate/pb/test/sysl.pb'), 'Module', " +
 		"//os.file('../translate/pb/test/petshop.pb'))"
 	pc := ParseContext{SourceDir: ".."}
@@ -26,6 +28,8 @@ func TestTransformProtobufToTupleFlow(t *testing.T) {
 }
 
 func TestTransformProtobufToTupleCompareResult(t *testing.T) {
+	t.Parallel()
+	// Map & List
 	code := `let shop = //encoding.proto.decode(//os.file('../translate/pb/test/sysl.pb'), 'Module',
 	//os.file('../translate/pb/test/petshop.pb'));shop.apps('PetShopApi').name.part.@`
 	AssertCodesEvalToSameValue(t, `0`, code)
@@ -47,4 +51,15 @@ func TestTransformProtobufToTupleCompareResult(t *testing.T) {
 	//os.file('../translate/pb/test/petshop.pb'));` +
 		`shop.apps('PetShopApi').endpoints('GET /petshop').attrs('patterns').a.elt.@item.@item.s`
 	AssertCodesEvalToSameValue(t, "'rest'", code)
+
+	// Enum
+	code = `let shop = //encoding.proto.decode(//os.file('../translate/pb/test/sysl.pb'), 'Module',
+	//os.file('../translate/pb/test/petshop.pb'));` +
+		`shop.apps('PetShopApi').endpoints('GET /petshop').rest_params.method`
+	AssertCodesEvalToSameValue(t, "'GET'", code)
+
+	code = `let shop = //encoding.proto.decode(//os.file('../translate/pb/test/sysl.pb'), 'Module',
+	//os.file('../translate/pb/test/petshop.pb'));` +
+		`shop.apps('PetShopApi').types('Breed').tuple.attr_defs('avgLifespan').primitive`
+	AssertCodesEvalToSameValue(t, "'DECIMAL'", code)
 }

@@ -42,7 +42,22 @@ func WalkThroughMessageToBuildValue(val pr.Value) (rel.Value, error) {
 				attrs = append(attrs, rel.NewAttr("@error_"+string(desc.Name()),
 					rel.NewString([]rune(err.Error()))))
 			} else {
-				attrs = append(attrs, rel.NewAttr(string(desc.Name()), item))
+				if desc.Enum() != nil {
+					switch t := item.(type) {
+					case rel.Number:
+						num, success := t.Int()
+						if success {
+							name := desc.Enum().Values().ByNumber(pr.EnumNumber(num)).Name()
+							attrs = append(attrs,
+								rel.NewAttr(string(desc.Name()),
+									rel.NewString([]rune(string(name)))))
+						}
+					default:
+						attrs = append(attrs, rel.NewAttr(string(desc.Name()), item))
+					}
+				} else {
+					attrs = append(attrs, rel.NewAttr(string(desc.Name()), item))
+				}
 			}
 			return true
 		})
@@ -90,13 +105,14 @@ func WalkThroughMessageToBuildValue(val pr.Value) (rel.Value, error) {
 		}
 		return val, nil
 	case pr.EnumNumber:
+		// type EnumNumber int32
 		val, err := rel.NewValue(int32(message))
 		if err != nil {
 			return nil, err
 		}
 		return val, nil
 	default:
-		// []byte and protoreflect.EnumNumber etc.
+		// []byte and protoreflect.Enum etc.
 		return rel.NewTuple(rel.NewStringAttr("@error",
 			[]rune(fmt.Errorf("%T is not supported data type", message).Error()))), nil
 	}
