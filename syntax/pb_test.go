@@ -26,10 +26,25 @@ func TestTransformProtobufToTupleFlow(t *testing.T) {
 }
 
 func TestTransformProtobufToTupleCompareResult(t *testing.T) {
-	code := `let shop = //encoding.proto.decode(//os.file('../translate/pb/test/sysl.pb'), 'Module', //os.file('../translate/pb/test/petshop.pb'));` +
-		`shop.apps('PetShopApi').attrs('package').s`
+	code := `let shop = //encoding.proto.decode(//os.file('../translate/pb/test/sysl.pb'), 'Module',
+	//os.file('../translate/pb/test/petshop.pb'));shop.apps('PetShopApi').name.part.@`
+	AssertCodesEvalToSameValue(t, `0`, code)
+
+	code = `let shop = //encoding.proto.decode(//os.file('../translate/pb/test/sysl.pb'), 'Module',
+	//os.file('../translate/pb/test/petshop.pb'));shop.apps('PetShopApi').name.part.@item.@item`
+	AssertCodesEvalToSameValue(t, `'PetShopApi'`, code)
+
+	code = `let shop = //encoding.proto.decode(//os.file('../translate/pb/test/sysl.pb'), 'Module',
+	//os.file('../translate/pb/test/petshop.pb'));shop.apps('PetShopApi').attrs('package').s`
 	AssertCodesEvalToSameValue(t, "'io.sysl.demo.petshop.api'", code)
-	// code = `let shop = //encoding.proto.decode(//os.file('../translate/pb/test/sysl.pb'), 'Module', //os.file('../translate/pb/test/petshop.pb'));` +
-	// 	`shop.apps('PetShopApi').endpoints('GET /petshop').attrs('patterns').a`
-	// AssertCodesEvalToSameValue(t, `'(elt: [(@: 0, @item: (s: \'rest\'))])'`, code)
+
+	code = `let shop = //encoding.proto.decode(//os.file('../translate/pb/test/sysl.pb'), 'Module',
+	//os.file('../translate/pb/test/petshop.pb'));` +
+		`shop.apps('PetShopApi').endpoints('GET /petshop').attrs('patterns').a.elt(0).@item.s`
+	AssertCodesEvalToSameValue(t, "'rest'", code)
+
+	code = `let shop = //encoding.proto.decode(//os.file('../translate/pb/test/sysl.pb'), 'Module',
+	//os.file('../translate/pb/test/petshop.pb'));` +
+		`shop.apps('PetShopApi').endpoints('GET /petshop').attrs('patterns').a.elt.@item.@item.s`
+	AssertCodesEvalToSameValue(t, "'rest'", code)
 }
