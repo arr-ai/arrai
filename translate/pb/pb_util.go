@@ -51,6 +51,8 @@ func WalkThroughMessageToBuildValue(val pr.Value) (rel.Value, error) {
 							attrs = append(attrs,
 								rel.NewAttr(string(desc.Name()),
 									rel.NewString([]rune(string(name)))))
+						} else {
+							attrs = append(attrs, rel.NewAttr(string(desc.Name()), item))
 						}
 					default:
 						attrs = append(attrs, rel.NewAttr(string(desc.Name()), item))
