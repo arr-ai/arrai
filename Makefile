@@ -1,4 +1,4 @@
-include VersionReport
+include VersionReport.mk
 
 all: parser test lint wasm
 
