@@ -117,6 +117,10 @@ func reprSet(s GenericSet, w io.Writer) {
 	fmt.Fprint(w, "}")
 }
 
+func reprClosure(c Closure, w io.Writer) {
+	fmt.Fprintf(w, "%s", c.String())
+}
+
 func reprStringCharTuple(t StringCharTuple, w io.Writer) {
 	fmt.Fprintf(w, "(@: %d, %s: %d)", t.at, StringCharAttr, t.char)
 }
@@ -162,6 +166,8 @@ func reprValue(v Value, w io.Writer) {
 		reprDict(v, w)
 	case GenericSet:
 		reprSet(v, w)
+	case Closure:
+		reprClosure(v, w)
 	case StringCharTuple:
 		reprStringCharTuple(v, w)
 	case ArrayItemTuple:

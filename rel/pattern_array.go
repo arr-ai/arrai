@@ -5,30 +5,11 @@ import (
 	"fmt"
 )
 
-type PatternFallback struct {
-	pattern  Pattern
-	fallback Expr
-}
-
-func NewPatternFallback(pattern Pattern, fallback Expr) PatternFallback {
-	return PatternFallback{
-		pattern:  pattern,
-		fallback: fallback,
-	}
-}
-
-func (f PatternFallback) String() string {
-	if f.fallback == nil {
-		return f.pattern.String()
-	}
-	return fmt.Sprintf("%s?:%s", f.pattern, f.fallback)
-}
-
 type ArrayPattern struct {
-	items []PatternFallback
+	items []FallbackPattern
 }
 
-func NewArrayPattern(elements ...PatternFallback) ArrayPattern {
+func NewArrayPattern(elements ...FallbackPattern) ArrayPattern {
 	return ArrayPattern{elements}
 }
 

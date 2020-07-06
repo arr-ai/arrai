@@ -39,7 +39,7 @@ func (c Closure) EqualClosure(d Closure) bool {
 
 // String returns a string representation of the expression.
 func (c Closure) String() string {
-	return "⦇" + c.f.String() + "⦈"
+	return c.f.String()
 }
 
 // Eval returns the Value
