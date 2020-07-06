@@ -15,7 +15,7 @@ func stdEncoding() rel.Attr {
 func stdEncodingProto() rel.Attr {
 	return rel.NewTupleAttr(
 		"proto",
-		rel.NewAttr("decode", pb.StdProtobufDecode),
+		rel.NewAttr("decode", pb.StdProtobufDecoder),
 		// this is a placeholder to represent //encoding.proto.proto
 		rel.NewAttr("proto", rel.NewTuple()),
 	)

@@ -2,6 +2,8 @@ package tools
 
 import "github.com/arr-ai/arrai/rel"
 
+// ValueAsString transform rel.Value to string.
+// In arr.ai, all empty sets are the same and `""`, `{}` and `[]` will be parsed to rel.GenericSet.
 func ValueAsString(v rel.Value) (string, bool) {
 	if v == nil {
 		return "", false
@@ -16,6 +18,8 @@ func ValueAsString(v rel.Value) (string, bool) {
 	return "", false
 }
 
+// ValueAsBytes transform rel.Value to byte array.
+// In arr.ai, all empty sets are the same and `""`, `{}` and `[]` will be parsed to rel.GenericSet.
 func ValueAsBytes(v rel.Value) ([]byte, bool) {
 	if v == nil {
 		return nil, false
