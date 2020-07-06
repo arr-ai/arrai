@@ -4,16 +4,18 @@ import (
 	"fmt"
 
 	"github.com/arr-ai/arrai/rel"
+	"github.com/arr-ai/arrai/tools"
 
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protodesc"
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/reflect/protoregistry"
 	"google.golang.org/protobuf/types/descriptorpb"
+	"google.golang.org/protobuf/types/dynamicpb"
 )
 
-// DecodeFileDescriptor parses protobuf definition file and decodes to file descriptor
-func DecodeFileDescriptor(definition []byte) (protoreflect.FileDescriptor, error) {
+// decodeFileDescriptor parses protobuf definition file and decodes to file descriptor
+func decodeFileDescriptor(definition []byte) (protoreflect.FileDescriptor, error) {
 	fdSet := new(descriptorpb.FileDescriptorSet)
 	if err := proto.Unmarshal(definition, fdSet); err != nil {
 		return nil, err
@@ -119,3 +121,43 @@ func WalkThroughMessageToBuildValue(val protoreflect.Value) (rel.Value, error) {
 			[]rune(fmt.Errorf("%T is not supported data type", message).Error()))), nil
 	}
 }
+
+//StdProtobufDecode transforms the protocol buffer message to a tuple.
+var StdProtobufDecode = rel.NewNativeFunction("decode", func(definition rel.Value) (rel.Value, error) {
+	definitionBytes, is := tools.ValueAsBytes(definition)
+	if !is {
+		return nil, fmt.Errorf("//encoding.proto.decode: definition not bytes")
+	}
+	fd, err := decodeFileDescriptor(definitionBytes)
+	if err != nil {
+		return nil, err
+	}
+
+	return rel.NewNativeFunction("decode$1", func(rootMessageName rel.Value) (rel.Value, error) {
+		nameStr, isStr := tools.ValueAsString(rootMessageName)
+		if !isStr {
+			return nil, fmt.Errorf("//encoding.proto.decode: rootMessageName not string")
+		}
+		rootMessageDesc := fd.Messages().ByName(protoreflect.Name(nameStr))
+		message := dynamicpb.NewMessage(rootMessageDesc)
+
+		return rel.NewNativeFunction("decode$2", func(data rel.Value) (rel.Value, error) {
+			dataBytes, is := tools.ValueAsBytes(data)
+			if !is {
+				return nil, fmt.Errorf("//encoding.proto.decode: data not bytes")
+			}
+
+			err = proto.Unmarshal(dataBytes, message)
+			if err != nil {
+				return nil, err
+			}
+
+			tuple, err := WalkThroughMessageToBuildValue(protoreflect.ValueOf(message.ProtoReflect()))
+			if err != nil {
+				return nil, err
+			}
+
+			return tuple, nil
+		}), nil
+	}), nil
+})

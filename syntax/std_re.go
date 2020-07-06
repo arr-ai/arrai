@@ -5,11 +5,12 @@ import (
 	"regexp"
 
 	"github.com/arr-ai/arrai/rel"
+	"github.com/arr-ai/arrai/tools"
 )
 
 var (
 	stdReMatch = rel.NewNativeFunction("compile", func(re rel.Value) (rel.Value, error) {
-		reStr, is := valueAsString(re)
+		reStr, is := tools.ValueAsString(re)
 		if !is {
 			return nil, fmt.Errorf("//re.compile: re not a string: %v", re)
 		}
@@ -19,7 +20,7 @@ var (
 		}
 		return rel.NewTuple(
 			rel.NewNativeFunctionAttr("match", func(str rel.Value) (rel.Value, error) {
-				s, is := valueAsString(str)
+				s, is := tools.ValueAsString(str)
 				if !is {
 					return nil, fmt.Errorf("//re.compile(re).match: s not a string: %v", str)
 				}
@@ -38,11 +39,11 @@ var (
 				return rel.NewArray(matches...), nil
 			}),
 			createNestedFuncAttr("sub", 2, func(args ...rel.Value) (rel.Value, error) {
-				new, is := valueAsString(args[0])
+				new, is := tools.ValueAsString(args[0])
 				if !is {
 					return nil, fmt.Errorf("//re.compile(re).sub: new not a string: %v", args[1])
 				}
-				s, is := valueAsString(args[1])
+				s, is := tools.ValueAsString(args[1])
 				if !is {
 					return nil, fmt.Errorf("//re.compile(re).sub: s not a string: %v", args[0])
 				}
@@ -50,7 +51,7 @@ var (
 			}),
 			createNestedFuncAttr("subf", 2, func(args ...rel.Value) (rel.Value, error) {
 				f := args[0]
-				s, is := valueAsString(args[1])
+				s, is := tools.ValueAsString(args[1])
 				if !is {
 					return nil, fmt.Errorf("//re.compile(re).subf: s not a string: %v", args[0])
 				}
