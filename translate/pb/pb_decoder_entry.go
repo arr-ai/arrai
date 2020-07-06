@@ -10,7 +10,7 @@ import (
 	"google.golang.org/protobuf/types/dynamicpb"
 )
 
-//StdProtobufDecoder transforms the protocol buffer message to a tuple.
+// StdProtobufDecoder transforms the protocol buffer message to a tuple.
 var StdProtobufDecoder = rel.NewNativeFunction("decode", func(tupleParam rel.Value) (rel.Value, error) {
 	tuple, isTuple := tupleParam.(rel.Tuple)
 	if !isTuple {
@@ -65,7 +65,7 @@ var StdProtobufDecoder = rel.NewNativeFunction("decode", func(tupleParam rel.Val
 				return nil, err
 			}
 
-			tuple, err := walkThroughMessageToBuildValue(protoreflect.ValueOf(message.ProtoReflect()))
+			tuple, err := convertProtoValToSyslVal(protoreflect.ValueOf(message.ProtoReflect()))
 			if err != nil {
 				return nil, err
 			}

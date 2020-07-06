@@ -31,9 +31,9 @@ func TestTransformProtobufToTupleFlow(t *testing.T) {
 	assert.NotNil(t, apps)
 }
 
-func TestTransformProtobufToTupleCompareResult(t *testing.T) {
+func TestTransformProtobufToTupleMapList(t *testing.T) {
 	t.Parallel()
-	// Map & List
+
 	code := sharedCode + `shop.apps('PetShopApi').name.part.@`
 	AssertCodesEvalToSameValue(t, `0`, code)
 
@@ -48,9 +48,12 @@ func TestTransformProtobufToTupleCompareResult(t *testing.T) {
 
 	code = sharedCode + `shop.apps('PetShopApi').endpoints('GET /petshop').attrs('patterns').a.elt.@item.@item.s`
 	AssertCodesEvalToSameValue(t, "'rest'", code)
+}
 
-	// Enum
-	code = sharedCode + `shop.apps('PetShopApi').endpoints('GET /petshop').rest_params.method`
+func TestTransformProtobufToTupleEnum(t *testing.T) {
+	t.Parallel()
+
+	code := sharedCode + `shop.apps('PetShopApi').endpoints('GET /petshop').rest_params.method`
 	AssertCodesEvalToSameValue(t, "'GET'", code)
 
 	code = sharedCode + `shop.apps('PetShopApi').types('Breed').tuple.attr_defs('avgLifespan').primitive`

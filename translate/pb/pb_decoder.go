@@ -31,36 +31,37 @@ func decodeFileDescriptor(definition []byte) (protoreflect.FileDescriptor, error
 	return fd1, nil
 }
 
-// walkThroughMessageToBuildValue walks through protobuf message and build a value whose type is rel.Value
-func walkThroughMessageToBuildValue(val protoreflect.Value) (rel.Value, error) {
+// convertProtoValToSyslVal walks through protobuf message and build a value whose type is rel.Value
+func convertProtoValToSyslVal(val protoreflect.Value) (rel.Value, error) {
 	switch message := val.Interface().(type) {
 	case protoreflect.Message:
 		attrs := []rel.Attr{}
 		message.Range(func(desc protoreflect.FieldDescriptor, val protoreflect.Value) bool {
-			item, err := walkThroughMessageToBuildValue(val)
+			item, err := convertProtoValToSyslVal(val)
 			if err != nil {
 				attrs = append(attrs, rel.NewAttr("@error_"+string(desc.Name()),
 					rel.NewString([]rune(err.Error()))))
-			} else {
-				if desc.Enum() != nil {
-					switch t := item.(type) {
-					case rel.Number:
-						num, success := t.Int()
-						if success {
-							name := desc.Enum().Values().ByNumber(protoreflect.EnumNumber(num)).Name()
-							attrs = append(attrs,
-								rel.NewAttr(string(desc.Name()),
-									rel.NewString([]rune(string(name)))))
-						} else {
-							attrs = append(attrs, rel.NewAttr(string(desc.Name()), item))
-						}
-					default:
-						attrs = append(attrs, rel.NewAttr(string(desc.Name()), item))
-					}
+				return true
+			}
+
+			itemNum, isNum := item.(rel.Number)
+			if desc.Enum() != nil && isNum {
+				// item is protoreflect.EnumNumber
+				num, success := itemNum.Int()
+				if success {
+					name := desc.Enum().
+						Values().
+						ByNumber(protoreflect.EnumNumber(num)).Name()
+					attrs = append(attrs,
+						rel.NewAttr(string(desc.Name()),
+							rel.NewString([]rune(string(name)))))
 				} else {
 					attrs = append(attrs, rel.NewAttr(string(desc.Name()), item))
 				}
+				return true
 			}
+
+			attrs = append(attrs, rel.NewAttr(string(desc.Name()), item))
 			return true
 		})
 		return rel.NewTuple(attrs...), nil
@@ -68,7 +69,7 @@ func walkThroughMessageToBuildValue(val protoreflect.Value) (rel.Value, error) {
 	case protoreflect.Map:
 		entries := []rel.DictEntryTuple{}
 		val.Map().Range(func(key protoreflect.MapKey, value protoreflect.Value) bool {
-			val, err := walkThroughMessageToBuildValue(value)
+			val, err := convertProtoValToSyslVal(value)
 			if err != nil {
 				entries = append(entries, rel.NewDictEntryTuple(
 					rel.NewString([]rune("@error_"+key.String())),
@@ -86,7 +87,7 @@ func walkThroughMessageToBuildValue(val protoreflect.Value) (rel.Value, error) {
 		list := []rel.Value{}
 		len := message.Len()
 		for i := 0; i < len; i++ {
-			item, err := walkThroughMessageToBuildValue(message.Get(i))
+			item, err := convertProtoValToSyslVal(message.Get(i))
 			if err != nil {
 				list = append(list, rel.NewArrayItemTuple(i,
 					rel.NewString([]rune("@error:"+err.Error()))))
