@@ -4,14 +4,12 @@ import (
 	"fmt"
 
 	"github.com/arr-ai/arrai/rel"
-	"github.com/arr-ai/arrai/tools"
 
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protodesc"
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/reflect/protoregistry"
 	"google.golang.org/protobuf/types/descriptorpb"
-	"google.golang.org/protobuf/types/dynamicpb"
 )
 
 // decodeFileDescriptor parses protobuf definition file and decodes to file descriptor
@@ -33,13 +31,13 @@ func decodeFileDescriptor(definition []byte) (protoreflect.FileDescriptor, error
 	return fd1, nil
 }
 
-// WalkThroughMessageToBuildValue walks through protobuf message and build a value whose type is rel.Value
-func WalkThroughMessageToBuildValue(val protoreflect.Value) (rel.Value, error) {
+// walkThroughMessageToBuildValue walks through protobuf message and build a value whose type is rel.Value
+func walkThroughMessageToBuildValue(val protoreflect.Value) (rel.Value, error) {
 	switch message := val.Interface().(type) {
 	case protoreflect.Message:
 		attrs := []rel.Attr{}
 		message.Range(func(desc protoreflect.FieldDescriptor, val protoreflect.Value) bool {
-			item, err := WalkThroughMessageToBuildValue(val)
+			item, err := walkThroughMessageToBuildValue(val)
 			if err != nil {
 				attrs = append(attrs, rel.NewAttr("@error_"+string(desc.Name()),
 					rel.NewString([]rune(err.Error()))))
@@ -70,7 +68,7 @@ func WalkThroughMessageToBuildValue(val protoreflect.Value) (rel.Value, error) {
 	case protoreflect.Map:
 		entries := []rel.DictEntryTuple{}
 		val.Map().Range(func(key protoreflect.MapKey, value protoreflect.Value) bool {
-			val, err := WalkThroughMessageToBuildValue(value)
+			val, err := walkThroughMessageToBuildValue(value)
 			if err != nil {
 				entries = append(entries, rel.NewDictEntryTuple(
 					rel.NewString([]rune("@error_"+key.String())),
@@ -88,7 +86,7 @@ func WalkThroughMessageToBuildValue(val protoreflect.Value) (rel.Value, error) {
 		list := []rel.Value{}
 		len := message.Len()
 		for i := 0; i < len; i++ {
-			item, err := WalkThroughMessageToBuildValue(message.Get(i))
+			item, err := walkThroughMessageToBuildValue(message.Get(i))
 			if err != nil {
 				list = append(list, rel.NewArrayItemTuple(i,
 					rel.NewString([]rune("@error:"+err.Error()))))
@@ -121,43 +119,3 @@ func WalkThroughMessageToBuildValue(val protoreflect.Value) (rel.Value, error) {
 			[]rune(fmt.Errorf("%T is not supported data type", message).Error()))), nil
 	}
 }
-
-//StdProtobufDecode transforms the protocol buffer message to a tuple.
-var StdProtobufDecode = rel.NewNativeFunction("decode", func(definition rel.Value) (rel.Value, error) {
-	definitionBytes, is := tools.ValueAsBytes(definition)
-	if !is {
-		return nil, fmt.Errorf("//encoding.proto.decode: definition not bytes")
-	}
-	fd, err := decodeFileDescriptor(definitionBytes)
-	if err != nil {
-		return nil, err
-	}
-
-	return rel.NewNativeFunction("decode$1", func(rootMessageName rel.Value) (rel.Value, error) {
-		nameStr, isStr := tools.ValueAsString(rootMessageName)
-		if !isStr {
-			return nil, fmt.Errorf("//encoding.proto.decode: rootMessageName not string")
-		}
-		rootMessageDesc := fd.Messages().ByName(protoreflect.Name(nameStr))
-		message := dynamicpb.NewMessage(rootMessageDesc)
-
-		return rel.NewNativeFunction("decode$2", func(data rel.Value) (rel.Value, error) {
-			dataBytes, is := tools.ValueAsBytes(data)
-			if !is {
-				return nil, fmt.Errorf("//encoding.proto.decode: data not bytes")
-			}
-
-			err = proto.Unmarshal(dataBytes, message)
-			if err != nil {
-				return nil, err
-			}
-
-			tuple, err := WalkThroughMessageToBuildValue(protoreflect.ValueOf(message.ProtoReflect()))
-			if err != nil {
-				return nil, err
-			}
-
-			return tuple, nil
-		}), nil
-	}), nil
-})

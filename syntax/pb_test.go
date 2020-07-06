@@ -8,11 +8,14 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+const sharedCode = `let sysl = //encoding.proto.decode(//encoding.proto.proto, //os.file('../translate/pb/test/sysl.pb'));` +
+	`let decodeSyslPb = //encoding.proto.decode(sysl);` +
+	`let shop = decodeSyslPb('Module', //os.file("../translate/pb/test/petshop.pb"));`
+
 func TestTransformProtobufToTupleFlow(t *testing.T) {
 	t.Parallel()
 
-	code := "//encoding.proto.decode(//os.file('../translate/pb/test/sysl.pb'), 'Module', " +
-		"//os.file('../translate/pb/test/petshop.pb'))"
+	code := sharedCode + `shop`
 	pc := ParseContext{SourceDir: ".."}
 	ast, err := pc.Parse(parser.NewScanner(code))
 	assert.NoError(t, err)
@@ -30,36 +33,25 @@ func TestTransformProtobufToTupleFlow(t *testing.T) {
 func TestTransformProtobufToTupleCompareResult(t *testing.T) {
 	t.Parallel()
 	// Map & List
-	code := `let shop = //encoding.proto.decode(//os.file('../translate/pb/test/sysl.pb'), 'Module',
-	//os.file('../translate/pb/test/petshop.pb'));shop.apps('PetShopApi').name.part.@`
+	code := sharedCode + `shop.apps('PetShopApi').name.part.@`
 	AssertCodesEvalToSameValue(t, `0`, code)
 
-	code = `let shop = //encoding.proto.decode(//os.file('../translate/pb/test/sysl.pb'), 'Module',
-	//os.file('../translate/pb/test/petshop.pb'));shop.apps('PetShopApi').name.part.@item.@item`
+	code = sharedCode + `shop.apps('PetShopApi').name.part.@item.@item`
 	AssertCodesEvalToSameValue(t, `'PetShopApi'`, code)
 
-	code = `let shop = //encoding.proto.decode(//os.file('../translate/pb/test/sysl.pb'), 'Module',
-	//os.file('../translate/pb/test/petshop.pb'));shop.apps('PetShopApi').attrs('package').s`
+	code = sharedCode + `shop.apps('PetShopApi').attrs('package').s`
 	AssertCodesEvalToSameValue(t, "'io.sysl.demo.petshop.api'", code)
 
-	code = `let shop = //encoding.proto.decode(//os.file('../translate/pb/test/sysl.pb'), 'Module',
-	//os.file('../translate/pb/test/petshop.pb'));` +
-		`shop.apps('PetShopApi').endpoints('GET /petshop').attrs('patterns').a.elt(0).@item.s`
+	code = sharedCode + `shop.apps('PetShopApi').endpoints('GET /petshop').attrs('patterns').a.elt(0).@item.s`
 	AssertCodesEvalToSameValue(t, "'rest'", code)
 
-	code = `let shop = //encoding.proto.decode(//os.file('../translate/pb/test/sysl.pb'), 'Module',
-	//os.file('../translate/pb/test/petshop.pb'));` +
-		`shop.apps('PetShopApi').endpoints('GET /petshop').attrs('patterns').a.elt.@item.@item.s`
+	code = sharedCode + `shop.apps('PetShopApi').endpoints('GET /petshop').attrs('patterns').a.elt.@item.@item.s`
 	AssertCodesEvalToSameValue(t, "'rest'", code)
 
 	// Enum
-	code = `let shop = //encoding.proto.decode(//os.file('../translate/pb/test/sysl.pb'), 'Module',
-	//os.file('../translate/pb/test/petshop.pb'));` +
-		`shop.apps('PetShopApi').endpoints('GET /petshop').rest_params.method`
+	code = sharedCode + `shop.apps('PetShopApi').endpoints('GET /petshop').rest_params.method`
 	AssertCodesEvalToSameValue(t, "'GET'", code)
 
-	code = `let shop = //encoding.proto.decode(//os.file('../translate/pb/test/sysl.pb'), 'Module',
-	//os.file('../translate/pb/test/petshop.pb'));` +
-		`shop.apps('PetShopApi').types('Breed').tuple.attr_defs('avgLifespan').primitive`
+	code = sharedCode + `shop.apps('PetShopApi').types('Breed').tuple.attr_defs('avgLifespan').primitive`
 	AssertCodesEvalToSameValue(t, "'DECIMAL'", code)
 }

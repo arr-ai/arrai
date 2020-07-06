@@ -8,16 +8,7 @@ import (
 func stdEncoding() rel.Attr {
 	return rel.NewTupleAttr("encoding",
 		stdEncodingJSON(),
-		stdEncodingProtoProto(),
 		stdEncodingProto(),
-	)
-}
-
-// this is a placeholder to represent //encoding.proto.proto
-func stdEncodingProtoProto() rel.Attr {
-	return rel.NewTupleAttr(
-		"proto",
-		rel.NewAttr("proto", rel.NewTuple()),
 	)
 }
 
@@ -25,5 +16,7 @@ func stdEncodingProto() rel.Attr {
 	return rel.NewTupleAttr(
 		"proto",
 		rel.NewAttr("decode", pb.StdProtobufDecode),
+		// this is a placeholder to represent //encoding.proto.proto
+		rel.NewAttr("proto", rel.NewTuple()),
 	)
 }
