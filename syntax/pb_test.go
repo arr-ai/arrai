@@ -8,7 +8,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-const sharedCode = `let sysl = //encoding.proto.decode(//encoding.proto.proto, //os.file('../translate/pb/test/sysl.pb'));` +
+const sharedCode = `let sysl = //encoding.proto.decode(//encoding.proto.proto, ` +
+	`//os.file('../translate/pb/test/sysl.pb'));` +
 	`let decodeSyslPb = //encoding.proto.decode(sysl);` +
 	`let shop = decodeSyslPb('Module', //os.file("../translate/pb/test/petshop.pb"));`
 

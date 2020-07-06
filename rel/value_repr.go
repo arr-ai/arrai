@@ -155,7 +155,7 @@ func reprNumber(n Number, w io.Writer) {
 }
 
 func reprNativeFunction(v Value, w io.Writer) {
-	fmt.Fprintf(w, "native funciton %s", v.String())
+	fmt.Fprintf(w, "native function %s", v.String())
 }
 
 func reprValue(v Value, w io.Writer) {
