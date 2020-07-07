@@ -8,15 +8,15 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-const sharedCode = `let sysl = //encoding.proto.decode(//encoding.proto.proto, ` +
-	`//os.file('../translate/pb/test/sysl.pb'));` +
-	`let decodeSyslPb = //encoding.proto.decode(sysl);` +
-	`let shop = decodeSyslPb('Module', //os.file("../translate/pb/test/petshop.pb"));`
+const decodePetshop = `let sysl = //encoding.proto.decode(//encoding.proto.proto,
+	//os.file('../translate/pb/test/sysl.pb'));
+	let decodeSyslPb = //encoding.proto.decode(sysl);
+	let shop = decodeSyslPb('Module', //os.file("../translate/pb/test/petshop.pb"));`
 
 func TestTransformProtobufToTupleFlow(t *testing.T) {
 	t.Parallel()
 
-	code := sharedCode + `shop`
+	code := decodePetshop + `shop`
 	pc := ParseContext{SourceDir: ".."}
 	ast, err := pc.Parse(parser.NewScanner(code))
 	assert.NoError(t, err)
@@ -34,28 +34,34 @@ func TestTransformProtobufToTupleFlow(t *testing.T) {
 func TestTransformProtobufToTupleMapList(t *testing.T) {
 	t.Parallel()
 
-	code := sharedCode + `shop.apps('PetShopApi').name.part.@`
+	code := decodePetshop + `shop.apps('PetShopApi').name.part.@`
 	AssertCodesEvalToSameValue(t, `0`, code)
 
-	code = sharedCode + `shop.apps('PetShopApi').name.part.@item.@item`
+	code = decodePetshop + `shop.apps('PetShopApi').name.part.@item.@item`
 	AssertCodesEvalToSameValue(t, `'PetShopApi'`, code)
 
-	code = sharedCode + `shop.apps('PetShopApi').attrs('package').s`
+	code = decodePetshop + `shop.apps('PetShopApi').attrs('package').s`
 	AssertCodesEvalToSameValue(t, "'io.sysl.demo.petshop.api'", code)
 
-	code = sharedCode + `shop.apps('PetShopApi').endpoints('GET /petshop').attrs('patterns').a.elt(0).@item.s`
+	code = decodePetshop + `shop.apps('PetShopApi').endpoints('GET /petshop').attrs('patterns').a.elt(0).@item.s`
 	AssertCodesEvalToSameValue(t, "'rest'", code)
 
-	code = sharedCode + `shop.apps('PetShopApi').endpoints('GET /petshop').attrs('patterns').a.elt.@item.@item.s`
+	code = decodePetshop + `shop.apps('PetShopApi').endpoints('GET /petshop').attrs('patterns').a.elt.@item.@item.s`
 	AssertCodesEvalToSameValue(t, "'rest'", code)
+
+	code = decodePetshop + `shop.apps('PetShopApi').endpoints('GET /petshop').attrs('patterns').a.elt(0).@`
+	AssertCodesEvalToSameValue(t, "0", code)
+
+	code = decodePetshop + `shop.apps('PetShopApi').endpoints('GET /petshop').attrs('patterns').a.elt.@`
+	AssertCodesEvalToSameValue(t, "0", code)
 }
 
 func TestTransformProtobufToTupleEnum(t *testing.T) {
 	t.Parallel()
 
-	code := sharedCode + `shop.apps('PetShopApi').endpoints('GET /petshop').rest_params.method`
+	code := decodePetshop + `shop.apps('PetShopApi').endpoints('GET /petshop').rest_params.method`
 	AssertCodesEvalToSameValue(t, "'GET'", code)
 
-	code = sharedCode + `shop.apps('PetShopApi').types('Breed').tuple.attr_defs('avgLifespan').primitive`
+	code = decodePetshop + `shop.apps('PetShopApi').types('Breed').tuple.attr_defs('avgLifespan').primitive`
 	AssertCodesEvalToSameValue(t, "'DECIMAL'", code)
 }

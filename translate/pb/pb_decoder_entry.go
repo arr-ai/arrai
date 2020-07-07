@@ -11,6 +11,11 @@ import (
 )
 
 // StdProtobufDecoder transforms the protocol buffer message to a tuple.
+// Sample code to call this method:
+// let sysl = //encoding.proto.decode(//encoding.proto.proto, //os.file('sysl.pb'));
+// let decodeSyslPb = //encoding.proto.decode(sysl);
+// let shop = decodeSyslPb('Module', //os.file("petshop.pb"));
+// petshop.apps("PetShopApi")
 var StdProtobufDecoder = rel.NewNativeFunction("decode", func(tupleParam rel.Value) (rel.Value, error) {
 	tuple, isTuple := tupleParam.(rel.Tuple)
 	if !isTuple {
@@ -18,7 +23,7 @@ var StdProtobufDecoder = rel.NewNativeFunction("decode", func(tupleParam rel.Val
 	}
 
 	if !tuple.IsTrue() {
-		// the call looks like `/set sysl = //encoding.proto.decode(//encoding.proto.proto, //os.file("sysl.pb"))`
+		// the call looks like `let sysl = //encoding.proto.decode(//encoding.proto.proto, //os.file('sysl.pb'))`
 		return rel.NewNativeFunction("decode$1", func(definition rel.Value) (rel.Value, error) {
 			_, is := tools.ValueAsBytes(definition)
 			if !is {
@@ -29,8 +34,8 @@ var StdProtobufDecoder = rel.NewNativeFunction("decode", func(tupleParam rel.Val
 		}), nil
 	}
 
-	// the call looks like `/set decodeSyslPb = //encoding.proto.decode(sysl)`
-	// after `/set sysl = //encoding.proto.decode(//encoding.proto.proto, //os.file("sysl.pb"))`
+	// the call looks like `let decodeSyslPb = //encoding.proto.decode(sysl);`
+	// after `let sysl = //encoding.proto.decode(//encoding.proto.proto, //os.file('sysl.pb'));`
 	fileDescriptor, has := tuple.Get("fileDescriptor")
 	if !has {
 		return nil, fmt.Errorf("//encoding.proto.decode: tupleParam doesn't have protobuf file descriptor")
