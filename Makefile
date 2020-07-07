@@ -1,26 +1,24 @@
 include VersionReport.mk
 
-all: parser test lint wasm
+all: lint test wasm
+
+parser:
+	go generate .
+
+build: parser
+	go build -ldflags=$(LDFLAGS) ./cmd/arrai
+
+wasm: parser
+	GOOS=js GOARCH=wasm go build -o /tmp/arrai.wasm ./cmd/arrai
 
 install: parser
 	go install -ldflags=$(LDFLAGS) ./cmd/arrai
 	[ -f $$(dirname $$(which arrai))/ai ] || ln -s arrai $$(dirname $$(which arrai))/ai
 	[ -f $$(dirname $$(which arrai))/ax ] || ln -s arrai $$(dirname $$(which arrai))/ax
 
-test:
-	go test $(GOTESTFLAGS) -tags timingsensitive ./...
-	GOARCH=386 go build ./...
-	go mod tidy
-
-lint:
+lint: parser
 	golangci-lint run
 
-wasm:
-	GOOS=js GOARCH=wasm go build -o /tmp/arrai.wasm ./cmd/arrai
-
-parser:
-	go generate .
-
-build:
-	go build -ldflags=$(LDFLAGS) ./cmd/arrai
- 
+test: parser
+	go test $(GOTESTFLAGS) -tags timingsensitive ./...
+	GOARCH=386 go build ./...
