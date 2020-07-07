@@ -42,7 +42,7 @@ func TestTransformProtobufToTupleMapList(t *testing.T) {
 
 	code = decodePetshop + `shop.apps('PetShopApi').attrs('package').s`
 	AssertCodesEvalToSameValue(t, "'io.sysl.demo.petshop.api'", code)
-
+	// With index
 	code = decodePetshop + `shop.apps('PetShopApi').endpoints('GET /petshop').attrs('patterns').a.elt(0).@item.s`
 	AssertCodesEvalToSameValue(t, "'rest'", code)
 
