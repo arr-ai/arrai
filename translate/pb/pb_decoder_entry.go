@@ -16,13 +16,13 @@ import (
 // let decodeSyslPb = //encoding.proto.decode(sysl);
 // let shop = decodeSyslPb('Module', //os.file("petshop.pb"));
 // petshop.apps("PetShopApi")
-var StdProtobufDecoder = rel.NewNativeFunction("decode", func(tupleParam rel.Value) (rel.Value, error) {
-	tuple, isTuple := tupleParam.(rel.Tuple)
-	if !isTuple {
-		return nil, fmt.Errorf("//encoding.proto.decode: tupleParam not tuple")
+var StdProtobufDecoder = rel.NewNativeFunction("decode", func(param rel.Value) (rel.Value, error) {
+	bytes, isBytes := param.(rel.Bytes)
+	if !isBytes {
+		return nil, fmt.Errorf("//encoding.proto.decode: param not bytes")
 	}
 
-	if !tuple.IsTrue() {
+	if bytes.Bytes() == nil {
 		// the call looks like `let sysl = //encoding.proto.decode(//encoding.proto.proto, //os.file('sysl.pb'))`
 		return rel.NewNativeFunction("decode$1", func(definition rel.Value) (rel.Value, error) {
 			_, is := tools.ValueAsBytes(definition)
@@ -30,18 +30,13 @@ var StdProtobufDecoder = rel.NewNativeFunction("decode", func(tupleParam rel.Val
 				return nil, fmt.Errorf("//encoding.proto.decode: definition not bytes")
 			}
 
-			return rel.NewTuple(rel.NewAttr("fileDescriptor", definition)), nil
+			return definition, nil
 		}), nil
 	}
 
 	// the call looks like `let decodeSyslPb = //encoding.proto.decode(sysl);`
 	// after `let sysl = //encoding.proto.decode(//encoding.proto.proto, //os.file('sysl.pb'));`
-	fileDescriptor, has := tuple.Get("fileDescriptor")
-	if !has {
-		return nil, fmt.Errorf("//encoding.proto.decode: tupleParam doesn't have protobuf file descriptor")
-	}
-
-	definitionBytes, is := tools.ValueAsBytes(fileDescriptor)
+	definitionBytes, is := tools.ValueAsBytes(bytes)
 	if !is {
 		return nil, fmt.Errorf("//encoding.proto.decode: fileDescriptor not bytes")
 	}
