@@ -26,11 +26,11 @@ Usage:
 |:-|:-|
 | `//encoding.json.decode('{"hi": "abc", "hello": 123}')` | `{'hello': 123, 'hi': (s: 'abc')}` |
 
-## `//encoding.proto.decode(proto <: bytes, rootModule <: string>, message <: protocol buffers message) <: tuple`
+## `//encoding.proto.decode(proto <: bytes, rootModule <: string, message <: protocol buffers message) <: tuple`
 
 This method accepts [protocol buffers message](https://github.com/protocolbuffers/protobuf) information and data, and transfroms to a built-in arrai value.
 
-Sample code for [Sysl](https://github.com/anz-bank/sysl):
+Sample code for [Sysl](https://github.com/anz-bank/sysl) protocol buffers message converting to arrai value:
 
 ```arrai
 let sysl = //encoding.proto.decode(//encoding.proto.proto, //os.file('../translate/pb/test/sysl.pb'));
@@ -39,7 +39,7 @@ let shop = decodeSyslPb('Module', //os.file('../translate/pb/test/petshop.pb'));
 shop.apps('PetShopApi').attrs('package').s
 ```
 
-And it will output
+It will output
 
 ```arrai
 'io.sysl.demo.petshop.api'
@@ -57,6 +57,6 @@ In this code line, `//encoding.proto.proto` is a constant, `//os.file('../transl
 let shop = decodeSyslPb('Module', //os.file("../translate/pb/test/petshop.pb"));
 ```
 
-In this code line, `'Module'` is the root message type it want to start build arrai value from, `//os.file('../translate/pb/test/petshop.pb')` is binary file of protocol buffers message which is used as data source to build arrai value.
+In this code line, `'Module'` is the root message type it want to start building arrai value from, `//os.file('../translate/pb/test/petshop.pb')` is binary file of protocol buffers message which is used as data source to build arrai value.
 
 [More sample code and data details](https://github.com/arr-ai/arrai/blob/master/syntax/pb_test.go)
