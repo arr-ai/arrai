@@ -81,7 +81,7 @@ func (s String) Hash(seed uintptr) uintptr {
 func (s String) Equal(v interface{}) bool {
 	switch x := v.(type) {
 	case String:
-		if len(s.s) != len(x.s) {
+		if len(s.s) != len(x.s) || s.offset != x.offset {
 			return false
 		}
 		for i, c := range s.s {

@@ -88,7 +88,7 @@ func (b Bytes) Hash(seed uintptr) uintptr {
 func (b Bytes) Equal(v interface{}) bool {
 	switch x := v.(type) {
 	case Bytes:
-		if len(b.b) != len(x.b) {
+		if len(b.b) != len(x.b) || b.offset != x.offset {
 			return false
 		}
 		for i, c := range b.b {

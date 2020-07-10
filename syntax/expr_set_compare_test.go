@@ -53,3 +53,30 @@ func TestSetCompare(t *testing.T) {
 		}
 	}
 }
+
+func TestStringCompare(t *testing.T) {
+	t.Parallel()
+
+	AssertCodesEvalToSameValue(t, `true `, `"abc" = "abc"  `)
+	AssertCodesEvalToSameValue(t, `false`, `"abc" = "ab"   `)
+	AssertCodesEvalToSameValue(t, `false`, `"abc" = 2\"abc"`)
+	AssertCodesEvalToSameValue(t, `false`, `"abc" = {}     `)
+}
+
+func TestBytesCompare(t *testing.T) {
+	t.Parallel()
+
+	AssertCodesEvalToSameValue(t, `true `, `<<"abc">> = <<"abc">>  `)
+	AssertCodesEvalToSameValue(t, `false`, `<<"abc">> = <<"ab">>   `)
+	AssertCodesEvalToSameValue(t, `false`, `<<"abc">> = 2\<<"abc">>`)
+	AssertCodesEvalToSameValue(t, `false`, `<<"abc">> = {}         `)
+}
+
+func TestArrayCompare(t *testing.T) {
+	t.Parallel()
+
+	AssertCodesEvalToSameValue(t, `true `, `[1, 2, 3] = [1, 2, 3]   `)
+	AssertCodesEvalToSameValue(t, `false`, `[1, 2, 3] = [1, 2]      `)
+	AssertCodesEvalToSameValue(t, `false`, `[1, 2, 3] = -1\[1, 2, 3]`)
+	AssertCodesEvalToSameValue(t, `false`, `[1, 2, 3] = {}          `)
+}
