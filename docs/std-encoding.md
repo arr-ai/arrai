@@ -1,6 +1,6 @@
 # encoding
 
-The `encoding` library provides functions convert a JSON value into a built-in arrai values.
+The `encoding` library provides functions convert a value into a built-in arrai values.
 The following functions are available by accessing the `//encoding` attribute.
 
 ## `//encoding.json.decode(json <: string|bytes) <: set`
@@ -25,3 +25,38 @@ Usage:
 | example | equals |
 |:-|:-|
 | `//encoding.json.decode('{"hi": "abc", "hello": 123}')` | `{'hello': 123, 'hi': (s: 'abc')}` |
+
+## `//encoding.proto.decode(proto <: bytes, rootModule <: string>, message <: protocol buffers message) <: tuple`
+
+This method accepts [protocol buffers message](https://github.com/protocolbuffers/protobuf) information and data, and transfroms to a built-in arrai value.
+
+Sample code for [Sysl](https://github.com/anz-bank/sysl):
+
+```arrai
+let sysl = //encoding.proto.decode(//encoding.proto.proto, //os.file('../translate/pb/test/sysl.pb'));
+let decodeSyslPb = //encoding.proto.decode(sysl);
+let shop = decodeSyslPb('Module', //os.file('../translate/pb/test/petshop.pb'));
+shop.apps('PetShopApi').attrs('package').s
+```
+
+And it will output
+
+```arrai
+'io.sysl.demo.petshop.api'
+```
+
+Currently, it has to follow the code above to transfrom protocol buffers message to a built-in arrai value.
+
+```arrai
+let sysl = //encoding.proto.decode(//encoding.proto.proto, //os.file('../translate/pb/test/sysl.pb'));
+```
+
+In this code line, `//encoding.proto.proto` is a constant, `//os.file('../translate/pb/test/sysl.pb')` is binary file of protocol buffers message definition file `.proto`.
+
+```arrai
+let shop = decodeSyslPb('Module', //os.file("../translate/pb/test/petshop.pb"));
+```
+
+In this code line, `'Module'` is the root message type it want to start build arrai value from, `//os.file('../translate/pb/test/petshop.pb')` is binary file of protocol buffers message which is used as data source to build arrai value.
+
+[More sample code and data details](https://github.com/arr-ai/arrai/blob/master/syntax/pb_test.go)
