@@ -1,6 +1,6 @@
 # encoding
 
-The `encoding` library provides functions convert a value into a built-in arrai values.
+The `encoding` library provides functions to convert data into built-in arr.ai values.
 The following functions are available by accessing the `//encoding` attribute.
 
 ## `//encoding.json.decode(json <: string|bytes) <: set`
@@ -26,16 +26,15 @@ Usage:
 |:-|:-|
 | `//encoding.json.decode('{"hi": "abc", "hello": 123}')` | `{'hello': 123, 'hi': (s: 'abc')}` |
 
-## `//encoding.proto.decode(proto <: bytes, rootModule <: string, message <: protocol buffers message) <: tuple`
+## `//encoding.proto.decode(protoFileDescriptor <: bytes, rootMessageName <: string, protobufMessage <: bytes) <: tuple`
 
-This method accepts [protocol buffers message](https://github.com/protocolbuffers/protobuf) information and data, and transfroms to a built-in arrai value.
+This method accepts [protobuf message](https://github.com/protocolbuffers/protobuf) information and data, and transfroms them to a built-in arr.ai value.
 
-Sample code for [Sysl](https://github.com/anz-bank/sysl) protocol buffers message converting to arrai value:
+Sample code for converting a [Sysl](https://github.com/anz-bank/sysl) protobuf message to arr.ai values:
 
 ```arrai
-let sysl = //encoding.proto.decode(//encoding.proto.proto, //os.file('../translate/pb/test/sysl.pb'));
-let decodeSyslPb = //encoding.proto.decode(sysl);
-let shop = decodeSyslPb('Module', //os.file('../translate/pb/test/petshop.pb'));
+let sysl = //encoding.proto.decode(//encoding.proto.proto, //os.file('sysl.pb'));
+let shop = //encoding.proto.decode(sysl, 'Module', //os.file('petshop.pb'));
 shop.apps('PetShopApi').attrs('package').s
 ```
 
@@ -45,18 +44,10 @@ It will output
 'io.sysl.demo.petshop.api'
 ```
 
-Currently, it has to follow the code above to transfrom protocol buffers message to a built-in arrai value.
+The first line constructs a protobuf file descriptor. `//encoding.proto.proto` is a constant, requesting a file descriptor as output. `//os.file('sysl.pb')` is the binary output of compiling [`sysl.proto`](https://github.com/anz-bank/sysl/blob/master/pkg/sysl/sysl.proto) with `protoc`.
 
-```arrai
-let sysl = //encoding.proto.decode(//encoding.proto.proto, //os.file('../translate/pb/test/sysl.pb'));
-```
+The second line uses the `sysl` file descriptor to parse `//os.file('petshop.pb')`, a compiled Sysl `Module` message.
 
-In this code line, `//encoding.proto.proto` is a constant, `//os.file('../translate/pb/test/sysl.pb')` is binary file of protocol buffers message definition file `.proto`.
-
-```arrai
-let shop = decodeSyslPb('Module', //os.file("../translate/pb/test/petshop.pb"));
-```
-
-In this code line, `'Module'` is the root message type it want to start building arrai value from, `//os.file('../translate/pb/test/petshop.pb')` is binary file of protocol buffers message which is used as data source to build arrai value.
+The output is `shop`, a tuple representing a `Module`. It contains a field `apps`, which maps names to tuple representations of `Application`. `Application` contains a field `attrs`, which maps names to tuple representation of `Attribute`. The data type of attribute `package` is `string`, so `.s` will get its `string` value.
 
 [More sample code and data details](https://github.com/arr-ai/arrai/blob/master/syntax/pb_test.go)
