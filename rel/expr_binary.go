@@ -307,6 +307,6 @@ func evalValForAddArrow(lhs, rhs Value) (Value, error) {
 	}
 
 	return nil, errors.Errorf(
-		"Both args to %q must be tuples or dicts, not %T and %T",
+		"Both args to %q must be tuples, not %T and %T",
 		"+>", lhs, rhs)
 }
