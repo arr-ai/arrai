@@ -262,3 +262,19 @@ $ arrai eval '{|a,b| (1,2), (1,3)} <&> {|a,c| (1,2), (1,3)}'
 $ arrai eval '{|a,b,c| (1,2,2), (1,2,3)} <&> {|b,c,d| (2,3,4), (1,3,4)}'
 {(a: 1, b: 2, c: 3, d: 4)}
 ```
+
+### Merging operator
+
+Merges two tuples and combines all rhs(right-hand side) attributes and any lhs(left-hand side) attributes whose name isn't on the rhs into a new tuple.
+
+#### Examples
+
+```bash
+arrai e '(a: 1, b: 2) +> (b: 3, c: 4)'
+(a: 1, b: 3, c: 4)
+```
+
+```bash
+arrai e '(a: 1, b: (c: 2)) +> (b: (c: 4), c: 4)'
+(a: 1, b: (c: 4), c: 4)
+```
