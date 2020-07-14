@@ -50,4 +50,4 @@ The second line uses the `sysl` file descriptor to parse `//os.file('petshop.pb'
 
 The output is `shop`, a tuple representing a `Module`. It contains a field `apps`, which maps names to tuple representations of `Application`. `Application` contains a field `attrs`, which maps names to tuple representation of `Attribute`. The data type of attribute `package` is `string`, so `.s` will get its `string` value.
 
-[More sample code and data details](https://github.com/arr-ai/arrai/blob/master/syntax/pb_test.go) 
+[More sample code and data details](https://github.com/arr-ai/arrai/blob/master/syntax/pb_test.go)
