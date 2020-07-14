@@ -298,7 +298,7 @@ func (e *BinExpr) Eval(local Scope) (_ Value, err error) {
 	return val, nil
 }
 
-// evalValForAddArrow evaluates for operator `+>`
+// evalValForAddArrow evaluates operator `+>`
 func evalValForAddArrow(lhs, rhs Value) (Value, error) {
 	if lhs, ok := lhs.(Tuple); ok {
 		if rhs, ok := rhs.(Tuple); ok {

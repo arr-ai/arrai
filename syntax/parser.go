@@ -25,7 +25,7 @@ expr   -> C* amp="&"* @ C* arrow=(
         > C* @:binop=("without" | "with") C*
         > C* @:binop="||" C*
         > C* @:binop="&&" C*
-        > C* @:binop="+>"
+        > C* @:binop="+>" C*
         > C* @:compare=/{!?(?:<:|=|<=?|>=?|\((?:<=?|>=?|<>=?)\))} C*
         > C* @ if=("if" t=expr ("else" f=expr)?)* C*
         > C* @:binop=/{\+\+|[+|]|-%?} C*
