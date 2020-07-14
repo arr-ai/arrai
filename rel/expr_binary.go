@@ -80,6 +80,14 @@ func NewAddExpr(scanner parser.Scanner, a, b Expr) Expr {
 		})
 }
 
+// NewAddArrowExpr returns a new ArrowExpr.
+func NewAddArrowExpr(scanner parser.Scanner, lhs, rhs Expr) Expr {
+	return newBinExpr(scanner, lhs, rhs, "+>", "(%s +> %s)",
+		func(lhs, rhs Value, _ Scope) (Value, error) {
+			return evalValForAddArrow(lhs, rhs)
+		})
+}
+
 // NewSubExpr evaluates a - b, given two Numbers.
 func NewSubExpr(scanner parser.Scanner, a, b Expr) Expr {
 	return newArithExpr(scanner, a, b, "-", func(a, b float64) float64 { return a - b })
@@ -288,4 +296,17 @@ func (e *BinExpr) Eval(local Scope) (_ Value, err error) {
 		return nil, WrapContext(err, e, local)
 	}
 	return val, nil
+}
+
+// evalValForAddArrow evaluates for operator `+>`
+func evalValForAddArrow(lhs, rhs Value) (Value, error) {
+	if lhs, ok := lhs.(Tuple); ok {
+		if rhs, ok := rhs.(Tuple); ok {
+			return MergeLeftToRight(lhs, rhs), nil
+		}
+	}
+
+	return nil, errors.Errorf(
+		"Both args to %q must be tuples or dicts, not %T and %T",
+		"+>", lhs, rhs)
 }

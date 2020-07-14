@@ -16,3 +16,11 @@ func TestRelationCall(t *testing.T) {
 	s := `{"key": "val"}("key")`
 	AssertCodesEvalToSameValue(t, `"val"`, s)
 }
+
+func TestOpsAddArrow(t *testing.T) {
+	AssertCodesEvalToSameValue(t, `(a: 1, b: 2) +> (c: 3, d: 4)`, `(a: 1, b: 2, c: 3, d: 4)`)
+	AssertCodesEvalToSameValue(t, `(a: 1, b: 2) +> (b: 3, c: 4)`, `(a: 1, b: 3, c: 4)`)
+	AssertCodesEvalToSameValue(t, `(a: 1, b: (c: 2)) +> (b: 3, c: 4)`, `(a: 1, b: 3, c: 4)`)
+	AssertCodesEvalToSameValue(t, `(a: 1, b: (c: 2)) +> (b: (c: 4), c: 4)`, `(a: 1, b: (c: 4), c: 4)`)
+	AssertCodesEvalToSameValue(t, `(a: 1, b: (c: 2)) +> (a: (b: 1), b: (c: 4))`, `(a: (b: 1), b: (c: 4))`)
+}
