@@ -80,7 +80,7 @@ func NewAddExpr(scanner parser.Scanner, a, b Expr) Expr {
 		})
 }
 
-// NewAddArrowExpr returns a new BinExpr which supports operator `+>`
+// NewAddArrowExpr returns a new BinExpr which supports operator `+>`.
 func NewAddArrowExpr(scanner parser.Scanner, lhs, rhs Expr) Expr {
 	return newBinExpr(scanner, lhs, rhs, "+>", "(%s +> %s)",
 		func(lhs, rhs Value, _ Scope) (Value, error) {
@@ -298,7 +298,7 @@ func (e *BinExpr) Eval(local Scope) (_ Value, err error) {
 	return val, nil
 }
 
-// evalValForAddArrow evaluates operator `+>`
+// evalValForAddArrow evaluates operator `+>`.
 func evalValForAddArrow(lhs, rhs Value) (Value, error) {
 	if lhs, ok := lhs.(Tuple); ok {
 		if rhs, ok := rhs.(Tuple); ok {
