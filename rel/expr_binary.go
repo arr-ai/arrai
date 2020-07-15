@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math"
 
+	"github.com/arr-ai/frozen"
 	"github.com/arr-ai/wbnf/parser"
 	"github.com/go-errors/errors"
 )
@@ -306,7 +307,28 @@ func evalValForAddArrow(lhs, rhs Value) (Value, error) {
 		}
 	}
 
+	if lhs, ok := lhs.(Dict); ok {
+		if rhs, ok := rhs.(Dict); ok {
+			return mergeDicts(lhs, rhs), nil
+		}
+	}
+
 	return nil, errors.Errorf(
-		"Both args to %q must be tuples, not %T and %T",
+		"Both args to %q must be tuples or dicts, not %T and %T",
 		"+>", lhs, rhs)
+}
+
+func mergeDicts(lhs Dict, rhs Dict) Dict {
+	tempMap := lhs.m
+
+	for e := rhs.DictEnumerator(); e.MoveNext(); {
+		key, value := e.Current()
+
+		if lhs.m.Has(key) {
+			tempMap = tempMap.Without(frozen.NewSet(key))
+		}
+		tempMap = tempMap.With(key, value)
+	}
+
+	return Dict{m: tempMap}
 }
