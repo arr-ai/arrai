@@ -265,7 +265,7 @@ $ arrai eval '{|a,b,c| (1,2,2), (1,2,3)} <&> {|b,c,d| (2,3,4), (1,3,4)}'
 
 ### Merge
 
-Merge combines two tuples/dicts, producing a single tuple/dict containing a union of their attributes. If the same name is present in both the LHS (left-hand side) and RHS (right-hand side) tuples, the RHS value takes precedence in the output.
+Merge combines two tuples/dicts, producing a single tuple/dict containing a union of their attributes. If the same name is present in both the LHS (left-hand side) and RHS (right-hand side) tuples/dicts, the RHS value takes precedence in the output.
 
 #### Examples
 
