@@ -26,6 +26,10 @@ Usage:
 |:-|:-|
 | `//encoding.json.decode('{"hi": "abc", "hello": 123}')` | `{'hello': 123, 'hi': (s: 'abc')}` |
 
+## `//encoding.yaml.decode(json <: string|bytes) <: set`
+
+Exactly the same as `//encoding.json.decode`, but takes either a `string` or `bytes` that represents a YAML object.
+
 ## `//encoding.proto.decode(protoFileDescriptor <: bytes, rootMessageName <: string, protobufMessage <: bytes) <: tuple`
 
 This method accepts [protobuf message](https://github.com/protocolbuffers/protobuf) information and data, and transfroms them to a built-in arr.ai value.
