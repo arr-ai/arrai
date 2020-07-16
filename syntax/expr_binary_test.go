@@ -38,8 +38,10 @@ func TestOpsAddArrowForDicts(t *testing.T) {
 	AssertCodesEvalToSameValue(t, `{'a': 'A1', 'b': 'A3', 'd': 'A4'}`, `{'a': 'A1', 'b': 'A2'} +> {'b': 'A3', 'd': 'A4'}`)
 	AssertCodesEvalToSameValue(t, `{'a': {'c': 'ABC2'}}`, `{'a': {'b': 'ABC1'}} +> {'a': {'c': 'ABC2'}}`)
 
-	AssertCodesEvalToSameValue(t, `{'a': 'A1', 'b': 'A2', 'c': 'A3', 'd': 'A4'}`, `{'a': 'A1', 'b': 'A2'} +> {'c': 'A3', 'd': 'A4'}`)
-	AssertCodesEvalToSameValue(t, `{'a': {'b': 'ABC1'}, 'b': {'c': 'ABC2'}}`, `{'a': {'b': 'ABC1'}} +> {'b': {'c': 'ABC2'}}`)
+	AssertCodesEvalToSameValue(t, `{'a': 'A1', 'b': 'A2', 'c': 'A3', 'd': 'A4'}`,
+		`{'a': 'A1', 'b': 'A2'} +> {'c': 'A3', 'd': 'A4'}`)
+	AssertCodesEvalToSameValue(t, `{'a': {'b': 'ABC1'}, 'b': {'c': 'ABC2'}}`,
+		`{'a': {'b': 'ABC1'}} +> {'b': {'c': 'ABC2'}}`)
 }
 
 func TestOpsAddArrowForError(t *testing.T) {
