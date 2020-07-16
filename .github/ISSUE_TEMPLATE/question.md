@@ -8,5 +8,7 @@ Please **do not post any internal, closed source snippets** on this public issue
 
 > What would you like to know?
 >
+> If it's a question about arr.ai's behaviour, please include your version (the output of `$ arrai info`).
+>
 > You can also [chat to us on Slack](https://anzoss.slack.com/archives/CSDD7K0PP) or [ask on Stack Overflow](https://stackoverflow.com/questions/tagged/arrai).
 
