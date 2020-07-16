@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"math"
 
-	"github.com/arr-ai/frozen"
 	"github.com/arr-ai/wbnf/parser"
 	"github.com/go-errors/errors"
 )
@@ -323,10 +322,6 @@ func mergeDicts(lhs Dict, rhs Dict) Dict {
 
 	for e := rhs.DictEnumerator(); e.MoveNext(); {
 		key, value := e.Current()
-
-		if lhs.m.Has(key) {
-			tempMap = tempMap.Without(frozen.NewSet(key))
-		}
 		tempMap = tempMap.With(key, value)
 	}
 
