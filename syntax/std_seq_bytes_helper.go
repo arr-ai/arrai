@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/arr-ai/arrai/rel"
+	"github.com/arr-ai/arrai/tools"
 )
 
 // Joins byte array joiner to subject.
@@ -28,7 +29,7 @@ func bytesSplit(delimiter rel.Value, subject rel.Bytes) (rel.Value, error) {
 	case rel.Bytes:
 		splitted = strings.Split(subject.String(), delimiter.String())
 	case rel.GenericSet:
-		delimStr, is := valueAsString(delimiter)
+		delimStr, is := tools.ValueAsString(delimiter)
 		if !is {
 			return nil, fmt.Errorf("//seq.split: delim not a string: %v", delimiter)
 		}

@@ -188,7 +188,7 @@ func (pc ParseContext) compilePatterns(exprs ...ast.Node) []rel.Pattern {
 	return result
 }
 
-func (pc ParseContext) compileSparsePatterns(b ast.Branch) []rel.PatternFallback {
+func (pc ParseContext) compileSparsePatterns(b ast.Branch) []rel.FallbackPattern {
 	var nodes []ast.Node
 	if firstItem, exists := b["first_item"]; exists {
 		nodes = []ast.Node{firstItem.(ast.One).Node}
@@ -198,19 +198,19 @@ func (pc ParseContext) compileSparsePatterns(b ast.Branch) []rel.PatternFallback
 			}
 		}
 	}
-	result := make([]rel.PatternFallback, 0, len(nodes))
+	result := make([]rel.FallbackPattern, 0, len(nodes))
 	for _, expr := range nodes {
 		if expr.One("empty") != nil {
-			result = append(result, rel.NewPatternFallback(nil, nil))
+			result = append(result, rel.NewFallbackPattern(nil, nil))
 			continue
 		}
 		ptn := pc.compilePattern(expr.(ast.Branch))
-		if fallback := expr.One("fallback"); fallback != nil {
-			fall := pc.CompileExpr(fallback.One("fall").(ast.Branch))
-			result = append(result, rel.NewPatternFallback(ptn, fall))
+		if fall := expr.One("fall"); fall != nil {
+			fallback := pc.CompileExpr(fall.(ast.Branch))
+			result = append(result, rel.NewFallbackPattern(ptn, fallback))
 			continue
 		}
-		result = append(result, rel.NewPatternFallback(ptn, nil))
+		result = append(result, rel.NewFallbackPattern(ptn, nil))
 	}
 	return result
 }
@@ -228,7 +228,7 @@ func (pc ParseContext) compileTuplePattern(b ast.Branch) rel.Pattern {
 
 			if extra := pair.One("extra"); extra != nil {
 				v = pc.compilePattern(pair.(ast.Branch))
-				attrs = append(attrs, rel.NewTuplePatternAttr(k, v, nil))
+				attrs = append(attrs, rel.NewTuplePatternAttr(k, rel.NewFallbackPattern(v, nil)))
 			} else {
 				v = pc.compilePattern(pair.One("v").(ast.Branch))
 				if name := pair.One("name"); name != nil {
@@ -239,10 +239,10 @@ func (pc ParseContext) compileTuplePattern(b ast.Branch) rel.Pattern {
 
 				tail := pair.One("tail")
 				fall := pair.One("v").One("fall")
-				if tail == nil && fall == nil {
-					attrs = append(attrs, rel.NewTuplePatternAttr(k, v, nil))
+				if fall == nil {
+					attrs = append(attrs, rel.NewTuplePatternAttr(k, rel.NewFallbackPattern(v, nil)))
 				} else if tail != nil && fall != nil {
-					attrs = append(attrs, rel.NewTuplePatternAttr(k, v, pc.CompileExpr(fall.(ast.Branch))))
+					attrs = append(attrs, rel.NewTuplePatternAttr(k, rel.NewFallbackPattern(v, pc.CompileExpr(fall.(ast.Branch)))))
 				} else {
 					panic("fallback item does not match")
 				}
@@ -259,7 +259,7 @@ func (pc ParseContext) compileDictPattern(b ast.Branch) rel.Pattern {
 		for _, pair := range pairs {
 			if extra := pair.One("extra"); extra != nil {
 				p := pc.compileExtraElementPattern(extra.(ast.Branch))
-				entryPtns = append(entryPtns, rel.NewDictPatternEntry(nil, p, nil))
+				entryPtns = append(entryPtns, rel.NewDictPatternEntry(nil, rel.NewFallbackPattern(p, nil)))
 				continue
 			}
 			key := pair.One("key")
@@ -269,10 +269,11 @@ func (pc ParseContext) compileDictPattern(b ast.Branch) rel.Pattern {
 
 			tail := key.One("tail")
 			fall := value.One("fall")
-			if tail == nil && fall == nil {
-				entryPtns = append(entryPtns, rel.NewDictPatternEntry(keyExpr, valuePtn, nil))
+			if fall == nil {
+				entryPtns = append(entryPtns, rel.NewDictPatternEntry(keyExpr, rel.NewFallbackPattern(valuePtn, nil)))
 			} else if tail != nil && fall != nil {
-				entryPtns = append(entryPtns, rel.NewDictPatternEntry(keyExpr, valuePtn, pc.CompileExpr(fall.(ast.Branch))))
+				entryPtns = append(entryPtns, rel.NewDictPatternEntry(keyExpr,
+					rel.NewFallbackPattern(valuePtn, pc.CompileExpr(fall.(ast.Branch)))))
 			} else {
 				panic("fallback item does not match")
 			}
@@ -425,7 +426,7 @@ func (pc ParseContext) compileIf(b ast.Branch, c ast.Children) rel.Expr {
 	loggingOnce.Do(func() {
 		log.Error(context.Background(),
 			errors.New("operator if is deprecated and will be removed soon, please use operator cond instead. "+
-				"Operator cond sample: let a = cond ( 2 > 1 : 1, 2 > 3 :2, * : 3)"))
+				"Operator cond sample: let a = cond {2 > 1: 1, 2 > 3: 2, _: 3}"))
 	})
 
 	result := pc.CompileExpr(b.One(exprTag).(ast.Branch))
@@ -1017,6 +1018,7 @@ var binops = map[string]binOpFunc{
 	"//":      rel.NewIdivExpr,
 	"^":       rel.NewPowExpr,
 	"\\":      rel.NewOffsetExpr,
+	"+>":      rel.NewAddArrowExpr,
 }
 
 var compareOps = map[string]rel.CompareFunc{

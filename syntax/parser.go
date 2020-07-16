@@ -25,6 +25,7 @@ expr   -> C* amp="&"* @ C* arrow=(
         > C* @:binop=("without" | "with") C*
         > C* @:binop="||" C*
         > C* @:binop="&&" C*
+        > C* @:binop="+>" C*
         > C* @:compare=/{!?(?:<:|=|<=?|>=?|\((?:<=?|>=?|<>=?)\))} C*
         > C* @ if=("if" t=expr ("else" f=expr)?)* C*
         > C* @:binop=/{\+\+|[+|]|-%?} C*
@@ -100,7 +101,7 @@ SEQ_COMMENT -> "," C*;
     C* odelim="{" C* rel=(names tuple=("(" v=top:SEQ_COMMENT, ")"):SEQ_COMMENT,?) cdelim="}" C*
   | C* odelim="{" C* set=(elt=top:SEQ_COMMENT,?) cdelim="}" C*
   | C* odelim="{" C* dict=(pairs=((extra|key=(expr tail=("?")?) ":" value=(top fall=(":" expr)?))):SEQ_COMMENT,?) cdelim="}" C*
-  | C* odelim="[" C* array=(%!sparse_sequence(top fallback?)?) C* cdelim="]" C*
+  | C* odelim="[" C* array=(%!sparse_sequence(tail=("?")? top fall=(":" expr)?)?) C* cdelim="]" C*
   | C* odelim="<<" C* bytes=(item=(STR|NUM|CHAR|IDENT|"("top")"):SEQ_COMMENT,?) C* cdelim=">>" C*
   | C* odelim="(" tuple=(pairs=(extra | (((name tail="?") | rec="rec"? name | name?) ":" v=(top fall=(":" expr)?))):SEQ_COMMENT,?) cdelim=")" C*
 };

@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/arr-ai/arrai/rel"
+	"github.com/arr-ai/arrai/tools"
 )
 
 // TODO: Make this more robust.
@@ -37,7 +38,7 @@ func formatValue(format string, value rel.Value) string {
 
 var (
 	stdStrExpand = mustCreateNestedFunc("expand", 4, func(args ...rel.Value) (rel.Value, error) {
-		format, is := valueAsString(args[0])
+		format, is := tools.ValueAsString(args[0])
 		if !is {
 			return nil, fmt.Errorf("//str.expand: format not a string: %v", args[0])
 		}
@@ -48,7 +49,7 @@ var (
 		}
 
 		var s string
-		delim, is := valueAsString(args[2])
+		delim, is := tools.ValueAsString(args[2])
 		if !is {
 			return nil, fmt.Errorf("//str.expand: delim not a string: %v", args[2])
 		}
@@ -71,7 +72,7 @@ var (
 			s = formatValue(format, args[1])
 		}
 		if s != "" {
-			tail, is := valueAsString(args[3])
+			tail, is := tools.ValueAsString(args[3])
 			if !is {
 				return nil, fmt.Errorf("//str.expand: tail not a string: %v", args[3])
 			}
@@ -89,43 +90,23 @@ func stdStr() rel.Attr {
 	return rel.NewTupleAttr("str",
 		rel.NewAttr("expand", stdStrExpand),
 		createNestedFuncAttr("lower", 1, func(args ...rel.Value) (rel.Value, error) {
-			if s, is := valueAsString(args[0]); is {
+			if s, is := tools.ValueAsString(args[0]); is {
 				return rel.NewString([]rune(strings.ToLower(s))), nil
 			}
 			return nil, fmt.Errorf("//str.lower: arg not a string: %v", args[0])
 		}),
 		rel.NewAttr("repr", stdStrRepr),
 		createNestedFuncAttr("title", 1, func(args ...rel.Value) (rel.Value, error) {
-			if s, is := valueAsString(args[0]); is {
+			if s, is := tools.ValueAsString(args[0]); is {
 				return rel.NewString([]rune(strings.Title(s))), nil
 			}
 			return nil, fmt.Errorf("//str.title: arg not a string: %v", args[0])
 		}),
 		createNestedFuncAttr("upper", 1, func(args ...rel.Value) (rel.Value, error) {
-			if s, is := valueAsString(args[0]); is {
+			if s, is := tools.ValueAsString(args[0]); is {
 				return rel.NewString([]rune(strings.ToUpper(s))), nil
 			}
 			return nil, fmt.Errorf("//str.upper: arg not a string: %v", args[0])
 		}),
 	)
-}
-
-func valueAsString(v rel.Value) (string, bool) {
-	switch v := v.(type) {
-	case rel.String:
-		return v.String(), true
-	case rel.GenericSet:
-		return "", !v.IsTrue()
-	}
-	return "", false
-}
-
-func valueAsBytes(v rel.Value) ([]byte, bool) {
-	switch v := v.(type) {
-	case rel.Bytes:
-		return v.Bytes(), true
-	case rel.GenericSet:
-		return nil, !v.IsTrue()
-	}
-	return nil, false
 }
