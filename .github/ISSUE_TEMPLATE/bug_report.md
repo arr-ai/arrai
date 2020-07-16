@@ -9,21 +9,22 @@ Please **do not post any internal, closed source snippets** on this public issue
 ### Description
 
 
+
 ### Steps to Reproduce
 1. 
 2. 
 3. 
 
-**Expected behavior:**
-
-**Actual behavior:**
-
-* Debug&Crash Output
+### Expected behavior
 
 
-### Your Environments
+
+### Actual behavior
+
+
+
+### Your Environment
 ```sh
-$ go version
-
+$ arrai info
 
 ```
