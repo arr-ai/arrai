@@ -6,12 +6,26 @@ import (
 )
 
 // FormatString returns string of `rel.Value` with more reabable format.
-// For examples:
-// Dict:
-//
-//
-// Tuple:
-//
+// For example:
+//{
+//	b: 2,
+//	a: 1,
+//	c: (
+//		a: 2,
+//		b: {
+//			aa: {
+//				bb: (
+//					a: 22,
+//					d: {
+//						3,
+//						1,
+//						2
+//					}
+//				)
+//			}
+//		}
+//	)
+//}
 func FormatString(val Value, identsNum int) string {
 	identsNum = identsNum + 1
 	switch t := val.(type) {
