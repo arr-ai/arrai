@@ -88,7 +88,10 @@ transform to each member of `lhs` and evaluates to a set of the results:
 ```
 
 Note that, if the transform produces the same output for some of the `lhs`
-elements, the resulting set will have fewer members than `lhs`.
+elements, the resulting set will have fewer members than `lhs`. Remember that
+sets cannot express the notion of duplicate membership, so if two or more input
+values yield the same output value, the resulting set will contain that value
+without reference to how many occurrences contributed to it.
 
 ### `>>`
 
