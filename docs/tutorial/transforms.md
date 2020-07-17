@@ -144,7 +144,8 @@ The "tuple-arrow" operator, `:>`, requires `lhs` to be a tuple. It applies the
 transform to each attribute value of `lhs` and evaluates to a tuple of the results:
 
 ```arrai
-@> (r: 0.5, g: 0.2, b: 0.7) => 1 - .
+@> (r: 0.5, g: 0.2, b: 0.7) :> 1 - .
+(b: 0.3, g: 0.8, r: 0.5)
 ```
 
 ## Unary forms
