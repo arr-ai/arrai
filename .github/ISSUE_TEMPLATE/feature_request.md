@@ -6,16 +6,11 @@ labels: enhancement
 
 Please **do not post any internal, closed source snippets** on this public issue tracker!
 
-### Current arrai Version
-
-
-### Use-cases
+### Purpose
 Please describe the _end goal_ you are trying to achieve that has led you to request this feature.
 
 
-### Attempted Solutions
 
+### Suggested approaches
+What have you tried, and how might this problem be solved?
 
-### References
-<!-- Please list the related GitHub issues, if there're any. -->
-- #2020
