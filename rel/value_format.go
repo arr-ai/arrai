@@ -32,9 +32,9 @@ func formatTupleString(tuple Tuple, identsNum int) string {
 	var sb strings.Builder
 	identsStr := getIdents(identsNum)
 	sb.WriteString("(")
-	for n, enum := 0, tuple.Enumerator(); enum.MoveNext(); n++ {
+	for index, enum := 0, tuple.Enumerator(); enum.MoveNext(); index++ {
 		name, val := enum.Current()
-		fmt.Fprintf(&sb, getFormat(n, tuple.Count()), identsStr, name, FormatString(val, identsNum))
+		fmt.Fprintf(&sb, getFormat(index, tuple.Count()), identsStr, name, FormatString(val, identsNum))
 	}
 
 	sb.WriteString(fmt.Sprintf("%s)", getIdents(identsNum-1)))
@@ -45,9 +45,9 @@ func formatDictString(dict Dict, identsNum int) string {
 	var sb strings.Builder
 	identsStr := getIdents(identsNum)
 	sb.WriteString("{")
-	for n, enum := 0, dict.DictEnumerator(); enum.MoveNext(); n++ {
+	for index, enum := 0, dict.DictEnumerator(); enum.MoveNext(); index++ {
 		key, val := enum.Current()
-		fmt.Fprintf(&sb, getFormat(n, dict.Count()), identsStr, key, FormatString(val, identsNum))
+		fmt.Fprintf(&sb, getFormat(index, dict.Count()), identsStr, key, FormatString(val, identsNum))
 	}
 
 	sb.WriteString(fmt.Sprintf("%s}", getIdents(identsNum-1)))
@@ -56,31 +56,34 @@ func formatDictString(dict Dict, identsNum int) string {
 
 func formatSetString(set Set, identsNum int) string {
 	var sb strings.Builder
-	// identsStr := getIdents(identsNum)
+	identsStr := getIdents(identsNum)
 	sb.WriteString("{")
-	for n, enum := 0, set.Enumerator(); enum.MoveNext(); n++ {
-		format := ",\n %v"
-		if n == 0 { // first item
+	for index, enum := 0, set.Enumerator(); enum.MoveNext(); index++ {
+		format := ",\n%s%v"
+		if index == 0 && set.Count() == 1 {
+			format = format[1:] + "\n"
+		} else if index == 0 && set.Count() > 1 {
 			format = format[1:]
-		} else if n > 0 && n == set.Count()-1 { // last item
+		} else if index == set.Count()-1 && set.Count() > 1 {
 			format = format + "\n"
 		}
 
-		enum.Current()
 		val := enum.Current()
-		fmt.Fprintf(&sb, format, FormatString(val, identsNum))
+		fmt.Fprintf(&sb, format, identsStr, FormatString(val, identsNum))
 	}
 
-	sb.WriteString("}")
+	sb.WriteString(fmt.Sprintf("%s}", getIdents(identsNum-1)))
 	return sb.String()
 }
 
 func getFormat(index, length int) string {
-	format := ",\n%s%v: %v\n"
-	if index == 0 && length > 1 {
-		format = format[1 : len(format)-1]
-	} else if index == 0 && length == 1 {
+	format := ",\n%s%v: %v"
+	if index == 0 && length == 1 {
+		format = format[1:] + "\n"
+	} else if index == 0 && length > 1 {
 		format = format[1:]
+	} else if index == length-1 && length > 1 {
+		format = format + "\n"
 	}
 
 	return format
