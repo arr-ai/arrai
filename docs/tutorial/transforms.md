@@ -48,9 +48,15 @@ The alternative form is likewise fairly trivial:
 ```
 
 In this case, instead of the name `.` being bound, the name `x` is bound to `42`
-when evaluating the expression `x + 1`.
+when evaluating the expression `x + 1`. This can come in handy when there are
+transform operators nested inside each other and an expression needs to refer to
+multiple levels:
 
-This operator shows its usefulness when `lhs` becomes more complex:
+```arrai
+@> (x: 3, y: 5, z: 5) -> ((x: 2, y: 2) -> \c ((c.x - .x)^2 + (c.y - .y)^2)^0.5) * .z
+```
+
+The `->` operator shows its usefulness when `lhs` becomes more complex:
 
 ```arrai
 @> /set data = (customer: (custid: 123, name: (first: "Franz", last: "Kafka")))
@@ -60,6 +66,16 @@ This operator shows its usefulness when `lhs` becomes more complex:
 As you can see, `->` offers a very lightweight mechanism to refer to a common
 complex expression while allowing a reader to follow a natural left-to-right
 order as they seek to understand the intent.
+
+On the flip side, when a complex expression spans multiple lines of code, the
+`let` operator is usually preferred:
+
+```arrai
+@> let v = (x: 3, y: 5, z: 5);
+ > ((x: 2, y: 2) -> \c ((c.x - v.x)^2 + (c.y - v.y)^2)^0.5) * v.z
+```
+
+While `let . = ...` is also allowed, it is not considered idiomatic arr.ai.
 
 ### `=>`
 
