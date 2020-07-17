@@ -34,15 +34,14 @@ chapters.
 5. [Set operators](setops.md)
 6. [Relational operators](relops.md)
 7. (TODO) [Functions and function calls](function.md)
-8. (TODO) [Transforms](transforms.md)
+8. [Transforms](transforms.md)
 9. (TODO) [Standard library](stdlib.md)
 10. (TODO) [Importing external code and data](import.md)
-11. [Transforms](transforms.md)
-12. [Writing tests](testing.md)
-13. (TODO) [Expression strings](exprstr.md)
-14. (TODO) [Templating with expression strings](templating.md)
-15. (TODO) [Grammars](grammars.md)
-16. [Macros](macros.md)
+11. [Writing tests](testing.md)
+12. (TODO) [Expression strings](exprstr.md)
+13. (TODO) [Templating with expression strings](templating.md)
+14. (TODO) [Grammars](grammars.md)
+15. [Macros](macros.md)
 
 ## Arr.ai command line
 
