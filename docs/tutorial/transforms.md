@@ -34,13 +34,21 @@ The arrow operator, `->`, can seem almost trivial:
 @> 42 -> .
 @> 42 -> . + 1
 @> "hello, " -> . ++ "world"
+@> (x: 2, y: 3, z: 5) -> .x * .y + .z
 ```
+
+The last example above illustrates the utility of the `.` name binding, since
+`.x` is shorthand for `(.).x`.
 
 The alternative form is likewise fairly trivial:
 
 ```arrai
 @> 42 -> \x x + 1
+@> (x: 2, y: 3, z: 5) -> \t t.x * t.y + t.z
 ```
+
+In this case, instead of the name `.` being bound, the name `x` is bound to `42`
+when evaluating the expression `x + 1`.
 
 This operator shows its usefulness when `lhs` becomes more complex:
 
