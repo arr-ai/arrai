@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestFmtPrettyForDict(t *testing.T) {
+func TestFmtPrettyForDict(t *testing.T) { //nolint:dupl
 	t.Parallel()
 	simpleDict, err := EvaluateExpr(".", `{'a':1, 'b':2, 'c':3}`)
 	assert.Nil(t, err)
@@ -29,7 +29,7 @@ func TestFmtPrettyForDict(t *testing.T) {
 	assert.Equal(t, true, strings.Contains(str, "\n\t\t\t222"))
 }
 
-func TestFmtPrettyForSet(t *testing.T) {
+func TestFmtPrettyForSet(t *testing.T) { //nolint:dupl
 	t.Parallel()
 	simpleSet, err := EvaluateExpr(".", `{24, 25, 26}`)
 	assert.Nil(t, err)
@@ -49,7 +49,7 @@ func TestFmtPrettyForSet(t *testing.T) {
 	assert.Equal(t, true, strings.Contains(str, "\n\t\t\t33"))
 }
 
-func TestFmtPrettyForTuple(t *testing.T) {
+func TestFmtPrettyForTuple(t *testing.T) { //nolint:dupl
 	t.Parallel()
 	simpleSet, err := EvaluateExpr(".", `(a:1, b:2, c:3)`)
 	assert.Nil(t, err)
