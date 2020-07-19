@@ -1,12 +1,14 @@
-package rel
+package syntax
 
 import (
 	"fmt"
 	"strings"
+
+	"github.com/arr-ai/arrai/rel"
 )
 
-// FormatString returns string of `rel.Value` with more reabable format.
-// For example:
+// FormatString returns a string which represents `rel.Value` with more reabable format.
+// For example, `{b: 2, a: 1, c: (a: 2, b: {aa: {bb: (a: 22, d: {3, 1, 2})}})}` can be formatted to:
 //{
 //	b: 2,
 //	a: 1,
@@ -26,23 +28,23 @@ import (
 //		}
 //	)
 //}
-func FormatString(val Value, identsNum int) string {
+func FormatString(val rel.Value, identsNum int) string {
 	identsNum = identsNum + 1
 	switch t := val.(type) {
-	case Tuple: // (a: 1)
+	case rel.Tuple: // (a: 1)
 		return formatTupleString(t, identsNum)
-	case Dict: // {'a': 1}
+	case rel.Dict: // {'a': 1}
 		return formatDictString(t, identsNum)
-	case Array:
+	case rel.Array:
 		return t.String()
-	case Set: // {1, 2}
+	case rel.Set: // {1, 2}
 		return formatSetString(t, identsNum)
 	default:
 		return t.String()
 	}
 }
 
-func formatTupleString(tuple Tuple, identsNum int) string {
+func formatTupleString(tuple rel.Tuple, identsNum int) string {
 	var sb strings.Builder
 	identsStr := getIdents(identsNum)
 	sb.WriteString("(")
@@ -55,7 +57,7 @@ func formatTupleString(tuple Tuple, identsNum int) string {
 	return sb.String()
 }
 
-func formatDictString(dict Dict, identsNum int) string {
+func formatDictString(dict rel.Dict, identsNum int) string {
 	var sb strings.Builder
 	identsStr := getIdents(identsNum)
 	sb.WriteString("{")
@@ -68,7 +70,7 @@ func formatDictString(dict Dict, identsNum int) string {
 	return sb.String()
 }
 
-func formatSetString(set Set, identsNum int) string {
+func formatSetString(set rel.Set, identsNum int) string {
 	var sb strings.Builder
 	identsStr := getIdents(identsNum)
 	sb.WriteString("{")
