@@ -8,7 +8,7 @@ import (
 )
 
 // FormatString returns a string which represents `rel.Value` with more reabable format.
-// For example, `{b: 2, a: 1, c: (a: 2, b: {aa: {bb: (a: 22, d: {3, 1, 2})}})}` can be formatted to:
+// For example, `{b: 2, a: 1, c: (a: 2, b: {aa: {bb: (a: 22, d: {3, 1, 2})}})}` is formatted to:
 //{
 //	b: 2,
 //	a: 1,
@@ -108,8 +108,10 @@ func getFormat(index, length int) string {
 func getIdents(identsNum int) string {
 	var sb strings.Builder
 	for i := 0; i < identsNum; i++ {
-		sb.WriteString("\t")
+		sb.WriteString(identStr)
 	}
 
 	return sb.String()
 }
+
+const identStr = "  "
