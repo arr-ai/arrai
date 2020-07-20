@@ -73,5 +73,5 @@ func TestFmtPrettyForTuple(t *testing.T) { //nolint:dupl
 }
 
 func contains(s, substrf string, identsNum int) bool {
-	return strings.Contains(s, fmt.Sprintf(substrf, getIdents(identsNum)))
+	return strings.Contains(s, fmt.Sprintf(substrf, getIndents(identsNum)))
 }
