@@ -12,14 +12,29 @@ func TestFmtPrettyForDict(t *testing.T) { //nolint:dupl
 	assert.Nil(t, err)
 	str, err := FormatString(simpleDict, 0)
 	assert.Nil(t, err)
-	assert.Equal(t, "{\n  a: 1,\n  b: 2,\n  c: 3\n}", str)
+	assert.Equal(t, `{
+  a: 1,
+  b: 2,
+  c: 3
+}`, str)
 
 	complexDict, err := EvaluateExpr(".", `{'a':1, 'c':(d:11, e:22, f:{111, 222}), 'b':2}`)
 	assert.Nil(t, err)
 	str, err = FormatString(complexDict, 0)
 	assert.Nil(t, err)
 	assert.Equal(t,
-		"{\n  a: 1,\n  b: 2,\n  c: (\n    d: 11,\n    e: 22,\n    f: {\n      111,\n      222\n    }\n  )\n}",
+		`{
+  a: 1,
+  b: 2,
+  c: (
+    d: 11,
+    e: 22,
+    f: {
+      111,
+      222
+    }
+  )
+}`,
 		str)
 }
 
@@ -29,14 +44,38 @@ func TestFmtPrettyForSet(t *testing.T) { //nolint:dupl
 	assert.Nil(t, err)
 	str, err := FormatString(simpleSet, 0)
 	assert.Nil(t, err)
-	assert.Equal(t, "{\n  24,\n  25,\n  26\n}", str)
+	assert.Equal(t, `{
+  24,
+  25,
+  26
+}`, str)
+
+	assert.Equal(t, `{
+  24,
+  25,
+  26
+}`, str)
 
 	complexSet, err := EvaluateExpr(".", `{(a: 1),(b: 2),(c:{11,22,33})}`)
 	assert.Nil(t, err)
 	str, err = FormatString(complexSet, 0)
 	assert.Nil(t, err)
 	assert.Equal(t,
-		"{\n  (\n    a: 1\n  ),\n  (\n    b: 2\n  ),\n  (\n    c: {\n      11,\n      22,\n      33\n    }\n  )\n}",
+		`{
+  (
+    a: 1
+  ),
+  (
+    b: 2
+  ),
+  (
+    c: {
+      11,
+      22,
+      33
+    }
+  )
+}`,
 		str)
 }
 
@@ -46,14 +85,29 @@ func TestFmtPrettyForTuple(t *testing.T) { //nolint:dupl
 	assert.Nil(t, err)
 	str, err := FormatString(simpleSet, 0)
 	assert.Nil(t, err)
-	assert.Equal(t, "(\n  a: 1,\n  b: 2,\n  c: 3\n)", str)
+	assert.Equal(t, `(
+  a: 1,
+  b: 2,
+  c: 3
+)`, str)
 
 	complexTuple, err := EvaluateExpr(".", `(a:1, b:(d:11, e:12, f:{1, 2}), c:3)`)
 	assert.Nil(t, err)
 	str, err = FormatString(complexTuple, 0)
 	assert.Nil(t, err)
 	assert.Equal(t,
-		"(\n  a: 1,\n  b: (\n    d: 11,\n    e: 12,\n    f: {\n      1,\n      2\n    }\n  ),\n  c: 3\n)",
+		`(
+  a: 1,
+  b: (
+    d: 11,
+    e: 12,
+    f: {
+      1,
+      2
+    }
+  ),
+  c: 3
+)`,
 		str)
 }
 
