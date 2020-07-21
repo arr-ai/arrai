@@ -8,7 +8,8 @@ func TestFmtPrettyDict(t *testing.T) {
 	t.Parallel()
 
 	AssertCodesEvalToSameValue(t, `{'a': 1, 'b': 2, 'c': 3}`, `//fmt.pretty({'b':2, 'a':1,'c':3})`)
-	AssertCodesEvalToSameValue(t, `{'a': 1, 'b': 2, 'c': {'d': 11, 'e': 22}}`, `//fmt.pretty({'b':2,'a':1,'c':{'d':11,'e':22}})`)
+	AssertCodesEvalToSameValue(t, `{'a': 1, 'b': 2, 'c': {'d': 11, 'e': 22}}`,
+		`//fmt.pretty({'b':2,'a':1,'c':{'d':11,'e':22}})`)
 }
 
 func TestFmtPrettyTuple(t *testing.T) {
