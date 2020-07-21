@@ -16,7 +16,7 @@ func stdFmt() rel.Attr {
 			}
 
 			fmt.Println(formattedStr)
-			return rel.NewString([]rune("")), nil
+			return value, nil
 		}),
 	)
 }
