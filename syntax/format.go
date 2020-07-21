@@ -28,53 +28,74 @@ import (
 //		}
 //	)
 //}
-func FormatString(val rel.Value, indentsNum int) string {
+func FormatString(val rel.Value, indentsNum int) (string, error) {
 	indentsNum = indentsNum + 1
 	switch t := val.(type) {
 	case rel.Tuple: // (a: 1)
 		return formatTupleString(t, indentsNum)
 	case rel.Dict: // {'a': 1}
 		return formatDictString(t, indentsNum)
-	case rel.Array:
-		return t.String()
-	case rel.Set: // {1, 2}
+	case rel.GenericSet: // {1, 2}
 		return formatSetString(t, indentsNum)
 	default:
-		return t.String()
+		return t.String(), nil
 	}
 }
 
-func formatTupleString(tuple rel.Tuple, indentsNum int) string {
+func formatTupleString(tuple rel.Tuple, indentsNum int) (string, error) {
 	var sb strings.Builder
 	indentsStr := getIndents(indentsNum)
 	sb.WriteString("(")
-	for index, enum := 0, tuple.Enumerator(); enum.MoveNext(); index++ {
-		name, val := enum.Current()
-		fmt.Fprintf(&sb, getFormat(index, tuple.Count()), indentsStr, name, FormatString(val, indentsNum))
+
+	for index, name := range tuple.Names().OrderedNames() {
+		value, found := tuple.Get(name)
+		if !found {
+			return "", fmt.Errorf("couldn't find %s", name)
+		}
+		formattedStr, err := FormatString(value, indentsNum)
+		if err != nil {
+			return "", nil
+		}
+		fmt.Fprintf(&sb,
+			getFormat(index, tuple.Count()), indentsStr, name,
+			formattedStr)
 	}
 
 	sb.WriteString(fmt.Sprintf("%s)", getIndents(indentsNum-1)))
-	return sb.String()
+	return sb.String(), nil
 }
 
-func formatDictString(dict rel.Dict, indentsNum int) string {
+func formatDictString(dict rel.Dict, indentsNum int) (string, error) {
 	var sb strings.Builder
 	indentsStr := getIndents(indentsNum)
 	sb.WriteString("{")
-	for index, enum := 0, dict.DictEnumerator(); enum.MoveNext(); index++ {
-		key, val := enum.Current()
-		fmt.Fprintf(&sb, getFormat(index, dict.Count()), indentsStr, key, FormatString(val, indentsNum))
+
+	for index, item := range dict.OrderedEntries() {
+		key, found := item.Get("@")
+		if !found {
+			return "", fmt.Errorf("couldn't find @ in %s", item)
+		}
+		val, found := item.Get(rel.DictValueAttr)
+		if !found {
+			return "", fmt.Errorf("couldn't find value in %s", item)
+		}
+		formattedStr, err := FormatString(val, indentsNum)
+		if err != nil {
+			return "", err
+		}
+		fmt.Fprintf(&sb, getFormat(index, dict.Count()), indentsStr, key, formattedStr)
 	}
 
 	sb.WriteString(fmt.Sprintf("%s}", getIndents(indentsNum-1)))
-	return sb.String()
+	return sb.String(), nil
 }
 
-func formatSetString(set rel.Set, indentsNum int) string {
+func formatSetString(set rel.GenericSet, indentsNum int) (string, error) {
 	var sb strings.Builder
 	indentsStr := getIndents(indentsNum)
 	sb.WriteString("{")
-	for index, enum := 0, set.Enumerator(); enum.MoveNext(); index++ {
+
+	for index, item := range set.OrderedValues() {
 		format := ",\n%s%v"
 		if index == 0 && set.Count() == 1 {
 			format = format[1:] + "\n"
@@ -84,12 +105,15 @@ func formatSetString(set rel.Set, indentsNum int) string {
 			format = format + "\n"
 		}
 
-		val := enum.Current()
-		fmt.Fprintf(&sb, format, indentsStr, FormatString(val, indentsNum))
+		formattedStr, err := FormatString(item, indentsNum)
+		if err != nil {
+			return "", err
+		}
+		fmt.Fprintf(&sb, format, indentsStr, formattedStr)
 	}
 
 	sb.WriteString(fmt.Sprintf("%s}", getIndents(indentsNum-1)))
-	return sb.String()
+	return sb.String(), nil
 }
 
 func getFormat(index, length int) string {
