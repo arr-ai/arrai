@@ -2,26 +2,17 @@ name: Docker
 
 on:
   push:
-    tags:
-      - 'v*.*.*'
-
-env:
-  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
 jobs:
-  release:
-    name: Release
+  build-and-publish-head:
     runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/master'
+
     steps:
-      - name: Check out code
-        uses: actions/checkout@master
-      - name: Build and push docker image
-        uses: docker/build-push-action@v1
-        with:
-          username: ${{ secrets.DOCKER_USER }}
-          password: ${{ secrets.DOCKER_PASS }}
-          repository: docker.io/anzbank/arrai
-          tag_with_ref: true
-          add_git_labels: true
-          tags: latest
-          labels: org.opencontainers.image.revision=${{ github.sha }},org.opencontainers.image.url=https://arr.ai
+    - uses: actions/checkout@v2
+    - name: Build and Publish head Docker image
+      uses: VaultVulp/gp-docker-action@1.1.6
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        image-name: arrai
+        image-tag: ${{ github.sha }}
