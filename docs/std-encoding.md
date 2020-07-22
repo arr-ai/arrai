@@ -52,7 +52,7 @@ Sample code for converting a [Sysl](https://github.com/anz-bank/sysl) protobuf m
 
 ```arrai
 let syslDescriptor = //encoding.proto.descriptor(//os.file('sysl.pb'));
-let shop = //encoding.proto.decode(syslDescriptor, 'Module', //os.file('petshop.pb));
+let shop = //encoding.proto.decode(syslDescriptor, 'Module', //os.file('petshop.pb'));
 shop.apps('PetShopApi').attrs('package').s
 ```
 
