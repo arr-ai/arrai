@@ -6,8 +6,6 @@ on:
 jobs:
   build-and-publish-head:
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/master'
-
     steps:
     - uses: actions/checkout@v2
     - name: Build and Publish head Docker image
