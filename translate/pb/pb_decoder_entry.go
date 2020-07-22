@@ -10,12 +10,15 @@ import (
 	"google.golang.org/protobuf/types/dynamicpb"
 )
 
+const fileDescriptorSet = "FileDescriptorSet"
+
+// StdProtobufDecoder transforms the protocol buffer message to a tuple.
 var StdProtobufDecoder = rel.NewNativeFunction("decode", func(param rel.Value) (rel.Value, error) {
 	tuple, isTuple := param.(rel.Tuple)
 	if !isTuple {
 		return nil, fmt.Errorf("//encoding.proto.decode: param not tuple")
 	}
-
+	// TODO will change it to use a tuple to represent a file descriptor, #496
 	fdVal, found := tuple.Get(fileDescriptorSet)
 	if !found {
 		return nil, fmt.Errorf("//encoding.proto.decode: couldn't find %s in tuple", fileDescriptorSet)
@@ -58,6 +61,7 @@ var StdProtobufDecoder = rel.NewNativeFunction("decode", func(param rel.Value) (
 	}), nil
 })
 
+// StdProtobufDescriptor transforms the protocol buffer `.proto` binary file to a tuple.
 var StdProtobufDescriptor = rel.NewNativeFunction("decode", func(param rel.Value) (rel.Value, error) {
 	definitionBytes, isBytes := param.(rel.Bytes)
 	if !isBytes {
@@ -66,5 +70,3 @@ var StdProtobufDescriptor = rel.NewNativeFunction("decode", func(param rel.Value
 
 	return rel.NewTuple(rel.NewAttr(fileDescriptorSet, definitionBytes)), nil
 })
-
-const fileDescriptorSet = "FileDescriptorSet"

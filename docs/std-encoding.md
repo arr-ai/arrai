@@ -28,9 +28,9 @@ Usage:
 
 ## `//encoding.proto.descriptor(protobufDefinition <: bytes) <: tuple`
 
-This method accepts [profobuf](https://github.com/protocolbuffers/protobuf) `.proto` binay file and return a tuple which has [`FileDescriptorSet`](https://pkg.go.dev/google.golang.org/protobuf@v1.25.0/types/descriptorpb?tab=doc#FileDescriptorSet) describes protobuf message types in the binary file.
+This method accepts [protobuf](https://github.com/protocolbuffers/protobuf) binary files and returns a tuple representation of a [`FileDescriptorSet`](https://pkg.go.dev/google.golang.org/protobuf@v1.25.0/types/descriptorpb?tab=doc#FileDescriptorSet), which describes message types in the binary file. This tuple can be passed as the first parameter to `decode`.
 
-For exmple:
+For example:
 
 ```arrai
 //encoding.proto.descriptor(//os.file('sys.pb'))
@@ -40,13 +40,19 @@ References: [sysl.pb](https://github.com/arr-ai/arrai/blob/master/translate/pb/t
 
 ## `//encoding.proto.decode(descriptor <: tuple, messageTypeName <: string, messageBytes <: bytes) <: tuple`
 
-This method accepts [protobuf message](https://github.com/protocolbuffers/protobuf) information and data, and transfroms them to a built-in arr.ai value tuple.
+This method accepts three parameters:
+
+- a tuple representation of a [`FileDescriptorSet`](https://pkg.go.dev/google.golang.org/protobuf@v1.25.0/types/descriptorpb?tab=doc#FileDescriptorSet) (as produced by `//encoding.proto.descriptor`).
+- the name of the message to be decoded.
+- the content of an encoded [protobuf message](https://github.com/protocolbuffers/protobuf).
+
+It returns a tuple representation of the encoded message.
 
 Sample code for converting a [Sysl](https://github.com/anz-bank/sysl) protobuf message to arr.ai values:
 
 ```arrai
-let descriptor = //encoding.proto.descriptor(//os.file('sysl.pb'));
-let shop = //encoding.proto.decode(descriptor, 'Module', //os.file("petshop.pb"));
+let syslDescriptor = //encoding.proto.descriptor(//os.file('sysl.pb'));
+let shop = //encoding.proto.decode(syslDescriptor, 'Module', //os.file('petshop.pb));
 shop.apps('PetShopApi').attrs('package').s
 ```
 
