@@ -8,9 +8,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-const decodePetshop = `let sysl = //encoding.proto.decode(//encoding.proto.proto,
-	//os.file('../translate/pb/test/sysl.pb'));
-	let decodeSyslPb = //encoding.proto.decode(sysl);
+const decodePetshop = `let descriptor = //encoding.proto.descriptor(//os.file('../translate/pb/test/sysl.pb'));
+	let decodeSyslPb = //encoding.proto.decode(descriptor);
 	let shop = decodeSyslPb('Module', //os.file("../translate/pb/test/petshop.pb"));`
 
 func TestTransformProtobufToTupleFlow(t *testing.T) {
