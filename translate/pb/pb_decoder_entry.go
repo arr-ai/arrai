@@ -16,9 +16,18 @@ var StdProtobufDecoder = rel.NewNativeFunction("decode", func(param rel.Value) (
 		return nil, fmt.Errorf("//encoding.proto.decode: param not tuple")
 	}
 
-	fdVal, _ := tuple.Get(fileDescriptorSet)
-	fdBytes, _ := fdVal.(rel.Bytes)
-	fd, _ := decodeFileDescriptor(fdBytes.Bytes())
+	fdVal, found := tuple.Get(fileDescriptorSet)
+	if !found {
+		return nil, fmt.Errorf("//encoding.proto.decode: couldn't find %s in tuple", fileDescriptorSet)
+	}
+	fdBytes, isBytes := fdVal.(rel.Bytes)
+	if !isBytes {
+		return nil, fmt.Errorf("//encoding.proto.decode: %s is not bytes", fileDescriptorSet)
+	}
+	fd, err := decodeFileDescriptor(fdBytes.Bytes())
+	if err != nil {
+		return nil, err
+	}
 
 	return rel.NewNativeFunction("decode$2", func(messageTypeName rel.Value) (rel.Value, error) {
 		nameStr, isStr := tools.ValueAsString(messageTypeName)

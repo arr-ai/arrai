@@ -26,15 +26,27 @@ Usage:
 |:-|:-|
 | `//encoding.json.decode('{"hi": "abc", "hello": 123}')` | `{'hello': 123, 'hi': (s: 'abc')}` |
 
-## `//encoding.proto.decode(protoFileDescriptor <: bytes, rootMessageName <: string, protobufMessage <: bytes) <: tuple`
+## `//encoding.proto.descriptor(protobufDefinition <: bytes) <: tuple`
 
-This method accepts [protobuf message](https://github.com/protocolbuffers/protobuf) information and data, and transfroms them to a built-in arr.ai value.
+This method accepts [profobuf](https://github.com/protocolbuffers/protobuf) `.proto` binay file and return a tuple which has [`FileDescriptorSet`](https://pkg.go.dev/google.golang.org/protobuf@v1.25.0/types/descriptorpb?tab=doc#FileDescriptorSet) describes protobuf message types in the binary file.
+
+For exmple:
+
+```arrai
+//encoding.proto.descriptor(//os.file('sys.pb'))
+```
+
+References: [sysl.pb](https://github.com/arr-ai/arrai/blob/master/translate/pb/test/sysl.pb)
+
+## `//encoding.proto.decode(descriptor <: tuple, messageTypeName <: string, messageBytes <: bytes) <: tuple`
+
+This method accepts [protobuf message](https://github.com/protocolbuffers/protobuf) information and data, and transfroms them to a built-in arr.ai value tuple.
 
 Sample code for converting a [Sysl](https://github.com/anz-bank/sysl) protobuf message to arr.ai values:
 
 ```arrai
-let sysl = //encoding.proto.decode(//encoding.proto.proto, //os.file('sysl.pb'));
-let shop = //encoding.proto.decode(sysl, 'Module', //os.file('petshop.pb'));
+let descriptor = //encoding.proto.descriptor(//os.file('sysl.pb'));
+let shop = //encoding.proto.decode(descriptor, 'Module', //os.file("petshop.pb"));
 shop.apps('PetShopApi').attrs('package').s
 ```
 
@@ -44,7 +56,7 @@ It will output
 'io.sysl.demo.petshop.api'
 ```
 
-The first line constructs a protobuf file descriptor. `//encoding.proto.proto` is a constant, requesting a file descriptor as output. `//os.file('sysl.pb')` is the binary output of compiling [`sysl.proto`](https://github.com/anz-bank/sysl/blob/master/pkg/sysl/sysl.proto) with `protoc`.
+The first line constructs a protobuf file descriptor. `//os.file('sysl.pb')` is the binary output of compiling [`sysl.proto`](https://github.com/anz-bank/sysl/blob/master/pkg/sysl/sysl.proto) with `protoc`.
 
 The second line uses the `sysl` file descriptor to parse `//os.file('petshop.pb')`, a compiled Sysl `Module` message.
 
