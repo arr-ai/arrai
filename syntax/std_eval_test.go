@@ -18,5 +18,5 @@ func TestEvalValue(t *testing.T) {
 	AssertCodesEvalToSameValue(t,
 		`(str: "stuff", num:123, array: [1,2,3])`,
 		`//eval.value(<<"(str: 'stuff', num:123, array: [1,2,3])">>)`)
-	AssertCodeErrors(t, `//eval.value(123)`, "")
+	AssertCodeErrors(t, "", `//eval.value(123)`)
 }

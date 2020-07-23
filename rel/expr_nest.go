@@ -29,10 +29,10 @@ func (e *NestExpr) String() string {
 func (e *NestExpr) Eval(local Scope) (Value, error) {
 	value, err := e.lhs.Eval(local)
 	if err != nil {
-		return nil, wrapContext(err, e, local)
+		return nil, WrapContext(err, e, local)
 	}
 	if set, ok := value.(Set); ok {
 		return Nest(set, e.attrs, e.attr), nil
 	}
-	return nil, wrapContext(errors.Errorf("nest not applicable to %T", value), e, local)
+	return nil, WrapContext(errors.Errorf("nest not applicable to %T", value), e, local)
 }

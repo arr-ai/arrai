@@ -12,9 +12,9 @@ func TestGetLastScope(t *testing.T) {
 	t.Parallel()
 
 	scope := EmptyScope.With("stuff", NewNumber(1)).With("random", NewNumber(2))
-	err := wrapContext(
-		wrapContext(
-			wrapContext(fmt.Errorf("random"), EmptyTuple, scope),
+	err := WrapContext(
+		WrapContext(
+			WrapContext(fmt.Errorf("random"), EmptyTuple, scope),
 			EmptyTuple,
 			scope,
 		),
@@ -23,21 +23,21 @@ func TestGetLastScope(t *testing.T) {
 	)
 	assert.True(t, err.(ContextErr).GetLastScope().m.Equal(scope.m))
 
-	err = wrapContext(fmt.Errorf("random"), EmptyTuple, scope)
+	err = WrapContext(fmt.Errorf("random"), EmptyTuple, scope)
 	assert.True(t, err.(ContextErr).GetLastScope().m.Equal(scope.m))
 
-	err = wrapContext(fmt.Errorf("random"), EmptyTuple, EmptyScope)
+	err = WrapContext(fmt.Errorf("random"), EmptyTuple, EmptyScope)
 	assert.True(t, err.(ContextErr).GetLastScope().m.Equal(EmptyScope.m))
 }
 
 func TestGetImportantFrames(t *testing.T) {
 	t.Parallel()
 
-	err := wrapContext(fmt.Errorf("random"), EmptyTuple, EmptyScope)
+	err := WrapContext(fmt.Errorf("random"), EmptyTuple, EmptyScope)
 	assert.Equal(t, []ContextErr{err.(ContextErr)}, err.(ContextErr).GetImportantFrames())
 
-	err2 := wrapContext(err, EmptyTuple, EmptyScope)
-	err3 := wrapContext(err2, EmptyTuple, EmptyScope)
+	err2 := WrapContext(err, EmptyTuple, EmptyScope)
+	err3 := WrapContext(err2, EmptyTuple, EmptyScope)
 
 	assert.Equal(t, []ContextErr{err.(ContextErr)}, err3.(ContextErr).GetImportantFrames())
 

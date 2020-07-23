@@ -128,16 +128,16 @@ func Join(a, b Set) Set {
 			return value.(Tuple).Project(common)
 		},
 		func(key Value, a, b Set) Set {
-			result := None
+			values := []Value{}
 			for i := a.Enumerator(); i.MoveNext(); {
 				for j := b.Enumerator(); j.MoveNext(); {
-					result = result.With(Merge(
+					values = append(values, Merge(
 						i.Current().(Tuple),
 						j.Current().(Tuple),
 					))
 				}
 			}
-			return result
+			return NewSet(values...)
 		},
 	)
 }

@@ -10,7 +10,9 @@ package main
 var (
 	Version       = "unspecified"
 	GitFullCommit = "unspecified"
+	GitTags       = "unspecified"
 	BuildDate     = "unspecified"
 	GoVersion     = "unspecified"
-	BuildOS       = "unspecified"
+	BuildOs       = "unspecified"
+	BuildArch     = "unspecified"
 )

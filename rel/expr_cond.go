@@ -58,12 +58,12 @@ func (e CondExpr) Eval(local Scope) (Value, error) {
 
 			cond, err := tempExpr.at.Eval(local)
 			if err != nil {
-				return nil, wrapContext(err, e, local)
+				return nil, WrapContext(err, e, local)
 			}
 
 			valid, err := e.validValidation(cond, local)
 			if err != nil {
-				return nil, wrapContext(err, e, local)
+				return nil, WrapContext(err, e, local)
 			}
 			if cond != nil && valid {
 				trueCond = &tempExpr
@@ -81,7 +81,7 @@ func (e CondExpr) Eval(local Scope) (Value, error) {
 
 	value, err := finalCond.Eval(local)
 	if err != nil {
-		return nil, wrapContext(err, e, local)
+		return nil, WrapContext(err, e, local)
 	}
 	return value, nil
 }

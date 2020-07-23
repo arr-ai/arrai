@@ -5,10 +5,7 @@ import (
 	"testing"
 )
 
-func TestGrammarToValueExpr(t *testing.T) {
-	t.Parallel()
-
-	expected := `(
+const expected = `(
 		@rule: "grammar",
 		stmt: [
 			(
@@ -24,10 +21,70 @@ func TestGrammarToValueExpr(t *testing.T) {
 			)
 		]
 	)`
-	AssertCodesEvalToSameValue(t, expected, `//grammar.parse(//grammar.lang.wbnf, "grammar", "a -> '1';")`)
-	AssertCodesEvalToSameValue(t, expected, `//grammar -> .parse(.lang.wbnf, "grammar", "a -> '1';")`)
-	AssertCodesEvalToSameValue(t, expected, `{://grammar.lang.wbnf.grammar: a -> '1'; :}`)
 
+func TestGrammarToValueExprQualified(t *testing.T) {
+	t.Parallel()
+
+	AssertCodesEvalToSameValue(t, expected, `//grammar.parse(//grammar.lang.wbnf, "grammar", "a -> '1';")`)
+}
+
+func TestGrammarToValueExprScoped(t *testing.T) {
+	t.Parallel()
+
+	AssertCodesEvalToSameValue(t, expected, `//grammar -> .parse(.lang.wbnf, "grammar", "a -> '1';")`)
+}
+
+func TestGrammarToValueExprInline(t *testing.T) {
+	t.Parallel()
+
+	AssertCodesEvalToSameValue(t, expected, `{://grammar.lang.wbnf[grammar]: a -> '1'; :}`)
+}
+
+func TestGrammarToValueExprInlineDefault(t *testing.T) {
+	t.Parallel()
+
+	AssertCodesEvalToSameValue(t, expected, `{://grammar.lang.wbnf: a -> '1'; :}`)
+}
+
+func TestMacroToValueInline(t *testing.T) {
+	t.Parallel()
+
+	AssertCodesEvalToSameValue(t, `(year: 2020, month: 06, day: 09)`, `
+		let time = (
+			@grammar: {://grammar.lang.wbnf: date -> year=\d{4} "-" month=\d{2} "-" day=\d{2};:},
+			@transform: (date: \ast ast -> (year: .year, month: .month, day: .day) :> //eval.value(.''))
+		);
+		{:time:2020-06-09:}
+	`)
+}
+
+func TestArraiGrammarMacroEquality(t *testing.T) {
+	t.Parallel()
+
+	AssertCodesEvalToSameValue(t,
+		`//grammar.parse(//grammar.lang.arrai)("expr", "1")`,
+		`{://grammar.lang.arrai:1:}`,
+	)
+}
+
+// TODO(ladeo): Figure out why this fails and fix it.
+//func TestArraiGrammarGrammarEquality(t *testing.T) {
+//	t.Parallel()
+//
+//	AssertCodeEvalsToGrammar(t, arraiParsers.Grammar(), `//grammar.lang.arrai`)
+//}
+
+// TODO(ladeo): Figure out why this fails and fix it.
+//func TestMacroToArraiValueInline(t *testing.T) {
+//	t.Parallel()
+//
+//	AssertCodesEvalToSameValue(t,
+//		`1`,
+//		`{:(@grammar://grammar.lang.arrai, @transform:(expr:\ast 1)):1:}`,
+//	)
+//}
+
+func TestGrammarToValueExprScopedAndInline(t *testing.T) {
 	exprs := []string{
 		`a -> '1';`,
 		`expr -> @:"+" > @:"*" > \d;`,
@@ -35,9 +92,11 @@ func TestGrammarToValueExpr(t *testing.T) {
 	for _, expr := range exprs {
 		expr := expr
 		t.Run(expr, func(t *testing.T) {
+			t.Parallel()
+
 			AssertCodesEvalToSameValue(t,
 				"//grammar -> .parse(.lang.wbnf, 'grammar', `"+expr+"`)",
-				`{://grammar.lang.wbnf.grammar:`+expr+`:}`,
+				`{://grammar.lang.wbnf[grammar]:`+expr+`:}`,
 			)
 		})
 	}
@@ -73,7 +132,7 @@ func TestGrammarParseParseLiteral(t *testing.T) {
 				s.grammar, s.rule, s.text)
 			AssertCodesEvalToSameValue(t,
 				parse,
-				fmt.Sprintf(`{:{://grammar.lang.wbnf.grammar:%s:}.%s:%s:}`, s.grammar, s.rule, s.text))
+				fmt.Sprintf(`{:{://grammar.lang.wbnf[grammar]:%s:}[%s]:%s:}`, s.grammar, s.rule, s.text))
 		})
 	}
 }
@@ -107,8 +166,8 @@ func TestGrammarParseParseScopeVar(t *testing.T) {
 		{`expr -> @:"+" > @:"*" > \d;`, "expr", `1+2*3`},
 	}
 	bindForms := []string{
-		`{://grammar.lang.wbnf.grammar:%s:} -> {:.%s:%s:}`,
-		`let g = {://grammar.lang.wbnf.grammar:%s:}; {:g.%s:%s:}`,
+		`{://grammar.lang.wbnf[grammar]:%s:} -> {:.[%s]:%s:}`,
+		`let g = {://grammar.lang.wbnf[grammar]:%s:}; {:g[%s]:%s:}`,
 	}
 	for i, s := range scenarios {
 		s := s
@@ -140,6 +199,6 @@ func TestGrammarParseParseScopeVar(t *testing.T) {
 // 				)
 // 			]
 // 		)`,
-// 		`{://grammar.lang.wbnf.grammar: expr -> @:'+' > @:'*' > \d+; :} -> {:.expr:1+:{'2'}:*3:}`,
+// 		`{://grammar.lang.wbnf[grammar]: expr -> @:'+' > @:'*' > \d+; :} -> {:.expr:1+:{'2'}:*3:}`,
 // 	)
 // }

@@ -20,23 +20,23 @@ func TestBytesExpr(t *testing.T) {
 	AssertCodesEvalToSameValue(t, toBytes(`"abc"    `), `<<({|@, @char| (0, 97), (1, 98), (2, 99)})>>`)
 
 	AssertCodeErrors(t,
-		`<<256>>`,
-		"BytesExpr.Eval: Number does not represent a byte: 256")
+		"BytesExpr.Eval: Number does not represent a byte: 256",
+		`<<256>>`)
 	AssertCodeErrors(t,
-		`<<(-2)>>`,
-		"BytesExpr.Eval: Number does not represent a byte: -2")
+		"BytesExpr.Eval: Number does not represent a byte: -2",
+		`<<(-2)>>`)
 	AssertCodeErrors(t,
-		`<<(2\"offset")>>`,
-		"BytesExpr.Eval: offsetted String is not supported: offset")
+		"BytesExpr.Eval: offsetted String is not supported: offset",
+		`<<(2\"offset")>>`)
 	AssertCodeErrors(t,
-		`<<({1, 2, 3})>>`,
-		"BytesExpr.Eval: Set {1, 2, 3} is not supported")
+		"BytesExpr.Eval: Set {1, 2, 3} is not supported",
+		`<<({1, 2, 3})>>`)
 	AssertCodeErrors(t,
-		`<<((a: 1))>>`,
-		"BytesExpr.Eval: *rel.GenericTuple is not supported")
+		"BytesExpr.Eval: *rel.GenericTuple is not supported",
+		`<<((a: 1))>>`)
 	AssertCodeErrors(t,
-		`<<([1, 2, 3])>>`,
-		"BytesExpr.Eval: rel.Array is not supported")
+		"BytesExpr.Eval: rel.Array is not supported",
+		`<<([1, 2, 3])>>`)
 }
 
 func toBytes(s string) string {

@@ -6,10 +6,10 @@ import (
 )
 
 type ArrayPattern struct {
-	items []Pattern
+	items []FallbackPattern
 }
 
-func NewArrayPattern(elements ...Pattern) ArrayPattern {
+func NewArrayPattern(elements ...FallbackPattern) ArrayPattern {
 	return ArrayPattern{elements}
 }
 
@@ -31,7 +31,13 @@ func (p ArrayPattern) Bind(local Scope, value Value) (Scope, error) {
 
 	extraElements := make(map[int]int)
 	for i, item := range p.items {
-		if _, is := item.(ExtraElementPattern); is {
+		if _, is := item.pattern.(ExtraElementPattern); is {
+			if len(extraElements) == 1 {
+				return EmptyScope, fmt.Errorf("non-deterministic pattern is not supported yet")
+			}
+			extraElements[i] = array.Count() - len(p.items)
+		}
+		if item.fallback != nil {
 			if len(extraElements) == 1 {
 				return EmptyScope, fmt.Errorf("non-deterministic pattern is not supported yet")
 			}
@@ -50,23 +56,28 @@ func (p ArrayPattern) Bind(local Scope, value Value) (Scope, error) {
 	result := EmptyScope
 	offset := 0
 	for i, item := range p.items {
-		if _, is := item.(ExtraElementPattern); is {
+		var value Value
+		if _, is := item.pattern.(ExtraElementPattern); is {
 			offset = extraElements[i]
 			arr := NewArray()
 			if offset >= 0 {
 				arr = NewArray(array.Values()[i : i+offset+1]...)
 			}
-			scope, err := item.Bind(local, arr)
+			value = arr
+		} else if array.Count() <= i+offset {
+			if item.fallback == nil {
+				return EmptyScope, fmt.Errorf("length of array %s shorter than array pattern %s", array, p)
+			}
+			var err error
+			value, err = item.fallback.Eval(local)
 			if err != nil {
 				return EmptyScope, err
 			}
-			result, err = result.MatchedUpdate(scope)
-			if err != nil {
-				return Scope{}, err
-			}
-			continue
+		} else {
+			value = array.Values()[i+offset]
 		}
-		scope, err := item.Bind(local, array.Values()[i+offset])
+
+		scope, err := item.pattern.Bind(local, value)
 		if err != nil {
 			return EmptyScope, err
 		}
@@ -90,4 +101,12 @@ func (p ArrayPattern) String() string {
 	}
 	b.WriteByte(']')
 	return b.String()
+}
+
+func (p ArrayPattern) Bindings() []string {
+	bindings := make([]string, len(p.items))
+	for i, v := range p.items {
+		bindings[i] = v.String()
+	}
+	return bindings
 }

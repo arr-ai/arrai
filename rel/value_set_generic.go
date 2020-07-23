@@ -2,13 +2,11 @@ package rel
 
 import (
 	"bytes"
-	"fmt"
 	"reflect"
 	"sort"
 
 	"github.com/arr-ai/frozen"
 	"github.com/arr-ai/wbnf/parser"
-	"github.com/go-errors/errors"
 )
 
 // GenericSet is a set of Values.
@@ -370,14 +368,4 @@ func (s GenericSet) OrderedValues() []Value {
 	}
 	sort.Sort(ValueList(a))
 	return a
-}
-
-func (s GenericSet) Bind(scope Scope, value Value) (Scope, error) {
-	if s == True || s == False {
-		if s.IsTrue() == value.IsTrue() {
-			return EmptyScope, nil
-		}
-		return EmptyScope, errors.Errorf("%s doesn't equal to %s", s, value)
-	}
-	return EmptyScope, fmt.Errorf("%s is not a Pattern", s)
 }

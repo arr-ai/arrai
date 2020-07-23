@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/arr-ai/arrai/rel"
+	"github.com/arr-ai/arrai/tools"
 )
 
 func stdNet() rel.Attr {
@@ -14,7 +15,7 @@ func stdNet() rel.Attr {
 		rel.NewTupleAttr(
 			"http",
 			rel.NewNativeFunctionAttr("get", func(v rel.Value) (rel.Value, error) {
-				url, is := valueAsString(v)
+				url, is := tools.ValueAsString(v)
 				if !is {
 					return nil, fmt.Errorf("//net.http.get: url not a string: %v", url)
 				}

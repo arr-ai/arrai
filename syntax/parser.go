@@ -16,6 +16,7 @@ expr   -> C* amp="&"* @ C* arrow=(
               nest |
               unnest |
               ARROW @ |
+              FILTER cond=(controlVar=@ "{" (condition=pattern ":" value=@):SEQ_COMMENT,? "}") |
               binding="->" C* "\\" C* pattern C* %%bind C* @ |
               binding="->" C* %%bind @
           )* C*
@@ -24,6 +25,7 @@ expr   -> C* amp="&"* @ C* arrow=(
         > C* @:binop=("without" | "with") C*
         > C* @:binop="||" C*
         > C* @:binop="&&" C*
+        > C* @:binop="+>" C*
         > C* @:compare=/{!?(?:<:|=|<=?|>=?|\((?:<=?|>=?|<>=?)\))} C*
         > C* @ if=("if" t=expr ("else" f=expr)?)* C*
         > C* @:binop=/{\+\+|[+|]|-%?} C*
@@ -37,9 +39,9 @@ expr   -> C* amp="&"* @ C* arrow=(
             | tail
           )* C*
         > %!patternterms(expr)
-        | C* cond=("cond" "{" (key=@ ":" value=@):SEQ_COMMENT,? "}") C*
+        | C* cond=("cond" "{" pairs=(key=@ ":" value=@):SEQ_COMMENT,? "}") C*
         | C* cond=("cond" controlVar=expr "{" (condition=pattern ":" value=@):SEQ_COMMENT,? "}") C*
-        | C* "{:" C* embed=(grammar=@ ":" subgrammar=%%ast) ":}" C*
+        | C* "{:" C* embed=(macro=@ rule? ":" subgrammar=%%ast) ":}" C*
         | C* op="\\\\" @ C*
         | C* fn="\\" pattern @ C*
         | C* import="//" pkg=( "{" dot="."? PKGPATH "}" | std=IDENT?)
@@ -50,6 +52,7 @@ expr   -> C* amp="&"* @ C* arrow=(
         | C* STR C*
         | C* NUM C*
         | C* CHAR C*;
+rule   -> C* "[" C* name C* "]" C*;
 nest   -> C* "nest" names IDENT C*;
 unnest -> C* "unnest" IDENT C*;
 touch  -> C* ("->*" ("&"? IDENT | STR))+ "(" expr:"," ","? ")" C*;
@@ -70,10 +73,17 @@ tail   -> get
                     |     ":" end=expr  (":" step=expr)?
                 ):SEQ_COMMENT,
             ")");
-pattern -> extra | %!patternterms(pattern|expr) | IDENT | NUM | C* "(" exprpattern=expr:SEQ_COMMENT,? ")" C* | C* exprpattern=STR C*;
+pattern -> extra 
+        | %!patternterms(pattern|expr)
+        | IDENT
+        | NUM 
+        | C* "(" exprpattern=expr:SEQ_COMMENT,? ")" C* 
+        | C* exprpattern=STR C*;
 extra -> ("..." ident=IDENT?);
+fallback -> ("?"? ":" fall=expr);
 
 ARROW  -> /{:>|=>|>>|orderby|order|rank|where|sum|max|mean|median|min};
+FILTER -> /{filter};
 IDENT  -> /{ \. | [$@A-Za-z_][0-9$@A-Za-z_]* };
 PKGPATH -> /{ (?: \\ | [^\\}] )* };
 STR    -> /{ " (?: \\. | [^\\"] )* "
@@ -90,11 +100,10 @@ SEQ_COMMENT -> "," C*;
 .macro patternterms(top) {
     C* odelim="{" C* rel=(names tuple=("(" v=top:SEQ_COMMENT, ")"):SEQ_COMMENT,?) cdelim="}" C*
   | C* odelim="{" C* set=(elt=top:SEQ_COMMENT,?) cdelim="}" C*
-  | C* odelim="{" C* dict=((ext=extra|key=expr ":" value=top):SEQ_COMMENT,?) cdelim="}" C*
-  | C* odelim="[" C* array=(%!sparse_sequence(top)?) C* cdelim="]" C*
+  | C* odelim="{" C* dict=(pairs=((extra|key=(expr tail=("?")?) ":" value=(top fall=(":" expr)?))):SEQ_COMMENT,?) cdelim="}" C*
+  | C* odelim="[" C* array=(%!sparse_sequence(tail=("?")? top fall=(":" expr)?)?) C* cdelim="]" C*
   | C* odelim="<<" C* bytes=(item=(STR|NUM|CHAR|IDENT|"("top")"):SEQ_COMMENT,?) C* cdelim=">>" C*
-  | C* odelim="(" tuple=(pairs=(extra | ((rec="rec"? name| name?) ":" v=top)):SEQ_COMMENT,?) cdelim=")" C*
-  | C* odelim="(" identpattern=IDENT cdelim=")" C*
+  | C* odelim="(" tuple=(pairs=(extra | (((name tail="?") | rec="rec"? name | name?) ":" v=(top fall=(":" expr)?))):SEQ_COMMENT,?) cdelim=")" C*
 };
 
 .macro sparse_sequence(top) {

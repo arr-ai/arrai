@@ -7,7 +7,9 @@ import (
 	"testing"
 
 	"github.com/arr-ai/arrai/rel"
+	"github.com/arr-ai/wbnf/ast"
 	"github.com/arr-ai/wbnf/parser"
+	"github.com/arr-ai/wbnf/wbnf"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -66,6 +68,19 @@ func AssertCodeEvalsToType(t *testing.T, expected interface{}, code string) bool
 	return true
 }
 
+// AssertCodeEvalsToGrammar asserts that code evaluates to a grammar equal to expected.
+func AssertCodeEvalsToGrammar(t *testing.T, expected parser.Grammar, code string) {
+	pc := ParseContext{SourceDir: ".."}
+	astElt := pc.MustParseString(code)
+	astExpr := pc.CompileExpr(astElt)
+	astValue, err := astExpr.Eval(rel.EmptyScope)
+	assert.NoError(t, err, "parsing code: %s", code)
+	astNode := rel.ASTNodeFromValue(astValue).(ast.Branch)
+	astGrammar := wbnf.NewFromAst(astNode)
+
+	assert.EqualValues(t, expected, astGrammar)
+}
+
 // AssertCodePanics asserts that code panics when executed.
 // TODO: Remove this. Should only intentionally panic for implementation bugs.
 func AssertCodePanics(t *testing.T, code string) bool {
@@ -81,7 +96,7 @@ func AssertCodePanics(t *testing.T, code string) bool {
 
 // AssertCodeErrors asserts that code fails with a certain
 // message when executed.
-func AssertCodeErrors(t *testing.T, code, errString string) bool {
+func AssertCodeErrors(t *testing.T, errString, code string) bool {
 	pc := ParseContext{SourceDir: ".."}
 	ast, err := pc.Parse(parser.NewScanner(code))
 	if assert.NoError(t, err, "parsing code: %s", code) {

@@ -52,9 +52,9 @@ func stdTest() rel.Attr {
 		// 					switch r := recover().(type) {
 		// 					case nil:
 		// 					case error:
-		// 						err = wrapContext(r, elt)
+		// 						err = WrapContext(r, elt)
 		// 					default:
-		// 						panic(wrapContext(fmt.Errorf("unexpected panic: %v", r), expr))
+		// 						panic(WrapContext(fmt.Errorf("unexpected panic: %v", r), expr))
 		// 					}
 		// 				}()
 		// 				_, err = elt.Eval(local)
@@ -80,6 +80,6 @@ func stdTest() rel.Attr {
 	)
 }
 
-// func wrapContext(err error, expr rel.Expr) error {
+// func WrapContext(err error, expr rel.Expr) error {
 // 	return fmt.Errorf("%s\n%s", err.Error(), expr.Source().Context(parser.DefaultLimit))
 // }

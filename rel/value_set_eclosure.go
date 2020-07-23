@@ -12,7 +12,7 @@ type ExprClosure struct {
 	e     Expr
 }
 
-// NewFunction returns a new function.
+// NewExprClosure returns a new ExprClosure.
 func NewExprClosure(scope Scope, e Expr) Value {
 	return ExprClosure{scope: scope, e: e}
 }

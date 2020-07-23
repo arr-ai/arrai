@@ -19,16 +19,27 @@ func NewExprPattern(expr Expr) ExprPattern {
 }
 
 func (p ExprPattern) Bind(scope Scope, value Value) (Scope, error) {
-	switch t := p.Expr.(type) {
-	case IdentExpr, Number, GenericSet:
-		return t.(Pattern).Bind(EmptyScope, value)
-	default:
-		return EmptyScope, fmt.Errorf("%s is not a Pattern", t)
+	if identExpr, is := p.Expr.(IdentExpr); is {
+		// Bind value for identexpr in Pattern, like `let (a: x, b: y) = (a: 4, b: 7); x`
+		return Scope{}.With(identExpr.ident, value), nil
 	}
+
+	v, err := p.Expr.Eval(scope)
+	if err != nil {
+		return Scope{}, err
+	}
+	if v.Equal(value) {
+		return Scope{}, nil
+	}
+	return Scope{}, fmt.Errorf("no match: %v != %v", v, value)
 }
 
 func (p ExprPattern) String() string {
 	return p.Expr.String()
+}
+
+func (p ExprPattern) Bindings() []string {
+	return []string{p.Expr.String()}
 }
 
 type ExprsPattern struct {
@@ -42,11 +53,6 @@ func NewExprsPattern(exprs ...Expr) ExprsPattern {
 func (p ExprsPattern) Bind(scope Scope, value Value) (Scope, error) {
 	if len(p.exprs) == 0 {
 		return EmptyScope, errors.Errorf("there is not any rel.Expr in rel.ExprsPattern")
-	}
-
-	if pe, isPattern := p.exprs[0].(Pattern); len(p.exprs) == 1 && isPattern {
-		// Support patterns IDENT and NUM
-		return pe.Bind(scope, value)
 	}
 
 	incomingVal, err := value.Eval(scope)
@@ -73,7 +79,6 @@ func (p ExprsPattern) String() string {
 	}
 
 	if len(p.exprs) == 1 {
-		// it processes cases IDENT and NUM as syntax, otherwise `let (:x) = (x: 1); x` will fail.
 		return p.exprs[0].String()
 	}
 
@@ -87,4 +92,12 @@ func (p ExprsPattern) String() string {
 	}
 	b.WriteByte(']')
 	return b.String()
+}
+
+func (p ExprsPattern) Bindings() []string {
+	bindings := make([]string, len(p.exprs))
+	for i, v := range p.exprs {
+		bindings[i] = v.String()
+	}
+	return bindings
 }

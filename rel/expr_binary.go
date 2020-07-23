@@ -80,6 +80,14 @@ func NewAddExpr(scanner parser.Scanner, a, b Expr) Expr {
 		})
 }
 
+// NewAddArrowExpr returns a new BinExpr which supports operator `+>`.
+func NewAddArrowExpr(scanner parser.Scanner, lhs, rhs Expr) Expr {
+	return newBinExpr(scanner, lhs, rhs, "+>", "(%s +> %s)",
+		func(lhs, rhs Value, _ Scope) (Value, error) {
+			return evalValForAddArrow(lhs, rhs)
+		})
+}
+
 // NewSubExpr evaluates a - b, given two Numbers.
 func NewSubExpr(scanner parser.Scanner, a, b Expr) Expr {
 	return newArithExpr(scanner, a, b, "-", func(a, b float64) float64 { return a - b })
@@ -276,16 +284,46 @@ func (e *BinExpr) String() string {
 func (e *BinExpr) Eval(local Scope) (_ Value, err error) {
 	a, err := e.a.Eval(local)
 	if err != nil {
-		return nil, wrapContext(err, e, local)
+		return nil, WrapContext(err, e, local)
 	}
 
 	b, err := e.b.Eval(local)
 	if err != nil {
-		return nil, wrapContext(err, e, local)
+		return nil, WrapContext(err, e, local)
 	}
 	val, err := e.eval(a, b, local)
 	if err != nil {
-		return nil, wrapContext(err, e, local)
+		return nil, WrapContext(err, e, local)
 	}
 	return val, nil
+}
+
+// evalValForAddArrow evaluates operator `+>`.
+func evalValForAddArrow(lhs, rhs Value) (Value, error) {
+	if lhs, ok := lhs.(Tuple); ok {
+		if rhs, ok := rhs.(Tuple); ok {
+			return MergeLeftToRight(lhs, rhs), nil
+		}
+	}
+
+	if lhs, ok := lhs.(Dict); ok {
+		if rhs, ok := rhs.(Dict); ok {
+			return mergeDicts(lhs, rhs), nil
+		}
+	}
+
+	return nil, errors.Errorf(
+		"Both args to %q must be both tuples or both dicts, not %T and %T",
+		"+>", lhs, rhs)
+}
+
+func mergeDicts(lhs Dict, rhs Dict) Dict {
+	tempMap := lhs.m
+
+	for e := rhs.DictEnumerator(); e.MoveNext(); {
+		key, value := e.Current()
+		tempMap = tempMap.With(key, value)
+	}
+
+	return Dict{m: tempMap}
 }
