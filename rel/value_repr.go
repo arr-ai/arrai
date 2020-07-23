@@ -159,7 +159,7 @@ func reprNativeFunction(v Value, w io.Writer) {
 }
 
 func reprBuildInfoTuple(v Value, w io.Writer) {
-	fmt.Fprintf(w, v.String())
+	fmt.Fprint(w, v.String())
 }
 
 func reprValue(v Value, w io.Writer) {

@@ -38,9 +38,9 @@ func PrettifyString(val Value, indentsNum int) (string, error) {
 	case GenericSet: // {1, 2}
 		return prettifySet(t, indentsNum)
 	case Array:
-		return prettifyArray(t, indentsNum)
+		return prettifyArray(t)
 	case String:
-		return prettifyString(t, indentsNum)
+		return prettifyString(t)
 	default:
 		return t.String(), nil
 	}
@@ -111,12 +111,12 @@ func prettifySet(set GenericSet, indentsNum int) (string, error) {
 	return sb.String(), nil
 }
 
-func prettifyString(str String, indentsNum int) (string, error) {
+func prettifyString(str String) (string, error) {
 	return fmt.Sprintf("'%s'", str), nil
 }
 
 // TODO: will change for #171 still
-func prettifyArray(array Array, indentsNum int) (string, error) {
+func prettifyArray(array Array) (string, error) {
 	var sb strings.Builder
 	fmt.Fprint(&sb, "[")
 	var sep reprCommaSep
