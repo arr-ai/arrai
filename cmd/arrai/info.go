@@ -16,7 +16,7 @@ func info(c *cli.Context) error {
 	fmt.Printf("Version    : %s\n", Version)
 	fmt.Printf("Git commit : %s\n", GitFullCommit)
 	fmt.Printf("Date       : %s\n", BuildDate)
-	fmt.Printf("OS/arch    : %s\n", BuildOS)
+	fmt.Printf("OS/arch    : %s/%s\n", BuildOs, BuildArch)
 	fmt.Printf("Go version : %s\n", GoVersion)
 
 	return nil

@@ -81,7 +81,7 @@ func StdScope() rel.Scope {
 				),
 				rel.NewTupleAttr("log",
 					rel.NewNativeFunctionAttr("print", func(value rel.Value) (rel.Value, error) {
-						prettifiedStr, err := PrettifyString(value, 0)
+						prettifiedStr, err := rel.PrettifyString(value, 0)
 						if err != nil {
 							return nil, err
 						}
