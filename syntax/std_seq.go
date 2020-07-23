@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/arr-ai/arrai/rel"
+	"github.com/arr-ai/arrai/tools"
 )
 
 func strJoin(joiner, subject rel.Value) (rel.Value, error) {
@@ -13,13 +14,13 @@ func strJoin(joiner, subject rel.Value) (rel.Value, error) {
 	toJoin := make([]string, 0, strs.Count())
 	index := 0
 	for i, ok := strs.(rel.Set).ArrayEnumerator(); ok && i.MoveNext(); index++ {
-		s, is := valueAsString(i.Current())
+		s, is := tools.ValueAsString(i.Current())
 		if !is {
 			return nil, fmt.Errorf("//str.join: array item %d not a string: %v", index, i.Current())
 		}
 		toJoin = append(toJoin, s)
 	}
-	if j, is := valueAsString(joiner); is {
+	if j, is := tools.ValueAsString(joiner); is {
 		return rel.NewString([]rune(strings.Join(toJoin, j))), nil
 	}
 	return nil, fmt.Errorf("join: sep not a string: %v", joiner)
@@ -43,7 +44,7 @@ func stdSeqConcat(seq rel.Value) (rel.Value, error) {
 	case rel.String:
 		var sb strings.Builder
 		for i, value := range values {
-			s, is := valueAsString(value)
+			s, is := tools.ValueAsString(value)
 			if !is {
 				return nil, fmt.Errorf("//str.concat: array item %d not a string: %v", i, value)
 			}
@@ -67,14 +68,14 @@ func stdSeqConcat(seq rel.Value) (rel.Value, error) {
 func stdSeqContains(sub, subject rel.Value) (rel.Value, error) { //nolint:dupl
 	switch subject := subject.(type) {
 	case rel.String:
-		if subStr, is := valueAsString(sub); is {
+		if subStr, is := tools.ValueAsString(sub); is {
 			return rel.NewBool(strings.Contains(subject.String(), subStr)), nil
 		}
 		return nil, fmt.Errorf("//seq.contains: sub not a string")
 	case rel.Array:
 		return arrayContains(sub, subject)
 	case rel.Bytes:
-		if subStr, is := valueAsBytes(sub); is {
+		if subStr, is := tools.ValueAsBytes(sub); is {
 			return rel.NewBool(bytes.Contains(subject.Bytes(), subStr)), nil
 		}
 		return nil, fmt.Errorf("//seq.contains: sub not a byte array")
@@ -120,14 +121,14 @@ func stdSeqJoin(joiner, subject rel.Value) (rel.Value, error) {
 func stdSeqHasPrefix(prefix, subject rel.Value) (rel.Value, error) { //nolint:dupl
 	switch subject := subject.(type) {
 	case rel.String:
-		if prefixStr, is := valueAsString(prefix); is {
+		if prefixStr, is := tools.ValueAsString(prefix); is {
 			return rel.NewBool(strings.HasPrefix(subject.String(), prefixStr)), nil
 		}
 		return nil, fmt.Errorf("//seq.has_prefix: prefix not a string: %v", prefix)
 	case rel.Array:
 		return arrayHasPrefix(prefix, subject)
 	case rel.Bytes:
-		if prefixBytes, is := valueAsBytes(prefix); is {
+		if prefixBytes, is := tools.ValueAsBytes(prefix); is {
 			return rel.NewBool(bytes.HasPrefix(subject.Bytes(), prefixBytes)), nil
 		}
 		return nil, fmt.Errorf("//seq.has_prefix: prefix not a byte array: %v", prefix)
@@ -142,14 +143,14 @@ func stdSeqHasPrefix(prefix, subject rel.Value) (rel.Value, error) { //nolint:du
 func stdSeqHasSuffix(suffix, subject rel.Value) (rel.Value, error) { //nolint:dupl
 	switch subject := subject.(type) {
 	case rel.String:
-		if suffixStr, is := valueAsString(suffix); is {
+		if suffixStr, is := tools.ValueAsString(suffix); is {
 			return rel.NewBool(strings.HasSuffix(subject.String(), suffixStr)), nil
 		}
 		return nil, fmt.Errorf("//seq.has_suffix: suffix not a string: %v", suffix)
 	case rel.Array:
 		return arrayHasSuffix(suffix, subject)
 	case rel.Bytes:
-		if suffixBytes, is := valueAsBytes(suffix); is {
+		if suffixBytes, is := tools.ValueAsBytes(suffix); is {
 			return rel.NewBool(bytes.HasSuffix(subject.Bytes(), suffixBytes)), nil
 		}
 		return nil, fmt.Errorf("//seq.has_suffix: suffix not a byte array: %v", suffix)
@@ -187,11 +188,11 @@ func stdSeqSub(old, new, subject rel.Value) (rel.Value, error) {
 	switch subject := subject.(type) {
 	case rel.String:
 		subjectStr := subject.String()
-		oldStr, is := valueAsString(old)
+		oldStr, is := tools.ValueAsString(old)
 		if !is {
 			return nil, fmt.Errorf("//seq.sub: old not a string: %v", old)
 		}
-		newStr, is := valueAsString(new)
+		newStr, is := tools.ValueAsString(new)
 		if !is {
 			return nil, fmt.Errorf("//seq.sub: new not a string: %v", new)
 		}
@@ -200,11 +201,11 @@ func stdSeqSub(old, new, subject rel.Value) (rel.Value, error) {
 		return arraySub(old, new, subject)
 	case rel.Bytes:
 		subjectBytes := subject.Bytes()
-		oldBytes, is := valueAsBytes(old)
+		oldBytes, is := tools.ValueAsBytes(old)
 		if !is {
 			return nil, fmt.Errorf("//seq.sub: old not a string: %v", old)
 		}
-		newBytes, is := valueAsBytes(new)
+		newBytes, is := tools.ValueAsBytes(new)
 		if !is {
 			return nil, fmt.Errorf("//seq.sub: new not a string: %v", new)
 		}
@@ -234,7 +235,7 @@ func stdSeqSub(old, new, subject rel.Value) (rel.Value, error) {
 func stdSeqSplit(delimiter, subject rel.Value) (rel.Value, error) {
 	switch subject := subject.(type) {
 	case rel.String:
-		delimStr, is := valueAsString(delimiter)
+		delimStr, is := tools.ValueAsString(delimiter)
 		if !is {
 			return nil, fmt.Errorf("//seq.split: delim not a string: %v", delimiter)
 		}
@@ -271,7 +272,7 @@ func stdSeqTrimPrefix(prefix, subject rel.Value) (rel.Value, error) {
 		switch subject := subject.(type) {
 		case rel.String:
 			subjectStr := subject.String()
-			if prefixStr, is := valueAsString(prefix); is {
+			if prefixStr, is := tools.ValueAsString(prefix); is {
 				return rel.NewString([]rune(strings.TrimPrefix(subjectStr, prefixStr))), nil
 			}
 			return nil, fmt.Errorf("//seq.trim_prefix: prefix not a string: %v", prefix)
@@ -279,7 +280,7 @@ func stdSeqTrimPrefix(prefix, subject rel.Value) (rel.Value, error) {
 			return arrayTrimPrefix(prefix, subject)
 		case rel.Bytes:
 			subjectBytes := subject.Bytes()
-			if prefixBytes, is := valueAsBytes(prefix); is {
+			if prefixBytes, is := tools.ValueAsBytes(prefix); is {
 				if bytes.HasPrefix(subjectBytes, prefixBytes) {
 					return rel.NewBytes(subjectBytes[len(prefixBytes):]), nil
 				}
@@ -295,7 +296,7 @@ func stdSeqTrimSuffix(suffix, subject rel.Value) (rel.Value, error) {
 	switch subject := subject.(type) {
 	case rel.String:
 		subjectStr := subject.String()
-		if suffixStr, is := valueAsString(suffix); is {
+		if suffixStr, is := tools.ValueAsString(suffix); is {
 			return rel.NewString([]rune(strings.TrimSuffix(subjectStr, suffixStr))), nil
 		}
 		return nil, fmt.Errorf("//seq.trim_suffix: suffix not a string: %v", suffix)
@@ -303,7 +304,7 @@ func stdSeqTrimSuffix(suffix, subject rel.Value) (rel.Value, error) {
 		return arrayTrimSuffix(suffix, subject)
 	case rel.Bytes:
 		subjectBytes := subject.Bytes()
-		if suffixBytes, is := valueAsBytes(suffix); is {
+		if suffixBytes, is := tools.ValueAsBytes(suffix); is {
 			if bytes.HasSuffix(subjectBytes, suffixBytes) {
 				return rel.NewBytes(subjectBytes[:len(subjectBytes)-len(suffixBytes)]), nil
 			}

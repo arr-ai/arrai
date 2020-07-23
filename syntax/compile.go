@@ -1018,6 +1018,7 @@ var binops = map[string]binOpFunc{
 	"//":      rel.NewIdivExpr,
 	"^":       rel.NewPowExpr,
 	"\\":      rel.NewOffsetExpr,
+	"+>":      rel.NewAddArrowExpr,
 }
 
 var compareOps = map[string]rel.CompareFunc{
