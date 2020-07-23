@@ -28,7 +28,7 @@ func GetBuildInfo(version, date, fullCommit, tags, os, arch, goVersion string) r
 	// Extract 'go1.14' from 'go1.14 darwin/amd64'
 	infos := strings.Split(goVersion, " ")
 	var goVersionNo rel.Value
-	if infos != nil && len(infos) > 0 {
+	if len(infos) > 0 {
 		goVersionNo = rel.NewString([]rune(infos[0]))
 	} else {
 		goVersionNo = rel.NewString([]rune(goVersion))
