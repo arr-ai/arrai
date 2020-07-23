@@ -17,9 +17,6 @@ func stdRuntime() rel.Attr {
 
 // GetBuildInfo returns arr.ai build information.
 func GetBuildInfo(version, date, fullCommit, tags, os, arch, goVersion string) rel.Value {
-	// return fmt.Sprintf(buildInfoTemplate, version, date, fullCommit, tags, os, arch, goVersion, os, arch)
-	// return "hello"
-
 	gitInfo := rel.NewTuple(
 		rel.NewAttr("commit", rel.NewString([]rune(fullCommit))),
 		// param tags has only one tag now.

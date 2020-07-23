@@ -23,7 +23,6 @@ func evalImpl(source string, w io.Writer) error {
 	return evalExpr(".", source, w)
 }
 
-// Prettify
 func evalExpr(path, source string, w io.Writer) error {
 	value, err := syntax.EvaluateExpr(path, source)
 	if err != nil {
