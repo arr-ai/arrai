@@ -12,10 +12,12 @@ build:
   main: ./cmd/arrai
   ldflags:
     - -s -w -X main.Version=v{{.Version}}
+    - -X main.GitTags=v{{.Version}}
     - -X main.GitCommit={{.ShortCommit}}
     - -X main.GitFullCommit={{.FullCommit}}
     - -X main.BuildDate={{.Date}}
-    - -X main.BuildOS={{.Os}}/{{.Arch}}
+    - -X main.BuildOs={{.Os}}
+    - -X main.BuildArch={{.Arch}}
     - -s -w -X "main.GoVersion={{.Env.GOVERSION}}"
   goos:
     - darwin

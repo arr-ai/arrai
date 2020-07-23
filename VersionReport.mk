@@ -29,7 +29,7 @@ endif
 endif
 
 FullCommit=$(shell git log --pretty=format:"%H" -1)
-GoVersion=$(firstword $(strip $(subst  go version, ,$(shell go version))))
+GoVersion=$(strip $(subst  go version, ,$(shell go version)))
 BuildDate=$(shell date -u +'%Y-%m-%dT%H:%M:%SZ')
 OS_ARCH=$(strip $(lastword $(shell go version)))
 BuildOs=$(firstword $(subst /,  ,$(OS_ARCH)))

@@ -1,6 +1,8 @@
 package syntax
 
 import (
+	"strings"
+
 	"github.com/arr-ai/arrai/rel"
 )
 
@@ -23,8 +25,17 @@ func GetBuildInfo(version, date, fullCommit, tags, os, arch, goVersion string) r
 		// param tags has only one tag now.
 		rel.NewAttr("tags", rel.NewArray(rel.NewString([]rune(tags)))))
 
+	// Extract 'go1.14' from 'go1.14 darwin/amd64'
+	infos := strings.Split(goVersion, " ")
+	var goVersionNo rel.Value
+	if infos != nil && len(infos) > 0 {
+		goVersionNo = rel.NewString([]rune(infos[0]))
+	} else {
+		goVersionNo = rel.NewString([]rune(goVersion))
+	}
+
 	compiler := rel.NewTuple(
-		rel.NewAttr("version", rel.NewString([]rune(goVersion))),
+		rel.NewAttr("version", goVersionNo),
 		rel.NewAttr("os", rel.NewString([]rune(os))),
 		rel.NewAttr("arch", rel.NewString([]rune(arch))))
 
