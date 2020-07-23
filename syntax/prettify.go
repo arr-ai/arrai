@@ -7,7 +7,7 @@ import (
 	"github.com/arr-ai/arrai/rel"
 )
 
-// FormatString returns a string which represents `rel.Value` with more reabable format.
+// PrettifyString returns a string which represents `rel.Value` with more reabable format.
 // For example, `{b: 2, a: 1, c: (a: 2, b: {aa: {bb: (a: 22, d: {3, 1, 2})}})}` is formatted to:
 //{
 //	b: 2,
@@ -28,21 +28,21 @@ import (
 //		}
 //	)
 //}
-func FormatString(val rel.Value, indentsNum int) (string, error) {
+func PrettifyString(val rel.Value, indentsNum int) (string, error) {
 	indentsNum = indentsNum + 1
 	switch t := val.(type) {
 	case rel.Tuple: // (a: 1)
-		return formatTupleString(t, indentsNum)
+		return prettifyTupleString(t, indentsNum)
 	case rel.Dict: // {'a': 1}
-		return formatDictString(t, indentsNum)
+		return prettifyDictString(t, indentsNum)
 	case rel.GenericSet: // {1, 2}
-		return formatSetString(t, indentsNum)
+		return prettifySetString(t, indentsNum)
 	default:
 		return t.String(), nil
 	}
 }
 
-func formatTupleString(tuple rel.Tuple, indentsNum int) (string, error) {
+func prettifyTupleString(tuple rel.Tuple, indentsNum int) (string, error) {
 	var sb strings.Builder
 	indentsStr := getIndents(indentsNum)
 	sb.WriteString("(")
@@ -52,12 +52,12 @@ func formatTupleString(tuple rel.Tuple, indentsNum int) (string, error) {
 		if !found {
 			return "", fmt.Errorf("couldn't find %s", name)
 		}
-		formattedStr, err := FormatString(value, indentsNum)
+		formattedStr, err := PrettifyString(value, indentsNum)
 		if err != nil {
 			return "", nil
 		}
 		fmt.Fprintf(&sb,
-			getFormat(index, tuple.Count()), indentsStr, name,
+			getPrettyFormat(index, tuple.Count()), indentsStr, name,
 			formattedStr)
 	}
 
@@ -65,7 +65,7 @@ func formatTupleString(tuple rel.Tuple, indentsNum int) (string, error) {
 	return sb.String(), nil
 }
 
-func formatDictString(dict rel.Dict, indentsNum int) (string, error) {
+func prettifyDictString(dict rel.Dict, indentsNum int) (string, error) {
 	var sb strings.Builder
 	indentsStr := getIndents(indentsNum)
 	sb.WriteString("{")
@@ -79,18 +79,18 @@ func formatDictString(dict rel.Dict, indentsNum int) (string, error) {
 		if !found {
 			return "", fmt.Errorf("couldn't find value in %s", item)
 		}
-		formattedStr, err := FormatString(val, indentsNum)
+		formattedStr, err := PrettifyString(val, indentsNum)
 		if err != nil {
 			return "", err
 		}
-		fmt.Fprintf(&sb, getFormat(index, dict.Count()), indentsStr, key, formattedStr)
+		fmt.Fprintf(&sb, getPrettyFormat(index, dict.Count()), indentsStr, key, formattedStr)
 	}
 
 	sb.WriteString(fmt.Sprintf("%s}", getIndents(indentsNum-1)))
 	return sb.String(), nil
 }
 
-func formatSetString(set rel.GenericSet, indentsNum int) (string, error) {
+func prettifySetString(set rel.GenericSet, indentsNum int) (string, error) {
 	var sb strings.Builder
 	indentsStr := getIndents(indentsNum)
 	sb.WriteString("{")
@@ -105,7 +105,7 @@ func formatSetString(set rel.GenericSet, indentsNum int) (string, error) {
 			format = format + "\n"
 		}
 
-		formattedStr, err := FormatString(item, indentsNum)
+		formattedStr, err := PrettifyString(item, indentsNum)
 		if err != nil {
 			return "", err
 		}
@@ -116,7 +116,7 @@ func formatSetString(set rel.GenericSet, indentsNum int) (string, error) {
 	return sb.String(), nil
 }
 
-func getFormat(index, length int) string {
+func getPrettyFormat(index, length int) string {
 	format := ",\n%s%v: %v"
 	if index == 0 && length == 1 {
 		format = format[1:] + "\n"

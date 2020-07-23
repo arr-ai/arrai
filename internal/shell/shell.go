@@ -125,6 +125,7 @@ func (s *shellInstance) parseCmd(line string, l *readline.Instance) error {
 	return nil
 }
 
+// Prettify
 func shellEval(lines string, scope rel.Scope) (_ rel.Value, err error) {
 	defer func() {
 		if r := recover(); r != nil {
