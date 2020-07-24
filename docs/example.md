@@ -205,17 +205,6 @@ $ echo '{"a": "hello", "b": "world"}'| arrai json | arrai x '.("a")'
 "hello"
 ```
 
-### Transform YAML and filter a value from it
-
-Filter out value of `a` from YAML:
-
-```bash
-$ echo '
-a: hello
-b: world' | arrai yaml | arrai x '.("a")'
-"hello"
-```
-
 ### Nest
 
 Nest groups the given attributes into a nested relation, keys on the given key. 
