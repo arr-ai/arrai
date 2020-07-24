@@ -12,7 +12,7 @@ build:
   main: ./cmd/arrai
   ldflags:
     - -s -w -X main.Version=v{{.Version}}
-    - -X main.GitTags=v{{.Tag}}
+    - -X main.GitTags={{.Tag}}
     - -X main.GitCommit={{.ShortCommit}}
     - -X main.GitFullCommit={{.FullCommit}}
     - -X main.BuildDate={{.Date}}
