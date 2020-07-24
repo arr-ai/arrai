@@ -8,8 +8,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-//func GetBuildInfo(version, date, fullCommit, tags, os, arch, goVersion string) rel.Value {
-
 func TestGetBuildInfo(t *testing.T) {
 	str, err := rel.PrettifyString(GetBuildInfo(
 		"DIRTY-v0.99.0", "2020-07-23T10:40:08Z", "d399e13f3670c6698ba35148e6f545322e20e1fb",

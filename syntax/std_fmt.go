@@ -1,6 +1,8 @@
 package syntax
 
 import (
+	"fmt"
+
 	"github.com/arr-ai/arrai/rel"
 )
 
@@ -8,11 +10,12 @@ func stdFmt() rel.Attr {
 	return rel.NewTupleAttr(
 		"fmt",
 		rel.NewNativeFunctionAttr("pretty", func(value rel.Value) (rel.Value, error) {
-			prettifiedString, err := rel.PrettifyString(value, 0)
+			formattedStr, err := rel.PrettifyString(value, 0)
 			if err != nil {
 				return nil, err
 			}
-			return rel.NewString([]rune(prettifiedString)), nil
+			fmt.Println(formattedStr)
+			return value, nil
 		}),
 	)
 }
