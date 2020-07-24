@@ -104,13 +104,12 @@ func TestDownFrameCmd(t *testing.T) {
 
 	sh := newShellInstance(newLineCollector(), []rel.ContextErr{})
 	assert.EqualError(t, down.process("", sh), "frame index out of range, frame length: 0")
-
 	assertEqualScope(t, removedVoidItems(syntax.StdScope()), removedVoidItems(sh.scope))
 
 	ctxErrs := createContextErrs()
 	sh = newShellInstance(newLineCollector(), ctxErrs)
 	sh.currentFrameIndex = 0
-	sh.scope = removedVoidItems(syntax.StdScope().Update(ctxErrs[0].GetScope()))
+	sh.scope = syntax.StdScope().Update(ctxErrs[0].GetScope())
 
 	assertCurrScope(t, sh, 0, ctxErrs)
 	require.NoError(t, down.process("", sh))

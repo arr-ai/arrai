@@ -113,6 +113,6 @@ func setupVersion(app *cli.App) {
 	cli.VersionPrinter = func(c *cli.Context) {
 		fmt.Printf("arrai %s %s/%s\n", Version, BuildOS, BuildArch)
 	}
-
+	// Construct build information here as these data are stored in main package only.
 	syntax.BuildInfo = syntax.GetBuildInfo(Version, BuildDate, GitFullCommit, GitTags, BuildOS, BuildArch, GoVersion)
 }
