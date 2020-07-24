@@ -158,10 +158,6 @@ func reprNativeFunction(v Value, w io.Writer) {
 	fmt.Fprintf(w, "native function %s", v.String())
 }
 
-func reprBuildInfoTuple(v Value, w io.Writer) {
-	fmt.Fprint(w, v.String())
-}
-
 func reprValue(v Value, w io.Writer) {
 	switch v := v.(type) {
 	case String:
