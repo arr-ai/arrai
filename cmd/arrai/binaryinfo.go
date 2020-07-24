@@ -13,6 +13,6 @@ var (
 	GitTags       = "unspecified"
 	BuildDate     = "unspecified"
 	GoVersion     = "unspecified"
-	BuildOs       = "unspecified"
+	BuildOS       = "unspecified"
 	BuildArch     = "unspecified"
 )

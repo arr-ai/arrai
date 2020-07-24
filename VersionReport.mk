@@ -35,4 +35,4 @@ OS_ARCH=$(strip $(lastword $(shell go version)))
 BuildOs=$(firstword $(subst /,  ,$(OS_ARCH)))
 BuildArch=$(lastword $(subst /,  ,$(OS_ARCH)))
 
-LDFLAGS='-X "main.Version=$(Version)" -X "main.GitFullCommit=$(FullCommit)" -X "main.GitTags=${tagName}" -X "main.BuildDate=$(BuildDate)" -X "main.GoVersion=$(GoVersion)" -X "main.BuildOs=$(BuildOs)" -X "main.BuildArch=$(BuildArch)"'
+LDFLAGS='-X "main.Version=$(Version)" -X "main.GitFullCommit=$(FullCommit)" -X "main.GitTags=${tagName}" -X "main.BuildDate=$(BuildDate)" -X "main.GoVersion=$(GoVersion)" -X "main.BuildOS=$(BuildOs)" -X "main.BuildArch=$(BuildArch)"'
