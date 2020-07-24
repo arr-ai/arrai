@@ -26,6 +26,10 @@ Usage:
 |:-|:-|
 | `//encoding.json.decode('{"hi": "abc", "hello": 123}')` | `{'hello': 123, 'hi': (s: 'abc')}` |
 
+## `//encoding.yaml.decode(json <: string|bytes) <: set`
+
+Exactly the same as `//encoding.json.decode`, but takes either a `string` or `bytes` that represents a YAML object.
+ss
 ## `//encoding.proto.descriptor(protobufDefinition <: bytes) <: tuple`
 
 This method accepts [protobuf](https://github.com/protocolbuffers/protobuf) binary files and returns a tuple representation of a [`FileDescriptorSet`](https://pkg.go.dev/google.golang.org/protobuf@v1.25.0/types/descriptorpb?tab=doc#FileDescriptorSet), which describes message types in the binary file. This tuple can be passed as the first parameter to `decode`.
