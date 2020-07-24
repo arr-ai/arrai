@@ -188,8 +188,6 @@ func reprValue(v Value, w io.Writer) {
 		reprNumber(v, w)
 	case *NativeFunction:
 		reprNativeFunction(v, w)
-	case BuildInfoTuple:
-		reprBuildInfoTuple(v, w)
 	default:
 		panic(fmt.Errorf("Repr(): unexpected Value type %T: %[1]v", v)) //nolint:golint
 	}

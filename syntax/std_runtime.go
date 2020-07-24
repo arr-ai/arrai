@@ -48,5 +48,5 @@ func GetBuildInfo(version, date, fullCommit, tags, os, arch, goVersion string) r
 		rel.NewAttr("go", goInfo),
 	)
 
-	return rel.NewBuildInfoTuple(info)
+	return info
 }
