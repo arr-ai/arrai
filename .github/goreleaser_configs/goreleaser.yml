@@ -16,7 +16,7 @@ build:
     - -X main.GitCommit={{.ShortCommit}}
     - -X main.GitFullCommit={{.FullCommit}}
     - -X main.BuildDate={{.Date}}
-    - -X main.BuildOs={{.Os}}
+    - -X main.BuildOS={{.Os}}
     - -X main.BuildArch={{.Arch}}
     - -s -w -X "main.GoVersion={{.Env.GOVERSION}}"
   goos:
