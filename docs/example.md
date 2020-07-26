@@ -196,12 +196,12 @@ $ arrai eval '{1, [2, 3], 4, [5, 6]} filter . {[_, _]: 42}'
 ```
 
 
-### Transform json and filter value from it
+### Transform JSON and filter a value from it
 
-Filter out value of `a` from json 
+Filter out value of `a` from JSON:
 
 ```bash
-$ echo '{"a": "hello", "b": "world"}'| arrai json | arrai x '."a"'
+$ echo '{"a": "hello", "b": "world"}'| arrai json | arrai x '.("a")'
 "hello"
 ```
 
