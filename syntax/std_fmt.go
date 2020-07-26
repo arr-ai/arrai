@@ -1,6 +1,8 @@
 package syntax
 
 import (
+	"fmt"
+
 	"github.com/arr-ai/arrai/rel"
 )
 
@@ -12,7 +14,8 @@ func stdFmt() rel.Attr {
 			if err != nil {
 				return nil, err
 			}
-			return rel.NewString([]rune(prettifiedString)), nil
+			fmt.Println(prettifiedString)
+			return value, nil
 		}),
 	)
 }
