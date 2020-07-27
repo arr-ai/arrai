@@ -1,33 +1,11 @@
 package syntax
 
 import (
-	"fmt"
-
 	"github.com/arr-ai/arrai/rel"
 )
 
 // BuildInfo represents arr.ai build information.
 var BuildInfo rel.Value
-
-const buildInfoTemplate = `
-(
-    version: '%s',
-    date: '%s',
-    git: (
-        commit: '%s',
-        tags: ['%s'],
-    ),
-    go: (
-        os: '%s',
-        arch: '%s',
-        compiler: (
-            version: '%s',
-            os: '%s',
-            arch: '%s',
-        ),
-    ),
-)
-`
 
 func stdRuntime() rel.Attr {
 	return rel.NewTupleAttr("arrai",
@@ -37,10 +15,22 @@ func stdRuntime() rel.Attr {
 
 // GetBuildInfo returns arr.ai build information.
 func GetBuildInfo(version, date, fullCommit, tags, os, arch, goVersion string) rel.Value {
-	expr, err := EvaluateExpr(".",
-		fmt.Sprintf(buildInfoTemplate, version, date, fullCommit, tags, os, arch, goVersion, os, arch))
-	if err != nil {
-		return rel.NewString([]rune(err.Error()))
-	}
-	return expr
+	return rel.NewTuple(
+		rel.NewAttr("version", rel.NewString([]rune(version))),
+		rel.NewAttr("date", rel.NewString([]rune(date))),
+		rel.NewAttr("git", rel.NewTuple(
+			rel.NewAttr("commit", rel.NewString([]rune(fullCommit))),
+			// param tags has only one tag now.
+			rel.NewAttr("tags", rel.NewSet(rel.NewString([]rune(tags))))),
+		),
+		rel.NewAttr("go", rel.NewTuple(
+			rel.NewAttr("os", rel.NewString([]rune(os))),
+			rel.NewAttr("arch", rel.NewString([]rune(arch))),
+			rel.NewAttr("compiler", rel.NewTuple(
+				rel.NewAttr("version", rel.NewString([]rune(goVersion))),
+				rel.NewAttr("os", rel.NewString([]rune(os))),
+				rel.NewAttr("arch", rel.NewString([]rune(arch)))),
+			)),
+		),
+	)
 }
