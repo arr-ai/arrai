@@ -123,10 +123,13 @@ type Set interface {
 	ArrayEnumerator() (OffsetValueEnumerator, bool)
 }
 
-type NoReturnError struct{ s Set }
+type NoReturnError struct {
+	input Value
+	s     Set
+}
 
 func (n NoReturnError) Error() string {
-	return fmt.Sprintf("Call: no return values from set %v", n.s)
+	return fmt.Sprintf("Call: no return values for input %v from set %v", n.input, n.s)
 }
 
 func SetCall(s Set, arg Value) (Value, error) {
@@ -135,7 +138,7 @@ func SetCall(s Set, arg Value) (Value, error) {
 		return nil, err
 	}
 	if !result.IsTrue() {
-		return nil, NoReturnError{s}
+		return nil, NoReturnError{input: arg, s: s}
 	}
 	for i, e := 1, result.Enumerator(); e.MoveNext(); i++ {
 		if i > 1 {
