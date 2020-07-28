@@ -153,7 +153,8 @@ func assertEqualScope(t *testing.T, expected, actual rel.Scope) {
 	}
 }
 
-// removeArraiInfo removes `//arrai.info` from the scope as it can't be constructed in this test due to its lack of package `main`.
+// removeArraiInfo removes `//arrai.info` from the scope as it can't be constructed
+// in this test due to its lack of package `main`.
 func removeArraiInfo(scope rel.Scope) rel.Scope {
 	root, _ := scope.Get("//")
 	rootTuple, _ := root.(rel.Tuple)
