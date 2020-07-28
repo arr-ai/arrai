@@ -91,6 +91,12 @@ type Tuple interface {
 	Project(names Names) Tuple
 }
 
+// TupleProjectAllBut returns the projection of t over all of its attributes except
+// those specified in names.
+func TupleProjectAllBut(t Tuple, names Names) Tuple {
+	return t.Project(t.Names().Minus(names))
+}
+
 // ValueEnumerator enumerates Values.
 type ValueEnumerator interface {
 	MoveNext() bool
