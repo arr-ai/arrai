@@ -10,12 +10,11 @@ func stdFmt() rel.Attr {
 	return rel.NewTupleAttr(
 		"fmt",
 		rel.NewNativeFunctionAttr("pretty", func(value rel.Value) (rel.Value, error) {
-			formattedStr, err := FormatString(value, 0)
+			prettifiedString, err := PrettifyString(value, 0)
 			if err != nil {
 				return nil, err
 			}
-
-			fmt.Println(formattedStr)
+			fmt.Println(prettifiedString)
 			return value, nil
 		}),
 	)
