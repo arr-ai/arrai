@@ -35,7 +35,7 @@ expr   -> C* amp="&"* @ C* arrow=(
         > C* unop=/{[-+!*^]}* @ C*
         > C* @ postfix=/{count|single}? C* touch? C*
         > C* (get | @) tail_op=(
-            safe_tail=(first_safe=(tail "?") ops=(safe=(tail "?") | tail)* ":" fall=@)
+            safe_tail=(first_safe=(tail "?") ops=(safe=(tail "?") | tail)* ":" fall=expr)
             | tail
           )* C*
         > %!patternterms(expr)
