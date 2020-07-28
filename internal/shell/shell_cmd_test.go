@@ -84,7 +84,7 @@ func TestUpFrameCmd(t *testing.T) {
 
 	sh := newShellInstance(newLineCollector(), []rel.ContextErr{})
 	assert.EqualError(t, up.process("", sh), "frame index out of range, frame length: 0")
-	assertEqualScope(t, removedVoidItems(syntax.StdScope()), removedVoidItems(sh.scope))
+	assertEqualScope(t, removeArraiInfo(syntax.StdScope()), removeArraiInfo(sh.scope))
 
 	ctxErrs := createContextErrs()
 	sh = newShellInstance(newLineCollector(), ctxErrs)
@@ -104,7 +104,7 @@ func TestDownFrameCmd(t *testing.T) {
 
 	sh := newShellInstance(newLineCollector(), []rel.ContextErr{})
 	assert.EqualError(t, down.process("", sh), "frame index out of range, frame length: 0")
-	assertEqualScope(t, removedVoidItems(syntax.StdScope()), removedVoidItems(sh.scope))
+	assertEqualScope(t, removeArraiInfo(syntax.StdScope()), removeArraiInfo(sh.scope))
 
 	ctxErrs := createContextErrs()
 	sh = newShellInstance(newLineCollector(), ctxErrs)
@@ -121,7 +121,7 @@ func TestDownFrameCmd(t *testing.T) {
 
 func assertCurrScope(t *testing.T, sh *shellInstance, index int, frames []rel.ContextErr) {
 	assert.Equal(t, index, sh.currentFrameIndex)
-	assertEqualScope(t, removedVoidItems(syntax.StdScope().Update(frames[index].GetScope())), removedVoidItems(sh.scope))
+	assertEqualScope(t, removeArraiInfo(syntax.StdScope().Update(frames[index].GetScope())), removeArraiInfo(sh.scope))
 }
 
 func createContextErrs() []rel.ContextErr {
@@ -153,8 +153,8 @@ func assertEqualScope(t *testing.T, expected, actual rel.Scope) {
 	}
 }
 
-// `//arrai.info` can't be constructed in this test as it involves package `main`.
-func removedVoidItems(scope rel.Scope) rel.Scope {
+// removeArraiInfo removes `//arrai.info` from the scope as it can't be constructed in this test due to its lack of package `main`.
+func removeArraiInfo(scope rel.Scope) rel.Scope {
 	root, _ := scope.Get("//")
 	rootTuple, _ := root.(rel.Tuple)
 
