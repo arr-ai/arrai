@@ -107,6 +107,7 @@ func StdScope() rel.Scope {
 				stdTest(),
 				stdBits(),
 				stdFmt(),
+				stdRuntime(),
 			))
 	})
 	return stdScopeVar

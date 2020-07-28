@@ -14,6 +14,7 @@ func stdFmt() rel.Attr {
 			if err != nil {
 				return nil, err
 			}
+
 			fmt.Println(prettifiedString)
 			return value, nil
 		}),
