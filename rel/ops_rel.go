@@ -105,42 +105,48 @@ func Reduce(
 	return result
 }
 
-// Join returns the relation join of a and b.
+// Joiner returns a function that computes the relational join of a and b.
+//
 // Defn: Join(a{x…,y…}, b{y…,z…}) = ∀{x…,y…,z…}: {x…,y…} ∈ a ∧ {y…,z…} ∈ b
 //         for mutually disjoint x…, y…, z…
-func Join(a, b Set) Set {
-	aNames, ok := RelationAttrs(a)
-	if !ok {
-		panic("Tuple names mismatch in join lhs")
-	}
-	bNames, ok := RelationAttrs(b)
-	if !ok {
-		panic("Tuple names mismatch in join rhs")
-	}
-	if a.Count() > b.Count() {
-		a, b = b, a
-		aNames, bNames = bNames, aNames
-	}
-	common := aNames.Intersect(bNames)
-	return GenericJoin(
-		a, b,
-		func(value Value) Value {
-			return value.(Tuple).Project(common)
-		},
-		func(key Value, a, b Set) Set {
-			values := []Value{}
-			for i := a.Enumerator(); i.MoveNext(); {
-				for j := b.Enumerator(); j.MoveNext(); {
-					values = append(values, Merge(
-						i.Current().(Tuple),
-						j.Current().(Tuple),
-					))
+//
+// The combine function determines how to combine matching tuples from a and b.
+func Joiner(combine func(common Names, a, b Tuple) Tuple) func(a, b Set) Set {
+	return func(a, b Set) Set {
+		aNames, ok := RelationAttrs(a)
+		if !ok {
+			panic("Tuple names mismatch in join lhs")
+		}
+		bNames, ok := RelationAttrs(b)
+		if !ok {
+			panic("Tuple names mismatch in join rhs")
+		}
+		common := aNames.Intersect(bNames)
+		return GenericJoin(
+			a, b,
+			func(value Value) Value {
+				return value.(Tuple).Project(common)
+			},
+			func(key Value, a, b Set) Set {
+				values := []Value{}
+				for i := a.Enumerator(); i.MoveNext(); {
+					for j := b.Enumerator(); j.MoveNext(); {
+						values = append(values, combine(
+							common,
+							i.Current().(Tuple),
+							j.Current().(Tuple),
+						))
+					}
 				}
-			}
-			return NewSet(values...)
-		},
-	)
+				return NewSet(values...)
+			},
+		)
+	}
 }
+
+var join func(a, b Set) Set = Joiner(func(_ Names, a, b Tuple) Tuple {
+	return Merge(a, b)
+})
 
 // func Join(a, b Set) Set {
 // 	aNames, ok := RelationAttrs(a)
@@ -189,30 +195,25 @@ func GenericJoin(
 	join func(key Value, a, b Set) Set,
 ) Set {
 	var mb frozen.MapBuilder
-	accumulate := func(s Set, slotKey Value) {
+	accumulate := func(s Set, slotKey int) {
 		for e := s.Enumerator(); e.MoveNext(); {
 			value := e.Current()
 			key := getKey(value)
 
-			slots, found := mb.Get(key)
+			entry, found := mb.Get(key)
 			if !found {
-				slots = frozen.Map{}
+				entry = [2]Set{None, None}
 			}
+			slots := entry.([2]Set)
 
 			// False denotes lhs accumulator
-			slot, found := slots.(frozen.Map).Get(slotKey)
-			if !found {
-				slot = None
-			}
-
-			slot = slot.(Set).With(value)
-			slots = slots.(frozen.Map).With(slotKey, slot)
+			slots[slotKey] = slots[slotKey].With(value)
 			mb.Put(key, slots)
 		}
 	}
 
-	aSlot := NewNumber(0)
-	bSlot := NewNumber(1)
+	const aSlot = 0
+	const bSlot = 1
 
 	accumulate(a, aSlot)
 	accumulate(b, bSlot)
@@ -221,15 +222,9 @@ func GenericJoin(
 	for i := mb.Finish().Range(); i.Next(); {
 		k, v := i.Entry()
 		key := k.(Value)
-		slots := v.(frozen.Map)
-		aSet := None
-		if aItem, ok := slots.Get(aSlot); ok {
-			aSet = aItem.(Set)
-		}
-		bSet := None
-		if bItem, ok := slots.Get(bSlot); ok {
-			bSet = bItem.(Set)
-		}
+		slots := v.([2]Set)
+		aSet := slots[aSlot]
+		bSet := slots[bSlot]
 		result = Union(result, join(key, aSet, bSet))
 	}
 	return result

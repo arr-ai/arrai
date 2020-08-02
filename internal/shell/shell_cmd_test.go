@@ -23,7 +23,13 @@ func TestTryRunCommand(t *testing.T) {
 
 	sh := newShellInstance(newLineCollector(), []rel.ContextErr{})
 	assert.NoError(t, tryRunCommand(`/set a = 1 + 2`, sh))
+	assert.NoError(t, tryRunCommand(`/set $a = 1 + 2`, sh))
+	assert.NoError(t, tryRunCommand(`/set . = 1 + 2`, sh))
+	assert.NoError(t, tryRunCommand(`/set _a = 1 + 2`, sh))
 	assert.NoError(t, tryRunCommand(`/unset a`, sh))
+	assert.NoError(t, tryRunCommand(`/unset $a`, sh))
+	assert.NoError(t, tryRunCommand(`/unset .`, sh))
+	assert.NoError(t, tryRunCommand(`/unset _a`, sh))
 
 	assert.EqualError(t, tryRunCommand("/hi", sh), "command hi not found")
 	assert.EqualError(t, tryRunCommand("random", sh), "random is not a command")
