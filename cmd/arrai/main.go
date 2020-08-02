@@ -104,6 +104,7 @@ VERSION:
 		} else {
 			logrus.Info("unable to start debug shell: standard input is not a terminal")
 		}
+		os.Exit(1)
 	}
 }
 
