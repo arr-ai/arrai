@@ -35,6 +35,8 @@ func PrettifyString(val rel.Value, indentsNum int) (string, error) {
 	switch t := val.(type) {
 	case rel.Tuple: // (a: 1)
 		return prettifyTuple(t, indentsNum)
+	case rel.Array: // [1, 2]
+		return prettifyArray(t, indentsNum)
 	case rel.Dict: // {'a': 1}
 		return prettifyDict(t, indentsNum)
 	case rel.GenericSet: // {1, 2}
@@ -69,6 +71,23 @@ func prettifyTuple(tuple rel.Tuple, indentsNum int) (string, error) {
 	return sb.String(), nil
 }
 
+func prettifyArray(arr rel.Array, indentsNum int) (string, error) {
+	var sb strings.Builder
+	indentsStr := getIndents(indentsNum)
+	sb.WriteString("[")
+
+	for index, item := range arr.Values() {
+		formattedStr, err := PrettifyString(item, indentsNum)
+		if err != nil {
+			return "", err
+		}
+		fmt.Fprintf(&sb, getPrettyFormat(",\n%s%v", index, arr.Count()), indentsStr, formattedStr)
+	}
+
+	sb.WriteString(fmt.Sprintf("%s]", getIndents(indentsNum-1)))
+	return sb.String(), nil
+}
+
 func prettifyDict(dict rel.Dict, indentsNum int) (string, error) {
 	var sb strings.Builder
 	indentsStr := getIndents(indentsNum)
@@ -79,15 +98,19 @@ func prettifyDict(dict rel.Dict, indentsNum int) (string, error) {
 		if !found {
 			return "", fmt.Errorf("couldn't find @ in %s", item)
 		}
+		prettyKey, err := PrettifyString(key, indentsNum)
+		if err != nil {
+			return "", err
+		}
 		val, found := item.Get(rel.DictValueAttr)
 		if !found {
 			return "", fmt.Errorf("couldn't find value in %s", item)
 		}
-		formattedStr, err := PrettifyString(val, indentsNum)
+		prettyVal, err := PrettifyString(val, indentsNum)
 		if err != nil {
 			return "", err
 		}
-		fmt.Fprintf(&sb, getPrettyFormat(",\n%s%v: %v", index, dict.Count()), indentsStr, key, formattedStr)
+		fmt.Fprintf(&sb, getPrettyFormat(",\n%s%v: %v", index, dict.Count()), indentsStr, prettyKey, prettyVal)
 	}
 
 	sb.WriteString(fmt.Sprintf("%s}", getIndents(indentsNum-1)))
