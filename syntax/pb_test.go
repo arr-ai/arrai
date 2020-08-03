@@ -36,23 +36,17 @@ func TestTransformProtobufToTupleMapList(t *testing.T) {
 	code := decodePetshop + `shop.apps('PetShopApi').name.part.@`
 	AssertCodesEvalToSameValue(t, `0`, code)
 
-	code = decodePetshop + `shop.apps('PetShopApi').name.part.@item.@item`
+	code = decodePetshop + `shop.apps('PetShopApi').name.part.@item`
 	AssertCodesEvalToSameValue(t, `'PetShopApi'`, code)
 
 	code = decodePetshop + `shop.apps('PetShopApi').attrs('package').s`
 	AssertCodesEvalToSameValue(t, "'io.sysl.demo.petshop.api'", code)
 	// With index
-	code = decodePetshop + `shop.apps('PetShopApi').endpoints('GET /petshop').attrs('patterns').a.elt(0).@item.s`
+	code = decodePetshop + `shop.apps('PetShopApi').endpoints('GET /petshop').attrs('patterns').a.elt(0).s`
 	AssertCodesEvalToSameValue(t, "'rest'", code)
 
-	code = decodePetshop + `shop.apps('PetShopApi').endpoints('GET /petshop').attrs('patterns').a.elt.@item.@item.s`
+	code = decodePetshop + `shop.apps('PetShopApi').endpoints('GET /petshop').attrs('patterns').a.elt.@item.s`
 	AssertCodesEvalToSameValue(t, "'rest'", code)
-
-	code = decodePetshop + `shop.apps('PetShopApi').endpoints('GET /petshop').attrs('patterns').a.elt(0).@`
-	AssertCodesEvalToSameValue(t, "0", code)
-
-	code = decodePetshop + `shop.apps('PetShopApi').endpoints('GET /petshop').attrs('patterns').a.elt.@`
-	AssertCodesEvalToSameValue(t, "0", code)
 }
 
 func TestTransformProtobufToTupleEnum(t *testing.T) {
