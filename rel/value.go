@@ -174,6 +174,8 @@ func NewValue(v interface{}) (Value, error) {
 	switch x := v.(type) {
 	case Value:
 		return x, nil
+	case bool:
+		return NewBool(x), nil
 	case uint:
 		return NewNumber(float64(x)), nil
 	case uint8:
@@ -198,6 +200,12 @@ func NewValue(v interface{}) (Value, error) {
 		return NewNumber(float64(x)), nil
 	case float64:
 		return NewNumber(x), nil
+	case string:
+		return NewString([]rune(x)), nil
+	case []rune:
+		return NewString(x), nil
+	case []byte:
+		return NewBytes(x), nil
 	case map[string]interface{}:
 		return NewTupleFromMap(x)
 	case []interface{}:
