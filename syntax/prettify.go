@@ -20,11 +20,7 @@ const indentStr = "  "
 //			aa: {
 //				bb: (
 //					a: 22,
-//					d: {
-//						3,
-//						1,
-//						2
-//					}
+//					d: {3, 1, 2}
 //				)
 //			}
 //		}
@@ -48,6 +44,22 @@ func PrettifyString(val rel.Value, indentsNum int) (string, error) {
 	}
 }
 
+func prettifySet(arr rel.GenericSet, indentsNum int) (string, error) {
+	content, err := prettifyItems(arr.OrderedValues(), indentsNum)
+	if err != nil {
+		return "", err
+	}
+	return fmt.Sprintf("{%v}", content), nil
+}
+
+func prettifyArray(arr rel.Array, indentsNum int) (string, error) {
+	content, err := prettifyItems(arr.Values(), indentsNum)
+	if err != nil {
+		return "", err
+	}
+	return fmt.Sprintf("[%v]", content), nil
+}
+
 func prettifyTuple(tuple rel.Tuple, indentsNum int) (string, error) {
 	var sb strings.Builder
 	indentsStr := getIndents(indentsNum)
@@ -62,29 +74,14 @@ func prettifyTuple(tuple rel.Tuple, indentsNum int) (string, error) {
 		if err != nil {
 			return "", nil
 		}
-		fmt.Fprintf(&sb,
-			getPrettyFormat(",\n%s%v: %v", index, tuple.Count()), indentsStr, name,
-			formattedStr)
+		format := getPrettyFormat(",\n%s%v: %v", index, tuple.Count())
+		_, err = fmt.Fprintf(&sb, format, indentsStr, name, formattedStr)
+		if err != nil {
+			return "", nil
+		}
 	}
 
 	sb.WriteString(fmt.Sprintf("%s)", getIndents(indentsNum-1)))
-	return sb.String(), nil
-}
-
-func prettifyArray(arr rel.Array, indentsNum int) (string, error) {
-	var sb strings.Builder
-	indentsStr := getIndents(indentsNum)
-	sb.WriteString("[")
-
-	for index, item := range arr.Values() {
-		formattedStr, err := PrettifyString(item, indentsNum)
-		if err != nil {
-			return "", err
-		}
-		fmt.Fprintf(&sb, getPrettyFormat(",\n%s%v", index, arr.Count()), indentsStr, formattedStr)
-	}
-
-	sb.WriteString(fmt.Sprintf("%s]", getIndents(indentsNum-1)))
 	return sb.String(), nil
 }
 
@@ -110,28 +107,88 @@ func prettifyDict(dict rel.Dict, indentsNum int) (string, error) {
 		if err != nil {
 			return "", err
 		}
-		fmt.Fprintf(&sb, getPrettyFormat(",\n%s%v: %v", index, dict.Count()), indentsStr, prettyKey, prettyVal)
+		format := getPrettyFormat(",\n%s%v: %v", index, dict.Count())
+		_, err = fmt.Fprintf(&sb, format, indentsStr, prettyKey, prettyVal)
+		if err != nil {
+			return "", err
+		}
 	}
 
 	sb.WriteString(fmt.Sprintf("%s}", getIndents(indentsNum-1)))
 	return sb.String(), nil
 }
 
-func prettifySet(set rel.GenericSet, indentsNum int) (string, error) {
-	var sb strings.Builder
-	indentsStr := getIndents(indentsNum)
-	sb.WriteString("{")
+func prettifyString(str rel.String) (string, error) {
+	return fmt.Sprintf("'%s'", str), nil
+}
 
-	for index, item := range set.OrderedValues() {
-		formattedStr, err := PrettifyString(item, indentsNum)
+type Enumerable interface {
+	ArrayEnumerator() (rel.OffsetValueEnumerator, bool)
+}
+
+// prettifyItems returns a pretty string representation of the contents of a set or array.
+func prettifyItems(vals []rel.Value, indentsNum int) (string, error) {
+	var sb strings.Builder
+	simple := isSimpleValues(vals)
+
+	for index, item := range vals {
+		str, err := prettifyItem(index, item, simple, indentsNum)
 		if err != nil {
 			return "", err
 		}
-		fmt.Fprintf(&sb, getPrettyFormat(",\n%s%v", index, set.Count()), indentsStr, formattedStr)
+		sb.WriteString(str)
+	}
+	if !simple {
+		sb.WriteString("\n" + getIndents(indentsNum-1))
+	}
+	return sb.String(), nil
+}
+
+// prettifyItem returns the pretty string for an item at an index within a collection.
+func prettifyItem(index int, item rel.Value, simple bool, indent int) (string, error) {
+	var sb strings.Builder
+	formattedStr, err := PrettifyString(item, indent)
+	if err != nil {
+		return "", err
+	}
+	if index > 0 {
+		sb.WriteString(",")
+		if simple {
+			sb.WriteString(" ")
+		}
+	}
+	if !simple {
+		sb.WriteString("\n" + getIndents(indent))
 	}
 
-	sb.WriteString(fmt.Sprintf("%s}", getIndents(indentsNum-1)))
+	fmt.Fprintf(&sb, "%v", formattedStr)
 	return sb.String(), nil
+}
+
+// isSimple returns true if the value should be pretty printed on a single line.
+func isSimple(val rel.Value) bool {
+	switch t := val.(type) {
+	case rel.Number, rel.String:
+		return true
+	case rel.Array:
+		return isSimpleValues(t.Values())
+	case rel.GenericSet:
+		return isSimpleValues(t.OrderedValues())
+	case rel.Dict:
+		return t.Count() == 0
+	}
+	return false
+}
+
+// isSimpleEnumerator returns true if all of the enumerated values should be pretty printed on a
+// single line.
+func isSimpleValues(vals []rel.Value) bool {
+	for _, item := range vals {
+		if !isSimple(item) {
+			return false
+		}
+	}
+	return true
 }
 
 func getPrettyFormat(format string, index, length int) string {
@@ -153,8 +210,4 @@ func getIndents(indentsNum int) string {
 	}
 
 	return sb.String()
-}
-
-func prettifyString(str rel.String) (string, error) {
-	return fmt.Sprintf("'%s'", str), nil
 }
