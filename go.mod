@@ -3,6 +3,7 @@ module github.com/arr-ai/arrai
 go 1.13
 
 require (
+	github.com/alecthomas/assert v0.0.0-20170929043011-405dbfeb8e38
 	github.com/anz-bank/pkg v0.0.9
 	github.com/arr-ai/frozen v0.14.0
 	github.com/arr-ai/hash v0.5.0

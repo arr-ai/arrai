@@ -76,15 +76,27 @@ func prettifyArray(arr rel.Array, indentsNum int) (string, error) {
 	indentsStr := getIndents(indentsNum)
 	sb.WriteString("[")
 
+	simple := isSimple(arr)
 	for index, item := range arr.Values() {
 		formattedStr, err := PrettifyString(item, indentsNum)
 		if err != nil {
 			return "", err
 		}
-		fmt.Fprintf(&sb, getPrettyFormat(",\n%s%v", index, arr.Count()), indentsStr, formattedStr)
+		if simple {
+			if index > 0 {
+				fmt.Fprintf(&sb, ", ")
+			}
+			fmt.Fprintf(&sb, "%v", formattedStr)
+		} else {
+			fmt.Fprintf(&sb, getPrettyFormat(",\n%s%v", index, arr.Count()), indentsStr, formattedStr)
+		}
 	}
 
-	sb.WriteString(fmt.Sprintf("%s]", getIndents(indentsNum-1)))
+	if simple {
+		sb.WriteString("]")
+	} else {
+		sb.WriteString(fmt.Sprintf("%s]", getIndents(indentsNum-1)))
+	}
 	return sb.String(), nil
 }
 
@@ -117,21 +129,70 @@ func prettifyDict(dict rel.Dict, indentsNum int) (string, error) {
 	return sb.String(), nil
 }
 
+func prettifyItem(sb *strings.Builder, index int, item rel.Value, simple bool, size int, indent int) error {
+	formattedStr, err := PrettifyString(item, indent)
+	if err != nil {
+		return err
+	}
+	if index > 0 {
+		sb.WriteString(",")
+		if simple {
+			sb.WriteString(" ")
+		} else {
+			sb.WriteString("\n" + getIndents(indent))
+		}
+	}
+
+	fmt.Fprintf(sb, "%v", formattedStr)
+	return nil
+}
+
 func prettifySet(set rel.GenericSet, indentsNum int) (string, error) {
 	var sb strings.Builder
-	indentsStr := getIndents(indentsNum)
 	sb.WriteString("{")
 
+	simple := isSimple(set)
 	for index, item := range set.OrderedValues() {
-		formattedStr, err := PrettifyString(item, indentsNum)
+		err := prettifyItem(&sb, index, item, simple, set.Count(), indentsNum)
 		if err != nil {
 			return "", err
 		}
-		fmt.Fprintf(&sb, getPrettyFormat(",\n%s%v", index, set.Count()), indentsStr, formattedStr)
 	}
 
-	sb.WriteString(fmt.Sprintf("%s}", getIndents(indentsNum-1)))
+	if !simple {
+		sb.WriteString(getIndents(indentsNum - 1))
+	}
+	sb.WriteString("}")
 	return sb.String(), nil
+}
+
+func prettifyString(str rel.String) (string, error) {
+	return fmt.Sprintf("'%s'", str), nil
+}
+
+// isSimple returns true if the value should be pretty printed on a single line.
+func isSimple(val rel.Value) bool {
+	switch t := val.(type) {
+	case rel.Number, rel.String:
+		return true
+	case rel.Array:
+		for _, item := range t.Values() {
+			if !isSimple(item) {
+				return false
+			}
+		}
+		return true
+	case rel.Set:
+		for e := t.Enumerator(); e.MoveNext(); {
+			if !isSimple(e.Current()) {
+				return false
+			}
+		}
+		return true
+	case rel.Dict:
+		return t.Count() == 0
+	}
+	return false
 }
 
 func getPrettyFormat(format string, index, length int) string {
@@ -153,8 +214,4 @@ func getIndents(indentsNum int) string {
 	}
 
 	return sb.String()
-}
-
-func prettifyString(str rel.String) (string, error) {
-	return fmt.Sprintf("'%s'", str), nil
 }
