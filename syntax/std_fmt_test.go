@@ -53,7 +53,7 @@ func TestFmtPrettyArraySimple(t *testing.T) {
 	t.Parallel()
 	AssertCodesEvalToSameValue(t, `"{}"`, `//fmt.pretty([ ])`)
 	AssertCodesEvalToSameValue(t, `"[1, 2, 3]"`, `//fmt.pretty([1,2,3])`)
-	AssertCodesEvalToSameValue(t, `"[1, 3]"`, `//fmt.pretty(1\[1,,3])`)
+	AssertCodesEvalToSameValue(t, `"[1, , 3]"`, `//fmt.pretty(9\[1,,3])`)
 	AssertCodesEvalToSameValue(t, `"[1, 2, ['a', 'b', 'c']]"`, `//fmt.pretty([1,2,["a",'b',  "c"]])`)
 }
 

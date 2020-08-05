@@ -39,6 +39,8 @@ func PrettifyString(val rel.Value, indentsNum int) (string, error) {
 		return prettifySet(t, indentsNum)
 	case rel.String:
 		return prettifyString(t)
+	case nil:
+		return "", nil
 	default:
 		return t.String(), nil
 	}
@@ -168,7 +170,7 @@ func prettifyItem(index int, item rel.Value, simple bool, indent int) (string, e
 // isSimple returns true if the value should be pretty printed on a single line.
 func isSimple(val rel.Value) bool {
 	switch t := val.(type) {
-	case rel.Number, rel.String:
+	case rel.Number, rel.String, nil:
 		return true
 	case rel.Array:
 		return isSimpleValues(t.Values())
