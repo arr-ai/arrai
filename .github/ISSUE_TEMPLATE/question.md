@@ -4,7 +4,7 @@ about: Not sure if it's a bug or a feature request? Ask a question!
 labels: question
 ---
 
-Please **do not post any internal, closed source snippets** on this public issue tracker!
+> Please **do not post any internal, closed source snippets** on this public issue tracker!
 
 > What would you like to know?
 >
