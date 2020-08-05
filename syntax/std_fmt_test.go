@@ -1,9 +1,10 @@
 package syntax
 
 import (
+	"testing"
+
 	"github.com/alecthomas/assert"
 	"github.com/arr-ai/arrai/rel"
-	"testing"
 )
 
 func TestFmtPrettyDict(t *testing.T) {
@@ -23,6 +24,11 @@ func TestFmtPrettyDict(t *testing.T) {
     'e': 22
   }
 }"`, `//fmt.pretty({'b':2,'a':1,'c':{'d':11,'e':22}})`)
+
+	AssertCodesEvalToSameValue(t, `"{
+  42: 1,
+  '42': 2
+}"`, `//fmt.pretty({'42':2,42:1})`)
 }
 
 func TestFmtPrettyTuple(t *testing.T) {
@@ -47,6 +53,7 @@ func TestFmtPrettyArraySimple(t *testing.T) {
 	t.Parallel()
 	AssertCodesEvalToSameValue(t, `"{}"`, `//fmt.pretty([ ])`)
 	AssertCodesEvalToSameValue(t, `"[1, 2, 3]"`, `//fmt.pretty([1,2,3])`)
+	AssertCodesEvalToSameValue(t, `"[1, 3]"`, `//fmt.pretty(1\[1,,3])`)
 	AssertCodesEvalToSameValue(t, `"[1, 2, ['a', 'b', 'c']]"`, `//fmt.pretty([1,2,["a",'b',  "c"]])`)
 }
 
@@ -74,7 +81,7 @@ func TestFmtPrettyArrayComplex(t *testing.T) {
 func TestFmtPrettySet(t *testing.T) {
 	t.Parallel()
 	AssertCodesEvalToSameValue(t, `"{}"`, `//fmt.pretty({ })`)
-	AssertCodesEvalToSameValue(t, `"{1, 2, 3}"`, `//fmt.pretty({1,2,3})`)
+	AssertCodesEvalToSameValue(t, `"{1, 3, '2'}"`, `//fmt.pretty({3,1,'2'})`)
 	AssertCodesEvalToSameValue(t, `"{1, 2, {3, 4, 5}}"`, `//fmt.pretty({1,2,{3,4,5}})`)
 }
 
