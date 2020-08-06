@@ -1,10 +1,5 @@
 package main
 
-import (
-	"fmt"
-	"runtime"
-)
-
 // Binary info variables are dynamically injected via the `-ldflags` flag with `go build`
 // Version   - Binary version
 // GitFullCommit - Commit SHA of the source code
@@ -15,7 +10,9 @@ import (
 var (
 	Version       = "unspecified"
 	GitFullCommit = "unspecified"
+	GitTags       = "unspecified"
 	BuildDate     = "unspecified"
 	GoVersion     = "unspecified"
-	BuildOS       = fmt.Sprintf("%s/%s", runtime.GOOS, runtime.GOARCH)
+	BuildOS       = "unspecified"
+	BuildArch     = "unspecified"
 )

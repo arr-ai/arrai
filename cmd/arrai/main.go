@@ -104,6 +104,7 @@ VERSION:
 		} else {
 			logrus.Info("unable to start debug shell: standard input is not a terminal")
 		}
+		os.Exit(1)
 	}
 }
 
@@ -111,6 +112,8 @@ func setupVersion(app *cli.App) {
 	app.Version = Version
 
 	cli.VersionPrinter = func(c *cli.Context) {
-		fmt.Printf("arrai %s %s\n", Version, BuildOS)
+		fmt.Printf("arrai %s %s/%s\n", Version, BuildOS, BuildArch)
 	}
+	// Construct build information here as these data are stored in main package only.
+	syntax.BuildInfo = syntax.GetBuildInfo(Version, BuildDate, GitFullCommit, GitTags, BuildOS, BuildArch, GoVersion)
 }

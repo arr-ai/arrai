@@ -31,5 +31,8 @@ endif
 FullCommit=$(shell git log --pretty=format:"%H" -1)
 GoVersion=$(strip $(subst  go version, ,$(shell go version)))
 BuildDate=$(shell date -u +'%Y-%m-%dT%H:%M:%SZ')
+OS_ARCH=$(strip $(lastword $(shell go version)))
+BuildOs=$(firstword $(subst /,  ,$(OS_ARCH)))
+BuildArch=$(lastword $(subst /,  ,$(OS_ARCH)))
 
-LDFLAGS='-X "main.Version=$(Version)" -X "main.GitFullCommit=$(FullCommit)" -X "main.BuildDate=$(BuildDate)" -X "main.GoVersion=$(GoVersion)"'
+LDFLAGS='-X "main.Version=$(Version)" -X "main.GitFullCommit=$(FullCommit)" -X "main.GitTags=${tagName}" -X "main.BuildDate=$(BuildDate)" -X "main.GoVersion=$(GoVersion)" -X "main.BuildOS=$(BuildOs)" -X "main.BuildArch=$(BuildArch)"'

@@ -47,7 +47,7 @@ func (sc *setCmd) names() []string {
 }
 
 func (sc *setCmd) process(line string, shellData *shellInstance) error {
-	identRe := regexp.MustCompile(`^(?P<ident>[a-zA-Z_]\w*)[ \t]+=`)
+	identRe := regexp.MustCompile(`^(?P<ident>\.|[$@A-Za-z_][0-9$@A-Za-z_]*)[ \t]+=`)
 	identMatches := identRe.FindStringSubmatch(line)
 	if len(identMatches) != 2 {
 		return errors.Errorf(`/set command error, usage: /set <name> = <expr>`)
@@ -69,7 +69,7 @@ func (uc *unsetCmd) names() []string {
 }
 
 func (uc *unsetCmd) process(line string, shellData *shellInstance) error {
-	ident := regexp.MustCompile(`^[a-zA-Z_]\w*`).FindString(line)
+	ident := regexp.MustCompile(`^(\.|[$@A-Za-z_][0-9$@A-Za-z_]*)`).FindString(line)
 	if ident == "" {
 		return errors.Errorf(`/unset command error, usage: /unset <name>`)
 	}

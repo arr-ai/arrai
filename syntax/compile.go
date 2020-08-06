@@ -1011,6 +1011,13 @@ var binops = map[string]binOpFunc{
 	"&":       rel.NewIntersectExpr,
 	"|":       rel.NewUnionExpr,
 	"<&>":     rel.NewJoinExpr,
+	"<->":     rel.NewComposeExpr,
+	"-&-":     rel.NewJoinCommonExpr,
+	"---":     rel.NewJoinExistsExpr,
+	"-&>":     rel.NewRightMatchExpr,
+	"<&-":     rel.NewLeftMatchExpr,
+	"-->":     rel.NewRightResidueExpr,
+	"<--":     rel.NewLeftResidueExpr,
 	"*":       rel.NewMulExpr,
 	"/":       rel.NewDivExpr,
 	"%":       rel.NewModExpr,
@@ -1018,6 +1025,7 @@ var binops = map[string]binOpFunc{
 	"//":      rel.NewIdivExpr,
 	"^":       rel.NewPowExpr,
 	"\\":      rel.NewOffsetExpr,
+	"+>":      rel.NewAddArrowExpr,
 }
 
 var compareOps = map[string]rel.CompareFunc{

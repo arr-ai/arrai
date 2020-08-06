@@ -154,6 +154,10 @@ func reprNumber(n Number, w io.Writer) {
 	fmt.Fprint(w, n.String())
 }
 
+func reprNativeFunction(v Value, w io.Writer) {
+	fmt.Fprintf(w, "native function %s", v.String())
+}
+
 func reprValue(v Value, w io.Writer) {
 	switch v := v.(type) {
 	case String:
@@ -178,6 +182,8 @@ func reprValue(v Value, w io.Writer) {
 		reprTuple(v, w)
 	case Number:
 		reprNumber(v, w)
+	case *NativeFunction:
+		reprNativeFunction(v, w)
 	default:
 		panic(fmt.Errorf("Repr(): unexpected Value type %T: %[1]v", v)) //nolint:golint
 	}
