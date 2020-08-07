@@ -88,9 +88,7 @@ func outputValue(ctx context.Context, value rel.Value, out string) error {
 	if len(parts) == 1 {
 		parts = []string{"", parts[0]}
 	}
-	opts := strings.SplitN(parts[0], "-", 2)
-	mode := opts[0]
-	opts = opts[1:]
+	mode := parts[0]
 	arg := parts[1]
 
 	fs := ctxfs.RuntimeFsFrom(ctx)
