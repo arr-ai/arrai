@@ -34,7 +34,7 @@ func AssertCodesEvalToSameValue(t *testing.T, expected, code string) bool {
 	}
 	// log.Printf("code=%v, codeExpr=%v", code, codeExpr)
 	if !rel.AssertExprsEvalToSameValue(t, expectedExpr, value) {
-		t.Logf("\nexpected: %s\ncode:     %s", expected, code)
+		t.Errorf("\nexpected: %s\ncode:     %s", expected, code)
 		return false
 	}
 	return true
@@ -62,7 +62,7 @@ func AssertCodeEvalsToType(t *testing.T, expected interface{}, code string) bool
 	}
 	codeExpr := pc.CompileExpr(ast)
 	if !rel.AssertExprEvalsToType(t, expected, codeExpr) {
-		t.Logf("\nexpected: %T\ncode:     %s", expected, code)
+		t.Errorf("\nexpected: %T\ncode:     %s", expected, code)
 		return false
 	}
 	return true
