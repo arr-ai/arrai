@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"os"
 	"testing"
 
@@ -11,15 +12,15 @@ import (
 func TestEvalFile(t *testing.T) {
 	t.Parallel()
 	var buf bytes.Buffer
-	require.NoError(t, evalFile("../../examples/jsfuncs/jsfuncs.arrai", &buf))
-	require.NoError(t, evalFile("../../examples/grpc/app.arrai", &buf))
+	require.NoError(t, evalFile(context.Background(), "../../examples/jsfuncs/jsfuncs.arrai", &buf, ""))
+	require.NoError(t, evalFile(context.Background(), "../../examples/grpc/app.arrai", &buf, ""))
 }
 
 func TestEvalNotExistingFile(t *testing.T) {
 	t.Parallel()
 	require.Equal(t, `"version": not a command and not found as a file in the current directory`,
-		evalFile("version", nil).Error())
+		evalFile(context.Background(), "version", nil, "").Error())
 
 	require.Equal(t, `"`+string([]rune{'.', os.PathSeparator})+`version": file not found`,
-		evalFile(string([]rune{'.', os.PathSeparator})+"version", nil).Error())
+		evalFile(context.Background(), string([]rune{'.', os.PathSeparator})+"version", nil, "").Error())
 }
