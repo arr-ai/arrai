@@ -300,20 +300,35 @@ func (e *BinExpr) Eval(local Scope) (_ Value, err error) {
 
 // evalValForAddArrow evaluates operator `+>`.
 func evalValForAddArrow(lhs, rhs Value) (Value, error) {
-	if lhs, ok := lhs.(Tuple); ok {
+	switch lhs := lhs.(type) {
+	case Tuple:
 		if rhs, ok := rhs.(Tuple); ok {
 			return MergeLeftToRight(lhs, rhs), nil
 		}
-	}
-
-	if lhs, ok := lhs.(Dict); ok {
-		if rhs, ok := rhs.(Dict); ok {
+	case Dict:
+		switch rhs := rhs.(type) {
+		case Dict:
 			return mergeDicts(lhs, rhs), nil
+		case Set:
+			if !rhs.IsTrue() {
+				return lhs, nil
+			}
+		}
+	case Set:
+		if !lhs.IsTrue() {
+			switch rhs := rhs.(type) {
+			case Dict:
+				return rhs, nil
+			case Set:
+				if !rhs.IsTrue() {
+					return lhs, nil
+				}
+			}
 		}
 	}
 
 	return nil, errors.Errorf(
-		"Both args to %q must be both tuples or both dicts, not %T and %T",
+		"Args to %q must be both tuples or both dicts, not %T and %T",
 		"+>", lhs, rhs)
 }
 
