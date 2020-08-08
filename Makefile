@@ -16,6 +16,11 @@ install: parser
 	[ -f $$(dirname $$(which arrai))/ai ] || ln -s arrai $$(dirname $$(which arrai))/ai
 	[ -f $$(dirname $$(which arrai))/ax ] || ln -s arrai $$(dirname $$(which arrai))/ax
 
+tidy:
+	go mod tidy
+	gofmt -s -w .
+	goimports -w .
+
 lint: parser
 	golangci-lint run
 
