@@ -13,4 +13,4 @@ Please **do not post any internal, closed source snippets** on this public issue
 
 
 ### Suggested approaches
-What have you tried, and how might this problem be solved?
+> What have you tried, and how might this problem be solved?
