@@ -31,6 +31,10 @@ func TestOpsAddArrowForTuples(t *testing.T) {
 
 func TestOpsAddArrowForDicts(t *testing.T) {
 	t.Parallel()
+	AssertCodesEvalToSameValue(t, `{}`, `{} +> {}`)
+	AssertCodesEvalToSameValue(t, `{1: 2}`, `{1: 2} +> {}`)
+	AssertCodesEvalToSameValue(t, `{3: 4}`, `{} +> {3: 4}`)
+
 	AssertCodesEvalToSameValue(t, `{'a': 1, 'b': 3, 'd': 4}`, `{'a': 1, 'b': 2} +> {'b': 3, 'd': 4}`)
 	AssertCodesEvalToSameValue(t, `{'a': 1, 'b': 3, 'd': 4}`, `{'a': 1, 'b': {'a': 2}} +> {'b': 3, 'd': 4}`)
 	AssertCodesEvalToSameValue(t, `{'a': {'c': 2}}`, `{'a': {'b': 1}} +> {'a': {'c': 2}}`)
