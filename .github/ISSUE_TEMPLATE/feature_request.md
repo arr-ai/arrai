@@ -4,7 +4,7 @@ about: Suggest a new feature or other enhancement.
 labels: enhancement
 ---
 
-> Please **do not post any internal, closed source snippets** on this public issue tracker!
+Please **do not post any internal, closed source snippets** on this public issue tracker!
 
 ### Purpose
 
@@ -14,4 +14,3 @@ labels: enhancement
 
 ### Suggested approaches
 What have you tried, and how might this problem be solved?
-
