@@ -3,8 +3,8 @@ package syntax
 import (
 	"testing"
 
-	"github.com/alecthomas/assert"
 	"github.com/arr-ai/arrai/rel"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestFmtPrettyDict(t *testing.T) {
