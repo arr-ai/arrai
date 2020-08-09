@@ -40,7 +40,7 @@ attributes `y` and `z`:
 
 |operator|returns|description|
 |:-:|-|-|
-| `A <&> B` | x,&nbsp;y, z | Join |
+| `A <&> B` | x, y, z | Join |
 | `A <-> B` | x, z | Compose |
 | `A -&- B` | y | Intersection of common attributes |
 | `A --- B` | &mdash; | true iff join isn't empty |
