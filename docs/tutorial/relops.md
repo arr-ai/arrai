@@ -25,10 +25,13 @@ y and z:
 @> R <&> S
 ```
 
+Formally, `R <&> S` is defined as the set of all `(:x, :y, :z)` such that
+`(:x, :y) <: R` and `(:y, :z) <: S` (`<:` means "is a member of").
+
 ### Join variants
 
 The join operator, `<&>` is the basis for a family of related operators. Each
-operator performs the same underlying operation of find pairs of tuples whose
+operator performs the same underlying operation of finding pairs of tuples whose
 matching attributes are equal. They differ only in which attributes appear in
 the output relation.
 
@@ -48,7 +51,7 @@ attributes `y` and `z`:
 
 Notes on mathematical intepretation:
 
-1. `A <&> B` is defined as the set of all `(:x, :y, :z)` such that `(:x, :y) <: A` and `(:y, :z) <: B`. All other operators are simply projections of `A <&> B` over different subsets of the attribute set `|x, y, z|`.
+1. Formally, these other operators are simply projections of `A <&> B` over different subsets of the attribute set `|x, y, z|`.
 1. The `<->` operator is a symmetric counterpart to function composition: `(A ∘ B)(x) = B(A(x))`.
 1. The last two operators can be thought of as the domain and codomain of `A <-> B`. Because relational composition is symmetric, it is an arbitrary choice as to which operator represents the domain and which one the codomain.
 1. The `-&-` operator returns the intersection of A's codomain and B's domain (or vice versa, given the symmetry of composition). It can be thought of as the inner domain of `A <-> B`.
