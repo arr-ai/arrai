@@ -10,14 +10,15 @@ import (
 // NestExpr returns the relation with names grouped into a nested relation.
 type NestExpr struct {
 	ExprScanner
-	lhs   Expr
-	attrs Names
-	attr  string
+	inverse bool
+	lhs     Expr
+	attrs   Names
+	attr    string
 }
 
 // NewNestExpr returns a new NestExpr.
-func NewNestExpr(scanner parser.Scanner, lhs Expr, attrs Names, attr string) Expr {
-	return &NestExpr{ExprScanner{scanner}, lhs, attrs, attr}
+func NewNestExpr(scanner parser.Scanner, inverse bool, lhs Expr, attrs Names, attr string) Expr {
+	return &NestExpr{ExprScanner{scanner}, inverse, lhs, attrs, attr}
 }
 
 // String returns a string representation of the expression.
