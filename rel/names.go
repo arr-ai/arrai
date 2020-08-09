@@ -1,8 +1,9 @@
 package rel
 
 import (
-	"bytes"
+	"fmt"
 	"sort"
+	"strings"
 
 	"github.com/arr-ai/frozen"
 )
@@ -63,18 +64,7 @@ func (n Names) Equal(i interface{}) bool {
 
 // String returns a string representation of the set of names.
 func (n Names) String() string {
-	var buf bytes.Buffer
-	buf.WriteRune('|')
-	i := 0
-	for e := n.Enumerator(); e.MoveNext(); {
-		if i != 0 {
-			buf.WriteRune(',')
-		}
-		i++
-		buf.WriteString(e.Current())
-	}
-	buf.WriteRune('|')
-	return buf.String()
+	return fmt.Sprintf("|%s|", strings.Join(n.OrderedNames(), ", "))
 }
 
 // With returns a set with all the input names and the given name.
