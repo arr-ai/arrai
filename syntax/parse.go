@@ -172,5 +172,6 @@ func parseNest(lhs rel.Expr, branch ast.Branch) rel.Expr {
 	for i, name := range names {
 		namestrings[i] = name.One("").Scanner().String()
 	}
-	return rel.NewNestExpr(attr, lhs, rel.NewNames(namestrings...), attr.String())
+	_, isInverse := branch["inv"]
+	return rel.NewNestExpr(attr, isInverse, lhs, rel.NewNames(namestrings...), attr.String())
 }
