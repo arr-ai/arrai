@@ -10,8 +10,9 @@ The following standard packages are available:
 - [`//bits`](std-bits.md): Bit utilities
 - [`//encoding`](std-encoding.md): Support for encoded data processing
 - [`//eval`](std-eval.md): Evaluate strings holding arr.ai code
+- [`//fmt`](std-fmt.md): String formatting utilities
 - [`//fn`](std-fn.md): Function manipulation utilities
-- [`//grammar`](../syntax/std-grammar.md): Grammar features & processing
+- [`//grammar`](std-grammar.md): Grammar features & processing
 - [`//log`](std-log.md): Print utilities
 - [`//math`](std-math.md): Math operations and functions
 - [`//net`](std-net.md): Network utilities

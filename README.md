@@ -26,7 +26,7 @@ into the world of arr.ai programming.
 See the [Introduction to Arr.ai](docs/README.md) to learn more about the arr.ai
 language.
 
-See the [Standard Library Reference](docs/std.md) to learn which are batteries
+See the [Standard Library Reference](docs/std.md) to learn what batteries
 are included in arr.ai.
 
 ### Arr.ai Examples
@@ -70,6 +70,8 @@ There are more features in the interactive shell. For more info please read the
 
 ### Evaluate an expression
 
+(See [here](docs/cmdline/eval.md) for a full description of `eval`.)
+
 ```bash
 arrai eval '41 + 1'
 ```
@@ -90,6 +92,8 @@ echo {0..10} | ax '2^.'
 -->
 
 ### Run an arrai file
+
+(See [here](docs/cmdline/eval.md) for a full description of `run`.)
 
 ```bash
 arrai path/to/file.arrai

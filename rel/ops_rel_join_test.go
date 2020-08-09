@@ -93,6 +93,6 @@ func intPairs(a, b string, pairs ...intPair) Set { //nolint:unparam
 }
 
 func assertJoin(t *testing.T, expected, a, b Set) bool { //nolint:unparam
-	return AssertEqualValues(t, expected, Join(a, b)) &&
-		AssertEqualValues(t, expected, Join(b, a))
+	return AssertEqualValues(t, expected, join(a, b)) &&
+		AssertEqualValues(t, expected, join(b, a))
 }

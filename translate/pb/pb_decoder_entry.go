@@ -10,46 +10,32 @@ import (
 	"google.golang.org/protobuf/types/dynamicpb"
 )
 
+const fileDescriptorSet = "FileDescriptorSet"
+
 // StdProtobufDecoder transforms the protocol buffer message to a tuple.
-// Sample code to call this method:
-// let sysl = //encoding.proto.decode(//encoding.proto.proto, //os.file('sysl.pb'));
-// let decodeSyslPb = //encoding.proto.decode(sysl);
-// let shop = decodeSyslPb('Module', //os.file("petshop.pb"));
-// petshop.apps("PetShopApi")
 var StdProtobufDecoder = rel.NewNativeFunction("decode", func(param rel.Value) (rel.Value, error) {
-	bytes, isBytes := param.(rel.Bytes)
+	tuple, isTuple := param.(rel.Tuple)
+	if !isTuple {
+		return nil, fmt.Errorf("//encoding.proto.decode: param not tuple")
+	}
+	// TODO will change it to use a tuple to represent a file descriptor, #496
+	fdVal, found := tuple.Get(fileDescriptorSet)
+	if !found {
+		return nil, fmt.Errorf("//encoding.proto.decode: couldn't find %s in tuple", fileDescriptorSet)
+	}
+	fdBytes, isBytes := fdVal.(rel.Bytes)
 	if !isBytes {
-		return nil, fmt.Errorf("//encoding.proto.decode: param not bytes")
+		return nil, fmt.Errorf("//encoding.proto.decode: %s is not bytes", fileDescriptorSet)
+	}
+	fd, err := decodeFileDescriptor(fdBytes.Bytes())
+	if err != nil {
+		return nil, err
 	}
 
-	if bytes.Bytes() == nil {
-		// the call looks like `let sysl = //encoding.proto.decode(//encoding.proto.proto, //os.file('sysl.pb'))`
-		return rel.NewNativeFunction("decode$1", func(definition rel.Value) (rel.Value, error) {
-			_, is := tools.ValueAsBytes(definition)
-			if !is {
-				return nil, fmt.Errorf("//encoding.proto.decode: definition not bytes")
-			}
-
-			return definition, nil
-		}), nil
-	}
-
-	// the call looks like `let decodeSyslPb = //encoding.proto.decode(sysl);`
-	// after `let sysl = //encoding.proto.decode(//encoding.proto.proto, //os.file('sysl.pb'));`
-	definitionBytes, is := tools.ValueAsBytes(bytes)
-	if !is {
-		return nil, fmt.Errorf("//encoding.proto.decode: fileDescriptor not bytes")
-	}
-
-	return rel.NewNativeFunction("decode$2", func(rootMessageName rel.Value) (rel.Value, error) {
-		fd, err := decodeFileDescriptor(definitionBytes)
-		if err != nil {
-			return nil, err
-		}
-
-		nameStr, isStr := tools.ValueAsString(rootMessageName)
+	return rel.NewNativeFunction("decode$2", func(messageTypeName rel.Value) (rel.Value, error) {
+		nameStr, isStr := tools.ValueAsString(messageTypeName)
 		if !isStr {
-			return nil, fmt.Errorf("//encoding.proto.decode: rootMessageName not string")
+			return nil, fmt.Errorf("//encoding.proto.decode: messageTypeName not string")
 		}
 		rootMessageDesc := fd.Messages().ByName(protoreflect.Name(nameStr))
 		message := dynamicpb.NewMessage(rootMessageDesc)
@@ -60,7 +46,7 @@ var StdProtobufDecoder = rel.NewNativeFunction("decode", func(param rel.Value) (
 				return nil, fmt.Errorf("//encoding.proto.decode: data not bytes")
 			}
 
-			err = proto.Unmarshal(dataBytes, message)
+			err := proto.Unmarshal(dataBytes, message)
 			if err != nil {
 				return nil, err
 			}
@@ -73,4 +59,14 @@ var StdProtobufDecoder = rel.NewNativeFunction("decode", func(param rel.Value) (
 			return tuple, nil
 		}), nil
 	}), nil
+})
+
+// StdProtobufDescriptor transforms the protocol buffer `.proto` binary file to a tuple.
+var StdProtobufDescriptor = rel.NewNativeFunction("decode", func(param rel.Value) (rel.Value, error) {
+	definitionBytes, isBytes := param.(rel.Bytes)
+	if !isBytes {
+		return nil, fmt.Errorf("//encoding.proto.descriptor: param not bytes")
+	}
+
+	return rel.NewTuple(rel.NewAttr(fileDescriptorSet, definitionBytes)), nil
 })

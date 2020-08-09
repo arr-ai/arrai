@@ -31,43 +31,50 @@ func NewOffsetBytes(b []byte, offset int) Set {
 	return Bytes{b: b, offset: offset}
 }
 
+// TODO: support byte arrays with holes.
 func AsBytes(s Set) (Bytes, bool) { //nolint:dupl
 	if b, ok := s.(Bytes); ok {
 		return b, true
 	}
-	if i := s.Enumerator(); i.MoveNext() {
+	n := s.Count()
+	if n == 0 {
+		return Bytes{}, true
+	}
+	tuples := make(bytesByteTupleArray, 0, n)
+	minAt := int(^uint(0) >> 1)
+	maxAt := -minAt - 1
+	for i := s.Enumerator(); i.MoveNext(); {
 		t, is := i.Current().(BytesByteTuple)
 		if !is {
 			return Bytes{}, false
 		}
-
-		middleIndex := s.Count()
-		strs := make([]byte, 2*middleIndex)
-		strs[middleIndex] = t.byteval
-		anchorOffset, minOffset := t.at, t.at
-		lowestIndex, highestIndex := middleIndex, middleIndex
-		for i.MoveNext() {
-			if t, is = i.Current().(BytesByteTuple); !is {
-				return Bytes{}, false
-			}
-			if t.at < minOffset {
-				minOffset = t.at
-			}
-			sliceIndex := middleIndex - (anchorOffset - t.at)
-			strs[sliceIndex] = t.byteval
-
-			if sliceIndex < lowestIndex {
-				lowestIndex = sliceIndex
-			}
-
-			if sliceIndex > highestIndex {
-				highestIndex = sliceIndex
-			}
+		if minAt > t.at {
+			minAt = t.at
 		}
-
-		return NewOffsetBytes(strs[lowestIndex:highestIndex+1], minOffset).(Bytes), true
+		if maxAt < t.at {
+			maxAt = t.at
+		}
+		tuples = append(tuples, t)
 	}
-	return Bytes{}, true
+	bytes := make([]byte, maxAt-minAt+1)
+	for _, t := range tuples {
+		bytes[t.at-minAt] = t.byteval
+	}
+	return Bytes{b: bytes, offset: minAt}, true
+}
+
+type bytesByteTupleArray []BytesByteTuple
+
+func (a bytesByteTupleArray) Len() int {
+	return len(a)
+}
+
+func (a bytesByteTupleArray) Less(i, j int) bool {
+	return a[i].at < a[j].at
+}
+
+func (a bytesByteTupleArray) Swap(i, j int) {
+	a[i], a[j] = a[j], a[i]
 }
 
 // Bytes returns the bytes of b. The caller must not modify the contents.

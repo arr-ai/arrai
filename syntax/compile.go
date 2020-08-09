@@ -603,6 +603,15 @@ func (pc ParseContext) compileTailFunc(tail ast.Node) rel.SafeTailCallback {
 
 func (pc ParseContext) compileGet(base rel.Expr, get ast.Node) rel.Expr {
 	if get != nil {
+		if names := get.One("names"); names != nil {
+			inverse := get.One("") != nil
+			attrs := parseNames(names.(ast.Branch))
+			return rel.NewTupleProjectExpr(
+				handleAccessScanners(base.Source(), names.Scanner()),
+				base, inverse, attrs,
+			)
+		}
+
 		var scanner parser.Scanner
 		var attr string
 		if ident := get.One("IDENT"); ident != nil {
@@ -613,6 +622,7 @@ func (pc ParseContext) compileGet(base rel.Expr, get ast.Node) rel.Expr {
 			scanner = str.One("").Scanner()
 			attr = parseArraiString(scanner.String())
 		}
+
 		base = rel.NewDotExpr(handleAccessScanners(base.Source(), scanner), base, attr)
 	}
 	return base
@@ -1011,6 +1021,13 @@ var binops = map[string]binOpFunc{
 	"&":       rel.NewIntersectExpr,
 	"|":       rel.NewUnionExpr,
 	"<&>":     rel.NewJoinExpr,
+	"<->":     rel.NewComposeExpr,
+	"-&-":     rel.NewJoinCommonExpr,
+	"---":     rel.NewJoinExistsExpr,
+	"-&>":     rel.NewRightMatchExpr,
+	"<&-":     rel.NewLeftMatchExpr,
+	"-->":     rel.NewRightResidueExpr,
+	"<--":     rel.NewLeftResidueExpr,
 	"*":       rel.NewMulExpr,
 	"/":       rel.NewDivExpr,
 	"%":       rel.NewModExpr,
@@ -1018,6 +1035,7 @@ var binops = map[string]binOpFunc{
 	"//":      rel.NewIdivExpr,
 	"^":       rel.NewPowExpr,
 	"\\":      rel.NewOffsetExpr,
+	"+>":      rel.NewAddArrowExpr,
 }
 
 var compareOps = map[string]rel.CompareFunc{

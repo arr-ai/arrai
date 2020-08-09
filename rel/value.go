@@ -91,6 +91,12 @@ type Tuple interface {
 	Project(names Names) Tuple
 }
 
+// TupleProjectAllBut returns the projection of t over all of its attributes except
+// those specified in names.
+func TupleProjectAllBut(t Tuple, names Names) Tuple {
+	return t.Project(t.Names().Minus(names))
+}
+
 // ValueEnumerator enumerates Values.
 type ValueEnumerator interface {
 	MoveNext() bool
@@ -123,10 +129,13 @@ type Set interface {
 	ArrayEnumerator() (OffsetValueEnumerator, bool)
 }
 
-type NoReturnError struct{ s Set }
+type NoReturnError struct {
+	input Value
+	s     Set
+}
 
 func (n NoReturnError) Error() string {
-	return fmt.Sprintf("Call: no return values from set %v", n.s)
+	return fmt.Sprintf("Call: no return values for input %v from set %v", n.input, n.s)
 }
 
 func SetCall(s Set, arg Value) (Value, error) {
@@ -135,7 +144,7 @@ func SetCall(s Set, arg Value) (Value, error) {
 		return nil, err
 	}
 	if !result.IsTrue() {
-		return nil, NoReturnError{s}
+		return nil, NoReturnError{input: arg, s: s}
 	}
 	for i, e := 1, result.Enumerator(); e.MoveNext(); i++ {
 		if i > 1 {
@@ -165,6 +174,8 @@ func NewValue(v interface{}) (Value, error) {
 	switch x := v.(type) {
 	case Value:
 		return x, nil
+	case bool:
+		return NewBool(x), nil
 	case uint:
 		return NewNumber(float64(x)), nil
 	case uint8:
@@ -189,6 +200,12 @@ func NewValue(v interface{}) (Value, error) {
 		return NewNumber(float64(x)), nil
 	case float64:
 		return NewNumber(x), nil
+	case string:
+		return NewString([]rune(x)), nil
+	case []rune:
+		return NewString(x), nil
+	case []byte:
+		return NewBytes(x), nil
 	case map[string]interface{}:
 		return NewTupleFromMap(x)
 	case []interface{}:

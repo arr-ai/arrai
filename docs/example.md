@@ -196,12 +196,12 @@ $ arrai eval '{1, [2, 3], 4, [5, 6]} filter . {[_, _]: 42}'
 ```
 
 
-### Transform json and filter value from it
+### Transform JSON and filter a value from it
 
-Filter out value of `a` from json 
+Filter out value of `a` from JSON:
 
 ```bash
-$ echo '{"a": "hello", "b": "world"}'| arrai json | arrai x '."a"'
+$ echo '{"a": "hello", "b": "world"}'| arrai json | arrai x '.("a")'
 "hello"
 ```
 
@@ -261,4 +261,35 @@ $ arrai eval '{|a,b| (1,2), (1,3)} <&> {|a,c| (1,2), (1,3)}'
 ```bash
 $ arrai eval '{|a,b,c| (1,2,2), (1,2,3)} <&> {|b,c,d| (2,3,4), (1,3,4)}'
 {(a: 1, b: 2, c: 3, d: 4)}
+```
+
+### Merge
+
+Merge combines two tuples/dicts, producing a single tuple/dict containing a union of their attributes. If the same name is present in both the LHS (left-hand side) and RHS (right-hand side) tuples/dicts, the RHS value takes precedence in the output.
+
+#### Examples
+
+```bash
+$ arrai e '(a: 1, b: 2) +> (b: 3, c: 4)'
+(a: 1, b: 3, c: 4)
+```
+
+```bash
+$ arrai e '(a: 1, b: (c: 2)) +> (b: (c: 4), c: 4)'
+(a: 1, b: (c: 4), c: 4)
+```
+
+```bash
+$ arrai e '(a: (b: 1)) +> (a: (c: 2))'
+(a: (c: 2))
+```
+
+```bash
+$ arrai e '{"a": 1, "b": 2} +> {"b": 3, "d": 4}'
+{'a': 1, 'b': 3, 'd': 4}
+```
+
+```bash
+$ arrai e '{"a": {"b": 1}} +> {"a": {"c": 2}}'
+{'a': {'c': 2}}
 ```
