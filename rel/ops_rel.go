@@ -29,9 +29,10 @@ func NestWithFunc(a Set, attrs Names, attr string, fn func(Set, Tuple) Set) Set 
 	}
 	names := mustGetRelationAttrs(a)
 
-	if !attrs.IsSubsetOf(names) {
-		panic(fmt.Errorf("nest attrs (%v) not a subset of relation attrs (%v)", attrs, names))
+	if err := validNestOp(names, attrs); err != nil {
+		panic(err)
 	}
+
 	key := names.Minus(attrs)
 	return Reduce(
 		a,
@@ -56,17 +57,18 @@ func mustGetRelationAttrs(a Set) Names {
 	return names
 }
 
+func validNestOp(setAttrs, nestAttrs Names) error {
+	if !nestAttrs.IsSubsetOf(setAttrs) {
+		return fmt.Errorf("nest attrs (%v) not a subset of relation attrs (%v)", nestAttrs, setAttrs)
+	}
+	return nil
+}
+
 // Nest groups the given attributes into nested relations.
 func Nest(a Set, attrs Names, attr string) Set {
 	return NestWithFunc(a, attrs, attr, func(nest Set, t Tuple) Set {
 		return nest.With(t.Project(attrs))
 	})
-}
-
-func InverseNest(a Set, attrs Names, attr string) Set {
-	names := mustGetRelationAttrs(a)
-	attrs = names.Minus(attrs)
-	return Nest(a, attrs, attr)
 }
 
 func SingleAttrNest(a Set, attr string) Set {
