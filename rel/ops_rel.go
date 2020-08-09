@@ -23,7 +23,7 @@ func RelationAttrs(a Set) (Names, bool) {
 	return names, true
 }
 
-func NestWithFunc(a Set, attrs Names, attr string, fn func (Set, Tuple) Set) Set {
+func NestWithFunc(a Set, attrs Names, attr string, fn func(Set, Tuple) Set) Set {
 	if !a.IsTrue() {
 		return a
 	}
