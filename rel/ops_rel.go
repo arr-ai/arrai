@@ -23,18 +23,16 @@ func RelationAttrs(a Set) (Names, bool) {
 	return names, true
 }
 
-// Nest groups the given attributes into nested relations.
-func Nest(a Set, attrs Names, attr string) Set {
+func NestWithFunc(a Set, attrs Names, attr string, fn func(Set, Tuple) Set) Set {
 	if !a.IsTrue() {
 		return a
 	}
-	names, ok := RelationAttrs(a)
-	if !ok {
-		panic("Tuple names mismatch in nest lhs")
+	names := mustGetRelationAttrs(a)
+
+	if err := validNestOp(names, attrs); err != nil {
+		panic(err)
 	}
-	if !attrs.IsSubsetOf(names) {
-		panic(fmt.Errorf("nest attrs (%v) not a subset of relation attrs (%v)", attrs, names))
-	}
+
 	key := names.Minus(attrs)
 	return Reduce(
 		a,
@@ -44,11 +42,39 @@ func Nest(a Set, attrs Names, attr string) Set {
 		func(key Value, tuples Set) Set {
 			nested := None
 			for e := tuples.Enumerator(); e.MoveNext(); {
-				nested = nested.With(e.Current().(Tuple).Project(attrs))
+				nested = fn(nested, e.Current().(Tuple))
 			}
 			return NewSet(Merge(key.(Tuple), NewTuple(Attr{attr, nested})))
 		},
 	)
+}
+
+func mustGetRelationAttrs(a Set) Names {
+	names, ok := RelationAttrs(a)
+	if !ok {
+		panic("Tuple names mismatch in nest lhs")
+	}
+	return names
+}
+
+func validNestOp(setAttrs, nestAttrs Names) error {
+	if !nestAttrs.IsSubsetOf(setAttrs) {
+		return fmt.Errorf("nest attrs (%v) not a subset of relation attrs (%v)", nestAttrs, setAttrs)
+	}
+	return nil
+}
+
+// Nest groups the given attributes into nested relations.
+func Nest(a Set, attrs Names, attr string) Set {
+	return NestWithFunc(a, attrs, attr, func(nest Set, t Tuple) Set {
+		return nest.With(t.Project(attrs))
+	})
+}
+
+func SingleAttrNest(a Set, attr string) Set {
+	return NestWithFunc(a, NewNames(attr), attr, func(nest Set, t Tuple) Set {
+		return nest.With(t.MustGet(attr))
+	})
 }
 
 // Unnest unpacks the attributes of a nested relation into the outer relation.

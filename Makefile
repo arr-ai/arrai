@@ -1,9 +1,13 @@
 include VersionReport.mk
 
+.PHONY: all
 all: lint test wasm
 
-parser:
-	go generate .
+.PHONY: parser
+parser: syntax/parser.go
+
+syntax/parser.go: tools/parser/generate_parser.go syntax/arrai.wbnf
+	go run $^ $@
 
 build: parser
 	go build -ldflags=$(LDFLAGS) ./cmd/arrai
@@ -15,6 +19,11 @@ install: parser
 	go install -ldflags=$(LDFLAGS) ./cmd/arrai
 	[ -f $$(dirname $$(which arrai))/ai ] || ln -s arrai $$(dirname $$(which arrai))/ai
 	[ -f $$(dirname $$(which arrai))/ax ] || ln -s arrai $$(dirname $$(which arrai))/ax
+
+tidy:
+	go mod tidy
+	gofmt -s -w .
+	goimports -w .
 
 lint: parser
 	golangci-lint run
