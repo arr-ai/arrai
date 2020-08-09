@@ -163,7 +163,11 @@ func (pc ParseContext) Parse(s *parser.Scanner) (ast.Branch, error) {
 
 func parseNest(lhs rel.Expr, branch ast.Branch) rel.Expr {
 	attr := branch.One("IDENT").One("").Scanner()
-	names := branch["names"].(ast.One).Node.(ast.Branch)["IDENT"].(ast.Many)
+	namesBranch, exist := branch["names"]
+	if !exist {
+		return rel.NewSingleNestExpr(attr, lhs, attr.String())
+	}
+	names := namesBranch.(ast.One).Node.(ast.Branch)["IDENT"].(ast.Many)
 	namestrings := make([]string, len(names))
 	for i, name := range names {
 		namestrings[i] = name.One("").Scanner().String()
