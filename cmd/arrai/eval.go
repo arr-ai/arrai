@@ -102,6 +102,7 @@ func outputValue(ctx context.Context, value rel.Value, out string) error {
 			}
 			return outputTupleDir(t, arg, fs, false)
 		}
+		return fmt.Errorf("result not a dict: %v", value)
 	}
 	return fmt.Errorf("invalid --out flag: %s", out)
 }
