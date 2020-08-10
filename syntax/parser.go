@@ -16,7 +16,7 @@ expr   -> C* amp="&"* @ C* arrow=(
               nest |
               unnest |
               ARROW @ |
-              FILTER cond=(controlVar=@ "{" (condition=pattern ":" value=@):SEQ_COMMENT,? "}") |
+              FILTER cond=(controlVar=@ "{" (condition=pattern ":" value=expr):SEQ_COMMENT,? "}") |
               binding="->" C* "\\" C* pattern C* %%bind C* @ |
               binding="->" C* %%bind @
           )* C*
