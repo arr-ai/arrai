@@ -42,7 +42,9 @@ func testPath(path string, w io.Writer) error {
 		return err
 	}
 
-	test.Report(results)
-
+	err = test.Report(w, results)
+	if err != nil {
+		return err
+	}
 	return nil
 }

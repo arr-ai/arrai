@@ -49,16 +49,26 @@ func Test(path string) (Results, error) {
 
 // isRecursivelyTrue returns true if every leaf value of val is true (not just truthy).
 func isRecursivelyTrue(val rel.Value) bool {
-	logrus.Tracef("checking truth of %v", val)
+	logrus.Infof("checking truth of %v", val)
 	switch v := val.(type) {
 	case rel.GenericSet:
-		if v.Count() == 0 {
+		if !v.IsTrue() {
 			return false
 		}
 		if v.Count() == 1 && v.Has(rel.NewTuple()) {
 			return true
 		}
 		for _, item := range v.OrderedValues() {
+			if !isRecursivelyTrue(item) {
+				return false
+			}
+		}
+		return true
+	case rel.Array:
+		if v.Count() == 0 {
+			return false
+		}
+		for _, item := range v.Values() {
 			if !isRecursivelyTrue(item) {
 				return false
 			}

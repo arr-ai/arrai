@@ -12,7 +12,7 @@ type Results struct {
 }
 
 // Add adds a result to the set of results.
-func (rs Results) Add(r Result) {
+func (rs *Results) Add(r Result) {
 	rs.results = append(rs.results, r)
 }
 
@@ -26,11 +26,27 @@ func (rs Results) AllPassed() bool {
 	return true
 }
 
+// Count returns the number of results in the set.
+func (rs Results) Count() int {
+	return len(rs.results)
+}
+
 // CountFailed returns the number of tests that failed.
 func (rs Results) CountFailed() int {
 	count := 0
 	for _, r := range rs.results {
 		if !r.pass {
+			count++
+		}
+	}
+	return count
+}
+
+// CountPassed returns the number of tests that passed.
+func (rs Results) CountPassed() int {
+	count := 0
+	for _, r := range rs.results {
+		if r.pass {
 			count++
 		}
 	}
