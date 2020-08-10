@@ -77,10 +77,10 @@ func TestExprLetArrayPattern(t *testing.T) { //nolint:dupl
 	AssertCodesEvalToSameValue(t, `2`, `let x = 3; let [_, b, (x)] = [1, 2, 3]; b`)
 	AssertCodesEvalToSameValue(t, `2`, `let x = 3; let [x] = [2]; x`)
 	AssertCodesEvalToSameValue(t,
-		`('': [88\'+'], @rule: 'expr', expr: [(expr: [('': 87\'1')]), ('': [90\'*'], expr: [('': 89\'2'), ('': 91\'3')])])`,
+		`('': [75\'+'], @rule: 'expr', expr: [(expr: [('': 74\'1')]), ('': [77\'*'], expr: [('': 76\'2'), ('': 78\'3')])])`,
 		`let [g] = [{://grammar.lang.wbnf: expr -> @:[-+] > @:[/*] > \d+; :}]; {:g:1+2*3:}`)
 	AssertCodesEvalToSameValue(t,
-		`('': [88\'+'], @rule: 'expr', expr: [(expr: [('': 87\'1')]), ('': [90\'*'], expr: [('': 89\'2'), ('': 91\'3')])])`,
+		`('': [94\'+'], @rule: 'expr', expr: [(expr: [('': 93\'1')]), ('': [96\'*'], expr: [('': 95\'2'), ('': 97\'3')])])`,
 		`let (a: g, b: x) = (a: {://grammar.lang.wbnf: expr -> @:[-+] > @:[/*] > \d+; :}, b: 42); {:g:1+2*3:}`)
 
 	AssertCodeErrors(t, "", `let [(x)] = [2]; x`)
