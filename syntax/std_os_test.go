@@ -2,13 +2,12 @@ package syntax
 
 import (
 	"bytes"
-	"os"
 	"testing"
 )
 
 func TestStdOsStdin(t *testing.T) {
 	// Not parallelisable
-	stdOsStdinVar = newStdOsStdin(os.Stdin, true)
+	stdOsStdinVar.hasInput = true
 	stdin := stdOsStdinVar.reader
 	defer func() { stdOsStdinVar.reset(stdin) }()
 
@@ -24,7 +23,7 @@ func TestStdOsStdin(t *testing.T) {
 
 func TestStdOsStdin_noInput(t *testing.T) {
 	// Not parallelisable
-	stdOsStdinVar = newStdOsStdin(os.Stdin, false)
+	stdOsStdinVar.hasInput = false
 	stdin := stdOsStdinVar.reader
 	defer func() { stdOsStdinVar.reset(stdin) }()
 
