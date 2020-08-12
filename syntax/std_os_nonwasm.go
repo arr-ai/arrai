@@ -43,4 +43,10 @@ func stdOsFile(v rel.Value) (rel.Value, error) {
 	return rel.NewBytes(f), nil
 }
 
-var stdOsStdinVar = newStdOsStdin(os.Stdin)
+// stdinHasInput returns true if there is data to read on stdin.
+func stdinHasInput() bool {
+	stat, _ := os.Stdin.Stat()
+	return (stat.Mode() & os.ModeCharDevice) == 0
+}
+
+var stdOsStdinVar = newStdOsStdin(os.Stdin, stdinHasInput())
