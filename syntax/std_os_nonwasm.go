@@ -45,7 +45,10 @@ func stdOsFile(v rel.Value) (rel.Value, error) {
 
 // stdinHasInput returns true if there is data to read on stdin.
 func stdinHasInput() bool {
-	stat, _ := os.Stdin.Stat()
+	stat, err := os.Stdin.Stat()
+	if err != nil {
+		return false
+	}
 	return (stat.Mode() & os.ModeCharDevice) == 0
 }
 
