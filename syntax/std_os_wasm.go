@@ -30,4 +30,4 @@ func stdOsFile(rel.Value) (rel.Value, error) {
 	panic("not implemented")
 }
 
-var stdOsStdinVar = newStdOsStdin(nil)
+var stdOsStdinVar = newStdOsStdin(nil, false)
