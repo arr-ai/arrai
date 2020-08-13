@@ -57,7 +57,7 @@ func (x *DotExpr) Eval(local Scope) (_ Value, err error) {
 		if value, found := t.Get(x.attr); found {
 			return value, nil
 		}
-		if x.attr[:1] != "&" {
+		if len(x.attr) > 0 && x.attr[:1] != "&" {
 			if value, found := t.Get("&" + x.attr); found {
 				//TODO: add tupleScope self to allow accessing itself
 				switch f := value.(type) {
