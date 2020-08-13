@@ -18,6 +18,15 @@ func TestDotExprAccessors(t *testing.T) {
 	assert.Equal(t, expr.Attr(), attr)
 }
 
+func TestDotExprErrorOnMissingEmptyAttr(t *testing.T) {
+	t.Parallel()
+
+	lhs := NewTuple(NewAttr("a", NewNumber(1)))
+	expr := NewDotExpr(*parser.NewScanner(""), lhs, "").(*DotExpr)
+
+	AssertExprErrorEquals(t, expr, `Missing attr "" (available: |a|)`)
+}
+
 func TestDotExprErrorOnInvalidStarAttr(t *testing.T) {
 	t.Parallel()
 
