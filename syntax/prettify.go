@@ -121,7 +121,7 @@ func prettifyDict(dict rel.Dict, indentsNum int) (string, error) {
 }
 
 func prettifyString(str rel.String) (string, error) {
-	return fmt.Sprintf("'%s'", str), nil
+	return fmt.Sprintf("%s", rel.Repr(str)), nil
 }
 
 type Enumerable interface {

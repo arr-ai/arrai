@@ -85,6 +85,13 @@ func TestFmtPrettySet(t *testing.T) {
 	AssertCodesEvalToSameValue(t, `"{1, 2, {3, 4, 5}}"`, `//fmt.pretty({1,2,{3,4,5}})`)
 }
 
+func TestFmtPrettyString(t *testing.T) {
+	t.Parallel()
+	AssertCodesEvalToSameValue(t, `"{}"`, `//fmt.pretty('')`)
+	AssertCodesEvalToSameValue(t, `"'abc'"`, `//fmt.pretty('abc')`)
+	AssertCodesEvalToSameValue(t, `"42\\'abc'"`, `//fmt.pretty(42\'abc')`)
+}
+
 func TestIsSimple(t *testing.T) {
 	assert.True(t, isSimple(rel.NewString([]rune("a"))))
 	assert.True(t, isSimple(rel.NewNumber(12345)))
