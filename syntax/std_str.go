@@ -13,8 +13,10 @@ func formatValue(format string, value rel.Value) string {
 	var v interface{}
 	switch set := value.(type) {
 	case rel.Set:
-		if s, is := rel.AsString(set); is {
+		if s, is := tools.ValueAsString(set); is {
 			v = s
+		} else if s, is := tools.ValueAsBytes(set); is {
+			v = string(s)
 		} else {
 			v = rel.Repr(set)
 		}
