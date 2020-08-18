@@ -51,8 +51,13 @@ func StdScope() rel.Scope {
 					case rel.Dict:
 						attrs := make([]rel.Attr, 0, t.Count())
 						for e := t.DictEnumerator(); e.MoveNext(); {
-							key, value := e.Current()
-							attrs = append(attrs, rel.NewAttr(key.(rel.String).String(), value))
+							keyVal, value := e.Current()
+							key := ""
+							// keyVal won't be a rel.String if it's empty.
+							if keyStr, ok := keyVal.(rel.String); ok {
+								key = keyStr.String()
+							}
+							attrs = append(attrs, rel.NewAttr(key, value))
 						}
 						return rel.NewTuple(attrs...), nil
 					case rel.Set:
