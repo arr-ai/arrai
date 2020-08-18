@@ -21,25 +21,6 @@ func stdOsGetEnv(value rel.Value) (rel.Value, error) {
 	return rel.NewString([]rune(os.Getenv(value.(rel.String).String()))), nil
 }
 
-func stdOsIsATty(value rel.Value) (rel.Value, error) {
-	n, ok := value.(rel.Number)
-	if !ok {
-		return nil, fmt.Errorf("isatty arg must be a number, not %T", value)
-	}
-	fd, ok := n.Int()
-	if !ok {
-		return nil, fmt.Errorf("isatty arg must be an integer, not %s", value)
-	}
-
-	switch fd {
-	case 0:
-		return rel.NewBool(isatty.IsTerminal(os.Stdin.Fd())), nil
-	case 1:
-		return rel.NewBool(isatty.IsTerminal(os.Stdout.Fd())), nil
-	}
-	return nil, fmt.Errorf("isatty not implemented for %v", fd)
-}
-
 func stdOsPathSeparator() rel.Value {
 	return rel.NewString([]rune{os.PathSeparator})
 }
@@ -64,13 +45,23 @@ func stdOsFile(v rel.Value) (rel.Value, error) {
 	return rel.NewBytes(f), nil
 }
 
-// stdinHasInput returns true if there is data to read on stdin.
-func stdinHasInput() bool {
-	stat, err := os.Stdin.Stat()
-	if err != nil {
-		return false
+func stdOsIsATty(value rel.Value) (rel.Value, error) {
+	n, ok := value.(rel.Number)
+	if !ok {
+		return nil, fmt.Errorf("isatty arg must be a number, not %T", value)
 	}
-	return (stat.Mode() & os.ModeCharDevice) == 0
+	fd, ok := n.Int()
+	if !ok {
+		return nil, fmt.Errorf("isatty arg must be an integer, not %s", value)
+	}
+
+	switch fd {
+	case 0:
+		return rel.NewBool(isatty.IsTerminal(os.Stdin.Fd())), nil
+	case 1:
+		return rel.NewBool(isatty.IsTerminal(os.Stdout.Fd())), nil
+	}
+	return nil, fmt.Errorf("isatty not implemented for %v", fd)
 }
 
-var stdOsStdinVar = newStdOsStdin(os.Stdin, stdinHasInput())
+var stdOsStdinVar = newStdOsStdin(os.Stdin)

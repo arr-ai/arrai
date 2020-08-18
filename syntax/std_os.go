@@ -24,14 +24,13 @@ func stdOs() rel.Attr {
 }
 
 type stdOsStdin struct {
-	reader   io.Reader
-	mutex    sync.Mutex
-	bytes    rel.Value
-	hasInput bool
+	reader io.Reader
+	mutex  sync.Mutex
+	bytes  rel.Value
 }
 
-func newStdOsStdin(r io.Reader, hasInput bool) *stdOsStdin {
-	return &stdOsStdin{reader: r, hasInput: hasInput}
+func newStdOsStdin(r io.Reader) *stdOsStdin {
+	return &stdOsStdin{reader: r}
 }
 
 func (d *stdOsStdin) reset(r io.Reader) {
@@ -47,16 +46,10 @@ func (d *stdOsStdin) read(_ rel.Value) (rel.Value, error) {
 	if d.bytes != nil {
 		return d.bytes, nil
 	}
-
-	if d.hasInput {
-		f, err := ioutil.ReadAll(stdOsStdinVar.reader)
-		if err != nil {
-			return nil, err
-		}
-		d.bytes = rel.NewBytes(f)
-	} else {
-		d.bytes = rel.NewBytes([]byte{})
+	f, err := ioutil.ReadAll(stdOsStdinVar.reader)
+	if err != nil {
+		return nil, err
 	}
-
+	d.bytes = rel.NewBytes(f)
 	return d.bytes, nil
 }
