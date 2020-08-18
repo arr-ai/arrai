@@ -53,9 +53,8 @@ func StdScope() rel.Scope {
 						for e := t.DictEnumerator(); e.MoveNext(); {
 							keyVal, value := e.Current()
 							key := ""
-							// keyVal won't be a rel.String if it's empty.
-							if keyStr, ok := keyVal.(rel.String); ok {
-								key = keyStr.String()
+							if keyVal.IsTrue() {
+								key = keyVal.String()
 							}
 							attrs = append(attrs, rel.NewAttr(key, value))
 						}

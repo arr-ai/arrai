@@ -7,6 +7,10 @@ func TestStdTuple(t *testing.T) {
 
 	AssertCodesEvalToSameValue(t, `()`, `//tuple({})`)
 	AssertCodesEvalToSameValue(t, `('':1)`, `//tuple({"":1})`)
+	AssertCodesEvalToSameValue(t, `('':1)`, `//tuple({{}:1})`)
+	AssertCodesEvalToSameValue(t, `('':1)`, `//tuple({[]:1})`)
+	AssertCodesEvalToSameValue(t, `('1':2)`, `//tuple({1:2})`)
+	AssertCodesEvalToSameValue(t, `('[1]':2)`, `//tuple({[1]:2})`)
 	AssertCodesEvalToSameValue(t, `(a:1)`, `//tuple({"a":1})`)
 	AssertCodesEvalToSameValue(t, `(a:1, b:2)`, `//tuple({"a":1, "b":2})`)
 
