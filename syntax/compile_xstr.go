@@ -9,49 +9,50 @@ import (
 	"github.com/arr-ai/arrai/rel"
 )
 
-var leadingWSRE = regexp.MustCompile(`\A[\t ]*`)
-var trailingWSRE = regexp.MustCompile(`[\t ]*\z`)
-var lastWSRE = regexp.MustCompile(`\n[\t ]+\z`)
-var expansionRE = regexp.MustCompile(`(?::([-+#*\.\_0-9a-z]*))(:(?:\\.|[^\\:}])*)?(?::((?:\\.|[^\\:}])*))?`)
+var (
+	leadingWSRE = regexp.MustCompile(`\A[\t ]*`)
+	lastWSRE    = regexp.MustCompile(`\n[\t ]+\z`)
+	expansionRE = regexp.MustCompile(`(?::([-+#*\.\_0-9a-z]*))(:(?:\\.|[^\\:}])*)?(?::((?:\\.|[^\\:}])*))?`)
+	indentRE    = regexp.MustCompile(`(\n[\t ]*)(?:[^\t ]|\z)[^\n]*\z`)
+)
 
 func (pc ParseContext) compileExpandableString(b ast.Branch, c ast.Children) rel.Expr {
 	scanner := c.(ast.One).Node.One("quote").Scanner()
 	quote := scanner.String()
 	parts := []interface{}{}
-	{
-		ws := quote[2:]
-		trim := ""
-		trimIndent := func(s string) {
-			s = ws + s
-			ws = ""
-			if trim == "" {
-				s = strings.TrimPrefix(s, "\n")
-				i := leadingWSRE.FindStringIndex(s)
-				trim = "\n" + s[:i[1]]
-				s = s[i[1]:]
-			}
-			if trim != "\n" {
-				s = strings.ReplaceAll(s, trim, "\n")
-			}
-			if s != "" {
-				parts = append(parts, s)
-			}
+
+	ws := quote[2:]
+	trim := ""
+	trimIndent := func(s string) {
+		s = ws + s
+		ws = ""
+		if trim == "" {
+			s = strings.TrimPrefix(s, "\n")
+			i := leadingWSRE.FindStringIndex(s)
+			trim = "\n" + s[:i[1]]
+			s = s[i[1]:]
 		}
-		for i, part := range c.(ast.One).Node.Many("part") {
-			p, part := which(part.(ast.Branch), "sexpr", "fragment")
-			switch p {
-			case "sexpr":
-				if i == 0 || ws != "" {
-					trimIndent("")
-				}
-				sexpr := part.(ast.One).Node.(ast.Branch)
-				ws = sexpr.One("close").One("").(ast.Leaf).Scanner().String()[1:]
-				parts = append(parts, sexpr)
-			case "fragment":
-				s := part.(ast.One).Node.One("").Scanner().String()
-				s = parseArraiStringFragment(s, quote[1:2]+":", "")
-				trimIndent(s)
+		if trim != "\n" {
+			s = strings.ReplaceAll(s, trim, "\n")
+		}
+		if s != "" {
+			parts = append(parts, s)
+		}
+	}
+	for i, part := range c.(ast.One).Node.Many("part") {
+		p, part := which(part.(ast.Branch), "sexpr", "fragment")
+		switch p {
+		case "sexpr":
+			if i == 0 || ws != "" {
+				trimIndent("")
 			}
+			sexpr := part.(ast.One).Node.(ast.Branch)
+			ws = sexpr.One("close").One("").(ast.Leaf).Scanner().String()[1:]
+			parts = append(parts, sexpr)
+		case "fragment":
+			s := part.(ast.One).Node.One("").Scanner().String()
+			s = parseArraiStringFragment(s, quote[1:2]+":", "")
+			trimIndent(s)
 		}
 	}
 
@@ -71,13 +72,6 @@ func (pc ParseContext) compileExpandableString(b ast.Branch, c ast.Children) rel
 		part := parts[i]
 		switch part := part.(type) {
 		case ast.Branch:
-			indent := ""
-			if i > 0 {
-				if s, ok := parts[i-1].(string); ok {
-					indent = trailingWSRE.FindString(s)
-				}
-			}
-
 			format := ""
 			delim := ""
 			appendIfNotEmpty := ""
@@ -87,10 +81,10 @@ func (pc ParseContext) compileExpandableString(b ast.Branch, c ast.Children) rel
 					format = control[m[2]:m[3]]
 				}
 				if m[4] >= 0 {
-					delim = parseArraiStringFragment(control[m[4]:m[5]], ":}", "\n"+indent)
+					delim = parseArraiStringFragment(control[m[4]:m[5]], ":}", "\n")
 				}
 				if m[6] >= 0 {
-					appendIfNotEmpty = parseArraiStringFragment(control[m[6]:m[7]], ":}", "\n"+indent)
+					appendIfNotEmpty = parseArraiStringFragment(control[m[6]:m[7]], ":}", "\n")
 				}
 			}
 			if strings.HasPrefix(next, "\n") {
@@ -119,11 +113,46 @@ func (pc ParseContext) compileExpandableString(b ast.Branch, c ast.Children) rel
 	}
 	for i, part := range parts {
 		if s, ok := part.(string); ok {
-			exprs[i] = rel.NewString([]rune(s))
+			exprs[i] = rel.NewTuple(rel.NewAttr("s", rel.NewString([]rune(s))))
 		}
 	}
 	// TODO: Use a more direct approach to invoke concat implementation.
 	return rel.NewCallExpr(b.Scanner(),
-		rel.NewNativeFunction("concat", stdSeqConcat),
+		rel.NewNativeFunction("xstr_concat", xstrConcat),
 		rel.NewArrayExpr(b.Scanner(), exprs...))
+}
+
+func xstrConcat(seq rel.Value) (rel.Value, error) {
+	values := seq.(rel.Array).Values()
+	recentIndent := "\n"
+	if len(values) == 0 {
+		return rel.None, nil
+	}
+	var sb strings.Builder
+	for _, i := range values {
+		// suppress empty string
+		if !i.IsTrue() {
+			continue
+		}
+		switch i := i.(type) {
+		// handle sexpr
+		case rel.String:
+			sb.WriteString(strings.ReplaceAll(i.String(), "\n", recentIndent))
+
+		// handle bare string
+		case rel.Tuple:
+			v := i.MustGet("s")
+			if !v.IsTrue() {
+				continue
+			}
+			s := v.String()
+			sb.WriteString(s)
+			if m := indentRE.FindStringSubmatch(s); m != nil {
+				recentIndent = m[1]
+			}
+		default:
+			panic("xstrConcat: not receiving a string")
+		}
+	}
+	return rel.NewString([]rune(sb.String())), nil
 }
