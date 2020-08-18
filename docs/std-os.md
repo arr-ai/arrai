@@ -39,6 +39,17 @@ Usage:
 |:-|:-|
 | `//os.get_env("KEY")` | `"string_value"` |
 
+## `//os.isatty(fileDescriptor <: int) <: bool`
+
+`isatty` returns `true` if the `fileDescriptor` (0 for `stdin`, 1 for `stdout`) is a terminal, or `false` otherwise (e.g. if input is piped in).
+
+Usage:
+
+| example | equals |
+|:-|:-|
+| `arrai eval "//os.isatty(0)"` | `true` |
+| `echo "" | arrai eval "//os.isatty(0)"` | `false` |
+
 ## `//os.path_separator <: string`
 
 `path_separator` contains the path separator of the current operating system.

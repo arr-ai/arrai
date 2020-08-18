@@ -19,6 +19,7 @@ func stdOs() rel.Attr {
 		rel.NewNativeFunctionAttr("file", stdOsFile),
 		rel.NewNativeFunctionAttr("get_env", stdOsGetEnv),
 		rel.NewNativeFunctionAttr("&stdin", stdOsStdinVar.read),
+		rel.NewNativeFunctionAttr("isatty", stdOsIsATty),
 	)
 }
 

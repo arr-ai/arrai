@@ -36,3 +36,15 @@ func TestStdOsStdin_noInput(t *testing.T) {
 	AssertCodesEvalToSameValue(t, `{}`, `//os.stdin`)
 	AssertCodesEvalToSameValue(t, `{}`, `//os.stdin`)
 }
+
+func TestStdOsIsATty(t *testing.T) {
+	t.Parallel()
+
+	AssertCodesEvalToSameValue(t, `false`, `//os.isatty(0)`)
+	AssertCodesEvalToSameValue(t, `false`, `//os.isatty(1)`)
+
+	AssertCodeErrors(t, "isatty arg must be a number, not rel.String", `//os.isatty("0")`)
+	AssertCodeErrors(t, "isatty arg must be an integer, not 0.1", `//os.isatty(0.1)`)
+	AssertCodeErrors(t, "isatty not implemented for 2", `//os.isatty(2)`)
+	AssertCodeErrors(t, "isatty not implemented for -1", `//os.isatty(-1)`)
+}
