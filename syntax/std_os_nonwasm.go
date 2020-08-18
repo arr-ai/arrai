@@ -4,9 +4,10 @@ package syntax
 
 import (
 	"fmt"
-	"github.com/mattn/go-isatty"
 	"io/ioutil"
 	"os"
+
+	"github.com/mattn/go-isatty"
 
 	"github.com/arr-ai/arrai/tools"
 
