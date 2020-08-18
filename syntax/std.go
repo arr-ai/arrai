@@ -86,7 +86,7 @@ func StdScope() rel.Scope {
 				),
 				rel.NewTupleAttr("log",
 					rel.NewNativeFunctionAttr("print", func(value rel.Value) (rel.Value, error) {
-						log.Print(value)
+						log.Print(rel.Repr(value))
 						return value, nil
 					}),
 					createNestedFuncAttr("printf", 2, func(args ...rel.Value) (rel.Value, error) {
