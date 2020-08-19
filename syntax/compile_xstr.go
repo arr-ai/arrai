@@ -180,9 +180,12 @@ func cleanEmptyVal(values rel.Value) []rel.Value {
 		// cleans bare string after the empty computed string
 		cleanRE(firstIndentRE, i+1, func(match, toReplace string) string {
 			if match != "" {
-				// clean bare string before the empty computed string
-				// only cleans this if i+1 will be changed, this is to retain
-				// any whitespaces in the bare string of i-1. Meant to handle
+				// cleans bare string before the empty computed string
+				//
+				// only does this if i+1 will be changed, this is meant to retain
+				// any whitespaces in the bare string of arr[i-1].
+				//
+				// Meant to handle
 				// $`
 				//   abc
 				//   ${''}def
