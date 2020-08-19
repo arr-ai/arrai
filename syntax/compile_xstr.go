@@ -11,7 +11,7 @@ import (
 
 var (
 	leadingWSRE   = regexp.MustCompile(`\A[\t ]*`)
-	lastWSRE      = regexp.MustCompile(`\n[\t ]+\z`)
+	lastWSRE      = regexp.MustCompile(`\n[\t ]*\z`)
 	expansionRE   = regexp.MustCompile(`(?::([-+#*\.\_0-9a-z]*))(:(?:\\.|[^\\:}])*)?(?::((?:\\.|[^\\:}])*))?`)
 	indentRE      = regexp.MustCompile(`(\n[\t ]*)(?:[^\t ]|\z)[^\n]*\z`)
 	firstIndentRE = regexp.MustCompile(`\A((\n[\t ]+)(?:\n)|(\n))`)
@@ -64,7 +64,7 @@ func (pc ParseContext) compileExpandableString(b ast.Branch, c ast.Children) rel
 
 	if last, is := parts[len(parts)-1].(string); is {
 		if loc := lastWSRE.FindStringIndex(last); loc != nil {
-			parts[len(parts)-1] = last[:loc[0]+1]
+			parts[len(parts)-1] = last[:loc[0]]
 		}
 	}
 
