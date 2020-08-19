@@ -223,6 +223,140 @@ func TestXStringSuppressEmptyComputedLines(t *testing.T) {
 	AssertCodesEvalToSameValue(t, `"x\n2"`, "$'\n  x\n  ${''}\n  ${''}\n  ${2}'")
 }
 
+func TestXStringSuppressNewlinesAfterEmptyComputedLines(t *testing.T) {
+	t.Parallel()
+	AssertCodesEvalToSameValue(t,
+		`
+"stuff:
+    abc
+    ghi
+"
+		`,
+		`
+$"
+stuff:
+    abc
+    ${''}
+    ghi
+"
+		`,
+	)
+	AssertCodesEvalToSameValue(t,
+		`
+"stuff:
+    abc
+ghi
+"
+		`,
+		`
+$"
+stuff:
+    abc
+    ${''}
+ghi
+"
+		`,
+	)
+	AssertCodesEvalToSameValue(t,
+		`
+"stuff:
+    abc
+    ghi
+"
+		`,
+		`
+$"
+stuff:
+    abc
+    ${''}ghi
+"
+		`,
+	)
+	AssertCodesEvalToSameValue(t,
+		`
+"stuff:
+    abc
+        ghi
+"
+		`,
+		`
+$"
+stuff:
+    abc
+    ${''}    ghi
+"
+		`,
+	)
+	AssertCodesEvalToSameValue(t,
+		`
+"stuff:
+    abc
+
+	ghi
+"
+		`,
+		`
+$"
+stuff:
+    abc
+	${''}
+
+	ghi
+"
+		`,
+	)
+	AssertCodesEvalToSameValue(t,
+		`
+"stuff:
+	abc
+	def
+	ghi
+"
+		`,
+		`
+$"
+stuff:
+	abc
+	${''}
+	${'def'}
+	ghi
+"
+		`,
+	)
+	AssertCodesEvalToSameValue(t,
+		`
+"stuff:
+	abc
+	def
+	ghi
+"
+		`,
+		`
+$"
+stuff:
+	abc
+	${''}${'def'}
+	ghi
+"
+		`,
+	)
+	AssertCodesEvalToSameValue(t,
+		`
+"stuff:
+	abc
+	defghi
+"
+		`,
+		`
+$"
+stuff:
+	abc
+	${''}${'def'}ghi
+"
+		`,
+	)
+}
+
 func TestXStringSuppressLastLineWS(t *testing.T) {
 	t.Parallel()
 	AssertCodesEvalToSameValue(t, `"xy"`, `$"x${ [] :::=}y"`)
