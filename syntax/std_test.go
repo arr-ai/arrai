@@ -12,12 +12,11 @@ func TestStdTuple(t *testing.T) {
 	AssertCodesEvalToSameValue(t, `('':1)`, `//tuple({"":1})`)
 	AssertCodesEvalToSameValue(t, `('':1)`, `//tuple({{}:1})`)
 	AssertCodesEvalToSameValue(t, `('':1)`, `//tuple({[]:1})`)
-	AssertCodesEvalToSameValue(t, `('0': 0)`, `//tuple({0: 0})`)
-	AssertCodesEvalToSameValue(t, `('()':())`, `//tuple({(): ()})`)
 
-	AssertCodesEvalToSameValue(t, `('1':2)`, `//tuple({1:2})`)
-	AssertCodesEvalToSameValue(t, `('[1]':2)`, `//tuple({[1]:2})`)
-
+	AssertCodeErrors(t, "", `//tuple({0: 0})`)
+	AssertCodeErrors(t, "", `//tuple({(): ()})`)
+	AssertCodeErrors(t, "", `//tuple({1:2})`)
+	AssertCodeErrors(t, "", `//tuple({[1]:2})`)
 	AssertCodeErrors(t, "", `//tuple((a:1))`)
 	AssertCodeErrors(t, "", `//tuple(42)`)
 }
