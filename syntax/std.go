@@ -52,12 +52,15 @@ func StdScope() rel.Scope {
 						attrs := make([]rel.Attr, 0, t.Count())
 						for e := t.DictEnumerator(); e.MoveNext(); {
 							keyVal, value := e.Current()
-							key := ""
+							var key string
 							// keyVal won't be a rel.String if it's empty.
 							if _, ok := keyVal.(rel.String); ok {
 								key = keyVal.String()
-							} else if _, ok := keyVal.(rel.GenericSet); !ok || keyVal.IsTrue() {
-								return nil, fmt.Errorf("all keys of arg to //tuple must be strings, not %T", keyVal)
+							} else if _, ok := keyVal.(rel.GenericSet); ok && !keyVal.IsTrue() {
+								key = ""
+							} else {
+								return nil, fmt.Errorf(
+									"all keys of arg to //tuple must be strings, not %T", keyVal)
 							}
 							attrs = append(attrs, rel.NewAttr(key, value))
 						}
