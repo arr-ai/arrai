@@ -125,6 +125,11 @@ func (pc ParseContext) compileExpandableString(b ast.Branch, c ast.Children) rel
 }
 
 func xstrConcat(seq rel.Value) (rel.Value, error) {
+	// this is always a sequence of values between bare string and computed expressions
+	// all bare strings are wrapped in a tuple of one attribute "s"
+	//
+	// bare strings are wrapped in a tuple to differentiate between
+	// regular string and computed expressions
 	values := cleanEmptyVal(seq)
 	recentIndent := "\n"
 	if len(values) == 0 {
@@ -137,7 +142,7 @@ func xstrConcat(seq rel.Value) (rel.Value, error) {
 			continue
 		}
 		switch i := i.(type) {
-		// handle sexpr
+		// handle computed expressions
 		case rel.String:
 			sb.WriteString(strings.ReplaceAll(i.String(), "\n", recentIndent))
 
@@ -165,6 +170,7 @@ func cleanEmptyVal(values rel.Value) []rel.Value {
 	length := len(arr)
 	cleanRE := func(re *regexp.Regexp, index int, cleaner func(string, string) string) {
 		if index >= 0 && index < length {
+			// anything that is wrapped in a tuple is considered bare string
 			if t, isBareString := arr[index].(rel.Tuple); isBareString {
 				if s := t.MustGet("s"); s.IsTrue() {
 					match := ""
