@@ -130,7 +130,7 @@ func xstrConcat(seq rel.Value) (rel.Value, error) {
 	//
 	// bare strings are wrapped in a tuple to differentiate between
 	// regular string and computed expressions
-	values := cleanEmptyVal(seq)
+	values := cleanEmptyVal(seq.(rel.Array))
 	recentIndent := "\n"
 	if len(values) == 0 {
 		return rel.None, nil
@@ -165,20 +165,22 @@ func xstrConcat(seq rel.Value) (rel.Value, error) {
 }
 
 // cleanEmptyVal cleans whitespaces of bare strings before and after a computed empty string.
-func cleanEmptyVal(values rel.Value) []rel.Value {
-	arr := values.(rel.Array).Values()
+func cleanEmptyVal(values rel.Array) []rel.Value {
+	arr := values.Values()
 	length := len(arr)
 	cleanRE := func(re *regexp.Regexp, index int, cleaner func(string, string) string) {
-		if index >= 0 && index < length {
-			// anything that is wrapped in a tuple is considered bare string
-			if t, isBareString := arr[index].(rel.Tuple); isBareString {
-				if s := t.MustGet("s"); s.IsTrue() {
-					match := ""
-					if m := re.FindStringSubmatch(s.String()); m != nil {
-						match = m[1]
-					}
-					arr[index] = t.With("s", rel.NewString([]rune(cleaner(match, s.String()))))
+		if index < 0 || index >= length {
+			return
+		}
+
+		// anything that is wrapped in a tuple is considered bare string
+		if t, isBareString := arr[index].(rel.Tuple); isBareString {
+			if s := t.MustGet("s"); s.IsTrue() {
+				match := ""
+				if m := re.FindStringSubmatch(s.String()); m != nil {
+					match = m[1]
 				}
+				arr[index] = t.With("s", rel.NewString([]rune(cleaner(match, s.String()))))
 			}
 		}
 	}
