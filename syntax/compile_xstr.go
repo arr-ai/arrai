@@ -164,7 +164,7 @@ func xstrConcat(seq rel.Value) (rel.Value, error) {
 	return rel.NewString([]rune(sb.String())), nil
 }
 
-// this function cleans whitespaces of bare strings before and after a computed emptyt string
+// cleanEmptyVal cleans whitespaces of bare strings before and after a computed empty string.
 func cleanEmptyVal(values rel.Value) []rel.Value {
 	arr := values.(rel.Array).Values()
 	length := len(arr)
