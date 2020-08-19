@@ -183,7 +183,7 @@ func cleanEmptyVal(values rel.Value) []rel.Value {
 				// cleans bare string before the empty computed string
 				//
 				// only does this if i+1 will be changed, this is meant to retain
-				// any whitespaces in the bare string of arr[i-1].
+				// any suffix whitespaces in the bare string of arr[i-1].
 				//
 				// Meant to handle
 				// $`
