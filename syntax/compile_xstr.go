@@ -10,10 +10,12 @@ import (
 )
 
 var (
-	leadingWSRE = regexp.MustCompile(`\A[\t ]*`)
-	lastWSRE    = regexp.MustCompile(`\n[\t ]+\z`)
-	expansionRE = regexp.MustCompile(`(?::([-+#*\.\_0-9a-z]*))(:(?:\\.|[^\\:}])*)?(?::((?:\\.|[^\\:}])*))?`)
-	indentRE    = regexp.MustCompile(`(\n[\t ]*)(?:[^\t ]|\z)[^\n]*\z`)
+	leadingWSRE   = regexp.MustCompile(`\A[\t ]*`)
+	lastWSRE      = regexp.MustCompile(`\n[\t ]+\z`)
+	expansionRE   = regexp.MustCompile(`(?::([-+#*\.\_0-9a-z]*))(:(?:\\.|[^\\:}])*)?(?::((?:\\.|[^\\:}])*))?`)
+	indentRE      = regexp.MustCompile(`(\n[\t ]*)(?:[^\t ]|\z)[^\n]*\z`)
+	firstIndentRE = regexp.MustCompile(`\A((\n[\t ]+)(?:\n)|(\n))`)
+	lastSpacesRE  = regexp.MustCompile(`([ \t]*)\z`)
 )
 
 func (pc ParseContext) compileExpandableString(b ast.Branch, c ast.Children) rel.Expr {
@@ -123,7 +125,7 @@ func (pc ParseContext) compileExpandableString(b ast.Branch, c ast.Children) rel
 }
 
 func xstrConcat(seq rel.Value) (rel.Value, error) {
-	values := seq.(rel.Array).Values()
+	values := cleanEmptyVal(seq)
 	recentIndent := "\n"
 	if len(values) == 0 {
 		return rel.None, nil
@@ -155,4 +157,51 @@ func xstrConcat(seq rel.Value) (rel.Value, error) {
 		}
 	}
 	return rel.NewString([]rune(sb.String())), nil
+}
+
+// this function cleans whitespaces of bare strings before and after a computed emptyt string
+func cleanEmptyVal(values rel.Value) []rel.Value {
+	arr := values.(rel.Array).Values()
+	length := len(arr)
+	cleanRE := func(re *regexp.Regexp, index int, cleaner func(string, string) string) {
+		if index >= 0 && index < length {
+			if t, isBareString := arr[index].(rel.Tuple); isBareString {
+				if s := t.MustGet("s"); s.IsTrue() {
+					match := ""
+					if m := re.FindStringSubmatch(s.String()); m != nil {
+						match = m[1]
+					}
+					arr[index] = t.With("s", rel.NewString([]rune(cleaner(match, s.String()))))
+				}
+			}
+		}
+	}
+	clean := func(i int) {
+		// cleans bare string after the empty computed string
+		cleanRE(firstIndentRE, i+1, func(match, toReplace string) string {
+			if match != "" {
+				// clean bare string before the empty computed string
+				// only cleans this if i+1 will be changed, this is to retain
+				// any whitespaces in the bare string of i-1. Meant to handle
+				// $`
+				//   abc
+				//   ${''}def
+				//  `
+				cleanRE(lastSpacesRE, i-1, func(match, toReplace string) string {
+					return strings.TrimSuffix(toReplace, match)
+				})
+				return strings.TrimPrefix(toReplace, match)
+			}
+			return toReplace
+		})
+	}
+	for i := 0; i < length; i++ {
+		switch v := arr[i].(type) {
+		case rel.Set:
+			if !v.IsTrue() {
+				clean(i)
+			}
+		}
+	}
+	return arr
 }
