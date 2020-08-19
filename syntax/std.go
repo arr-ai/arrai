@@ -55,6 +55,13 @@ func StdScope() rel.Scope {
 							key := ""
 							if keyVal.IsTrue() {
 								key = keyVal.String()
+							} else {
+								switch keyVal.(type) {
+								case rel.Number:
+									key = "0"
+								case rel.Tuple:
+									key = "()"
+								}
 							}
 							attrs = append(attrs, rel.NewAttr(key, value))
 						}
