@@ -55,8 +55,8 @@ Expression strings apply the following rules to handle whitespace:
    ghi
    ```
 
-3. If the last newline (`\n`) is followed by pure whitespace, that whitespace is
-   discarded.
+3. The last newline (`\n`) along with any whitespaces after the newline will be
+   removed.
 
 4. If, after indentation removal, an embedded expression is the only remaining
    content on a line, and the formatted result is empty, then the entire line,
