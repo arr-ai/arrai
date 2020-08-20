@@ -2,6 +2,7 @@ package rel
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 
 	"github.com/arr-ai/frozen"
@@ -42,7 +43,7 @@ func NewDictPattern(entries ...DictPatternEntry) DictPattern {
 	return DictPattern{entries}
 }
 
-func (p DictPattern) Bind(local Scope, value Value) (Scope, error) {
+func (p DictPattern) Bind(ctx context.Context, local Scope, value Value) (Scope, error) {
 	dict, is := value.(Dict)
 	if !is {
 		return EmptyScope, fmt.Errorf("%s is not a dict", value)
@@ -94,7 +95,7 @@ func (p DictPattern) Bind(local Scope, value Value) (Scope, error) {
 					return EmptyScope, fmt.Errorf("couldn't find %s in dict %s", key, m)
 				}
 				var err error
-				dictValue, err = entry.pattern.fallback.Eval(local)
+				dictValue, err = entry.pattern.fallback.Eval(ctx, local)
 				if err != nil {
 					return EmptyScope, err
 				}
@@ -104,7 +105,7 @@ func (p DictPattern) Bind(local Scope, value Value) (Scope, error) {
 			}
 		}
 
-		scope, err := entry.pattern.pattern.Bind(local, dictValue)
+		scope, err := entry.pattern.pattern.Bind(ctx, local, dictValue)
 		if err != nil {
 			return EmptyScope, err
 		}

@@ -2,6 +2,7 @@
 package rel
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -137,7 +138,7 @@ func TestBytesByteTuple_String(t *testing.T) { //nolint:dupl
 func TestBytesByteTuple_Eval(t *testing.T) {
 	t.Parallel()
 	tuple := NewBytesByteTuple(42, 'a')
-	value, err := tuple.Eval(EmptyScope)
+	value, err := tuple.Eval(context.Background(), EmptyScope)
 	require.NoError(t, err)
 	assert.Equal(t, tuple, value)
 }

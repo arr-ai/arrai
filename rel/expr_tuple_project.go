@@ -1,6 +1,7 @@
 package rel
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -19,8 +20,8 @@ func NewTupleProjectExpr(scanner parser.Scanner, base Expr, inverse bool, attrs 
 	return &TupleProjectExpr{ExprScanner{scanner}, base, inverse, NewNames(attrs...)}
 }
 
-func (tp *TupleProjectExpr) Eval(local Scope) (Value, error) {
-	val, err := tp.base.Eval(local)
+func (tp *TupleProjectExpr) Eval(ctx context.Context, local Scope) (Value, error) {
+	val, err := tp.base.Eval(ctx, local)
 	if err != nil {
 		return nil, WrapContext(err, tp, local)
 	}

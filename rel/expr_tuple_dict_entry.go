@@ -1,6 +1,7 @@
 package rel
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/arr-ai/wbnf/parser"
@@ -29,12 +30,12 @@ func (e DictEntryTupleExpr) String() string {
 }
 
 // Eval returns the subject
-func (e DictEntryTupleExpr) Eval(local Scope) (Value, error) {
-	at, err := e.at.Eval(local)
+func (e DictEntryTupleExpr) Eval(ctx context.Context, local Scope) (Value, error) {
+	at, err := e.at.Eval(ctx, local)
 	if err != nil {
 		return nil, WrapContext(err, e, local)
 	}
-	value, err := e.value.Eval(local)
+	value, err := e.value.Eval(ctx, local)
 	if err != nil {
 		return nil, WrapContext(err, e, local)
 	}

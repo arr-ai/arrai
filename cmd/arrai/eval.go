@@ -49,7 +49,7 @@ func evalImpl(ctx context.Context, source string, w io.Writer, out string) error
 }
 
 func evalExpr(ctx context.Context, path, source string, w io.Writer, out string) error {
-	value, err := syntax.EvaluateExpr(path, source)
+	value, err := syntax.EvaluateExpr(ctx, path, source)
 	if err != nil {
 		return err
 	}

@@ -1,6 +1,7 @@
 package rel
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/arr-ai/wbnf/parser"
@@ -35,9 +36,9 @@ func (e IdentExpr) String() string {
 }
 
 // Eval returns the value from scope corresponding to the ident.
-func (e IdentExpr) Eval(local Scope) (Value, error) {
+func (e IdentExpr) Eval(ctx context.Context, local Scope) (Value, error) {
 	if a, found := local.Get(e.ident); found && a != nil {
-		return a.Eval(local)
+		return a.Eval(ctx, local)
 	}
 	return nil, WrapContext(fmt.Errorf("name %q not found in %v", e.ident, local.m.Keys()), e, local)
 }

@@ -1,6 +1,7 @@
 package rel
 
 import (
+	"context"
 	"reflect"
 
 	"github.com/arr-ai/wbnf/parser"
@@ -44,8 +45,8 @@ func (c ExprClosure) String() string {
 }
 
 // Eval returns the Value
-func (c ExprClosure) Eval(_ Scope) (Value, error) {
-	return c.e.Eval(c.scope)
+func (c ExprClosure) Eval(ctx context.Context, _ Scope) (Value, error) {
+	return c.e.Eval(ctx, c.scope)
 }
 
 // Source returns a scanner locating the ExprClosure's source code.

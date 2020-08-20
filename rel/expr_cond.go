@@ -2,6 +2,7 @@ package rel
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 
 	"github.com/arr-ai/wbnf/parser"
@@ -43,7 +44,7 @@ func (e CondExpr) String() string {
 }
 
 // Eval returns the value of true condition, or default condition value.
-func (e CondExpr) Eval(local Scope) (Value, error) {
+func (e CondExpr) Eval(ctx context.Context, local Scope) (Value, error) {
 	var trueCond *DictEntryTupleExpr
 
 	switch c := e.dicExpr.(type) {
@@ -56,7 +57,7 @@ func (e CondExpr) Eval(local Scope) (Value, error) {
 				break
 			}
 
-			cond, err := tempExpr.at.Eval(local)
+			cond, err := tempExpr.at.Eval(ctx, local)
 			if err != nil {
 				return nil, WrapContext(err, e, local)
 			}
@@ -79,7 +80,7 @@ func (e CondExpr) Eval(local Scope) (Value, error) {
 		return None, nil
 	}
 
-	value, err := finalCond.Eval(local)
+	value, err := finalCond.Eval(ctx, local)
 	if err != nil {
 		return nil, WrapContext(err, e, local)
 	}

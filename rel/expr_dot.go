@@ -1,6 +1,7 @@
 package rel
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/arr-ai/wbnf/parser"
@@ -45,11 +46,11 @@ func (x *DotExpr) String() string {
 }
 
 // Eval returns the lhs
-func (x *DotExpr) Eval(local Scope) (_ Value, err error) {
+func (x *DotExpr) Eval(ctx context.Context, local Scope) (_ Value, err error) {
 	if x.attr == "*" {
 		return nil, WrapContext(errors.Errorf("expr.* not allowed outside tuple attr"), x, local)
 	}
-	a, err := x.lhs.Eval(local)
+	a, err := x.lhs.Eval(ctx, local)
 	if err != nil {
 		return nil, WrapContext(err, x, local)
 	}

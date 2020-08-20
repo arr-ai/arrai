@@ -1,6 +1,7 @@
 package syntax
 
 import (
+	"context"
 	"fmt"
 	"log"
 
@@ -13,6 +14,7 @@ import (
 
 type ParseContext struct {
 	SourceDir string
+	ctx       context.Context
 }
 
 func parseNames(names ast.Branch) []string {

@@ -1,6 +1,7 @@
 package rel
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/arr-ai/wbnf/parser"
@@ -24,8 +25,8 @@ func (e *TupleMapExpr) String() string {
 }
 
 // Eval returns the lhs
-func (e *TupleMapExpr) Eval(local Scope) (_ Value, err error) {
-	value, err := e.lhs.Eval(local)
+func (e *TupleMapExpr) Eval(ctx context.Context, local Scope) (_ Value, err error) {
+	value, err := e.lhs.Eval(ctx, local)
 	if err != nil {
 		return nil, WrapContext(err, e, local)
 	}
@@ -37,8 +38,8 @@ func (e *TupleMapExpr) Eval(local Scope) (_ Value, err error) {
 		}
 	}()
 	return value.(Tuple).Map(func(v Value) Value {
-		scope, _ := e.fn.arg.Bind(local, v) //nolint: errcheck
-		v, err = e.fn.body.Eval(local.Update(scope))
+		scope, _ := e.fn.arg.Bind(ctx, local, v) //nolint: errcheck
+		v, err = e.fn.body.Eval(ctx, local.Update(scope))
 		if err != nil {
 			panic(err)
 		}

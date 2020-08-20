@@ -1,6 +1,10 @@
+//FIXME: import evaluations are done during compilation, which requires context
+// to be here. Putting context here means there needs to be context var that
+// is passed down through compile functions
 package syntax
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -21,7 +25,7 @@ var importLocalFileOnce sync.Once
 var importLocalFileVar rel.Value
 var cache = newCache()
 
-func importLocalFile(fromRoot bool) rel.Value {
+func importLocalFile(ctx context.Context, fromRoot bool) rel.Value {
 	importLocalFileOnce.Do(func() {
 		importLocalFileVar = rel.NewNativeFunction("//./", func(v rel.Value) (rel.Value, error) {
 			s, ok := rel.AsString(v.(rel.Set))
@@ -44,7 +48,7 @@ func importLocalFile(fromRoot bool) rel.Value {
 				}
 			}
 
-			v, err := fileValue(filename)
+			v, err := fileValue(ctx, filename)
 			if err != nil {
 				return nil, err
 			}
@@ -58,7 +62,7 @@ func importLocalFile(fromRoot bool) rel.Value {
 var importExternalContentOnce sync.Once
 var importExternalContentVar rel.Value
 
-func importExternalContent() rel.Value {
+func importExternalContent(ctx context.Context) rel.Value {
 	importExternalContentOnce.Do(func() {
 		importExternalContentVar = rel.NewNativeFunction("//", func(v rel.Value) (rel.Value, error) {
 			s, ok := rel.AsString(v.(rel.Set))
@@ -70,7 +74,7 @@ func importExternalContent() rel.Value {
 			var moduleErr error
 
 			if !strings.HasPrefix(importpath, "http://") && !strings.HasPrefix(importpath, "https://") {
-				v, err := importModuleFile(importpath)
+				v, err := importModuleFile(ctx, importpath)
 				if err == nil {
 					return v, nil
 				}
@@ -80,7 +84,7 @@ func importExternalContent() rel.Value {
 				importpath = "https://" + importpath
 			}
 
-			v, err := importURL(importpath)
+			v, err := importURL(ctx, importpath)
 			if err != nil {
 				if moduleErr != nil {
 					return nil, fmt.Errorf("failed to import %s - %s, and %s", importpath, moduleErr.Error(), err.Error())
@@ -94,7 +98,7 @@ func importExternalContent() rel.Value {
 	return importExternalContentVar
 }
 
-func importModuleFile(importpath string) (rel.Value, error) {
+func importModuleFile(ctx context.Context, importpath string) (rel.Value, error) {
 	var mod module.Module = module.NewGoModule()
 
 	m, err := mod.Get(importpath)
@@ -102,7 +106,7 @@ func importModuleFile(importpath string) (rel.Value, error) {
 		return nil, err
 	}
 
-	return fileValue(filepath.Join(m.Dir, strings.TrimPrefix(importpath, m.Name)))
+	return fileValue(ctx, filepath.Join(m.Dir, strings.TrimPrefix(importpath, m.Name)))
 }
 
 func findRootFromModule(modulePath string) (string, error) {
@@ -132,7 +136,7 @@ func findRootFromModule(modulePath string) (string, error) {
 	}
 }
 
-func importURL(url string) (rel.Value, error) {
+func importURL(ctx context.Context, url string) (rel.Value, error) {
 	resp, err := http.Get(url) //nolint:gosec
 	if err != nil {
 		return nil, err
@@ -144,13 +148,13 @@ func importURL(url string) (rel.Value, error) {
 		if err != nil {
 			return nil, err
 		}
-		val, err := cache.getOrAdd(url, func() (rel.Value, error) { return bytesValue(NoPath, data) })
+		val, err := cache.getOrAdd(url, func() (rel.Value, error) { return bytesValue(ctx, NoPath, data) })
 		return val, err
 	}
 	return nil, fmt.Errorf("request %s failed: %s", url, resp.Status)
 }
 
-func fileValue(filename string) (rel.Value, error) {
+func fileValue(ctx context.Context, filename string) (rel.Value, error) {
 	if filepath.Ext(filename) == "" {
 		filename += ".arrai"
 	}
@@ -165,16 +169,16 @@ func fileValue(filename string) (rel.Value, error) {
 	case ".yml", ".yaml":
 		return translate.BytesYamlToArrai(bytes)
 	}
-	return bytesValue(filename, bytes)
+	return bytesValue(ctx, filename, bytes)
 }
 
-func bytesValue(filename string, data []byte) (rel.Value, error) {
+func bytesValue(ctx context.Context, filename string, data []byte) (rel.Value, error) {
 	eval := func() (rel.Value, error) {
 		expr, err := Compile(filename, string(data))
 		if err != nil {
 			return nil, err
 		}
-		value, err := expr.Eval(rel.EmptyScope)
+		value, err := expr.Eval(ctx, rel.EmptyScope)
 		if err != nil {
 			return nil, rel.WrapContext(err, expr, rel.EmptyScope)
 		}

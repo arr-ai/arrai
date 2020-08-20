@@ -1,6 +1,7 @@
 package rel
 
 import (
+	"context"
 	"fmt"
 	"math"
 	"reflect"
@@ -170,7 +171,7 @@ func (a Array) Shift(offset int) Array {
 }
 
 // Eval returns the string.
-func (a Array) Eval(_ Scope) (Value, error) {
+func (a Array) Eval(ctx context.Context, _ Scope) (Value, error) {
 	return a, nil
 }
 

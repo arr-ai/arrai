@@ -1,6 +1,7 @@
 package rel
 
 import (
+	"context"
 	"strings"
 
 	"github.com/arr-ai/wbnf/parser"
@@ -27,10 +28,10 @@ func NewBytesExpr(scanner parser.Scanner, elements ...Expr) Expr {
 	return NewBytes(bytes)
 }
 
-func (b BytesExpr) Eval(local Scope) (Value, error) {
+func (b BytesExpr) Eval(ctx context.Context, local Scope) (Value, error) {
 	bytes := make([]byte, 0)
 	for _, expr := range b.elements {
-		value, err := expr.Eval(local)
+		value, err := expr.Eval(ctx, local)
 		if err != nil {
 			return nil, WrapContext(err, b, local)
 		}

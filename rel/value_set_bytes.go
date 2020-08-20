@@ -1,6 +1,7 @@
 package rel
 
 import (
+	"context"
 	"reflect"
 
 	"github.com/arr-ai/wbnf/parser"
@@ -116,7 +117,7 @@ func (b Bytes) String() string {
 }
 
 // Eval returns the string.
-func (b Bytes) Eval(_ Scope) (Value, error) {
+func (b Bytes) Eval(ctx context.Context, _ Scope) (Value, error) {
 	return b, nil
 }
 

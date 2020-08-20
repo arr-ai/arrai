@@ -2,6 +2,7 @@ package rel
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 )
 
@@ -42,7 +43,7 @@ func NewTuplePattern(attrs ...TuplePatternAttr) TuplePattern {
 	return TuplePattern{attrs}
 }
 
-func (p TuplePattern) Bind(local Scope, value Value) (Scope, error) {
+func (p TuplePattern) Bind(ctx context.Context, local Scope, value Value) (Scope, error) {
 	tuple, is := value.(Tuple)
 	if !is {
 		return EmptyScope, fmt.Errorf("%s is not a tuple", value)
@@ -89,13 +90,13 @@ func (p TuplePattern) Bind(local Scope, value Value) (Scope, error) {
 					return EmptyScope, fmt.Errorf("couldn't find %s in tuple %s", attr.name, tuple)
 				}
 				var err error
-				tupleValue, err = attr.pattern.fallback.Eval(local)
+				tupleValue, err = attr.pattern.fallback.Eval(ctx, local)
 				if err != nil {
 					return EmptyScope, err
 				}
 			}
 		}
-		scope, err := attr.pattern.Bind(local, tupleValue)
+		scope, err := attr.pattern.Bind(ctx, local, tupleValue)
 		if err != nil {
 			return EmptyScope, err
 		}

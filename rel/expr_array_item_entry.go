@@ -1,6 +1,7 @@
 package rel
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/arr-ai/wbnf/parser"
@@ -29,12 +30,12 @@ func (e ArrayItemTupleExpr) String() string {
 }
 
 // Eval returns the subject.
-func (e ArrayItemTupleExpr) Eval(local Scope) (_ Value, err error) {
-	at, err := e.at.Eval(local)
+func (e ArrayItemTupleExpr) Eval(ctx context.Context, local Scope) (_ Value, err error) {
+	at, err := e.at.Eval(ctx, local)
 	if err != nil {
 		return nil, WrapContext(err, e, local)
 	}
-	value, err := e.item.Eval(local)
+	value, err := e.item.Eval(ctx, local)
 	if err != nil {
 		return nil, WrapContext(err, e, local)
 	}

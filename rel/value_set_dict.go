@@ -1,6 +1,7 @@
 package rel
 
 import (
+	"context"
 	"fmt"
 	"reflect"
 	"sort"
@@ -108,7 +109,7 @@ func (d Dict) OrderedEntries() []DictEntryTuple {
 	return result
 }
 
-func (d Dict) Eval(local Scope) (Value, error) {
+func (d Dict) Eval(ctx context.Context, local Scope) (Value, error) {
 	return d, nil
 }
 

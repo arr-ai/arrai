@@ -2,6 +2,7 @@ package rel
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 
 	"github.com/arr-ai/wbnf/parser"
@@ -42,20 +43,20 @@ func (expr CondPatternControlVarExpr) String() string {
 }
 
 // Eval evaluates to find the first valid condition and return its value.
-func (expr CondPatternControlVarExpr) Eval(scope Scope) (Value, error) {
-	varVal, err := expr.controlVarExpr.Eval(scope)
+func (expr CondPatternControlVarExpr) Eval(ctx context.Context, scope Scope) (Value, error) {
+	varVal, err := expr.controlVarExpr.Eval(ctx, scope)
 	if err != nil {
 		return nil, WrapContext(err, expr.controlVarExpr, scope)
 	}
 
 	for _, conditionPair := range expr.conditionPairs {
-		bindings, err := conditionPair.Bind(scope, varVal)
+		bindings, err := conditionPair.Bind(ctx, scope, varVal)
 		if err == nil {
 			l, err := scope.MatchedUpdate(bindings)
 			if err != nil {
 				return nil, WrapContext(err, expr.controlVarExpr, scope)
 			}
-			val, err := conditionPair.Eval(l)
+			val, err := conditionPair.Eval(ctx, l)
 			if err != nil {
 				return nil, WrapContext(err, expr.controlVarExpr, l)
 			}

@@ -1,6 +1,7 @@
 package rel
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/arr-ai/wbnf/parser"
@@ -18,8 +19,8 @@ func NewRecursionExpr(scanner parser.Scanner, name Expr, fn Expr, fix, fixt Valu
 	return RecursionExpr{ExprScanner{scanner}, NewExprPattern(name), fn, fix, fixt}
 }
 
-func (r RecursionExpr) Eval(local Scope) (Value, error) {
-	val, err := r.fn.Eval(local)
+func (r RecursionExpr) Eval(ctx context.Context, local Scope) (Value, error) {
+	val, err := r.fn.Eval(ctx, local)
 	if err != nil {
 		return nil, WrapContext(err, r, local)
 	}

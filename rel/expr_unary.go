@@ -1,12 +1,14 @@
 package rel
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/arr-ai/wbnf/parser"
 	"github.com/go-errors/errors"
 )
 
+//TODO: add context?
 type unaryEval func(a Value, local Scope) (Value, error)
 
 // UnaryExpr represents a range of operators.
@@ -103,8 +105,8 @@ func (e *UnaryExpr) String() string {
 }
 
 // Eval returns the subject
-func (e *UnaryExpr) Eval(local Scope) (Value, error) {
-	a, err := e.a.Eval(local)
+func (e *UnaryExpr) Eval(ctx context.Context, local Scope) (Value, error) {
+	a, err := e.a.Eval(ctx, local)
 	if err != nil {
 		return nil, WrapContext(err, e, local)
 	}

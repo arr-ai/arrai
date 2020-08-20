@@ -1,6 +1,7 @@
 package syntax
 
 import (
+	"context"
 	"testing"
 
 	"github.com/arr-ai/arrai/rel"
@@ -21,7 +22,7 @@ func TestTransformProtobufToTupleFlow(t *testing.T) {
 	assert.NoError(t, err)
 
 	codeExpr := pc.CompileExpr(ast)
-	val, err := codeExpr.Eval(rel.EmptyScope)
+	val, err := codeExpr.Eval(context.Background(), rel.EmptyScope)
 
 	assert.NoError(t, err)
 	shop, _ := val.(rel.Tuple)

@@ -1,6 +1,7 @@
 package rel
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/arr-ai/wbnf/parser"
@@ -25,13 +26,13 @@ func (e *IfElseExpr) String() string {
 }
 
 // Eval returns the ifTrue
-func (e *IfElseExpr) Eval(local Scope) (Value, error) {
-	cond, err := e.cond.Eval(local)
+func (e *IfElseExpr) Eval(ctx context.Context, local Scope) (Value, error) {
+	cond, err := e.cond.Eval(ctx, local)
 	if err != nil {
 		return nil, WrapContext(err, e, local)
 	}
 	if cond.IsTrue() {
-		return e.ifTrue.Eval(local)
+		return e.ifTrue.Eval(ctx, local)
 	}
-	return e.ifFalse.Eval(local)
+	return e.ifFalse.Eval(ctx, local)
 }

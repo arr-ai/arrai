@@ -1,6 +1,7 @@
 package rel
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/arr-ai/wbnf/parser"
@@ -30,8 +31,8 @@ func (e *UnnestExpr) String() string {
 }
 
 // Eval returns e.lhs with e.attrs grouped under e.attr.
-func (e *UnnestExpr) Eval(local Scope) (Value, error) {
-	value, err := e.lhs.Eval(local)
+func (e *UnnestExpr) Eval(ctx context.Context, local Scope) (Value, error) {
+	value, err := e.lhs.Eval(ctx, local)
 	if err != nil {
 		return nil, WrapContext(err, e, local)
 	}

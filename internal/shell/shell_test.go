@@ -2,6 +2,7 @@
 package shell
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"testing"
@@ -322,7 +323,7 @@ func assertTabCompletion(t *testing.T,
 ) {
 	scope := syntax.StdScope()
 	for name, expr := range scopeValues {
-		val, err := syntax.EvaluateExpr("", expr)
+		val, err := syntax.EvaluateExpr(context.Background(), "", expr)
 		require.NoError(t, err)
 		scope = scope.With(name, val)
 	}

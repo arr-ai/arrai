@@ -1,6 +1,7 @@
 package rel
 
 import (
+	"context"
 	"testing"
 
 	"github.com/arr-ai/wbnf/parser"
@@ -139,13 +140,13 @@ func TestOffsetExprEvalFail(t *testing.T) {
 
 	// None in LHS instead of a Number
 	_, err := NewOffsetExpr(
-		*parser.NewScanner(""), None, None).Eval(EmptyScope)
+		*parser.NewScanner(""), None, None).Eval(context.Background(), EmptyScope)
 	expected := errors.Errorf("\\ not applicable to %T", None).Error()
 	assert.EqualError(t, errors.New(err.Error()[:len(expected)]), expected)
 
 	// Randomg set in RHS instead of an Array
 	_, err = NewOffsetExpr(
-		*parser.NewScanner(""), Number(float64(0)), NewSet(Number(float64(0)))).Eval(EmptyScope)
+		*parser.NewScanner(""), Number(float64(0)), NewSet(Number(float64(0)))).Eval(context.Background(), EmptyScope)
 	expected = errors.Errorf("\\ not applicable to %T", NewSet(Number(float64(0)))).Error()
 	assert.EqualError(t, errors.New(err.Error()[:len(expected)]), expected)
 }

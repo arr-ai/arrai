@@ -1,6 +1,7 @@
 package rel
 
 import (
+	"context"
 	"fmt"
 	"reflect"
 
@@ -69,7 +70,7 @@ func (t DictEntryTuple) String() string {
 }
 
 // Eval returns the tuple.
-func (t DictEntryTuple) Eval(local Scope) (Value, error) {
+func (t DictEntryTuple) Eval(ctx context.Context, local Scope) (Value, error) {
 	return t, nil
 }
 

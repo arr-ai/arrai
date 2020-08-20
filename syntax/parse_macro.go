@@ -1,6 +1,7 @@
 package syntax
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/arr-ai/arrai/rel"
@@ -21,7 +22,8 @@ type Macro struct {
 func (pc ParseContext) unpackMacro(macroElt parser.Node, ruleElt parser.Node, relScope rel.Scope) (Macro, error) {
 	macroNode := ast.FromParserNode(arraiParsers.Grammar(), macroElt)
 	macroExpr := pc.CompileExpr(macroNode).(rel.Expr)
-	macroValue, err := macroExpr.Eval(relScope)
+	//TODO: context may need to be initialized with more key values here
+	macroValue, err := macroExpr.Eval(context.Background(), relScope)
 	if err != nil {
 		return Macro{ruleName: ""}, err
 	}

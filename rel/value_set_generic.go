@@ -2,6 +2,7 @@ package rel
 
 import (
 	"bytes"
+	"context"
 	"reflect"
 	"sort"
 
@@ -167,7 +168,7 @@ func (s GenericSet) String() string {
 }
 
 // Eval returns the set.
-func (s GenericSet) Eval(local Scope) (Value, error) {
+func (s GenericSet) Eval(ctx context.Context, local Scope) (Value, error) {
 	return s, nil
 }
 

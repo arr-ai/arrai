@@ -1,6 +1,7 @@
 package rel
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/arr-ai/wbnf/parser"
@@ -19,8 +20,8 @@ func NewOffsetExpr(scanner parser.Scanner, n, s Expr) Expr {
 	return &OffsetExpr{ExprScanner{scanner}, n, s}
 }
 
-func (o *OffsetExpr) Eval(local Scope) (_ Value, err error) {
-	offset, err := o.offset.Eval(local)
+func (o *OffsetExpr) Eval(ctx context.Context, local Scope) (_ Value, err error) {
+	offset, err := o.offset.Eval(ctx, local)
 	if err != nil {
 		return nil, WrapContext(err, o, local)
 	}
@@ -29,7 +30,7 @@ func (o *OffsetExpr) Eval(local Scope) (_ Value, err error) {
 		return nil, WrapContext(errors.Errorf("\\ not applicable to %T", offset), o, local)
 	}
 
-	array, err := o.array.Eval(local)
+	array, err := o.array.Eval(ctx, local)
 	if err != nil {
 		return nil, WrapContext(err, o, local)
 	}

@@ -2,6 +2,7 @@ package rel
 
 import (
 	"bytes"
+	"context"
 
 	"github.com/arr-ai/wbnf/parser"
 	"github.com/go-errors/errors"
@@ -49,9 +50,9 @@ func (e *AttrExpr) IsWildcard() bool {
 
 // Apply applies the AttrExpr to the Tuple.
 func (e *AttrExpr) Apply(
-	local Scope, tuple Tuple,
+	ctx context.Context, local Scope, tuple Tuple,
 ) (Tuple, error) {
-	value, err := e.expr.Eval(local)
+	value, err := e.expr.Eval(ctx, local)
 	if err != nil {
 		return nil, err
 	}
@@ -138,11 +139,11 @@ func (e *TupleExpr) String() string { //nolint:dupl
 }
 
 // Eval returns the subject
-func (e *TupleExpr) Eval(local Scope) (Value, error) {
+func (e *TupleExpr) Eval(ctx context.Context, local Scope) (Value, error) {
 	tuple := EmptyTuple
 	var err error
 	for _, attr := range e.attrs {
-		tuple, err = attr.Apply(local, tuple)
+		tuple, err = attr.Apply(ctx, local, tuple)
 		if err != nil {
 			return nil, WrapContext(err, e, local)
 		}

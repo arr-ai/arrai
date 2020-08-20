@@ -57,7 +57,7 @@ func stdTest() rel.Attr {
 		// 						panic(WrapContext(fmt.Errorf("unexpected panic: %v", r), expr))
 		// 					}
 		// 				}()
-		// 				_, err = elt.Eval(local)
+		// 				_, err = elt.Eval(ctx, local)
 		// 			}()
 		// 			if err != nil {
 		// 				filename = elt.Source().Filename()

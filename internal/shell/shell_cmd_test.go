@@ -1,6 +1,7 @@
 package shell
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
@@ -53,7 +54,7 @@ func TestSetCmd(t *testing.T) {
 
 func setCmdAssertion(t *testing.T, name, exprToSet string, set *setCmd, sh *shellInstance) {
 	assert.NoError(t, set.process(fmt.Sprintf("%s = %s", name, exprToSet), sh))
-	actualVal, err := syntax.EvalWithScope("", exprToSet, sh.scope)
+	actualVal, err := syntax.EvalWithScope(context.Background(), "", exprToSet, sh.scope)
 	require.NoError(t, err)
 	expr, exists := sh.scope.Get(name)
 	assert.True(t, exists)

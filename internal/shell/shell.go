@@ -31,7 +31,7 @@ func tryEval(line string, scope rel.Scope) (_ rel.Value, err error) {
 			}
 		}
 	}()
-	return syntax.EvalWithScope("", line, scope)
+	return syntax.EvalWithScope(context.Background(), "", line, scope)
 }
 
 func shellFilterInputRune(r rune) (rune, bool) {

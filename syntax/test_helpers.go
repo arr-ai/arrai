@@ -1,6 +1,7 @@
 package syntax
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"strings"
@@ -28,7 +29,7 @@ func AssertCodesEvalToSameValue(t *testing.T, expected, code string) bool {
 		return false
 	}
 	codeExpr := pc.CompileExpr(ast)
-	value, err := codeExpr.Eval(rel.Scope{})
+	value, err := codeExpr.Eval(context.Background(), rel.Scope{})
 	if !assert.NoError(t, err, "evaluating expected: %s", expected) {
 		return false
 	}
@@ -73,7 +74,7 @@ func AssertCodeEvalsToGrammar(t *testing.T, expected parser.Grammar, code string
 	pc := ParseContext{SourceDir: ".."}
 	astElt := pc.MustParseString(code)
 	astExpr := pc.CompileExpr(astElt)
-	astValue, err := astExpr.Eval(rel.EmptyScope)
+	astValue, err := astExpr.Eval(context.Background(), rel.EmptyScope)
 	assert.NoError(t, err, "parsing code: %s", code)
 	astNode := rel.ASTNodeFromValue(astValue).(ast.Branch)
 	astGrammar := wbnf.NewFromAst(astNode)
@@ -89,7 +90,7 @@ func AssertCodePanics(t *testing.T, code string) bool {
 		ast, err := pc.Parse(parser.NewScanner(code))
 		if assert.NoError(t, err, "parsing code: %s", code) {
 			codeExpr := pc.CompileExpr(ast)
-			codeExpr.Eval(rel.EmptyScope) //nolint:errcheck
+			codeExpr.Eval(context.Background(), rel.EmptyScope) //nolint:errcheck
 		}
 	})
 }
@@ -101,7 +102,7 @@ func AssertCodeErrors(t *testing.T, errString, code string) bool {
 	ast, err := pc.Parse(parser.NewScanner(code))
 	if assert.NoError(t, err, "parsing code: %s", code) {
 		codeExpr := pc.CompileExpr(ast)
-		_, err := codeExpr.Eval(rel.EmptyScope)
+		_, err := codeExpr.Eval(context.Background(), rel.EmptyScope)
 		if err == nil {
 			panic(fmt.Sprintf("the code `%s` didn't generate any error", code))
 		}

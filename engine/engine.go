@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"context"
 	"sync/atomic"
 
 	"github.com/go-errors/errors"
@@ -60,14 +61,14 @@ func Start() *Engine {
 		for name, fn := range globals {
 			global = global.With(name, rel.NewNativeFunction(name, fn))
 		}
-
+		ctx := context.Background()
 		for {
 			logrus.Info("Engine select")
 			select {
 			case w := <-e.addWatcher:
 				logrus.Info("Add watcher")
 				watchers[w.id] = w
-				w.update(global)
+				w.update(ctx, global)
 			case id := <-e.removeWatcher:
 				logrus.Info("Remove watcher")
 				watchers[id].close()
@@ -76,7 +77,7 @@ func Start() *Engine {
 				logrus.Info("Update DB")
 				logrus.Infof("-> %#v", req.expr)
 				logrus.Infof("-> %s", req.expr)
-				value, err := req.expr.Eval(global)
+				value, err := req.expr.Eval(ctx, global)
 				if err != nil {
 					req.failed <- err
 					continue
@@ -85,7 +86,7 @@ func Start() *Engine {
 				global = global.With(Root, value)
 				for i, w := range watchers {
 					logrus.Infof("Update watcher %d", i)
-					w.update(global)
+					w.update(ctx, global)
 				}
 			case <-e.stop:
 				logrus.Infof("Stop")
@@ -144,14 +145,14 @@ type watcher struct {
 	onclose  func(error)
 }
 
-func (w *watcher) update(global rel.Scope) {
+func (w *watcher) update(ctx context.Context, global rel.Scope) {
 	defer func() {
 		if err := recover(); err != nil {
 			w.onclose(errors.WrapPrefix(err, "update panic", 0))
 		}
 	}()
 
-	value, err := w.expr.Eval(global)
+	value, err := w.expr.Eval(ctx, global)
 	if err != nil {
 		w.cancel()
 		w.onclose(err)

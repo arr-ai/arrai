@@ -1,6 +1,7 @@
 package rel
 
 import (
+	"context"
 	"testing"
 
 	"github.com/arr-ai/wbnf/parser"
@@ -40,7 +41,7 @@ func TestDotExprErrorOnEvalError(t *testing.T) {
 
 	// This will fail to eval, as in the previous test.
 	lhs := NewDotExpr(*parser.NewScanner("().*"), NewTuple(), "*")
-	_, err := lhs.Eval(EmptyScope)
+	_, err := lhs.Eval(context.Background(), EmptyScope)
 
 	// When this fails, it will propagate the err above, wrapped in expr's context.
 	expr := NewDotExpr(*parser.NewScanner("().*.a"), lhs, "a")

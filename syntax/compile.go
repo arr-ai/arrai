@@ -1,5 +1,6 @@
 package syntax
 
+//TODO: should I add context to compile functions?
 import (
 	"context"
 	"errors"
@@ -563,9 +564,9 @@ func (pc ParseContext) compileTailFunc(tail ast.Node) rel.SafeTailCallback {
 				exprs = append(exprs, arg.One("expr"))
 			}
 			compiledExprs := pc.compileExprs(exprs...)
-			return func(v rel.Value, local rel.Scope) (rel.Value, error) {
+			return func(ctx context.Context, v rel.Value, local rel.Scope) (rel.Value, error) {
 				for _, arg := range compiledExprs {
-					a, err := arg.Eval(local)
+					a, err := arg.Eval(ctx, local)
 					if err != nil {
 						return nil, err
 					}
@@ -593,8 +594,8 @@ func (pc ParseContext) compileTailFunc(tail ast.Node) rel.SafeTailCallback {
 				scanner = str.One("").Scanner()
 				attr = parseArraiString(scanner.String())
 			}
-			return func(v rel.Value, local rel.Scope) (rel.Value, error) {
-				return rel.NewDotExpr(handleAccessScanners(v.Source(), scanner), v, attr).Eval(local)
+			return func(ctx context.Context, v rel.Value, local rel.Scope) (rel.Value, error) {
+				return rel.NewDotExpr(handleAccessScanners(v.Source(), scanner), v, attr).Eval(ctx, local)
 			}
 		}
 	}
@@ -632,8 +633,8 @@ func (pc ParseContext) compileSafeTails(base rel.Expr, tail ast.Node) rel.Expr {
 	if tail != nil {
 		firstSafe := tail.One("first_safe").One("tail")
 		safeCallback := func(tailFunc rel.SafeTailCallback) rel.SafeTailCallback {
-			return func(v rel.Value, local rel.Scope) (rel.Value, error) {
-				val, err := tailFunc(v, local)
+			return func(ctx context.Context, v rel.Value, local rel.Scope) (rel.Value, error) {
+				val, err := tailFunc(ctx, v, local)
 				if err != nil {
 					switch e := err.(type) {
 					case rel.NoReturnError:
@@ -850,11 +851,11 @@ func (pc ParseContext) compilePackage(b ast.Branch, c ast.Children) rel.Expr {
 				panic(fmt.Errorf("local import %q invalid; no local context", name))
 			}
 			return rel.NewCallExpr(scanner,
-				NewPackageExpr(scanner, importLocalFile(fromRoot)),
+				NewPackageExpr(scanner, importLocalFile(pc.ctx, fromRoot)),
 				rel.NewString([]rune(path.Join(pc.SourceDir, filepath))),
 			)
 		}
-		return rel.NewCallExpr(scanner, NewPackageExpr(scanner, importExternalContent()), rel.NewString([]rune(name)))
+		return rel.NewCallExpr(scanner, NewPackageExpr(scanner, importExternalContent(pc.ctx)), rel.NewString([]rune(name)))
 	}
 	panic("malformed package AST")
 }
