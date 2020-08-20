@@ -14,6 +14,7 @@ func TestStrSub(t *testing.T) { //nolint:dupl
 		`//seq.sub( "doesn't matter", "hello there","this is still a test")`)
 	AssertCodeErrors(t, "", `//seq.sub("hello there", "test", 1)`)
 	/////////////////
+	AssertCodesEvalToSameValue(t, `""`, `//seq.sub('a', "b", "")`)
 	AssertCodesEvalToSameValue(t, `""`, `//seq.sub( "","", "")`)
 	AssertCodesEvalToSameValue(t, `"A"`, `//seq.sub( "","A", "")`)
 	AssertCodesEvalToSameValue(t, `""`, `//seq.sub( "A","", "")`)
