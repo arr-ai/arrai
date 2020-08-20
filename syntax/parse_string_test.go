@@ -229,8 +229,7 @@ func TestXStringSuppressNewlinesAfterEmptyComputedLines(t *testing.T) {
 		`
 "stuff:
     abc
-    ghi
-"
+    ghi"
 		`,
 		`
 $"
@@ -245,8 +244,7 @@ stuff:
 		`
 "stuff:
     abc
-ghi
-"
+ghi"
 		`,
 		`
 $"
@@ -261,8 +259,7 @@ ghi
 		`
 "stuff:
     abc
-    ghi
-"
+    ghi"
 		`,
 		`
 $"
@@ -276,8 +273,7 @@ stuff:
 		`
 "stuff:
     abc
-        ghi
-"
+        ghi"
 		`,
 		`
 $"
@@ -292,8 +288,7 @@ stuff:
 "stuff:
     abc
 
-	ghi
-"
+	ghi"
 		`,
 		`
 $"
@@ -301,8 +296,7 @@ stuff:
     abc
 	${''}
 
-	ghi
-"
+	ghi"
 		`,
 	)
 	AssertCodesEvalToSameValue(t,
@@ -310,8 +304,7 @@ stuff:
 "stuff:
 	abc
 	def
-	ghi
-"
+	ghi"
 		`,
 		`
 $"
@@ -328,8 +321,7 @@ stuff:
 "stuff:
 	abc
 	def
-	ghi
-"
+	ghi"
 		`,
 		`
 $"
@@ -344,8 +336,7 @@ stuff:
 		`
 "stuff:
 	abc
-	defghi
-"
+	defghi"
 		`,
 		`
 $"
@@ -369,15 +360,38 @@ func TestXStringSuppressLastLineWS(t *testing.T) {
 			${[1, 2, 3] >> $"
 				${.}
 				.
-				"::\n}
+				"::\n\n:\n}
 		"`)
 	AssertCodesEvalToSameValue(t, `"1\n.\n\n2\n.\n\n3\n.\n"`, `
 		$"
 			${[1, 2, 3] >> $"
 				${.}
 				.
-			"::\n}
+			"::\n\n:\n}
 		"`)
+	AssertCodesEvalToSameValue(t, `"stuff:\n\tletter:\n\t\td\n\tletter:\n\t\te\n\tletter:\n\t\tf"`,
+		`
+$"
+stuff:
+	${['d', 'e', 'f'] >> $"
+		letter:
+			${.}
+	"::\i}
+"
+		`,
+	)
+	AssertCodesEvalToSameValue(t, `"stuff:\n\tletter:\n\t\td\n\tletter:\n\t\te\n\tletter:\n\t\tf\n\t\t\t"`,
+		`
+$"
+stuff:
+	${['d', 'e', 'f'] >> $"
+		letter:
+			${.}
+	"::\i}
+${"\t\t\t"}
+"
+		`,
+	)
 }
 
 func TestXStringArrays(t *testing.T) {
