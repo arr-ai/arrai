@@ -346,6 +346,18 @@ stuff:
 "
 		`,
 	)
+	AssertCodesEvalToSameValue(t,
+		`
+"stuff:
+	abc"
+		`,
+		`
+$"
+stuff:${''}
+	abc
+"
+		`,
+	)
 }
 
 func TestXStringSuppressLastLineWS(t *testing.T) {
