@@ -192,9 +192,9 @@ func cleanEmptyVal(values rel.Array) []rel.Value {
 			}
 			changeRight := false
 
-			// cleans bare string before the empty computed string
+			// Cleans bare string before the empty computed string.
 			//
-			// cleaning happens if and only if both strings before and after
+			// Cleaning happens if and only if both strings before and after
 			// the empty string. This is meant to remove the whole line if
 			// the empty string is the only thing in that line. For example:
 			// $`
@@ -203,8 +203,8 @@ func cleanEmptyVal(values rel.Array) []rel.Value {
 			//       children
 			//  `
 			//
-			// if one of the sides don't require cleaning or if only one of the
-			// regex match, cleaning isn't done to both sides to retain
+			// If one of the sides don't require cleaning (if only one of the
+			// regex match), cleaning isn't done to both sides to retain
 			// whitespaces. Essentially, to handle these cases:
 			// $`                               $`
 			//   root: ${''}           or         root:
