@@ -11,11 +11,11 @@ import (
 
 var (
 	leadingWSRE   = regexp.MustCompile(`\A[\t ]*`)
-	lastWSRE      = regexp.MustCompile(`\n[\t ]+\z`)
+	lastWSRE      = regexp.MustCompile(`\n[\t ]*\z`)
 	expansionRE   = regexp.MustCompile(`(?::([-+#*\.\_0-9a-z]*))(:(?:\\.|[^\\:}])*)?(?::((?:\\.|[^\\:}])*))?`)
 	indentRE      = regexp.MustCompile(`(\n[\t ]*)(?:[^\t ]|\z)[^\n]*\z`)
 	firstIndentRE = regexp.MustCompile(`\A((\n[\t ]+)(?:\n)|(\n))`)
-	lastSpacesRE  = regexp.MustCompile(`([ \t]*)\z`)
+	lastSpacesRE  = regexp.MustCompile(`\n([ \t]*)\z`)
 )
 
 func (pc ParseContext) compileExpandableString(b ast.Branch, c ast.Children) rel.Expr {
@@ -64,7 +64,7 @@ func (pc ParseContext) compileExpandableString(b ast.Branch, c ast.Children) rel
 
 	if last, is := parts[len(parts)-1].(string); is {
 		if loc := lastWSRE.FindStringIndex(last); loc != nil {
-			parts[len(parts)-1] = last[:loc[0]+1]
+			parts[len(parts)-1] = last[:loc[0]]
 		}
 	}
 
@@ -186,24 +186,41 @@ func cleanEmptyVal(values rel.Array) []rel.Value {
 	}
 	clean := func(i int) {
 		// cleans bare string after the empty computed string
-		cleanRE(firstIndentRE, i+1, func(match, toReplace string) string {
-			if match != "" {
-				// cleans bare string before the empty computed string
-				//
-				// only does this if i+1 will be changed, this is meant to retain
-				// any suffix whitespaces in the bare string of arr[i-1].
-				//
-				// Meant to handle
-				// $`
-				//   abc
-				//   ${''}def
-				//  `
-				cleanRE(lastSpacesRE, i-1, func(match, toReplace string) string {
-					return strings.TrimSuffix(toReplace, match)
-				})
-				return strings.TrimPrefix(toReplace, match)
+		cleanRE(firstIndentRE, i+1, func(rightMatch, rightStr string) string {
+			if rightMatch == "" {
+				return rightStr
 			}
-			return toReplace
+			changeRight := false
+
+			// Cleans bare string before the empty computed string.
+			//
+			// Cleaning happens if and only if both strings before and after
+			// the empty string. This is meant to remove the whole line if
+			// the empty string is the only thing in that line. For example:
+			// $`
+			//   root:
+			//       ${''}
+			//       children
+			//  `
+			//
+			// If one of the sides don't require cleaning (if only one of the
+			// regex match), cleaning isn't done to both sides to retain
+			// whitespaces. Essentially, to handle these cases:
+			// $`                               $`
+			//   root: ${''}           or         root:
+			//       children                         ${''}children
+			//  `                                `
+			cleanRE(lastSpacesRE, i-1, func(leftMatch, leftStr string) string {
+				if leftMatch != "" {
+					changeRight = true
+					return strings.TrimSuffix(leftStr, leftMatch)
+				}
+				return leftStr
+			})
+			if changeRight {
+				return strings.TrimPrefix(rightStr, rightMatch)
+			}
+			return rightStr
 		})
 	}
 	for i := 0; i < length; i++ {
