@@ -30,6 +30,184 @@ func TestXStringIndent(t *testing.T) {
 	t.Parallel()
 	AssertCodesEvalToSameValue(t, `"a\nb"`, "$`\n  a\n  b`")
 	AssertCodesEvalToSameValue(t, `"a\nb\n  c\nd"`, "$'\n  a\n  b\n    c\n  d'")
+	AssertCodesEvalToSameValue(t,
+		`
+"letter: a
+letter: b
+letter: c"
+`,
+		`
+$"${['a', 'b', 'c'] >> $'letter: ${.}'::\i}"
+        `,
+	)
+
+	AssertCodesEvalToSameValue(t,
+		`
+"stuff xyzabc stuff 123123123"
+`,
+		`
+$"stuff xyz${"abc"} stuff ${"123123123"}"
+        `,
+	)
+
+	AssertCodesEvalToSameValue(t,
+		`
+"abc:
+    letter: a
+    letter: b
+    letter: c"
+`,
+		`$"
+        abc:
+            ${['a', 'b', 'c'] >> $'letter: ${.}'::\i}
+        "`,
+	)
+
+	AssertCodesEvalToSameValue(t,
+		`
+"stuff
+    123
+    321
+    456
+    654
+333"
+`,
+		`$"
+        stuff
+            ${123}
+            ${321}
+            456
+            ${654}
+        ${333}
+        "`,
+	)
+
+	AssertCodesEvalToSameValue(t,
+		`
+"abc:
+    letter:
+        a
+    letter:
+        b
+    letter:
+        c"
+`,
+		`$"
+        abc:
+            ${['a', 'b', 'c'] >> $'
+            letter:
+                ${.}
+            '::\i}
+        "`,
+	)
+
+	AssertCodesEvalToSameValue(t,
+		`
+"letters:
+    letter:
+        d
+    letter:
+        e
+    letter:
+        f
+
+    numbers:
+        number:
+            1
+        number:
+            2
+        number:
+            3"`,
+		`$"
+        letters:
+            ${['d', 'e', 'f'] >> $"
+                letter:
+                    ${.}
+            "::\i}
+
+            numbers:
+                ${[1, 2, 3] >> $"
+                    number:
+                        ${.}
+                "::\i}
+        "`,
+	)
+
+	AssertCodesEvalToSameValue(t,
+		`
+"abc:
+    letter:
+        a
+    letter:
+        b
+    letter:
+        c"`,
+		`$"
+        abc:
+            ${['a', 'b', 'c'] >> $'
+            letter:
+                ${.}
+            '::\i}
+        "`,
+	)
+
+	AssertCodesEvalToSameValue(t,
+		`
+"letters:
+    letter:
+        d
+    letter:
+        e
+    letter:
+        f
+numbers:
+number:
+    1
+number:
+    2
+number:
+    3"`,
+		`$"
+        letters:
+            ${['d', 'e', 'f'] >> $"
+                letter:
+                    ${.}
+            "::\i}
+        numbers:
+        ${[1, 2, 3] >> $"
+            number:
+                ${.}
+        "::\i}
+        "`,
+	)
+
+	AssertCodesEvalToSameValue(t,
+		`
+"letters:letter:
+    d
+letter:
+    e
+letter:
+    f
+numbers:
+number:
+    1
+number:
+    2
+number:
+    3"`,
+		`$"
+        letters:${['d', 'e', 'f'] >> $"
+                letter:
+                    ${.}
+            "::\i}
+        numbers:
+        ${[1, 2, 3] >> $"
+            number:
+                ${.}
+        "::\i}
+        "`,
+	)
 }
 
 func TestXStringWS(t *testing.T) {
@@ -45,6 +223,143 @@ func TestXStringSuppressEmptyComputedLines(t *testing.T) {
 	AssertCodesEvalToSameValue(t, `"x\n2"`, "$'\n  x\n  ${''}\n  ${''}\n  ${2}'")
 }
 
+func TestXStringSuppressNewlinesAfterEmptyComputedLines(t *testing.T) {
+	t.Parallel()
+	AssertCodesEvalToSameValue(t,
+		`
+"stuff:
+    abc
+    ghi"
+		`,
+		`
+$"
+stuff:
+    abc
+    ${''}
+    ghi
+"
+		`,
+	)
+	AssertCodesEvalToSameValue(t,
+		`
+"stuff:
+    abc
+ghi"
+		`,
+		`
+$"
+stuff:
+    abc
+    ${''}
+ghi
+"
+		`,
+	)
+	AssertCodesEvalToSameValue(t,
+		`
+"stuff:
+    abc
+    ghi"
+		`,
+		`
+$"
+stuff:
+    abc
+    ${''}ghi
+"
+		`,
+	)
+	AssertCodesEvalToSameValue(t,
+		`
+"stuff:
+    abc
+        ghi"
+		`,
+		`
+$"
+stuff:
+    abc
+    ${''}    ghi
+"
+		`,
+	)
+	AssertCodesEvalToSameValue(t,
+		`
+"stuff:
+    abc
+
+	ghi"
+		`,
+		`
+$"
+stuff:
+    abc
+	${''}
+
+	ghi"
+		`,
+	)
+	AssertCodesEvalToSameValue(t,
+		`
+"stuff:
+	abc
+	def
+	ghi"
+		`,
+		`
+$"
+stuff:
+	abc
+	${''}
+	${'def'}
+	ghi
+"
+		`,
+	)
+	AssertCodesEvalToSameValue(t,
+		`
+"stuff:
+	abc
+	def
+	ghi"
+		`,
+		`
+$"
+stuff:
+	abc
+	${''}${'def'}
+	ghi
+"
+		`,
+	)
+	AssertCodesEvalToSameValue(t,
+		`
+"stuff:
+	abc
+	defghi"
+		`,
+		`
+$"
+stuff:
+	abc
+	${''}${'def'}ghi
+"
+		`,
+	)
+	AssertCodesEvalToSameValue(t,
+		`
+"stuff:
+	abc"
+		`,
+		`
+$"
+stuff:${''}
+	abc
+"
+		`,
+	)
+}
+
 func TestXStringSuppressLastLineWS(t *testing.T) {
 	t.Parallel()
 	AssertCodesEvalToSameValue(t, `"xy"`, `$"x${ [] :::=}y"`)
@@ -57,15 +372,38 @@ func TestXStringSuppressLastLineWS(t *testing.T) {
 			${[1, 2, 3] >> $"
 				${.}
 				.
-				"::\n}
+				"::\n\n:\n}
 		"`)
 	AssertCodesEvalToSameValue(t, `"1\n.\n\n2\n.\n\n3\n.\n"`, `
 		$"
 			${[1, 2, 3] >> $"
 				${.}
 				.
-			"::\n}
+			"::\n\n:\n}
 		"`)
+	AssertCodesEvalToSameValue(t, `"stuff:\n\tletter:\n\t\td\n\tletter:\n\t\te\n\tletter:\n\t\tf"`,
+		`
+$"
+stuff:
+	${['d', 'e', 'f'] >> $"
+		letter:
+			${.}
+	"::\i}
+"
+		`,
+	)
+	AssertCodesEvalToSameValue(t, `"stuff:\n\tletter:\n\t\td\n\tletter:\n\t\te\n\tletter:\n\t\tf\n\t\t\t"`,
+		`
+$"
+stuff:
+	${['d', 'e', 'f'] >> $"
+		letter:
+			${.}
+	"::\i}
+${"\t\t\t"}
+"
+		`,
+	)
 }
 
 func TestXStringArrays(t *testing.T) {

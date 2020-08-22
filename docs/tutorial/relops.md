@@ -25,26 +25,36 @@ y and z:
 @> R <&> S
 ```
 
+Formally, `R <&> S` is defined as the set of all `(:x, :y, :z)` such that
+`(:x, :y) <: R` and `(:y, :z) <: S` (`<:` means "is a member of").
+
 ### Join variants
 
 The join operator, `<&>` is the basis for a family of related operators. Each
-operator performs the same underlying operation of find pairs of tuples whose
+operator performs the same underlying operation of finding pairs of tuples whose
 matching attributes are equal. They differ only in which attributes appear in
 the output relation.
 
-Assuming A is a relation with attributes x and y, and B is a relation with
-attributes y and z.
+Assuming `A` is a relation with attributes `x` and `y`, and `B` is a relation with
+attributes `y` and `z`:
 
 |operator|returns|description|
 |:-:|-|-|
 | `A <&> B` | x, y, z | Join |
 | `A <-> B` | x, z | Compose |
 | `A -&- B` | y | Intersection of common attributes |
-| `A --- B` | y | true iff join isn't empty |
+| `A --- B` | &mdash; | true iff join isn't empty |
 | `A -&> B` | y, z | All tuples from B with matching tuples in A |
 | `A <&- B` | x, y | All tuples from A with matching tuples in B |
-| `A --> B` | z | All tuples from B with matching tuples in A, excluding common attributes |
-| `A <-- B` | x | All tuples from A with matching tuples in B, excluding common attributes |
+| `A --> B` | z | All tuples from B with matching tuples in A, excluding common attributes. |
+| `A <-- B` | x | All tuples from A with matching tuples in B, excluding common attributes. |
+
+Notes on mathematical intepretation:
+
+1. Formally, these other operators are simply projections of `A <&> B` over different subsets of the attribute set `|x, y, z|`.
+1. The `<->` operator is a symmetric counterpart to function composition: `(A ∘ B)(x) = B(A(x))`.
+1. The last two operators can be thought of as the domain and codomain of `A <-> B`. Because relational composition is symmetric, it is an arbitrary choice as to which operator represents the domain and which one the codomain.
+1. The `-&-` operator returns the intersection of A's codomain and B's domain (or vice versa, given the symmetry of composition). It can be thought of as the inner domain of `A <-> B`.
 
 The syntax follows a consistent pattern. The base operator is `<&>`, which
 returns all attributes. Each variant excludes attributes from the result based
@@ -65,6 +75,34 @@ on which characters from the base operator have been replaced with `-`:
 @> R --> S
 @> R <-- S
 ```
+
+The join family don't just operate on ternary relations. The attributes `x`, `y` and `z`
+in the above discussion actually exemplify sets of attributes, as follows:
+
+1. `x` represents the attributes unique to the left hand side argument.
+1. `y` represents the attributes in common between both arguments.
+1. `z` represents the attributes unique to the right hand side argument.
+
+```arrai
+@> /set A = {|a,b,j,k| (1, 2, 3, 4), (7, 8, 9, 10)}
+@> /set B = {|j,k,s,t| (9, 10, 20, 21), (15, 16, 23, 24)}
+@> A <&> B
+@> A <-> B
+```
+
+It's also important to understand that, as representives of attribute sets,
+any one or more of `x`, `y` and `z` may be empty. That is there might be no
+attributes unique to A, or none common to both, or none unique to B, or any
+combination of these states.
+
+```arrai
+@> {|a| (2)} <&> {|a,b| (1, 1), (2, 4), (3, 8)}  # No attributes unique to A
+@> {|a| (1), (2), (3)} <&> {|a| (2), (3), (4)}   # No attributes unique to either
+@> {|a| (1), (2)} <&> {|b| (4), (5)}             # No attributes common to A and B
+```
+
+The definition of `<&>` given earlier holds true regardless of what `x`, `y`
+and `z` represent.
 
 ## Rank
 

@@ -100,7 +100,8 @@ position of each character in the string being represented.)
 Arr.ai is an expression language, which means that every arr.ai program, no
 matter how complex, is a single expression evaluating to a single value. You can
 play with the language on the command line by running `arrai eval <expression>`,
-with `e` being a shortcut for `eval`, e.g.:
+with `e` being a shortcut for `eval` (see [here](cmdline/eval.md) for a detailed
+description of the `eval` command), e.g.:
 
 ```bash
 $ arrai e 42

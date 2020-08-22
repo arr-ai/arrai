@@ -16,7 +16,7 @@ expr   -> C* amp="&"* @ C* arrow=(
               nest |
               unnest |
               ARROW @ |
-              FILTER cond=(controlVar=@ "{" (condition=pattern ":" value=@):SEQ_COMMENT,? "}") |
+              FILTER cond=(controlVar=@ "{" (condition=pattern ":" value=expr):SEQ_COMMENT,? "}") |
               binding="->" C* "\\" C* pattern C* %%bind C* @ |
               binding="->" C* %%bind @
           )* C*
@@ -53,10 +53,10 @@ expr   -> C* amp="&"* @ C* arrow=(
         | C* NUM C*
         | C* CHAR C*;
 rule   -> C* "[" C* name C* "]" C*;
-nest   -> C* "nest" names IDENT C*;
+nest   -> C* "nest" (inv="~"? names)? IDENT C*;
 unnest -> C* "unnest" IDENT C*;
 touch  -> C* ("->*" ("&"? IDENT | STR))+ "(" expr:"," ","? ")" C*;
-get    -> C* dot="." ("&"? IDENT | STR) C*;
+get    -> C* dot="." ("&"? IDENT | STR | "~"? names) C*;
 names  -> C* "|" C* IDENT:"," C* "|" C*;
 name   -> C* IDENT C* | C* STR C*;
 xstr   -> C* quote=/{\$"\s*} part=( sexpr | fragment=/{(?: \\. | \$[^{"] | [^\\"$] )+} )* '"' C*
@@ -73,11 +73,11 @@ tail   -> get
                     |     ":" end=expr  (":" step=expr)?
                 ):SEQ_COMMENT,
             ")");
-pattern -> extra 
+pattern -> extra
         | %!patternterms(pattern|expr)
         | IDENT
-        | NUM 
-        | C* "(" exprpattern=expr:SEQ_COMMENT,? ")" C* 
+        | NUM
+        | C* "(" exprpattern=expr:SEQ_COMMENT,? ")" C*
         | C* exprpattern=STR C*;
 extra -> ("..." ident=IDENT?);
 fallback -> ("?"? ":" fall=expr);
@@ -103,7 +103,7 @@ SEQ_COMMENT -> "," C*;
   | C* odelim="{" C* dict=(pairs=((extra|key=(expr tail=("?")?) ":" value=(top fall=(":" expr)?))):SEQ_COMMENT,?) cdelim="}" C*
   | C* odelim="[" C* array=(%!sparse_sequence(tail=("?")? top fall=(":" expr)?)?) C* cdelim="]" C*
   | C* odelim="<<" C* bytes=(item=(STR|NUM|CHAR|IDENT|"("top")"):SEQ_COMMENT,?) C* cdelim=">>" C*
-  | C* odelim="(" tuple=(pairs=(extra | (((name tail="?") | rec="rec"? name | name?) ":" v=(top fall=(":" expr)?))):SEQ_COMMENT,?) cdelim=")" C*
+  | C* odelim="(" tuple=(pairs=(extra | (((name? tail="?") | rec="rec"? name | name?) ":" v=(top fall=(":" expr)?))):SEQ_COMMENT,?) cdelim=")" C*
 };
 
 .macro sparse_sequence(top) {

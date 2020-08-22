@@ -79,3 +79,13 @@ func TestTupleRec(t *testing.T) {
 		`,
 	)
 }
+
+func TestTuplePattern(t *testing.T) {
+	t.Parallel()
+
+	AssertCodesEvalToSameValue(t, `42`, `let (x?: x:42) = (); x     `)
+	AssertCodesEvalToSameValue(t, `24`, `let (x?: x:42) = (x: 24); x`)
+
+	AssertCodesEvalToSameValue(t, `42`, `let (?: x:42) = (); x      `)
+	AssertCodesEvalToSameValue(t, `24`, `let (?: x:42) = (x: 24); x `)
+}

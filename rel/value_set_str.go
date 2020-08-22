@@ -13,6 +13,7 @@ const StringCharAttr = "@char"
 type String struct {
 	s      []rune
 	offset int
+	holes  int
 }
 
 // NewString constructs an array as a relation.
@@ -25,46 +26,61 @@ func NewOffsetString(s []rune, offset int) Set {
 	if len(s) == 0 {
 		return None
 	}
-	return String{s: s, offset: offset}
+	holes := 0
+	for _, r := range s {
+		if r < 0 {
+			holes++
+		}
+	}
+	return String{s: s, offset: offset, holes: holes}
 }
 
 func AsString(s Set) (String, bool) { //nolint:dupl
 	if s, ok := s.(String); ok {
 		return s, true
 	}
-	if i := s.Enumerator(); i.MoveNext() {
+	n := s.Count()
+	if n == 0 {
+		return String{}, true
+	}
+	tuples := make(stringCharTupleArray, 0, n)
+	minAt := int(^uint(0) >> 1)
+	maxAt := -minAt - 1
+	for i := s.Enumerator(); i.MoveNext(); {
 		t, is := i.Current().(StringCharTuple)
 		if !is {
 			return String{}, false
 		}
-
-		middleIndex := s.Count()
-		strs := make([]rune, 2*middleIndex)
-		strs[middleIndex] = t.char
-		anchorOffset, minOffset := t.at, t.at
-		lowestIndex, highestIndex := middleIndex, middleIndex
-		for i.MoveNext() {
-			if t, is = i.Current().(StringCharTuple); !is {
-				return String{}, false
-			}
-			if t.at < minOffset {
-				minOffset = t.at
-			}
-			sliceIndex := middleIndex - (anchorOffset - t.at)
-			strs[sliceIndex] = t.char
-
-			if sliceIndex < lowestIndex {
-				lowestIndex = sliceIndex
-			}
-
-			if sliceIndex > highestIndex {
-				highestIndex = sliceIndex
-			}
+		if minAt > t.at {
+			minAt = t.at
 		}
-
-		return NewOffsetString(strs[lowestIndex:highestIndex+1], minOffset).(String), true
+		if maxAt < t.at {
+			maxAt = t.at
+		}
+		tuples = append(tuples, t)
 	}
-	return String{}, true
+	str := make([]rune, maxAt-minAt+1)
+	for i := range str {
+		str[i] = -1
+	}
+	for _, t := range tuples {
+		str[t.at-minAt] = t.char
+	}
+	return String{s: str, offset: minAt, holes: len(str) - n}, true
+}
+
+type stringCharTupleArray []StringCharTuple
+
+func (a stringCharTupleArray) Len() int {
+	return len(a)
+}
+
+func (a stringCharTupleArray) Less(i, j int) bool {
+	return a[i].at < a[j].at
+}
+
+func (a stringCharTupleArray) Swap(i, j int) {
+	a[i], a[j] = a[j], a[i]
 }
 
 // Hash computes a hash for a String.
@@ -81,7 +97,7 @@ func (s String) Hash(seed uintptr) uintptr {
 func (s String) Equal(v interface{}) bool {
 	switch x := v.(type) {
 	case String:
-		if len(s.s) != len(x.s) {
+		if len(s.s) != len(x.s) || s.offset != x.offset {
 			return false
 		}
 		for i, c := range s.s {
@@ -148,7 +164,7 @@ func (s String) Export() interface{} {
 
 // Count returns the number of elements in the String.
 func (s String) Count() int {
-	return len(s.s)
+	return len(s.s) - s.holes
 }
 
 // Has returns true iff the given Value is in the String.
@@ -162,12 +178,14 @@ func (s String) Has(value Value) bool {
 }
 
 func (s String) with(index int, char rune) Set {
-	if s.index(index) == len(s.s) {
-		return String{s: append(s.s, char), offset: s.offset}
-	} else if index == s.offset-1 {
+	switch {
+	case s.index(index) == len(s.s):
+		return String{s: append(s.s, char), offset: s.offset, holes: s.holes}
+	case index == s.offset-1:
 		return String{
 			s:      append(append(make([]rune, 0, 1+len(s.s)), char), s.s...),
 			offset: s.offset - 1,
+			holes:  s.holes,
 		}
 	}
 	return newSetFromSet(s).With(NewStringCharTuple(index, char))
@@ -186,11 +204,19 @@ func (s String) With(value Value) Set {
 // was already absent, the original String is returned.
 func (s String) Without(value Value) Set {
 	if t, ok := value.(StringCharTuple); ok {
-		if i := s.index(t.at); i >= 0 && i < len(s.s) && t.char == s.s[i] {
-			if t.at == s.offset+i {
-				return String{s: s.s[:i], offset: s.offset}
+		i := s.index(t.at)
+		switch {
+		case i == 0:
+			return String{s: s.s[:i], offset: s.offset, holes: s.holes}
+		case i == len(s.s)-1:
+			return String{s: s.s[i : len(s.s)-1], offset: s.offset, holes: s.holes}
+		case 0 < i && i < len(s.s)-1:
+			if t.char == s.s[i] {
+				newS := make([]rune, len(s.s))
+				copy(newS, s.s)
+				newS[i] = -1
+				return String{s: newS, offset: s.offset, holes: s.holes + 1}
 			}
-			return newSetFromSet(s).Without(value)
 		}
 	}
 	return s
@@ -254,11 +280,13 @@ type stringValueEnumerator struct {
 
 // MoveNext moves the enumerator to the next Value.
 func (e *stringValueEnumerator) MoveNext() bool {
-	if e.i >= len(e.s.s)-1 {
-		return false
+	for e.i < len(e.s.s)-1 {
+		e.i++
+		if e.s.s[e.i] >= 0 {
+			return true
+		}
 	}
-	e.i++
-	return true
+	return false
 }
 
 // Current returns the enumerator's current Value.

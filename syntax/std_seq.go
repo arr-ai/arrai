@@ -203,11 +203,11 @@ func stdSeqSub(old, new, subject rel.Value) (rel.Value, error) {
 		subjectBytes := subject.Bytes()
 		oldBytes, is := tools.ValueAsBytes(old)
 		if !is {
-			return nil, fmt.Errorf("//seq.sub: old not a string: %v", old)
+			return nil, fmt.Errorf("//seq.sub: old not a byte array: %v", old)
 		}
 		newBytes, is := tools.ValueAsBytes(new)
 		if !is {
-			return nil, fmt.Errorf("//seq.sub: new not a string: %v", new)
+			return nil, fmt.Errorf("//seq.sub: new not a byte array: %v", new)
 		}
 		// TODO: Use a byte-aware implementation, not strings.ReplaceAll.
 		return rel.NewBytes(
