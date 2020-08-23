@@ -2,13 +2,14 @@ package test
 
 import (
 	"fmt"
-	"github.com/arr-ai/arrai/rel"
-	"github.com/arr-ai/arrai/syntax"
-	"github.com/sirupsen/logrus"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/arr-ai/arrai/rel"
+	"github.com/arr-ai/arrai/syntax"
+	"github.com/sirupsen/logrus"
 )
 
 // Test runs all tests in the subtree of path and returns the results.
