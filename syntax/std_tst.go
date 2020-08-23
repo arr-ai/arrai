@@ -13,14 +13,14 @@ func createTestCompareFuncAttr(name string, ok func(a, b rel.Value) bool, messag
 		if !ok(expected, actual) {
 			return nil, fmt.Errorf("%s\nexpected: %v\nactual:   %v", message, expected, actual)
 		}
-		return rel.None, nil
+		return rel.True, nil
 	})
 }
 
 func createTestCheckFuncAttr(name string, ok func(v rel.Value) bool) rel.Attr {
 	return rel.NewNativeFunctionAttr(name, func(value rel.Value) (rel.Value, error) {
 		if ok(value) {
-			return rel.None, nil
+			return rel.True, nil
 		}
 		return nil, fmt.Errorf("not %s\nvalue: %v", name, value)
 	})

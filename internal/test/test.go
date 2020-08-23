@@ -30,7 +30,7 @@ func Test(w io.Writer, path string) (Results, error) {
 		return results, fmt.Errorf("no tests found in %v", path)
 	}
 
-	fmt.Printf("Tests:\n%s\n", strings.Join(files, "\n"))
+	fmt.Fprintf(w, "Tests:\n%s\n", strings.Join(files, "\n"))
 
 	for _, file := range files {
 		bytes, err := ioutil.ReadFile(file)
@@ -54,7 +54,7 @@ func isRecursivelyTrue(val rel.Value) bool {
 	switch v := val.(type) {
 	case rel.GenericSet:
 		if !v.IsTrue() {
-			return true
+			return false
 		}
 		if v.Count() == 1 && v.Has(rel.NewTuple()) {
 			return true
