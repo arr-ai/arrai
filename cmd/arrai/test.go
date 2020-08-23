@@ -37,7 +37,7 @@ func testPath(path string, w io.Writer) error {
 		return fmt.Errorf(`"%s": file not found`, path)
 	}
 
-	results, err := test.Test(path)
+	results, err := test.Test(w, path)
 	if err != nil {
 		return err
 	}
