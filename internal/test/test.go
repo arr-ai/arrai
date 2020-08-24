@@ -2,6 +2,7 @@ package test
 
 import (
 	"fmt"
+	"io"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -9,11 +10,10 @@ import (
 
 	"github.com/arr-ai/arrai/rel"
 	"github.com/arr-ai/arrai/syntax"
-	"github.com/sirupsen/logrus"
 )
 
 // Test runs all tests in the subtree of path and returns the results.
-func Test(path string) (Results, error) {
+func Test(w io.Writer, path string) (Results, error) {
 	results := Results{}
 	var files []string
 	err := filepath.Walk(path, func(path string, info os.FileInfo, err error) error {
@@ -30,7 +30,7 @@ func Test(path string) (Results, error) {
 		return results, fmt.Errorf("no tests found in %v", path)
 	}
 
-	fmt.Printf("Tests:\n%s\n", strings.Join(files, "\n"))
+	fmt.Fprintf(w, "Tests:\n%s\n", strings.Join(files, "\n"))
 
 	for _, file := range files {
 		bytes, err := ioutil.ReadFile(file)
@@ -39,10 +39,11 @@ func Test(path string) (Results, error) {
 		}
 		result, err := syntax.EvaluateExpr(file, string(bytes))
 		if err != nil {
-			return results, err
+			fmt.Fprintf(w, "\nfailed test: %s\n", err)
+			results.Add(Result{file: file, pass: false})
+		} else {
+			results.Add(Result{file: file, pass: isRecursivelyTrue(result)})
 		}
-
-		results.Add(Result{file: file, pass: isRecursivelyTrue(result)})
 	}
 
 	return results, nil
@@ -50,7 +51,6 @@ func Test(path string) (Results, error) {
 
 // isRecursivelyTrue returns true if every leaf value of val is true (not just truthy).
 func isRecursivelyTrue(val rel.Value) bool {
-	logrus.Infof("checking truth of %v", val)
 	switch v := val.(type) {
 	case rel.GenericSet:
 		if !v.IsTrue() {
@@ -92,6 +92,7 @@ func isRecursivelyTrue(val rel.Value) bool {
 				return false
 			}
 		}
+		return true
 	}
 	return false
 }
