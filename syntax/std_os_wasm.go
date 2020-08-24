@@ -26,6 +26,10 @@ func stdOsCwd() rel.Value {
 	panic("not implemented")
 }
 
+func stdOsExists(rel.Value) (rel.Value, error) {
+	panic("not implemented")
+}
+
 func stdOsFile(rel.Value) (rel.Value, error) {
 	panic("not implemented")
 }
