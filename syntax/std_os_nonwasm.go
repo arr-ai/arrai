@@ -40,6 +40,9 @@ func stdOsExists(v rel.Value) (rel.Value, error) {
 	if os.IsNotExist(err) {
 		return rel.NewBool(false), nil
 	}
+	if err != nil {
+		return nil, err
+	}
 	return rel.NewBool(true), nil
 }
 
