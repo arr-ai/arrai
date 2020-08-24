@@ -224,7 +224,7 @@ func stdSeqSub(old, new, subject rel.Value) (rel.Value, error) {
 			return subject, nil
 		} else if oldIsSet && !newIsSet {
 			return new, nil
-		} else if !oldIsSet && newIsSet {
+		} else {
 			return subject, nil
 		}
 	}
