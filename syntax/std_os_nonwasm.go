@@ -35,6 +35,14 @@ func stdOsCwd() rel.Value {
 	return rel.NewString([]rune(wd))
 }
 
+func stdOsExists(v rel.Value) (rel.Value, error) {
+	_, err := os.Stat(v.(rel.String).String())
+	if os.IsNotExist(err) {
+		return rel.NewBool(false), nil
+	}
+	return rel.NewBool(true), nil
+}
+
 func stdOsFile(v rel.Value) (rel.Value, error) {
 	f, err := ioutil.ReadFile(v.(rel.String).String())
 	if err != nil {

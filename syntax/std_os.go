@@ -16,6 +16,7 @@ func stdOs() rel.Attr {
 		rel.NewAttr("path_separator", stdOsPathSeparator()),
 		rel.NewAttr("path_list_separator", stdOsPathListSeparator()),
 		rel.NewAttr("cwd", stdOsCwd()),
+		rel.NewNativeFunctionAttr("exists", stdOsExists),
 		rel.NewNativeFunctionAttr("file", stdOsFile),
 		rel.NewNativeFunctionAttr("get_env", stdOsGetEnv),
 		rel.NewNativeFunctionAttr("&stdin", stdOsStdinVar.read),
