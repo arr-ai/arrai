@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/arr-ai/arrai/pkg/arraictx"
 	"github.com/arr-ai/arrai/rel"
 	pb "github.com/arr-ai/proto"
 	"github.com/sirupsen/logrus"
@@ -34,7 +35,7 @@ func observe(c *cli.Context) error {
 	client := pb.NewArraiClient(conn)
 
 	req := &pb.ObserveReq{Expr: source}
-	observe, err := client.Observe(context.Background(), req)
+	observe, err := client.Observe(arraictx.InitRunCtx(context.Background()), req)
 	if err != nil {
 		return err
 	}

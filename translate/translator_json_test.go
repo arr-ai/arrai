@@ -1,9 +1,11 @@
 package translate_test
 
 import (
+	"context"
 	"encoding/json"
 	"testing"
 
+	"github.com/arr-ai/arrai/pkg/arraictx"
 	"github.com/arr-ai/arrai/rel"
 	"github.com/arr-ai/arrai/syntax"
 	"github.com/arr-ai/arrai/translate"
@@ -15,11 +17,13 @@ import (
 // AssertExpectedTranslation asserts that the translated value is the same as the expected string
 func AssertExpectedTranslation(t *testing.T, expected string, value rel.Value) bool {
 	var pc syntax.ParseContext
-	ast, err := pc.Parse(parser.NewScanner(expected))
+	ctx := arraictx.InitRunCtx(context.Background())
+	ast, err := pc.Parse(ctx, parser.NewScanner(expected))
 	if !assert.NoError(t, err, "parsing expected: %s", expected) {
 		return false
 	}
-	expectedExpr := pc.CompileExpr(ast)
+	expectedExpr, err := pc.CompileExpr(ctx, ast)
+	require.NoError(t, err)
 	if !rel.AssertExprsEvalToSameValue(t, expectedExpr, value) {
 		return assert.Fail(
 			t, "Input should translate to same value", "%s == %s", expected, value)

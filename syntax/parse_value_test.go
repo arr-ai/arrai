@@ -1,15 +1,17 @@
 package syntax
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/arr-ai/arrai/pkg/arraictx"
 	"github.com/arr-ai/arrai/rel"
 )
 
 func assertParse(t *testing.T, expected rel.Value, input string) bool { //nolint:unparam
-	expr, err := Compile(NoPath, input)
+	expr, err := Compile(arraictx.InitRunCtx(context.Background()), NoPath, input)
 	if lit, is := expr.(rel.LiteralExpr); is {
 		expr = lit.Literal()
 	}

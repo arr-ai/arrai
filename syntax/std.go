@@ -1,6 +1,7 @@
 package syntax
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"math"
@@ -180,7 +181,7 @@ func createFunc3Attr(name string, f func(a, b, c rel.Value) (rel.Value, error)) 
 }
 
 func mustParseLit(s string) rel.Value {
-	lit, err := MustCompile(NoPath, s).Eval(rel.EmptyScope)
+	lit, err := MustCompile(context.Background(), NoPath, s).Eval(rel.EmptyScope)
 	if err != nil {
 		panic(err)
 	}

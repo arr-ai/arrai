@@ -1,11 +1,14 @@
 package syntax
 
 import (
+	"context"
 	"testing"
 
+	"github.com/arr-ai/arrai/pkg/arraictx"
 	"github.com/arr-ai/arrai/rel"
 	"github.com/arr-ai/wbnf/parser"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 const decodePetshop = `let descriptor = //encoding.proto.descriptor(//os.file('../translate/pb/test/sysl.pb'));
@@ -15,12 +18,15 @@ const decodePetshop = `let descriptor = //encoding.proto.descriptor(//os.file('.
 func TestTransformProtobufToTupleFlow(t *testing.T) {
 	t.Parallel()
 
+	ctx := arraictx.InitRunCtx(context.Background())
+
 	code := decodePetshop + `shop`
 	pc := ParseContext{SourceDir: ".."}
-	ast, err := pc.Parse(parser.NewScanner(code))
+	ast, err := pc.Parse(ctx, parser.NewScanner(code))
 	assert.NoError(t, err)
 
-	codeExpr := pc.CompileExpr(ast)
+	codeExpr, err := pc.CompileExpr(ctx, ast)
+	require.NoError(t, err)
 	val, err := codeExpr.Eval(rel.EmptyScope)
 
 	assert.NoError(t, err)

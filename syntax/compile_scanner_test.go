@@ -1,8 +1,10 @@
 package syntax
 
 import (
+	"context"
 	"testing"
 
+	"github.com/arr-ai/arrai/pkg/arraictx"
 	"github.com/arr-ai/wbnf/parser"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -13,9 +15,11 @@ import (
 func assertCompileScanner(t *testing.T, source string) bool { //nolint:unparam
 	pc := ParseContext{SourceDir: ".."}
 	// Add some space padding, which should not become part of the source.
-	ast, err := pc.Parse(parser.NewScanner(" " + source + " "))
+	ctx := arraictx.InitRunCtx(context.Background())
+	ast, err := pc.Parse(ctx, parser.NewScanner(" "+source+" "))
 	require.NoError(t, err, "%s", source)
-	expr := pc.CompileExpr(ast)
+	expr, err := pc.CompileExpr(ctx, ast)
+	require.NoError(t, err)
 	return assert.Equal(t, source, expr.Source().String())
 }
 
