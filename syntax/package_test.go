@@ -53,7 +53,10 @@ func TestJsonPackageImport(t *testing.T) {
 
 func TestJsonPackageImportNotExists(t *testing.T) {
 	t.Parallel()
-	AssertCodeErrors(t, "", `//{./examples/json/fooooo.json}`)
+	AssertCodeErrors(t,
+		"open ../examples/json/fooooo.json: no such file or directory",
+		`//{./examples/json/fooooo.json}`,
+	)
 }
 
 // func TestPackageExternalImport(t *testing.T) {
