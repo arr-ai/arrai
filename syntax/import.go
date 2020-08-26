@@ -1,6 +1,3 @@
-//FIXME: import evaluations are done during compilation, which requires context
-// to be here. Putting context here means there needs to be context var that
-// is passed down through compile functions
 package syntax
 
 import (
@@ -166,6 +163,7 @@ func bytesValue(ctx context.Context, filename string, data []byte) (rel.Value, e
 		if err != nil {
 			return nil, err
 		}
+		//FIXME: make this lazy evaluate
 		value, err := expr.Eval(ctx, rel.EmptyScope)
 		if err != nil {
 			return nil, rel.WrapContext(err, expr, rel.EmptyScope)
