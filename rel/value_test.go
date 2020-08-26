@@ -1,6 +1,9 @@
 package rel
 
 import (
+	"go/parser"
+	"go/token"
+	"io/ioutil"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -35,4 +38,12 @@ func TestSetCall(t *testing.T) {
 	result, err = SetCall(set, NewNumber(2))
 	require.NoError(t, err)
 	assert.True(t, result.Equal(NewNumber(24)))
+}
+
+func TestReflect(t *testing.T) {
+	fset := token.NewFileSet()
+	bs, _ := ioutil.ReadFile("value_test.go")
+	f, _ := parser.ParseFile(fset, "", string(bs), 0)
+	v, _ := NewValue(f)
+	assert.NotNil(t, v)
 }
