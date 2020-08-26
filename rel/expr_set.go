@@ -48,7 +48,7 @@ func (e *SetExpr) Eval(ctx context.Context, local Scope) (Value, error) {
 	for _, expr := range e.elements {
 		value, err := EvalExpr(ctx, expr, local)
 		if err != nil {
-			return nil, WrapContext(err, e, local)
+			return nil, WrapContextErr(err, e, local)
 		}
 		values = append(values, value)
 	}

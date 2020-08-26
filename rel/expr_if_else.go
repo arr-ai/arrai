@@ -29,7 +29,7 @@ func (e *IfElseExpr) String() string {
 func (e *IfElseExpr) Eval(ctx context.Context, local Scope) (Value, error) {
 	cond, err := e.cond.Eval(ctx, local)
 	if err != nil {
-		return nil, WrapContext(err, e, local)
+		return nil, WrapContextErr(err, e, local)
 	}
 	if cond.IsTrue() {
 		return e.ifTrue.Eval(ctx, local)

@@ -108,11 +108,11 @@ func (e *UnaryExpr) String() string {
 func (e *UnaryExpr) Eval(ctx context.Context, local Scope) (Value, error) {
 	a, err := e.a.Eval(ctx, local)
 	if err != nil {
-		return nil, WrapContext(err, e, local)
+		return nil, WrapContextErr(err, e, local)
 	}
 	val, err := e.eval(a, local)
 	if err != nil {
-		return nil, WrapContext(err, e, local)
+		return nil, WrapContextErr(err, e, local)
 	}
 	return val, nil
 }

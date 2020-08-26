@@ -48,7 +48,7 @@ func (s Scope) Eval(ctx context.Context, local Scope) (Value, error) {
 		name, expr := e.Current()
 		value, err := expr.Eval(ctx, local)
 		if err != nil {
-			return nil, WrapContext(err, expr, local)
+			return nil, WrapContextErr(err, expr, local)
 		}
 		tuple = tuple.With(name, value)
 	}

@@ -46,7 +46,7 @@ func (expr CondPatternControlVarExpr) String() string {
 func (expr CondPatternControlVarExpr) Eval(ctx context.Context, scope Scope) (Value, error) {
 	varVal, err := expr.controlVarExpr.Eval(ctx, scope)
 	if err != nil {
-		return nil, WrapContext(err, expr.controlVarExpr, scope)
+		return nil, WrapContextErr(err, expr.controlVarExpr, scope)
 	}
 
 	for _, conditionPair := range expr.conditionPairs {
@@ -54,11 +54,11 @@ func (expr CondPatternControlVarExpr) Eval(ctx context.Context, scope Scope) (Va
 		if err == nil {
 			l, err := scope.MatchedUpdate(bindings)
 			if err != nil {
-				return nil, WrapContext(err, expr.controlVarExpr, scope)
+				return nil, WrapContextErr(err, expr.controlVarExpr, scope)
 			}
 			val, err := conditionPair.Eval(ctx, l)
 			if err != nil {
-				return nil, WrapContext(err, expr.controlVarExpr, l)
+				return nil, WrapContextErr(err, expr.controlVarExpr, l)
 			}
 			return val, nil
 		}

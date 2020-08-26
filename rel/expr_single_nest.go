@@ -29,10 +29,10 @@ func (e *SingleNestExpr) String() string {
 func (e *SingleNestExpr) Eval(ctx context.Context, local Scope) (Value, error) {
 	value, err := e.lhs.Eval(ctx, local)
 	if err != nil {
-		return nil, WrapContext(err, e, local)
+		return nil, WrapContextErr(err, e, local)
 	}
 	if set, ok := value.(Set); ok {
 		return SingleAttrNest(set, e.attr), nil
 	}
-	return nil, WrapContext(errors.Errorf("nest not applicable to %T", value), e, local)
+	return nil, WrapContextErr(errors.Errorf("nest not applicable to %T", value), e, local)
 }

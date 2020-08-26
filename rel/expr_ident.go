@@ -40,5 +40,5 @@ func (e IdentExpr) Eval(ctx context.Context, local Scope) (Value, error) {
 	if a, found := local.Get(e.ident); found && a != nil {
 		return a.Eval(ctx, local)
 	}
-	return nil, WrapContext(fmt.Errorf("name %q not found in %v", e.ident, local.m.Keys()), e, local)
+	return nil, WrapContextErr(fmt.Errorf("name %q not found in %v", e.ident, local.m.Keys()), e, local)
 }

@@ -33,11 +33,11 @@ func (e DictEntryTupleExpr) String() string {
 func (e DictEntryTupleExpr) Eval(ctx context.Context, local Scope) (Value, error) {
 	at, err := e.at.Eval(ctx, local)
 	if err != nil {
-		return nil, WrapContext(err, e, local)
+		return nil, WrapContextErr(err, e, local)
 	}
 	value, err := e.value.Eval(ctx, local)
 	if err != nil {
-		return nil, WrapContext(err, e, local)
+		return nil, WrapContextErr(err, e, local)
 	}
 	return NewDictEntryTuple(at, value), nil
 }

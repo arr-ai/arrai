@@ -33,11 +33,11 @@ func (e StringCharTupleExpr) String() string {
 func (e StringCharTupleExpr) Eval(ctx context.Context, local Scope) (_ Value, err error) {
 	at, err := e.at.Eval(ctx, local)
 	if err != nil {
-		return nil, WrapContext(err, e, local)
+		return nil, WrapContextErr(err, e, local)
 	}
 	char, err := e.char.Eval(ctx, local)
 	if err != nil {
-		return nil, WrapContext(err, e, local)
+		return nil, WrapContextErr(err, e, local)
 	}
 	return NewStringCharTuple(int(at.(Number).Float64()), rune(char.(Number).Float64())), nil
 }

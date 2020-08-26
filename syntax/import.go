@@ -166,7 +166,7 @@ func bytesValue(ctx context.Context, filename string, data []byte) (rel.Value, e
 		//FIXME: make this lazy evaluate
 		value, err := expr.Eval(ctx, rel.EmptyScope)
 		if err != nil {
-			return nil, rel.WrapContext(err, expr, rel.EmptyScope)
+			return nil, rel.WrapContextErr(err, expr, rel.EmptyScope)
 		}
 		return value, nil
 	}

@@ -86,7 +86,7 @@ func AssertExprErrors(t *testing.T, expr Expr) bool {
 func AssertExprErrorEquals(t *testing.T, expr Expr, msg string) bool {
 	_, err := expr.Eval(context.Background(), EmptyScope)
 
-	return assert.EqualError(t, err, WrapContext(errors.Errorf(msg), expr, EmptyScope).Error())
+	return assert.EqualError(t, err, WrapContextErr(errors.Errorf(msg), expr, EmptyScope).Error())
 }
 
 // AssertExprPanics asserts that the expr panics when evaluated.

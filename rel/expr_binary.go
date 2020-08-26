@@ -286,16 +286,16 @@ func (e *BinExpr) String() string {
 func (e *BinExpr) Eval(ctx context.Context, local Scope) (_ Value, err error) {
 	a, err := e.a.Eval(ctx, local)
 	if err != nil {
-		return nil, WrapContext(err, e, local)
+		return nil, WrapContextErr(err, e, local)
 	}
 
 	b, err := e.b.Eval(ctx, local)
 	if err != nil {
-		return nil, WrapContext(err, e, local)
+		return nil, WrapContextErr(err, e, local)
 	}
 	val, err := e.eval(a, b, local)
 	if err != nil {
-		return nil, WrapContext(err, e, local)
+		return nil, WrapContextErr(err, e, local)
 	}
 	return val, nil
 }

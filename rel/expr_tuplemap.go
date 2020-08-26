@@ -28,7 +28,7 @@ func (e *TupleMapExpr) String() string {
 func (e *TupleMapExpr) Eval(ctx context.Context, local Scope) (_ Value, err error) {
 	value, err := e.lhs.Eval(ctx, local)
 	if err != nil {
-		return nil, WrapContext(err, e, local)
+		return nil, WrapContextErr(err, e, local)
 	}
 	defer func() {
 		if r := recover(); r != nil {

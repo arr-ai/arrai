@@ -78,7 +78,7 @@ func (c ContextErr) GetSource() parser.Scanner {
 	return c.source
 }
 
-func WrapContext(err error, expr Expr, scope Scope) error {
+func WrapContextErr(err error, expr Expr, scope Scope) error {
 	return ContextErr{err, expr.Source(), scope}
 }
 

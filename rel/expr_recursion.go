@@ -22,7 +22,7 @@ func NewRecursionExpr(scanner parser.Scanner, name Expr, fn Expr, fix, fixt Valu
 func (r RecursionExpr) Eval(ctx context.Context, local Scope) (Value, error) {
 	val, err := r.fn.Eval(ctx, local)
 	if err != nil {
-		return nil, WrapContext(err, r, local)
+		return nil, WrapContextErr(err, r, local)
 	}
 
 	//TODO: optimise, get it to load either fix or fixt not both
@@ -35,13 +35,13 @@ func (r RecursionExpr) Eval(ctx context.Context, local Scope) (Value, error) {
 				f = f.With(attr, NewClosure(local, NewFunction(fn.Source(), r.name, fn.f).(*Function)))
 				continue
 			}
-			return nil, WrapContext(errors.Errorf("Recursion requires a tuple of functions: %v", t.String()), r, local)
+			return nil, WrapContextErr(errors.Errorf("Recursion requires a tuple of functions: %v", t.String()), r, local)
 		}
 		return Call(r.fixt, f, local)
 	case Closure:
 		return Call(r.fix, NewClosure(local, NewFunction(f.Source(), r.name, f.f).(*Function)), local)
 	}
-	return nil, WrapContext(errors.Errorf("Recursion does not support %T", val), r, local)
+	return nil, WrapContextErr(errors.Errorf("Recursion does not support %T", val), r, local)
 }
 
 func (r RecursionExpr) String() string {

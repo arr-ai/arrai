@@ -31,11 +31,11 @@ func (e *ArrowExpr) String() string {
 func (e *ArrowExpr) Eval(ctx context.Context, local Scope) (_ Value, err error) {
 	value, err := e.lhs.Eval(ctx, local)
 	if err != nil {
-		return nil, WrapContext(err, e, local)
+		return nil, WrapContextErr(err, e, local)
 	}
 	scope, err := e.fn.arg.Bind(ctx, local, value)
 	if err != nil {
-		return nil, WrapContext(err, e, local)
+		return nil, WrapContextErr(err, e, local)
 	}
 	return e.fn.body.Eval(ctx, local.Update(scope))
 }

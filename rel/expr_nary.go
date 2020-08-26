@@ -37,12 +37,12 @@ func (e CompareExpr) String() string {
 func (e CompareExpr) Eval(ctx context.Context, local Scope) (Value, error) {
 	lhs, err := e.args[0].Eval(ctx, local)
 	if err != nil {
-		return nil, WrapContext(err, e, local)
+		return nil, WrapContextErr(err, e, local)
 	}
 	for i, arg := range e.args[1:] {
 		rhs, err := arg.Eval(ctx, local)
 		if err != nil {
-			return nil, WrapContext(err, e, local)
+			return nil, WrapContextErr(err, e, local)
 		}
 		sat, err := e.comps[i](lhs, rhs)
 		if err != nil {

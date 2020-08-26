@@ -33,11 +33,11 @@ func (e ArrayItemTupleExpr) String() string {
 func (e ArrayItemTupleExpr) Eval(ctx context.Context, local Scope) (_ Value, err error) {
 	at, err := e.at.Eval(ctx, local)
 	if err != nil {
-		return nil, WrapContext(err, e, local)
+		return nil, WrapContextErr(err, e, local)
 	}
 	value, err := e.item.Eval(ctx, local)
 	if err != nil {
-		return nil, WrapContext(err, e, local)
+		return nil, WrapContextErr(err, e, local)
 	}
 	return NewArrayItemTuple(int(at.(Number).Float64()), value), nil
 }

@@ -53,7 +53,7 @@ func (e ArrayExpr) Eval(ctx context.Context, local Scope) (Value, error) {
 			var err error
 			value, err = expr.Eval(ctx, local)
 			if err != nil {
-				return nil, WrapContext(err, e, local)
+				return nil, WrapContextErr(err, e, local)
 			}
 		}
 		values = append(values, value)
