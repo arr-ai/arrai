@@ -2,10 +2,11 @@ package rel
 
 import (
 	"fmt"
-	"reflect"
-
 	"github.com/arr-ai/frozen"
 	"github.com/arr-ai/wbnf/parser"
+	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
+	"reflect"
 )
 
 // Expr represents an arr.ai expression.
@@ -211,66 +212,96 @@ func NewValue(v interface{}) (Value, error) {
 	case []interface{}:
 		return NewSetFrom(x...)
 	default:
-		return NewFromReflection(reflect.ValueOf(x)), nil
-		//return nil, errors.Errorf("%v (%[1]T) not convertible to Value", v)
+		v, err := newReflectValueValue(reflect.ValueOf(x), make(path))
+		if err != nil {
+			return nil, err
+		} else {
+			return v, nil
+		}
 	}
 }
 
-func NewFromReflection(original reflect.Value) (ret Value) {
-	defer func() { recover() }()
+// path tracks pointers of ancestors of a reflected value being processed to detect cycles.
+type path map[*reflect.Value]bool
 
-	switch original.Kind() {
-
-	case reflect.Ptr:
-		originalValue := original.Elem()
-		if !originalValue.IsValid() {
-			return None
-		}
-		return NewFromReflection(originalValue)
-
-	case reflect.Interface:
-		return NewFromReflection(original.Elem())
-
-	case reflect.Struct:
-		t := NewStringAttr("@type", []rune(original.Type().Name()))
-		attrs := []Attr{t}
-		for i := 0; i < original.NumField(); i += 1 {
-			if original.Field(i).Type().String() != "*ast.Object" {
-				k := original.Type().Field(i).Name
-				v := NewFromReflection(original.Field(i))
-				if v != nil {
-					attrs = append(attrs, NewAttr(k, v))
-				}
-			}
-		}
-		return NewTuple(attrs...)
-
-	case reflect.Slice:
-		vs := []Value{}
-		for i := 0; i < original.Len(); i += 1 {
-			if v := NewFromReflection(original.Index(i)); v != nil {
-				vs = append(vs, v)
-			}
-		}
-		return NewArray(vs...)
-
-	case reflect.Map:
-		es := []DictEntryTuple{}
-		for _, key := range original.MapKeys() {
-			if v := NewFromReflection(original.MapIndex(key)); v != nil {
-				k := NewString([]rune(key.String()))
-				es = append(es, NewDictEntryTuple(k, v))
-			}
-		}
-		return NewDict(false, es...)
-
-	case reflect.Bool:
-		return NewBool(original.Interface().(bool))
-
-	case reflect.String:
-		return NewString([]rune(original.Interface().(string)))
+func newReflectValueValue(v reflect.Value, p path) (Value, error) {
+	if _, ok := p[&v]; ok {
+		logrus.Tracef("cycle in reflection (path len %d)", len(p))
+		return nil, nil
+	} else {
+		p[&v] = true
 	}
-	return nil
+	defer func() { delete(p, &v) }()
+
+	switch v.Kind() {
+	case reflect.Bool:
+		return NewBool(v.Bool()), nil
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
+		reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64,
+		reflect.Uintptr:
+		return NewNumber(float64(v.Int())), nil
+	case reflect.Float32, reflect.Float64:
+		return NewNumber(v.Float()), nil
+	case reflect.Complex64, reflect.Complex128:
+		return nil, fmt.Errorf("%T not yet supported as arr.ai value", v.Interface())
+	case reflect.Array, reflect.Slice:
+		n := v.Len()
+		items := make([]Value, 0, n)
+		for i := 0; i < n; i++ {
+			item, err := newReflectValueValue(v.Index(i), p)
+			if err != nil {
+				return nil, err
+			} else if item != nil {
+				items = append(items, item)
+			}
+		}
+		return NewArray(items...), nil
+	case reflect.Func:
+		return nil, fmt.Errorf("function wrapping not yet supported")
+	case reflect.Interface, reflect.Ptr:
+		if !v.IsValid() || !v.Elem().IsValid() {
+			return None, nil
+		}
+		return newReflectValueValue(v.Elem(), p)
+	case reflect.Map:
+		kvs := make([]DictEntryTuple, 0, v.Len())
+		for r := v.MapRange(); r.Next(); {
+			at, err := newReflectValueValue(r.Key(), p)
+			if err != nil {
+				return nil, err
+			}
+			value, err := newReflectValueValue(r.Value(), p)
+			if err != nil {
+				return nil, err
+			} else if value != nil {
+				kvs = append(kvs, NewDictEntryTuple(at, value))
+			}
+		}
+		return NewDict(false, kvs...), nil
+	case reflect.String:
+		return NewString([]rune(v.String())), nil
+	case reflect.Struct:
+		n := v.NumField()
+		attrs := make([]Attr, 0, n+1)
+		attrs = append(attrs, NewStringAttr("@type", []rune(v.Type().Name())))
+		t := v.Type()
+		for i := 0; i < n; i++ {
+			var name string
+			if tag, has := t.Field(i).Tag.Lookup("arrai"); has {
+				name = tag
+			} else {
+				name = t.Field(i).Name
+			}
+			value, err := newReflectValueValue(v.Field(i), p)
+			if err != nil {
+				return nil, err
+			} else if value != nil {
+				attrs = append(attrs, NewAttr(name, value))
+			}
+		}
+		return NewTuple(attrs...), nil
+	}
+	return nil, errors.Errorf("%v (%[1]T) not convertible to Value", v.Interface())
 }
 
 // AttrEnumeratorToSlice transcribes its Attrs in a slice.
