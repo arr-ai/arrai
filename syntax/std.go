@@ -2,6 +2,8 @@ package syntax
 
 import (
 	"fmt"
+	goparser "go/parser"
+	"go/token"
 	"log"
 	"math"
 	"strconv"
@@ -77,6 +79,9 @@ func StdScope() rel.Scope {
 					rel.NewFloatAttr("e", math.E),
 					newFloatFuncAttr("sin", math.Sin),
 					newFloatFuncAttr("cos", math.Cos),
+				),
+				rel.NewTupleAttr("go",
+					rel.NewNativeFunctionAttr("parse", parseGo),
 				),
 				rel.NewTupleAttr("grammar",
 					rel.NewNativeFunctionAttr("parse", parseGrammar),
@@ -207,4 +212,26 @@ func parseGrammar(v rel.Value) (rel.Value, error) {
 			return rel.ASTNodeToValue(ast.FromParserNode(parsers.Grammar(), node)), nil
 		}), nil
 	}), nil
+}
+
+func parseGo(v rel.Value) (rel.Value, error) {
+	if sv, ok := v.(rel.String); ok {
+		s, err := rel.NewValue(sv.String())
+		if err != nil {
+			return nil, err
+		}
+
+		fset := token.NewFileSet()
+		f, err := goparser.ParseFile(fset, "", s.String(), 0)
+		if err != nil {
+			return nil, err
+		}
+		r, err := rel.NewValue(f)
+		if err != nil {
+			return nil, err
+		}
+		return r, nil
+	} else {
+		return nil, fmt.Errorf("go file must be a string, not %T", v)
+	}
 }
