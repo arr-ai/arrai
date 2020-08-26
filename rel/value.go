@@ -2,10 +2,10 @@ package rel
 
 import (
 	"fmt"
+	"reflect"
 
 	"github.com/arr-ai/frozen"
 	"github.com/arr-ai/wbnf/parser"
-	"github.com/go-errors/errors"
 )
 
 // Expr represents an arr.ai expression.
@@ -211,8 +211,66 @@ func NewValue(v interface{}) (Value, error) {
 	case []interface{}:
 		return NewSetFrom(x...)
 	default:
-		return nil, errors.Errorf("%v (%[1]T) not convertible to Value", v)
+		return NewFromReflection(reflect.ValueOf(x)), nil
+		//return nil, errors.Errorf("%v (%[1]T) not convertible to Value", v)
 	}
+}
+
+func NewFromReflection(original reflect.Value) (ret Value) {
+	defer func() { recover() }()
+
+	switch original.Kind() {
+
+	case reflect.Ptr:
+		originalValue := original.Elem()
+		if !originalValue.IsValid() {
+			return None
+		}
+		return NewFromReflection(originalValue)
+
+	case reflect.Interface:
+		return NewFromReflection(original.Elem())
+
+	case reflect.Struct:
+		t := NewStringAttr("@type", []rune(original.Type().Name()))
+		attrs := []Attr{t}
+		for i := 0; i < original.NumField(); i += 1 {
+			if original.Field(i).Type().String() != "*ast.Object" {
+				k := original.Type().Field(i).Name
+				v := NewFromReflection(original.Field(i))
+				if v != nil {
+					attrs = append(attrs, NewAttr(k, v))
+				}
+			}
+		}
+		return NewTuple(attrs...)
+
+	case reflect.Slice:
+		vs := []Value{}
+		for i := 0; i < original.Len(); i += 1 {
+			if v := NewFromReflection(original.Index(i)); v != nil {
+				vs = append(vs, v)
+			}
+		}
+		return NewArray(vs...)
+
+	case reflect.Map:
+		es := []DictEntryTuple{}
+		for _, key := range original.MapKeys() {
+			if v := NewFromReflection(original.MapIndex(key)); v != nil {
+				k := NewString([]rune(key.String()))
+				es = append(es, NewDictEntryTuple(k, v))
+			}
+		}
+		return NewDict(false, es...)
+
+	case reflect.Bool:
+		return NewBool(original.Interface().(bool))
+
+	case reflect.String:
+		return NewString([]rune(original.Interface().(string)))
+	}
+	return nil
 }
 
 // AttrEnumeratorToSlice transcribes its Attrs in a slice.
