@@ -1,6 +1,7 @@
 package syntax
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/arr-ai/arrai/rel"
@@ -18,9 +19,17 @@ type Macro struct {
 
 // unpackMacro processes the current parser scope when a macro invocation is detected. It extracts
 // the details of the macro to invoke, and returns them as a Macro.
-func (pc ParseContext) unpackMacro(macroElt parser.Node, ruleElt parser.Node, relScope rel.Scope) (Macro, error) {
+func (pc ParseContext) unpackMacro(
+	ctx context.Context,
+	macroElt parser.Node,
+	ruleElt parser.Node,
+	relScope rel.Scope,
+) (Macro, error) {
 	macroNode := ast.FromParserNode(arraiParsers.Grammar(), macroElt)
-	macroExpr := pc.CompileExpr(macroNode).(rel.Expr)
+	macroExpr, err := pc.CompileExpr(ctx, macroNode)
+	if err != nil {
+		return Macro{}, err
+	}
 	macroValue, err := macroExpr.Eval(relScope)
 	if err != nil {
 		return Macro{ruleName: ""}, err

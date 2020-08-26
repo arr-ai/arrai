@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 
+	"github.com/arr-ai/arrai/pkg/arraictx"
 	pb "github.com/arr-ai/proto"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
@@ -31,7 +32,7 @@ func update(c *cli.Context) error {
 
 	client := pb.NewArraiClient(conn)
 
-	update, err := client.Update(context.Background())
+	update, err := client.Update(arraictx.InitRunCtx(context.Background()))
 	if err != nil {
 		return err
 	}

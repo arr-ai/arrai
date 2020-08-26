@@ -1,6 +1,7 @@
 package test
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -8,6 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/arr-ai/arrai/pkg/arraictx"
 	"github.com/arr-ai/arrai/rel"
 	"github.com/arr-ai/arrai/syntax"
 )
@@ -32,12 +34,15 @@ func Test(w io.Writer, path string) (Results, error) {
 
 	fmt.Fprintf(w, "Tests:\n%s\n", strings.Join(files, "\n"))
 
+	//TODO: init with values
+	ctx := arraictx.InitRunCtx(context.Background())
+
 	for _, file := range files {
 		bytes, err := ioutil.ReadFile(file)
 		if err != nil {
 			return results, err
 		}
-		result, err := syntax.EvaluateExpr(file, string(bytes))
+		result, err := syntax.EvaluateExpr(ctx, file, string(bytes))
 		if err != nil {
 			fmt.Fprintf(w, "\nfailed test: %s\n", err)
 			results.Add(Result{file: file, pass: false})

@@ -3,10 +3,12 @@
 package shell
 
 import (
+	"context"
 	"fmt"
 	"regexp"
 	"strings"
 
+	"github.com/arr-ai/arrai/pkg/arraictx"
 	"github.com/arr-ai/arrai/rel"
 )
 
@@ -79,8 +81,10 @@ func (s *shellInstance) globalCompletions(prefix string, startOfLine bool) (newL
 func (s *shellInstance) partialExprPredictions(currentLine string) (newLine [][]rune, length int) {
 	currentExpr := strings.Join(s.collector.withLine(currentLine).lines, "\n")
 	realExpr, residue := s.trimExpr(currentExpr)
+	//TODO: use context from shell
+	ctx := arraictx.InitRunCtx(context.Background())
 	if residue != "" {
-		val, err := tryEval(realExpr, s.scope)
+		val, err := tryEval(ctx, realExpr, s.scope)
 		if err != nil {
 			return
 		}
@@ -90,7 +94,7 @@ func (s *shellInstance) partialExprPredictions(currentLine string) (newLine [][]
 			length = len(residue)
 		}
 	}
-	val, err := tryEval(currentExpr, s.scope)
+	val, err := tryEval(ctx, currentExpr, s.scope)
 	if err == nil {
 		newLine = append(newLine, formatPredictions(predictFromValue(val), "")...)
 	}

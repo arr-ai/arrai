@@ -1,13 +1,13 @@
 package syntax
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
-	"sync"
 
 	"github.com/arr-ai/arrai/rel"
 	"github.com/arr-ai/arrai/tools"
@@ -17,84 +17,73 @@ import (
 
 const arraiRootMarker = "go.mod"
 
-var importLocalFileOnce sync.Once
-var importLocalFileVar rel.Value
 var cache = newCache()
 
-func importLocalFile(fromRoot bool) rel.Value {
-	importLocalFileOnce.Do(func() {
-		importLocalFileVar = rel.NewNativeFunction("//./", func(v rel.Value) (rel.Value, error) {
-			s, ok := rel.AsString(v.(rel.Set))
-			if !ok {
-				return nil, fmt.Errorf("cannot convert %#v to string", v)
-			}
+func importLocalFile(ctx context.Context, fromRoot bool) rel.Value {
+	return rel.NewNativeFunction("//./", func(v rel.Value) (rel.Value, error) {
+		s, ok := rel.AsString(v.(rel.Set))
+		if !ok {
+			return nil, fmt.Errorf("cannot convert %#v to string", v)
+		}
 
-			filename := s.String()
-			if fromRoot {
-				pwd, err := os.Getwd()
-				if err != nil {
-					return nil, err
-				}
-				rootPath, err := findRootFromModule(pwd)
-				if err != nil {
-					return nil, err
-				}
-				if !strings.HasPrefix(filename, "/") {
-					filename = rootPath + "/" + strings.ReplaceAll(filename, "../", "")
-				}
-			}
-
-			v, err := fileValue(filename)
+		filename := s.String()
+		if fromRoot {
+			pwd, err := os.Getwd()
 			if err != nil {
 				return nil, err
 			}
-
-			return v, nil
-		})
-	})
-	return importLocalFileVar
-}
-
-var importExternalContentOnce sync.Once
-var importExternalContentVar rel.Value
-
-func importExternalContent() rel.Value {
-	importExternalContentOnce.Do(func() {
-		importExternalContentVar = rel.NewNativeFunction("//", func(v rel.Value) (rel.Value, error) {
-			s, ok := rel.AsString(v.(rel.Set))
-			if !ok {
-				return nil, fmt.Errorf("cannot convert %#v to string", v)
-			}
-			importpath := s.String()
-
-			var moduleErr error
-
-			if !strings.HasPrefix(importpath, "http://") && !strings.HasPrefix(importpath, "https://") {
-				v, err := importModuleFile(importpath)
-				if err == nil {
-					return v, nil
-				}
-				moduleErr = err
-
-				// Since an explicit schema is allowed, it's OK to assume https as the default.
-				importpath = "https://" + importpath
-			}
-
-			v, err := importURL(importpath)
+			rootPath, err := findRootFromModule(pwd)
 			if err != nil {
-				if moduleErr != nil {
-					return nil, fmt.Errorf("failed to import %s - %s, and %s", importpath, moduleErr.Error(), err.Error())
-				}
 				return nil, err
 			}
+			if !strings.HasPrefix(filename, "/") {
+				filename = rootPath + "/" + strings.ReplaceAll(filename, "../", "")
+			}
+		}
 
-			return v, nil
-		})
+		v, err := fileValue(ctx, filename)
+		if err != nil {
+			return nil, err
+		}
+
+		return v, nil
 	})
-	return importExternalContentVar
 }
 
-func importModuleFile(importpath string) (rel.Value, error) {
+func importExternalContent(ctx context.Context) rel.Value {
+	return rel.NewNativeFunction("//", func(v rel.Value) (rel.Value, error) {
+		s, ok := rel.AsString(v.(rel.Set))
+		if !ok {
+			return nil, fmt.Errorf("cannot convert %#v to string", v)
+		}
+		importpath := s.String()
+
+		var moduleErr error
+
+		if !strings.HasPrefix(importpath, "http://") && !strings.HasPrefix(importpath, "https://") {
+			v, err := importModuleFile(ctx, importpath)
+			if err == nil {
+				return v, nil
+			}
+			moduleErr = err
+
+			// Since an explicit schema is allowed, it's OK to assume https as the default.
+			importpath = "https://" + importpath
+		}
+
+		v, err := importURL(ctx, importpath)
+		if err != nil {
+			if moduleErr != nil {
+				return nil, fmt.Errorf("failed to import %s - %s, and %s", importpath, moduleErr.Error(), err.Error())
+			}
+			return nil, err
+		}
+
+		return v, nil
+	})
+}
+
+func importModuleFile(ctx context.Context, importpath string) (rel.Value, error) {
 	var mod module.Module = module.NewGoModule()
 
 	m, err := mod.Get(importpath)
@@ -102,7 +91,7 @@ func importModuleFile(importpath string) (rel.Value, error) {
 		return nil, err
 	}
 
-	return fileValue(filepath.Join(m.Dir, strings.TrimPrefix(importpath, m.Name)))
+	return fileValue(ctx, filepath.Join(m.Dir, strings.TrimPrefix(importpath, m.Name)))
 }
 
 func findRootFromModule(modulePath string) (string, error) {
@@ -132,7 +121,7 @@ func findRootFromModule(modulePath string) (string, error) {
 	}
 }
 
-func importURL(url string) (rel.Value, error) {
+func importURL(ctx context.Context, url string) (rel.Value, error) {
 	resp, err := http.Get(url) //nolint:gosec
 	if err != nil {
 		return nil, err
@@ -144,13 +133,13 @@ func importURL(url string) (rel.Value, error) {
 		if err != nil {
 			return nil, err
 		}
-		val, err := cache.getOrAdd(url, func() (rel.Value, error) { return bytesValue(NoPath, data) })
+		val, err := cache.getOrAdd(url, func() (rel.Value, error) { return bytesValue(ctx, NoPath, data) })
 		return val, err
 	}
 	return nil, fmt.Errorf("request %s failed: %s", url, resp.Status)
 }
 
-func fileValue(filename string) (rel.Value, error) {
+func fileValue(ctx context.Context, filename string) (rel.Value, error) {
 	if filepath.Ext(filename) == "" {
 		filename += ".arrai"
 	}
@@ -165,12 +154,12 @@ func fileValue(filename string) (rel.Value, error) {
 	case ".yml", ".yaml":
 		return translate.BytesYamlToArrai(bytes)
 	}
-	return bytesValue(filename, bytes)
+	return bytesValue(ctx, filename, bytes)
 }
 
-func bytesValue(filename string, data []byte) (rel.Value, error) {
+func bytesValue(ctx context.Context, filename string, data []byte) (rel.Value, error) {
 	eval := func() (rel.Value, error) {
-		expr, err := Compile(filename, string(data))
+		expr, err := Compile(ctx, filename, string(data))
 		if err != nil {
 			return nil, err
 		}
