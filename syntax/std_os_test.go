@@ -19,3 +19,8 @@ func TestStdOsStdin(t *testing.T) {
 	AssertCodesEvalToSameValue(t, `<<97, 98, 99>>`, `//os.stdin`)
 	AssertCodesEvalToSameValue(t, `<<97, 98, 99>>`, `//os.stdin`)
 }
+
+func TestStdOsExists(t *testing.T) {
+	AssertCodesEvalToSameValue(t, `true`, `//os.exists('std_os_test.go')`)
+	AssertCodesEvalToSameValue(t, `false`, `//os.exists('doesntexist.anywhere')`)
+}

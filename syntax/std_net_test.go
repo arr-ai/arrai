@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/arr-ai/arrai/pkg/arraictx"
 	"github.com/arr-ai/arrai/rel"
 	"github.com/stretchr/testify/require"
 )
@@ -28,8 +29,7 @@ wasm:
 	expectedContentType := rel.NewString([]rune("text/plain; charset=utf-8"))
 
 	result, err := EvaluateExpr(
-		context.Background(),
-		"",
+		arraictx.InitRunCtx(context.Background()), "",
 		`//net.http.get("https://raw.githubusercontent.com/arr-ai/arrai/cf1326f7b61178e3e98aff30540e10cb73449445/Makefile")`,
 	)
 	require.NoError(t, err)

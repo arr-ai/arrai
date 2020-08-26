@@ -18,6 +18,10 @@ Usage:
 
 `cwd` contains a string representing the current user directory.
 
+## `//os.exists(filepath <: string) <: boolean`
+
+`exists` returns `true` if a file or directory exists at `filepath`, or `false` otherwise.
+
 ## `//os.file(filepath <: string) <: array_of_bytes`
 
 `file` returns the content of a file located at `filepath` in the form of an array of bytes.

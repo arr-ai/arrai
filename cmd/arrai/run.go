@@ -7,9 +7,8 @@ import (
 	"os"
 	"strings"
 
-	"github.com/arr-ai/arrai/pkg/ctxfs"
+	"github.com/arr-ai/arrai/pkg/arraictx"
 	"github.com/arr-ai/arrai/tools"
-	"github.com/spf13/afero"
 	"github.com/urfave/cli/v2"
 )
 
@@ -27,11 +26,7 @@ func run(c *cli.Context) error {
 	tools.SetArgs(c)
 	file := c.Args().Get(0)
 
-	ctx := context.Background()
-	ctx = ctxfs.SourceFsOnto(ctx, afero.NewOsFs())
-	ctx = ctxfs.RuntimeFsOnto(ctx, afero.NewOsFs())
-
-	return evalFile(ctx, file, os.Stdout, c.Value("out").(string))
+	return evalFile(arraictx.InitRunCtx(context.Background()), file, os.Stdout, c.Value("out").(string))
 }
 
 func evalFile(ctx context.Context, path string, w io.Writer, out string) error {

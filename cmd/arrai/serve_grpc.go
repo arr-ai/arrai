@@ -1,9 +1,11 @@
 package main
 
 import (
+	"context"
 	"io"
 
 	"github.com/arr-ai/arrai/engine"
+	"github.com/arr-ai/arrai/pkg/arraictx"
 	"github.com/arr-ai/arrai/rel"
 	"github.com/arr-ai/arrai/syntax"
 	pb "github.com/arr-ai/proto"
@@ -36,6 +38,7 @@ type arraiServer struct {
 
 func (s *arraiServer) Update(stream pb.Arrai_UpdateServer) error {
 	ack := pb.UpdateAck{}
+	ctx := arraictx.InitRunCtx(context.TODO())
 
 	for {
 		req, err := stream.Recv()
@@ -47,7 +50,7 @@ func (s *arraiServer) Update(stream pb.Arrai_UpdateServer) error {
 			return err
 		}
 		logrus.Infof("req.Expr: %s", req.Expr)
-		expr, err := syntax.Compile(syntax.NoPath, req.Expr)
+		expr, err := syntax.Compile(ctx, syntax.NoPath, req.Expr)
 		if err != nil {
 			logrus.Errorf("Error in arraiServer.Update: %v", err)
 			return err
@@ -66,7 +69,8 @@ func (s *arraiServer) Update(stream pb.Arrai_UpdateServer) error {
 }
 
 func (s *arraiServer) Observe(req *pb.ObserveReq, stream pb.Arrai_ObserveServer) error {
-	expr, err := syntax.Compile(syntax.NoPath, req.Expr)
+	ctx := arraictx.InitRunCtx(context.TODO())
+	expr, err := syntax.Compile(ctx, syntax.NoPath, req.Expr)
 	if err != nil {
 		return err
 	}

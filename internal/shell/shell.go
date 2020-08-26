@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/anz-bank/pkg/log"
+	"github.com/arr-ai/arrai/pkg/arraictx"
 	"github.com/arr-ai/arrai/rel"
 	"github.com/arr-ai/arrai/syntax"
 	"github.com/chzyer/readline"
@@ -21,7 +22,7 @@ const (
 	shellContinuationPrompt = " > "
 )
 
-func tryEval(line string, scope rel.Scope) (_ rel.Value, err error) {
+func tryEval(ctx context.Context, line string, scope rel.Scope) (_ rel.Value, err error) {
 	defer func() {
 		if i := recover(); i != nil {
 			if i, is := i.(error); is {
@@ -31,7 +32,7 @@ func tryEval(line string, scope rel.Scope) (_ rel.Value, err error) {
 			}
 		}
 	}()
-	return syntax.EvalWithScope(context.Background(), "", line, scope)
+	return syntax.EvalWithScope(ctx, "", line, scope)
 }
 
 func shellFilterInputRune(r rune) (rune, bool) {
@@ -43,8 +44,9 @@ func shellFilterInputRune(r rune) (rune, bool) {
 	return r, true
 }
 
-func Shell(frames []rel.ContextErr) error {
-	ctx := log.WithConfigs(log.SetVerboseMode(true)).Onto(context.Background())
+func Shell(ctx context.Context, frames []rel.ContextErr) error {
+	ctx = log.WithConfigs(log.SetVerboseMode(true)).Onto(ctx)
+	ctx = arraictx.InitRunCtx(ctx)
 	sh := newShellInstance(newLineCollector(), frames)
 	l, err := readline.NewEx(&readline.Config{
 		Prompt:              shellPrompt,
@@ -54,7 +56,7 @@ func Shell(frames []rel.ContextErr) error {
 		FuncFilterInputRune: shellFilterInputRune,
 	})
 	if err != nil {
-		panic(err)
+		return err
 	}
 	defer l.Close()
 	for {
@@ -71,7 +73,7 @@ func Shell(frames []rel.ContextErr) error {
 			panic(err)
 		}
 
-		if err = sh.parseCmd(line, l); err != nil {
+		if err = sh.parseCmd(ctx, line, l); err != nil {
 			switch err {
 			case exitError{}:
 				return nil
@@ -105,7 +107,7 @@ func newShellInstance(c *lineCollector, frames []rel.ContextErr) *shellInstance 
 	}
 }
 
-func (s *shellInstance) parseCmd(line string, l *readline.Instance) error {
+func (s *shellInstance) parseCmd(ctx context.Context, line string, l *readline.Instance) error {
 	if line = strings.TrimSpace(line); line != "" {
 		s.collector.appendLine(line)
 	}
@@ -114,8 +116,8 @@ func (s *shellInstance) parseCmd(line string, l *readline.Instance) error {
 		lines := strings.Join(s.collector.lines, "\n")
 		s.collector.reset()
 		if isCommand(lines) {
-			return tryRunCommand(lines, s)
-		} else if _, err := shellEval(lines, s.scope); err != nil {
+			return tryRunCommand(ctx, lines, s)
+		} else if _, err := shellEval(ctx, lines, s.scope); err != nil {
 			return err
 		}
 	}
@@ -125,13 +127,13 @@ func (s *shellInstance) parseCmd(line string, l *readline.Instance) error {
 	return nil
 }
 
-func shellEval(lines string, scope rel.Scope) (_ rel.Value, err error) {
+func shellEval(ctx context.Context, lines string, scope rel.Scope) (_ rel.Value, err error) {
 	defer func() {
 		if r := recover(); r != nil {
 			err = fmt.Errorf("unexpected panic: %v", r)
 		}
 	}()
-	value, err := tryEval(lines, scope)
+	value, err := tryEval(ctx, lines, scope)
 	if err != nil {
 		return nil, err
 	}

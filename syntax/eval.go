@@ -7,7 +7,7 @@ import (
 )
 
 func EvalWithScope(ctx context.Context, path, source string, scope rel.Scope) (rel.Value, error) {
-	expr, err := Compile(path, source)
+	expr, err := Compile(ctx, path, source)
 	if err != nil {
 		return nil, err
 	}

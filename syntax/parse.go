@@ -14,7 +14,6 @@ import (
 
 type ParseContext struct {
 	SourceDir string
-	ctx       context.Context
 }
 
 func parseNames(names ast.Branch) []string {
@@ -40,13 +39,13 @@ func parseName(name ast.Branch) string {
 }
 
 // MustParseString parses input string and returns the parsed Expr or panics.
-func (pc ParseContext) MustParseString(s string) ast.Branch {
-	return pc.MustParse(parser.NewScanner(s))
+func (pc ParseContext) MustParseString(ctx context.Context, s string) ast.Branch {
+	return pc.MustParse(ctx, parser.NewScanner(s))
 }
 
 // MustParse parses input and returns the parsed Expr or panics.
-func (pc ParseContext) MustParse(s *parser.Scanner) ast.Branch {
-	ast, err := pc.Parse(s)
+func (pc ParseContext) MustParse(ctx context.Context, s *parser.Scanner) ast.Branch {
+	ast, err := pc.Parse(ctx, s)
 	if err != nil {
 		panic(err)
 	}
@@ -54,12 +53,12 @@ func (pc ParseContext) MustParse(s *parser.Scanner) ast.Branch {
 }
 
 // ParseString parses input string and returns the parsed Expr or an error.
-func (pc ParseContext) ParseString(s string) (ast.Branch, error) {
-	return pc.Parse(parser.NewScanner(s))
+func (pc ParseContext) ParseString(ctx context.Context, s string) (ast.Branch, error) {
+	return pc.Parse(ctx, parser.NewScanner(s))
 }
 
 // Parse parses input and returns the parsed Expr or an error.
-func (pc ParseContext) Parse(s *parser.Scanner) (ast.Branch, error) {
+func (pc ParseContext) Parse(ctx context.Context, s *parser.Scanner) (ast.Branch, error) {
 	rscopes := []rel.Scope{{}}
 	v, err := arraiParsers.ParseWithExternals(parser.Rule("expr"), s, parser.ExternalRefs{
 		"bind": func(pscope parser.Scope, _ *parser.Scanner) (parser.TreeElement, error) {
@@ -73,7 +72,10 @@ func (pc ParseContext) Parse(s *parser.Scanner) (ast.Branch, error) {
 				}
 			}
 			exprNode := ast.FromParserNode(arraiParsers.Grammar(), exprElt)
-			expr := pc.CompileExpr(exprNode)
+			expr, err := pc.CompileExpr(ctx, exprNode)
+			if err != nil {
+				return nil, err
+			}
 			exprClosure := rel.NewExprClosure(rscopes[len(rscopes)-1], expr)
 
 			identStr := "."
@@ -86,7 +88,10 @@ func (pc ParseContext) Parse(s *parser.Scanner) (ast.Branch, error) {
 				source := expr.Source()
 
 				patNode := ast.FromParserNode(arraiParsers.Grammar(), pattern)
-				pat := pc.compilePattern(patNode)
+				pat, err := pc.compilePattern(ctx, patNode)
+				if err != nil {
+					return nil, err
+				}
 				bindings := pat.Bindings()
 				for _, b := range bindings {
 					rhs := rel.NewFunction(*parser.NewScanner(fmt.Sprintf("let %s = %s; %s", pat, source, b)),
@@ -107,7 +112,7 @@ func (pc ParseContext) Parse(s *parser.Scanner) (ast.Branch, error) {
 				panic("wat?")
 			}
 			relScope := rscopes[len(rscopes)-1]
-			macro, err := pc.unpackMacro(elt.(parser.Node), ruleElt.(parser.Node), relScope)
+			macro, err := pc.unpackMacro(ctx, elt.(parser.Node), ruleElt.(parser.Node), relScope)
 			if err != nil {
 				return nil, err
 			}
@@ -118,7 +123,7 @@ func (pc ParseContext) Parse(s *parser.Scanner) (ast.Branch, error) {
 
 			childast, err := parsers.ParseWithExternals(rule, input, parser.ExternalRefs{
 				"*:{()}:": func(scope parser.Scope, _ *parser.Scanner) (parser.TreeElement, error) {
-					childast, err := pc.Parse(input)
+					childast, err := pc.Parse(ctx, input)
 					switch err.(type) {
 					case nil, parser.UnconsumedInputError:
 					default:

@@ -52,8 +52,18 @@ func StdScope() rel.Scope {
 					case rel.Dict:
 						attrs := make([]rel.Attr, 0, t.Count())
 						for e := t.DictEnumerator(); e.MoveNext(); {
-							key, value := e.Current()
-							attrs = append(attrs, rel.NewAttr(key.(rel.String).String(), value))
+							keyVal, value := e.Current()
+							var key string
+							// keyVal won't be a rel.String if it's empty.
+							if _, ok := keyVal.(rel.String); ok {
+								key = keyVal.String()
+							} else if _, ok := keyVal.(rel.GenericSet); ok && !keyVal.IsTrue() {
+								key = ""
+							} else {
+								return nil, fmt.Errorf(
+									"all keys of arg to //tuple must be strings, not %T", keyVal)
+							}
+							attrs = append(attrs, rel.NewAttr(key, value))
 						}
 						return rel.NewTuple(attrs...), nil
 					case rel.Set:
@@ -171,7 +181,8 @@ func createFunc3Attr(name string, f func(a, b, c rel.Value) (rel.Value, error)) 
 }
 
 func mustParseLit(s string) rel.Value {
-	lit, err := MustCompile(NoPath, s).Eval(context.Background(), rel.EmptyScope)
+	ctx := context.Background()
+	lit, err := MustCompile(ctx, NoPath, s).Eval(ctx, rel.EmptyScope)
 	if err != nil {
 		panic(err)
 	}

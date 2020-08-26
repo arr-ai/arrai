@@ -23,6 +23,7 @@ var cmds = []*cli.Command{
 	transformCommand,
 	updateCommand,
 	infoCommand,
+	testCommand,
 }
 
 func main() {

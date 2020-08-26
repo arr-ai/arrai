@@ -19,11 +19,18 @@ type Macro struct {
 
 // unpackMacro processes the current parser scope when a macro invocation is detected. It extracts
 // the details of the macro to invoke, and returns them as a Macro.
-func (pc ParseContext) unpackMacro(macroElt parser.Node, ruleElt parser.Node, relScope rel.Scope) (Macro, error) {
+func (pc ParseContext) unpackMacro(
+	ctx context.Context,
+	macroElt parser.Node,
+	ruleElt parser.Node,
+	relScope rel.Scope,
+) (Macro, error) {
 	macroNode := ast.FromParserNode(arraiParsers.Grammar(), macroElt)
-	macroExpr := pc.CompileExpr(macroNode).(rel.Expr)
-	//TODO: context may need to be initialized with more key values here
-	macroValue, err := macroExpr.Eval(context.Background(), relScope)
+	macroExpr, err := pc.CompileExpr(ctx, macroNode)
+	if err != nil {
+		return Macro{}, err
+	}
+	macroValue, err := macroExpr.Eval(ctx, relScope)
 	if err != nil {
 		return Macro{ruleName: ""}, err
 	}

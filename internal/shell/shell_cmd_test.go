@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/arr-ai/arrai/pkg/arraictx"
 	"github.com/arr-ai/arrai/rel"
 	"github.com/arr-ai/arrai/syntax"
 	"github.com/arr-ai/wbnf/parser"
@@ -23,17 +24,18 @@ func TestTryRunCommand(t *testing.T) {
 	t.Parallel()
 
 	sh := newShellInstance(newLineCollector(), []rel.ContextErr{})
-	assert.NoError(t, tryRunCommand(`/set a = 1 + 2`, sh))
-	assert.NoError(t, tryRunCommand(`/set $a = 1 + 2`, sh))
-	assert.NoError(t, tryRunCommand(`/set . = 1 + 2`, sh))
-	assert.NoError(t, tryRunCommand(`/set _a = 1 + 2`, sh))
-	assert.NoError(t, tryRunCommand(`/unset a`, sh))
-	assert.NoError(t, tryRunCommand(`/unset $a`, sh))
-	assert.NoError(t, tryRunCommand(`/unset .`, sh))
-	assert.NoError(t, tryRunCommand(`/unset _a`, sh))
+	ctx := arraictx.InitRunCtx(context.Background())
+	assert.NoError(t, tryRunCommand(ctx, `/set a = 1 + 2`, sh))
+	assert.NoError(t, tryRunCommand(ctx, `/set $a = 1 + 2`, sh))
+	assert.NoError(t, tryRunCommand(ctx, `/set . = 1 + 2`, sh))
+	assert.NoError(t, tryRunCommand(ctx, `/set _a = 1 + 2`, sh))
+	assert.NoError(t, tryRunCommand(ctx, `/unset a`, sh))
+	assert.NoError(t, tryRunCommand(ctx, `/unset $a`, sh))
+	assert.NoError(t, tryRunCommand(ctx, `/unset .`, sh))
+	assert.NoError(t, tryRunCommand(ctx, `/unset _a`, sh))
 
-	assert.EqualError(t, tryRunCommand("/hi", sh), "command hi not found")
-	assert.EqualError(t, tryRunCommand("random", sh), "random is not a command")
+	assert.EqualError(t, tryRunCommand(ctx, "/hi", sh), "command hi not found")
+	assert.EqualError(t, tryRunCommand(ctx, "random", sh), "random is not a command")
 }
 
 func TestSetCmd(t *testing.T) {
@@ -48,13 +50,15 @@ func TestSetCmd(t *testing.T) {
 	setCmdAssertion(t, "a123", "123", set, sh)
 
 	errMsg := `/set command error, usage: /set <name> = <expr>`
-	assert.EqualError(t, set.process("a 1+2", sh), errMsg)
-	assert.EqualError(t, set.process("= 1+2", sh), errMsg)
+	ctx := arraictx.InitRunCtx(context.Background())
+	assert.EqualError(t, set.process(ctx, "a 1+2", sh), errMsg)
+	assert.EqualError(t, set.process(ctx, "= 1+2", sh), errMsg)
 }
 
 func setCmdAssertion(t *testing.T, name, exprToSet string, set *setCmd, sh *shellInstance) {
-	assert.NoError(t, set.process(fmt.Sprintf("%s = %s", name, exprToSet), sh))
-	actualVal, err := syntax.EvalWithScope(context.Background(), "", exprToSet, sh.scope)
+	ctx := arraictx.InitRunCtx(context.Background())
+	assert.NoError(t, set.process(ctx, fmt.Sprintf("%s = %s", name, exprToSet), sh))
+	actualVal, err := syntax.EvalWithScope(ctx, "", exprToSet, sh.scope)
 	require.NoError(t, err)
 	expr, exists := sh.scope.Get(name)
 	assert.True(t, exists)
@@ -68,19 +72,21 @@ func TestUnsetCmd(t *testing.T) {
 	assert.Equal(t, []string{"unset"}, unset.names())
 
 	sh := newShellInstance(newLineCollector(), []rel.ContextErr{})
+	ctx := arraictx.InitRunCtx(context.Background())
+
 	require.True(t, sh.scope.Count() == syntax.StdScope().Count())
-	assert.NoError(t, unset.process("x", sh))
+	assert.NoError(t, unset.process(ctx, "x", sh))
 
 	sh.scope = sh.scope.With("a", rel.NewNumber(123))
 	require.NotPanics(t, func() {
 		sh.scope.MustGet("a")
 	})
 
-	assert.NoError(t, unset.process("a", sh))
+	assert.NoError(t, unset.process(ctx, "a", sh))
 	_, exists := sh.scope.Get("a")
 	assert.False(t, exists)
 
-	assert.EqualError(t, unset.process("123", sh), "/unset command error, usage: /unset <name>")
+	assert.EqualError(t, unset.process(ctx, "123", sh), "/unset command error, usage: /unset <name>")
 }
 
 func TestUpFrameCmd(t *testing.T) {
@@ -90,17 +96,19 @@ func TestUpFrameCmd(t *testing.T) {
 	assert.Equal(t, []string{"up", "u"}, up.names())
 
 	sh := newShellInstance(newLineCollector(), []rel.ContextErr{})
-	assert.EqualError(t, up.process("", sh), "frame index out of range, frame length: 0")
+	ctx := arraictx.InitRunCtx(context.Background())
+
+	assert.EqualError(t, up.process(ctx, "", sh), "frame index out of range, frame length: 0")
 	assertEqualScope(t, removeArraiInfo(syntax.StdScope()), removeArraiInfo(sh.scope))
 
 	ctxErrs := createContextErrs()
 	sh = newShellInstance(newLineCollector(), ctxErrs)
 	assertCurrScope(t, sh, 2, ctxErrs)
-	require.NoError(t, up.process("", sh))
+	require.NoError(t, up.process(ctx, "", sh))
 	assertCurrScope(t, sh, 1, ctxErrs)
-	require.NoError(t, up.process("", sh))
+	require.NoError(t, up.process(ctx, "", sh))
 	assertCurrScope(t, sh, 0, ctxErrs)
-	assert.EqualError(t, up.process("", sh), "frame index out of range, frame length: 3")
+	assert.EqualError(t, up.process(ctx, "", sh), "frame index out of range, frame length: 3")
 }
 
 func TestDownFrameCmd(t *testing.T) {
@@ -110,7 +118,9 @@ func TestDownFrameCmd(t *testing.T) {
 	assert.Equal(t, []string{"down", "d"}, down.names())
 
 	sh := newShellInstance(newLineCollector(), []rel.ContextErr{})
-	assert.EqualError(t, down.process("", sh), "frame index out of range, frame length: 0")
+	ctx := arraictx.InitRunCtx(context.Background())
+
+	assert.EqualError(t, down.process(ctx, "", sh), "frame index out of range, frame length: 0")
 	assertEqualScope(t, removeArraiInfo(syntax.StdScope()), removeArraiInfo(sh.scope))
 
 	ctxErrs := createContextErrs()
@@ -119,11 +129,11 @@ func TestDownFrameCmd(t *testing.T) {
 	sh.scope = syntax.StdScope().Update(ctxErrs[0].GetScope())
 
 	assertCurrScope(t, sh, 0, ctxErrs)
-	require.NoError(t, down.process("", sh))
+	require.NoError(t, down.process(ctx, "", sh))
 	assertCurrScope(t, sh, 1, ctxErrs)
-	require.NoError(t, down.process("", sh))
+	require.NoError(t, down.process(ctx, "", sh))
 	assertCurrScope(t, sh, 2, ctxErrs)
-	assert.EqualError(t, down.process("", sh), "frame index out of range, frame length: 3")
+	assert.EqualError(t, down.process(ctx, "", sh), "frame index out of range, frame length: 3")
 }
 
 func assertCurrScope(t *testing.T, sh *shellInstance, index int, frames []rel.ContextErr) {
