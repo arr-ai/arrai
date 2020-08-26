@@ -4,6 +4,7 @@ import (
 	"context"
 	"reflect"
 
+	"github.com/arr-ai/arrai/pkg/arraictx"
 	"github.com/arr-ai/wbnf/parser"
 	"github.com/go-errors/errors"
 )
@@ -133,7 +134,7 @@ func (c Closure) CallAll(arg Value) (Set, error) {
 			"nullary-vs-unary function arg mismatch (%s vs %s)", c.f.Arg(), arg))
 	}
 	if niladic {
-		val, err := c.f.body.Eval(context.Background(), c.scope)
+		val, err := c.f.body.Eval(arraictx.InitRunCtx(context.Background()), c.scope)
 		if err != nil {
 			return nil, err
 		}
@@ -143,7 +144,7 @@ func (c Closure) CallAll(arg Value) (Set, error) {
 	if err != nil {
 		return nil, err
 	}
-	val, err := c.f.body.Eval(context.Background(), c.scope.Update(scope))
+	val, err := c.f.body.Eval(arraictx.InitRunCtx(context.Background()), c.scope.Update(scope))
 	if err != nil {
 		return nil, err
 	}

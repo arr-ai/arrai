@@ -7,6 +7,7 @@ import (
 	"github.com/go-errors/errors"
 	"github.com/sirupsen/logrus"
 
+	"github.com/arr-ai/arrai/pkg/arraictx"
 	"github.com/arr-ai/arrai/rel"
 )
 
@@ -61,7 +62,7 @@ func Start() *Engine {
 		for name, fn := range globals {
 			global = global.With(name, rel.NewNativeFunction(name, fn))
 		}
-		ctx := context.Background()
+		ctx := arraictx.InitRunCtx(context.Background())
 		for {
 			logrus.Info("Engine select")
 			select {

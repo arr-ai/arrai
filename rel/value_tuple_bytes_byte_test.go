@@ -5,6 +5,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/arr-ai/arrai/pkg/arraictx"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -138,7 +139,7 @@ func TestBytesByteTuple_String(t *testing.T) { //nolint:dupl
 func TestBytesByteTuple_Eval(t *testing.T) {
 	t.Parallel()
 	tuple := NewBytesByteTuple(42, 'a')
-	value, err := tuple.Eval(context.Background(), EmptyScope)
+	value, err := tuple.Eval(arraictx.InitRunCtx(context.Background()), EmptyScope)
 	require.NoError(t, err)
 	assert.Equal(t, tuple, value)
 }
