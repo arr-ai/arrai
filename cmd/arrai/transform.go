@@ -31,7 +31,7 @@ func transform(c *cli.Context) error {
 	// 	}
 
 	// 	global := rel.EmptyScope.With(".", value)
-	// 	xvalue, err := expr.Eval(global, global)
+	// 	xvalue, err := expr.Eval(ctx, global, global)
 	// 	if err != nil {
 	// 		return err
 	// 	}

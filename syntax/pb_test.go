@@ -27,7 +27,7 @@ func TestTransformProtobufToTupleFlow(t *testing.T) {
 
 	codeExpr, err := pc.CompileExpr(ctx, ast)
 	require.NoError(t, err)
-	val, err := codeExpr.Eval(rel.EmptyScope)
+	val, err := codeExpr.Eval(ctx, rel.EmptyScope)
 
 	assert.NoError(t, err)
 	shop, _ := val.(rel.Tuple)

@@ -1,6 +1,7 @@
 package rel
 
 import (
+	"context"
 	"fmt"
 	"math"
 
@@ -8,6 +9,7 @@ import (
 	"github.com/go-errors/errors"
 )
 
+//TODO: add context?
 type binEval func(a, b Value, local Scope) (Value, error)
 
 // BinExpr represents a range of operators.
@@ -281,19 +283,19 @@ func (e *BinExpr) String() string {
 }
 
 // Eval returns the subject
-func (e *BinExpr) Eval(local Scope) (_ Value, err error) {
-	a, err := e.a.Eval(local)
+func (e *BinExpr) Eval(ctx context.Context, local Scope) (_ Value, err error) {
+	a, err := e.a.Eval(ctx, local)
 	if err != nil {
-		return nil, WrapContext(err, e, local)
+		return nil, WrapContextErr(err, e, local)
 	}
 
-	b, err := e.b.Eval(local)
+	b, err := e.b.Eval(ctx, local)
 	if err != nil {
-		return nil, WrapContext(err, e, local)
+		return nil, WrapContextErr(err, e, local)
 	}
 	val, err := e.eval(a, b, local)
 	if err != nil {
-		return nil, WrapContext(err, e, local)
+		return nil, WrapContextErr(err, e, local)
 	}
 	return val, nil
 }

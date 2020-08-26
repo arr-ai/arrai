@@ -1,6 +1,7 @@
 package rel
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/arr-ai/frozen"
@@ -14,7 +15,7 @@ type Expr interface {
 	fmt.Stringer
 
 	// Eval evaluates the expr in a given scope.
-	Eval(local Scope) (Value, error)
+	Eval(ctx context.Context, local Scope) (Value, error)
 
 	Source() parser.Scanner
 }

@@ -34,7 +34,7 @@ func AssertCodesEvalToSameValue(t *testing.T, expected, code string) bool {
 	}
 	codeExpr, err := pc.CompileExpr(ctx, ast)
 	require.NoError(t, err)
-	value, err := codeExpr.Eval(rel.Scope{})
+	value, err := codeExpr.Eval(ctx, rel.Scope{})
 	if !assert.NoError(t, err, "evaluating expected: %s", expected) {
 		return false
 	}
@@ -86,7 +86,7 @@ func AssertCodeEvalsToGrammar(t *testing.T, expected parser.Grammar, code string
 	astElt := pc.MustParseString(ctx, code)
 	astExpr, err := pc.CompileExpr(ctx, astElt)
 	require.NoError(t, err)
-	astValue, err := astExpr.Eval(rel.EmptyScope)
+	astValue, err := astExpr.Eval(ctx, rel.EmptyScope)
 	assert.NoError(t, err, "parsing code: %s", code)
 	astNode := rel.ASTNodeFromValue(astValue).(ast.Branch)
 	astGrammar := wbnf.NewFromAst(astNode)
@@ -104,7 +104,7 @@ func AssertCodePanics(t *testing.T, code string) bool {
 		if assert.NoError(t, err, "parsing code: %s", code) {
 			codeExpr, err := pc.CompileExpr(ctx, ast)
 			require.NoError(t, err)
-			codeExpr.Eval(rel.EmptyScope) //nolint:errcheck
+			codeExpr.Eval(ctx, rel.EmptyScope) //nolint:errcheck
 		}
 	})
 }
@@ -118,7 +118,7 @@ func AssertCodeErrors(t *testing.T, errString, code string) bool {
 	if assert.NoError(t, err, "parsing code: %s", code) {
 		codeExpr, err := pc.CompileExpr(ctx, ast)
 		require.NoError(t, err)
-		_, err = codeExpr.Eval(rel.EmptyScope)
+		_, err = codeExpr.Eval(ctx, rel.EmptyScope)
 		if err == nil {
 			panic(fmt.Sprintf("the code `%s` didn't generate any error", code))
 		}

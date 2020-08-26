@@ -2,6 +2,7 @@ package rel
 
 import (
 	"bytes"
+	"context"
 
 	"github.com/arr-ai/wbnf/parser"
 )
@@ -44,15 +45,15 @@ func (e ArrayExpr) String() string {
 }
 
 // Eval returns the subject.
-func (e ArrayExpr) Eval(local Scope) (Value, error) {
+func (e ArrayExpr) Eval(ctx context.Context, local Scope) (Value, error) {
 	values := make([]Value, 0, len(e.elements))
 	for _, expr := range e.elements {
 		var value Value
 		if expr != nil {
 			var err error
-			value, err = expr.Eval(local)
+			value, err = expr.Eval(ctx, local)
 			if err != nil {
-				return nil, WrapContext(err, e, local)
+				return nil, WrapContextErr(err, e, local)
 			}
 		}
 		values = append(values, value)

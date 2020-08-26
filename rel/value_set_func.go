@@ -1,6 +1,7 @@
 package rel
 
 import (
+	"context"
 	"fmt"
 	"unsafe"
 
@@ -70,6 +71,6 @@ func (f *Function) String() string {
 }
 
 // Eval returns the Value
-func (f *Function) Eval(local Scope) (Value, error) {
+func (f *Function) Eval(ctx context.Context, local Scope) (Value, error) {
 	return NewClosure(local, f), nil
 }

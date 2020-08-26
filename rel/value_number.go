@@ -1,6 +1,7 @@
 package rel
 
 import (
+	"context"
 	"reflect"
 	"strconv"
 	"unsafe"
@@ -68,7 +69,7 @@ func (n Number) String() string {
 }
 
 // Eval returns the number.
-func (n Number) Eval(_ Scope) (Value, error) {
+func (n Number) Eval(ctx context.Context, _ Scope) (Value, error) {
 	return n, nil
 }
 

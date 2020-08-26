@@ -1,6 +1,7 @@
 package rel
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -19,17 +20,17 @@ func NewTupleProjectExpr(scanner parser.Scanner, base Expr, inverse bool, attrs 
 	return &TupleProjectExpr{ExprScanner{scanner}, base, inverse, NewNames(attrs...)}
 }
 
-func (tp *TupleProjectExpr) Eval(local Scope) (Value, error) {
-	val, err := tp.base.Eval(local)
+func (tp *TupleProjectExpr) Eval(ctx context.Context, local Scope) (Value, error) {
+	val, err := tp.base.Eval(ctx, local)
 	if err != nil {
-		return nil, WrapContext(err, tp, local)
+		return nil, WrapContextErr(err, tp, local)
 	}
 	tuple, isTuple := val.(Tuple)
 	if !isTuple {
-		return nil, WrapContext(errors.Errorf("lhs does not evaluate to tuple: %s", val), tp, local)
+		return nil, WrapContextErr(errors.Errorf("lhs does not evaluate to tuple: %s", val), tp, local)
 	}
 	if !tp.attrs.IsSubsetOf(tuple.Names()) {
-		return nil, WrapContext(errors.Errorf("names are not subset of lhs: %s", tuple.Names()), tp, local)
+		return nil, WrapContextErr(errors.Errorf("names are not subset of lhs: %s", tuple.Names()), tp, local)
 	}
 
 	if tp.inverse {

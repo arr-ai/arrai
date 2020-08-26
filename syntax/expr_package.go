@@ -1,6 +1,7 @@
 package syntax
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/arr-ai/arrai/rel"
@@ -29,6 +30,6 @@ func (e PackageExpr) String() string {
 }
 
 // Eval returns the subject
-func (e PackageExpr) Eval(_ rel.Scope) (rel.Value, error) {
-	return e.a.Eval(StdScope())
+func (e PackageExpr) Eval(ctx context.Context, _ rel.Scope) (rel.Value, error) {
+	return e.a.Eval(ctx, StdScope())
 }

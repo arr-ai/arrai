@@ -30,7 +30,7 @@ func (pc ParseContext) unpackMacro(
 	if err != nil {
 		return Macro{}, err
 	}
-	macroValue, err := macroExpr.Eval(relScope)
+	macroValue, err := macroExpr.Eval(ctx, relScope)
 	if err != nil {
 		return Macro{ruleName: ""}, err
 	}

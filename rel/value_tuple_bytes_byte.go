@@ -1,6 +1,7 @@
 package rel //nolint:dupl
 
 import (
+	"context"
 	"fmt"
 	"reflect"
 
@@ -69,7 +70,7 @@ func (t BytesByteTuple) String() string {
 }
 
 // Eval returns the tuple.
-func (t BytesByteTuple) Eval(local Scope) (Value, error) {
+func (t BytesByteTuple) Eval(ctx context.Context, local Scope) (Value, error) {
 	return t, nil
 }
 

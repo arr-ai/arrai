@@ -1,5 +1,6 @@
 package syntax
 
+//TODO: should I add context to compile functions?
 import (
 	"context"
 	"errors"
@@ -698,13 +699,14 @@ func (pc ParseContext) compileTailFunc(ctx context.Context, tail ast.Node) (rel.
 			for _, arg := range args {
 				exprs = append(exprs, arg.One("expr"))
 			}
+
 			compiledExprs, err := pc.compileExprs(ctx, exprs...)
 			if err != nil {
 				return nil, err
 			}
-			return func(v rel.Value, local rel.Scope) (rel.Value, error) {
+			return func(ctx context.Context, v rel.Value, local rel.Scope) (rel.Value, error) {
 				for _, arg := range compiledExprs {
-					a, err := arg.Eval(local)
+					a, err := arg.Eval(ctx, local)
 					if err != nil {
 						return nil, err
 					}
@@ -732,8 +734,8 @@ func (pc ParseContext) compileTailFunc(ctx context.Context, tail ast.Node) (rel.
 				scanner = str.One("").Scanner()
 				attr = parseArraiString(scanner.String())
 			}
-			return func(v rel.Value, local rel.Scope) (rel.Value, error) {
-				return rel.NewDotExpr(handleAccessScanners(v.Source(), scanner), v, attr).Eval(local)
+			return func(ctx context.Context, v rel.Value, local rel.Scope) (rel.Value, error) {
+				return rel.NewDotExpr(handleAccessScanners(v.Source(), scanner), v, attr).Eval(ctx, local)
 			}, nil
 		}
 	}
@@ -771,8 +773,8 @@ func (pc ParseContext) compileSafeTails(ctx context.Context, base rel.Expr, tail
 	if tail != nil {
 		firstSafe := tail.One("first_safe").One("tail")
 		safeCallback := func(tailFunc rel.SafeTailCallback) rel.SafeTailCallback {
-			return func(v rel.Value, local rel.Scope) (rel.Value, error) {
-				val, err := tailFunc(v, local)
+			return func(ctx context.Context, v rel.Value, local rel.Scope) (rel.Value, error) {
+				val, err := tailFunc(ctx, v, local)
 				if err != nil {
 					switch e := err.(type) {
 					case rel.NoReturnError:

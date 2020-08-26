@@ -17,6 +17,7 @@ func stdEval() rel.Attr {
 	)
 }
 
+//TODO: should this function take context
 func evalExpr(v rel.Value) (rel.Value, error) {
 	switch val := v.(type) {
 	case rel.String, rel.Bytes:

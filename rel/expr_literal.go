@@ -1,6 +1,8 @@
 package rel
 
 import (
+	"context"
+
 	"github.com/arr-ai/wbnf/parser"
 )
 
@@ -25,6 +27,6 @@ func (e LiteralExpr) String() string {
 }
 
 // Eval returns the subject
-func (e LiteralExpr) Eval(_ Scope) (Value, error) {
+func (e LiteralExpr) Eval(ctx context.Context, _ Scope) (Value, error) {
 	return e.literal, nil
 }

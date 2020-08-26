@@ -1,6 +1,7 @@
 package rel
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/arr-ai/wbnf/parser"
@@ -137,28 +138,28 @@ func (e *ReduceExpr) String() string {
 }
 
 // Eval returns the subject
-func (e *ReduceExpr) Eval(local Scope) (_ Value, err error) {
-	a, err := e.a.Eval(local)
+func (e *ReduceExpr) Eval(ctx context.Context, local Scope) (_ Value, err error) {
+	a, err := e.a.Eval(ctx, local)
 	if err != nil {
-		return nil, WrapContext(err, e, local)
+		return nil, WrapContextErr(err, e, local)
 	}
 	if s, ok := a.(Set); ok {
 		acc, err := e.init(s)
 		if err != nil {
-			return nil, WrapContext(err, e, local)
+			return nil, WrapContextErr(err, e, local)
 		}
 		for i := s.Enumerator(); i.MoveNext(); {
-			f, err := e.f.Eval(local)
+			f, err := e.f.Eval(ctx, local)
 			if err != nil {
-				return nil, WrapContext(err, e, local)
+				return nil, WrapContextErr(err, e, local)
 			}
 			v, err := SetCall(f.(Closure), i.Current())
 			if err != nil {
-				return nil, WrapContext(err, e, local)
+				return nil, WrapContextErr(err, e, local)
 			}
 			acc, err = e.reduce(acc, v)
 			if err != nil {
-				return nil, WrapContext(err, e, local)
+				return nil, WrapContextErr(err, e, local)
 			}
 		}
 		return e.output(acc)

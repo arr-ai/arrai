@@ -12,7 +12,7 @@ func EvalWithScope(ctx context.Context, path, source string, scope rel.Scope) (r
 		return nil, err
 	}
 
-	value, err := expr.Eval(scope)
+	value, err := expr.Eval(ctx, scope)
 	if err != nil {
 		return nil, err
 	}

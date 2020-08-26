@@ -1,8 +1,10 @@
 package rel
 
 import (
+	"context"
 	"reflect"
 
+	"github.com/arr-ai/arrai/pkg/arraictx"
 	"github.com/arr-ai/wbnf/parser"
 	"github.com/go-errors/errors"
 )
@@ -43,7 +45,7 @@ func (c Closure) String() string {
 }
 
 // Eval returns the Value
-func (c Closure) Eval(local Scope) (Value, error) {
+func (c Closure) Eval(ctx context.Context, local Scope) (Value, error) {
 	return c, nil
 }
 
@@ -123,6 +125,7 @@ func (c Closure) Where(p func(v Value) (bool, error)) (Set, error) {
 	panic("unimplemented")
 }
 
+//FIXME: context not used properly
 func (c Closure) CallAll(arg Value) (Set, error) {
 	niladic := c.f.Arg() == "-"
 	noArg := arg == nil
@@ -131,17 +134,17 @@ func (c Closure) CallAll(arg Value) (Set, error) {
 			"nullary-vs-unary function arg mismatch (%s vs %s)", c.f.Arg(), arg))
 	}
 	if niladic {
-		val, err := c.f.body.Eval(c.scope)
+		val, err := c.f.body.Eval(arraictx.InitRunCtx(context.Background()), c.scope)
 		if err != nil {
 			return nil, err
 		}
 		return NewSet(val), nil
 	}
-	scope, err := c.f.arg.Bind(c.scope, arg)
+	scope, err := c.f.arg.Bind(context.Background(), c.scope, arg)
 	if err != nil {
 		return nil, err
 	}
-	val, err := c.f.body.Eval(c.scope.Update(scope))
+	val, err := c.f.body.Eval(arraictx.InitRunCtx(context.Background()), c.scope.Update(scope))
 	if err != nil {
 		return nil, err
 	}

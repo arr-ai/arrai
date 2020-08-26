@@ -1,9 +1,12 @@
+//TODO: the context here maybe need to be initialized with proper values like fs
 package rel
 
 import (
+	"context"
 	"reflect"
 	"testing"
 
+	"github.com/arr-ai/arrai/pkg/arraictx"
 	"github.com/go-errors/errors"
 	"github.com/stretchr/testify/assert"
 )
@@ -38,11 +41,12 @@ func RequireEqualValues(t *testing.T, expected, actual Value) {
 
 // AssertExprsEvalToSameValue asserts that the exprs evaluate to the same value.
 func AssertExprsEvalToSameValue(t *testing.T, expected, expr Expr) bool {
-	expectedValue, err := expected.Eval(EmptyScope)
+	ctx := context.Background()
+	expectedValue, err := expected.Eval(ctx, EmptyScope)
 	if !assert.NoError(t, err, "evaluating expected: %s", expected) {
 		return false
 	}
-	value, err := expr.Eval(EmptyScope)
+	value, err := expr.Eval(ctx, EmptyScope)
 	if !assert.NoError(t, err, "evaluating expr: %s", expr) {
 		return false
 	}
@@ -62,7 +66,7 @@ func RequireExprsEvalToSameValue(t *testing.T, expected, expr Expr) {
 
 // AssertExprEvalsToType asserts that the exprs evaluate to the same value.
 func AssertExprEvalsToType(t *testing.T, expected interface{}, expr Expr) bool {
-	value, err := expr.Eval(EmptyScope)
+	value, err := expr.Eval(arraictx.InitRunCtx(context.Background()), EmptyScope)
 	if !assert.NoError(t, err, "evaluating expr: %s", expr) {
 		return false
 	}
@@ -75,18 +79,18 @@ func AssertExprEvalsToType(t *testing.T, expected interface{}, expr Expr) bool {
 
 // AssertExprErrors asserts that the expr returns an error when evaluated.
 func AssertExprErrors(t *testing.T, expr Expr) bool {
-	_, err := expr.Eval(EmptyScope)
+	_, err := expr.Eval(arraictx.InitRunCtx(context.Background()), EmptyScope)
 	return assert.Error(t, err)
 }
 
 // AssertExprErrorEquals asserts that the expr returns an error with the given message when evaluated.
 func AssertExprErrorEquals(t *testing.T, expr Expr, msg string) bool {
-	_, err := expr.Eval(EmptyScope)
+	_, err := expr.Eval(arraictx.InitRunCtx(context.Background()), EmptyScope)
 
-	return assert.EqualError(t, err, WrapContext(errors.Errorf(msg), expr, EmptyScope).Error())
+	return assert.EqualError(t, err, WrapContextErr(errors.Errorf(msg), expr, EmptyScope).Error())
 }
 
 // AssertExprPanics asserts that the expr panics when evaluated.
 func AssertExprPanics(t *testing.T, expr Expr) bool {
-	return assert.Panics(t, func() { expr.Eval(EmptyScope) }) //nolint:errcheck
+	return assert.Panics(t, func() { expr.Eval(arraictx.InitRunCtx(context.Background()), EmptyScope) }) //nolint:errcheck
 }
