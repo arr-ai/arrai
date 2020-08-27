@@ -1,16 +1,10 @@
 # Writing tests
 
-Arr.ai has a rudimentary testing library. The API is documented
-[here](../std-test.md).
+Arr.ai is a functional language designed for the representation and transformation of data. As such, testing arr.ai code is different from testing more stateful, imperative code.
 
-Writing tests is as simple as calling `//test.suite({...})` with a set of tests:
+Arr.ai's approach to testing is for test files to produce a data structure within which all leaves are `true` (not just truthy). If any leaf is not `true`, the test is said to have failed.
 
-```arrai
-@> //test.suite({
- >     //test.assert.equal(42)(6 * 7),
- >     //test.assert.unequal(42)(6 * 9),
- > })
-@> //test.suite({
- >     //test.assert.false({1, 2, 3} where . < 2)
- > })
-```
+## TODO
+
+- Provide examples.
+- Use macros to augment standard arr.ai code for testing (e.g. replace leaf comparison exprs with equivalent `//testing.assert.*` functions).

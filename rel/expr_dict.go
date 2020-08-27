@@ -2,6 +2,7 @@ package rel
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 
 	"github.com/arr-ai/wbnf/parser"
@@ -49,16 +50,16 @@ func (e DictExpr) String() string {
 }
 
 // Eval returns the subject
-func (e DictExpr) Eval(local Scope) (Value, error) {
+func (e DictExpr) Eval(ctx context.Context, local Scope) (Value, error) {
 	entryExprs := make([]DictEntryTuple, 0, len(e.entryExprs))
 	for _, expr := range e.entryExprs {
-		at, err := expr.at.Eval(local)
+		at, err := expr.at.Eval(ctx, local)
 		if err != nil {
-			return nil, WrapContext(err, e, local)
+			return nil, WrapContextErr(err, e, local)
 		}
-		value, err := expr.value.Eval(local)
+		value, err := expr.value.Eval(ctx, local)
 		if err != nil {
-			return nil, WrapContext(err, e, local)
+			return nil, WrapContextErr(err, e, local)
 		}
 		entryExprs = append(entryExprs, NewDictEntryTuple(at, value))
 	}

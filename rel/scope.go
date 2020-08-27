@@ -2,6 +2,7 @@ package rel
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"sort"
 
@@ -41,13 +42,13 @@ func (s Scope) String() string {
 }
 
 // Eval evaluates an expression in a given symbol environment.
-func (s Scope) Eval(local Scope) (Value, error) {
+func (s Scope) Eval(ctx context.Context, local Scope) (Value, error) {
 	tuple := NewTuple()
 	for e := s.Enumerator(); e.MoveNext(); {
 		name, expr := e.Current()
-		value, err := expr.Eval(local)
+		value, err := expr.Eval(ctx, local)
 		if err != nil {
-			return nil, WrapContext(err, expr, local)
+			return nil, WrapContextErr(err, expr, local)
 		}
 		tuple = tuple.With(name, value)
 	}

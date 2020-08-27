@@ -1,9 +1,11 @@
 package main
 
 import (
+	"context"
 	"net/http"
 
 	"github.com/arr-ai/arrai/engine"
+	"github.com/arr-ai/arrai/pkg/arraictx"
 	"github.com/arr-ai/arrai/rel"
 	"github.com/arr-ai/arrai/syntax"
 	"github.com/gorilla/websocket"
@@ -25,6 +27,7 @@ func newWebsocketFrontend(eng *engine.Engine) *websocketFrontend {
 }
 
 func (wsfe *websocketFrontend) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	ctx := arraictx.InitRunCtx(context.TODO())
 	conn, err := wsfe.upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Errorf("Error upgrading websocket: %s", err)
@@ -44,7 +47,7 @@ func (wsfe *websocketFrontend) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		}
 		if msgtype == websocket.TextMessage {
 			s := string(p)
-			expr, err := syntax.Compile(syntax.NoPath, s)
+			expr, err := syntax.Compile(ctx, syntax.NoPath, s)
 			if err != nil {
 				log.Errorf("Error parsing request %#v: %s", s, err)
 				if err := conn.WriteJSON(map[string]interface{}{"error": err.Error()}); err != nil {

@@ -1,8 +1,10 @@
 package rel
 
 import (
+	"context"
 	"testing"
 
+	"github.com/arr-ai/arrai/pkg/arraictx"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -136,7 +138,7 @@ func TestArrayItemTuple_String(t *testing.T) {
 func TestArrayItemTuple_Eval(t *testing.T) {
 	t.Parallel()
 	tuple := NewArrayItemTuple(42, None)
-	value, err := tuple.Eval(EmptyScope)
+	value, err := tuple.Eval(arraictx.InitRunCtx(context.Background()), EmptyScope)
 	require.NoError(t, err)
 	assert.Equal(t, tuple, value)
 }

@@ -1,6 +1,7 @@
 package syntax
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/arr-ai/arrai/rel"
@@ -16,10 +17,11 @@ func stdEval() rel.Attr {
 	)
 }
 
+//TODO: should this function take context
 func evalExpr(v rel.Value) (rel.Value, error) {
 	switch val := v.(type) {
 	case rel.String, rel.Bytes:
-		evaluated, err := EvaluateExpr(".", val.String())
+		evaluated, err := EvaluateExpr(context.Background(), ".", val.String())
 		if err != nil {
 			panic(err)
 		}

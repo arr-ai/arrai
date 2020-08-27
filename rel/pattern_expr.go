@@ -2,6 +2,7 @@ package rel
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 
 	"github.com/go-errors/errors"
@@ -18,13 +19,13 @@ func NewExprPattern(expr Expr) ExprPattern {
 	return ExprPattern{Expr: expr}
 }
 
-func (p ExprPattern) Bind(scope Scope, value Value) (Scope, error) {
+func (p ExprPattern) Bind(ctx context.Context, scope Scope, value Value) (Scope, error) {
 	if identExpr, is := p.Expr.(IdentExpr); is {
 		// Bind value for identexpr in Pattern, like `let (a: x, b: y) = (a: 4, b: 7); x`
 		return Scope{}.With(identExpr.ident, value), nil
 	}
 
-	v, err := p.Expr.Eval(scope)
+	v, err := p.Expr.Eval(ctx, scope)
 	if err != nil {
 		return Scope{}, err
 	}
@@ -50,18 +51,18 @@ func NewExprsPattern(exprs ...Expr) ExprsPattern {
 	return ExprsPattern{exprs: exprs}
 }
 
-func (p ExprsPattern) Bind(scope Scope, value Value) (Scope, error) {
+func (p ExprsPattern) Bind(ctx context.Context, scope Scope, value Value) (Scope, error) {
 	if len(p.exprs) == 0 {
 		return EmptyScope, errors.Errorf("there is not any rel.Expr in rel.ExprsPattern")
 	}
 
-	incomingVal, err := value.Eval(scope)
+	incomingVal, err := value.Eval(ctx, scope)
 	if err != nil {
 		return EmptyScope, err
 	}
 
 	for _, e := range p.exprs {
-		val, err := e.Eval(scope)
+		val, err := e.Eval(ctx, scope)
 		if err != nil {
 			return EmptyScope, err
 		}

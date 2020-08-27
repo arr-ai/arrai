@@ -1,0 +1,9 @@
+# 5 test cases
+(
+    # Added expression let to clarify the actual result can be a complex expression
+    testCase1: //test.assert.equal("Hello, arrai!", let words = ["Hello", "arrai!"];//seq.join(", ", words)),
+    testCase2: //test.assert.unequal("Hello, arrai!", //seq.join(", ", ["Nihao", "arrai!"])),
+    testCase3: //test.assert.size(2, {"Hello", "arrai!"}),
+    testCase4: //test.assert.true({"Hello", "arrai!"}),
+    testCase5: //test.assert.false({}),
+)

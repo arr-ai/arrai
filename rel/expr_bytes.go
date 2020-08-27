@@ -1,6 +1,7 @@
 package rel
 
 import (
+	"context"
 	"strings"
 
 	"github.com/arr-ai/wbnf/parser"
@@ -27,35 +28,35 @@ func NewBytesExpr(scanner parser.Scanner, elements ...Expr) Expr {
 	return NewBytes(bytes)
 }
 
-func (b BytesExpr) Eval(local Scope) (Value, error) {
+func (b BytesExpr) Eval(ctx context.Context, local Scope) (Value, error) {
 	bytes := make([]byte, 0)
 	for _, expr := range b.elements {
-		value, err := expr.Eval(local)
+		value, err := expr.Eval(ctx, local)
 		if err != nil {
-			return nil, WrapContext(err, b, local)
+			return nil, WrapContextErr(err, b, local)
 		}
 		switch v := value.(type) {
 		case Number:
 			if !isByteNumber(v) {
-				return nil, WrapContext(errors.Errorf("BytesExpr.Eval: Number does not represent a byte: %v", v), b, local)
+				return nil, WrapContextErr(errors.Errorf("BytesExpr.Eval: Number does not represent a byte: %v", v), b, local)
 			}
 			bytes = append(bytes, byte(v))
 		case String:
 			if err := b.handleOffset(v); err != nil {
-				return nil, WrapContext(err, b, local)
+				return nil, WrapContextErr(err, b, local)
 			}
 			bytes = append(bytes, []byte(string(v.s))...)
 		case GenericSet:
 			if s, isString := AsString(v); isString {
 				if err := b.handleOffset(s); err != nil {
-					return nil, WrapContext(err, b, local)
+					return nil, WrapContextErr(err, b, local)
 				}
 				bytes = append(bytes, []byte(string(s.s))...)
 				continue
 			}
-			return nil, WrapContext(errors.Errorf("BytesExpr.Eval: Set %v is not supported", expr), b, local)
+			return nil, WrapContextErr(errors.Errorf("BytesExpr.Eval: Set %v is not supported", expr), b, local)
 		default:
-			return nil, WrapContext(errors.Errorf("BytesExpr.Eval: %T is not supported", v), b, local)
+			return nil, WrapContextErr(errors.Errorf("BytesExpr.Eval: %T is not supported", v), b, local)
 		}
 	}
 	return NewBytes(bytes), nil
