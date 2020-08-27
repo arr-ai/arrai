@@ -10,11 +10,11 @@ import (
 type importCache struct {
 	mutex sync.Mutex
 	cond  *sync.Cond
-	cache map[string]rel.Value
+	cache map[string]rel.Expr
 }
 
 func newCache() *importCache {
-	c := &importCache{cache: map[string]rel.Value{}}
+	c := &importCache{cache: map[string]rel.Expr{}}
 	c.cond = sync.NewCond(&c.mutex)
 	return c
 }
@@ -22,7 +22,7 @@ func newCache() *importCache {
 // getOrAdd tries to get the value for key. If not present, and another
 // goroutine is currently computing a value for key, this goroutine will wait
 // till it's ready.
-func (service *importCache) getOrAdd(key string, add func() (rel.Value, error)) (rel.Value, error) {
+func (service *importCache) getOrAdd(key string, add func() (rel.Expr, error)) (rel.Expr, error) {
 	adding := false
 
 	service.mutex.Lock()

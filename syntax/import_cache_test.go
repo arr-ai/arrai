@@ -3,12 +3,16 @@
 package syntax
 
 import (
+	"context"
 	"fmt"
 	"sync"
 	"testing"
 	"time"
 
+	"github.com/arr-ai/arrai/pkg/arraictx"
 	"github.com/arr-ai/arrai/rel"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestImportCache(t *testing.T) {
@@ -25,27 +29,35 @@ func TestImportCache(t *testing.T) {
 
 	cache := newCache()
 	var wg sync.WaitGroup
-	add := func(whenMs int, key string, value rel.Value, sleepMs int, descr string) {
+	add := func(ctx context.Context, whenMs int, key string, value rel.Value, sleepMs int, descr string) {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
 			time.Sleep(time.Until(start.Add(time.Duration(whenMs) * time.Millisecond)))
-			actual, _ := cache.getOrAdd(key, func() (rel.Value, error) {
+			actual, _ := cache.getOrAdd(key, func() (rel.Expr, error) {
 				log("> %s", descr)
 				time.Sleep(time.Duration(sleepMs) * time.Millisecond)
 				log("< %s", descr)
 				return value, nil
 			})
-			rel.AssertEqualValues(t, actual, value)
+			// to avoid evaluating nil expression
+			if value == nil {
+				assert.Equal(t, nil, actual)
+				return
+			}
+			actualValue, err := actual.Eval(ctx, StdScope())
+			require.NoError(t, err)
+			rel.AssertEqualValues(t, actualValue, value)
 		}()
 	}
 
-	add(10, "a", rel.None, 100, "a 1")
-	add(20, "a", rel.None, 0, "a 2")
-	add(30, "b", rel.None, 50, "b")
-	add(40, "c", rel.None, 100, "c")
-	add(50, "d", nil, 40, "d 1")
-	add(60, "d", nil, 40, "d 2")
+	ctx := arraictx.InitRunCtx(context.Background())
+	add(ctx, 10, "a", rel.None, 100, "a 1")
+	add(ctx, 20, "a", rel.None, 0, "a 2")
+	add(ctx, 30, "b", rel.None, 50, "b")
+	add(ctx, 40, "c", rel.None, 100, "c")
+	add(ctx, 50, "d", nil, 40, "d 1")
+	add(ctx, 60, "d", nil, 40, "d 2")
 
 	wg.Wait()
 

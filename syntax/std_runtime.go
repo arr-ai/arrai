@@ -5,7 +5,7 @@ import (
 )
 
 // BuildInfo represents arr.ai build information.
-var BuildInfo rel.Value
+var BuildInfo rel.Value = rel.EmptyTuple
 
 func stdRuntime() rel.Attr {
 	return rel.NewTupleAttr("arrai",

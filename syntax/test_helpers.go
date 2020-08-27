@@ -117,7 +117,9 @@ func AssertCodeErrors(t *testing.T, errString, code string) bool {
 	ast, err := pc.Parse(ctx, parser.NewScanner(code))
 	if assert.NoError(t, err, "parsing code: %s", code) {
 		codeExpr, err := pc.CompileExpr(ctx, ast)
-		require.NoError(t, err)
+		if err != nil {
+			return assert.EqualError(t, errors.New(err.Error()[:len(errString)]), errString)
+		}
 		_, err = codeExpr.Eval(ctx, rel.EmptyScope)
 		if err == nil {
 			panic(fmt.Sprintf("the code `%s` didn't generate any error", code))
