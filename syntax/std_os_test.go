@@ -34,14 +34,18 @@ func TestStdOsTree(t *testing.T) {
 		(name: ".empty", path: "std_os_test/.empty", isDir: false, size: 0, modTime: -1),
 		(name: "README.md", path: "std_os_test/README.md", isDir: false, size: 84, modTime: -1),
 		(name: "no files", path: "std_os_test/no files", isDir: true, size: 96, modTime: -1),
-		(name: "full", path: "std_os_test/no files/full", isDir: true, size: 128, modTime: -1),
+		(name: "full", path: "std_os_test/no files/full", isDir: true, size: 160, modTime: -1),
 		(name: "README.md", path: "std_os_test/no files/full/README.md", isDir: false, size: 73, modTime: -1),
+ 		(name: "root.ln", path: "std_os_test/no files/full/root.ln", isDir: false, size: 18, modTime: -1),
 		(name: "empty", path: "std_os_test/no files/full/empty", isDir: true, size: 64, modTime: -1),
 	}`, `//os.tree('std_os_test') => . +> (modTime: -1)`)
 
 	AssertCodesEvalToSameValue(t, `{
 		(name: "empty", path: "std_os_test/no files/full/empty/", isDir: true, size: 64, modTime: -1),
 	}`, `//os.tree('std_os_test/no files/full/empty/') => . +> (modTime: -1)`)
+
+	AssertCodesEvalToSameValue(t,
+		`{'.'}`, `//os.tree('.') => .path where . = '.'`)
 
 	AssertCodesEvalToSameValue(t, `{
 		(name: "README.md", path: "std_os_test/README.md", isDir: false, size: 84, modTime: -1),
