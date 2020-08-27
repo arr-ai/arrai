@@ -1,0 +1,12 @@
+# Greets the user by name.
+let rec greet = \name
+    $`Hello${cond name {
+        '': '',
+        [...head, tail]: $`, ${head >> //str.title(.)::, }, and ${//str.title(tail)}`,
+        _: $`, ${//str.title(name)}`,
+    }}!`
+;
+
+(
+    :greet,
+)

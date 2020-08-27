@@ -1,0 +1,7 @@
+let (:greet, ...) = //{./hello};
+
+(
+    empty: greet('') = 'Hello!',
+    one: greet('foo') = 'Hello, Foo!',
+    many: greet(['foo', 'bar', 'baz']) = 'Hello, Foo, Bar, and Baz!',
+)
