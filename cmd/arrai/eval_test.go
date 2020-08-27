@@ -6,6 +6,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/arr-ai/arrai/pkg/arraictx"
 	"github.com/arr-ai/arrai/pkg/ctxfs"
 
 	"github.com/spf13/afero"
@@ -14,7 +15,7 @@ import (
 
 func assertEvalOutputs(t *testing.T, expected, source string) bool { //nolint:unparam
 	var sb strings.Builder
-	return assert.NoError(t, evalImpl(context.Background(), source, &sb, "")) &&
+	return assert.NoError(t, evalImpl(arraictx.InitRunCtx(context.Background()), source, &sb, "")) &&
 		assert.Equal(t, expected, strings.TrimRight(sb.String(), "\n"))
 }
 
@@ -22,7 +23,7 @@ func assertEvalCreates(t *testing.T, expected map[string]string, source, out str
 	var sb strings.Builder
 
 	memFs := afero.NewBasePathFs(afero.NewMemMapFs(), "/")
-	ctx := ctxfs.RuntimeFsOnto(context.Background(), memFs)
+	ctx := ctxfs.RuntimeFsOnto(arraictx.InitRunCtx(context.Background()), memFs)
 
 	stdoutOK := assert.NoError(t, evalImpl(ctx, source, &sb, out)) &&
 		assert.Equal(t, "", strings.TrimRight(sb.String(), "\n"))

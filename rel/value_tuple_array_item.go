@@ -1,6 +1,7 @@
 package rel
 
 import (
+	"context"
 	"fmt"
 	"reflect"
 
@@ -71,7 +72,7 @@ func (t ArrayItemTuple) String() string {
 }
 
 // Eval returns the tuple.
-func (t ArrayItemTuple) Eval(local Scope) (Value, error) {
+func (t ArrayItemTuple) Eval(ctx context.Context, local Scope) (Value, error) {
 	return t, nil
 }
 

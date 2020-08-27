@@ -21,7 +21,7 @@ func isCommand(line string) bool {
 	return cmdRe.MatchString(line)
 }
 
-func tryRunCommand(line string, shellData *shellInstance) error {
+func tryRunCommand(ctx context.Context, line string, shellData *shellInstance) error {
 	var name string
 	if name = cmdRe.FindString(line); name == "" {
 		return errors.Errorf("%s is not a command", line)
@@ -32,12 +32,12 @@ func tryRunCommand(line string, shellData *shellInstance) error {
 	if !isCmd {
 		return errors.Errorf("command %s not found", name)
 	}
-	return cmd.process(line, shellData)
+	return cmd.process(ctx, line, shellData)
 }
 
 type shellCmd interface {
 	names() []string
-	process(line string, shellData *shellInstance) error
+	process(ctx context.Context, line string, shellData *shellInstance) error
 }
 
 type setCmd struct{}
@@ -46,7 +46,7 @@ func (sc *setCmd) names() []string {
 	return []string{"set"}
 }
 
-func (sc *setCmd) process(line string, shellData *shellInstance) error {
+func (sc *setCmd) process(ctx context.Context, line string, shellData *shellInstance) error {
 	identRe := regexp.MustCompile(`^(?P<ident>\.|[$@A-Za-z_][0-9$@A-Za-z_]*)[ \t]+=`)
 	identMatches := identRe.FindStringSubmatch(line)
 	if len(identMatches) != 2 {
@@ -54,7 +54,7 @@ func (sc *setCmd) process(line string, shellData *shellInstance) error {
 	}
 	name := identMatches[1]
 	expr := identRe.ReplaceAllString(line, "")
-	val, err := shellEval(expr, shellData.scope)
+	val, err := shellEval(ctx, expr, shellData.scope)
 	if err != nil {
 		return err
 	}
@@ -68,7 +68,7 @@ func (uc *unsetCmd) names() []string {
 	return []string{"unset"}
 }
 
-func (uc *unsetCmd) process(line string, shellData *shellInstance) error {
+func (uc *unsetCmd) process(ctx context.Context, line string, shellData *shellInstance) error {
 	ident := regexp.MustCompile(`^(\.|[$@A-Za-z_][0-9$@A-Za-z_]*)`).FindString(line)
 	if ident == "" {
 		return errors.Errorf(`/unset command error, usage: /unset <name>`)
@@ -89,7 +89,7 @@ func (*exitCommand) names() []string {
 	return []string{"exit"}
 }
 
-func (ec *exitCommand) process(_ string, _ *shellInstance) error {
+func (ec *exitCommand) process(ctx context.Context, _ string, _ *shellInstance) error {
 	return exitError{}
 }
 
@@ -99,7 +99,7 @@ func (*upFrameCmd) names() []string {
 	return []string{"up", "u"}
 }
 
-func (*upFrameCmd) process(_ string, sh *shellInstance) error {
+func (*upFrameCmd) process(ctx context.Context, _ string, sh *shellInstance) error {
 	return changeFrame(sh.currentFrameIndex-1, sh)
 }
 
@@ -109,7 +109,7 @@ func (d *downFrameCmd) names() []string {
 	return []string{"down", "d"}
 }
 
-func (*downFrameCmd) process(_ string, sh *shellInstance) error {
+func (*downFrameCmd) process(ctx context.Context, _ string, sh *shellInstance) error {
 	return changeFrame(sh.currentFrameIndex+1, sh)
 }
 
@@ -118,6 +118,7 @@ func changeFrame(i int, sh *shellInstance) error {
 		return fmt.Errorf("frame index out of range, frame length: %d", len(sh.frames))
 	}
 	sh.currentFrameIndex = i
+	//TODO: change context
 	log.Infof(context.Background(), "Stack: %d\n%s\n", i, sh.frames[i].GetSource().Context(parser.DefaultLimit))
 	sh.scope = syntax.StdScope().Update(sh.frames[i].GetScope())
 	return nil

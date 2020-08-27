@@ -2,8 +2,12 @@
 
 package shell
 
-import "github.com/arr-ai/arrai/rel"
+import (
+	"context"
 
-func Shell(_ []rel.ContextErr) error {
+	"github.com/arr-ai/arrai/rel"
+)
+
+func Shell(_ context.Context, _ []rel.ContextErr) error {
 	panic("not implemented")
 }

@@ -1,6 +1,9 @@
 package rel
 
-import "fmt"
+import (
+	"context"
+	"fmt"
+)
 
 // PatternExprPair a Pattern/Expr pair
 type PatternExprPair struct {
@@ -18,10 +21,10 @@ func (pt PatternExprPair) String() string {
 	return fmt.Sprintf("%s:%s", pt.pattern, pt.expr)
 }
 
-func (pt PatternExprPair) Bind(local Scope, value Value) (Scope, error) {
-	return pt.pattern.Bind(local, value)
+func (pt PatternExprPair) Bind(ctx context.Context, local Scope, value Value) (Scope, error) {
+	return pt.pattern.Bind(ctx, local, value)
 }
 
-func (pt PatternExprPair) Eval(local Scope) (Value, error) {
-	return pt.expr.Eval(local)
+func (pt PatternExprPair) Eval(ctx context.Context, local Scope) (Value, error) {
+	return pt.expr.Eval(ctx, local)
 }

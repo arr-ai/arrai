@@ -2,6 +2,7 @@ package rel
 
 import (
 	"bytes"
+	"context"
 
 	"github.com/arr-ai/wbnf/parser"
 	"github.com/go-errors/errors"
@@ -42,12 +43,12 @@ func (e *SetExpr) String() string {
 }
 
 // Eval returns the subject
-func (e *SetExpr) Eval(local Scope) (Value, error) {
+func (e *SetExpr) Eval(ctx context.Context, local Scope) (Value, error) {
 	values := make([]Value, 0, len(e.elements))
 	for _, expr := range e.elements {
-		value, err := EvalExpr(expr, local)
+		value, err := EvalExpr(ctx, expr, local)
 		if err != nil {
-			return nil, WrapContext(err, e, local)
+			return nil, WrapContextErr(err, e, local)
 		}
 		values = append(values, value)
 	}

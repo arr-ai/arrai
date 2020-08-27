@@ -1,6 +1,7 @@
 package rel
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/arr-ai/wbnf/parser"
@@ -77,11 +78,11 @@ func (c ContextErr) GetSource() parser.Scanner {
 	return c.source
 }
 
-func WrapContext(err error, expr Expr, scope Scope) error {
+func WrapContextErr(err error, expr Expr, scope Scope) error {
 	return ContextErr{err, expr.Source(), scope}
 }
 
-func EvalExpr(expr Expr, local Scope) (_ Value, err error) {
+func EvalExpr(ctx context.Context, expr Expr, local Scope) (_ Value, err error) {
 	//TODO: this is only the initial scope, how to get the last scope?
-	return expr.Eval(local)
+	return expr.Eval(ctx, local)
 }

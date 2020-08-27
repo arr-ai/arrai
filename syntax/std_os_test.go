@@ -24,3 +24,15 @@ func TestStdOsExists(t *testing.T) {
 	AssertCodesEvalToSameValue(t, `true`, `//os.exists('std_os_test.go')`)
 	AssertCodesEvalToSameValue(t, `false`, `//os.exists('doesntexist.anywhere')`)
 }
+
+func TestStdOsIsATty(t *testing.T) {
+	t.Parallel()
+
+	AssertCodesEvalToSameValue(t, `false`, `//os.isatty(0)`)
+	AssertCodesEvalToSameValue(t, `false`, `//os.isatty(1)`)
+
+	AssertCodeErrors(t, "isatty arg must be a number, not rel.String", `//os.isatty("0")`)
+	AssertCodeErrors(t, "isatty arg must be an integer, not 0.1", `//os.isatty(0.1)`)
+	AssertCodeErrors(t, "isatty not implemented for 2", `//os.isatty(2)`)
+	AssertCodeErrors(t, "isatty not implemented for -1", `//os.isatty(-1)`)
+}

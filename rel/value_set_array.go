@@ -1,6 +1,7 @@
 package rel
 
 import (
+	"context"
 	"fmt"
 	"math"
 	"reflect"
@@ -22,7 +23,7 @@ func NewArray(values ...Value) Set {
 	return NewOffsetArray(0, values...)
 }
 
-// NewArray constructs an array as a relation.
+// NewOffsetArray constructs an offset array as a relation.
 func NewOffsetArray(offset int, values ...Value) Set {
 	// Trim holes from both ends.
 	for i, v := range values {
@@ -170,7 +171,7 @@ func (a Array) Shift(offset int) Array {
 }
 
 // Eval returns the string.
-func (a Array) Eval(_ Scope) (Value, error) {
+func (a Array) Eval(ctx context.Context, _ Scope) (Value, error) {
 	return a, nil
 }
 

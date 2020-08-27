@@ -1,6 +1,7 @@
 package syntax
 
 import (
+	"context"
 	"fmt"
 	goparser "go/parser"
 	"go/token"
@@ -183,7 +184,8 @@ func createFunc3Attr(name string, f func(a, b, c rel.Value) (rel.Value, error)) 
 }
 
 func mustParseLit(s string) rel.Value {
-	lit, err := MustCompile(NoPath, s).Eval(rel.EmptyScope)
+	ctx := context.Background()
+	lit, err := MustCompile(ctx, NoPath, s).Eval(ctx, rel.EmptyScope)
 	if err != nil {
 		panic(err)
 	}

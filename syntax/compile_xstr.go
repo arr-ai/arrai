@@ -1,6 +1,7 @@
 package syntax
 
 import (
+	"context"
 	"regexp"
 	"strings"
 
@@ -18,7 +19,7 @@ var (
 	lastSpacesRE  = regexp.MustCompile(`\n([ \t]*)\z`)
 )
 
-func (pc ParseContext) compileExpandableString(b ast.Branch, c ast.Children) rel.Expr {
+func (pc ParseContext) compileExpandableString(ctx context.Context, b ast.Branch, c ast.Children) (rel.Expr, error) {
 	scanner := c.(ast.One).Node.One("quote").Scanner()
 	quote := scanner.String()
 	parts := []interface{}{}
@@ -59,7 +60,7 @@ func (pc ParseContext) compileExpandableString(b ast.Branch, c ast.Children) rel
 	}
 
 	if len(parts) == 0 {
-		return rel.None
+		return rel.None, nil
 	}
 
 	if last, is := parts[len(parts)-1].(string); is {
@@ -103,9 +104,12 @@ func (pc ParseContext) compileExpandableString(b ast.Branch, c ast.Children) rel
 				}
 				next = ""
 			}
+			expr, err := pc.CompileExpr(ctx, part.One("expr").(ast.Branch))
+			if err != nil {
+				return nil, err
+			}
 			exprs[i] = rel.NewCallExprCurry(part.Scanner(), stdStrExpand,
-				rel.NewString([]rune(format)),
-				pc.CompileExpr(part.One("expr").(ast.Branch)),
+				rel.NewString([]rune(format)), expr,
 				rel.NewString([]rune(delim)),
 				rel.NewString([]rune(appendIfNotEmpty)),
 			)
@@ -121,7 +125,7 @@ func (pc ParseContext) compileExpandableString(b ast.Branch, c ast.Children) rel
 	// TODO: Use a more direct approach to invoke concat implementation.
 	return rel.NewCallExpr(b.Scanner(),
 		rel.NewNativeFunction("xstr_concat", xstrConcat),
-		rel.NewArrayExpr(b.Scanner(), exprs...))
+		rel.NewArrayExpr(b.Scanner(), exprs...)), nil
 }
 
 func xstrConcat(seq rel.Value) (rel.Value, error) {

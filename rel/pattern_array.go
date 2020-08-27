@@ -2,6 +2,7 @@ package rel
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 )
 
@@ -13,7 +14,7 @@ func NewArrayPattern(elements ...FallbackPattern) ArrayPattern {
 	return ArrayPattern{elements}
 }
 
-func (p ArrayPattern) Bind(local Scope, value Value) (Scope, error) {
+func (p ArrayPattern) Bind(ctx context.Context, local Scope, value Value) (Scope, error) {
 	if s, is := value.(GenericSet); is {
 		if s.set.IsEmpty() {
 			if len(p.items) == 0 {
@@ -69,7 +70,7 @@ func (p ArrayPattern) Bind(local Scope, value Value) (Scope, error) {
 				return EmptyScope, fmt.Errorf("length of array %s shorter than array pattern %s", array, p)
 			}
 			var err error
-			value, err = item.fallback.Eval(local)
+			value, err = item.fallback.Eval(ctx, local)
 			if err != nil {
 				return EmptyScope, err
 			}
@@ -77,7 +78,7 @@ func (p ArrayPattern) Bind(local Scope, value Value) (Scope, error) {
 			value = array.Values()[i+offset]
 		}
 
-		scope, err := item.pattern.Bind(local, value)
+		scope, err := item.pattern.Bind(ctx, local, value)
 		if err != nil {
 			return EmptyScope, err
 		}

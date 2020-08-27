@@ -2,6 +2,7 @@ package rel
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"reflect"
 	"regexp"
@@ -200,7 +201,7 @@ func (t *GenericTuple) String() string {
 }
 
 // Eval returns the tuple.
-func (t *GenericTuple) Eval(local Scope) (Value, error) {
+func (t *GenericTuple) Eval(ctx context.Context, local Scope) (Value, error) {
 	return t, nil
 }
 

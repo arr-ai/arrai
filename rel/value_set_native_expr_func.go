@@ -49,7 +49,7 @@ package rel
 // }
 
 // // Eval returns the Value
-// func (f *NativeExprFunction) Eval(local Scope) (Value, error) {
+// func (f *NativeExprFunction) Eval(ctx context.Context, local Scope) (Value, error) {
 // 	return f, nil
 // }
 

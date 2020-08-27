@@ -1,6 +1,7 @@
 package rel
 
 import (
+	"context"
 	"reflect"
 
 	"github.com/arr-ai/wbnf/parser"
@@ -15,7 +16,7 @@ type Bytes struct {
 	offset int
 }
 
-// NewBytes constructs an array as a relation.
+// NewBytes constructs a byte array as a relation.
 func NewBytes(b []byte) Set {
 	if len(b) == 0 {
 		return None
@@ -23,7 +24,7 @@ func NewBytes(b []byte) Set {
 	return Bytes{b: b}
 }
 
-// NewBytes constructs an array as a relation.
+// NewOffsetBytes constructs an offset byte array as a relation.
 func NewOffsetBytes(b []byte, offset int) Set {
 	if len(b) == 0 {
 		return None
@@ -116,7 +117,7 @@ func (b Bytes) String() string {
 }
 
 // Eval returns the string.
-func (b Bytes) Eval(_ Scope) (Value, error) {
+func (b Bytes) Eval(ctx context.Context, _ Scope) (Value, error) {
 	return b, nil
 }
 

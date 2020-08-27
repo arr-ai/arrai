@@ -1,6 +1,7 @@
 package rel
 
 import (
+	"context"
 	"reflect"
 	"unsafe"
 
@@ -53,7 +54,7 @@ func (f *NativeFunction) String() string {
 }
 
 // Eval returns the Value
-func (f *NativeFunction) Eval(local Scope) (Value, error) {
+func (f *NativeFunction) Eval(ctx context.Context, local Scope) (Value, error) {
 	return f, nil
 }
 

@@ -2,6 +2,7 @@ package rel
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 )
 
@@ -21,7 +22,7 @@ func NewSetPattern(patterns ...Pattern) SetPattern {
 	return SetPattern{patterns}
 }
 
-func (p SetPattern) Bind(local Scope, value Value) (Scope, error) {
+func (p SetPattern) Bind(ctx context.Context, local Scope, value Value) (Scope, error) {
 	set, is := value.(GenericSet)
 	if !is {
 		return EmptyScope, fmt.Errorf("value %s is not a set", value)
@@ -95,13 +96,13 @@ func (p SetPattern) Bind(local Scope, value Value) (Scope, error) {
 		var scope Scope
 		var err error
 		if _, is := p.patterns[i].(ExtraElementPattern); is {
-			scope, err = p.patterns[i].Bind(local, set)
+			scope, err = p.patterns[i].Bind(ctx, local, set)
 		} else {
 			if set.Count() != 1 {
 				return EmptyScope, fmt.Errorf("the length of set %s is wrong", set)
 			}
 
-			scope, err = p.patterns[i].Bind(local, set.set.Any().(Value))
+			scope, err = p.patterns[i].Bind(ctx, local, set.set.Any().(Value))
 			if err != nil {
 				return EmptyScope, err
 			}

@@ -1,5 +1,7 @@
 package rel
 
+import "context"
+
 type ExtraElementPattern struct {
 	ident string
 }
@@ -8,7 +10,7 @@ func NewExtraElementPattern(ident string) ExtraElementPattern {
 	return ExtraElementPattern{ident}
 }
 
-func (p ExtraElementPattern) Bind(scope Scope, value Value) (Scope, error) {
+func (p ExtraElementPattern) Bind(ctx context.Context, scope Scope, value Value) (Scope, error) {
 	if p.ident == "" {
 		return EmptyScope, nil
 	}

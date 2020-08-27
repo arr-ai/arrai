@@ -1,6 +1,7 @@
 package rel
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/arr-ai/wbnf/parser"
@@ -25,25 +26,25 @@ func (e *DArrowExpr) String() string {
 }
 
 // Eval returns the lhs transformed elementwise by fn.
-func (e *DArrowExpr) Eval(local Scope) (_ Value, err error) {
-	value, err := e.lhs.Eval(local)
+func (e *DArrowExpr) Eval(ctx context.Context, local Scope) (_ Value, err error) {
+	value, err := e.lhs.Eval(ctx, local)
 	if err != nil {
-		return nil, WrapContext(err, e, local)
+		return nil, WrapContextErr(err, e, local)
 	}
 	if set, ok := value.(Set); ok {
 		values := []Value{}
 		for i := set.Enumerator(); i.MoveNext(); {
-			scope, err := e.fn.arg.Bind(local, i.Current())
+			scope, err := e.fn.arg.Bind(ctx, local, i.Current())
 			if err != nil {
-				return nil, WrapContext(err, e, local)
+				return nil, WrapContextErr(err, e, local)
 			}
-			v, err := e.fn.body.Eval(local.Update(scope))
+			v, err := e.fn.body.Eval(ctx, local.Update(scope))
 			if err != nil {
-				return nil, WrapContext(err, e, local)
+				return nil, WrapContextErr(err, e, local)
 			}
 			values = append(values, v)
 		}
 		return NewSet(values...), nil
 	}
-	return nil, WrapContext(errors.Errorf("=> not applicable to %T: %[1]v", value), e, local)
+	return nil, WrapContextErr(errors.Errorf("=> not applicable to %T: %[1]v", value), e, local)
 }

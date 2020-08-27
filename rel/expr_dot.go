@@ -1,6 +1,7 @@
 package rel
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/arr-ai/wbnf/parser"
@@ -45,13 +46,13 @@ func (x *DotExpr) String() string {
 }
 
 // Eval returns the lhs
-func (x *DotExpr) Eval(local Scope) (_ Value, err error) {
+func (x *DotExpr) Eval(ctx context.Context, local Scope) (_ Value, err error) {
 	if x.attr == "*" {
-		return nil, WrapContext(errors.Errorf("expr.* not allowed outside tuple attr"), x, local)
+		return nil, WrapContextErr(errors.Errorf("expr.* not allowed outside tuple attr"), x, local)
 	}
-	a, err := x.lhs.Eval(local)
+	a, err := x.lhs.Eval(ctx, local)
 	if err != nil {
-		return nil, WrapContext(err, x, local)
+		return nil, WrapContextErr(err, x, local)
 	}
 	get := func(t Tuple) (Value, error) {
 		if value, found := t.Get(x.attr); found {
@@ -70,7 +71,7 @@ func (x *DotExpr) Eval(local Scope) (_ Value, err error) {
 				}
 			}
 		}
-		return nil, WrapContext(MissingAttrError{errors.Errorf("Missing attr %q (available: %v)", x.attr, t.Names())},
+		return nil, WrapContextErr(MissingAttrError{errors.Errorf("Missing attr %q (available: %v)", x.attr, t.Names())},
 			x, local)
 	}
 
@@ -79,20 +80,20 @@ func (x *DotExpr) Eval(local Scope) (_ Value, err error) {
 		return get(t)
 	case Set:
 		if !t.IsTrue() {
-			return nil, WrapContext(errors.Errorf("Cannot get attr %q from empty set", x.attr), x, local)
+			return nil, WrapContextErr(errors.Errorf("Cannot get attr %q from empty set", x.attr), x, local)
 		}
 		e := t.Enumerator()
 		e.MoveNext()
 		v := e.Current()
 		if e.MoveNext() {
-			return nil, WrapContext(errors.Errorf("Too many elts to get attr %q from set", x.attr), x, local)
+			return nil, WrapContextErr(errors.Errorf("Too many elts to get attr %q from set", x.attr), x, local)
 		}
 		if t, ok := v.(Tuple); ok {
 			return get(t)
 		}
-		return nil, WrapContext(errors.Errorf("Cannot get attr %q from non-tuple set elt", x.attr), x, local)
+		return nil, WrapContextErr(errors.Errorf("Cannot get attr %q from non-tuple set elt", x.attr), x, local)
 	default:
-		return nil, WrapContext(errors.Errorf(
+		return nil, WrapContextErr(errors.Errorf(
 			"(%s).%s: lhs must be a Tuple, not %T", x.lhs, x.attr, a), x, local)
 	}
 }

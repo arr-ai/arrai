@@ -1,6 +1,7 @@
 package rel
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/arr-ai/wbnf/parser"
@@ -27,20 +28,20 @@ func (e *NestExpr) String() string {
 }
 
 // Eval returns e.lhs with e.attrs grouped under e.attr.
-func (e *NestExpr) Eval(local Scope) (Value, error) {
-	value, err := e.lhs.Eval(local)
+func (e *NestExpr) Eval(ctx context.Context, local Scope) (Value, error) {
+	value, err := e.lhs.Eval(ctx, local)
 	if err != nil {
-		return nil, WrapContext(err, e, local)
+		return nil, WrapContextErr(err, e, local)
 	}
 	if set, ok := value.(Set); ok {
 		if e.inverse {
 			setRelAttrs := mustGetRelationAttrs(set)
 			if err := validNestOp(setRelAttrs, e.attrs); err != nil {
-				return nil, WrapContext(err, e, local)
+				return nil, WrapContextErr(err, e, local)
 			}
 			e.attrs = setRelAttrs.Minus(e.attrs)
 			if !e.attrs.IsTrue() {
-				return nil, WrapContext(
+				return nil, WrapContextErr(
 					fmt.Errorf("nest attrs cannot be on all of relation attrs (%v)", setRelAttrs),
 					e, local,
 				)
@@ -48,5 +49,5 @@ func (e *NestExpr) Eval(local Scope) (Value, error) {
 		}
 		return Nest(set, e.attrs, e.attr), nil
 	}
-	return nil, WrapContext(errors.Errorf("nest not applicable to %T", value), e, local)
+	return nil, WrapContextErr(errors.Errorf("nest not applicable to %T", value), e, local)
 }

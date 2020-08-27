@@ -1,6 +1,7 @@
 package rel
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/arr-ai/wbnf/parser"
@@ -19,18 +20,18 @@ func (e AndExpr) String() string {
 	return fmt.Sprintf("(%v) && (%v)", e.a, e.b)
 }
 
-func (e AndExpr) Eval(local Scope) (Value, error) {
-	a, err := e.a.Eval(local)
+func (e AndExpr) Eval(ctx context.Context, local Scope) (Value, error) {
+	a, err := e.a.Eval(ctx, local)
 	if err != nil {
-		return nil, WrapContext(err, e, local)
+		return nil, WrapContextErr(err, e, local)
 	}
 	if !a.IsTrue() {
 		return a, nil
 	}
 
-	b, err := e.b.Eval(local)
+	b, err := e.b.Eval(ctx, local)
 	if err != nil {
-		return nil, WrapContext(err, e, local)
+		return nil, WrapContextErr(err, e, local)
 	}
 
 	return b, nil
@@ -49,18 +50,18 @@ func (e OrExpr) String() string {
 	return fmt.Sprintf("(%v) || (%v)", e.a, e.b)
 }
 
-func (e OrExpr) Eval(local Scope) (Value, error) {
-	a, err := e.a.Eval(local)
+func (e OrExpr) Eval(ctx context.Context, local Scope) (Value, error) {
+	a, err := e.a.Eval(ctx, local)
 	if err != nil {
-		return nil, WrapContext(err, e, local)
+		return nil, WrapContextErr(err, e, local)
 	}
 	if a.IsTrue() {
 		return a, nil
 	}
 
-	b, err := e.b.Eval(local)
+	b, err := e.b.Eval(ctx, local)
 	if err != nil {
-		return nil, WrapContext(err, e, local)
+		return nil, WrapContextErr(err, e, local)
 	}
 
 	return b, nil
