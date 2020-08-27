@@ -212,8 +212,7 @@ func NewValue(v interface{}) (Value, error) {
 	case []interface{}:
 		return NewSetFrom(x...)
 	default:
-		xv := reflect.ValueOf(x)
-		v, err := newReflectValueValue(xv, make(visited))
+		v, err := newReflectValueValue(reflect.ValueOf(x), make(visited))
 		if err != nil {
 			return nil, err
 		} else {
