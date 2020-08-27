@@ -44,8 +44,7 @@ func TestStdOsTree(t *testing.T) {
 		(name: "empty", path: "std_os_test/no files/full/empty/", isDir: true, size: 64, modTime: -1),
 	}`, `//os.tree('std_os_test/no files/full/empty/') => . +> (modTime: -1)`)
 
-	AssertCodesEvalToSameValue(t,
-		`{'.'}`, `//os.tree('.') => .path where . = '.'`)
+	AssertCodesEvalToSameValue(t, `{'.'}`, `//os.tree('.') => .path where . = '.'`)
 
 	AssertCodesEvalToSameValue(t, `{
 		(name: "README.md", path: "std_os_test/README.md", isDir: false, size: 84, modTime: -1),
