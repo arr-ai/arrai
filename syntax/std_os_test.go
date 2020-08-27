@@ -28,6 +28,7 @@ func TestStdOsExists(t *testing.T) {
 func TestStdOsTree(t *testing.T) {
 	t.Parallel()
 
+	// modTime is set to -1 to be non-deterministic.
 	AssertCodesEvalToSameValue(t, `{
 		(name: "std_os_test", path: "std_os_test", isDir: true, size: 160, modTime: -1),
 		(name: ".empty", path: "std_os_test/.empty", isDir: false, size: 0, modTime: -1),
@@ -41,6 +42,10 @@ func TestStdOsTree(t *testing.T) {
 	AssertCodesEvalToSameValue(t, `{
 		(name: "empty", path: "std_os_test/no files/full/empty/", isDir: true, size: 64, modTime: -1),
 	}`, `//os.tree('std_os_test/no files/full/empty/') => . +> (modTime: -1)`)
+
+	AssertCodesEvalToSameValue(t, `{
+		(name: "README.md", path: "std_os_test/README.md", isDir: false, size: 84, modTime: -1),
+	}`, `//os.tree('std_os_test/README.md') => . +> (modTime: -1)`)
 
 	AssertCodeErrors(t, ``, `//os.tree(['std_os_test'])`)
 	AssertCodeErrors(t, ``, `//os.tree('doesntexist')`)
