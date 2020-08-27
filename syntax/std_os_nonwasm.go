@@ -5,14 +5,12 @@ package syntax
 import (
 	"context"
 	"fmt"
+	"github.com/arr-ai/arrai/tools"
 	"github.com/mattn/go-isatty"
 	"github.com/pkg/errors"
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"strings"
-
-	"github.com/arr-ai/arrai/tools"
 
 	"github.com/arr-ai/arrai/rel"
 )
@@ -61,42 +59,30 @@ func stdOsFile(_ context.Context, v rel.Value) (rel.Value, error) {
 }
 
 // stdOsTree returns an array of paths to files within the given directory path.
-func stdOsTree(v rel.Value) (rel.Value, error) {
+func stdOsTree(_ context.Context, v rel.Value) (rel.Value, error) {
 	d, ok := v.(rel.String)
 	if !ok {
 		return nil, errors.Errorf("tree arg must be a string, not %T", v)
 	}
 
-	type entry map[string]interface{}
-	root := entry{d.String(): make(entry)}
+	fs := []rel.Value{}
 	err := filepath.Walk(d.String(), func(path string, info os.FileInfo, err error) error {
-		ps := strings.Split(path, string(filepath.Separator))
-		parent := root
-		for i, p := range ps {
-			if !info.IsDir() && i == len(ps)-1 {
-				parent[p] = true
-				return nil
-			}
-
-			v, ok := parent[p]
-			if !ok {
-				e := entry{}
-				parent[p] = e
-				parent = e
-			} else {
-				parent, ok = v.(entry)
-				if !ok {
-					return errors.Errorf("entry is not an entry")
-				}
-			}
+		if err != nil {
+			return err
 		}
+		fs = append(fs, rel.NewTuple(
+			rel.NewStringAttr("name", []rune(info.Name())),
+			rel.NewStringAttr("path", []rune(path)),
+			rel.NewBoolAttr("isDir", info.IsDir()),
+			rel.NewFloatAttr("size", float64(info.Size())),
+			rel.NewFloatAttr("modTime", float64(info.ModTime().UnixNano())),
+		))
 		return nil
 	})
 	if err != nil {
 		return nil, err
 	}
-	//rel.NewDict(false, root)
-	return rel.NewValue(root)
+	return rel.NewSet(fs...), nil
 }
 
 func stdOsIsATty(_ context.Context, value rel.Value) (rel.Value, error) {

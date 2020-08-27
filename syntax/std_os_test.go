@@ -26,20 +26,24 @@ func TestStdOsExists(t *testing.T) {
 }
 
 func TestStdOsTree(t *testing.T) {
+	t.Parallel()
+
 	AssertCodesEvalToSameValue(t, `{
-		'std_os_test': {
-			'empty': {
-				'full': {
-					'empty': {},
-					'README.md': true,
-				},
-			},
-			'.empty': true,
-			'README.md': true,
-		}
-	}`, `//os.tree('std_os_test')`)
+		(name: "std_os_test", path: "std_os_test", isDir: true, size: 160, modTime: -1),
+		(name: ".empty", path: "std_os_test/.empty", isDir: false, size: 0, modTime: -1),
+		(name: "README.md", path: "std_os_test/README.md", isDir: false, size: 84, modTime: -1),
+		(name: "no files", path: "std_os_test/no files", isDir: true, size: 96, modTime: -1),
+		(name: "full", path: "std_os_test/no files/full", isDir: true, size: 128, modTime: -1),
+		(name: "README.md", path: "std_os_test/no files/full/README.md", isDir: false, size: 73, modTime: -1),
+		(name: "empty", path: "std_os_test/no files/full/empty", isDir: true, size: 64, modTime: -1),
+	}`, `//os.tree('std_os_test') => . +> (modTime: -1)`)
+
+	AssertCodesEvalToSameValue(t, `{
+		(name: "empty", path: "std_os_test/no files/full/empty/", isDir: true, size: 64, modTime: -1),
+	}`, `//os.tree('std_os_test/no files/full/empty/') => . +> (modTime: -1)`)
 
 	AssertCodeErrors(t, ``, `//os.tree(['std_os_test'])`)
+	AssertCodeErrors(t, ``, `//os.tree('doesntexist')`)
 }
 
 func TestStdOsIsATty(t *testing.T) {
