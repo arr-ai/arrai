@@ -212,7 +212,8 @@ func NewValue(v interface{}) (Value, error) {
 	case []interface{}:
 		return NewSetFrom(x...)
 	default:
-		v, err := newReflectValueValue(reflect.ValueOf(x), make(path))
+		xv := reflect.ValueOf(x)
+		v, err := newReflectValueValue(xv, make(visited))
 		if err != nil {
 			return nil, err
 		} else {
@@ -221,17 +222,18 @@ func NewValue(v interface{}) (Value, error) {
 	}
 }
 
-// path tracks pointers of ancestors of a reflected value being processed to detect cycles.
-type path map[*reflect.Value]bool
+// visited tracks pointers of ancestors of a reflected value to detect cycles.
+type visited map[uintptr]bool
 
-func newReflectValueValue(v reflect.Value, p path) (Value, error) {
-	if _, ok := p[&v]; ok {
-		logrus.Tracef("cycle in reflection (path len %d)", len(p))
-		return nil, nil
-	} else {
-		p[&v] = true
+func newReflectValueValue(v reflect.Value, p visited) (Value, error) {
+	if v.Kind() == reflect.Ptr {
+		if _, cycle := p[v.Pointer()]; cycle {
+			logrus.Tracef("cycle in reflection (path len %d)", len(p))
+			return nil, nil
+		}
+		p[v.Pointer()] = true
+		defer func() { delete(p, v.Pointer()) }()
 	}
-	defer func() { delete(p, &v) }()
 
 	switch v.Kind() {
 	case reflect.Bool:

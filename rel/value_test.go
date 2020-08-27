@@ -42,7 +42,7 @@ func TestSetCall(t *testing.T) {
 
 func TestReflect(t *testing.T) {
 	fset := token.NewFileSet()
-	bs, err := ioutil.ReadFile("value_test.go")
+	bs, err := ioutil.ReadFile("value.go")
 	assert.NoError(t, err)
 
 	f, err := parser.ParseFile(fset, "", string(bs), 0)
