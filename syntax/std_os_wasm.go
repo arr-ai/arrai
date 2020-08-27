@@ -14,6 +14,10 @@ func stdOsGetEnv(value rel.Value) (rel.Value, error) {
 	panic("not implemented")
 }
 
+func stdOsIsATty(value rel.Value) (rel.Value, error) {
+	panic("not implemented")
+}
+
 func stdOsPathSeparator() rel.Value {
 	panic("not implemented")
 }

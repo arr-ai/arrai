@@ -17,12 +17,12 @@ type String struct {
 	holes  int
 }
 
-// NewString constructs an array as a relation.
+// NewString constructs a string as a relation.
 func NewString(s []rune) Set {
 	return NewOffsetString(s, 0)
 }
 
-// NewString constructs an array as a relation.
+// NewOffsetString constructs an offset string as a relation.
 func NewOffsetString(s []rune, offset int) Set {
 	if len(s) == 0 {
 		return None

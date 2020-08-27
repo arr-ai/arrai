@@ -23,7 +23,7 @@ func NewArray(values ...Value) Set {
 	return NewOffsetArray(0, values...)
 }
 
-// NewArray constructs an array as a relation.
+// NewOffsetArray constructs an offset array as a relation.
 func NewOffsetArray(offset int, values ...Value) Set {
 	// Trim holes from both ends.
 	for i, v := range values {
