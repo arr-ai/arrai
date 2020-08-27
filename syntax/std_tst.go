@@ -1,25 +1,26 @@
 package syntax
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/arr-ai/arrai/rel"
 )
 
-func createTestCompareFuncAttr(name string, ok func(a, b rel.Value) bool, message string) rel.Attr {
-	return createNestedFuncAttr(name, 2, func(args ...rel.Value) (rel.Value, error) {
+func createTestCompareFuncAttr(name string, ok func(_ context.Context, a, b rel.Value) bool, message string) rel.Attr {
+	return createNestedFuncAttr(name, 2, func(ctx context.Context, args ...rel.Value) (rel.Value, error) {
 		expected := args[0]
 		actual := args[1]
-		if !ok(expected, actual) {
+		if !ok(ctx, expected, actual) {
 			return nil, fmt.Errorf("%s\nexpected: %v\nactual:   %v", message, expected, actual)
 		}
 		return rel.True, nil
 	})
 }
 
-func createTestCheckFuncAttr(name string, ok func(v rel.Value) bool) rel.Attr {
-	return rel.NewNativeFunctionAttr(name, func(value rel.Value) (rel.Value, error) {
-		if ok(value) {
+func createTestCheckFuncAttr(name string, ok func(_ context.Context, v rel.Value) bool) rel.Attr {
+	return rel.NewNativeFunctionAttr(name, func(ctx context.Context, value rel.Value) (rel.Value, error) {
+		if ok(ctx, value) {
 			return rel.True, nil
 		}
 		return nil, fmt.Errorf("not %s\nvalue: %v", name, value)
@@ -29,13 +30,21 @@ func createTestCheckFuncAttr(name string, ok func(v rel.Value) bool) rel.Attr {
 func stdTest() rel.Attr {
 	return rel.NewTupleAttr("test",
 		rel.NewTupleAttr("assert",
-			createTestCompareFuncAttr("equal", func(e, a rel.Value) bool { return e.Equal(a) }, "not equal"),
-			createTestCompareFuncAttr("unequal", func(e, a rel.Value) bool { return !e.Equal(a) }, "not unequal"),
-			createTestCompareFuncAttr("size", func(e, a rel.Value) bool {
+			createTestCompareFuncAttr(
+				"equal",
+				func(_ context.Context, e, a rel.Value) bool { return e.Equal(a) },
+				"not equal",
+			),
+			createTestCompareFuncAttr(
+				"unequal",
+				func(_ context.Context, e, a rel.Value) bool { return !e.Equal(a) },
+				"not unequal",
+			),
+			createTestCompareFuncAttr("size", func(_ context.Context, e, a rel.Value) bool {
 				return int(e.(rel.Number).Float64()) == a.(rel.Set).Count()
 			}, "unexpected size"),
-			createTestCheckFuncAttr("false", func(v rel.Value) bool { return !v.IsTrue() }),
-			createTestCheckFuncAttr("true", func(v rel.Value) bool { return v.IsTrue() }),
+			createTestCheckFuncAttr("false", func(_ context.Context, v rel.Value) bool { return !v.IsTrue() }),
+			createTestCheckFuncAttr("true", func(_ context.Context, v rel.Value) bool { return v.IsTrue() }),
 		),
 		//TODO: reimplement testing suite
 		// rel.NewNativeExprFunctionAttr("suite", func(expr rel.Expr, local rel.Scope) (rel.Value, error) {

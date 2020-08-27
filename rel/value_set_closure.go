@@ -4,7 +4,6 @@ import (
 	"context"
 	"reflect"
 
-	"github.com/arr-ai/arrai/pkg/arraictx"
 	"github.com/arr-ai/wbnf/parser"
 	"github.com/go-errors/errors"
 )
@@ -80,16 +79,16 @@ func (c Closure) Negate() Value {
 }
 
 // Export exports a Closure.
-func (c Closure) Export() interface{} {
+func (c Closure) Export(ctx context.Context) interface{} {
 	if c.f.Arg() == "-" {
-		result, err := SetCall(c, None)
+		result, err := SetCall(ctx, c, None)
 		if err != nil {
 			panic(err)
 		}
-		return result.Export()
+		return result.Export(ctx)
 	}
 	return func(arg Value) Value {
-		result, err := SetCall(c, None)
+		result, err := SetCall(ctx, c, None)
 		if err != nil {
 			panic(err)
 		}
@@ -126,7 +125,7 @@ func (c Closure) Where(p func(v Value) (bool, error)) (Set, error) {
 }
 
 //FIXME: context not used properly
-func (c Closure) CallAll(arg Value) (Set, error) {
+func (c Closure) CallAll(ctx context.Context, arg Value) (Set, error) {
 	niladic := c.f.Arg() == "-"
 	noArg := arg == nil
 	if niladic != noArg {
@@ -134,17 +133,17 @@ func (c Closure) CallAll(arg Value) (Set, error) {
 			"nullary-vs-unary function arg mismatch (%s vs %s)", c.f.Arg(), arg))
 	}
 	if niladic {
-		val, err := c.f.body.Eval(arraictx.InitRunCtx(context.Background()), c.scope)
+		val, err := c.f.body.Eval(ctx, c.scope)
 		if err != nil {
 			return nil, err
 		}
 		return NewSet(val), nil
 	}
-	scope, err := c.f.arg.Bind(context.Background(), c.scope, arg)
+	scope, err := c.f.arg.Bind(ctx, c.scope, arg)
 	if err != nil {
 		return nil, err
 	}
-	val, err := c.f.body.Eval(arraictx.InitRunCtx(context.Background()), c.scope.Update(scope))
+	val, err := c.f.body.Eval(ctx, c.scope.Update(scope))
 	if err != nil {
 		return nil, err
 	}

@@ -153,7 +153,7 @@ func (e *ReduceExpr) Eval(ctx context.Context, local Scope) (_ Value, err error)
 			if err != nil {
 				return nil, WrapContextErr(err, e, local)
 			}
-			v, err := SetCall(f.(Closure), i.Current())
+			v, err := SetCall(ctx, f.(Closure), i.Current())
 			if err != nil {
 				return nil, WrapContextErr(err, e, local)
 			}

@@ -108,7 +108,7 @@ func jsonEscape(value Expr) interface{} {
 			},
 		}
 	case Number:
-		return x.Export()
+		return x.Float64()
 	case Tuple:
 		result := make(map[string]interface{}, x.Count())
 		for e := x.Enumerator(); e.MoveNext(); {

@@ -2,6 +2,7 @@ package syntax
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"strings"
 
@@ -26,7 +27,7 @@ func strJoin(joiner, subject rel.Value) (rel.Value, error) {
 	return nil, fmt.Errorf("join: sep not a string: %v", joiner)
 }
 
-func stdSeqConcat(seq rel.Value) (rel.Value, error) {
+func stdSeqConcat(_ context.Context, seq rel.Value) (rel.Value, error) {
 	if set, is := seq.(rel.Set); is {
 		if !set.IsTrue() {
 			return rel.None, nil
@@ -65,7 +66,7 @@ func stdSeqConcat(seq rel.Value) (rel.Value, error) {
 	return nil, fmt.Errorf("concat: incompatible value: %v", values[0])
 }
 
-func stdSeqContains(sub, subject rel.Value) (rel.Value, error) { //nolint:dupl
+func stdSeqContains(_ context.Context, sub, subject rel.Value) (rel.Value, error) { //nolint:dupl
 	switch subject := subject.(type) {
 	case rel.String:
 		if subStr, is := tools.ValueAsString(sub); is {
@@ -87,7 +88,7 @@ func stdSeqContains(sub, subject rel.Value) (rel.Value, error) { //nolint:dupl
 	return rel.NewBool(false), nil
 }
 
-func stdSeqJoin(joiner, subject rel.Value) (rel.Value, error) {
+func stdSeqJoin(_ context.Context, joiner, subject rel.Value) (rel.Value, error) {
 	switch subject := subject.(type) {
 	case rel.Array:
 		switch subject.Values()[0].(type) {
@@ -118,7 +119,7 @@ func stdSeqJoin(joiner, subject rel.Value) (rel.Value, error) {
 	return nil, fmt.Errorf("join: unsupported args: %s, %s", joiner, subject)
 }
 
-func stdSeqHasPrefix(prefix, subject rel.Value) (rel.Value, error) { //nolint:dupl
+func stdSeqHasPrefix(_ context.Context, prefix, subject rel.Value) (rel.Value, error) { //nolint:dupl
 	switch subject := subject.(type) {
 	case rel.String:
 		if prefixStr, is := tools.ValueAsString(prefix); is {
@@ -140,7 +141,7 @@ func stdSeqHasPrefix(prefix, subject rel.Value) (rel.Value, error) { //nolint:du
 	return rel.NewBool(false), nil
 }
 
-func stdSeqHasSuffix(suffix, subject rel.Value) (rel.Value, error) { //nolint:dupl
+func stdSeqHasSuffix(_ context.Context, suffix, subject rel.Value) (rel.Value, error) { //nolint:dupl
 	switch subject := subject.(type) {
 	case rel.String:
 		if suffixStr, is := tools.ValueAsString(suffix); is {
@@ -162,9 +163,9 @@ func stdSeqHasSuffix(suffix, subject rel.Value) (rel.Value, error) { //nolint:du
 	return rel.NewBool(false), nil
 }
 
-func stdSeqRepeat(arg rel.Value) (rel.Value, error) {
+func stdSeqRepeat(_ context.Context, arg rel.Value) (rel.Value, error) {
 	n := int(arg.(rel.Number))
-	return rel.NewNativeFunction("repeat(n)", func(arg rel.Value) (rel.Value, error) {
+	return rel.NewNativeFunction("repeat(n)", func(_ context.Context, arg rel.Value) (rel.Value, error) {
 		switch seq := arg.(type) {
 		case rel.String:
 			return rel.NewString([]rune(strings.Repeat(seq.String(), n))), nil
@@ -184,7 +185,7 @@ func stdSeqRepeat(arg rel.Value) (rel.Value, error) {
 	}), nil
 }
 
-func stdSeqSub(old, new, subject rel.Value) (rel.Value, error) {
+func stdSeqSub(_ context.Context, old, new, subject rel.Value) (rel.Value, error) {
 	switch subject := subject.(type) {
 	case rel.String:
 		subjectStr := subject.String()
@@ -232,7 +233,7 @@ func stdSeqSub(old, new, subject rel.Value) (rel.Value, error) {
 	return nil, fmt.Errorf("sub: unsupported args: %s, %s, %s", old, new, subject)
 }
 
-func stdSeqSplit(delimiter, subject rel.Value) (rel.Value, error) {
+func stdSeqSplit(_ context.Context, delimiter, subject rel.Value) (rel.Value, error) {
 	switch subject := subject.(type) {
 	case rel.String:
 		delimStr, is := tools.ValueAsString(delimiter)
@@ -263,8 +264,8 @@ func stdSeqSplit(delimiter, subject rel.Value) (rel.Value, error) {
 	return nil, fmt.Errorf("split: unsupported args: %s, %s", delimiter, subject)
 }
 
-func stdSeqTrimPrefix(prefix, subject rel.Value) (rel.Value, error) {
-	hasPrefix, err := stdSeqHasPrefix(prefix, subject)
+func stdSeqTrimPrefix(ctx context.Context, prefix, subject rel.Value) (rel.Value, error) {
+	hasPrefix, err := stdSeqHasPrefix(ctx, prefix, subject)
 	if err != nil {
 		return nil, err
 	}
@@ -292,7 +293,7 @@ func stdSeqTrimPrefix(prefix, subject rel.Value) (rel.Value, error) {
 	return subject, nil
 }
 
-func stdSeqTrimSuffix(suffix, subject rel.Value) (rel.Value, error) {
+func stdSeqTrimSuffix(_ context.Context, suffix, subject rel.Value) (rel.Value, error) {
 	switch subject := subject.(type) {
 	case rel.String:
 		subjectStr := subject.String()

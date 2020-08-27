@@ -1,8 +1,10 @@
 package rel
 
 import (
+	"context"
 	"testing"
 
+	"github.com/arr-ai/arrai/pkg/arraictx"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -64,16 +66,16 @@ func TestDictCallAll(t *testing.T) {
 		return NewDictEntryTuple(NewNumber(k), NewNumber(v))
 	}
 	dict := NewDict(false, kv(1, 10), kv(2, 20), kv(3, 30))
-
-	AssertEqualValues(t, NewSet(NewNumber(10)), MustCallAll(dict, NewNumber(1)))
-	AssertEqualValues(t, NewSet(NewNumber(20)), MustCallAll(dict, NewNumber(2)))
-	AssertEqualValues(t, NewSet(NewNumber(30)), MustCallAll(dict, NewNumber(3)))
-	AssertEqualValues(t, None, MustCallAll(dict, NewNumber(4)))
+	ctx := arraictx.InitRunCtx(context.Background())
+	AssertEqualValues(t, NewSet(NewNumber(10)), MustCallAll(ctx, dict, NewNumber(1)))
+	AssertEqualValues(t, NewSet(NewNumber(20)), MustCallAll(ctx, dict, NewNumber(2)))
+	AssertEqualValues(t, NewSet(NewNumber(30)), MustCallAll(ctx, dict, NewNumber(3)))
+	AssertEqualValues(t, None, MustCallAll(ctx, dict, NewNumber(4)))
 
 	dict = NewDict(true, kv(1, 10), kv(1, 11), kv(2, 20), kv(3, 30))
 
-	AssertEqualValues(t, NewSet(NewNumber(10), NewNumber(11)), MustCallAll(dict, NewNumber(1)))
-	AssertEqualValues(t, NewSet(NewNumber(20)), MustCallAll(dict, NewNumber(2)))
-	AssertEqualValues(t, NewSet(NewNumber(30)), MustCallAll(dict, NewNumber(3)))
-	AssertEqualValues(t, None, MustCallAll(dict, NewNumber(4)))
+	AssertEqualValues(t, NewSet(NewNumber(10), NewNumber(11)), MustCallAll(ctx, dict, NewNumber(1)))
+	AssertEqualValues(t, NewSet(NewNumber(20)), MustCallAll(ctx, dict, NewNumber(2)))
+	AssertEqualValues(t, NewSet(NewNumber(30)), MustCallAll(ctx, dict, NewNumber(3)))
+	AssertEqualValues(t, None, MustCallAll(ctx, dict, NewNumber(4)))
 }

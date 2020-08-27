@@ -18,8 +18,8 @@ var (
 	lastID = uint64(0)
 )
 
-var globals = map[string]func(rel.Value) (rel.Value, error){
-	"str": func(value rel.Value) (rel.Value, error) { //nolint:unparam
+var globals = map[string]rel.NativeFnBody{
+	"str": func(_ context.Context, value rel.Value) (rel.Value, error) { //nolint:unparam
 		return rel.NewString([]rune(value.String())), nil
 	},
 }

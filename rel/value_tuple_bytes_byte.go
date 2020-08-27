@@ -112,7 +112,7 @@ func (t BytesByteTuple) Negate() Value {
 }
 
 // Export exports a Tuple.
-func (t BytesByteTuple) Export() interface{} {
+func (t BytesByteTuple) Export(_ context.Context) interface{} {
 	return map[string]interface{}{
 		"@":           t.at,
 		BytesByteAttr: t.byteval,

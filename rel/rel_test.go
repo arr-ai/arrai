@@ -1,8 +1,10 @@
 package rel
 
 import (
+	"context"
 	"testing"
 
+	"github.com/arr-ai/arrai/pkg/arraictx"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -15,7 +17,7 @@ func testValueFromValue(t *testing.T, v Value) {
 func testNumericValue(t *testing.T, intf interface{}) {
 	n, err := NewValue(intf)
 	assert.NoError(t, err)
-	assert.Equal(t, 123.0, n.Export())
+	assert.Equal(t, 123.0, n.Export(arraictx.InitRunCtx(context.Background())))
 	testValueFromValue(t, n)
 }
 
@@ -87,7 +89,7 @@ func TestNewValueFromMap(t *testing.T) {
 	}
 	v, err := NewValue(m)
 	if assert.NoError(t, err) {
-		assert.Equal(t, m, v.Export(), "%s.Export()", v)
+		assert.Equal(t, m, v.Export(arraictx.InitRunCtx(context.Background())), "%s.Export()", v)
 		testValueFromValue(t, v)
 	}
 }

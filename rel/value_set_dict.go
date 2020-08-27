@@ -190,7 +190,7 @@ func (d Dict) Negate() Value {
 	return NewTuple(NewAttr(negateTag, d))
 }
 
-func (d Dict) Export() interface{} {
+func (d Dict) Export(_ context.Context) interface{} {
 	var mb frozen.MapBuilder
 	for i := d.m.Range(); i.Next(); {
 		k, v := i.Entry()
@@ -269,7 +269,7 @@ func (d Dict) Where(p func(v Value) (bool, error)) (Set, error) {
 	return Dict{m: m}, nil
 }
 
-func (d Dict) CallAll(arg Value) (Set, error) {
+func (d Dict) CallAll(_ context.Context, arg Value) (Set, error) {
 	val, exists := d.m.Get(arg)
 	if exists {
 		switch v := val.(type) {

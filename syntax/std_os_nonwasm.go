@@ -3,6 +3,7 @@
 package syntax
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -18,7 +19,7 @@ func stdOsGetArgs() rel.Value {
 	return strArrToRelArr(tools.Arguments)
 }
 
-func stdOsGetEnv(value rel.Value) (rel.Value, error) {
+func stdOsGetEnv(_ context.Context, value rel.Value) (rel.Value, error) {
 	return rel.NewString([]rune(os.Getenv(value.(rel.String).String()))), nil
 }
 
@@ -38,7 +39,7 @@ func stdOsCwd() rel.Value {
 	return rel.NewString([]rune(wd))
 }
 
-func stdOsExists(v rel.Value) (rel.Value, error) {
+func stdOsExists(_ context.Context, v rel.Value) (rel.Value, error) {
 	_, err := os.Stat(v.(rel.String).String())
 	if os.IsNotExist(err) {
 		return rel.NewBool(false), nil
@@ -49,7 +50,7 @@ func stdOsExists(v rel.Value) (rel.Value, error) {
 	return rel.NewBool(true), nil
 }
 
-func stdOsFile(v rel.Value) (rel.Value, error) {
+func stdOsFile(_ context.Context, v rel.Value) (rel.Value, error) {
 	f, err := ioutil.ReadFile(v.(rel.String).String())
 	if err != nil {
 		return nil, err
@@ -57,7 +58,7 @@ func stdOsFile(v rel.Value) (rel.Value, error) {
 	return rel.NewBytes(f), nil
 }
 
-func stdOsIsATty(value rel.Value) (rel.Value, error) {
+func stdOsIsATty(_ context.Context, value rel.Value) (rel.Value, error) {
 	n, ok := value.(rel.Number)
 	if !ok {
 		return nil, fmt.Errorf("isatty arg must be a number, not %T", value)

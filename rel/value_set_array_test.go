@@ -1,8 +1,10 @@
 package rel
 
 import (
+	"context"
 	"testing"
 
+	"github.com/arr-ai/arrai/pkg/arraictx"
 	"github.com/stretchr/testify/require"
 )
 
@@ -81,26 +83,26 @@ func TestArrayCallAll(t *testing.T) {
 	t.Parallel()
 
 	three := NewArray(NewNumber(10), NewNumber(11), NewNumber(12))
-
-	AssertEqualValues(t, NewSet(NewNumber(10)), MustCallAll(three, NewNumber(0)))
-	AssertEqualValues(t, NewSet(NewNumber(11)), MustCallAll(three, NewNumber(1)))
-	AssertEqualValues(t, NewSet(NewNumber(12)), MustCallAll(three, NewNumber(2)))
-	AssertEqualValues(t, None, MustCallAll(three, NewNumber(5)))
-	AssertEqualValues(t, None, MustCallAll(three, NewNumber(-1)))
+	ctx := arraictx.InitRunCtx(context.Background())
+	AssertEqualValues(t, NewSet(NewNumber(10)), MustCallAll(ctx, three, NewNumber(0)))
+	AssertEqualValues(t, NewSet(NewNumber(11)), MustCallAll(ctx, three, NewNumber(1)))
+	AssertEqualValues(t, NewSet(NewNumber(12)), MustCallAll(ctx, three, NewNumber(2)))
+	AssertEqualValues(t, None, MustCallAll(ctx, three, NewNumber(5)))
+	AssertEqualValues(t, None, MustCallAll(ctx, three, NewNumber(-1)))
 
 	three = NewOffsetArray(-2, NewNumber(10), NewNumber(11), NewNumber(12))
-	AssertEqualValues(t, NewSet(NewNumber(10)), MustCallAll(three, NewNumber(-2)))
-	AssertEqualValues(t, NewSet(NewNumber(11)), MustCallAll(three, NewNumber(-1)))
-	AssertEqualValues(t, NewSet(NewNumber(12)), MustCallAll(three, NewNumber(0)))
-	AssertEqualValues(t, None, MustCallAll(three, NewNumber(1)))
-	AssertEqualValues(t, None, MustCallAll(three, NewNumber(-3)))
+	AssertEqualValues(t, NewSet(NewNumber(10)), MustCallAll(ctx, three, NewNumber(-2)))
+	AssertEqualValues(t, NewSet(NewNumber(11)), MustCallAll(ctx, three, NewNumber(-1)))
+	AssertEqualValues(t, NewSet(NewNumber(12)), MustCallAll(ctx, three, NewNumber(0)))
+	AssertEqualValues(t, None, MustCallAll(ctx, three, NewNumber(1)))
+	AssertEqualValues(t, None, MustCallAll(ctx, three, NewNumber(-3)))
 
 	three = NewOffsetArray(2, NewNumber(10), NewNumber(11), NewNumber(12))
-	AssertEqualValues(t, NewSet(NewNumber(10)), MustCallAll(three, NewNumber(2)))
-	AssertEqualValues(t, NewSet(NewNumber(11)), MustCallAll(three, NewNumber(3)))
-	AssertEqualValues(t, NewSet(NewNumber(12)), MustCallAll(three, NewNumber(4)))
-	AssertEqualValues(t, None, MustCallAll(three, NewNumber(1)))
-	AssertEqualValues(t, None, MustCallAll(three, NewNumber(5)))
+	AssertEqualValues(t, NewSet(NewNumber(10)), MustCallAll(ctx, three, NewNumber(2)))
+	AssertEqualValues(t, NewSet(NewNumber(11)), MustCallAll(ctx, three, NewNumber(3)))
+	AssertEqualValues(t, NewSet(NewNumber(12)), MustCallAll(ctx, three, NewNumber(4)))
+	AssertEqualValues(t, None, MustCallAll(ctx, three, NewNumber(1)))
+	AssertEqualValues(t, None, MustCallAll(ctx, three, NewNumber(5)))
 }
 
 func TestArrayWhere(t *testing.T) {

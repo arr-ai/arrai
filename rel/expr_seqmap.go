@@ -49,15 +49,15 @@ func (e *SeqArrowExpr) Eval(ctx context.Context, local Scope) (_ Value, err erro
 	var call func(at, v Value) (Value, error)
 	if e.withAt {
 		call = func(at, v Value) (Value, error) {
-			s, err := SetCall(closure, at)
+			s, err := SetCall(ctx, closure, at)
 			if err != nil {
 				return nil, WrapContextErr(err, e, local)
 			}
-			return SetCall(s.(Set), v)
+			return SetCall(ctx, s.(Set), v)
 		}
 	} else {
 		call = func(_, v Value) (Value, error) {
-			return SetCall(closure, v)
+			return SetCall(ctx, closure, v)
 		}
 	}
 

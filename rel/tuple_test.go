@@ -1,8 +1,10 @@
 package rel
 
 import (
+	"context"
 	"testing"
 
+	"github.com/arr-ai/arrai/pkg/arraictx"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -145,7 +147,7 @@ func TestTupleExport(t *testing.T) {
 	scenario := func(m map[string]interface{}) {
 		v, err := NewTupleFromMap(m)
 		if assert.NoError(t, err) {
-			assert.Equal(t, m, v.Export())
+			assert.Equal(t, m, v.Export(arraictx.InitRunCtx(context.Background())))
 		}
 	}
 	scenario(map[string]interface{}{})
@@ -160,7 +162,7 @@ func TestTupleString(t *testing.T) {
 	scenario := func(repr string, attrs ...Attr) {
 		tuple := NewTuple(attrs...)
 		if assert.Equal(
-			t, len(attrs), tuple.Count(), "%v", tuple.Export(),
+			t, len(attrs), tuple.Count(), "%v", tuple.Export(arraictx.InitRunCtx(context.Background())),
 		) {
 			assert.Equal(t, repr, tuple.String(), "%v", tuple)
 		}
@@ -203,11 +205,11 @@ func TestTupleGet(t *testing.T) {
 	)
 	a, found := tuple.Get("a")
 	if assert.True(t, found) {
-		assert.Equal(t, 42.0, a.Export())
+		assert.Equal(t, 42.0, a.Export(arraictx.InitRunCtx(context.Background())))
 	}
 	b, found := tuple.Get("b")
 	if assert.True(t, found) {
-		assert.Equal(t, 43.0, b.Export())
+		assert.Equal(t, 43.0, b.Export(arraictx.InitRunCtx(context.Background())))
 	}
 	c, found := tuple.Get("c")
 	if found {
@@ -344,7 +346,7 @@ func TestTupleEnumerator(t *testing.T) {
 	m := map[string]interface{}{}
 	for e := tuple.Enumerator(); e.MoveNext(); {
 		name, value := e.Current()
-		m[name] = value.Export()
+		m[name] = value.Export(arraictx.InitRunCtx(context.Background()))
 	}
 	assert.Equal(t,
 		map[string]interface{}{

@@ -9,8 +9,7 @@ import (
 	"github.com/go-errors/errors"
 )
 
-//TODO: add context?
-type binEval func(a, b Value, local Scope) (Value, error)
+type binEval func(ctx context.Context, a, b Value, local Scope) (Value, error)
 
 // BinExpr represents a range of operators.
 type BinExpr struct {
@@ -32,7 +31,7 @@ type valueEval func(a, b Value) Value
 func MakeBinValExpr(op string, eval valueEval) func(scanner parser.Scanner, a, b Expr) Expr {
 	return func(scanner parser.Scanner, a, b Expr) Expr {
 		return newBinExpr(scanner, a, b, op, "(%s "+op+" %s)",
-			func(a, b Value, _ Scope) (Value, error) {
+			func(ctx context.Context, a, b Value, _ Scope) (Value, error) {
 				return eval(a, b), nil
 			})
 	}
@@ -42,7 +41,7 @@ type arithEval func(a, b float64) float64
 
 func newArithExpr(scanner parser.Scanner, a, b Expr, op string, eval arithEval) Expr {
 	return newBinExpr(scanner, a, b, op, "(%s "+op+" %s)",
-		func(a, b Value, _ Scope) (Value, error) {
+		func(_ context.Context, a, b Value, _ Scope) (Value, error) {
 			if a, ok := a.(Number); ok {
 				if b, ok := b.(Number); ok {
 					return NewNumber(eval(a.Float64(), b.Float64())), nil
@@ -77,7 +76,7 @@ func addValues(a, b Value) (Value, error) {
 // NewAddExpr evaluates a + b, given two Numbers.
 func NewAddExpr(scanner parser.Scanner, a, b Expr) Expr {
 	return newBinExpr(scanner, a, b, "+", "(%s + %s)",
-		func(a, b Value, _ Scope) (Value, error) {
+		func(_ context.Context, a, b Value, _ Scope) (Value, error) {
 			return addValues(a, b)
 		})
 }
@@ -85,7 +84,7 @@ func NewAddExpr(scanner parser.Scanner, a, b Expr) Expr {
 // NewAddArrowExpr returns a new BinExpr which supports operator `+>`.
 func NewAddArrowExpr(scanner parser.Scanner, lhs, rhs Expr) Expr {
 	return newBinExpr(scanner, lhs, rhs, "+>", "(%s +> %s)",
-		func(lhs, rhs Value, _ Scope) (Value, error) {
+		func(_ context.Context, lhs, rhs Value, _ Scope) (Value, error) {
 			return evalValForAddArrow(lhs, rhs)
 		})
 }
@@ -136,7 +135,7 @@ func NewPowExpr(scanner parser.Scanner, a, b Expr) Expr {
 // NewWithExpr evaluates a with b, given a set lhs.
 func NewWithExpr(scanner parser.Scanner, a, b Expr) Expr {
 	return newBinExpr(scanner, a, b, "with", "(%s with %s)",
-		func(a, b Value, _ Scope) (Value, error) {
+		func(_ context.Context, a, b Value, _ Scope) (Value, error) {
 			if x, ok := a.(Set); ok {
 				return x.With(b), nil
 			}
@@ -147,7 +146,7 @@ func NewWithExpr(scanner parser.Scanner, a, b Expr) Expr {
 // NewWithoutExpr evaluates a without b, given a set lhs.
 func NewWithoutExpr(scanner parser.Scanner, a, b Expr) Expr {
 	return newBinExpr(scanner, a, b, "without", "(%s without %s)",
-		func(a, b Value, _ Scope) (Value, error) {
+		func(_ context.Context, a, b Value, _ Scope) (Value, error) {
 			if x, ok := a.(Set); ok {
 				return x.Without(b), nil
 			}
@@ -159,11 +158,11 @@ func NewWithoutExpr(scanner parser.Scanner, a, b Expr) Expr {
 func NewWhereExpr(scanner parser.Scanner, a, pred Expr) Expr {
 	pred = ExprAsFunction(pred)
 	return newBinExpr(scanner, a, pred, "where", "(%s where %s)",
-		func(a, pred Value, local Scope) (Value, error) {
+		func(ctx context.Context, a, pred Value, local Scope) (Value, error) {
 			if x, ok := a.(Set); ok {
 				if p, ok := pred.(Closure); ok {
 					return x.Where(func(v Value) (bool, error) {
-						r, err := SetCall(p, v)
+						r, err := SetCall(ctx, p, v)
 						if err != nil {
 							return false, err
 						}
@@ -180,12 +179,12 @@ func NewWhereExpr(scanner parser.Scanner, a, pred Expr) Expr {
 func NewOrderByExpr(scanner parser.Scanner, a, key Expr) Expr {
 	key = ExprAsFunction(key)
 	return newBinExpr(scanner, a, key, "order", "(%s order %s)",
-		func(a, key Value, local Scope) (Value, error) {
+		func(ctx context.Context, a, key Value, local Scope) (Value, error) {
 			if x, ok := a.(Set); ok {
 				if k, ok := key.(Closure); ok {
 					values, err := OrderBy(x,
 						func(value Value) (Value, error) {
-							return SetCall(k, value)
+							return SetCall(ctx, k, value)
 						},
 						func(a, b Value) bool {
 							return a.Less(b)
@@ -205,7 +204,7 @@ func NewOrderByExpr(scanner parser.Scanner, a, key Expr) Expr {
 func NewOrderExpr(scanner parser.Scanner, a, key Expr) Expr {
 	key = ExprAsFunction(key)
 	return newBinExpr(scanner, a, key, "order", "(%s order %s)",
-		func(a, less Value, local Scope) (Value, error) {
+		func(ctx context.Context, a, less Value, local Scope) (Value, error) {
 			if x, ok := a.(Set); ok {
 				if l, ok := less.(Closure); ok {
 					values, err := OrderBy(x,
@@ -213,11 +212,11 @@ func NewOrderExpr(scanner parser.Scanner, a, key Expr) Expr {
 							return value, nil
 						},
 						func(a, b Value) bool {
-							c, err := SetCall(l, a)
+							c, err := SetCall(ctx, l, a)
 							if err != nil {
 								panic(err)
 							}
-							less, err := SetCall(c.(Closure), b)
+							less, err := SetCall(ctx, c.(Closure), b)
 							if err != nil {
 								panic(err)
 							}
@@ -240,11 +239,11 @@ func NewOrderExpr(scanner parser.Scanner, a, key Expr) Expr {
 func NewRankExpr(scanner parser.Scanner, a, key Expr) Expr {
 	key = ExprAsFunction(key)
 	return newBinExpr(scanner, a, key, "rank", "(%s rank %s)",
-		func(a, tuplef Value, local Scope) (Value, error) {
+		func(ctx context.Context, a, tuplef Value, local Scope) (Value, error) {
 			if x, ok := a.(Set); ok {
 				if l, ok := tuplef.(Closure); ok {
 					return Rank(x, func(v Tuple) (Tuple, error) {
-						result, err := SetCall(l, v)
+						result, err := SetCall(ctx, l, v)
 						if err != nil {
 							return nil, err
 						}
@@ -257,9 +256,9 @@ func NewRankExpr(scanner parser.Scanner, a, key Expr) Expr {
 		})
 }
 
-func Call(a, b Value, _ Scope) (Value, error) {
+func Call(ctx context.Context, a, b Value, _ Scope) (Value, error) {
 	if x, ok := a.(Set); ok {
-		return SetCall(x, b)
+		return SetCall(ctx, x, b)
 	}
 	return nil, errors.Errorf(
 		"call lhs must be a function, not %T", a)
@@ -293,7 +292,7 @@ func (e *BinExpr) Eval(ctx context.Context, local Scope) (_ Value, err error) {
 	if err != nil {
 		return nil, WrapContextErr(err, e, local)
 	}
-	val, err := e.eval(a, b, local)
+	val, err := e.eval(ctx, a, b, local)
 	if err != nil {
 		return nil, WrapContextErr(err, e, local)
 	}

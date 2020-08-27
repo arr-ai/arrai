@@ -1,6 +1,7 @@
 package syntax
 
 import (
+	"context"
 	"fmt"
 	"math"
 	"math/bits"
@@ -15,7 +16,7 @@ func stdBits() rel.Attr {
 	)
 }
 
-func set(v rel.Value) (rel.Value, error) {
+func set(_ context.Context, v rel.Value) (rel.Value, error) {
 	n, isNumber := v.(rel.Number)
 	if !isNumber || float64(n) < 0 {
 		return nil, fmt.Errorf("argument not a non-negative number: %v", v)
@@ -40,7 +41,7 @@ func maskFloat(v float64) (bitmask []rel.Value) {
 	panic("unimplemented")
 }
 
-func mask(v rel.Value) (rel.Value, error) {
+func mask(_ context.Context, v rel.Value) (rel.Value, error) {
 	if s, isSet := v.(rel.Set); isSet {
 		var total float64
 		for e := s.Enumerator(); e.MoveNext(); {

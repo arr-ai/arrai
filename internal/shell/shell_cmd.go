@@ -100,7 +100,7 @@ func (*upFrameCmd) names() []string {
 }
 
 func (*upFrameCmd) process(ctx context.Context, _ string, sh *shellInstance) error {
-	return changeFrame(sh.currentFrameIndex-1, sh)
+	return changeFrame(ctx, sh.currentFrameIndex-1, sh)
 }
 
 type downFrameCmd struct{}
@@ -110,16 +110,15 @@ func (d *downFrameCmd) names() []string {
 }
 
 func (*downFrameCmd) process(ctx context.Context, _ string, sh *shellInstance) error {
-	return changeFrame(sh.currentFrameIndex+1, sh)
+	return changeFrame(ctx, sh.currentFrameIndex+1, sh)
 }
 
-func changeFrame(i int, sh *shellInstance) error {
+func changeFrame(ctx context.Context, i int, sh *shellInstance) error {
 	if i < 0 || i >= len(sh.frames) {
 		return fmt.Errorf("frame index out of range, frame length: %d", len(sh.frames))
 	}
 	sh.currentFrameIndex = i
-	//TODO: change context
-	log.Infof(context.Background(), "Stack: %d\n%s\n", i, sh.frames[i].GetSource().Context(parser.DefaultLimit))
+	log.Infof(ctx, "Stack: %d\n%s\n", i, sh.frames[i].GetSource().Context(parser.DefaultLimit))
 	sh.scope = syntax.StdScope().Update(sh.frames[i].GetScope())
 	return nil
 }

@@ -85,7 +85,7 @@ package rel
 // }
 
 // // Export exports a NativeExprFunction.
-// func (f *NativeExprFunction) Export() interface{} {
+// func (f *NativeExprFunction) Export(_ context.Context, ) interface{} {
 // 	return f.fn
 // }
 
