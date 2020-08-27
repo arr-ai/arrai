@@ -25,6 +25,23 @@ func TestStdOsExists(t *testing.T) {
 	AssertCodesEvalToSameValue(t, `false`, `//os.exists('doesntexist.anywhere')`)
 }
 
+func TestStdOsTree(t *testing.T) {
+	AssertCodesEvalToSameValue(t, `{
+		'std_os_test': {
+			'empty': {
+				'full': {
+					'empty': {},
+					'README.md': true,
+				},
+			},
+			'.empty': true,
+			'README.md': true,
+		}
+	}`, `//os.tree('std_os_test')`)
+
+	AssertCodeErrors(t, ``, `//os.tree(['std_os_test'])`)
+}
+
 func TestStdOsIsATty(t *testing.T) {
 	t.Parallel()
 
