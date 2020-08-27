@@ -3,6 +3,8 @@
 package syntax
 
 import (
+	"context"
+
 	"github.com/arr-ai/arrai/rel"
 )
 
@@ -10,11 +12,11 @@ func stdOsGetArgs() rel.Value {
 	panic("not implemented")
 }
 
-func stdOsGetEnv(value rel.Value) (rel.Value, error) {
+func stdOsGetEnv(context.Context, rel.Value) (rel.Value, error) {
 	panic("not implemented")
 }
 
-func stdOsIsATty(value rel.Value) (rel.Value, error) {
+func stdOsIsATty(context.Context, rel.Value) (rel.Value, error) {
 	panic("not implemented")
 }
 
@@ -30,11 +32,11 @@ func stdOsCwd() rel.Value {
 	panic("not implemented")
 }
 
-func stdOsExists(rel.Value) (rel.Value, error) {
+func stdOsExists(context.Context, rel.Value) (rel.Value, error) {
 	panic("not implemented")
 }
 
-func stdOsFile(rel.Value) (rel.Value, error) {
+func stdOsFile(context.Context, rel.Value) (rel.Value, error) {
 	panic("not implemented")
 }
 

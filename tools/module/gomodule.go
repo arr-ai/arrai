@@ -30,14 +30,14 @@ func (m *GoModule) Load() error {
 	}
 
 	out := ioutil.Discard
-
-	err = runGo(context.Background(), out, "mod", "download")
+	ctx := context.TODO()
+	err = runGo(ctx, out, "mod", "download")
 	if err != nil {
 		return errors.Wrap(err, "failed to download modules")
 	}
 
 	b := &bytes.Buffer{}
-	err = runGo(context.Background(), b, "list", "-m", "-json", "all")
+	err = runGo(ctx, b, "list", "-m", "-json", "all")
 	if err != nil {
 		return errors.Wrap(err, "failed to list modules")
 	}
@@ -99,7 +99,7 @@ func goGetByPackagePath(filename string) error {
 }
 
 func goGet(args ...string) error {
-	if err := runGo(context.Background(), logrus.StandardLogger().Out, append([]string{"get"}, args...)...); err != nil { // nolint:lll
+	if err := runGo(context.TODO(), logrus.StandardLogger().Out, append([]string{"get"}, args...)...); err != nil { // nolint:lll
 		return errors.Wrapf(err, "failed to get %q", args)
 	}
 	return nil

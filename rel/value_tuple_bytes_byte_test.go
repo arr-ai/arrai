@@ -176,7 +176,10 @@ func TestBytesByteTuple_Negate(t *testing.T) {
 
 func TestBytesByteTuple_Export(t *testing.T) {
 	t.Parallel()
-	assert.Equal(t, map[string]interface{}{"@": 1, "@byte": uint8('a')}, NewBytesByteTuple(1, 'a').Export())
+	assert.Equal(t,
+		map[string]interface{}{"@": 1, "@byte": uint8('a')},
+		NewBytesByteTuple(1, 'a').Export(arraictx.InitRunCtx(context.Background())),
+	)
 }
 
 func TestBytesByteTuple_Count(t *testing.T) {
@@ -286,24 +289,24 @@ func TestBytesCallAll(t *testing.T) {
 	t.Parallel()
 
 	abc := NewBytes([]byte("abc"))
-
-	AssertEqualValues(t, NewSet(NewNumber(float64('a'))), MustCallAll(abc, NewNumber(0)))
-	AssertEqualValues(t, NewSet(NewNumber(float64('b'))), MustCallAll(abc, NewNumber(1)))
-	AssertEqualValues(t, NewSet(NewNumber(float64('c'))), MustCallAll(abc, NewNumber(2)))
-	AssertEqualValues(t, None, MustCallAll(abc, NewNumber(5)))
-	AssertEqualValues(t, None, MustCallAll(abc, NewNumber(-1)))
+	ctx := arraictx.InitRunCtx(context.Background())
+	AssertEqualValues(t, NewSet(NewNumber(float64('a'))), MustCallAll(ctx, abc, NewNumber(0)))
+	AssertEqualValues(t, NewSet(NewNumber(float64('b'))), MustCallAll(ctx, abc, NewNumber(1)))
+	AssertEqualValues(t, NewSet(NewNumber(float64('c'))), MustCallAll(ctx, abc, NewNumber(2)))
+	AssertEqualValues(t, None, MustCallAll(ctx, abc, NewNumber(5)))
+	AssertEqualValues(t, None, MustCallAll(ctx, abc, NewNumber(-1)))
 
 	abc = NewOffsetBytes([]byte("abc"), -2)
-	AssertEqualValues(t, NewSet(NewNumber(float64('a'))), MustCallAll(abc, NewNumber(-2)))
-	AssertEqualValues(t, NewSet(NewNumber(float64('b'))), MustCallAll(abc, NewNumber(-1)))
-	AssertEqualValues(t, NewSet(NewNumber(float64('c'))), MustCallAll(abc, NewNumber(0)))
-	AssertEqualValues(t, None, MustCallAll(abc, NewNumber(1)))
-	AssertEqualValues(t, None, MustCallAll(abc, NewNumber(-3)))
+	AssertEqualValues(t, NewSet(NewNumber(float64('a'))), MustCallAll(ctx, abc, NewNumber(-2)))
+	AssertEqualValues(t, NewSet(NewNumber(float64('b'))), MustCallAll(ctx, abc, NewNumber(-1)))
+	AssertEqualValues(t, NewSet(NewNumber(float64('c'))), MustCallAll(ctx, abc, NewNumber(0)))
+	AssertEqualValues(t, None, MustCallAll(ctx, abc, NewNumber(1)))
+	AssertEqualValues(t, None, MustCallAll(ctx, abc, NewNumber(-3)))
 
 	abc = NewOffsetBytes([]byte("abc"), 2)
-	AssertEqualValues(t, NewSet(NewNumber(float64('a'))), MustCallAll(abc, NewNumber(2)))
-	AssertEqualValues(t, NewSet(NewNumber(float64('b'))), MustCallAll(abc, NewNumber(3)))
-	AssertEqualValues(t, NewSet(NewNumber(float64('c'))), MustCallAll(abc, NewNumber(4)))
-	AssertEqualValues(t, None, MustCallAll(abc, NewNumber(1)))
-	AssertEqualValues(t, None, MustCallAll(abc, NewNumber(5)))
+	AssertEqualValues(t, NewSet(NewNumber(float64('a'))), MustCallAll(ctx, abc, NewNumber(2)))
+	AssertEqualValues(t, NewSet(NewNumber(float64('b'))), MustCallAll(ctx, abc, NewNumber(3)))
+	AssertEqualValues(t, NewSet(NewNumber(float64('c'))), MustCallAll(ctx, abc, NewNumber(4)))
+	AssertEqualValues(t, None, MustCallAll(ctx, abc, NewNumber(1)))
+	AssertEqualValues(t, None, MustCallAll(ctx, abc, NewNumber(5)))
 }

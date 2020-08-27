@@ -1,6 +1,7 @@
 package rel
 
 import (
+	"context"
 	"strings"
 
 	"github.com/arr-ai/wbnf/parser"
@@ -72,7 +73,7 @@ func NewRelationExpr(scanner parser.Scanner, names []string, tuples ...[]Expr) (
 
 func newSetBinExpr(scanner parser.Scanner, a, b Expr, op string, f func(x, y Set) (Set, error)) Expr {
 	return newBinExpr(scanner, a, b, op, "(%s "+op+" %s)",
-		func(a, b Value, _ Scope) (Value, error) {
+		func(_ context.Context, a, b Value, _ Scope) (Value, error) {
 			if x, ok := a.(Set); ok {
 				if y, ok := b.(Set); ok {
 					return f(x, y)

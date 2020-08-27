@@ -111,10 +111,10 @@ func (t ArrayItemTuple) Negate() Value {
 }
 
 // Export exports a Tuple.
-func (t ArrayItemTuple) Export() interface{} {
+func (t ArrayItemTuple) Export(ctx context.Context) interface{} {
 	return map[string]interface{}{
 		"@":           t.at,
-		ArrayItemAttr: t.item.Export(),
+		ArrayItemAttr: t.item.Export(ctx),
 	}
 }
 

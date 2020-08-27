@@ -1,6 +1,7 @@
 package syntax
 
 import (
+	"context"
 	"encoding/json"
 
 	"github.com/arr-ai/arrai/rel"
@@ -10,7 +11,7 @@ import (
 func stdEncodingJSON() rel.Attr {
 	return rel.NewTupleAttr(
 		"json",
-		rel.NewNativeFunctionAttr("decode", func(v rel.Value) (rel.Value, error) {
+		rel.NewNativeFunctionAttr("decode", func(_ context.Context, v rel.Value) (rel.Value, error) {
 			var bytes []byte
 			switch v := v.(type) {
 			case rel.String:

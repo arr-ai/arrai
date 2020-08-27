@@ -54,7 +54,7 @@ func (x *DotExpr) Eval(ctx context.Context, local Scope) (_ Value, err error) {
 	if err != nil {
 		return nil, WrapContextErr(err, x, local)
 	}
-	get := func(t Tuple) (Value, error) {
+	get := func(ctx context.Context, t Tuple) (Value, error) {
 		if value, found := t.Get(x.attr); found {
 			return value, nil
 		}
@@ -63,9 +63,9 @@ func (x *DotExpr) Eval(ctx context.Context, local Scope) (_ Value, err error) {
 				//TODO: add tupleScope self to allow accessing itself
 				switch f := value.(type) {
 				case Closure:
-					return SetCall(f, nil)
+					return SetCall(ctx, f, nil)
 				case *NativeFunction:
-					return SetCall(f, nil)
+					return SetCall(ctx, f, nil)
 				default:
 					panic(fmt.Errorf("not a function: %v", f))
 				}
@@ -77,7 +77,7 @@ func (x *DotExpr) Eval(ctx context.Context, local Scope) (_ Value, err error) {
 
 	switch t := a.(type) {
 	case Tuple:
-		return get(t)
+		return get(ctx, t)
 	case Set:
 		if !t.IsTrue() {
 			return nil, WrapContextErr(errors.Errorf("Cannot get attr %q from empty set", x.attr), x, local)
@@ -89,7 +89,7 @@ func (x *DotExpr) Eval(ctx context.Context, local Scope) (_ Value, err error) {
 			return nil, WrapContextErr(errors.Errorf("Too many elts to get attr %q from set", x.attr), x, local)
 		}
 		if t, ok := v.(Tuple); ok {
-			return get(t)
+			return get(ctx, t)
 		}
 		return nil, WrapContextErr(errors.Errorf("Cannot get attr %q from non-tuple set elt", x.attr), x, local)
 	default:

@@ -20,7 +20,7 @@ const arraiRootMarker = "go.mod"
 var cache = newCache()
 
 func importLocalFile(ctx context.Context, fromRoot bool) rel.Value {
-	return rel.NewNativeFunction("//./", func(v rel.Value) (rel.Value, error) {
+	return rel.NewNativeFunction("//./", func(_ context.Context, v rel.Value) (rel.Value, error) {
 		s, ok := rel.AsString(v.(rel.Set))
 		if !ok {
 			return nil, fmt.Errorf("cannot convert %#v to string", v)
@@ -51,7 +51,7 @@ func importLocalFile(ctx context.Context, fromRoot bool) rel.Value {
 }
 
 func importExternalContent(ctx context.Context) rel.Value {
-	return rel.NewNativeFunction("//", func(v rel.Value) (rel.Value, error) {
+	return rel.NewNativeFunction("//", func(_ context.Context, v rel.Value) (rel.Value, error) {
 		s, ok := rel.AsString(v.(rel.Set))
 		if !ok {
 			return nil, fmt.Errorf("cannot convert %#v to string", v)

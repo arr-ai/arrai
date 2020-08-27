@@ -37,9 +37,9 @@ func (r RecursionExpr) Eval(ctx context.Context, local Scope) (Value, error) {
 			}
 			return nil, WrapContextErr(errors.Errorf("Recursion requires a tuple of functions: %v", t.String()), r, local)
 		}
-		return Call(r.fixt, f, local)
+		return Call(ctx, r.fixt, f, local)
 	case Closure:
-		return Call(r.fix, NewClosure(local, NewFunction(f.Source(), r.name, f.f).(*Function)), local)
+		return Call(ctx, r.fix, NewClosure(local, NewFunction(f.Source(), r.name, f.f).(*Function)), local)
 	}
 	return nil, WrapContextErr(errors.Errorf("Recursion does not support %T", val), r, local)
 }

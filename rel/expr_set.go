@@ -58,7 +58,7 @@ func (e *SetExpr) Eval(ctx context.Context, local Scope) (Value, error) {
 // NewIntersectExpr evaluates a <&> b.
 func NewIntersectExpr(scanner parser.Scanner, a, b Expr) Expr {
 	return newBinExpr(scanner, a, b, "<&>", "(%s <&> %s)",
-		func(a, b Value, _ Scope) (Value, error) {
+		func(_ context.Context, a, b Value, _ Scope) (Value, error) {
 			if x, ok := a.(Set); ok {
 				if y, ok := b.(Set); ok {
 					return Intersect(x, y), nil

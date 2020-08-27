@@ -157,7 +157,7 @@ func (b Bytes) Negate() Value {
 }
 
 // Export exports a Bytes as a string.
-func (b Bytes) Export() interface{} {
+func (b Bytes) Export(_ context.Context) interface{} {
 	return string(b.b)
 }
 
@@ -236,7 +236,7 @@ func (b Bytes) Where(p func(v Value) (bool, error)) (Set, error) {
 	return result, nil
 }
 
-func (b Bytes) CallAll(arg Value) (Set, error) {
+func (b Bytes) CallAll(_ context.Context, arg Value) (Set, error) {
 	i := int(arg.(Number).Float64()) - b.offset
 	if i < 0 || i >= len(b.Bytes()) {
 		return None, nil

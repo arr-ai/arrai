@@ -159,7 +159,7 @@ func (s String) Negate() Value {
 }
 
 // Export exports a String as a string.
-func (s String) Export() interface{} {
+func (s String) Export(_ context.Context) interface{} {
 	return string(s.s)
 }
 
@@ -248,7 +248,7 @@ func (s String) Where(p func(v Value) (bool, error)) (Set, error) {
 	return NewSet(values...), nil
 }
 
-func (s String) CallAll(arg Value) (Set, error) {
+func (s String) CallAll(_ context.Context, arg Value) (Set, error) {
 	i := int(arg.(Number).Float64()) - s.offset
 	if i < 0 || i >= len(s.s) {
 		return None, nil

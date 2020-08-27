@@ -41,7 +41,7 @@ func RequireEqualValues(t *testing.T, expected, actual Value) {
 
 // AssertExprsEvalToSameValue asserts that the exprs evaluate to the same value.
 func AssertExprsEvalToSameValue(t *testing.T, expected, expr Expr) bool {
-	ctx := context.Background()
+	ctx := arraictx.InitRunCtx(context.Background())
 	expectedValue, err := expected.Eval(ctx, EmptyScope)
 	if !assert.NoError(t, err, "evaluating expected: %s", expected) {
 		return false

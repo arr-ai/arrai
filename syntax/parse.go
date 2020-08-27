@@ -147,7 +147,7 @@ func (pc ParseContext) Parse(ctx context.Context, s *parser.Scanner) (ast.Branch
 
 			childastNode := ast.FromParserNode(subg, childast)
 			childastValue := rel.ASTNodeToValue(childastNode)
-			bodyValue, err := rel.SetCall(macro.transform, childastValue)
+			bodyValue, err := rel.SetCall(ctx, macro.transform, childastValue)
 			if err != nil {
 				return nil, err
 			}

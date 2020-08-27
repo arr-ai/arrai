@@ -80,9 +80,9 @@ func (c ExprClosure) Negate() Value {
 }
 
 // Export exports a ExprClosure.
-func (c ExprClosure) Export() interface{} {
+func (c ExprClosure) Export(ctx context.Context) interface{} {
 	return func(v Value) Value {
-		result, err := SetCall(c, v)
+		result, err := SetCall(ctx, c, v)
 		if err != nil {
 			panic(err)
 		}
@@ -118,7 +118,7 @@ func (ExprClosure) Where(p func(v Value) (bool, error)) (Set, error) {
 	panic("unimplemented")
 }
 
-func (c ExprClosure) CallAll(arg Value) (Set, error) {
+func (c ExprClosure) CallAll(_ context.Context, arg Value) (Set, error) {
 	//TODO: CallAll
 	panic("unimplemented")
 }

@@ -230,11 +230,11 @@ func (a Array) Negate() Value {
 }
 
 // Export exports an Array as a slice.
-func (a Array) Export() interface{} {
+func (a Array) Export(ctx context.Context) interface{} {
 	result := make([]interface{}, 0, a.Count())
 	for _, v := range a.values {
 		if v != nil {
-			result = append(result, v.Export())
+			result = append(result, v.Export(ctx))
 		} else {
 			result = append(result, nil)
 		}
@@ -370,7 +370,7 @@ func (a Array) Where(p func(v Value) (bool, error)) (Set, error) {
 	return result, nil
 }
 
-func (a Array) CallAll(arg Value) (Set, error) {
+func (a Array) CallAll(_ context.Context, arg Value) (Set, error) {
 	i := int(arg.(Number).Float64()) - a.offset
 	if i < 0 || i >= len(a.values) {
 		return None, nil

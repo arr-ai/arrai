@@ -224,16 +224,16 @@ func (s GenericSet) Negate() Value {
 }
 
 // Export exports a genericSet as an array of exported Values.
-func (s GenericSet) Export() interface{} {
+func (s GenericSet) Export(ctx context.Context) interface{} {
 	if s.set.IsEmpty() {
 		return []interface{}{}
 	}
 	if s, is := AsString(s); is {
-		return s.Export()
+		return s.Export(ctx)
 	}
 	result := make([]interface{}, 0, s.set.Count())
 	for e := s.Enumerator(); e.MoveNext(); {
-		result = append(result, e.Current().Export())
+		result = append(result, e.Current().Export(ctx))
 	}
 	return result
 }
@@ -289,7 +289,7 @@ func (s GenericSet) Where(p func(v Value) (bool, error)) (_ Set, err error) {
 	return s, err
 }
 
-func (s GenericSet) CallAll(arg Value) (Set, error) {
+func (s GenericSet) CallAll(_ context.Context, arg Value) (Set, error) {
 	var t Tuple
 	var at Value
 	tm := NewTupleMatcher(map[string]Matcher{"@": Bind(&at)}, Bind(&t))

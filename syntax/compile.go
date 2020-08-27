@@ -715,7 +715,7 @@ func (pc ParseContext) compileTailFunc(ctx context.Context, tail ast.Node) (rel.
 					if !is {
 						return nil, fmt.Errorf("not a set: %v", v)
 					}
-					v, err = rel.SetCall(set, a)
+					v, err = rel.SetCall(ctx, set, a)
 					if err != nil {
 						return nil, err
 					}

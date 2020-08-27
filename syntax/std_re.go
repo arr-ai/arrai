@@ -1,6 +1,7 @@
 package syntax
 
 import (
+	"context"
 	"fmt"
 	"regexp"
 
@@ -9,7 +10,7 @@ import (
 )
 
 var (
-	stdReMatch = rel.NewNativeFunction("compile", func(re rel.Value) (rel.Value, error) {
+	stdReMatch = rel.NewNativeFunction("compile", func(_ context.Context, re rel.Value) (rel.Value, error) {
 		reStr, is := tools.ValueAsString(re)
 		if !is {
 			return nil, fmt.Errorf("//re.compile: re not a string: %v", re)
@@ -19,7 +20,7 @@ var (
 			return nil, fmt.Errorf("//re.compile: %s", err)
 		}
 		return rel.NewTuple(
-			rel.NewNativeFunctionAttr("match", func(str rel.Value) (rel.Value, error) {
+			rel.NewNativeFunctionAttr("match", func(_ context.Context, str rel.Value) (rel.Value, error) {
 				s, is := tools.ValueAsString(str)
 				if !is {
 					return nil, fmt.Errorf("//re.compile(re).match: s not a string: %v", str)
@@ -38,25 +39,24 @@ var (
 				}
 				return rel.NewArray(matches...), nil
 			}),
-			createNestedFuncAttr("sub", 2, func(args ...rel.Value) (rel.Value, error) {
-				new, is := tools.ValueAsString(args[0])
+			createFunc2Attr("sub", func(_ context.Context, a, b rel.Value) (rel.Value, error) {
+				new, is := tools.ValueAsString(a)
 				if !is {
-					return nil, fmt.Errorf("//re.compile(re).sub: new not a string: %v", args[1])
+					return nil, fmt.Errorf("//re.compile(re).sub: new not a string: %v", b)
 				}
-				s, is := tools.ValueAsString(args[1])
+				s, is := tools.ValueAsString(b)
 				if !is {
-					return nil, fmt.Errorf("//re.compile(re).sub: s not a string: %v", args[0])
+					return nil, fmt.Errorf("//re.compile(re).sub: s not a string: %v", a)
 				}
 				return rel.NewString([]rune(regex.ReplaceAllString(s, new))), nil
 			}),
-			createNestedFuncAttr("subf", 2, func(args ...rel.Value) (rel.Value, error) {
-				f := args[0]
-				s, is := tools.ValueAsString(args[1])
+			createFunc2Attr("subf", func(ctx context.Context, a, b rel.Value) (rel.Value, error) {
+				s, is := tools.ValueAsString(b)
 				if !is {
-					return nil, fmt.Errorf("//re.compile(re).subf: s not a string: %v", args[0])
+					return nil, fmt.Errorf("//re.compile(re).subf: s not a string: %v", a)
 				}
 				return rel.NewString([]rune(regex.ReplaceAllStringFunc(s, func(match string) string {
-					result, err := rel.Call(f, rel.NewString([]rune(match)), rel.EmptyScope)
+					result, err := rel.Call(ctx, a, rel.NewString([]rune(match)), rel.EmptyScope)
 					if err != nil {
 						panic(err)
 					}
