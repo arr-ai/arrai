@@ -126,20 +126,20 @@ func StdScope() rel.Scope {
 }
 
 type fnArgs struct {
-	arg []rel.Value
-	ctx context.Context
+	args []rel.Value
+	ctx  context.Context
 }
 
 func createNestedFunc(
 	name string, nArgs int,
 	f func(context.Context, ...rel.Value) (rel.Value, error), args fnArgs) (rel.Value, error) {
 	if nArgs == 0 {
-		return f(args.ctx, args.arg...)
+		return f(args.ctx, args.args...)
 	}
 	return rel.NewNativeFunction(
 		name+strconv.Itoa(nArgs),
 		func(ctx context.Context, parent rel.Value) (rel.Value, error) {
-			return createNestedFunc(name, nArgs-1, f, fnArgs{arg: append(args.arg, parent), ctx: ctx})
+			return createNestedFunc(name, nArgs-1, f, fnArgs{args: append(args.args, parent), ctx: ctx})
 		}), nil
 }
 
@@ -149,7 +149,7 @@ func mustCreateNestedFunc(
 	if nArgs == 0 {
 		panic(errors.New("mustCreateNestedFunc: function cannot have 0 arguments"))
 	}
-	g, err := createNestedFunc(name, nArgs, f, fnArgs{})
+	g, err := createNestedFunc(name, nArgs, f, fnArgs{args: make([]rel.Value, 0)})
 	if err != nil {
 		panic(err)
 	}
@@ -160,7 +160,7 @@ func createNestedFuncAttr(name string, nArgs int, f func(context.Context, ...rel
 	if nArgs == 0 {
 		panic(errors.New("createNestedFuncAttr: function cannot have 0 arguments"))
 	}
-	g, err := createNestedFunc(name, nArgs, f, fnArgs{})
+	g, err := createNestedFunc(name, nArgs, f, fnArgs{args: make([]rel.Value, 0)})
 	if err != nil {
 		panic(err)
 	}
