@@ -1,6 +1,7 @@
 package syntax
 
 import (
+	"context"
 	"github.com/arr-ai/arrai/rel"
 	"github.com/pkg/errors"
 	"go/parser"
@@ -11,7 +12,7 @@ func stdLang() rel.Attr {
 	return rel.NewTupleAttr(
 		"lang", rel.NewTupleAttr(
 			"go", rel.NewNativeFunctionAttr(
-				"parse", func(v rel.Value) (rel.Value, error) {
+				"parse", func(_ context.Context, v rel.Value) (rel.Value, error) {
 					// Accepts []byte because ParseFile ultimately uses []byte.
 					doParse := func(src []byte) (rel.Value, error) {
 						fset := token.NewFileSet()
