@@ -93,7 +93,7 @@ func findRootFromModule(modulePath string) (string, error) {
 		case exists:
 			return currentPath, nil
 		case reachedRoot:
-			// if arraiRootMarker isn't found, it uses the directory of the source arrai file
+			// If arraiRootMarker isn't found, use the directory of the source arr.ai file.
 			return absModulePath, nil
 		case err != nil:
 			return "", err
