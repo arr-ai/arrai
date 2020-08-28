@@ -1,9 +1,11 @@
 package rel
 
 import (
+	"context"
 	"sort"
 	"testing"
 
+	"github.com/arr-ai/arrai/pkg/arraictx"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -145,7 +147,7 @@ func TestSetExport(t *testing.T) {
 		}
 		v, err := NewSetFrom(intfs...)
 		if assert.NoError(t, err) {
-			a := v.Export().([]interface{})
+			a := v.Export(arraictx.InitRunCtx(context.Background())).([]interface{})
 			sort.Sort(Float64InterfaceList(a))
 			assert.Equal(t, intfs, a)
 		}
@@ -161,7 +163,7 @@ func TestSetString(t *testing.T) {
 	scenario := func(repr string, values ...interface{}) {
 		set := intSet(values...)
 		if assert.Equal(
-			t, len(values), set.Count(), "%v", set.Export(),
+			t, len(values), set.Count(), "%v", set.Export(arraictx.InitRunCtx(context.Background())),
 		) {
 			assert.Equal(t, repr, set.String(), "%v", set)
 		}
@@ -264,8 +266,9 @@ func TestSetWalk(t *testing.T) {
 	set := intSet(42, 43, 44, 45, 46)
 
 	a := []interface{}{}
+	ctx := arraictx.InitRunCtx(context.Background())
 	for e := set.Enumerator(); e.MoveNext(); {
-		a = append(a, e.Current().Export())
+		a = append(a, e.Current().Export(ctx))
 	}
 	sort.Sort(Float64InterfaceList(a))
 	assert.Equal(t, []interface{}{42.0, 43.0, 44.0, 45.0, 46.0}, a)

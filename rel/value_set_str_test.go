@@ -2,8 +2,10 @@
 package rel
 
 import (
+	"context"
 	"testing"
 
+	"github.com/arr-ai/arrai/pkg/arraictx"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -23,24 +25,24 @@ func TestStringCallAll(t *testing.T) {
 	t.Parallel()
 
 	abc := NewString([]rune("abc"))
-
-	AssertEqualValues(t, NewSet(NewNumber(float64('a'))), MustCallAll(abc, NewNumber(0)))
-	AssertEqualValues(t, NewSet(NewNumber(float64('b'))), MustCallAll(abc, NewNumber(1)))
-	AssertEqualValues(t, NewSet(NewNumber(float64('c'))), MustCallAll(abc, NewNumber(2)))
-	AssertEqualValues(t, None, MustCallAll(abc, NewNumber(5)))
-	AssertEqualValues(t, None, MustCallAll(abc, NewNumber(-1)))
+	ctx := arraictx.InitRunCtx(context.Background())
+	AssertEqualValues(t, NewSet(NewNumber(float64('a'))), MustCallAll(ctx, abc, NewNumber(0)))
+	AssertEqualValues(t, NewSet(NewNumber(float64('b'))), MustCallAll(ctx, abc, NewNumber(1)))
+	AssertEqualValues(t, NewSet(NewNumber(float64('c'))), MustCallAll(ctx, abc, NewNumber(2)))
+	AssertEqualValues(t, None, MustCallAll(ctx, abc, NewNumber(5)))
+	AssertEqualValues(t, None, MustCallAll(ctx, abc, NewNumber(-1)))
 
 	abc = NewOffsetString([]rune("abc"), -2)
-	AssertEqualValues(t, NewSet(NewNumber(float64('a'))), MustCallAll(abc, NewNumber(-2)))
-	AssertEqualValues(t, NewSet(NewNumber(float64('b'))), MustCallAll(abc, NewNumber(-1)))
-	AssertEqualValues(t, NewSet(NewNumber(float64('c'))), MustCallAll(abc, NewNumber(0)))
-	AssertEqualValues(t, None, MustCallAll(abc, NewNumber(1)))
-	AssertEqualValues(t, None, MustCallAll(abc, NewNumber(-3)))
+	AssertEqualValues(t, NewSet(NewNumber(float64('a'))), MustCallAll(ctx, abc, NewNumber(-2)))
+	AssertEqualValues(t, NewSet(NewNumber(float64('b'))), MustCallAll(ctx, abc, NewNumber(-1)))
+	AssertEqualValues(t, NewSet(NewNumber(float64('c'))), MustCallAll(ctx, abc, NewNumber(0)))
+	AssertEqualValues(t, None, MustCallAll(ctx, abc, NewNumber(1)))
+	AssertEqualValues(t, None, MustCallAll(ctx, abc, NewNumber(-3)))
 
 	abc = NewOffsetString([]rune("abc"), 2)
-	AssertEqualValues(t, NewSet(NewNumber(float64('a'))), MustCallAll(abc, NewNumber(2)))
-	AssertEqualValues(t, NewSet(NewNumber(float64('b'))), MustCallAll(abc, NewNumber(3)))
-	AssertEqualValues(t, NewSet(NewNumber(float64('c'))), MustCallAll(abc, NewNumber(4)))
-	AssertEqualValues(t, None, MustCallAll(abc, NewNumber(1)))
-	AssertEqualValues(t, None, MustCallAll(abc, NewNumber(5)))
+	AssertEqualValues(t, NewSet(NewNumber(float64('a'))), MustCallAll(ctx, abc, NewNumber(2)))
+	AssertEqualValues(t, NewSet(NewNumber(float64('b'))), MustCallAll(ctx, abc, NewNumber(3)))
+	AssertEqualValues(t, NewSet(NewNumber(float64('c'))), MustCallAll(ctx, abc, NewNumber(4)))
+	AssertEqualValues(t, None, MustCallAll(ctx, abc, NewNumber(1)))
+	AssertEqualValues(t, None, MustCallAll(ctx, abc, NewNumber(5)))
 }

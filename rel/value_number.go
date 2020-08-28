@@ -107,6 +107,6 @@ func (n Number) Negate() Value {
 }
 
 // Export exports a Number.
-func (n Number) Export() interface{} {
+func (n Number) Export(_ context.Context) interface{} {
 	return n.Float64()
 }

@@ -128,7 +128,7 @@ func (pc ParseContext) compileExpandableString(ctx context.Context, b ast.Branch
 		rel.NewArrayExpr(b.Scanner(), exprs...)), nil
 }
 
-func xstrConcat(seq rel.Value) (rel.Value, error) {
+func xstrConcat(_ context.Context, seq rel.Value) (rel.Value, error) {
 	// this is always a sequence of values between bare string and computed expressions
 	// all bare strings are wrapped in a tuple of one attribute "s"
 	//

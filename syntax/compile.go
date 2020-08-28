@@ -715,7 +715,7 @@ func (pc ParseContext) compileTailFunc(ctx context.Context, tail ast.Node) (rel.
 					if !is {
 						return nil, fmt.Errorf("not a set: %v", v)
 					}
-					v, err = rel.SetCall(set, a)
+					v, err = rel.SetCall(ctx, set, a)
 					if err != nil {
 						return nil, err
 					}
@@ -1056,16 +1056,18 @@ func (pc ParseContext) compilePackage(ctx context.Context, b ast.Branch, c ast.C
 			if pc.SourceDir == "" {
 				return nil, fmt.Errorf("local import %q invalid; no local context", name)
 			}
-			return rel.NewCallExpr(scanner,
-				NewPackageExpr(scanner, importLocalFile(ctx, fromRoot)),
-				rel.NewString([]rune(path.Join(pc.SourceDir, filepath))),
-			), nil
+			importPath := path.Join(pc.SourceDir, filepath)
+			expr, err := importLocalFile(ctx, fromRoot, importPath)
+			if err != nil {
+				return nil, err
+			}
+			return NewImportExpr(scanner, expr, importPath), nil
 		}
-		return rel.NewCallExpr(
-			scanner,
-			NewPackageExpr(scanner, importExternalContent(ctx)),
-			rel.NewString([]rune(name)),
-		), nil
+		expr, err := importExternalContent(ctx, name)
+		if err != nil {
+			return nil, err
+		}
+		return NewImportExpr(scanner, expr, name), nil
 	}
 	return nil, fmt.Errorf("compilePackage: malformed package AST %s", pkg)
 }

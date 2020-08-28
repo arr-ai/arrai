@@ -1,6 +1,7 @@
 package syntax
 
 import (
+	"context"
 	"io"
 	"io/ioutil"
 	"sync"
@@ -41,7 +42,7 @@ func (d *stdOsStdin) reset(r io.Reader) {
 	d.bytes = nil
 }
 
-func (d *stdOsStdin) read(_ rel.Value) (rel.Value, error) {
+func (d *stdOsStdin) read(context.Context, rel.Value) (rel.Value, error) {
 	d.mutex.Lock()
 	defer d.mutex.Unlock()
 	if d.bytes != nil {

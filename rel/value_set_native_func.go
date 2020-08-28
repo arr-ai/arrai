@@ -9,24 +9,26 @@ import (
 	"github.com/arr-ai/wbnf/parser"
 )
 
+type NativeFnBody func(context.Context, Value) (Value, error)
+
 // NativeFunction represents a binary relation uniquely mapping inputs to outputs.
 type NativeFunction struct {
 	name string
-	fn   func(Value) (Value, error)
+	fn   NativeFnBody
 }
 
 // NewNativeFunction returns a new function.
-func NewNativeFunction(name string, fn func(Value) (Value, error)) Value {
+func NewNativeFunction(name string, fn NativeFnBody) Value {
 	return &NativeFunction{"⦑" + name + "⦒", fn}
 }
 
 // NewNativeLambda returns a nameless function.
-func NewNativeLambda(fn func(Value) (Value, error)) Value {
+func NewNativeLambda(fn NativeFnBody) Value {
 	return NewNativeFunction("", fn)
 }
 
 // NewNativeFunctionAttr returns a new Attr with a named key and NativeFunction value.
-func NewNativeFunctionAttr(name string, fn func(Value) (Value, error)) Attr {
+func NewNativeFunctionAttr(name string, fn NativeFnBody) Attr {
 	return NewAttr(name, NewNativeFunction(name, fn))
 }
 
@@ -90,7 +92,7 @@ func (f *NativeFunction) Negate() Value {
 }
 
 // Export exports a NativeFunction.
-func (f *NativeFunction) Export() interface{} {
+func (f *NativeFunction) Export(_ context.Context) interface{} {
 	return f.fn
 }
 
@@ -123,8 +125,8 @@ func (*NativeFunction) Where(p func(v Value) (bool, error)) (Set, error) {
 }
 
 // Call calls the NativeFunction with the given parameter.
-func (f *NativeFunction) CallAll(arg Value) (Set, error) {
-	v, err := f.fn(arg)
+func (f *NativeFunction) CallAll(ctx context.Context, arg Value) (Set, error) {
+	v, err := f.fn(ctx, arg)
 	if err != nil {
 		return nil, err
 	}

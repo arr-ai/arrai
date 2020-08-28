@@ -8,8 +8,7 @@ import (
 	"github.com/go-errors/errors"
 )
 
-//TODO: add context?
-type unaryEval func(a Value, local Scope) (Value, error)
+type unaryEval func(ctx context.Context, a Value, local Scope) (Value, error)
 
 // UnaryExpr represents a range of operators.
 type UnaryExpr struct {
@@ -27,21 +26,21 @@ func newUnaryExpr(scanner parser.Scanner, a Expr, op, format string, eval unaryE
 // NewPosExpr evaluates to a.
 func NewPosExpr(scanner parser.Scanner, a Expr) Expr {
 	return newUnaryExpr(scanner, a, "+", "(+%s)",
-		func(a Value, _ Scope) (Value, error) { return a, nil },
+		func(_ context.Context, a Value, _ Scope) (Value, error) { return a, nil },
 	)
 }
 
 // NewNegExpr evaluates to -a.
 func NewNegExpr(scanner parser.Scanner, a Expr) Expr {
 	return newUnaryExpr(scanner, a, "-", "(-%s)",
-		func(a Value, _ Scope) (Value, error) { return a.Negate(), nil },
+		func(_ context.Context, a Value, _ Scope) (Value, error) { return a.Negate(), nil },
 	)
 }
 
 // NewPowerSetExpr evaluates to ^a.
 func NewPowerSetExpr(scanner parser.Scanner, a Expr) Expr {
 	return newUnaryExpr(scanner, a, "**", "(**%s)",
-		func(a Value, _ Scope) (Value, error) {
+		func(_ context.Context, a Value, _ Scope) (Value, error) {
 			if s, ok := a.(Set); ok {
 				return PowerSet(s), nil
 			}
@@ -53,15 +52,15 @@ func NewPowerSetExpr(scanner parser.Scanner, a Expr) Expr {
 // NewNotExpr evaluates to !a.
 func NewNotExpr(scanner parser.Scanner, a Expr) Expr {
 	return newUnaryExpr(scanner, a, "!", "(!%s)",
-		func(a Value, _ Scope) (Value, error) { return NewBool(!a.IsTrue()), nil })
+		func(_ context.Context, a Value, _ Scope) (Value, error) { return NewBool(!a.IsTrue()), nil })
 }
 
 // NewEvalExpr evaluates to *a, given a set lhs.
 func NewEvalExpr(scanner parser.Scanner, a Expr) Expr {
 	return newUnaryExpr(scanner, a, "*", "(*%s)",
-		func(a Value, local Scope) (Value, error) {
+		func(ctx context.Context, a Value, local Scope) (Value, error) {
 			if x, ok := a.(Closure); ok {
-				return SetCall(x, None)
+				return SetCall(ctx, x, None)
 			}
 			return nil, errors.Errorf("eval arg must be a Function, not %T", a)
 		})
@@ -70,7 +69,7 @@ func NewEvalExpr(scanner parser.Scanner, a Expr) Expr {
 // NewCountExpr evaluates to the number of elements in a.
 func NewCountExpr(scanner parser.Scanner, a Expr) Expr {
 	return newUnaryExpr(scanner, a, "count", "(%s count)",
-		func(a Value, local Scope) (Value, error) {
+		func(_ context.Context, a Value, local Scope) (Value, error) {
 			if x, ok := a.(Set); ok {
 				return NewNumber(float64(x.Count())), nil
 			}
@@ -81,7 +80,7 @@ func NewCountExpr(scanner parser.Scanner, a Expr) Expr {
 // NewSingleExpr evaluates to the single element in a or fails if a count != 1.
 func NewSingleExpr(scanner parser.Scanner, a Expr) Expr {
 	return newUnaryExpr(scanner, a, "single", "(%s single)",
-		func(a Value, local Scope) (Value, error) {
+		func(_ context.Context, a Value, local Scope) (Value, error) {
 			if x, ok := a.(Set); ok {
 				var result Value
 				for e := x.Enumerator(); e.MoveNext(); {
@@ -110,7 +109,7 @@ func (e *UnaryExpr) Eval(ctx context.Context, local Scope) (Value, error) {
 	if err != nil {
 		return nil, WrapContextErr(err, e, local)
 	}
-	val, err := e.eval(a, local)
+	val, err := e.eval(ctx, a, local)
 	if err != nil {
 		return nil, WrapContextErr(err, e, local)
 	}

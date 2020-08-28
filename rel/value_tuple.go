@@ -283,11 +283,11 @@ func (t *GenericTuple) Negate() Value {
 }
 
 // Export exports a Tuple.
-func (t *GenericTuple) Export() interface{} {
+func (t *GenericTuple) Export(ctx context.Context) interface{} {
 	result := make(map[string]interface{}, t.Count())
 	for e := t.Enumerator(); e.MoveNext(); {
 		name, value := e.Current()
-		result[name] = value.Export()
+		result[name] = value.Export(ctx)
 	}
 	return result
 }

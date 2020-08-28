@@ -4,6 +4,7 @@ import (
 	"archive/tar"
 	"archive/zip"
 	"bytes"
+	"context"
 	"fmt"
 	"io"
 	"path"
@@ -14,7 +15,7 @@ import (
 func stdArchive() rel.Attr {
 	return rel.NewTupleAttr("archive",
 		rel.NewTupleAttr("tar",
-			rel.NewNativeFunctionAttr("tar", func(v rel.Value) (rel.Value, error) {
+			rel.NewNativeFunctionAttr("tar", func(_ context.Context, v rel.Value) (rel.Value, error) {
 				return createArchive(v, func(w io.Writer) (io.Closer, func(string, []byte) (io.Writer, error)) {
 					aw := tar.NewWriter(w)
 					return aw, func(path string, data []byte) (io.Writer, error) {
@@ -28,7 +29,7 @@ func stdArchive() rel.Attr {
 			}),
 		),
 		rel.NewTupleAttr("zip",
-			rel.NewNativeFunctionAttr("zip", func(v rel.Value) (rel.Value, error) {
+			rel.NewNativeFunctionAttr("zip", func(_ context.Context, v rel.Value) (rel.Value, error) {
 				return createArchive(v, func(w io.Writer) (io.Closer, func(string, []byte) (io.Writer, error)) {
 					aw := zip.NewWriter(w)
 					return aw, func(path string, _ []byte) (io.Writer, error) {

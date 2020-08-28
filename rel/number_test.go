@@ -1,8 +1,10 @@
 package rel
 
 import (
+	"context"
 	"testing"
 
+	"github.com/arr-ai/arrai/pkg/arraictx"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -58,7 +60,7 @@ func TestNumberExport(t *testing.T) {
 	t.Parallel()
 	for _, n := range []float64{0, -1, 0.5, -0.05} {
 		number := NewNumber(n)
-		assert.Equal(t, n, number.Export(), "%s.Export()", number)
+		assert.Equal(t, n, number.Export(arraictx.InitRunCtx(context.Background())), "%s.Export()", number)
 	}
 }
 

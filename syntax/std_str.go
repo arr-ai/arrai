@@ -1,6 +1,7 @@
 package syntax
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -9,7 +10,7 @@ import (
 )
 
 // TODO: Make this more robust.
-func formatValue(format string, value rel.Value) string {
+func formatValue(ctx context.Context, format string, value rel.Value) string {
 	var v interface{}
 	switch set := value.(type) {
 	case rel.Set:
@@ -23,13 +24,13 @@ func formatValue(format string, value rel.Value) string {
 	case nil:
 		panic(fmt.Errorf("unable to format nil value"))
 	default:
-		v = value.Export()
+		v = value.Export(ctx)
 	}
 	switch format[len(format)-1] {
 	case 't':
 		v = value.IsTrue()
 	case 'c', 'd', 'o', 'O', 'x', 'X', 'U':
-		v = int(value.Export().(float64))
+		v = int(value.Export(ctx).(float64))
 	case 'q':
 		if f, ok := v.(float64); ok {
 			v = int(f)
@@ -39,7 +40,7 @@ func formatValue(format string, value rel.Value) string {
 }
 
 var (
-	stdStrExpand = mustCreateNestedFunc("expand", 4, func(args ...rel.Value) (rel.Value, error) {
+	stdStrExpand = mustCreateNestedFunc("expand", 4, func(ctx context.Context, args ...rel.Value) (rel.Value, error) {
 		format, is := tools.ValueAsString(args[0])
 		if !is {
 			return nil, fmt.Errorf("//str.expand: format not a string: %v", args[0])
@@ -63,7 +64,7 @@ var (
 						sb.WriteString(delim[1:])
 					}
 					if value != nil {
-						sb.WriteString(formatValue(format, value))
+						sb.WriteString(formatValue(ctx, format, value))
 					}
 				}
 				s = sb.String()
@@ -71,7 +72,7 @@ var (
 				return nil, fmt.Errorf("//str..expand: arg not an array in ${arg::}: %v", args[1])
 			}
 		} else {
-			s = formatValue(format, args[1])
+			s = formatValue(ctx, format, args[1])
 		}
 		if s != "" {
 			tail, is := tools.ValueAsString(args[3])
@@ -83,7 +84,7 @@ var (
 		return rel.NewString([]rune(s)), nil
 	})
 
-	stdStrRepr = rel.NewNativeFunction("repr", func(value rel.Value) (rel.Value, error) {
+	stdStrRepr = rel.NewNativeFunction("repr", func(_ context.Context, value rel.Value) (rel.Value, error) {
 		return rel.NewString([]rune(rel.Repr(value))), nil
 	})
 )
@@ -91,20 +92,20 @@ var (
 func stdStr() rel.Attr {
 	return rel.NewTupleAttr("str",
 		rel.NewAttr("expand", stdStrExpand),
-		createNestedFuncAttr("lower", 1, func(args ...rel.Value) (rel.Value, error) {
+		createNestedFuncAttr("lower", 1, func(_ context.Context, args ...rel.Value) (rel.Value, error) {
 			if s, is := tools.ValueAsString(args[0]); is {
 				return rel.NewString([]rune(strings.ToLower(s))), nil
 			}
 			return nil, fmt.Errorf("//str.lower: arg not a string: %v", args[0])
 		}),
 		rel.NewAttr("repr", stdStrRepr),
-		createNestedFuncAttr("title", 1, func(args ...rel.Value) (rel.Value, error) {
+		createNestedFuncAttr("title", 1, func(_ context.Context, args ...rel.Value) (rel.Value, error) {
 			if s, is := tools.ValueAsString(args[0]); is {
 				return rel.NewString([]rune(strings.Title(s))), nil
 			}
 			return nil, fmt.Errorf("//str.title: arg not a string: %v", args[0])
 		}),
-		createNestedFuncAttr("upper", 1, func(args ...rel.Value) (rel.Value, error) {
+		createNestedFuncAttr("upper", 1, func(_ context.Context, args ...rel.Value) (rel.Value, error) {
 			if s, is := tools.ValueAsString(args[0]); is {
 				return rel.NewString([]rune(strings.ToUpper(s))), nil
 			}

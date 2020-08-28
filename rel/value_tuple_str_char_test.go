@@ -171,7 +171,10 @@ func TestStringCharTuple_Negate(t *testing.T) {
 
 func TestStringCharTuple_Export(t *testing.T) {
 	t.Parallel()
-	assert.Equal(t, map[string]interface{}{"@": 1, "@char": 'a'}, NewStringCharTuple(1, 'a').Export())
+	assert.Equal(t,
+		map[string]interface{}{"@": 1, "@char": 'a'},
+		NewStringCharTuple(1, 'a').Export(arraictx.InitRunCtx(context.Background())),
+	)
 }
 
 func TestStringCharTuple_Count(t *testing.T) {

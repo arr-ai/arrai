@@ -53,6 +53,7 @@ func TestJsonPackageImport(t *testing.T) {
 
 func TestJsonPackageImportNotExists(t *testing.T) {
 	t.Parallel()
+	//FIXME: empty error message because windows and UNIX error messages are different
 	AssertCodeErrors(t, "", `//{./examples/json/fooooo.json}`)
 }
 

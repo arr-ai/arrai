@@ -1,8 +1,10 @@
 package rel
 
 import (
+	"context"
 	"testing"
 
+	"github.com/arr-ai/arrai/pkg/arraictx"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -51,10 +53,10 @@ func TestGenericSetCallAll(t *testing.T) {
 			NewAttr("random", NewNumber(5)),
 		),
 	)
-
-	AssertEqualValues(t, NewSet(NewNumber(42), NewNumber(24)), MustCallAll(set, NewNumber(1)))
-	assert.Panics(t, func() { MustCallAll(set, NewNumber(2)) })
-	assert.Panics(t, func() { MustCallAll(set, NewNumber(3)) })
-	AssertEqualValues(t, NewSet(NewNumber(5)), MustCallAll(set, NewNumber(4)))
-	AssertEqualValues(t, None, MustCallAll(set, NewNumber(5)))
+	ctx := arraictx.InitRunCtx(context.Background())
+	AssertEqualValues(t, NewSet(NewNumber(42), NewNumber(24)), MustCallAll(ctx, set, NewNumber(1)))
+	assert.Panics(t, func() { MustCallAll(ctx, set, NewNumber(2)) })
+	assert.Panics(t, func() { MustCallAll(ctx, set, NewNumber(3)) })
+	AssertEqualValues(t, NewSet(NewNumber(5)), MustCallAll(ctx, set, NewNumber(4)))
+	AssertEqualValues(t, None, MustCallAll(ctx, set, NewNumber(5)))
 }

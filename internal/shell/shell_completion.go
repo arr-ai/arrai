@@ -82,7 +82,7 @@ func (s *shellInstance) partialExprPredictions(currentLine string) (newLine [][]
 	currentExpr := strings.Join(s.collector.withLine(currentLine).lines, "\n")
 	realExpr, residue := s.trimExpr(currentExpr)
 	//TODO: use context from shell
-	ctx := arraictx.InitRunCtx(context.Background())
+	ctx := arraictx.InitRunCtx(context.TODO())
 	if residue != "" {
 		val, err := tryEval(ctx, realExpr, s.scope)
 		if err != nil {

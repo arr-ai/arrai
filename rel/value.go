@@ -44,7 +44,7 @@ type Value interface {
 	Negate() Value
 
 	// Export converts the Value to a natural Go value.
-	Export() interface{}
+	Export(context.Context) interface{}
 }
 
 // intfValueLess supports
@@ -126,7 +126,7 @@ type Set interface {
 	Without(Value) Set
 	Map(func(Value) Value) Set
 	Where(func(Value) (bool, error)) (Set, error)
-	CallAll(Value) (Set, error)
+	CallAll(context.Context, Value) (Set, error)
 
 	ArrayEnumerator() (OffsetValueEnumerator, bool)
 }
@@ -140,8 +140,8 @@ func (n NoReturnError) Error() string {
 	return fmt.Sprintf("Call: no return values for input %v from set %v", n.input, n.s)
 }
 
-func SetCall(s Set, arg Value) (Value, error) {
-	result, err := s.CallAll(arg)
+func SetCall(ctx context.Context, s Set, arg Value) (Value, error) {
+	result, err := s.CallAll(ctx, arg)
 	if err != nil {
 		return nil, err
 	}
@@ -156,8 +156,8 @@ func SetCall(s Set, arg Value) (Value, error) {
 	return SetAny(result), nil
 }
 
-func MustCallAll(s Set, v Value) Value {
-	result, err := s.CallAll(v)
+func MustCallAll(ctx context.Context, s Set, v Value) Value {
+	result, err := s.CallAll(ctx, v)
 	if err != nil {
 		panic(err)
 	}

@@ -109,10 +109,10 @@ func (t DictEntryTuple) Negate() Value {
 }
 
 // Export exports a Tuple.
-func (t DictEntryTuple) Export() interface{} {
+func (t DictEntryTuple) Export(ctx context.Context) interface{} {
 	return map[string]interface{}{
-		"@":           t.at.Export(),
-		DictValueAttr: t.value.Export(),
+		"@":           t.at.Export(ctx),
+		DictValueAttr: t.value.Export(ctx),
 	}
 }
 

@@ -109,7 +109,7 @@ func (t StringCharTuple) Negate() Value {
 }
 
 // Export exports a Tuple.
-func (t StringCharTuple) Export() interface{} {
+func (t StringCharTuple) Export(_ context.Context) interface{} {
 	return map[string]interface{}{
 		"@":            t.at,
 		StringCharAttr: t.char,

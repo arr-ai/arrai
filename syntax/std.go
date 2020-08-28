@@ -2,6 +2,7 @@ package syntax
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	goparser "go/parser"
 	"go/token"
@@ -35,7 +36,7 @@ func StdScope() rel.Scope {
 		fixFn, fixtFn := FixFuncs()
 		stdScopeVar = rel.EmptyScope.
 			With("//", rel.NewTuple(
-				rel.NewNativeFunctionAttr("dict", func(value rel.Value) (rel.Value, error) {
+				rel.NewNativeFunctionAttr("dict", func(_ context.Context, value rel.Value) (rel.Value, error) {
 					if t, ok := value.(rel.Tuple); ok {
 						if !t.IsTrue() {
 							return rel.None, nil
@@ -49,7 +50,7 @@ func StdScope() rel.Scope {
 					}
 					return nil, fmt.Errorf("dict(): not a tuple")
 				}),
-				rel.NewNativeFunctionAttr("tuple", func(value rel.Value) (rel.Value, error) {
+				rel.NewNativeFunctionAttr("tuple", func(_ context.Context, value rel.Value) (rel.Value, error) {
 					switch t := value.(type) {
 					case rel.Dict:
 						attrs := make([]rel.Attr, 0, t.Count())
@@ -93,18 +94,18 @@ func StdScope() rel.Scope {
 					rel.NewAttr("fixt", fixtFn),
 				),
 				rel.NewTupleAttr("log",
-					rel.NewNativeFunctionAttr("print", func(value rel.Value) (rel.Value, error) {
+					rel.NewNativeFunctionAttr("print", func(_ context.Context, value rel.Value) (rel.Value, error) {
 						log.Print(rel.Repr(value))
 						return value, nil
 					}),
-					createNestedFuncAttr("printf", 2, func(args ...rel.Value) (rel.Value, error) {
-						format := args[0].(rel.String).String()
-						strs := make([]interface{}, 0, args[1].(rel.Set).Count())
-						for i, ok := args[1].(rel.Set).ArrayEnumerator(); ok && i.MoveNext(); {
+					createFunc2Attr("printf", func(ctx context.Context, a, b rel.Value) (rel.Value, error) {
+						format := a.(rel.String).String()
+						strs := make([]interface{}, 0, b.(rel.Set).Count())
+						for i, ok := b.(rel.Set).ArrayEnumerator(); ok && i.MoveNext(); {
 							strs = append(strs, i.Current())
 						}
 						log.Printf(format, strs...)
-						return args[1], nil
+						return b, nil
 					}),
 				),
 				stdArchive(),
@@ -127,64 +128,77 @@ func StdScope() rel.Scope {
 	return stdScopeVar
 }
 
-func createNestedFunc(
-	name string, nArgs int, f func(...rel.Value) (rel.Value, error), args ...rel.Value,
-) (rel.Value, error) {
-	if nArgs == 0 {
-		return f(args...)
-	}
+type fnArgs struct {
+	args []rel.Value
+	ctx  context.Context
+}
 
-	return rel.NewNativeFunction(name+strconv.Itoa(nArgs), func(parent rel.Value) (rel.Value, error) {
-		return createNestedFunc(name, nArgs-1, f, append(args, parent)...)
-	}), nil
+func createNestedFunc(
+	name string, nArgs int,
+	f func(context.Context, ...rel.Value) (rel.Value, error), args fnArgs) (rel.Value, error) {
+	if nArgs == 0 {
+		return f(args.ctx, args.args...)
+	}
+	return rel.NewNativeFunction(
+		name+strconv.Itoa(nArgs),
+		func(ctx context.Context, parent rel.Value) (rel.Value, error) {
+			return createNestedFunc(name, nArgs-1, f, fnArgs{args: append(args.args, parent), ctx: ctx})
+		}), nil
 }
 
 func mustCreateNestedFunc(
-	name string, nArgs int, f func(...rel.Value) (rel.Value, error), args ...rel.Value,
+	name string, nArgs int, f func(context.Context, ...rel.Value) (rel.Value, error),
 ) rel.Value {
-	g, err := createNestedFunc(name, nArgs, f, args...)
+	if nArgs == 0 {
+		panic(errors.New("mustCreateNestedFunc: function cannot have 0 arguments"))
+	}
+	g, err := createNestedFunc(name, nArgs, f, fnArgs{args: make([]rel.Value, 0)})
 	if err != nil {
 		panic(err)
 	}
 	return g
 }
 
-func createNestedFuncAttr(name string, nArgs int, f func(...rel.Value) (rel.Value, error)) rel.Attr {
-	g, err := createNestedFunc(name, nArgs, f)
+func createNestedFuncAttr(name string, nArgs int, f func(context.Context, ...rel.Value) (rel.Value, error)) rel.Attr {
+	if nArgs == 0 {
+		panic(errors.New("createNestedFuncAttr: function cannot have 0 arguments"))
+	}
+	g, err := createNestedFunc(name, nArgs, f, fnArgs{args: make([]rel.Value, 0)})
 	if err != nil {
 		panic(err)
 	}
 	return rel.NewAttr(name, g)
 }
 
-func createFunc2(name string, f func(a, b rel.Value) (rel.Value, error)) rel.Value {
-	return rel.NewNativeFunction(name, func(a rel.Value) (rel.Value, error) {
-		return rel.NewNativeFunction(name+"_2", func(b rel.Value) (rel.Value, error) {
-			return f(a, b)
+func createFunc2(name string, f func(ctx context.Context, a, b rel.Value) (rel.Value, error)) rel.Value {
+	return rel.NewNativeFunction(name, func(_ context.Context, a rel.Value) (rel.Value, error) {
+		return rel.NewNativeFunction(name+"$2", func(ctx context.Context, b rel.Value) (rel.Value, error) {
+			return f(ctx, a, b)
 		}), nil
 	})
 }
 
-func createFunc2Attr(name string, f func(a, b rel.Value) (rel.Value, error)) rel.Attr {
+func createFunc2Attr(name string, f func(ctx context.Context, a, b rel.Value) (rel.Value, error)) rel.Attr {
 	return rel.NewAttr(name, createFunc2(name, f))
 }
 
-func createFunc3(name string, f func(a, b, c rel.Value) (rel.Value, error)) rel.Value {
-	return rel.NewNativeFunction(name, func(a rel.Value) (rel.Value, error) {
-		return rel.NewNativeFunction(name+"$2", func(b rel.Value) (rel.Value, error) {
-			return rel.NewNativeFunction(name+"$3", func(c rel.Value) (rel.Value, error) {
-				return f(a, b, c)
+func createFunc3(name string, f func(ctx context.Context, a, b, c rel.Value) (rel.Value, error)) rel.Value {
+	return rel.NewNativeFunction(name, func(_ context.Context, a rel.Value) (rel.Value, error) {
+		return rel.NewNativeFunction(name+"$2", func(_ context.Context, b rel.Value) (rel.Value, error) {
+			return rel.NewNativeFunction(name+"$3", func(ctx context.Context, c rel.Value) (rel.Value, error) {
+				return f(ctx, a, b, c)
 			}), nil
 		}), nil
 	})
 }
 
-func createFunc3Attr(name string, f func(a, b, c rel.Value) (rel.Value, error)) rel.Attr {
+func createFunc3Attr(name string, f func(ctx context.Context, a, b, c rel.Value) (rel.Value, error)) rel.Attr {
 	return rel.NewAttr(name, createFunc3(name, f))
 }
 
 func mustParseLit(s string) rel.Value {
-	ctx := context.Background()
+	// this shouldn't require any special key-value pairs in the context
+	ctx := context.TODO()
 	lit, err := MustCompile(ctx, NoPath, s).Eval(ctx, rel.EmptyScope)
 	if err != nil {
 		panic(err)
@@ -193,24 +207,26 @@ func mustParseLit(s string) rel.Value {
 }
 
 func newFloatFuncAttr(name string, f func(float64) float64) rel.Attr {
-	return rel.NewNativeFunctionAttr(name, func(value rel.Value) (rel.Value, error) {
+	return rel.NewNativeFunctionAttr(name, func(_ context.Context, value rel.Value) (rel.Value, error) {
 		return rel.NewNumber(f(value.(rel.Number).Float64())), nil
 	})
 }
 
-func parseGrammar(v rel.Value) (rel.Value, error) {
+func parseGrammar(_ context.Context, v rel.Value) (rel.Value, error) {
 	astNode := rel.ASTNodeFromValue(v).(ast.Branch)
 	g := wbnf.NewFromAst(astNode)
 	parsers := g.Compile(astNode)
-	return rel.NewNativeFunction("parse(<grammar>)", func(v rel.Value) (rel.Value, error) {
+	return rel.NewNativeFunction("parse(<grammar>)", func(_ context.Context, v rel.Value) (rel.Value, error) {
 		rule := v.String()
-		return rel.NewNativeFunction(fmt.Sprintf("parse(%s)", rule), func(v rel.Value) (rel.Value, error) {
-			node, err := parsers.Parse(parser.Rule(rule), parser.NewScanner(v.String()))
-			if err != nil {
-				return nil, err
-			}
-			return rel.ASTNodeToValue(ast.FromParserNode(parsers.Grammar(), node)), nil
-		}), nil
+		return rel.NewNativeFunction(
+			fmt.Sprintf("parse(%s)", rule),
+			func(_ context.Context, v rel.Value) (rel.Value, error) {
+				node, err := parsers.Parse(parser.Rule(rule), parser.NewScanner(v.String()))
+				if err != nil {
+					return nil, err
+				}
+				return rel.ASTNodeToValue(ast.FromParserNode(parsers.Grammar(), node)), nil
+			}), nil
 	}), nil
 }
 

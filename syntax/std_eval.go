@@ -17,11 +17,10 @@ func stdEval() rel.Attr {
 	)
 }
 
-//TODO: should this function take context
-func evalExpr(v rel.Value) (rel.Value, error) {
+func evalExpr(ctx context.Context, v rel.Value) (rel.Value, error) {
 	switch val := v.(type) {
 	case rel.String, rel.Bytes:
-		evaluated, err := EvaluateExpr(context.Background(), ".", val.String())
+		evaluated, err := EvaluateExpr(ctx, ".", val.String())
 		if err != nil {
 			panic(err)
 		}
