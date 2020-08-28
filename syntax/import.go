@@ -21,11 +21,7 @@ var cache = newCache()
 
 func importLocalFile(ctx context.Context, fromRoot bool, importPath string) (rel.Expr, error) {
 	if fromRoot {
-		pwd, err := os.Getwd()
-		if err != nil {
-			return nil, err
-		}
-		rootPath, err := findRootFromModule(pwd)
+		rootPath, err := findRootFromModule(filepath.Dir(importPath))
 		if err != nil {
 			return nil, err
 		}
@@ -78,7 +74,7 @@ func importModuleFile(ctx context.Context, importPath string) (rel.Expr, error) 
 }
 
 func findRootFromModule(modulePath string) (string, error) {
-	currentPath, err := filepath.Abs(modulePath)
+	absModulePath, err := filepath.Abs(modulePath)
 	if err != nil {
 		return "", err
 	}
@@ -89,6 +85,7 @@ func findRootFromModule(modulePath string) (string, error) {
 	}
 
 	// Keep walking up the directories to find nearest root marker
+	currentPath := absModulePath
 	for {
 		exists := tools.FileExists(filepath.Join(currentPath, arraiRootMarker))
 		reachedRoot := currentPath == systemRoot || (err != nil && os.IsPermission(err))
@@ -96,7 +93,8 @@ func findRootFromModule(modulePath string) (string, error) {
 		case exists:
 			return currentPath, nil
 		case reachedRoot:
-			return "", nil
+			// if arraiRootMarker isn't found, it uses the directory of the source arrai file
+			return absModulePath, nil
 		case err != nil:
 			return "", err
 		}

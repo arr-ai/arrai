@@ -34,11 +34,17 @@ func TestPackagePi(t *testing.T) {
 func TestPackageImport(t *testing.T) {
 	t.Parallel()
 	AssertCodesEvalToSameValue(t, `{1, 4, 9, 16}`, `//{./examples/simple/simple}`)
+
+	// import expr in the file
+	AssertCodesEvalToSameValue(t, `1            `, `//{/examples/import/foo2}`)
 }
 
 func TestPackageImportFromRoot(t *testing.T) {
 	t.Parallel()
 	AssertCodesEvalToSameValue(t, `{1, 4, 9, 16}`, `//{/examples/simple/simple}`)
+
+	// import expr in the file
+	AssertCodesEvalToSameValue(t, `1            `, `//{/examples/import/foo}`)
 }
 
 func TestJsonPackageImportFromModuleRoot(t *testing.T) {

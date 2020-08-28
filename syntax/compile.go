@@ -1056,7 +1056,10 @@ func (pc ParseContext) compilePackage(ctx context.Context, b ast.Branch, c ast.C
 			if pc.SourceDir == "" {
 				return nil, fmt.Errorf("local import %q invalid; no local context", name)
 			}
-			importPath := path.Join(pc.SourceDir, filepath)
+			importPath := filepath
+			if !fromRoot {
+				importPath = path.Join(pc.SourceDir, filepath)
+			}
 			expr, err := importLocalFile(ctx, fromRoot, importPath)
 			if err != nil {
 				return nil, err
