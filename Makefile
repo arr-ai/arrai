@@ -31,5 +31,7 @@ lint: parser
 test: parser
 	go test $(GOTESTFLAGS) -tags timingsensitive ./...
 	GOARCH=386 go build ./...
+	make build && ./arrai test
+
 docker:
 	docker build . -t arrai
