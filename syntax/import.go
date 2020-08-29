@@ -126,7 +126,7 @@ func fileValue(ctx context.Context, filename string) (rel.Expr, error) {
 		filename += ".arrai"
 	}
 
-	bytes, err := ctxfs.FsRead(ctxfs.SourceFsFrom(ctx), filename)
+	bytes, err := ctxfs.ReadFile(ctxfs.SourceFsFrom(ctx), filename)
 	if err != nil {
 		return nil, err
 	}

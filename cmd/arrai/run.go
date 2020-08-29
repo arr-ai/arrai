@@ -33,15 +33,14 @@ func run(c *cli.Context) error {
 func evalFile(ctx context.Context, path string, w io.Writer, out string) error {
 	if exists, err := tools.FileExists(ctx, path); err != nil {
 		return err
-	}
-	if !exists {
+	} else if !exists {
 		if !strings.Contains(path, string([]rune{os.PathSeparator})) {
 			return fmt.Errorf(`"%s": not a command and not found as a file in the current directory`, path)
 		}
 		return fmt.Errorf(`"%s": file not found`, path)
 	}
 
-	buf, err := ctxfs.FsRead(ctxfs.SourceFsFrom(ctx), path)
+	buf, err := ctxfs.ReadFile(ctxfs.SourceFsFrom(ctx), path)
 	if err != nil {
 		return err
 	}

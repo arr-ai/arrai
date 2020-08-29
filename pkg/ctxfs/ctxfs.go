@@ -2,6 +2,7 @@ package ctxfs
 
 import (
 	"context"
+	"io/ioutil"
 
 	"github.com/spf13/afero"
 )
@@ -48,20 +49,12 @@ func RuntimeFsFrom(ctx context.Context) afero.Fs {
 	return defaultFs
 }
 
-func FsRead(fs afero.Fs, filePath string) ([]byte, error) {
+func ReadFile(fs afero.Fs, filePath string) ([]byte, error) {
 	f, err := fs.Open(filePath)
 	if err != nil {
 		return nil, err
 	}
 	defer f.Close()
 
-	fi, err := f.Stat()
-	if err != nil {
-		return nil, err
-	}
-	buf := make([]byte, fi.Size())
-	if _, err = f.Read(buf); err != nil {
-		return nil, err
-	}
-	return buf, nil
+	return ioutil.ReadAll(f)
 }

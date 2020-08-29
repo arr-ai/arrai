@@ -123,7 +123,7 @@ func buildTree(ctx context.Context, root string) (map[string]interface{}, error)
 			if err != nil {
 				log.Printf("ERROR WALKING TO %s: %s", path, err)
 			} else if !info.IsDir() {
-				data, err := ctxfs.FsRead(ctxfs.SourceFsFrom(ctx), path)
+				data, err := ctxfs.ReadFile(ctxfs.SourceFsFrom(ctx), path)
 				if err != nil {
 					return errors.WrapPrefix(err, "reading "+path, 0)
 				}

@@ -34,7 +34,7 @@ func Test(ctx context.Context, w io.Writer, path string) (Results, error) {
 	fmt.Fprintf(w, "Tests:\n%s\n", strings.Join(files, "\n"))
 
 	for _, file := range files {
-		bytes, err := ctxfs.FsRead(ctxfs.SourceFsFrom(ctx), file)
+		bytes, err := ctxfs.ReadFile(ctxfs.SourceFsFrom(ctx), file)
 		if err != nil {
 			return results, err
 		}
