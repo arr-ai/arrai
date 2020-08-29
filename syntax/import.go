@@ -2,6 +2,7 @@ package syntax
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -74,7 +75,7 @@ func importModuleFile(ctx context.Context, importPath string) (rel.Expr, error) 
 }
 
 func findRootFromModule(modulePath string) (string, error) {
-	absModulePath, err := filepath.Abs(modulePath)
+	currentPath, err := filepath.Abs(modulePath)
 	if err != nil {
 		return "", err
 	}
@@ -85,7 +86,6 @@ func findRootFromModule(modulePath string) (string, error) {
 	}
 
 	// Keep walking up the directories to find nearest root marker
-	currentPath := absModulePath
 	for {
 		exists := tools.FileExists(filepath.Join(currentPath, arraiRootMarker))
 		reachedRoot := currentPath == systemRoot || (err != nil && os.IsPermission(err))
@@ -93,8 +93,8 @@ func findRootFromModule(modulePath string) (string, error) {
 		case exists:
 			return currentPath, nil
 		case reachedRoot:
-			// If arraiRootMarker isn't found, use the directory of the source arr.ai file.
-			return absModulePath, nil
+			//TODO: test this after context filesystem is implemented
+			return "", errors.New("module root not found")
 		case err != nil:
 			return "", err
 		}
