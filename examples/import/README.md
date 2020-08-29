@@ -2,7 +2,7 @@
 
 These examples demonstrate how importing works in arr.ai
 
-There are two ways to import
+There are two ways to import.
 
 ## Relative Import
 
