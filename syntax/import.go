@@ -2,6 +2,7 @@ package syntax
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -21,11 +22,7 @@ var cache = newCache()
 
 func importLocalFile(ctx context.Context, fromRoot bool, importPath string) (rel.Expr, error) {
 	if fromRoot {
-		pwd, err := os.Getwd()
-		if err != nil {
-			return nil, err
-		}
-		rootPath, err := findRootFromModule(pwd)
+		rootPath, err := findRootFromModule(filepath.Dir(importPath))
 		if err != nil {
 			return nil, err
 		}
@@ -96,7 +93,8 @@ func findRootFromModule(modulePath string) (string, error) {
 		case exists:
 			return currentPath, nil
 		case reachedRoot:
-			return "", nil
+			//TODO: test this after context filesystem is implemented
+			return "", errors.New("module root not found")
 		case err != nil:
 			return "", err
 		}
