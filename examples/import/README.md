@@ -11,7 +11,7 @@ The path will have the prefix `./`.
 
 ## Module Import
 
-Module imports are relative to the root of the project. The root of the project
+Module imports are relative to the root of the module. The root of the module
 is determined by the file `go.mod`. The file itself can be located in the same
 directory of the source script or the parent directory. This is meant to avoid
 importing outside of the root.
