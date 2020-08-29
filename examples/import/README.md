@@ -16,7 +16,6 @@ is determined by the file `go.mod`. The file itself can be located in the same
 directory of the source script or the parent directory. This is meant to avoid
 importing outside of the root.
 
-If there is no `go.mod`, the directory of the source file is considered the root
-of the project.
+If no module root is found, module-relative imports will fail.
 
 The import path of this import has the prefix `/`.
