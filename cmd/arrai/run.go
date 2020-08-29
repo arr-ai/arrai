@@ -33,7 +33,8 @@ func run(c *cli.Context) error {
 func evalFile(ctx context.Context, path string, w io.Writer, out string) error {
 	if exists, err := tools.FileExists(ctx, path); err != nil {
 		return err
-	} else if !exists {
+	}
+	if !exists {
 		if !strings.Contains(path, string([]rune{os.PathSeparator})) {
 			return fmt.Errorf(`"%s": not a command and not found as a file in the current directory`, path)
 		}
