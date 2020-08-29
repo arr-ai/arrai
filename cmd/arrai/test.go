@@ -1,12 +1,14 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"os"
 	"strings"
 
 	"github.com/arr-ai/arrai/internal/test"
+	"github.com/arr-ai/arrai/pkg/arraictx"
 	"github.com/arr-ai/arrai/tools"
 
 	"github.com/urfave/cli/v2"
@@ -22,11 +24,11 @@ var testCommand = &cli.Command{
 func doTest(c *cli.Context) error {
 	tools.SetArgs(c)
 	file := c.Args().Get(0)
-	return testPath(file, os.Stdout)
+	return testPath(arraictx.InitRunCtx(context.Background()), file, os.Stdout)
 }
 
 // testPath runs and reports on all tests in the subtree of the given path.
-func testPath(path string, w io.Writer) error {
+func testPath(ctx context.Context, path string, w io.Writer) error {
 	if path == "" {
 		path = "."
 	}
@@ -37,7 +39,7 @@ func testPath(path string, w io.Writer) error {
 		return fmt.Errorf(`"%s": file not found`, path)
 	}
 
-	results, err := test.Test(w, path)
+	results, err := test.Test(ctx, w, path)
 	if err != nil {
 		return err
 	}

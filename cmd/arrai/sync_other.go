@@ -9,7 +9,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
@@ -17,6 +16,7 @@ import (
 	"time"
 
 	"github.com/arr-ai/arrai/pkg/arraictx"
+	"github.com/arr-ai/arrai/pkg/ctxfs"
 	pb "github.com/arr-ai/proto"
 	"github.com/go-errors/errors"
 	"github.com/rjeczalik/notify"
@@ -61,6 +61,7 @@ func sync(c *cli.Context) error {
 	}
 
 	log.Printf("Watching %q", watch)
+	ctx := arraictx.InitRunCtx(context.TODO())
 	for {
 		ei := <-eich
 
@@ -69,7 +70,7 @@ func sync(c *cli.Context) error {
 
 		log.Printf("EI: %v", ei)
 
-		tree, err := buildTree(path.Clean(dir))
+		tree, err := buildTree(ctx, path.Clean(dir))
 		if err != nil {
 			if e, ok := err.(*errors.Error); ok {
 				log.Printf("TREE BUILDING ERROR: %s", e.ErrorStack())
@@ -115,14 +116,14 @@ func writeTreeToBuffer(tree map[string]interface{}, buf *bytes.Buffer) {
 	buf.WriteRune('}')
 }
 
-func buildTree(root string) (map[string]interface{}, error) {
+func buildTree(ctx context.Context, root string) (map[string]interface{}, error) {
 	tree := map[string]interface{}{}
 	err := filepath.Walk(root,
 		func(path string, info os.FileInfo, err error) error {
 			if err != nil {
 				log.Printf("ERROR WALKING TO %s: %s", path, err)
 			} else if !info.IsDir() {
-				data, err := ioutil.ReadFile(path)
+				data, err := ctxfs.FsRead(ctxfs.SourceFsFrom(ctx), path)
 				if err != nil {
 					return errors.WrapPrefix(err, "reading "+path, 0)
 				}

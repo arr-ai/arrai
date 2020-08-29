@@ -5,11 +5,11 @@ package syntax
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"os"
 
 	"github.com/mattn/go-isatty"
 
+	"github.com/arr-ai/arrai/pkg/ctxfs"
 	"github.com/arr-ai/arrai/tools"
 
 	"github.com/arr-ai/arrai/rel"
@@ -39,23 +39,33 @@ func stdOsCwd() rel.Value {
 	return rel.NewString([]rune(wd))
 }
 
-func stdOsExists(_ context.Context, v rel.Value) (rel.Value, error) {
-	_, err := os.Stat(v.(rel.String).String())
-	if os.IsNotExist(err) {
-		return rel.NewBool(false), nil
-	}
+func stdOsExists(ctx context.Context, v rel.Value) (rel.Value, error) {
+	filePath, err := toString("os.exists", v)
 	if err != nil {
+		return nil, err
+	}
+	_, err = ctxfs.RuntimeFsFrom(ctx).Stat(filePath.String())
+	switch {
+	case os.IsNotExist(err):
+		return rel.NewBool(false), nil
+	case err != nil:
 		return nil, err
 	}
 	return rel.NewBool(true), nil
 }
 
-func stdOsFile(_ context.Context, v rel.Value) (rel.Value, error) {
-	f, err := ioutil.ReadFile(v.(rel.String).String())
+func stdOsFile(ctx context.Context, v rel.Value) (rel.Value, error) {
+	filePath, err := toString("os.file", v)
 	if err != nil {
 		return nil, err
 	}
-	return rel.NewBytes(f), nil
+	buf, err := ctxfs.FsRead(ctxfs.RuntimeFsFrom(ctx), filePath.String())
+	if err != nil {
+		//TODO: wrap this in an arrai error message
+		return nil, err
+	}
+
+	return rel.NewBytes(buf), nil
 }
 
 func stdOsIsATty(_ context.Context, value rel.Value) (rel.Value, error) {
@@ -78,3 +88,11 @@ func stdOsIsATty(_ context.Context, value rel.Value) (rel.Value, error) {
 }
 
 var stdOsStdinVar = newStdOsStdin(os.Stdin)
+
+func toString(fnName string, v rel.Value) (rel.String, error) {
+	str, isString := v.(rel.String)
+	if !isString {
+		return rel.String{}, fmt.Errorf("//%s: argument does not resolve to String: %v", fnName, v)
+	}
+	return str, nil
+}
