@@ -1,16 +1,24 @@
 package tools
 
-import "os"
+import (
+	"context"
+	"os"
 
-// FileExists returns true if a file is existing.
-func FileExists(file string) bool {
+	"github.com/arr-ai/arrai/pkg/ctxfs"
+)
+
+// FileExists returns true if a file is existing. This is meant to be used with
+// SourceFs related operations.
+func FileExists(ctx context.Context, file string) (bool, error) {
 	if len(file) == 0 {
-		return false
+		return false, nil
 	}
-
-	info, err := os.Stat(file)
-	if os.IsNotExist(err) {
-		return false
+	info, err := ctxfs.SourceFsFrom(ctx).Stat(file)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return false, nil
+		}
+		return false, err
 	}
-	return !info.IsDir()
+	return !info.IsDir(), nil
 }

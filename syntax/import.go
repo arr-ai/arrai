@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/arr-ai/arrai/pkg/ctxfs"
 	"github.com/arr-ai/arrai/rel"
 	"github.com/arr-ai/arrai/tools"
 	"github.com/arr-ai/arrai/tools/module"
@@ -22,7 +23,7 @@ var cache = newCache()
 
 func importLocalFile(ctx context.Context, fromRoot bool, importPath string) (rel.Expr, error) {
 	if fromRoot {
-		rootPath, err := findRootFromModule(filepath.Dir(importPath))
+		rootPath, err := findRootFromModule(ctx, filepath.Dir(importPath))
 		if err != nil {
 			return nil, err
 		}
@@ -74,7 +75,7 @@ func importModuleFile(ctx context.Context, importPath string) (rel.Expr, error) 
 	return fileValue(ctx, filepath.Join(m.Dir, strings.TrimPrefix(importPath, m.Name)))
 }
 
-func findRootFromModule(modulePath string) (string, error) {
+func findRootFromModule(ctx context.Context, modulePath string) (string, error) {
 	currentPath, err := filepath.Abs(modulePath)
 	if err != nil {
 		return "", err
@@ -87,7 +88,7 @@ func findRootFromModule(modulePath string) (string, error) {
 
 	// Keep walking up the directories to find nearest root marker
 	for {
-		exists := tools.FileExists(filepath.Join(currentPath, arraiRootMarker))
+		exists, err := tools.FileExists(ctx, filepath.Join(currentPath, arraiRootMarker))
 		reachedRoot := currentPath == systemRoot || (err != nil && os.IsPermission(err))
 		switch {
 		case exists:
@@ -125,10 +126,11 @@ func fileValue(ctx context.Context, filename string) (rel.Expr, error) {
 		filename += ".arrai"
 	}
 
-	bytes, err := ioutil.ReadFile(filename)
+	bytes, err := ctxfs.ReadFile(ctxfs.SourceFsFrom(ctx), filename)
 	if err != nil {
 		return nil, err
 	}
+
 	switch filepath.Ext(filename) {
 	case ".json":
 		return bytesJSONToArrai(bytes)
