@@ -139,7 +139,7 @@ func (c Closure) CallAll(ctx context.Context, arg Value) (Set, error) {
 		}
 		return NewSet(val), nil
 	}
-	scope, err := c.f.arg.Bind(ctx, c.scope, arg)
+	ctx, scope, err := c.f.arg.Bind(ctx, c.scope, arg)
 	if err != nil {
 		return nil, err
 	}

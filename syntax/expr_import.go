@@ -15,7 +15,7 @@ type ImportExpr struct {
 }
 
 func NewImportExpr(scanner parser.Scanner, imported rel.Expr, path string) ImportExpr {
-	return ImportExpr{rel.ExprScanner{scanner}, NewPackageExpr(scanner, imported), path}
+	return ImportExpr{rel.ExprScanner{Src: scanner}, NewPackageExpr(scanner, imported), path}
 }
 
 func (i ImportExpr) Eval(ctx context.Context, _ rel.Scope) (rel.Value, error) {

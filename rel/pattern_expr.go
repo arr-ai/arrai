@@ -19,20 +19,20 @@ func NewExprPattern(expr Expr) ExprPattern {
 	return ExprPattern{Expr: expr}
 }
 
-func (p ExprPattern) Bind(ctx context.Context, scope Scope, value Value) (Scope, error) {
+func (p ExprPattern) Bind(ctx context.Context, scope Scope, value Value) (context.Context, Scope, error) {
 	if identExpr, is := p.Expr.(IdentExpr); is {
 		// Bind value for identexpr in Pattern, like `let (a: x, b: y) = (a: 4, b: 7); x`
-		return Scope{}.With(identExpr.ident, value), nil
+		return ctx, Scope{}.With(identExpr.ident, value), nil
 	}
 
 	v, err := p.Expr.Eval(ctx, scope)
 	if err != nil {
-		return Scope{}, err
+		return ctx, Scope{}, err
 	}
 	if v.Equal(value) {
-		return Scope{}, nil
+		return ctx, Scope{}, nil
 	}
-	return Scope{}, fmt.Errorf("no match: %v != %v", v, value)
+	return ctx, Scope{}, fmt.Errorf("no match: %v != %v", v, value)
 }
 
 func (p ExprPattern) String() string {
@@ -51,27 +51,27 @@ func NewExprsPattern(exprs ...Expr) ExprsPattern {
 	return ExprsPattern{exprs: exprs}
 }
 
-func (p ExprsPattern) Bind(ctx context.Context, scope Scope, value Value) (Scope, error) {
+func (p ExprsPattern) Bind(ctx context.Context, scope Scope, value Value) (context.Context, Scope, error) {
 	if len(p.exprs) == 0 {
-		return EmptyScope, errors.Errorf("there is not any rel.Expr in rel.ExprsPattern")
+		return ctx, EmptyScope, errors.Errorf("there is not any rel.Expr in rel.ExprsPattern")
 	}
 
 	incomingVal, err := value.Eval(ctx, scope)
 	if err != nil {
-		return EmptyScope, err
+		return ctx, EmptyScope, err
 	}
 
 	for _, e := range p.exprs {
 		val, err := e.Eval(ctx, scope)
 		if err != nil {
-			return EmptyScope, err
+			return ctx, EmptyScope, err
 		}
 		if incomingVal.Equal(val) {
-			return scope, nil
+			return ctx, scope, nil
 		}
 	}
 
-	return EmptyScope, errors.Errorf("didn't find matched value")
+	return ctx, EmptyScope, errors.Errorf("didn't find matched value")
 }
 
 func (p ExprsPattern) String() string {

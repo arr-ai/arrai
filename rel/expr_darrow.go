@@ -34,7 +34,7 @@ func (e *DArrowExpr) Eval(ctx context.Context, local Scope) (_ Value, err error)
 	if set, ok := value.(Set); ok {
 		values := []Value{}
 		for i := set.Enumerator(); i.MoveNext(); {
-			scope, err := e.fn.arg.Bind(ctx, local, i.Current())
+			ctx, scope, err := e.fn.arg.Bind(ctx, local, i.Current())
 			if err != nil {
 				return nil, WrapContextErr(err, e, local)
 			}

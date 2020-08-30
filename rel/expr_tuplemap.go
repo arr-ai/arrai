@@ -38,7 +38,7 @@ func (e *TupleMapExpr) Eval(ctx context.Context, local Scope) (_ Value, err erro
 		}
 	}()
 	return value.(Tuple).Map(func(v Value) Value {
-		scope, _ := e.fn.arg.Bind(ctx, local, v) //nolint: errcheck
+		ctx, scope, _ := e.fn.arg.Bind(ctx, local, v) //nolint: errcheck
 		v, err = e.fn.body.Eval(ctx, local.Update(scope))
 		if err != nil {
 			panic(err)
