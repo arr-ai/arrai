@@ -78,7 +78,9 @@ func (p ArrayPattern) Bind(ctx context.Context, local Scope, value Value) (conte
 			value = array.Values()[i+offset]
 		}
 
-		ctx, scope, err := item.pattern.Bind(ctx, local, value)
+		var scope Scope
+		var err error
+		ctx, scope, err = item.pattern.Bind(ctx, local, value)
 		if err != nil {
 			return ctx, EmptyScope, err
 		}

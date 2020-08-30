@@ -105,7 +105,9 @@ func (p DictPattern) Bind(ctx context.Context, local Scope, value Value) (contex
 			}
 		}
 
-		ctx, scope, err := entry.pattern.pattern.Bind(ctx, local, dictValue)
+		var scope Scope
+		var err error
+		ctx, scope, err = entry.pattern.pattern.Bind(ctx, local, dictValue)
 		if err != nil {
 			return ctx, EmptyScope, err
 		}

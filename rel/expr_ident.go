@@ -3,6 +3,7 @@ package rel
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/arr-ai/wbnf/parser"
 )
@@ -14,11 +15,14 @@ type IdentExpr struct {
 }
 
 // NewIdentExpr returns a new identifier.
-func NewIdentExpr(scanner parser.Scanner, ident string) IdentExpr {
+func NewIdentExpr(scanner parser.Scanner, ident string) Expr {
+	if strings.HasPrefix(ident, "${") {
+		return DynIdentExpr{IdentExpr: IdentExpr{ExprScanner{scanner}, ident}}
+	}
 	return IdentExpr{ExprScanner{scanner}, ident}
 }
 
-func NewDotIdent(source parser.Scanner) IdentExpr {
+func NewDotIdent(source parser.Scanner) Expr {
 	return NewIdentExpr(source, ".")
 }
 
@@ -41,4 +45,16 @@ func (e IdentExpr) Eval(ctx context.Context, local Scope) (Value, error) {
 		return a.Eval(ctx, local)
 	}
 	return nil, WrapContextErr(fmt.Errorf("name %q not found in %v", e.ident, local.m.Keys()), e, local)
+}
+
+type DynIdentExpr struct {
+	IdentExpr
+}
+
+// Eval returns the value from scope corresponding to the ident.
+func (e DynIdentExpr) Eval(ctx context.Context, local Scope) (Value, error) {
+	if a := ctx.Value(DynIdent(e.ident)); a != nil {
+		return a.(Value), nil
+	}
+	return nil, WrapContextErr(fmt.Errorf("dynamic variable %s not found", e.ident), e, local)
 }

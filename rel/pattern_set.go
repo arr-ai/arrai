@@ -23,27 +23,15 @@ func NewSetPattern(patterns ...Pattern) SetPattern {
 }
 
 func (p SetPattern) Bind(ctx context.Context, local Scope, value Value) (context.Context, Scope, error) {
-	set, is := value.(GenericSet)
-	if !is {
-		return ctx, EmptyScope, fmt.Errorf("value %s is not a set", value)
-	}
-
+	set := value.(Set)
 	extraElements := make(map[int]int)
 	for i, ptn := range p.patterns {
-		if _, is := ptn.(ExtraElementPattern); is {
+		switch ptn.(type) {
+		case ExtraElementPattern, IdentPattern, DynIdentPattern:
 			if len(extraElements) == 1 {
 				return ctx, EmptyScope, fmt.Errorf("non-deterministic pattern is not supported yet")
 			}
 			extraElements[i] = set.Count() - len(p.patterns)
-			continue
-		}
-		if t, is := ptn.(ExprPattern); is {
-			if _, is = t.Expr.(IdentExpr); is {
-				if len(extraElements) == 1 {
-					return ctx, EmptyScope, fmt.Errorf("non-deterministic pattern is not supported yet")
-				}
-				extraElements[i] = set.Count() - len(p.patterns)
-			}
 		}
 	}
 
@@ -61,9 +49,10 @@ func (p SetPattern) Bind(ctx context.Context, local Scope, value Value) (context
 			continue
 		}
 		switch t := ptn.(type) {
+		case IdentPattern:
+		case DynIdentPattern:
 		case ExprPattern:
-			v, is := t.Expr.(Value)
-			if is {
+			if v, is := t.Expr.(Value); is {
 				if !set.Has(v) {
 					return ctx, EmptyScope, fmt.Errorf("item %s is not included in set %s", v, value)
 				}
@@ -89,7 +78,7 @@ func (p SetPattern) Bind(ctx context.Context, local Scope, value Value) (context
 				set = set.Without(v.(Value)).(GenericSet)
 			}
 		default:
-			return ctx, EmptyScope, fmt.Errorf("%s not supported yet", t)
+			panic(fmt.Errorf("pattern typt %T not supported yet", t))
 		}
 	}
 	for i := range extraElements {
@@ -102,7 +91,11 @@ func (p SetPattern) Bind(ctx context.Context, local Scope, value Value) (context
 				return ctx, EmptyScope, fmt.Errorf("the length of set %s is wrong", set)
 			}
 
-			ctx, scope, err = p.patterns[i].Bind(ctx, local, set.set.Any().(Value))
+			e := set.Enumerator()
+			if !e.MoveNext() {
+				panic("set with count 1 failed to enumerate")
+			}
+			ctx, scope, err = p.patterns[i].Bind(ctx, local, e.Current())
 			if err != nil {
 				return ctx, EmptyScope, err
 			}

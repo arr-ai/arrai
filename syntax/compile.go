@@ -411,11 +411,11 @@ func (pc ParseContext) compileLet(ctx context.Context, c ast.Children) (rel.Expr
 
 	if c.(ast.One).Node.One("rec") != nil {
 		fix, fixt := FixFuncs()
-		identExpr, is := p.(rel.ExprPattern).Expr.(rel.IdentExpr)
+		identPattern, is := p.(rel.IdentPattern)
 		if !is {
 			return nil, fmt.Errorf("let rec paramater must be IDENT, not %v", p)
 		}
-		name := identExpr.Ident()
+		name := identPattern.Ident()
 		expr = rel.NewRecursionExpr(c.Scanner(), name, expr, fix, fixt)
 	}
 

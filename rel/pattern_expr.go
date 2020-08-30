@@ -12,7 +12,13 @@ type ExprPattern struct {
 	Expr Expr
 }
 
-func NewExprPattern(expr Expr) ExprPattern {
+func NewExprPattern(expr Expr) Pattern {
+	switch x := expr.(type) {
+	case IdentExpr:
+		return IdentPattern(x.ident)
+	case DynIdentExpr:
+		return DynIdentPattern(x.ident)
+	}
 	if value, is := exprIsValue(expr); is {
 		return ExprPattern{Expr: value}
 	}

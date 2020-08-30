@@ -96,7 +96,9 @@ func (p TuplePattern) Bind(ctx context.Context, local Scope, value Value) (conte
 				}
 			}
 		}
-		ctx, scope, err := attr.pattern.Bind(ctx, local, tupleValue)
+		var scope Scope
+		var err error
+		ctx, scope, err = attr.pattern.Bind(ctx, local, tupleValue)
 		if err != nil {
 			return ctx, EmptyScope, err
 		}
