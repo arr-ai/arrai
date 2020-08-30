@@ -92,7 +92,8 @@ func findRootFromModule(ctx context.Context, modulePath string) (string, error) 
 	if err != nil {
 		return "", err
 	}
-	paths := append(make([]string, 0, len(strings.Split(currentPath, string(os.PathSeparator)))), currentPath)
+	// 16 is enough for pretty much all cases.
+	paths := append(make([]string, 0, 16), currentPath)
 
 	// Keep walking up the directories to find nearest root marker
 	for {
