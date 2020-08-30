@@ -19,12 +19,12 @@ func TestModuleImportRoot(t *testing.T) {
 
 	//
 	// path1
-	// ├── arraiRootMarker
+	// ├── ModuleRootSentinel
 	// └── path2
 	//     ├── path3
 	//     │   └── import_from_root.arrai
 	//     └── path4
-	//         ├── arraiRootMarker
+	//         ├── ModuleRootSentinel
 	//         ├── 1.arrai
 	//         ├── import_from_same_dir_root.arrai
 	//         └── path5
@@ -37,8 +37,8 @@ func TestModuleImportRoot(t *testing.T) {
 	files := []struct {
 		fileName, expr string
 	}{
-		{filepath.Join("path1", syntax.ArraiRootMarker), ""},
-		{filepath.Join("path1/path2/path4", syntax.ArraiRootMarker), ""},
+		{filepath.Join("path1", syntax.ModuleRootSentinel), ""},
+		{filepath.Join("path1/path2/path4", syntax.ModuleRootSentinel), ""},
 		{"path1/path2/path3/import_from_root.arrai", "//{/path2/path4/path5/2}"},
 		{"path1/path2/path4/1.arrai", "1"},
 		{"path1/path2/path4/import_from_same_dir_root.arrai", "//{/1}"},

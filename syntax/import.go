@@ -18,7 +18,8 @@ import (
 	"github.com/arr-ai/arrai/translate"
 )
 
-const ArraiRootMarker = "go.mod"
+// ModuleRootSentinel is a file which marks the module root of a project.
+const ModuleRootSentinel = "go.mod"
 
 var roots = sync.Map{}
 
@@ -97,7 +98,7 @@ func findRootFromModule(ctx context.Context, modulePath string) (string, error) 
 
 	// Keep walking up the directories to find nearest root marker
 	for {
-		exists, err := tools.FileExists(ctx, filepath.Join(currentPath, ArraiRootMarker))
+		exists, err := tools.FileExists(ctx, filepath.Join(currentPath, ModuleRootSentinel))
 		reachedRoot := currentPath == systemRoot || (err != nil && os.IsPermission(err))
 		switch {
 		case exists:
