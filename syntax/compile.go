@@ -5,7 +5,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"path"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -41,7 +40,7 @@ func Compile(ctx context.Context, filePath, source string) (rel.Expr, error) {
 		if filePath == NoPath {
 			dirpath = NoPath
 		} else {
-			dirpath = path.Dir(filePath)
+			dirpath = filepath.Dir(filePath)
 		}
 	}
 	pc := ParseContext{SourceDir: dirpath}
@@ -1055,16 +1054,16 @@ func (pc ParseContext) compilePackage(ctx context.Context, b ast.Branch, c ast.C
 		scanner := pkgpath.One("").(ast.Leaf).Scanner()
 		name := scanner.String()
 		if strings.HasPrefix(name, "/") {
-			filepath := strings.Trim(name, "/")
+			filePath := strings.Trim(name, "/")
 			fromRoot := pkg["dot"] == nil
 			if pc.SourceDir == "" {
 				return nil, fmt.Errorf("local import %q invalid; no local context", name)
 			}
-			importPath := filepath
+			importPath := filepath.Clean(filePath)
 			if !fromRoot {
-				importPath = path.Join(pc.SourceDir, filepath)
+				importPath = filepath.Join(pc.SourceDir, filePath)
 			}
-			expr, err := importLocalFile(ctx, fromRoot, importPath)
+			expr, err := importLocalFile(ctx, fromRoot, importPath, pc.SourceDir)
 			if err != nil {
 				return nil, err
 			}
