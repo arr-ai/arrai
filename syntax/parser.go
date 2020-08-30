@@ -84,7 +84,7 @@ fallback -> ("?"? ":" fall=expr);
 
 ARROW  -> /{:>|=>|>>|orderby|order|rank|where|sum|max|mean|median|min};
 FILTER -> "filter";
-IDENT  -> /{ \. | \${ (?:[^{}]|{ [^}]+ \})+ \} | [$@A-Za-z_][0-9$@A-Za-z_]* };
+IDENT  -> /{ \. | @{ (?:[^{}]|{ [^}]+ \})+ \} | [$@A-Za-z_][0-9$@A-Za-z_]* };
 PKGPATH -> /{ (?: \\ | [^\\}] )* };
 STR    -> /{ " (?: \\. | [^\\"] )* "
            | ' (?: \\. | [^\\'] )* '

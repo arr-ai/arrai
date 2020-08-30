@@ -3,7 +3,6 @@ package rel
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	"github.com/arr-ai/wbnf/parser"
 )
@@ -16,7 +15,7 @@ type IdentExpr struct {
 
 // NewIdentExpr returns a new identifier.
 func NewIdentExpr(scanner parser.Scanner, ident string) Expr {
-	if strings.HasPrefix(ident, "${") {
+	if isDynIdent(ident) {
 		return DynIdentExpr{IdentExpr: IdentExpr{ExprScanner{scanner}, ident}}
 	}
 	return IdentExpr{ExprScanner{scanner}, ident}

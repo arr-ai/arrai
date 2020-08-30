@@ -7,10 +7,14 @@ import (
 
 type DynIdent string
 
+func isDynIdent(ident string) bool {
+	return strings.HasPrefix(ident, "@{")
+}
+
 type IdentPattern string
 
 func NewIdentPattern(name string) Pattern {
-	if strings.HasPrefix(name, "${") {
+	if isDynIdent(name) {
 		return DynIdentPattern(name)
 	}
 	return IdentPattern(name)
