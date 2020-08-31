@@ -322,12 +322,16 @@ func (a Array) Without(value Value) Set {
 }
 
 // Map maps values per f.
-func (a Array) Map(f func(v Value) Value) Set {
+func (a Array) Map(f func(v Value) (Value, error)) (Set, error) {
 	var values []Value
 	for e := a.Enumerator(); e.MoveNext(); {
-		values = append(values, f(e.Current()))
+		v, err := f(e.Current())
+		if err != nil {
+			return nil, err
+		}
+		values = append(values, v)
 	}
-	return NewSet(values...)
+	return NewSet(values...), nil
 }
 
 // Where returns a new Array with all the Values satisfying predicate p.
