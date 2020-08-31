@@ -219,21 +219,23 @@ func TestExprLetGetPattern(t *testing.T) { //nolint:dupl
 }
 
 func TestExprLetDynIdentPattern(t *testing.T) {
+	t.Parallel()
 	AssertCodesEvalToSameValue(t, `42`, `let f = \x x * @{y}; let @{y} = 6; f(7)`)
 	AssertCodesEvalToSameValue(t, `42`, `let f = \x x * @{y}; let [@{y}, y] = [6, 8]; f(7)`)
 	AssertCodesEvalToSameValue(t, `42`, `let f = \x x * @{y}; let {@{y}, 8} = {6, 8}; f(7)`)
 	AssertCodesEvalToSameValue(t, `42`, `let f = \x x * @{y}; let (a:@{y}, ...) = (a:6, b:8); f(7)`)
 	AssertCodesEvalToSameValue(t, `42`, `let f = \x x * @{y}; let {1:@{y}, ...} = {1:6, 2:8}; f(7)`)
 	AssertCodesEvalToSameValue(t, `[2, 4, 8, 16, 32]`, `let f = \x x ^ @{y}; [1, 2, 3, 4, 5] >> \@{y} f(2)`)
-	AssertCodesEvalToSameValue(t, `[27, 64]`, `
-		let f = \x x ^ @{y}; [
-			let @{y} = 3; f(3),
-			let @{y} = 6; f(2),
+	AssertCodesEvalToSameValue(t, `{[1, 1], [4, 8], [9, 27], [25, 125]}`, `
+		let f = \x x ^ @{y}; {1, 2, 3, 5} => [
+			let @{y} = 2; f(.),
+			let @{y} = 3; f(.),
 		]
 	`)
 }
 
 func TestExprDynLet(t *testing.T) {
+	t.Parallel()
 	AssertCodesEvalToSameValue(t, `42`, `let (@{x}: 42); @{x}`)
 	AssertCodesEvalToSameValue(t, `201`, `let f = \x 100 * x + @{x}; let (@{x}: 1); f(2)`)
 	AssertCodesEvalToSameValue(t, `201`, `let setter = \n (@{x}: n); let f = \x 100 * x + @{x}; let setter(1); f(2)`)

@@ -26,7 +26,7 @@ func (e *DynLetExpr) String() string {
 	return fmt.Sprintf("(let %s; %s)", e.bindings, e.expr)
 }
 
-// Eval returns the lhs
+// Eval evaluates expr with the contents of bindings bound as dynamic variables.
 func (e *DynLetExpr) Eval(ctx context.Context, local Scope) (Value, error) {
 	value, err := e.bindings.Eval(ctx, local)
 	if err != nil {
