@@ -23,7 +23,10 @@ func NewSetPattern(patterns ...Pattern) SetPattern {
 }
 
 func (p SetPattern) Bind(ctx context.Context, local Scope, value Value) (context.Context, Scope, error) {
-	set := value.(Set)
+	set, is := value.(Set)
+	if !is {
+		return ctx, EmptyScope, fmt.Errorf("value %s is not a set", value)
+	}
 	extraElements := make(map[int]int)
 	for i, ptn := range p.patterns {
 		switch ptn.(type) {
