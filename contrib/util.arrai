@@ -105,7 +105,6 @@ let topsort = \graph _topsort(graph, [], unimported(graph));
     :reduce,
     :reduceFlat,
     :reduceObj,
-    :simpleTransform,
     :topsort,
     :unimported,
 )
