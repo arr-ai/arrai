@@ -11,10 +11,10 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/anz-bank/sysl/pkg/mod"
 	"github.com/arr-ai/arrai/pkg/ctxfs"
 	"github.com/arr-ai/arrai/rel"
 	"github.com/arr-ai/arrai/tools"
-	"github.com/arr-ai/arrai/tools/module"
 	"github.com/arr-ai/arrai/translate"
 )
 
@@ -69,9 +69,7 @@ func importExternalContent(ctx context.Context, importPath string) (rel.Expr, er
 }
 
 func importModuleFile(ctx context.Context, importPath string) (rel.Expr, error) {
-	var mod module.Module = module.NewGoModule()
-
-	m, err := mod.Get(importPath)
+	m, err := mod.Retrieve(mod.ExtractVersion(importPath))
 	if err != nil {
 		return nil, err
 	}
