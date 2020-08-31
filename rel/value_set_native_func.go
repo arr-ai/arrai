@@ -116,7 +116,7 @@ func (*NativeFunction) Without(Value) Set {
 	panic("unimplemented")
 }
 
-func (*NativeFunction) Map(func(Value) Value) Set {
+func (*NativeFunction) Map(func(Value) (Value, error)) (Set, error) {
 	panic("unimplemented")
 }
 

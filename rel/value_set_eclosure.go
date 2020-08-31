@@ -110,7 +110,7 @@ func (ExprClosure) Without(Value) Set {
 	panic("unimplemented")
 }
 
-func (ExprClosure) Map(func(Value) Value) Set {
+func (ExprClosure) Map(func(Value) (Value, error)) (Set, error) {
 	panic("unimplemented")
 }
 

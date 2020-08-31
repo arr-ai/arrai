@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/arr-ai/arrai/pkg/arraictx"
+	"github.com/arr-ai/arrai/pkg/ctxfs"
 	"github.com/arr-ai/arrai/tools"
 	"github.com/urfave/cli/v2"
 )
@@ -30,24 +31,19 @@ func run(c *cli.Context) error {
 }
 
 func evalFile(ctx context.Context, path string, w io.Writer, out string) error {
-	if !tools.FileExists(path) {
+	if exists, err := tools.FileExists(ctx, path); err != nil {
+		return err
+	} else if !exists {
 		if !strings.Contains(path, string([]rune{os.PathSeparator})) {
 			return fmt.Errorf(`"%s": not a command and not found as a file in the current directory`, path)
 		}
 		return fmt.Errorf(`"%s": file not found`, path)
 	}
 
-	f, err := os.Open(path)
+	buf, err := ctxfs.ReadFile(ctxfs.SourceFsFrom(ctx), path)
 	if err != nil {
 		return err
 	}
-	fi, err := f.Stat()
-	if err != nil {
-		return err
-	}
-	buf := make([]byte, fi.Size())
-	if _, err := f.Read(buf); err != nil {
-		return err
-	}
+
 	return evalExpr(ctx, path, string(buf), w, out)
 }

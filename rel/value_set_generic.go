@@ -265,12 +265,16 @@ func (s GenericSet) Without(value Value) Set {
 }
 
 // Map maps values per f.
-func (s GenericSet) Map(f func(v Value) Value) Set {
+func (s GenericSet) Map(f func(v Value) (Value, error)) (Set, error) {
 	result := NewSet()
 	for e := s.Enumerator(); e.MoveNext(); {
-		result = result.With(f(e.Current()))
+		v, err := f(e.Current())
+		if err != nil {
+			return nil, err
+		}
+		result = result.With(v)
 	}
-	return result
+	return result, nil
 }
 
 // Where returns a new genericSet with all the Values satisfying predicate p.

@@ -229,11 +229,13 @@ func TestStringCharTuple_Without(t *testing.T) {
 
 func TestStringCharTuple_Map(t *testing.T) {
 	t.Parallel()
+	m, err := NewStringCharTuple(1, 'a').Map(func(v Value) (Value, error) {
+		return NewNumber(v.(Number).Float64() + 1), nil
+	})
+	require.NoError(t, err)
 	AssertEqualValues(t,
 		NewStringCharTuple(2, 'b'),
-		NewStringCharTuple(1, 'a').Map(func(v Value) Value {
-			return NewNumber(v.(Number).Float64() + 1)
-		}),
+		m,
 	)
 }
 
