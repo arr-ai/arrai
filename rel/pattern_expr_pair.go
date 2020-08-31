@@ -21,7 +21,7 @@ func (pt PatternExprPair) String() string {
 	return fmt.Sprintf("%s:%s", pt.pattern, pt.expr)
 }
 
-func (pt PatternExprPair) Bind(ctx context.Context, local Scope, value Value) (Scope, error) {
+func (pt PatternExprPair) Bind(ctx context.Context, local Scope, value Value) (context.Context, Scope, error) {
 	return pt.pattern.Bind(ctx, local, value)
 }
 

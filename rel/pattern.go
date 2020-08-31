@@ -11,7 +11,7 @@ type Pattern interface {
 	fmt.Stringer
 
 	// Bind binds pattern with value and add the binding pair to scope
-	Bind(ctx context.Context, scope Scope, value Value) (Scope, error)
+	Bind(ctx context.Context, scope Scope, value Value) (context.Context, Scope, error)
 
 	// Bindings returns all the names a pattern expects to bind
 	Bindings() []string
