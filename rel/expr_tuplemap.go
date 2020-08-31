@@ -25,24 +25,20 @@ func (e *TupleMapExpr) String() string {
 }
 
 // Eval returns the lhs
-func (e *TupleMapExpr) Eval(ctx context.Context, local Scope) (_ Value, err error) {
+func (e *TupleMapExpr) Eval(ctx context.Context, local Scope) (Value, error) {
 	value, err := e.lhs.Eval(ctx, local)
 	if err != nil {
 		return nil, WrapContextErr(err, e, local)
 	}
-	defer func() {
-		if r := recover(); r != nil {
-			if err == nil {
-				panic(r)
-			}
-		}
-	}()
-	return value.(Tuple).Map(func(v Value) Value {
-		ctx, scope, _ := e.fn.arg.Bind(ctx, local, v) //nolint: errcheck
-		v, err = e.fn.body.Eval(ctx, local.Update(scope))
+	return value.(Tuple).Map(func(v Value) (Value, error) {
+		ctx, scope, err := e.fn.arg.Bind(ctx, local, v) //nolint: errcheck
 		if err != nil {
-			panic(err)
+			return nil, err
 		}
-		return v
-	}), nil
+		ans, err := e.fn.body.Eval(ctx, local.Update(scope))
+		if err != nil {
+			return nil, err
+		}
+		return ans, nil
+	})
 }

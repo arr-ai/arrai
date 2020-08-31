@@ -155,14 +155,20 @@ func (t StringCharTuple) Without(name string) Tuple {
 	return t
 }
 
-func (t StringCharTuple) Map(f func(Value) Value) Tuple {
-	at := f(NewNumber(float64(t.at)))
-	char := f(NewNumber(float64(t.char)))
+func (t StringCharTuple) Map(f func(Value) (Value, error)) (Tuple, error) { //nolint:dupl
+	at, err := f(NewNumber(float64(t.at)))
+	if err != nil {
+		return nil, err
+	}
+	char, err := f(NewNumber(float64(t.char)))
+	if err != nil {
+		return nil, err
+	}
 	if at, ok := at.(Number); ok {
 		if at, is := at.Int(); is {
 			if char, ok := char.(Number); ok {
 				if char, is := char.Int(); is {
-					return NewStringCharTuple(at, rune(char))
+					return NewStringCharTuple(at, rune(char)), nil
 				}
 			}
 		}

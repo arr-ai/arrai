@@ -234,12 +234,11 @@ func TestBytesByteTuple_Without(t *testing.T) {
 
 func TestBytesByteTuple_Map(t *testing.T) {
 	t.Parallel()
-	AssertEqualValues(t,
-		NewBytesByteTuple(2, 'b'),
-		NewBytesByteTuple(1, 'a').Map(func(v Value) Value {
-			return NewNumber(v.(Number).Float64() + 1)
-		}),
-	)
+	m, err := NewBytesByteTuple(1, 'a').Map(func(v Value) (Value, error) {
+		return NewNumber(v.(Number).Float64() + 1), nil
+	})
+	require.NoError(t, err)
+	AssertEqualValues(t, NewBytesByteTuple(2, 'b'), m)
 }
 
 func TestBytesByteTuple_HasName(t *testing.T) {

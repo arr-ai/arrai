@@ -12,7 +12,9 @@ import (
 func TestAsString(t *testing.T) {
 	t.Parallel()
 
-	generic := NewString([]rune("this is a test")).Map(func(v Value) Value { return v })
+	generic, err := NewString([]rune("this is a test")).Map(func(v Value) (Value, error) { return v, nil })
+	require.NoError(t, err)
+
 	stringified, isString := AsString(generic)
 	require.True(t, isString)
 	assert.True(t, stringified.Equal(NewString([]rune("this is a test"))), stringified.String())

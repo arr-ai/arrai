@@ -88,7 +88,7 @@ type Tuple interface {
 	// Transform
 	With(name string, value Value) Tuple
 	Without(name string) Tuple
-	Map(func(Value) Value) Tuple
+	Map(func(Value) (Value, error)) (Tuple, error)
 	Project(names Names) Tuple
 }
 
@@ -123,7 +123,7 @@ type Set interface {
 	// Transform
 	With(Value) Set
 	Without(Value) Set
-	Map(func(Value) Value) Set
+	Map(func(Value) (Value, error)) (Set, error)
 	Where(func(Value) (bool, error)) (Set, error)
 	CallAll(context.Context, Value) (Set, error)
 
