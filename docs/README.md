@@ -512,6 +512,10 @@ External libraries may be accessed via package references.
       request content of `https://foo.org/bar/some.json` via HTTPS
    5. **`//{foo.org/bar/some.yaml}`/`//{https://foo.org/bar/some.yml}`:**
       request content of `https://foo.org/bar/some.yaml` via HTTPS, file extension can be `yml` or `yaml`
+   Note: **`//{hostname/path}`** supports indicating specific version:
+   * **`//{github.com/foo/bar/baz@v0.0.1}`:** access the v0.0.1 of package `bar`
+   * **`//{github.com/foo/bar/baz@master}`:** access the latest package `bar` in master branch every time
+   * **`//{github.com/foo/bar/baz}`:** downloads and locks the package version the first time importing `bar`.
 
 ### Tuples vs Maps
 
