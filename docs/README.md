@@ -447,6 +447,11 @@ let f = add(1, div(5, 2));
 )
 ```
 
+```sh
+$ arrai run app.arrai
+(down: 3, nearest: 4, none: 3.5, up: 4)
+```
+
 This feature is currently under development and will undergo significant changes
 in the near future.
 
