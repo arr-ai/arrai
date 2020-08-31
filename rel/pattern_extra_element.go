@@ -10,11 +10,11 @@ func NewExtraElementPattern(ident string) ExtraElementPattern {
 	return ExtraElementPattern{ident}
 }
 
-func (p ExtraElementPattern) Bind(ctx context.Context, scope Scope, value Value) (Scope, error) {
+func (p ExtraElementPattern) Bind(ctx context.Context, scope Scope, value Value) (context.Context, Scope, error) {
 	if p.ident == "" {
-		return EmptyScope, nil
+		return ctx, EmptyScope, nil
 	}
-	return EmptyScope.With(p.ident, value), nil
+	return ctx, EmptyScope.With(p.ident, value), nil
 }
 
 func (p ExtraElementPattern) String() string {

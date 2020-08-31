@@ -14,44 +14,44 @@ func NewArrayPattern(elements ...FallbackPattern) ArrayPattern {
 	return ArrayPattern{elements}
 }
 
-func (p ArrayPattern) Bind(ctx context.Context, local Scope, value Value) (Scope, error) {
+func (p ArrayPattern) Bind(ctx context.Context, local Scope, value Value) (context.Context, Scope, error) {
 	if s, is := value.(GenericSet); is {
 		if s.set.IsEmpty() {
 			if len(p.items) == 0 {
-				return EmptyScope, nil
+				return ctx, EmptyScope, nil
 			}
-			return EmptyScope, fmt.Errorf("value [] is empty but pattern %s is not", p)
+			return ctx, EmptyScope, fmt.Errorf("value [] is empty but pattern %s is not", p)
 		}
-		return EmptyScope, fmt.Errorf("value %s is not an array", value)
+		return ctx, EmptyScope, fmt.Errorf("value %s is not an array", value)
 	}
 
 	array, is := value.(Array)
 	if !is {
-		return EmptyScope, fmt.Errorf("value %s is not an array", value)
+		return ctx, EmptyScope, fmt.Errorf("value %s is not an array", value)
 	}
 
 	extraElements := make(map[int]int)
 	for i, item := range p.items {
 		if _, is := item.pattern.(ExtraElementPattern); is {
 			if len(extraElements) == 1 {
-				return EmptyScope, fmt.Errorf("non-deterministic pattern is not supported yet")
+				return ctx, EmptyScope, fmt.Errorf("non-deterministic pattern is not supported yet")
 			}
 			extraElements[i] = array.Count() - len(p.items)
 		}
 		if item.fallback != nil {
 			if len(extraElements) == 1 {
-				return EmptyScope, fmt.Errorf("non-deterministic pattern is not supported yet")
+				return ctx, EmptyScope, fmt.Errorf("non-deterministic pattern is not supported yet")
 			}
 			extraElements[i] = array.Count() - len(p.items)
 		}
 	}
 
 	if len(p.items) > array.Count()+len(extraElements) {
-		return EmptyScope, fmt.Errorf("length of array %s shorter than array pattern %s", array, p)
+		return ctx, EmptyScope, fmt.Errorf("length of array %s shorter than array pattern %s", array, p)
 	}
 
 	if len(extraElements) == 0 && len(p.items) < array.Count() {
-		return EmptyScope, fmt.Errorf("length of array %s longer than array pattern %s", array, p)
+		return ctx, EmptyScope, fmt.Errorf("length of array %s longer than array pattern %s", array, p)
 	}
 
 	result := EmptyScope
@@ -67,28 +67,30 @@ func (p ArrayPattern) Bind(ctx context.Context, local Scope, value Value) (Scope
 			value = arr
 		} else if array.Count() <= i+offset {
 			if item.fallback == nil {
-				return EmptyScope, fmt.Errorf("length of array %s shorter than array pattern %s", array, p)
+				return ctx, EmptyScope, fmt.Errorf("length of array %s shorter than array pattern %s", array, p)
 			}
 			var err error
 			value, err = item.fallback.Eval(ctx, local)
 			if err != nil {
-				return EmptyScope, err
+				return ctx, EmptyScope, err
 			}
 		} else {
 			value = array.Values()[i+offset]
 		}
 
-		scope, err := item.pattern.Bind(ctx, local, value)
+		var scope Scope
+		var err error
+		ctx, scope, err = item.pattern.Bind(ctx, local, value)
 		if err != nil {
-			return EmptyScope, err
+			return ctx, EmptyScope, err
 		}
 		result, err = result.MatchedUpdate(scope)
 		if err != nil {
-			return Scope{}, err
+			return ctx, Scope{}, err
 		}
 	}
 
-	return result, nil
+	return ctx, result, nil
 }
 
 func (p ArrayPattern) String() string {

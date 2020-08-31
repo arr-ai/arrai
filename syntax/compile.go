@@ -381,7 +381,7 @@ func (pc ParseContext) compileArrow(ctx context.Context, b ast.Branch, name stri
 	}
 	if name == "amp" {
 		for range c.(ast.Many) {
-			expr = rel.NewFunction(source, rel.NewExprPattern(rel.NewIdentExpr(source, "-")), expr)
+			expr = rel.NewFunction(source, rel.IdentPattern("-"), expr)
 		}
 	}
 	return expr, nil
@@ -410,7 +410,11 @@ func (pc ParseContext) compileLet(ctx context.Context, c ast.Children) (rel.Expr
 
 	if c.(ast.One).Node.One("rec") != nil {
 		fix, fixt := FixFuncs()
-		name := p.(rel.ExprPattern).Expr
+		identPattern, is := p.(rel.IdentPattern)
+		if !is {
+			return nil, fmt.Errorf("let rec paramater must be IDENT, not %v", p)
+		}
+		name := identPattern.Ident()
 		expr = rel.NewRecursionExpr(c.Scanner(), name, expr, fix, fixt)
 	}
 
@@ -1099,11 +1103,7 @@ func (pc ParseContext) compileTuple(ctx context.Context, b ast.Branch, c ast.Chi
 			scanner := pair.One("v").(ast.Branch).Scanner()
 			if pair.One("rec") != nil {
 				fix, fixt := FixFuncs()
-				v = rel.NewRecursionExpr(
-					scanner,
-					rel.NewIdentExpr(pair.One("name").Scanner(), k),
-					v, fix, fixt,
-				)
+				v = rel.NewRecursionExpr(scanner, k, v, fix, fixt)
 			}
 			attr, err := rel.NewAttrExpr(scanner, k, v)
 			if err != nil {

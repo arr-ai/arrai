@@ -10,13 +10,13 @@ import (
 
 type RecursionExpr struct {
 	ExprScanner
-	name      ExprPattern
+	name      Pattern
 	fn        Expr
 	fix, fixt Value
 }
 
-func NewRecursionExpr(scanner parser.Scanner, name Expr, fn Expr, fix, fixt Value) Expr {
-	return RecursionExpr{ExprScanner{scanner}, NewExprPattern(name), fn, fix, fixt}
+func NewRecursionExpr(scanner parser.Scanner, name string, fn Expr, fix, fixt Value) Expr {
+	return RecursionExpr{ExprScanner{scanner}, NewIdentPattern(name), fn, fix, fixt}
 }
 
 func (r RecursionExpr) Eval(ctx context.Context, local Scope) (Value, error) {

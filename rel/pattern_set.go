@@ -22,37 +22,25 @@ func NewSetPattern(patterns ...Pattern) SetPattern {
 	return SetPattern{patterns}
 }
 
-func (p SetPattern) Bind(ctx context.Context, local Scope, value Value) (Scope, error) {
-	set, is := value.(GenericSet)
-	if !is {
-		return EmptyScope, fmt.Errorf("value %s is not a set", value)
-	}
-
+func (p SetPattern) Bind(ctx context.Context, local Scope, value Value) (context.Context, Scope, error) {
+	set := value.(Set)
 	extraElements := make(map[int]int)
 	for i, ptn := range p.patterns {
-		if _, is := ptn.(ExtraElementPattern); is {
+		switch ptn.(type) {
+		case ExtraElementPattern, IdentPattern, DynIdentPattern:
 			if len(extraElements) == 1 {
-				return EmptyScope, fmt.Errorf("non-deterministic pattern is not supported yet")
+				return ctx, EmptyScope, fmt.Errorf("non-deterministic pattern is not supported yet")
 			}
 			extraElements[i] = set.Count() - len(p.patterns)
-			continue
-		}
-		if t, is := ptn.(ExprPattern); is {
-			if _, is = t.Expr.(IdentExpr); is {
-				if len(extraElements) == 1 {
-					return EmptyScope, fmt.Errorf("non-deterministic pattern is not supported yet")
-				}
-				extraElements[i] = set.Count() - len(p.patterns)
-			}
 		}
 	}
 
 	if len(p.patterns) > set.Count()+len(extraElements) {
-		return EmptyScope, fmt.Errorf("length of set %s shorter than set pattern %s", set, p)
+		return ctx, EmptyScope, fmt.Errorf("length of set %s shorter than set pattern %s", set, p)
 	}
 
 	if len(extraElements) == 0 && len(p.patterns) < set.Count() {
-		return EmptyScope, fmt.Errorf("length of set %s longer than set pattern %s", set, p)
+		return ctx, EmptyScope, fmt.Errorf("length of set %s longer than set pattern %s", set, p)
 	}
 
 	result := EmptyScope
@@ -61,18 +49,19 @@ func (p SetPattern) Bind(ctx context.Context, local Scope, value Value) (Scope, 
 			continue
 		}
 		switch t := ptn.(type) {
+		case IdentPattern:
+		case DynIdentPattern:
 		case ExprPattern:
-			v, is := t.Expr.(Value)
-			if is {
+			if v, is := t.Expr.(Value); is {
 				if !set.Has(v) {
-					return EmptyScope, fmt.Errorf("item %s is not included in set %s", v, value)
+					return ctx, EmptyScope, fmt.Errorf("item %s is not included in set %s", v, value)
 				}
 				set = set.Without(v).(GenericSet)
 				continue
 			}
 
 			if _, is := t.Expr.(IdentExpr); !is {
-				return EmptyScope, fmt.Errorf("item type %s is not supported yet", t)
+				return ctx, EmptyScope, fmt.Errorf("item type %s is not supported yet", t)
 			}
 		case ExprsPattern:
 			// Support cases:
@@ -81,43 +70,47 @@ func (p SetPattern) Bind(ctx context.Context, local Scope, value Value) (Scope, 
 			if identExpr, is := t.exprs[0].(IdentExpr); is {
 				v, has := local.Get(identExpr.ident)
 				if !has {
-					return EmptyScope, fmt.Errorf("%q not in scope", identExpr.ident)
+					return ctx, EmptyScope, fmt.Errorf("%q not in scope", identExpr.ident)
 				}
 				if !set.Has(v.(Value)) {
-					return EmptyScope, fmt.Errorf("item %s is not included in set %s", v, value)
+					return ctx, EmptyScope, fmt.Errorf("item %s is not included in set %s", v, value)
 				}
 				set = set.Without(v.(Value)).(GenericSet)
 			}
 		default:
-			return EmptyScope, fmt.Errorf("%s not supported yet", t)
+			panic(fmt.Errorf("pattern typt %T not supported yet", t))
 		}
 	}
 	for i := range extraElements {
 		var scope Scope
 		var err error
 		if _, is := p.patterns[i].(ExtraElementPattern); is {
-			scope, err = p.patterns[i].Bind(ctx, local, set)
+			ctx, scope, err = p.patterns[i].Bind(ctx, local, set)
 		} else {
 			if set.Count() != 1 {
-				return EmptyScope, fmt.Errorf("the length of set %s is wrong", set)
+				return ctx, EmptyScope, fmt.Errorf("the length of set %s is wrong", set)
 			}
 
-			scope, err = p.patterns[i].Bind(ctx, local, set.set.Any().(Value))
+			e := set.Enumerator()
+			if !e.MoveNext() {
+				panic("set with count 1 failed to enumerate")
+			}
+			ctx, scope, err = p.patterns[i].Bind(ctx, local, e.Current())
 			if err != nil {
-				return EmptyScope, err
+				return ctx, EmptyScope, err
 			}
 		}
 		if err != nil {
-			return EmptyScope, err
+			return ctx, EmptyScope, err
 		}
 
 		result, err = result.MatchedUpdate(scope)
 		if err != nil {
-			return EmptyScope, err
+			return ctx, EmptyScope, err
 		}
 	}
 
-	return result, nil
+	return ctx, result, nil
 }
 
 func (p SetPattern) String() string {

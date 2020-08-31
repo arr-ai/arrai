@@ -50,7 +50,7 @@ func (expr CondPatternControlVarExpr) Eval(ctx context.Context, scope Scope) (Va
 	}
 
 	for _, conditionPair := range expr.conditionPairs {
-		bindings, err := conditionPair.Bind(ctx, scope, varVal)
+		ctx, bindings, err := conditionPair.Bind(ctx, scope, varVal)
 		if err == nil {
 			l, err := scope.MatchedUpdate(bindings)
 			if err != nil {
