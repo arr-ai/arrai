@@ -28,7 +28,7 @@ let rec simpleTransform = \ast
 # Key-value pairs for which the predicate returns false will be removed from the result.
 let rec filterTree = \pred \ast
     cond ast {
-        {(@:..., @value:...), ...}: ast where pred(.@, .@value) >> filterTree(pred, .),
+        {(@:_, ...), ...}: ast where pred(.@, .@value) >> filterTree(pred, .),
         [...]: ast >> filterTree(pred, .),
         {...}: ast => filterTree(pred, .),
         (...): //tuple(//dict(ast) where pred(.@, .@value) >> filterTree(pred, .)),
@@ -67,7 +67,7 @@ let rec reduceObj = \obj \fn \val
 let reduceFlat = \arr \fn \val reduce(arr, \z \i reduce(i, fn, z), val);
 
 # Returns a sequence with any offset and holes removed.
-let ranked = \s s rank (:.@);
+let noOffset = \s s rank (:.@);
 # Explore constructs a dependency graph by starting at source and calling step
 # to find adjacent nodes. Deps is the graph constructed so far.
 # Self-edges are ignored.
@@ -101,11 +101,10 @@ let topsort = \graph _topsort(graph, [], unimported(graph));
     :filterTree,
     :invokeMacro,
     :simpleTransform,
-    :ranked,
+    :noOffset,
     :reduce,
     :reduceFlat,
     :reduceObj,
-    :ranked,
     :simpleTransform,
     :topsort,
     :unimported,
