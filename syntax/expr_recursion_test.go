@@ -35,7 +35,7 @@ func TestRecursionExpr(t *testing.T) {
 		`let rec random = 1; random`,
 	)
 	AssertCodeErrors(t,
-		`let rec paramater must be IDENT, not 1`,
+		`let rec parameter must be IDENT, not 1`,
 		`let rec 1 = 1; 2`,
 	)
 }

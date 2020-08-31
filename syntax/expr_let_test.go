@@ -60,21 +60,6 @@ func TestExprLetIdentPattern(t *testing.T) {
 	AssertCodesEvalToSameValue(t, `[]`, `let ids = {'ids': [1, 2]}('id')?:[]; ids`)
 }
 
-func TestExprLetDynIdentPattern(t *testing.T) {
-	AssertCodesEvalToSameValue(t, `42`, `let f = \x x * @{y}; let @{y} = 6; f(7)`)
-	AssertCodesEvalToSameValue(t, `42`, `let f = \x x * @{y}; let [@{y}, y] = [6, 8]; f(7)`)
-	AssertCodesEvalToSameValue(t, `42`, `let f = \x x * @{y}; let {@{y}, 8} = {6, 8}; f(7)`)
-	AssertCodesEvalToSameValue(t, `42`, `let f = \x x * @{y}; let (a:@{y}, ...) = (a:6, b:8); f(7)`)
-	AssertCodesEvalToSameValue(t, `42`, `let f = \x x * @{y}; let {1:@{y}, ...} = {1:6, 2:8}; f(7)`)
-	AssertCodesEvalToSameValue(t, `[2, 4, 8, 16, 32]`, `let f = \x x ^ @{y}; [1, 2, 3, 4, 5] >> \@{y} f(2)`)
-	AssertCodesEvalToSameValue(t, `[27, 64]`, `
-		let f = \x x ^ @{y}; [
-			let @{y} = 3; f(3),
-			let @{y} = 6; f(2),
-		]
-	`)
-}
-
 func TestExprLetArrayPattern(t *testing.T) { //nolint:dupl
 	t.Parallel()
 	AssertCodesEvalToSameValue(t, `1`, `let [] = []; 1`)
@@ -210,7 +195,7 @@ func TestExprLetNestedPattern(t *testing.T) {
 	AssertCodeErrors(t, "", `let [[x]] = []; 42`)
 }
 
-func TestExprLetGetPattern(t *testing.T) {
+func TestExprLetGetPattern(t *testing.T) { //nolint:dupl
 	t.Parallel()
 	AssertCodesEvalToSameValue(t, `1`, `let {"a"?: x:42} = {"a": 1}; x`)
 	AssertCodesEvalToSameValue(t, `42`, `let {"b"?: x:42} = {"a": 1}; x`)
@@ -231,4 +216,34 @@ func TestExprLetGetPattern(t *testing.T) {
 	AssertCodesEvalToSameValue(t, `[1, 2, 3]`, `let [x, [y, ?z:0]] = [1, [2, 3]]; [x, y, z]`)
 
 	AssertCodeErrors(t, "", `let (x?: (k: (z?: w:42))) = (x: (y: (z: 1))); w`)
+}
+
+func TestExprLetDynIdentPattern(t *testing.T) {
+	AssertCodesEvalToSameValue(t, `42`, `let f = \x x * @{y}; let @{y} = 6; f(7)`)
+	AssertCodesEvalToSameValue(t, `42`, `let f = \x x * @{y}; let [@{y}, y] = [6, 8]; f(7)`)
+	AssertCodesEvalToSameValue(t, `42`, `let f = \x x * @{y}; let {@{y}, 8} = {6, 8}; f(7)`)
+	AssertCodesEvalToSameValue(t, `42`, `let f = \x x * @{y}; let (a:@{y}, ...) = (a:6, b:8); f(7)`)
+	AssertCodesEvalToSameValue(t, `42`, `let f = \x x * @{y}; let {1:@{y}, ...} = {1:6, 2:8}; f(7)`)
+	AssertCodesEvalToSameValue(t, `[2, 4, 8, 16, 32]`, `let f = \x x ^ @{y}; [1, 2, 3, 4, 5] >> \@{y} f(2)`)
+	AssertCodesEvalToSameValue(t, `[27, 64]`, `
+		let f = \x x ^ @{y}; [
+			let @{y} = 3; f(3),
+			let @{y} = 6; f(2),
+		]
+	`)
+}
+
+func TestExprDynLet(t *testing.T) {
+	AssertCodesEvalToSameValue(t, `42`, `let (@{x}: 42); @{x}`)
+	AssertCodesEvalToSameValue(t, `201`, `let f = \x 100 * x + @{x}; let (@{x}: 1); f(2)`)
+	AssertCodesEvalToSameValue(t, `201`, `let setter = \n (@{x}: n); let f = \x 100 * x + @{x}; let setter(1); f(2)`)
+
+	AssertCodeErrors(t,
+		`bindings not a tuple in "let bindings; expr": {1, 2, 3}`,
+		`let {1, 2, 3}; x`,
+	)
+	AssertCodeErrors(t,
+		`"x" not a dynamic name in "let bindings; expr"`,
+		`let (x: 42); x`,
+	)
 }
