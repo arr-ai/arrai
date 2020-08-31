@@ -242,12 +242,16 @@ func (d Dict) Without(v Value) Set {
 	return d
 }
 
-func (d Dict) Map(m func(Value) Value) Set {
+func (d Dict) Map(f func(v Value) (Value, error)) (Set, error) {
 	var sb frozen.SetBuilder
 	for e := d.Enumerator(); e.MoveNext(); {
-		sb.Add(m(e.Current()))
+		v, err := f(e.Current())
+		if err != nil {
+			return nil, err
+		}
+		sb.Add(v)
 	}
-	return GenericSet{set: sb.Finish()}
+	return GenericSet{set: sb.Finish()}, nil
 }
 
 func (d Dict) Where(p func(v Value) (bool, error)) (Set, error) {

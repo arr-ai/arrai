@@ -155,8 +155,17 @@ func (t DictEntryTuple) Without(name string) Tuple {
 	return t
 }
 
-func (t DictEntryTuple) Map(f func(Value) Value) Tuple {
-	return NewDictEntryTuple(f(t.at), f(t.value))
+func (t DictEntryTuple) Map(f func(Value) (Value, error)) (Tuple, error) {
+	at, err := f(t.at)
+	if err != nil {
+		return nil, err
+	}
+	value, err := f(t.value)
+	if err != nil {
+		return nil, err
+	}
+
+	return NewDictEntryTuple(at, value), nil
 }
 
 // HasName returns true iff the Tuple has an attribute with the given name.

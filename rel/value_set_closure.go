@@ -116,7 +116,7 @@ func (c Closure) Without(v Value) Set {
 	panic("unimplemented")
 }
 
-func (c Closure) Map(f func(Value) Value) Set {
+func (c Closure) Map(f func(v Value) (Value, error)) (Set, error) {
 	panic("unimplemented")
 }
 

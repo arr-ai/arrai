@@ -158,14 +158,20 @@ func (t BytesByteTuple) Without(name string) Tuple {
 	return t
 }
 
-func (t BytesByteTuple) Map(f func(Value) Value) Tuple {
-	at := f(NewNumber(float64(t.at)))
-	byteval := f(NewNumber(float64(t.byteval)))
+func (t BytesByteTuple) Map(f func(Value) (Value, error)) (Tuple, error) { //nolint:dupl
+	at, err := f(NewNumber(float64(t.at)))
+	if err != nil {
+		return nil, err
+	}
+	byteval, err := f(NewNumber(float64(t.byteval)))
+	if err != nil {
+		return nil, err
+	}
 	if at, ok := at.(Number); ok {
 		if at, is := at.Int(); is {
 			if byteval, ok := byteval.(Number); ok {
 				if byteval, is := byteval.Int(); is {
-					return NewBytesByteTuple(at, byte(byteval))
+					return NewBytesByteTuple(at, byte(byteval)), nil
 				}
 			}
 		}

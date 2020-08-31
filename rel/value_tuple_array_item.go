@@ -157,12 +157,18 @@ func (t ArrayItemTuple) Without(name string) Tuple {
 	return t
 }
 
-func (t ArrayItemTuple) Map(f func(Value) Value) Tuple {
-	at := f(NewNumber(float64(t.at)))
-	item := f(t.item)
+func (t ArrayItemTuple) Map(f func(Value) (Value, error)) (Tuple, error) {
+	at, err := f(NewNumber(float64(t.at)))
+	if err != nil {
+		return nil, err
+	}
+	item, err := f(t.item)
+	if err != nil {
+		return nil, err
+	}
 	if at, ok := at.(Number); ok {
 		if at, is := at.Int(); is {
-			return NewArrayItemTuple(at, item)
+			return NewArrayItemTuple(at, item), nil
 		}
 	}
 	return t.asGenericTuple().Map(f)
