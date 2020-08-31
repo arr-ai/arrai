@@ -2,6 +2,7 @@ package syntax
 
 import (
 	"bytes"
+	"fmt"
 	"testing"
 )
 
@@ -28,27 +29,29 @@ func TestStdOsExists(t *testing.T) {
 func TestStdOsTree(t *testing.T) {
 	t.Parallel()
 
-	// mod_time is set to -1 to be non-deterministic.
-	AssertCodesEvalToSameValue(t, `{
-		(name: "std_os_test", path: "std_os_test", is_dir: true, size: 160, mod_time: -1),
-		(name: ".empty", path: "std_os_test/.empty", is_dir: false, size: 0, mod_time: -1),
-		(name: "README.md", path: "std_os_test/README.md", is_dir: false, size: 84, mod_time: -1),
-		(name: "no files", path: "std_os_test/no files", is_dir: true, size: 96, mod_time: -1),
-		(name: "full", path: "std_os_test/no files/full", is_dir: true, size: 160, mod_time: -1),
-		(name: "README.md", path: "std_os_test/no files/full/README.md", is_dir: false, size: 73, mod_time: -1),
- 		(name: "root.ln", path: "std_os_test/no files/full/root.ln", is_dir: false, size: 18, mod_time: -1),
-		(name: "empty", path: "std_os_test/no files/full/empty", is_dir: true, size: 64, mod_time: -1),
-	}`, `//os.tree('std_os_test') => . +> (mod_time: -1)`)
+	// size and mod_time are non-deterministic, so evaluate some predicate of them instead.
+	predx := `. +> (mod_time: .mod_time > 0, size: .size > 0)`
 
 	AssertCodesEvalToSameValue(t, `{
-		(name: "empty", path: "std_os_test/no files/full/empty/", is_dir: true, size: 64, mod_time: -1),
-	}`, `//os.tree('std_os_test/no files/full/empty/') => . +> (mod_time: -1)`)
+		(name: "std_os_test", path: "std_os_test", is_dir: true, size: true, mod_time: true),
+		(name: ".empty", path: "std_os_test/.empty", is_dir: false, size: false, mod_time: true),
+		(name: "README.md", path: "std_os_test/README.md", is_dir: false, size: true, mod_time: true),
+		(name: "no files", path: "std_os_test/no files", is_dir: true, size: true, mod_time: true),
+		(name: "full", path: "std_os_test/no files/full", is_dir: true, size: true, mod_time: true),
+		(name: "README.md", path: "std_os_test/no files/full/README.md", is_dir: false, size: true, mod_time: true),
+ 		(name: "root.ln", path: "std_os_test/no files/full/root.ln", is_dir: false, size: true, mod_time: true),
+		(name: "empty", path: "std_os_test/no files/full/empty", is_dir: true, size: true, mod_time: true),
+	}`, fmt.Sprintf(`//os.tree('std_os_test') => %s`, predx))
+
+	AssertCodesEvalToSameValue(t, `{
+		(name: "empty", path: "std_os_test/no files/full/empty/", is_dir: true, size: true, mod_time: true),
+	}`, fmt.Sprintf(`//os.tree('std_os_test/no files/full/empty/') => %s`, predx))
 
 	AssertCodesEvalToSameValue(t, `{'.'}`, `//os.tree('.') => .path where . = '.'`)
 
 	AssertCodesEvalToSameValue(t, `{
-		(name: "README.md", path: "std_os_test/README.md", is_dir: false, size: 84, mod_time: -1),
-	}`, `//os.tree('std_os_test/README.md') => . +> (mod_time: -1)`)
+		(name: "README.md", path: "std_os_test/README.md", is_dir: false, size: true, mod_time: true),
+	}`, fmt.Sprintf(`//os.tree('std_os_test/README.md') => %s`, predx))
 
 	AssertCodeErrors(t, ``, `//os.tree(['std_os_test'])`)
 	AssertCodeErrors(t, ``, `//os.tree('doesntexist')`)
