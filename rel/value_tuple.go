@@ -331,13 +331,17 @@ func (t *GenericTuple) Without(name string) Tuple {
 	return &GenericTuple{tuple: t.tuple.Without(frozen.NewSet(name))}
 }
 
-func (t *GenericTuple) Map(f func(Value) Value) Tuple {
+func (t *GenericTuple) Map(f func(Value) (Value, error)) (Tuple, error) {
 	var b frozen.MapBuilder
 	for e := t.Enumerator(); e.MoveNext(); {
 		key, value := e.Current()
-		b.Put(key, f(value))
+		v, err := f(value)
+		if err != nil {
+			return nil, err
+		}
+		b.Put(key, v)
 	}
-	return &GenericTuple{tuple: b.Finish()}
+	return &GenericTuple{tuple: b.Finish()}, nil
 }
 
 // HasName returns true iff the Tuple has an attribute with the given name.

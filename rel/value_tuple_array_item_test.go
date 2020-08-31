@@ -229,9 +229,11 @@ func TestArrayItemTuple_Without(t *testing.T) {
 
 func TestArrayItemTuple_Map(t *testing.T) {
 	t.Parallel()
-	assert.True(t, NewArrayItemTuple(1, NewNumber(10)).Map(func(v Value) Value {
-		return NewNumber(v.(Number).Float64() + 1)
-	}).Equal(NewArrayItemTuple(2, NewNumber(11))))
+	m, err := NewArrayItemTuple(1, NewNumber(10)).Map(func(v Value) (Value, error) {
+		return NewNumber(v.(Number).Float64() + 1), nil
+	})
+	require.NoError(t, err)
+	assert.True(t, m.Equal(NewArrayItemTuple(2, NewNumber(11))))
 }
 
 func TestArrayItemTuple_HasName(t *testing.T) {
