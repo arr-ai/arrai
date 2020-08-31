@@ -16,7 +16,6 @@ import (
 	"github.com/arr-ai/arrai/rel"
 	"github.com/arr-ai/arrai/tools"
 	"github.com/arr-ai/arrai/translate"
-	"github.com/sirupsen/logrus"
 )
 
 // ModuleRootSentinel is a file which marks the module root of a project.
@@ -72,10 +71,10 @@ func importExternalContent(ctx context.Context, importPath string) (rel.Expr, er
 func importModuleFile(ctx context.Context, importPath string) (rel.Expr, error) {
 	path, ver := mod.ExtractVersion(importPath)
 	if ver != "" {
-		logrus.Warn(fmt.Sprintf("per-importing versioning is not allowed, tag @%s is igored.", ver))
+		return nil, errors.New("per-importing versioning is not allowed")
 	}
 
-	m, err := mod.Retrieve(path, "")
+	m, err := mod.Retrieve(path, ver)
 	if err != nil {
 		return nil, err
 	}
