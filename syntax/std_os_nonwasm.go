@@ -83,9 +83,9 @@ func stdOsTree(_ context.Context, v rel.Value) (rel.Value, error) {
 		fs = append(fs, rel.NewTuple(
 			rel.NewStringAttr("name", []rune(info.Name())),
 			rel.NewStringAttr("path", []rune(path)),
-			rel.NewBoolAttr("isDir", info.IsDir()),
+			rel.NewBoolAttr("is_dir", info.IsDir()),
 			rel.NewFloatAttr("size", float64(info.Size())),
-			rel.NewFloatAttr("modTime", float64(info.ModTime().UnixNano())),
+			rel.NewFloatAttr("mod_time", float64(info.ModTime().UnixNano())),
 		))
 		return nil
 	})
