@@ -2,30 +2,32 @@ package syntax
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 
+	"github.com/arr-ai/arrai/pkg/ctxfs"
 	"github.com/arr-ai/arrai/rel"
 	"github.com/arr-ai/arrai/tools"
 	"github.com/arr-ai/arrai/tools/module"
 	"github.com/arr-ai/arrai/translate"
 )
 
-const arraiRootMarker = "go.mod"
+// ModuleRootSentinel is a file which marks the module root of a project.
+const ModuleRootSentinel = "go.mod"
+
+var roots = sync.Map{}
 
 var cache = newCache()
 
-func importLocalFile(ctx context.Context, fromRoot bool, importPath string) (rel.Expr, error) {
+func importLocalFile(ctx context.Context, fromRoot bool, importPath, sourceDir string) (rel.Expr, error) {
 	if fromRoot {
-		pwd, err := os.Getwd()
-		if err != nil {
-			return nil, err
-		}
-		rootPath, err := findRootFromModule(pwd)
+		rootPath, err := findRootFromModule(ctx, sourceDir)
 		if err != nil {
 			return nil, err
 		}
@@ -77,30 +79,41 @@ func importModuleFile(ctx context.Context, importPath string) (rel.Expr, error) 
 	return fileValue(ctx, filepath.Join(m.Dir, strings.TrimPrefix(importPath, m.Name)))
 }
 
-func findRootFromModule(modulePath string) (string, error) {
+func findRootFromModule(ctx context.Context, modulePath string) (string, error) {
 	currentPath, err := filepath.Abs(modulePath)
 	if err != nil {
 		return "", err
+	}
+
+	if r, exists := roots.Load(currentPath); exists {
+		return r.(string), nil
 	}
 
 	systemRoot, err := filepath.Abs(string(os.PathSeparator))
 	if err != nil {
 		return "", err
 	}
+	// 16 is enough for pretty much all cases.
+	paths := append(make([]string, 0, 16), currentPath)
 
 	// Keep walking up the directories to find nearest root marker
 	for {
-		exists := tools.FileExists(filepath.Join(currentPath, arraiRootMarker))
+		exists, err := tools.FileExists(ctx, filepath.Join(currentPath, ModuleRootSentinel))
 		reachedRoot := currentPath == systemRoot || (err != nil && os.IsPermission(err))
 		switch {
 		case exists:
+			for _, p := range paths {
+				roots.Store(p, currentPath)
+			}
 			return currentPath, nil
 		case reachedRoot:
-			return "", nil
+			//TODO: test this after context filesystem is implemented
+			return "", errors.New("module root not found")
 		case err != nil:
 			return "", err
 		}
 		currentPath = filepath.Dir(currentPath)
+		paths = append(paths, currentPath)
 	}
 }
 
@@ -127,10 +140,11 @@ func fileValue(ctx context.Context, filename string) (rel.Expr, error) {
 		filename += ".arrai"
 	}
 
-	bytes, err := ioutil.ReadFile(filename)
+	bytes, err := ctxfs.ReadFile(ctxfs.SourceFsFrom(ctx), filename)
 	if err != nil {
 		return nil, err
 	}
+
 	switch filepath.Ext(filename) {
 	case ".json":
 		return bytesJSONToArrai(bytes)

@@ -4,6 +4,8 @@ import (
 	"context"
 	"reflect"
 
+	"github.com/pkg/errors"
+
 	"github.com/arr-ai/wbnf/parser"
 )
 
@@ -249,7 +251,11 @@ func (s String) Where(p func(v Value) (bool, error)) (Set, error) {
 }
 
 func (s String) CallAll(_ context.Context, arg Value) (Set, error) {
-	i := int(arg.(Number).Float64()) - s.offset
+	n, ok := arg.(Number)
+	if !ok {
+		return nil, errors.Errorf("string call arg must be number, not %T", arg)
+	}
+	i := int(n.Float64()) - s.offset
 	if i < 0 || i >= len(s.s) {
 		return None, nil
 	}
