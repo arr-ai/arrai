@@ -35,7 +35,7 @@ Usage:
 
 ## `//os.tree(dirPath <: string) <: set`
 
-`tree` returns a set of `stat` details about all directories and files in the tree rooted at `dirPath` (including `dirPath` itself.
+`tree` returns a set of `stat` details about all directories and files in the tree rooted at `dirPath` (including `dirPath` itself). Each file and directory is a tuple with the attributes `(name, path, is_dir, size, mod_time)`.
 
 If `dirPath` is a file, `tree` returns a set containing details for just that file.
 
