@@ -15,8 +15,8 @@ github.com/alecthomas/template v0.0.0-20160405071501-a0175ee3bccc/go.mod h1:LOuy
 github.com/alecthomas/template v0.0.0-20190718012654-fb15b899a751/go.mod h1:LOuyumcjzFXgccqObfd/Ljyb9UuFJ6TxHnclSeseNhc=
 github.com/alecthomas/units v0.0.0-20151022065526-2efee857e7cf/go.mod h1:ybxpYRFXyAe+OPACYpWeL0wqObRcbAqCMya13uyzqw0=
 github.com/alecthomas/units v0.0.0-20190717042225-c3de453c63f4/go.mod h1:ybxpYRFXyAe+OPACYpWeL0wqObRcbAqCMya13uyzqw0=
-github.com/anz-bank/pkg v0.0.15 h1:X5wilDqA+/Y10xWrQn1cWlGONT2Y9kPpIfI+r4L3q5g=
-github.com/anz-bank/pkg v0.0.15/go.mod h1:lkb4fViFh94YhPhitru2wq9dLzqXJ8XAY/s9fihYTMs=
+github.com/anz-bank/pkg v0.0.16 h1:jb6sP3cnQSLNMchXx+bFKqgg0vYOD3NTnvJ8I4/UEqg=
+github.com/anz-bank/pkg v0.0.16/go.mod h1:lkb4fViFh94YhPhitru2wq9dLzqXJ8XAY/s9fihYTMs=
 github.com/anz-bank/sysl-examples v0.0.1/go.mod h1:AdokLChJxixvIBlAByw+kI13pAKawobfpcYCyPssvLQ=
 github.com/arr-ai/frozen v0.11.1/go.mod h1:YEr4TubkrAoA3f9U1R4PcEVB5ocBUdiS3NKh03cbVts=
 github.com/arr-ai/frozen v0.14.0 h1:eByyaJpEPnIQ9drLxWEkn3lEXbQ0x18DZmTltfhefHA=

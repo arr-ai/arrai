@@ -69,7 +69,7 @@ func importExternalContent(ctx context.Context, importPath string) (rel.Expr, er
 }
 
 func importModuleFile(ctx context.Context, importPath string) (rel.Expr, error) {
-	if err := mod.Config(mod.GoModulesMode, nil, nil); err != nil {
+	if err := mod.Config(mod.GoModulesMode, nil, nil, nil); err != nil {
 		return nil, err
 	}
 

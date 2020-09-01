@@ -4,7 +4,7 @@ go 1.13
 
 require (
 	github.com/alecthomas/repr v0.0.0-20200325044227-4184120f674c // indirect
-	github.com/anz-bank/pkg v0.0.15
+	github.com/anz-bank/pkg v0.0.16
 	github.com/arr-ai/frozen v0.14.0
 	github.com/arr-ai/hash v0.5.0
 	github.com/arr-ai/proto v0.0.0-20180422074755-2ffbedebee50
