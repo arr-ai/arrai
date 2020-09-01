@@ -84,10 +84,15 @@ func (pc ParseContext) Parse(ctx context.Context, s *parser.Scanner) (ast.Branch
 			}
 			rscopes = append(rscopes, rscopes[len(rscopes)-1].With(identStr, exprClosure))
 
-			if _, pattern, has := pscope.GetVal("pattern"); has {
+			var patNode ast.Branch
+			var node parser.TreeElement
+			if _, node, has = pscope.GetVal("pat"); has && len(node.(parser.Node).Children) > 0 {
+				patNode = ast.FromParserNode(arraiParsers.Grammar(), node.(parser.Node).Children[0].(parser.Node).Children[1])
+			} else if _, node, has = pscope.GetVal("pattern"); has {
+				patNode = ast.FromParserNode(arraiParsers.Grammar(), node)
+			}
+			if has {
 				source := expr.Source()
-
-				patNode := ast.FromParserNode(arraiParsers.Grammar(), pattern)
 				pat, err := pc.compilePattern(ctx, patNode)
 				if err != nil {
 					return nil, err
