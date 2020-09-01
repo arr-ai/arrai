@@ -46,7 +46,7 @@ expr   -> C* amp="&"* @ C* arrow=(
         | C* fn="\\" pattern @ C*
         | C* import="//" pkg=( "{" dot="."? PKGPATH "}" | std=IDENT?)
         | C* odelim="(" @ cdelim=")" C*
-        | C* let=("let" C* rec="rec"? pattern C* "=" C* @ %%bind C* ";" C* @) C*
+        | C* let=("let" C* rec="rec"? pat=(C* pattern C* "=")? C* @ %%bind C* ";" C* @) C*
         | C* xstr C*
         | C* IDENT C*
         | C* STR C*
