@@ -21,9 +21,11 @@ import (
 // ModuleRootSentinel is a file which marks the module root of a project.
 const ModuleRootSentinel = "go.mod"
 
-var roots = sync.Map{}
-
-var cache = newCache()
+var (
+	roots             = sync.Map{}
+	cache             = newCache()
+	errModuleNotExist = errors.New("module root not found")
+)
 
 func importLocalFile(ctx context.Context, fromRoot bool, importPath, sourceDir string) (rel.Expr, error) {
 	if fromRoot {
@@ -114,8 +116,7 @@ func findRootFromModule(ctx context.Context, modulePath string) (string, error) 
 			}
 			return currentPath, nil
 		case reachedRoot:
-			//TODO: test this after context filesystem is implemented
-			return "", errors.New("module root not found")
+			return "", errModuleNotExist
 		case err != nil:
 			return "", err
 		}
