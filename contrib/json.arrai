@@ -11,8 +11,8 @@ let rec simplify = \j
         (): {},
         _: cond {
             # Base case: j is a number.
-            # TODO: Replace with a more elegant <: check.
-            j < 99999999999999999999: j,
+            # TODO: Replace with a more elegant check (j <: //number).
+            j < {}: j,
             _: j >> simplify(.),
         },
     }
