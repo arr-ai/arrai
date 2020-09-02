@@ -13,6 +13,14 @@ func Report(w io.Writer, rs Results) error {
 			return err
 		}
 	} else {
+		for _, r := range rs.results {
+			if !r.pass {
+				_, err := fmt.Fprintf(w, "%s failed\n", r.file)
+				if err != nil {
+					return err
+				}
+			}
+		}
 		_, err := fmt.Fprintf(w, "%d/%d tests passed\n", rs.CountPassed(), rs.Count())
 		if err != nil {
 			return err
