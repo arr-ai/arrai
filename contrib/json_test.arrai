@@ -4,7 +4,7 @@ let (:simplify, :tuplify, :decodeSimple, ...) = //{./json};
     simplify: (
         empty: simplify({}) = {},
         same: simplify({'a': {'b': {}}}) = {'a': {'b': {}}},
-        nulls: simplify({'a': (a: []), 's': (s: '')}) = {'a': {}, 's': {}},
+        nulls: simplify({'a': (a: []), 'b': (b: <<''>>), 's': (s: '')}) = {'a': {}, 'b': {}, 's': {}},
         values: simplify({'a': (a: [1, 2]), 's': (s: 'hi')}) = {'a': [1, 2], 's': 'hi'},
     ),
 

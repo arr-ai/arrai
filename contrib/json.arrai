@@ -6,6 +6,7 @@ let rec simplify = \j
     cond j {
         [...]: j >> simplify(.),
         (:a): simplify(a),
+        (:b): simplify(b),
         (:s): simplify(s),
         (): {},
         _: cond {
@@ -19,10 +20,10 @@ let rec simplify = \j
 # This is essentially decoding JSON with a logical schema.
 let rec tuplify = \v
     cond v {
+        {x: ...}: //tuple(v >> tuplify(.)),
         [...]: v >> tuplify(.),
         {...}: v => tuplify(.),
         (...): v :> tuplify(.),
-        {x: ...}: //tuple(v >> tuplify(.)),
         _: v
     }
 ;
