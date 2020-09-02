@@ -40,4 +40,8 @@ func stdOsFile(context.Context, rel.Value) (rel.Value, error) {
 	panic("not implemented")
 }
 
+func stdOsExec(context.Context, rel.Value) (rel.Value, error) {
+	panic("not implemented")
+}
+
 var stdOsStdinVar = newStdOsStdin(nil)
