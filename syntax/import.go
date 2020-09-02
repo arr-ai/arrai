@@ -38,6 +38,10 @@ func importLocalFile(ctx context.Context, fromRoot bool, importPath, sourceDir s
 		}
 	}
 
+	if err := bundleLocalFile(ctx, importPath); err != nil {
+		return nil, err
+	}
+
 	v, err := fileValue(ctx, importPath)
 	if err != nil {
 		return nil, err
@@ -85,7 +89,12 @@ func importModuleFile(ctx context.Context, importPath string) (rel.Expr, error) 
 		return nil, err
 	}
 
-	return fileValue(ctx, filepath.Join(m.Dir, strings.TrimPrefix(importPath, m.Name)))
+	relImportPath := strings.TrimPrefix(importPath, m.Name)
+	if err := bundleModule(ctx, relImportPath, m); err != nil {
+		return nil, err
+	}
+
+	return fileValue(ctx, filepath.Join(m.Dir, relImportPath))
 }
 
 func findRootFromModule(ctx context.Context, modulePath string) (string, error) {
@@ -135,6 +144,9 @@ func importURL(ctx context.Context, url string) (rel.Expr, error) {
 	if resp.StatusCode == http.StatusOK {
 		data, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
+			return nil, err
+		}
+		if err = bundleRemoteFile(ctx, url, data); err != nil {
 			return nil, err
 		}
 		val, err := cache.getOrAdd(url, func() (rel.Expr, error) { return bytesValue(ctx, NoPath, data) })

@@ -23,7 +23,7 @@ func WithZipFs(ctx context.Context, key interface{}) context.Context {
 	return context.WithValue(ctx, key, &zipFs{fs: afero.NewMemMapFs()})
 }
 
-func ZipFile(ctx context.Context, key interface{}, filePath string, content []byte) error {
+func ZipCreate(ctx context.Context, key interface{}, filePath string, content []byte) error {
 	if !strings.HasPrefix(filePath, "/") {
 		return fmt.Errorf("path has to be absolute in UNIX path format: %s", filePath)
 	}
@@ -36,11 +36,13 @@ func ZipFile(ctx context.Context, key interface{}, filePath string, content []by
 		return err
 	}
 
-	if _, err := fs.fs.Stat(filePath); err != nil && os.IsExist(err) {
-		return fmt.Errorf("BundleFs: file already exists: %s", filePath)
+	if exists, err := fileExists(fs.fs, key, filePath); exists {
+		return nil
+	} else if err != nil {
+		return err
 	}
 
-	f, err := fs.fs.Open(filePath)
+	f, err := fs.fs.Create(filePath)
 	if err != nil {
 		return err
 	}
@@ -52,11 +54,17 @@ func ZipFile(ctx context.Context, key interface{}, filePath string, content []by
 
 func FileExists(ctx context.Context, key interface{}, filePath string) (bool, error) {
 	fs := ctx.Value(key).(*zipFs)
-	fs.Lock()
-	defer fs.Unlock()
+	fs.RLock()
+	defer fs.RUnlock()
+	return fileExists(fs.fs, key, filePath)
+}
 
-	fi, err := fs.fs.Stat(filePath)
+func fileExists(fs afero.Fs, key interface{}, filePath string) (bool, error) {
+	fi, err := fs.Stat(filePath)
 	if err != nil {
+		if os.IsNotExist(err) {
+			return false, nil
+		}
 		return false, err
 	}
 	return !fi.IsDir(), nil

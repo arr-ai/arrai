@@ -15,6 +15,7 @@ import (
 var cmds = []*cli.Command{
 	shellCommand,
 	runCommand,
+	bundleCommand,
 	evalCommand,
 	jsonCommand,
 	observeCommand,
