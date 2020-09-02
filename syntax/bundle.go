@@ -15,7 +15,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/anz-bank/sysl/pkg/mod"
+	"github.com/anz-bank/pkg/mod"
 	"github.com/arr-ai/arrai/pkg/ctxfs"
 	"github.com/arr-ai/arrai/rel"
 	"github.com/spf13/afero/zipfs"
