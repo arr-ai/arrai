@@ -43,12 +43,7 @@ func evalFile(ctx context.Context, path string, w io.Writer, out string) error {
 
 	switch filepath.Ext(path) {
 	case ".arraiz", ".zip":
-		ctx, err = syntax.WithBundleRun(ctx, path, buf)
-		if err != nil {
-			return err
-		}
-
-		buf, path = syntax.GetMainBundleSource(ctx)
+		return runBundled(ctx, buf, w, out)
 	}
 
 	return evalExpr(ctx, path, string(buf), w, out)
@@ -64,4 +59,14 @@ func runFileExists(ctx context.Context, path string) error {
 		return fmt.Errorf(`"%s": file not found`, path)
 	}
 	return nil
+}
+
+func runBundled(ctx context.Context, buf []byte, w io.Writer, out string) error {
+	ctx, err := syntax.WithBundleRun(ctx, buf)
+	if err != nil {
+		return err
+	}
+
+	ctx, mainFile, path := syntax.GetMainBundleSource(ctx)
+	return evalExpr(ctx, path, string(mainFile), w, out)
 }
