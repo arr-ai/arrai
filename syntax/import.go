@@ -33,6 +33,9 @@ func importLocalFile(ctx context.Context, fromRoot bool, importPath, sourceDir s
 		if err != nil {
 			return nil, err
 		}
+		if err = addLocalRoot(ctx, rootPath); err != nil {
+			return nil, err
+		}
 		if !strings.HasPrefix(importPath, "/") {
 			importPath = rootPath + "/" + strings.ReplaceAll(importPath, "../", "")
 		}

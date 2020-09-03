@@ -36,7 +36,7 @@ func ZipCreate(ctx context.Context, key interface{}, filePath string, content []
 		return err
 	}
 
-	if exists, err := fileExists(fs.fs, key, filePath); exists {
+	if exists, err := fileExists(fs.fs, filePath); exists {
 		return nil
 	} else if err != nil {
 		return err
@@ -56,10 +56,10 @@ func FileExists(ctx context.Context, key interface{}, filePath string) (bool, er
 	fs := ctx.Value(key).(*zipFs)
 	fs.RLock()
 	defer fs.RUnlock()
-	return fileExists(fs.fs, key, filePath)
+	return fileExists(fs.fs, filePath)
 }
 
-func fileExists(fs afero.Fs, key interface{}, filePath string) (bool, error) {
+func fileExists(fs afero.Fs, filePath string) (bool, error) {
 	fi, err := fs.Stat(filePath)
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -93,6 +93,7 @@ func OutputZip(ctx context.Context, key interface{}, w io.Writer) error {
 			return err
 		}
 
+		// paths must be a relative UNIX path
 		path = strings.TrimPrefix(path, "/")
 		zipF, err := zipWriter.Create(path)
 		if err != nil {

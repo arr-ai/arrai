@@ -53,7 +53,6 @@ func (b bundleConfig) String() string {
 	return fmt.Sprintf("(main_root: %q, main_file: %q)", b.mainRoot, b.mainFile)
 }
 
-//TODO: use createConfig
 func createConfig(ctx context.Context) error {
 	return ctxfs.ZipCreate(
 		ctx, bundleFsKey,
@@ -90,7 +89,7 @@ func GetMainBundleSource(ctx context.Context) ([]byte, string) {
 	mainFile := getBundledConfig(ctx).mainFile
 	buf, err := ctxfs.ReadFile(ctxfs.SourceFsFrom(ctx), mainFile)
 	if err != nil {
-		panic(fmt.Errorf("not bundled properly: %s", mainFile))
+		panic(fmt.Errorf("not bundled properly, main file not accessible: %s", err))
 	}
 	return buf, mainFile
 }
@@ -104,6 +103,7 @@ func OutputArraiz(ctx context.Context, w io.Writer) error {
 	return ctxfs.OutputZip(ctx, bundleFsKey, w)
 }
 
+// getBundledConfig is used to get configuration that is already bundled.
 func getBundledConfig(ctx context.Context) bundleConfig {
 	if !isRunningBundle(ctx) {
 		//FIXME: return error?
@@ -144,6 +144,7 @@ func withBundleConfig(ctx context.Context, b bundleConfig) context.Context {
 	return context.WithValue(ctx, bundleConfKey, b)
 }
 
+// fromBundleConfig is meant to be used for fetching configurations during bundling.
 func fromBundleConfig(ctx context.Context) bundleConfig {
 	return ctx.Value(bundleConfKey).(bundleConfig)
 }
@@ -207,18 +208,32 @@ func SetupBundle(ctx context.Context, filePath string, source []byte) (_ context
 	return ctx, createConfig(ctx)
 }
 
-//FIXME: handle nested root
-func addLocalRoot(ctx context.Context, rootPath string, source []byte) error {
+func addLocalRoot(ctx context.Context, rootPath string) (err error) {
 	if !isBundling(ctx) {
 		return nil
 	}
+
+	rootPath, err = filepath.Abs(rootPath)
+	if err != nil {
+		return err
+	}
+
+	rootPath = filepath.Join(rootPath, ModuleRootSentinel)
+
+	buf, err := ctxfs.ReadFile(ctxfs.SourceFsFrom(ctx), rootPath)
+	if err != nil {
+		return err
+	}
+	rootPath = strings.TrimPrefix(rootPath, fromBundleConfig(ctx).absRootPath)
+
+	pathInBundle := path.Join(moduleDir, fromBundleConfig(ctx).mainRoot, toUnixPath(rootPath))
 	if exists, err := ctxfs.FileExists(ctx, bundleFsKey, rootPath); err != nil {
 		return err
-	} else if !exists {
+	} else if exists {
 		return nil
 	}
 
-	return ctxfs.ZipCreate(ctx, bundleFsKey, toUnixPath(rootPath), source)
+	return ctxfs.ZipCreate(ctx, bundleFsKey, pathInBundle, buf)
 }
 
 func bundleLocalFile(ctx context.Context, filePath string) (err error) {
