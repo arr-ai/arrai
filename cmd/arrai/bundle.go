@@ -18,7 +18,7 @@ const bundledType = ".arraiz"
 var bundleCommand = &cli.Command{
 	Name:    "bundle",
 	Aliases: []string{"b"},
-	Usage:   "bundle arrai script and its dependencies into a runnable file. It outputs .arraiz file.",
+	Usage:   "bundles an arr.ai script and its imports into an .arraiz file that can be `arrai run`.",
 	Action:  bundle,
 	Flags: []cli.Flag{
 		outFlag,
