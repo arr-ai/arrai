@@ -19,12 +19,14 @@ type zipFs struct {
 	fs afero.Fs
 }
 
+const sep = "/"
+
 func WithZipFs(ctx context.Context, key interface{}) context.Context {
 	return context.WithValue(ctx, key, &zipFs{fs: afero.NewMemMapFs()})
 }
 
 func ZipCreate(ctx context.Context, key interface{}, filePath string, content []byte) error {
-	if !strings.HasPrefix(filePath, "/") {
+	if !strings.HasPrefix(filePath, sep) {
 		return fmt.Errorf("path has to be absolute in UNIX path format: %s", filePath)
 	}
 
@@ -71,19 +73,22 @@ func fileExists(fs afero.Fs, filePath string) (bool, error) {
 }
 
 func OutputZip(ctx context.Context, key interface{}, w io.Writer) error {
+	zipMem := ctx.Value(key).(*zipFs)
+	zipMem.Lock()
+	defer zipMem.Unlock()
+
 	zipWriter := zip.NewWriter(w)
 	defer zipWriter.Close()
-	fs := ctx.Value(key).(*zipFs)
-	fs.Lock()
-	defer fs.Unlock()
-	return afero.Walk(fs.fs, "/", func(path string, info os.FileInfo, err error) error {
+
+	fs := zipMem.fs
+	return afero.Walk(fs, sep, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
 		if info.IsDir() {
 			return nil
 		}
-		f, err := fs.fs.Open(path)
+		f, err := fs.Open(path)
 		if err != nil {
 			return err
 		}
@@ -94,7 +99,7 @@ func OutputZip(ctx context.Context, key interface{}, w io.Writer) error {
 		}
 
 		// paths must be a relative UNIX path
-		path = strings.TrimPrefix(path, "/")
+		path = strings.TrimPrefix(path, sep)
 		zipF, err := zipWriter.Create(path)
 		if err != nil {
 			return err
