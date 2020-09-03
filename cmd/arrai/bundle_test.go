@@ -103,7 +103,7 @@ func TestBundleFiles(t *testing.T) {
 			ctx := ctxfs.SourceFsOnto(context.Background(), fs)
 			ctx = ctxrootcache.WithRootCache(ctx)
 			buf := &bytes.Buffer{}
-			assert.NoError(t, bundleFiles(ctx, c.path, buf, ""))
+			assert.NoError(t, bundleFiles(ctx, syntax.MustAbs(t, c.path), buf, ""))
 			ctxfs.ZipEqualToFiles(t, buf.Bytes(), c.expectedFiles)
 		})
 	}

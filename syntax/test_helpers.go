@@ -3,6 +3,7 @@ package syntax
 import (
 	"context"
 	"errors"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -161,4 +162,10 @@ func AssertEvalExprString(t *testing.T, expected, source string) bool {
 	return assert.NoError(t, err) &&
 		assert.NotNil(t, expr) &&
 		assert.Equal(t, expected, strings.Replace(expr.String(), ` `, ``, -1))
+}
+
+func MustAbs(t *testing.T, filePath string) string {
+	abs, err := filepath.Abs(filePath)
+	require.NoError(t, err)
+	return abs
 }

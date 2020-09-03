@@ -59,7 +59,7 @@ func getImportFs(t *testing.T) afero.Fs {
 			{"/path1/path2/path4/path5/import_from_nested_root.arrai", "//{/1}"},
 		}
 		for _, af := range files {
-			f, err := importFs.Create(mustAbs(t, af.fileName))
+			f, err := importFs.Create(syntax.MustAbs(t, af.fileName))
 			require.NoError(t, err)
 			defer f.Close()
 			mustWrite(t, f, []byte(af.expr))
@@ -128,7 +128,7 @@ func TestModuleImportRoot(t *testing.T) {
 	}
 	for _, c := range cases {
 		var buf bytes.Buffer
-		require.NoError(t, evalFile(ctxrootcache.WithRootCache(ctx), c.filePath, &buf, ""))
+		require.NoError(t, evalFile(ctxrootcache.WithRootCache(ctx), syntax.MustAbs(t, c.filePath), &buf, ""))
 		require.Equal(t, c.expected+"\n", buf.String())
 	}
 }
@@ -137,28 +137,22 @@ func TestNoImportRoot(t *testing.T) {
 	t.Parallel()
 
 	fs := afero.NewMemMapFs()
-	require.NoError(t, fs.MkdirAll(mustAbs(t, "path/to/file"), os.ModeDir))
-	f, err := fs.Create(mustAbs(t, "path/to/file/test.arrai"))
+	require.NoError(t, fs.MkdirAll(syntax.MustAbs(t, "path/to/file"), os.ModeDir))
+	f, err := fs.Create(syntax.MustAbs(t, "path/to/file/test.arrai"))
 	require.NoError(t, err)
 	defer f.Close()
 	mustWrite(t, f, []byte("//{/file}"))
 
-	f, err = fs.Create(mustAbs(t, "file.arrai"))
+	f, err = fs.Create(syntax.MustAbs(t, "file.arrai"))
 	require.NoError(t, err)
 	defer f.Close()
 	mustWrite(t, f, []byte("1"))
 	require.EqualError(t,
 		evalFile(
 			ctxrootcache.WithRootCache(ctxfs.SourceFsOnto(context.Background(), fs)),
-			mustAbs(t, "path/to/file/test.arrai"), &bytes.Buffer{}, "",
+			syntax.MustAbs(t, "path/to/file/test.arrai"), &bytes.Buffer{}, "",
 		),
 		"module root not found")
-}
-
-func mustAbs(t *testing.T, filePath string) string {
-	abs, err := filepath.Abs(filePath)
-	require.NoError(t, err)
-	return abs
 }
 
 func mustWrite(t *testing.T, f afero.File, content []byte) {

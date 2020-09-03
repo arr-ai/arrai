@@ -30,7 +30,7 @@ func TestSetupBundle(t *testing.T) {
 			bundleConfig{
 				"test/root",
 				path.Join(ModuleDir, "/test/root/test.arrai"),
-				"/another/test/root",
+				MustAbs(t, "/another/test/root"),
 			}, "",
 		},
 		{
@@ -40,7 +40,7 @@ func TestSetupBundle(t *testing.T) {
 			bundleConfig{
 				"",
 				path.Join(NoModuleDir, "test.arrai"),
-				"/another/test/root",
+				MustAbs(t, "/another/test/root"),
 			}, "",
 		},
 		{
@@ -50,7 +50,7 @@ func TestSetupBundle(t *testing.T) {
 			bundleConfig{
 				"test/root",
 				path.Join(ModuleDir, "/test/root/test.arrai"),
-				"/another/test/root",
+				MustAbs(t, "/another/test/root"),
 			}, errSentinelHasNoModule.Error(),
 		},
 	}
