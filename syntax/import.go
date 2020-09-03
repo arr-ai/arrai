@@ -9,10 +9,10 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"sync"
 
 	"github.com/anz-bank/pkg/mod"
 	"github.com/arr-ai/arrai/pkg/ctxfs"
+	"github.com/arr-ai/arrai/pkg/ctxrootcache"
 	"github.com/arr-ai/arrai/rel"
 	"github.com/arr-ai/arrai/tools"
 	"github.com/arr-ai/arrai/translate"
@@ -22,14 +22,9 @@ import (
 const ModuleRootSentinel = "go.mod"
 
 var (
-	roots             = newSyncMap()
 	cache             = newCache()
 	errModuleNotExist = errors.New("module root not found")
 )
-
-func newSyncMap() sync.Map {
-	return sync.Map{}
-}
 
 func importLocalFile(ctx context.Context, fromRoot bool, importPath, sourceDir string) (rel.Expr, error) {
 	if fromRoot {
@@ -110,8 +105,10 @@ func findRootFromModule(ctx context.Context, modulePath string) (string, error) 
 		return "", err
 	}
 
-	if r, exists := roots.Load(currentPath); exists {
-		return r.(string), nil
+	if r, exists, err := ctxrootcache.LoadRoot(ctx, currentPath); err != nil {
+		return "", err
+	} else if exists {
+		return r, nil
 	}
 
 	systemRoot, err := filepath.Abs(string(os.PathSeparator))
@@ -128,7 +125,9 @@ func findRootFromModule(ctx context.Context, modulePath string) (string, error) 
 		switch {
 		case exists:
 			for _, p := range paths {
-				roots.Store(p, currentPath)
+				if err := ctxrootcache.StoreRoot(ctx, p, currentPath); err != nil {
+					return "", err
+				}
 			}
 			return currentPath, nil
 		case reachedRoot:

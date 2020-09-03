@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/arr-ai/arrai/pkg/ctxfs"
+	"github.com/arr-ai/arrai/pkg/ctxrootcache"
 	"github.com/arr-ai/arrai/syntax"
 	"github.com/stretchr/testify/assert"
 )
@@ -96,8 +97,11 @@ func TestBundleFiles(t *testing.T) {
 	for _, c := range cases {
 		c := c
 		t.Run(c.name, func(t *testing.T) {
+			t.Parallel()
+
 			fs := ctxfs.CreateTestMemMapFs(t, c.files)
 			ctx := ctxfs.SourceFsOnto(context.Background(), fs)
+			ctx = ctxrootcache.WithRootCache(ctx)
 			buf := &bytes.Buffer{}
 			assert.NoError(t, bundleFiles(ctx, c.path, buf, ""))
 			ctxfs.ZipEqualToFiles(t, buf.Bytes(), c.expectedFiles)

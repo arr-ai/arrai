@@ -10,6 +10,7 @@ import (
 
 	"github.com/arr-ai/arrai/pkg/arraictx"
 	"github.com/arr-ai/arrai/pkg/ctxfs"
+	"github.com/arr-ai/arrai/pkg/ctxrootcache"
 	"github.com/arr-ai/arrai/syntax"
 	"github.com/spf13/afero"
 	"github.com/stretchr/testify/assert"
@@ -81,6 +82,9 @@ func TestRunBundle(t *testing.T) {
 	for _, c := range cases {
 		c := c
 		t.Run(c.name, func(t *testing.T) {
+			t.Parallel()
+
+			ctx = ctxrootcache.WithRootCache(ctx)
 			zipped := &bytes.Buffer{}
 			require.NoError(t, bundleFiles(ctx, c.filePath, zipped, ""))
 			out := &bytes.Buffer{}
@@ -102,6 +106,7 @@ func TestRunBundleWithoutRoot(t *testing.T) {
 	f.Close()
 
 	ctx := ctxfs.SourceFsOnto(context.Background(), fs)
+	ctx = ctxrootcache.WithRootCache(ctx)
 	zipped := &bytes.Buffer{}
 	require.NoError(t, bundleFiles(ctx, path, zipped, ""))
 	out := &bytes.Buffer{}
@@ -123,7 +128,7 @@ func TestModuleImportRoot(t *testing.T) {
 	}
 	for _, c := range cases {
 		var buf bytes.Buffer
-		require.NoError(t, evalFile(ctx, c.filePath, &buf, ""))
+		require.NoError(t, evalFile(ctxrootcache.WithRootCache(ctx), c.filePath, &buf, ""))
 		require.Equal(t, c.expected+"\n", buf.String())
 	}
 }
@@ -142,10 +147,9 @@ func TestNoImportRoot(t *testing.T) {
 	require.NoError(t, err)
 	defer f.Close()
 	mustWrite(t, f, []byte("1"))
-
 	require.EqualError(t,
 		evalFile(
-			ctxfs.SourceFsOnto(context.Background(), fs),
+			ctxrootcache.WithRootCache(ctxfs.SourceFsOnto(context.Background(), fs)),
 			mustAbs(t, "path/to/file/test.arrai"), &bytes.Buffer{}, "",
 		),
 		"module root not found")

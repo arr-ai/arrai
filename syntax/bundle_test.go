@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/arr-ai/arrai/pkg/ctxfs"
+	"github.com/arr-ai/arrai/pkg/ctxrootcache"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -63,6 +64,8 @@ func TestSetupBundle(t *testing.T) {
 			files[c.rootFile.name] = c.rootFile.content
 			fs := ctxfs.CreateTestMemMapFs(t, files)
 			ctx := ctxfs.SourceFsOnto(context.Background(), fs)
+			ctx = ctxrootcache.WithRootCache(ctx)
+
 			ctx, err := SetupBundle(ctx, c.mainFile.name, []byte(c.mainFile.content))
 			if c.expectedErr == "" {
 				assert.NoError(t, err)
