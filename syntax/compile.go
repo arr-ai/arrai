@@ -55,6 +55,12 @@ func Compile(ctx context.Context, filePath, source string) (rel.Expr, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	// to avoid syncMap data race during tests.
+	defer func() {
+		roots = newSyncMap()
+	}()
+
 	return pc.CompileExpr(ctx, ast)
 }
 

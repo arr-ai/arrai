@@ -13,7 +13,6 @@ import (
 	"regexp"
 	"runtime"
 	"strings"
-	"sync"
 
 	"github.com/anz-bank/pkg/mod"
 	"github.com/arr-ai/arrai/pkg/ctxfs"
@@ -33,9 +32,15 @@ type bundleConfig struct {
 type bundleKey int
 
 const (
-	moduleDir   = "/module"
-	noModuleDir = "/unnamed"
-	configFile  = "/config.arrai"
+	// ModuleDir contains all the module files in a bundled scripts.
+	ModuleDir = "/module"
+
+	// NoModuleDir contains all the module files without root in a bundled scripts.
+	NoModuleDir = "/unnamed"
+
+	// BundleConfig contains configurations to run a bundled scripts.
+	BundleConfig = "/config.arrai"
+	arraiExt     = ".arrai"
 
 	bundleFsKey bundleKey = iota
 	bundleConfKey
@@ -43,11 +48,9 @@ const (
 )
 
 var (
-	rootModuleRE  = regexp.MustCompile("^module ([^\n]+)\n")
-	bundledConfig bundleConfig
+	rootModuleRE           = regexp.MustCompile("^module ([^\n]+)\n")
+	errSentinelHasNoModule = errors.New("sentinel does not show module path")
 )
-
-var compileBundledConfig sync.Once
 
 func (b bundleConfig) String() string {
 	return fmt.Sprintf("(main_root: %q, main_file: %q)", b.mainRoot, b.mainFile)
@@ -56,24 +59,14 @@ func (b bundleConfig) String() string {
 func createConfig(ctx context.Context) error {
 	return ctxfs.ZipCreate(
 		ctx, bundleFsKey,
-		configFile, []byte(fromBundleConfig(ctx).String()),
+		BundleConfig, []byte(fromBundleConfig(ctx).String()),
 	)
 }
 
 // WithBundleRun adds necessary values to the context to allow running bundled arrai scripts.
-func WithBundleRun(ctx context.Context, filePath string, buf []byte) (context.Context, error) {
-	f, err := ctxfs.SourceFsFrom(ctx).Open(filePath)
-	if err != nil {
-		return ctx, err
-	}
-	defer f.Close()
-
-	fi, err := f.Stat()
-	if err != nil {
-		return ctx, err
-	}
-
-	z, err := zip.NewReader(bytes.NewReader(buf), fi.Size())
+func WithBundleRun(ctx context.Context, buf []byte) (context.Context, error) {
+	r := bytes.NewReader(buf)
+	z, err := zip.NewReader(r, r.Size())
 	if err != nil {
 		return ctx, err
 	}
@@ -82,16 +75,18 @@ func WithBundleRun(ctx context.Context, filePath string, buf []byte) (context.Co
 }
 
 // GetMainBundleSource gets the path for the main arrai script in the bundled arrai scripts.
-func GetMainBundleSource(ctx context.Context) ([]byte, string) {
+func GetMainBundleSource(ctx context.Context) (context.Context, []byte, string) {
 	if !isRunningBundle(ctx) {
-		return nil, ""
+		return ctx, nil, ""
 	}
-	mainFile := getBundledConfig(ctx).mainFile
-	buf, err := ctxfs.ReadFile(ctxfs.SourceFsFrom(ctx), mainFile)
+	ctx = withBundledConfig(ctx)
+	mainFile := fromBundleConfig(ctx).mainFile
+	fs := ctxfs.SourceFsFrom(ctx)
+	buf, err := ctxfs.ReadFile(fs, mainFile)
 	if err != nil {
 		panic(fmt.Errorf("not bundled properly, main file not accessible: %s", err))
 	}
-	return buf, mainFile
+	return ctx, buf, mainFile
 }
 
 // OutputArraiz writes the zip binary to the provided writer.
@@ -103,37 +98,34 @@ func OutputArraiz(ctx context.Context, w io.Writer) error {
 	return ctxfs.OutputZip(ctx, bundleFsKey, w)
 }
 
-// getBundledConfig is used to get configuration that is already bundled.
-func getBundledConfig(ctx context.Context) bundleConfig {
+// withBundledConfig is used add bundled scripts configuration to the context.
+func withBundledConfig(ctx context.Context) context.Context {
 	if !isRunningBundle(ctx) {
 		//FIXME: return error?
-		return bundleConfig{}
+		return ctx
 	}
-	//TODO: better error message
-	compileBundledConfig.Do(func() {
-		buf, err := ctxfs.ReadFile(ctxfs.SourceFsFrom(ctx), configFile)
-		if err != nil {
-			// config file not generated
-			panic(err)
-		}
 
-		expr, err := Compile(ctx, configFile, string(buf))
-		if err != nil {
-			// config file not generated properly
-			panic(err)
-		}
+	buf, err := ctxfs.ReadFile(ctxfs.SourceFsFrom(ctx), BundleConfig)
+	if err != nil {
+		// config file not generated
+		panic(err)
+	}
 
-		val, err := expr.Eval(ctx, rel.EmptyScope)
-		if err != nil {
-			panic(err)
-		}
-		t := val.(rel.Tuple)
-		bundledConfig = bundleConfig{
-			mainRoot: t.MustGet("main_root").String(),
-			mainFile: t.MustGet("main_file").String(),
-		}
+	expr, err := Compile(ctx, BundleConfig, string(buf))
+	if err != nil {
+		// config file not generated properly
+		panic(err)
+	}
+
+	val, err := expr.Eval(ctx, rel.EmptyScope)
+	if err != nil {
+		panic(err)
+	}
+	t := val.(rel.Tuple)
+	return context.WithValue(ctx, bundleConfKey, bundleConfig{
+		mainRoot: t.MustGet("main_root").String(),
+		mainFile: t.MustGet("main_file").String(),
 	})
-	return bundledConfig
 }
 
 func isRunningBundle(ctx context.Context) bool {
@@ -167,7 +159,7 @@ func SetupBundle(ctx context.Context, filePath string, source []byte) (_ context
 		if err != errModuleNotExist {
 			return ctx, err
 		}
-		mainFile := path.Join(noModuleDir, filepath.Base(filePath))
+		mainFile := path.Join(NoModuleDir, filepath.Base(filePath))
 		if err = ctxfs.ZipCreate(ctx, bundleFsKey, mainFile, source); err != nil {
 			return ctx, err
 		}
@@ -189,16 +181,16 @@ func SetupBundle(ctx context.Context, filePath string, source []byte) (_ context
 	moduleRoot := rootModuleRE.FindStringSubmatch(string(buf))
 	if moduleRoot == nil {
 		//TODO: maybe treat it as no module?
-		return ctx, errors.New("sentinel does not show module path")
+		return ctx, errSentinelHasNoModule
 	}
 
-	err = ctxfs.ZipCreate(ctx, bundleFsKey, path.Join(moduleDir, moduleRoot[1], ModuleRootSentinel), buf)
+	err = ctxfs.ZipCreate(ctx, bundleFsKey, path.Join(ModuleDir, moduleRoot[1], ModuleRootSentinel), buf)
 	if err != nil {
 		return ctx, err
 	}
 
 	filePathRelativeToSentinel := toUnixPath(strings.TrimPrefix(filePath, root))
-	mainPath := path.Join(moduleDir, moduleRoot[1], filePathRelativeToSentinel)
+	mainPath := path.Join(ModuleDir, moduleRoot[1], filePathRelativeToSentinel)
 
 	if err = ctxfs.ZipCreate(ctx, bundleFsKey, mainPath, source); err != nil {
 		return ctx, err
@@ -226,7 +218,7 @@ func addLocalRoot(ctx context.Context, rootPath string) (err error) {
 	}
 	rootPath = strings.TrimPrefix(rootPath, fromBundleConfig(ctx).absRootPath)
 
-	pathInBundle := path.Join(moduleDir, fromBundleConfig(ctx).mainRoot, toUnixPath(rootPath))
+	pathInBundle := path.Join(ModuleDir, fromBundleConfig(ctx).mainRoot, toUnixPath(rootPath))
 	if exists, err := ctxfs.FileExists(ctx, bundleFsKey, rootPath); err != nil {
 		return err
 	} else if exists {
@@ -247,7 +239,7 @@ func bundleLocalFile(ctx context.Context, filePath string) (err error) {
 
 	//FIXME: not very clean
 	if filepath.Ext(filePath) == "" {
-		filePath += ".arrai"
+		filePath += arraiExt
 	}
 
 	f, err := ctxfs.SourceFsFrom(ctx).Open(filePath)
@@ -263,10 +255,10 @@ func bundleLocalFile(ctx context.Context, filePath string) (err error) {
 	var dir string
 	config := fromBundleConfig(ctx)
 	if config.mainRoot != "" {
-		dir = moduleDir
+		dir = ModuleDir
 		filePath = path.Join(config.mainRoot, toUnixPath(strings.TrimPrefix(filePath, config.absRootPath)))
 	} else {
-		dir = noModuleDir
+		dir = NoModuleDir
 		filePath = toUnixPath(strings.TrimPrefix(filePath, config.absRootPath))
 	}
 
@@ -279,7 +271,7 @@ func bundleModule(ctx context.Context, relImportPath string, m *mod.Module) erro
 	}
 
 	if filepath.Ext(relImportPath) == "" {
-		relImportPath += ".arrai"
+		relImportPath += arraiExt
 	}
 
 	f, err := ctxfs.SourceFsFrom(ctx).Open(filepath.Join(m.Dir, relImportPath))
@@ -292,7 +284,7 @@ func bundleModule(ctx context.Context, relImportPath string, m *mod.Module) erro
 		return err
 	}
 
-	return ctxfs.ZipCreate(ctx, bundleFsKey, path.Join(moduleDir, m.Name, relImportPath), source)
+	return ctxfs.ZipCreate(ctx, bundleFsKey, path.Join(ModuleDir, m.Name, relImportPath), source)
 }
 
 func bundleRemoteFile(ctx context.Context, url string, source []byte) error {
@@ -302,7 +294,7 @@ func bundleRemoteFile(ctx context.Context, url string, source []byte) error {
 
 	//TODO: test with deep imports
 	url = strings.TrimPrefix("http://", strings.TrimPrefix("https://", url))
-	return ctxfs.ZipCreate(ctx, bundleFsKey, path.Join(moduleDir, url), source)
+	return ctxfs.ZipCreate(ctx, bundleFsKey, path.Join(ModuleDir, url), source)
 }
 
 func toUnixPath(p string) string {

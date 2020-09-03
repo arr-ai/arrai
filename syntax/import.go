@@ -22,10 +22,14 @@ import (
 const ModuleRootSentinel = "go.mod"
 
 var (
-	roots             = sync.Map{}
+	roots             = newSyncMap()
 	cache             = newCache()
 	errModuleNotExist = errors.New("module root not found")
 )
+
+func newSyncMap() sync.Map {
+	return sync.Map{}
+}
 
 func importLocalFile(ctx context.Context, fromRoot bool, importPath, sourceDir string) (rel.Expr, error) {
 	if fromRoot {
