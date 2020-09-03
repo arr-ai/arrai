@@ -4,6 +4,7 @@ import (
 	"archive/zip"
 	"bytes"
 	"io/ioutil"
+	"path/filepath"
 	"testing"
 
 	"github.com/spf13/afero"
@@ -39,6 +40,8 @@ func CreateTestMemMapFs(t *testing.T, files map[string]string) afero.Fs {
 		if name == "" {
 			continue
 		}
+		name, err := filepath.Abs(name)
+		require.NoError(t, err)
 		file, err := fs.Create(name)
 		require.NoError(t, err)
 		_, err = file.Write([]byte(content))
