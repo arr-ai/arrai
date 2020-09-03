@@ -91,7 +91,7 @@ func sync(c *cli.Context) error {
 }
 
 var handlers = map[string]func([]byte) ([]byte, error){
-	".xlsx": handleXlsx,
+	// TODO: Add XLSX support with ".xlsx": handleXlsx, (see commit faaeff7).
 }
 
 func writeTreeToBuffer(tree map[string]interface{}, buf *bytes.Buffer) {
