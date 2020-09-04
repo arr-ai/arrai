@@ -53,6 +53,10 @@ func evalExpr(ctx context.Context, path, source string, w io.Writer, out string)
 		return err
 	}
 
+	return handleEvalOut(ctx, value, w, out)
+}
+
+func handleEvalOut(ctx context.Context, value rel.Value, w io.Writer, out string) error {
 	if out != "" {
 		return outputValue(ctx, value, out)
 	}

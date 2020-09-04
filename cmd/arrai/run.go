@@ -62,11 +62,10 @@ func runFileExists(ctx context.Context, path string) error {
 }
 
 func runBundled(ctx context.Context, buf []byte, w io.Writer, out string) error {
-	ctx, err := syntax.WithBundleRun(ctx, buf)
+	val, err := syntax.EvaluateBundle(ctx, buf)
 	if err != nil {
 		return err
 	}
 
-	ctx, mainFile, path := syntax.GetMainBundleSource(ctx)
-	return evalExpr(ctx, path, string(mainFile), w, out)
+	return handleEvalOut(ctx, val, w, out)
 }
