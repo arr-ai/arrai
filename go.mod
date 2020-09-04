@@ -4,7 +4,7 @@ go 1.13
 
 require (
 	github.com/alecthomas/repr v0.0.0-20200325044227-4184120f674c // indirect
-	github.com/anz-bank/pkg v0.0.16
+	github.com/anz-bank/pkg v0.0.21
 	github.com/arr-ai/frozen v0.14.0
 	github.com/arr-ai/hash v0.5.0
 	github.com/arr-ai/proto v0.0.0-20180422074755-2ffbedebee50
@@ -20,10 +20,9 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/rjeczalik/notify v0.9.2
 	github.com/sirupsen/logrus v1.6.0
-	github.com/spf13/afero v1.3.4
+	github.com/spf13/afero v1.3.5
 	github.com/stretchr/objx v0.2.0 // indirect
 	github.com/stretchr/testify v1.6.1
-	github.com/tealeg/xlsx v1.0.5
 	github.com/urfave/cli/v2 v2.2.0
 	golang.org/x/crypto v0.0.0-20191011191535-87dc89f01550 // indirect
 	golang.org/x/net v0.0.0-20200602114024-627f9648deb9 // indirect

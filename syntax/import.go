@@ -82,7 +82,12 @@ func importModuleFile(ctx context.Context, importPath string) (rel.Expr, error) 
 		return fileValue(ctx, path.Join(ModuleDir, importPath))
 	}
 
-	if err := mod.Config(mod.GoModulesMode, nil, nil, nil); err != nil {
+	wd, err := os.Getwd()
+	if err != nil {
+		return nil, err
+	}
+	if err := mod.Config(mod.GoModulesMode,
+		mod.GoModulesOptions{ModName: filepath.Base(wd)}, mod.GitHubOptions{}); err != nil {
 		return nil, err
 	}
 
