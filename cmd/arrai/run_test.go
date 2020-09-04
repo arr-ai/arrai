@@ -86,7 +86,7 @@ func TestRunBundle(t *testing.T) {
 
 			ctx = ctxrootcache.WithRootCache(ctx)
 			zipped := &bytes.Buffer{}
-			require.NoError(t, bundleFiles(ctx, c.filePath, zipped, ""))
+			require.NoError(t, bundleFiles(ctx, syntax.MustAbs(t, c.filePath), zipped, ""))
 			out := &bytes.Buffer{}
 			assert.NoError(t, runBundled(ctx, zipped.Bytes(), out, ""))
 			assert.Equal(t, c.result+"\n", out.String())

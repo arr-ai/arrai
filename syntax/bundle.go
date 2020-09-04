@@ -80,7 +80,7 @@ func GetMainBundleSource(ctx context.Context) (context.Context, []byte, string) 
 		return ctx, nil, ""
 	}
 	ctx = withBundledConfig(ctx)
-	mainFile := fromBundleConfig(ctx).mainFile
+	mainFile := bundleToValidPath(ctx, fromBundleConfig(ctx).mainFile)
 	fs := ctxfs.SourceFsFrom(ctx)
 	buf, err := ctxfs.ReadFile(fs, mainFile)
 	if err != nil {
@@ -303,6 +303,16 @@ func toUnixPath(p string) string {
 			p = strings.TrimPrefix(p, vol)
 		}
 		return strings.ReplaceAll(p, "\\", "/")
+	}
+	return p
+}
+
+// since config file uses UNIX path, they need to be converted to windows path
+// (without volume) to work with afero zipfs.
+func bundleToValidPath(ctx context.Context, p string) string {
+	if runtime.GOOS == "windows" && isRunningBundle(ctx) {
+		p = strings.TrimPrefix(p, filepath.VolumeName(p))
+		return strings.ReplaceAll(p, "/", "\\")
 	}
 	return p
 }

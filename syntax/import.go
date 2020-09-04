@@ -105,6 +105,8 @@ func findRootFromModule(ctx context.Context, modulePath string) (string, error) 
 		return "", err
 	}
 
+	currentPath = bundleToValidPath(ctx, currentPath)
+
 	if r, exists, err := ctxrootcache.LoadRoot(ctx, currentPath); err != nil {
 		return "", err
 	} else if exists {
@@ -115,6 +117,9 @@ func findRootFromModule(ctx context.Context, modulePath string) (string, error) 
 	if err != nil {
 		return "", err
 	}
+
+	systemRoot = bundleToValidPath(ctx, systemRoot)
+
 	// 16 is enough for pretty much all cases.
 	paths := append(make([]string, 0, 16), currentPath)
 
