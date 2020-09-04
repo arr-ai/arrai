@@ -7,12 +7,13 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"path"
 	"path/filepath"
 	"strings"
-	"sync"
 
 	"github.com/anz-bank/pkg/mod"
 	"github.com/arr-ai/arrai/pkg/ctxfs"
+	"github.com/arr-ai/arrai/pkg/ctxrootcache"
 	"github.com/arr-ai/arrai/rel"
 	"github.com/arr-ai/arrai/tools"
 	"github.com/arr-ai/arrai/translate"
@@ -21,9 +22,10 @@ import (
 // ModuleRootSentinel is a file which marks the module root of a project.
 const ModuleRootSentinel = "go.mod"
 
-var roots = sync.Map{}
-
-var cache = newCache()
+var (
+	cache             = newCache()
+	errModuleNotExist = errors.New("module root not found")
+)
 
 func importLocalFile(ctx context.Context, fromRoot bool, importPath, sourceDir string) (rel.Expr, error) {
 	if fromRoot {
@@ -31,9 +33,16 @@ func importLocalFile(ctx context.Context, fromRoot bool, importPath, sourceDir s
 		if err != nil {
 			return nil, err
 		}
+		if err = addLocalRoot(ctx, rootPath); err != nil {
+			return nil, err
+		}
 		if !strings.HasPrefix(importPath, "/") {
 			importPath = rootPath + "/" + strings.ReplaceAll(importPath, "../", "")
 		}
+	}
+
+	if err := bundleLocalFile(ctx, importPath); err != nil {
+		return nil, err
 	}
 
 	v, err := fileValue(ctx, importPath)
@@ -69,6 +78,10 @@ func importExternalContent(ctx context.Context, importPath string) (rel.Expr, er
 }
 
 func importModuleFile(ctx context.Context, importPath string) (rel.Expr, error) {
+	if isRunningBundle(ctx) {
+		return fileValue(ctx, path.Join(ModuleDir, importPath))
+	}
+
 	if err := mod.Config(mod.GoModulesMode, nil, nil, nil); err != nil {
 		return nil, err
 	}
@@ -83,7 +96,12 @@ func importModuleFile(ctx context.Context, importPath string) (rel.Expr, error) 
 		return nil, err
 	}
 
-	return fileValue(ctx, filepath.Join(m.Dir, strings.TrimPrefix(importPath, m.Name)))
+	relImportPath := strings.TrimPrefix(importPath, m.Name)
+	if err := bundleModule(ctx, relImportPath, m); err != nil {
+		return nil, err
+	}
+
+	return fileValue(ctx, filepath.Join(m.Dir, relImportPath))
 }
 
 func findRootFromModule(ctx context.Context, modulePath string) (string, error) {
@@ -92,14 +110,21 @@ func findRootFromModule(ctx context.Context, modulePath string) (string, error) 
 		return "", err
 	}
 
-	if r, exists := roots.Load(currentPath); exists {
-		return r.(string), nil
+	currentPath = bundleToValidPath(ctx, currentPath)
+
+	if r, exists, err := ctxrootcache.LoadRoot(ctx, currentPath); err != nil {
+		return "", err
+	} else if exists {
+		return r, nil
 	}
 
 	systemRoot, err := filepath.Abs(string(os.PathSeparator))
 	if err != nil {
 		return "", err
 	}
+
+	systemRoot = bundleToValidPath(ctx, systemRoot)
+
 	// 16 is enough for pretty much all cases.
 	paths := append(make([]string, 0, 16), currentPath)
 
@@ -110,12 +135,13 @@ func findRootFromModule(ctx context.Context, modulePath string) (string, error) 
 		switch {
 		case exists:
 			for _, p := range paths {
-				roots.Store(p, currentPath)
+				if err := ctxrootcache.StoreRoot(ctx, p, currentPath); err != nil {
+					return "", err
+				}
 			}
 			return currentPath, nil
 		case reachedRoot:
-			//TODO: test this after context filesystem is implemented
-			return "", errors.New("module root not found")
+			return "", errModuleNotExist
 		case err != nil:
 			return "", err
 		}
@@ -125,6 +151,10 @@ func findRootFromModule(ctx context.Context, modulePath string) (string, error) 
 }
 
 func importURL(ctx context.Context, url string) (rel.Expr, error) {
+	if isRunningBundle(ctx) {
+		url = strings.TrimPrefix(strings.TrimPrefix(url, "https://"), "http://")
+		return fileValue(ctx, path.Join(ModuleDir, url))
+	}
 	resp, err := http.Get(url) //nolint:gosec
 	if err != nil {
 		return nil, err
@@ -134,6 +164,9 @@ func importURL(ctx context.Context, url string) (rel.Expr, error) {
 	if resp.StatusCode == http.StatusOK {
 		data, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
+			return nil, err
+		}
+		if err = bundleRemoteFile(ctx, url, data); err != nil {
 			return nil, err
 		}
 		val, err := cache.getOrAdd(url, func() (rel.Expr, error) { return bytesValue(ctx, NoPath, data) })

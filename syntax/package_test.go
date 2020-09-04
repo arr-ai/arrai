@@ -88,7 +88,6 @@ func TestPackageExternalImportModule(t *testing.T) {
 	t.Run("", func(t *testing.T) {
 		run := func(name string, f func(t *testing.T)) {
 			t.Run(name, func(t *testing.T) {
-				t.Parallel()
 				f(t)
 			})
 		}
