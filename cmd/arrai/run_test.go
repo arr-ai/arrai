@@ -1,6 +1,7 @@
 package main
 
 import (
+	"archive/zip"
 	"bytes"
 	"context"
 	"os"
@@ -91,6 +92,58 @@ func TestRunBundle(t *testing.T) {
 			assert.Equal(t, c.result+"\n", out.String())
 		})
 	}
+}
+
+//nolint: lll
+func TestRunBundleWithHttp(t *testing.T) {
+	t.Parallel()
+
+	files := map[string]string{
+		sentinelFile("github.com/test1"):          "module github.com/test1\n",
+		moduleFile("github.com/test1/test.arrai"): "//{https://raw.githubusercontent.com/arr-ai/arrai/v0.160.0/examples/import/bar.arrai}",
+		moduleFile(
+			"raw.githubusercontent.com/arr-ai/arrai/v0.160.0/examples/import/bar.arrai",
+		): "1",
+		syntax.BundleConfig: config("github.com/test1", moduleFile("github.com/test1/test.arrai")),
+	}
+
+	buf := createBundle(t, files)
+
+	ctx := arraictx.InitRunCtx(context.Background())
+	actual := &bytes.Buffer{}
+	assert.NoError(t, runBundled(ctx, buf, actual, ""))
+	assert.Equal(t, "1\n", actual.String())
+}
+
+func TestRunBundleWithGithubImport(t *testing.T) {
+	t.Parallel()
+
+	files := map[string]string{
+		sentinelFile("github.com/test1"):          "module github.com/test1\n",
+		moduleFile("github.com/test1/test.arrai"): "//{github.com/test2/test.arrai}",
+		moduleFile("github.com/test2/test.arrai"): "1",
+		syntax.BundleConfig:                       config("github.com/test1", moduleFile("github.com/test1/test.arrai")),
+	}
+
+	buf := createBundle(t, files)
+
+	ctx := arraictx.InitRunCtx(context.Background())
+	actual := &bytes.Buffer{}
+	assert.NoError(t, runBundled(ctx, buf, actual, ""))
+	assert.Equal(t, "1\n", actual.String())
+}
+
+func createBundle(t *testing.T, files map[string]string) []byte {
+	buf := &bytes.Buffer{}
+	w := zip.NewWriter(buf)
+	for name, content := range files {
+		f, err := w.Create(name)
+		require.NoError(t, err)
+		_, err = f.Write([]byte(content))
+		require.NoError(t, err)
+	}
+	w.Close()
+	return buf.Bytes()
 }
 
 func TestRunBundleWithoutRoot(t *testing.T) {

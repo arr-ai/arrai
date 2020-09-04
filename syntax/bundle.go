@@ -293,7 +293,7 @@ func bundleRemoteFile(ctx context.Context, url string, source []byte) error {
 	}
 
 	//TODO: test with deep imports
-	url = strings.TrimPrefix("http://", strings.TrimPrefix("https://", url))
+	url = strings.TrimPrefix(strings.TrimPrefix(url, "https://"), "http://")
 	return ctxfs.ZipCreate(ctx, bundleFsKey, path.Join(ModuleDir, url), source)
 }
 

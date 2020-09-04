@@ -63,6 +63,25 @@ func TestBundleFiles(t *testing.T) {
 			},
 		},
 		{
+			"remote import", "/github.com/test/test/test.arrai",
+			map[string]string{
+				sentinelPath("/github.com/test/test"): "module github.com/test/test\n",
+				"/github.com/test/test/test.arrai":    "//{https://raw.githubusercontent.com/arr-ai/arrai/v0.160.0/examples/import/bar.arrai}",
+			},
+			map[string]string{
+				syntax.BundleConfig: config(
+					"github.com/test/test",
+					moduleFile("/github.com/test/test/test.arrai"),
+				),
+				moduleFile(
+					"/github.com/test/test/test.arrai",
+				): "//{https://raw.githubusercontent.com/arr-ai/arrai/v0.160.0/examples/import/bar.arrai}",
+				moduleFile(
+					"raw.githubusercontent.com/arr-ai/arrai/v0.160.0/examples/import/bar.arrai",
+				): "1\n",
+			},
+		},
+		{
 			"no root", "/github.com/test/test/test.arrai",
 			map[string]string{
 				"/github.com/test/test/test.arrai": "1",

@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"path"
 	"path/filepath"
 	"strings"
 
@@ -77,6 +78,10 @@ func importExternalContent(ctx context.Context, importPath string) (rel.Expr, er
 }
 
 func importModuleFile(ctx context.Context, importPath string) (rel.Expr, error) {
+	if isRunningBundle(ctx) {
+		return fileValue(ctx, path.Join(ModuleDir, importPath))
+	}
+
 	if err := mod.Config(mod.GoModulesMode, nil, nil, nil); err != nil {
 		return nil, err
 	}
@@ -146,6 +151,10 @@ func findRootFromModule(ctx context.Context, modulePath string) (string, error) 
 }
 
 func importURL(ctx context.Context, url string) (rel.Expr, error) {
+	if isRunningBundle(ctx) {
+		url = strings.TrimPrefix(strings.TrimPrefix(url, "https://"), "http://")
+		return fileValue(ctx, path.Join(ModuleDir, url))
+	}
 	resp, err := http.Get(url) //nolint:gosec
 	if err != nil {
 		return nil, err
