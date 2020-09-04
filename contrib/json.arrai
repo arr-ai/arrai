@@ -1,0 +1,41 @@
+# Helper functions for working with JSON data.
+
+# Returns a "simplified" structure, replacing decoded tuples with their internal values.
+# Intended for cases in which the types of null values is not interesting.
+let rec simplify = \j
+    cond j {
+        [...]: j >> simplify(.),
+        (:a): simplify(a),
+        (:b): simplify(b),
+        (:s): simplify(s),
+        (): {},
+        _: cond {
+            # Base case: j is a number.
+            # TODO: Replace with a more elegant check (j <: //number).
+            j < {}: j,
+            _: j >> simplify(.),
+        },
+    }
+;
+
+# Returns a copy of v with all dicts converted to tuples.
+# This is essentially decoding JSON with a logical schema.
+let rec tuplify = \v
+    cond v {
+        {x: ...}: //tuple(v >> tuplify(.)),
+        [...]: v >> tuplify(.),
+        {...}: v => tuplify(.),
+        (...): v :> tuplify(.),
+        _: v
+    }
+;
+
+# Returns a simplified, tuplified copy of json.
+# json is the content of a JSON file (string or bytes).
+let decodeSimple = \json tuplify(simplify(//encoding.json.decode(json)));
+
+(
+    :simplify,
+    :tuplify,
+    :decodeSimple,
+)

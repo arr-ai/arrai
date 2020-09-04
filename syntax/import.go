@@ -11,10 +11,10 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/anz-bank/pkg/mod"
 	"github.com/arr-ai/arrai/pkg/ctxfs"
 	"github.com/arr-ai/arrai/rel"
 	"github.com/arr-ai/arrai/tools"
-	"github.com/arr-ai/arrai/tools/module"
 	"github.com/arr-ai/arrai/translate"
 )
 
@@ -69,9 +69,16 @@ func importExternalContent(ctx context.Context, importPath string) (rel.Expr, er
 }
 
 func importModuleFile(ctx context.Context, importPath string) (rel.Expr, error) {
-	var mod module.Module = module.NewGoModule()
+	if err := mod.Config(mod.GoModulesMode, nil, nil, nil); err != nil {
+		return nil, err
+	}
 
-	m, err := mod.Get(importPath)
+	path, ver := mod.ExtractVersion(importPath)
+	if ver != "" {
+		return nil, errors.New("per-importing versioning is not allowed")
+	}
+
+	m, err := mod.Retrieve(path, ver)
 	if err != nil {
 		return nil, err
 	}

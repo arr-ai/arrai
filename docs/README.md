@@ -408,6 +408,53 @@ If `\name` is omitted, `\.` is assumed.
 
 <!-- TODO: Examples -->
 
+#### Dynamically scoped bindings
+
+It is often useful to bind a value to a name somewhere high up in a program
+and have it visible to any code that is invoked under that binding's scope. For
+example, you might want to provide a math library that implements customisable
+rounding behaviour, but you don't want to have every single operator call take
+a rounding or configuration parameter. Dynamically scope variables address this
+need.
+
+Any variable of the form `@{...}` is a dynamically scoped variable. Here is the
+library example using a dynamically scoped variable.
+
+```arrai
+# math.arrai
+let round = \x cond @{round} {
+   'down': x//1,
+   'nearest': (x + 0.5)//1,
+   'up': -(-x//1),
+   _: x,
+};
+(
+   round: round,
+   add: \x \y round(x + y),
+   sub: \x \y round(x - y),
+   mul: \x \y round(x * y),
+   div: \x \y round(x / y),
+)
+
+# app.arrai
+let (:add, :div, ...) = math;
+let f = add(1, div(5, 2));
+(
+   none   : let @{round} = ''       ; f,
+   down   : let @{round} = 'down'   ; f,
+   nearest: let @{round} = 'nearest'; f,
+   up     : let @{round} = 'up'     ; f,
+)
+```
+
+```sh
+$ arrai run app.arrai
+(down: 3, nearest: 4, none: 3.5, up: 4)
+```
+
+This feature is currently under development and will undergo significant changes
+in the near future.
+
 ### Relations
 
 Relations are sets of tuples with a common set of names across all tuples. They

@@ -1,0 +1,21 @@
+let (:simplify, :tuplify, :decodeSimple, ...) = //{./json};
+
+(
+    simplify: (
+        empty: simplify({}) = {},
+        same: simplify({'a': {'b': {}}}) = {'a': {'b': {}}},
+        nulls: simplify({'a': (a: []), 'b': (b: <<''>>), 's': (s: '')}) = {'a': {}, 'b': {}, 's': {}},
+        values: simplify({'a': (a: [1, 2]), 's': (s: 'hi')}) = {'a': [1, 2], 's': 'hi'},
+    ),
+
+    tuplify: (
+        empty: tuplify({}) = {},
+        maps: tuplify({'a': {'b': {}}}) = (a: (b: {})),
+        arrays: tuplify({'a': [[{'b': [1]}]]}) = (a: [[(b: [1])]]),
+    ),
+
+    decodeSimple: (
+        empty: decodeSimple(`{}`) = {},
+        full: decodeSimple(`{"a": ["b", 0, [], ""]}`) = (a: ['b', 0, {}, {}]),
+    )
+)

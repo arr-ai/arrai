@@ -1,0 +1,27 @@
+let util = //{./util};
+
+let _sum = \z \i z + i;
+
+let _concat = \z \k \v $`${z}+${k}${v}`;
+
+(
+    reduce: (
+        empty: util.reduce([], _sum, {}) = {},
+        one: util.reduce([1], _sum, 0) = 1,
+        many: util.reduce([1,2,3], _sum, 0) = 6,
+    ),
+
+    reduceFlat: (
+        empty: util.reduceFlat([], _sum, {}) = {},
+        one: util.reduceFlat([[1]], _sum, 0) = 1,
+        many: util.reduceFlat([[1],[2],[3]], _sum, 0) = 6,
+        pairs: util.reduceFlat([[1,2],[3,4]], _sum, 0) = 10,
+    ),
+
+    reduceObj: (
+        empty: util.reduceObj({}, _concat, '') = '',
+        one: util.reduceObj((a: 1), _concat, '') = '+a1',
+        tuple: util.reduceObj((b: 1, a: 2), _concat, '') = '+a2+b1',
+        dict: util.reduceObj({'b': 1, 'a': 2}, _concat, '') = '+a2+b1',
+    )
+)

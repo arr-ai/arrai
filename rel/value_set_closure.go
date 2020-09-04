@@ -116,7 +116,7 @@ func (c Closure) Without(v Value) Set {
 	panic("unimplemented")
 }
 
-func (c Closure) Map(f func(Value) Value) Set {
+func (c Closure) Map(f func(v Value) (Value, error)) (Set, error) {
 	panic("unimplemented")
 }
 
@@ -139,7 +139,7 @@ func (c Closure) CallAll(ctx context.Context, arg Value) (Set, error) {
 		}
 		return NewSet(val), nil
 	}
-	scope, err := c.f.arg.Bind(ctx, c.scope, arg)
+	ctx, scope, err := c.f.arg.Bind(ctx, c.scope, arg)
 	if err != nil {
 		return nil, err
 	}

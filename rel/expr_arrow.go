@@ -33,7 +33,7 @@ func (e *ArrowExpr) Eval(ctx context.Context, local Scope) (_ Value, err error) 
 	if err != nil {
 		return nil, WrapContextErr(err, e, local)
 	}
-	scope, err := e.fn.arg.Bind(ctx, local, value)
+	ctx, scope, err := e.fn.arg.Bind(ctx, local, value)
 	if err != nil {
 		return nil, WrapContextErr(err, e, local)
 	}

@@ -3,7 +3,6 @@ package syntax
 import (
 	"context"
 	"errors"
-	"fmt"
 	"strings"
 	"testing"
 
@@ -121,10 +120,8 @@ func AssertCodeErrors(t *testing.T, errString, code string) bool {
 			return assert.EqualError(t, errors.New(err.Error()[:len(errString)]), errString)
 		}
 		_, err = codeExpr.Eval(ctx, rel.EmptyScope)
-		if err == nil {
-			panic(fmt.Sprintf("the code `%s` didn't generate any error", code))
-		}
-		assert.EqualError(t, errors.New(err.Error()[:len(errString)]), errString)
+		return assert.Error(t, err) &&
+			assert.EqualError(t, errors.New(err.Error()[:len(errString)]), errString)
 	}
 	return false
 }

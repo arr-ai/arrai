@@ -46,7 +46,7 @@ expr   -> C* amp="&"* @ C* arrow=(
         | C* fn="\\" pattern @ C*
         | C* import="//" pkg=( "{" dot="."? PKGPATH "}" | std=IDENT?)
         | C* odelim="(" @ cdelim=")" C*
-        | C* let=("let" C* rec="rec"? pattern C* "=" C* @ %%bind C* ";" C* @) C*
+        | C* let=("let" C* rec="rec"? pat=(C* pattern C* "=")? C* @ %%bind C* ";" C* @) C*
         | C* xstr C*
         | C* IDENT C*
         | C* STR C*
@@ -67,24 +67,24 @@ sexpr  -> "${"
           control=/{ (?: : [-+#*\.\_0-9a-z]* (?: : (?: \\. | [^\\:}] )* ){0,2} )? }
           close=/{\}\s*};
 tail   -> get
-          | call=("("
-                arg=(
-                    expr (":" end=expr? (":" step=expr)?)?
-                    |     ":" end=expr  (":" step=expr)?
-                ):SEQ_COMMENT,
-            ")");
-pattern -> extra
+        | call=("("
+              arg=(
+                  expr (":" end=expr? (":" step=expr)?)?
+                  |     ":" end=expr  (":" step=expr)?
+              ):SEQ_COMMENT,
+          ")");
+pattern-> extra
         | %!patternterms(pattern|expr)
         | IDENT
         | NUM
         | C* "(" exprpattern=expr:SEQ_COMMENT,? ")" C*
         | C* exprpattern=STR C*;
-extra -> ("..." ident=IDENT?);
+extra  -> ("..." ident=IDENT?);
 fallback -> ("?"? ":" fall=expr);
 
 ARROW  -> /{:>|=>|>>|orderby|order|rank|where|sum|max|mean|median|min};
-FILTER -> /{filter};
-IDENT  -> /{ \. | [$@A-Za-z_][0-9$@A-Za-z_]* };
+FILTER -> "filter";
+IDENT  -> /{ \. | @{ (?:[^{}]|{ [^}]+ \})+ \} | [$@A-Za-z_][0-9$@A-Za-z_]* };
 PKGPATH -> /{ (?: \\ | [^\\}] )* };
 STR    -> /{ " (?: \\. | [^\\"] )* "
            | ' (?: \\. | [^\\'] )* '
