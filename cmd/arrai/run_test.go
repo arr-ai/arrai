@@ -78,12 +78,11 @@ func TestRunBundle(t *testing.T) {
 		{"single root", "/path1/path2/path4/path5/import_from_nested_root.arrai", "1"},
 		{"nested roots", "/path1/path2/path3/import_from_root.arrai", "2"},
 	}
-	ctx := ctxfs.SourceFsOnto(context.Background(), getImportFs(t))
 	for _, c := range cases {
 		c := c
 		t.Run(c.name, func(t *testing.T) {
 			t.Parallel()
-
+			ctx := ctxfs.SourceFsOnto(context.Background(), getImportFs(t))
 			ctx = ctxrootcache.WithRootCache(ctx)
 			zipped := &bytes.Buffer{}
 			require.NoError(t, bundleFiles(ctx, syntax.MustAbs(t, c.filePath), zipped, ""))
