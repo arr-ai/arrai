@@ -73,7 +73,8 @@ func importModuleFile(ctx context.Context, importPath string) (rel.Expr, error) 
 	if err != nil {
 		return nil, err
 	}
-	if err := mod.Config(mod.GoModulesMode, mod.GoModulesOptions{ModName: filepath.Base(wd)}, mod.GitHubOptions{}); err != nil {
+	if err := mod.Config(mod.GoModulesMode,
+		mod.GoModulesOptions{ModName: filepath.Base(wd)}, mod.GitHubOptions{}); err != nil {
 		return nil, err
 	}
 
