@@ -44,7 +44,9 @@ func Compile(ctx context.Context, filePath, source string) (rel.Expr, error) {
 		}
 	}
 	pc := ParseContext{SourceDir: dirpath}
-	if !filepath.IsAbs(filePath) {
+	// bundle run will always get absolute UNIX filePath. This needs to happen
+	// with windows too.
+	if !filepath.IsAbs(filePath) && !isRunningBundle(ctx) {
 		var err error
 		filePath, err = filepath.Rel(".", filePath)
 		if err != nil {
