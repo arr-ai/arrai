@@ -16,15 +16,30 @@ func NewPatternExprPair(pattern Pattern, expr Expr) PatternExprPair {
 	return PatternExprPair{pattern, expr}
 }
 
+// Pattern returns the PatternExprPair's Pattern.
+func (p PatternExprPair) Pattern() Pattern {
+	return p.pattern
+}
+
+// Expr returns the PatternExprPair's Expr.
+func (p PatternExprPair) Expr() Expr {
+	return p.expr
+}
+
 // String returns a string representation of a PatternPair.
-func (pt PatternExprPair) String() string {
-	return fmt.Sprintf("%s:%s", pt.pattern, pt.expr)
+func (p PatternExprPair) String() string {
+	return fmt.Sprintf("%s: %s", p.pattern, p.expr)
 }
 
-func (pt PatternExprPair) Bind(ctx context.Context, local Scope, value Value) (context.Context, Scope, error) {
-	return pt.pattern.Bind(ctx, local, value)
+// Bind implements Pattern.Bind.
+func (p PatternExprPair) Bind(
+	ctx context.Context,
+	local Scope,
+	value Value,
+) (context.Context, Scope, error) {
+	return p.pattern.Bind(ctx, local, value)
 }
 
-func (pt PatternExprPair) Eval(ctx context.Context, local Scope) (Value, error) {
-	return pt.expr.Eval(ctx, local)
+func (p PatternExprPair) eval(ctx context.Context, local Scope) (Value, error) {
+	return p.expr.Eval(ctx, local)
 }

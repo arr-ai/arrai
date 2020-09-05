@@ -373,12 +373,24 @@ func (pc ParseContext) compileArrow(ctx context.Context, b ast.Branch, name stri
 				}
 				expr = binops["->"](source, expr, rhs)
 			case "FILTER":
-				pred, err := pc.CompileExpr(ctx, arrow.(ast.Branch))
+				transform, err := pc.CompileExpr(ctx, arrow.(ast.Branch))
 				if err != nil {
 					return nil, err
 				}
+				log.Info(ctx, transform)
+				t := transform.(rel.CondPatternControlVarExpr)
+				conditions := t.Conditions()
+				trueConds := make([]rel.PatternExprPair, 0, len(conditions))
+				for _, c := range conditions {
+					trueConds = append(trueConds, rel.NewPatternExprPair(c.Pattern(), rel.True))
+				}
+				pred := rel.NewCondPatternControlVarExpr(
+					t.ExprScanner.Src,
+					t.Control(),
+					trueConds...,
+				)
 				lhs := rel.NewWhereExpr(source, expr, pred)
-				expr = rel.NewDArrowExpr(source, lhs, pred)
+				expr = rel.NewDArrowExpr(source, lhs, transform)
 			}
 		}
 	}

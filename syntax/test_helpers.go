@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"path/filepath"
-	"strings"
 	"testing"
 
 	"github.com/arr-ai/arrai/pkg/arraictx"
@@ -161,7 +160,7 @@ func AssertEvalExprString(t *testing.T, expected, source string) bool {
 	expr, err := Compile(arraictx.InitRunCtx(context.Background()), ".", source)
 	return assert.NoError(t, err) &&
 		assert.NotNil(t, expr) &&
-		assert.Equal(t, expected, strings.Replace(expr.String(), ` `, ``, -1))
+		assert.Equal(t, expected, expr.String())
 }
 
 func MustAbs(t *testing.T, filePath string) string {
