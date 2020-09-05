@@ -2,6 +2,7 @@ package rel
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	"github.com/arr-ai/wbnf/parser"
@@ -85,7 +86,15 @@ func newSetBinExpr(scanner parser.Scanner, a, b Expr, op string, f func(x, y Set
 }
 
 func newSetBinExprNoError(scanner parser.Scanner, a, b Expr, op string, f func(x, y Set) Set) Expr {
-	return newSetBinExpr(scanner, a, b, op, func(x, y Set) (Set, error) {
+	return newSetBinExpr(scanner, a, b, op, func(x, y Set) (_ Set, err error) {
+		defer func() {
+			if r := recover(); r != nil {
+				if _, is := r.(error); !is {
+					r = fmt.Errorf("panic: %v", r)
+				}
+				err = r.(error)
+			}
+		}()
 		return f(x, y), nil
 	})
 }

@@ -16,6 +16,14 @@ func NewPatternExprPair(pattern Pattern, expr Expr) PatternExprPair {
 	return PatternExprPair{pattern, expr}
 }
 
+func (p PatternExprPair) Pattern() Pattern {
+	return p.pattern
+}
+
+func (p PatternExprPair) Expr() Expr {
+	return p.expr
+}
+
 // String returns a string representation of a PatternPair.
 func (pt PatternExprPair) String() string {
 	return fmt.Sprintf("%s:%s", pt.pattern, pt.expr)

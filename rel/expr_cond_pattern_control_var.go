@@ -20,14 +20,17 @@ func NewCondPatternControlVarExpr(scanner parser.Scanner, controlVar Expr, patte
 	return CondPatternControlVarExpr{ExprScanner{scanner}, controlVar, patternExprs}
 }
 
+func (e CondPatternControlVarExpr) Control() Expr {
+	return e.controlVarExpr
+}
+
+func (e CondPatternControlVarExpr) Conditions() []PatternExprPair {
+	return e.conditionPairs
+}
+
 func (expr CondPatternControlVarExpr) String() string {
 	var b bytes.Buffer
-	b.WriteByte('(')
-	fmt.Fprintf(&b, "(control_var: %v)", expr.controlVarExpr.String())
-
-	if len(expr.conditionPairs) > 0 {
-		b.WriteByte(',')
-	}
+	fmt.Fprintf(&b, "cond %v ", expr.controlVarExpr.String())
 
 	b.WriteByte('{')
 	for i, conditionPair := range expr.conditionPairs {
@@ -38,7 +41,6 @@ func (expr CondPatternControlVarExpr) String() string {
 	}
 
 	b.WriteByte('}')
-	b.WriteByte(')')
 	return b.String()
 }
 
