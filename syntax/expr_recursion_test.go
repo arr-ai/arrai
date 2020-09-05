@@ -21,8 +21,8 @@ func TestRecursionExpr(t *testing.T) {
    		eo.even(6)`,
 	)
 	AssertCodeErrors(t,
-		"Recursion requires a tuple of functions: "+
-			"(even: (\\n ((n  = 0)) || («(eo.odd)»((n - 1)))), num: 6, odd: (\\n ((n  != 0)) && («(eo.even)»((n - 1)))))",
+		`Recursion requires a tuple of functions: `+
+			`(even: (\n ((n = 0)) || («(eo.odd)»((n - 1)))), num: 6, odd: (\n ((n != 0)) && («(eo.even)»((n - 1)))))`,
 		`let rec eo = (
      		even: \n n = 0 || eo.odd(n - 1),
 			odd:  \n n != 0 && eo.even(n - 1),

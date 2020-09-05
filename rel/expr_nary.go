@@ -25,7 +25,7 @@ func NewCompareExpr(scanner parser.Scanner, args []Expr, comps []CompareFunc, op
 // String returns a string representation of the expression.
 func (e CompareExpr) String() string {
 	var sb strings.Builder
-	fmt.Fprintf(&sb, "(%v ", e.args[0])
+	fmt.Fprintf(&sb, "(%v", e.args[0])
 	for i, arg := range e.args[1:] {
 		fmt.Fprintf(&sb, " %s %v", e.ops[i], arg)
 	}
