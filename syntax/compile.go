@@ -377,7 +377,6 @@ func (pc ParseContext) compileArrow(ctx context.Context, b ast.Branch, name stri
 				if err != nil {
 					return nil, err
 				}
-				log.Info(ctx, transform)
 				t := transform.(rel.CondPatternControlVarExpr)
 				conditions := t.Conditions()
 				trueConds := make([]rel.PatternExprPair, 0, len(conditions))
