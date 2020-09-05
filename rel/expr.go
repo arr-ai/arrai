@@ -3,6 +3,7 @@ package rel
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/arr-ai/wbnf/parser"
 )
@@ -85,4 +86,25 @@ func WrapContextErr(err error, expr Expr, scope Scope) error {
 func EvalExpr(ctx context.Context, expr Expr, local Scope) (_ Value, err error) {
 	//TODO: this is only the initial scope, how to get the last scope?
 	return expr.Eval(ctx, local)
+}
+
+// Errors is sequence of error
+type Errors struct {
+	errors []error
+}
+
+// Error returns string represents Errors
+func (errs Errors) Error() string {
+	var result strings.Builder
+	len := len(errs.errors)
+	if len > 0 {
+		for i, err := range errs.errors {
+			result.WriteString(err.Error())
+			if i < len-1 {
+				result.WriteString("\n\n")
+			}
+		}
+	}
+
+	return result.String()
 }

@@ -40,7 +40,7 @@ func Test(ctx context.Context, w io.Writer, path string) (Results, error) {
 		}
 		result, err := syntax.EvaluateExpr(ctx, file, string(bytes))
 		if err != nil {
-			fmt.Fprintf(w, "\nfailed test: %s\n", err)
+			fmt.Fprintf(w, "\nfailed test:\n%s\n", err)
 			results.Add(Result{file: file, pass: false})
 		} else {
 			results.Add(Result{file: file, pass: isRecursivelyTrue(result)})

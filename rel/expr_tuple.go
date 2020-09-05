@@ -142,12 +142,18 @@ func (e *TupleExpr) String() string { //nolint:dupl
 func (e *TupleExpr) Eval(ctx context.Context, local Scope) (Value, error) {
 	tuple := EmptyTuple
 	var err error
+	errs := Errors{}
 	for _, attr := range e.attrs {
 		tuple, err = attr.Apply(ctx, local, tuple)
 		if err != nil {
-			return nil, WrapContextErr(err, e, local)
+			errs.errors = append(errs.errors, WrapContextErr(err, e, local))
+			tuple = EmptyTuple
 		}
 	}
+	if len(errs.errors) > 0 {
+		return nil, errs
+	}
+
 	// TODO: Construct new tuple directly
 	return tuple.(*GenericTuple).Canonical(), nil
 }
