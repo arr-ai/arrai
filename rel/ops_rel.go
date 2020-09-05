@@ -137,15 +137,15 @@ func Reduce(
 //         for mutually disjoint x…, y…, z…
 //
 // The combine function determines how to combine matching tuples from a and b.
-func Joiner(combine func(common Names, a, b Tuple) Tuple) func(a, b Set) Set {
-	return func(a, b Set) Set {
+func Joiner(combine func(common Names, a, b Tuple) Tuple) func(a, b Set) (Set, error) {
+	return func(a, b Set) (Set, error) {
 		aNames, ok := RelationAttrs(a)
 		if !ok {
-			panic("Tuple names mismatch in join lhs")
+			return nil, fmt.Errorf("tuple names mismatch in join lhs")
 		}
 		bNames, ok := RelationAttrs(b)
 		if !ok {
-			panic("Tuple names mismatch in join rhs")
+			return nil, fmt.Errorf("tuple names mismatch in join rhs")
 		}
 		common := aNames.Intersect(bNames)
 		return GenericJoin(
@@ -166,11 +166,11 @@ func Joiner(combine func(common Names, a, b Tuple) Tuple) func(a, b Set) Set {
 				}
 				return NewSet(values...)
 			},
-		)
+		), nil
 	}
 }
 
-var join func(a, b Set) Set = Joiner(func(_ Names, a, b Tuple) Tuple {
+var join = Joiner(func(_ Names, a, b Tuple) Tuple {
 	return Merge(a, b)
 })
 
