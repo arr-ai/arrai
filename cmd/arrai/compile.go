@@ -21,7 +21,7 @@ import (
 
 var compileCommand = &cli.Command{
 	Name:    "compile",
-	Aliases: []string{"compile"},
+	Aliases: []string{"c"},
 	Usage:   "compile arrai scripts into a runnable binary",
 	Action:  compile,
 	Flags: []cli.Flag{
