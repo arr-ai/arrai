@@ -15,6 +15,9 @@ import (
 
 // Test runs all tests in the subtree of path and returns the results.
 func Test(ctx context.Context, w io.Writer, path string) (Results, error) {
+	// Identifies it is running cmd test
+	ctx = context.WithValue(ctx, rel.CmdIdentifier{Name: "test"}, "test")
+
 	results := Results{}
 	var files []string
 	err := filepath.Walk(path, func(path string, info os.FileInfo, err error) error {
@@ -40,7 +43,7 @@ func Test(ctx context.Context, w io.Writer, path string) (Results, error) {
 		}
 		result, err := syntax.EvaluateExpr(ctx, file, string(bytes))
 		if err != nil {
-			fmt.Fprintf(w, "\nfailed test: %s\n", err)
+			fmt.Fprintf(w, "\nfailed test:\n%s\n", err)
 			results.Add(Result{file: file, pass: false})
 		} else {
 			results.Add(Result{file: file, pass: isRecursivelyTrue(result)})

@@ -3,6 +3,7 @@ package rel
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/arr-ai/wbnf/parser"
 )
@@ -85,4 +86,30 @@ func WrapContextErr(err error, expr Expr, scope Scope) error {
 func EvalExpr(ctx context.Context, expr Expr, local Scope) (_ Value, err error) {
 	//TODO: this is only the initial scope, how to get the last scope?
 	return expr.Eval(ctx, local)
+}
+
+// Errors is sequence of error
+type Errors struct {
+	errors []error
+}
+
+// Error returns string represents Errors
+func (errs Errors) Error() string {
+	if len(errs.errors) == 0 {
+		return ""
+	}
+
+	var result strings.Builder
+	for i, err := range errs.errors {
+		if i > 0 {
+			result.WriteString("\n\n")
+		}
+		result.WriteString(err.Error())
+	}
+	return result.String()
+}
+
+// CmdIdentifier identifies an arrai command like test, shell and eval etc.
+type CmdIdentifier struct {
+	Name string
 }
