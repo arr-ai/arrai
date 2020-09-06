@@ -107,7 +107,11 @@ func buildBinary(ctx context.Context, bundledScripts []byte, out afero.File) err
 	if err != nil {
 		return err
 	}
-	defer fs.RemoveAll(buildDir)
+	defer func() {
+		if err := fs.RemoveAll(buildDir); err != nil {
+			panic(err)
+		}
+	}()
 
 	mainFilePath := filepath.Join(buildDir, "main.go")
 	f, err := fs.Create(mainFilePath)
