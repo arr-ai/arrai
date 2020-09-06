@@ -15,6 +15,9 @@ import (
 
 // Test runs all tests in the subtree of path and returns the results.
 func Test(ctx context.Context, w io.Writer, path string) (Results, error) {
+	// Identifies it is running cmd test
+	ctx = context.WithValue(ctx, rel.CmdIdentifier{Name: "test"}, "test")
+
 	results := Results{}
 	var files []string
 	err := filepath.Walk(path, func(path string, info os.FileInfo, err error) error {

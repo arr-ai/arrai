@@ -140,9 +140,24 @@ func (e *TupleExpr) String() string { //nolint:dupl
 
 // Eval returns the subject
 func (e *TupleExpr) Eval(ctx context.Context, local Scope) (Value, error) {
+	if cmd, isStr := ctx.Value(CmdIdentifier{Name: "test"}).(string); isStr && cmd == "test" {
+		return e.evalTests(ctx, local)
+	}
+
 	tuple := EmptyTuple
 	var err error
-	errs := Errors{}
+	for _, attr := range e.attrs {
+		tuple, err = attr.Apply(ctx, local, tuple)
+		return nil, err
+	}
+	// TODO: Construct new tuple directly
+	return tuple.(*GenericTuple).Canonical(), nil
+}
+
+func (e *TupleExpr) evalTests(ctx context.Context, local Scope) (Value, error) {
+	tuple := EmptyTuple
+	var err error
+	var errs Errors
 	for _, attr := range e.attrs {
 		tuple, err = attr.Apply(ctx, local, tuple)
 		if err != nil {

@@ -95,16 +95,21 @@ type Errors struct {
 
 // Error returns string represents Errors
 func (errs Errors) Error() string {
-	var result strings.Builder
-	len := len(errs.errors)
-	if len > 0 {
-		for i, err := range errs.errors {
-			result.WriteString(err.Error())
-			if i < len-1 {
-				result.WriteString("\n\n")
-			}
-		}
+	if len(errs.errors) == 0 {
+		return ""
 	}
 
+	var result strings.Builder
+	for i, err := range errs.errors {
+		if i > 0 {
+			result.WriteString("\n\n")
+		}
+		result.WriteString(err.Error())
+	}
 	return result.String()
+}
+
+// CmdIdentifier identifies an arrai command like test, shell and eval etc.
+type CmdIdentifier struct {
+	Name string
 }
