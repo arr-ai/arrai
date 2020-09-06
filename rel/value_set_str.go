@@ -4,6 +4,7 @@ import (
 	"context"
 	"reflect"
 
+	"github.com/arr-ai/hash"
 	"github.com/arr-ai/wbnf/parser"
 )
 
@@ -86,12 +87,8 @@ func (a stringCharTupleArray) Swap(i, j int) {
 
 // Hash computes a hash for a String.
 func (s String) Hash(seed uintptr) uintptr {
-	// TODO: Optimize.
-	h := seed
-	for e := s.Enumerator(); e.MoveNext(); {
-		h ^= e.Current().Hash(seed)
-	}
-	return h
+	// TODO: implement a []rune-friendly hash function.
+	return hash.String(string(s.s), seed)
 }
 
 // Equal tests two Sets for equality. Any other type returns false.
@@ -226,8 +223,8 @@ func (s String) Without(value Value) Set {
 // Map maps values per f.
 func (s String) Map(f func(v Value) (Value, error)) (Set, error) {
 	result := NewSet()
-	for e := s.Enumerator(); e.MoveNext(); {
-		v, err := f(e.Current())
+	for e := s.Enumerator().(*stringValueEnumerator); e.MoveNext(); {
+		v, err := f(e.currentStringCharTuple())
 		if err != nil {
 			return nil, err
 		}
@@ -239,8 +236,8 @@ func (s String) Map(f func(v Value) (Value, error)) (Set, error) {
 // Where returns a new String with all the Values satisfying predicate p.
 func (s String) Where(p func(v Value) (bool, error)) (Set, error) {
 	values := make([]Value, 0, s.Count())
-	for e := s.Enumerator(); e.MoveNext(); {
-		value := e.Current()
+	for e := s.Enumerator().(*stringValueEnumerator); e.MoveNext(); {
+		value := e.currentStringCharTuple()
 		matches, err := p(value)
 		if err != nil {
 			return nil, err
@@ -296,6 +293,11 @@ func (e *stringValueEnumerator) MoveNext() bool {
 
 // Current returns the enumerator's current Value.
 func (e *stringValueEnumerator) Current() Value {
+	return NewStringCharTuple(e.s.offset+e.i, e.s.s[e.i])
+}
+
+// This version avoids mallocs.
+func (e *stringValueEnumerator) currentStringCharTuple() StringCharTuple {
 	return NewStringCharTuple(e.s.offset+e.i, e.s.s[e.i])
 }
 

@@ -4,6 +4,7 @@ import (
 	"context"
 	"reflect"
 
+	"github.com/arr-ai/hash"
 	"github.com/arr-ai/wbnf/parser"
 )
 
@@ -85,11 +86,8 @@ func (b Bytes) Bytes() []byte {
 
 // Hash computes a hash for a Bytes.
 func (b Bytes) Hash(seed uintptr) uintptr {
-	h := seed
-	for e := b.Enumerator(); e.MoveNext(); {
-		h ^= e.Current().Hash(seed)
-	}
-	return h
+	// TODO: implement a []byte-friendly hash function.
+	return hash.String(string(b.b), seed)
 }
 
 // Equal tests two Sets for equality. Any other type returns false.
@@ -214,8 +212,8 @@ func (b Bytes) Without(value Value) Set {
 // Map maps values per f.
 func (b Bytes) Map(f func(v Value) (Value, error)) (Set, error) {
 	result := NewSet()
-	for e := b.Enumerator(); e.MoveNext(); {
-		v, err := f(e.Current())
+	for e := b.Enumerator().(*BytesEnumerator); e.MoveNext(); {
+		v, err := f(e.CurrentBytesByteTuple())
 		if err != nil {
 			return nil, err
 		}
@@ -227,8 +225,8 @@ func (b Bytes) Map(f func(v Value) (Value, error)) (Set, error) {
 // Where returns a new Bytes with all the Values satisfying predicate p.
 func (b Bytes) Where(p func(v Value) (bool, error)) (Set, error) {
 	result := Set(b)
-	for e := b.Enumerator(); e.MoveNext(); {
-		value := e.Current()
+	for e := b.Enumerator().(*BytesEnumerator); e.MoveNext(); {
+		value := e.CurrentBytesByteTuple()
 		match, err := p(value)
 		if err != nil {
 			return nil, err
@@ -271,6 +269,11 @@ func (e *BytesEnumerator) MoveNext() bool {
 // Current returns the enumerator'b current Value.
 func (e *BytesEnumerator) Current() Value {
 	return newBytesTuple(e.i, e.b[e.i])
+}
+
+// CurrentBytesByteTuple returns the enumerator'b current Value.
+func (e *BytesEnumerator) CurrentBytesByteTuple() BytesByteTuple {
+	return NewBytesByteTuple(e.i, e.b[e.i])
 }
 
 // Enumerator returns an enumerator over the Values in the Bytes.

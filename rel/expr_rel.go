@@ -84,79 +84,73 @@ func newSetBinExpr(scanner parser.Scanner, a, b Expr, op string, f func(x, y Set
 		})
 }
 
-func newSetBinExprNoError(scanner parser.Scanner, a, b Expr, op string, f func(x, y Set) Set) Expr {
-	return newSetBinExpr(scanner, a, b, op, func(x, y Set) (Set, error) {
-		return f(x, y), nil
-	})
-}
-
 // NewJoinExpr evaluates a <&> b.
 func NewJoinExpr(scanner parser.Scanner, a, b Expr) Expr {
-	return newSetBinExprNoError(scanner, a, b, "<&>", join)
+	return newSetBinExpr(scanner, a, b, "<&>", join)
 }
 
 // NewComposeExpr evaluates a <-> b.
 func NewComposeExpr(scanner parser.Scanner, a, b Expr) Expr {
-	return newSetBinExprNoError(scanner, a, b, "<->", Joiner(func(common Names, a, b Tuple) Tuple {
+	return newSetBinExpr(scanner, a, b, "<->", Joiner(func(common Names, a, b Tuple) Tuple {
 		return Merge(TupleProjectAllBut(a, common), TupleProjectAllBut(b, common))
 	}))
 }
 
 // NewJoinCommonExpr evaluates a -&- b.
 func NewJoinCommonExpr(scanner parser.Scanner, a, b Expr) Expr {
-	return newSetBinExprNoError(scanner, a, b, "-&-", Joiner(func(common Names, a, _ Tuple) Tuple {
+	return newSetBinExpr(scanner, a, b, "-&-", Joiner(func(common Names, a, _ Tuple) Tuple {
 		return a.Project(common)
 	}))
 }
 
 // NewJoinExistsExpr evaluates a --- b.
 func NewJoinExistsExpr(scanner parser.Scanner, a, b Expr) Expr {
-	return newSetBinExprNoError(scanner, a, b, "---", Joiner(func(_ Names, _, _ Tuple) Tuple {
+	return newSetBinExpr(scanner, a, b, "---", Joiner(func(_ Names, _, _ Tuple) Tuple {
 		return EmptyTuple
 	}))
 }
 
 // NewRightMatchExpr evaluates a -&> b.
 func NewRightMatchExpr(scanner parser.Scanner, a, b Expr) Expr {
-	return newSetBinExprNoError(scanner, a, b, "-&>", Joiner(func(_ Names, _, b Tuple) Tuple {
+	return newSetBinExpr(scanner, a, b, "-&>", Joiner(func(_ Names, _, b Tuple) Tuple {
 		return b
 	}))
 }
 
 // NewLeftMatchExpr evaluates a <&- b.
 func NewLeftMatchExpr(scanner parser.Scanner, a, b Expr) Expr {
-	return newSetBinExprNoError(scanner, a, b, "-&>", Joiner(func(_ Names, a, _ Tuple) Tuple {
+	return newSetBinExpr(scanner, a, b, "-&>", Joiner(func(_ Names, a, _ Tuple) Tuple {
 		return a
 	}))
 }
 
 // NewRightResidueExpr evaluates a --> b.
 func NewRightResidueExpr(scanner parser.Scanner, a, b Expr) Expr {
-	return newSetBinExprNoError(scanner, a, b, "-->", Joiner(func(common Names, _, b Tuple) Tuple {
+	return newSetBinExpr(scanner, a, b, "-->", Joiner(func(common Names, _, b Tuple) Tuple {
 		return TupleProjectAllBut(b, common)
 	}))
 }
 
 // NewLeftResidueExpr evaluates a <-- b.
 func NewLeftResidueExpr(scanner parser.Scanner, a, b Expr) Expr {
-	return newSetBinExprNoError(scanner, a, b, "-->", Joiner(func(common Names, a, _ Tuple) Tuple {
+	return newSetBinExpr(scanner, a, b, "-->", Joiner(func(common Names, a, _ Tuple) Tuple {
 		return TupleProjectAllBut(a, common)
 	}))
 }
 
 // NewUnionExpr evaluates a | b.
 func NewUnionExpr(scanner parser.Scanner, a, b Expr) Expr {
-	return newSetBinExprNoError(scanner, a, b, "|", Union)
+	return newSetBinExpr(scanner, a, b, "|", func(a, b Set) (Set, error) { return Union(a, b), nil })
 }
 
 // NewDiffExpr evaluates a &~ b.
 func NewDiffExpr(scanner parser.Scanner, a, b Expr) Expr {
-	return newSetBinExprNoError(scanner, a, b, "&~", Difference)
+	return newSetBinExpr(scanner, a, b, "&~", func(a, b Set) (Set, error) { return Difference(a, b), nil })
 }
 
 // NewSymmDiffExpr evaluates a ~~ b.
 func NewSymmDiffExpr(scanner parser.Scanner, a, b Expr) Expr {
-	return newSetBinExprNoError(scanner, a, b, "~~", SymmetricDifference)
+	return newSetBinExpr(scanner, a, b, "~~", func(a, b Set) (Set, error) { return SymmetricDifference(a, b), nil })
 }
 
 // NewConcatExpr evaluates a ++ b.

@@ -44,7 +44,9 @@ func Compile(ctx context.Context, filePath, source string) (rel.Expr, error) {
 		}
 	}
 	pc := ParseContext{SourceDir: dirpath}
-	if !filepath.IsAbs(filePath) {
+	// bundle run will always get absolute UNIX filePath. This needs to happen
+	// with windows too.
+	if !filepath.IsAbs(filePath) && !isRunningBundle(ctx) {
 		var err error
 		filePath, err = filepath.Rel(".", filePath)
 		if err != nil {
@@ -55,6 +57,7 @@ func Compile(ctx context.Context, filePath, source string) (rel.Expr, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	return pc.CompileExpr(ctx, ast)
 }
 
@@ -370,12 +373,23 @@ func (pc ParseContext) compileArrow(ctx context.Context, b ast.Branch, name stri
 				}
 				expr = binops["->"](source, expr, rhs)
 			case "FILTER":
-				pred, err := pc.CompileExpr(ctx, arrow.(ast.Branch))
+				transform, err := pc.CompileExpr(ctx, arrow.(ast.Branch))
 				if err != nil {
 					return nil, err
 				}
+				t := transform.(rel.CondPatternControlVarExpr)
+				conditions := t.Conditions()
+				trueConds := make([]rel.PatternExprPair, 0, len(conditions))
+				for _, c := range conditions {
+					trueConds = append(trueConds, rel.NewPatternExprPair(c.Pattern(), rel.True))
+				}
+				pred := rel.NewCondPatternControlVarExpr(
+					t.ExprScanner.Src,
+					t.Control(),
+					trueConds...,
+				)
 				lhs := rel.NewWhereExpr(source, expr, pred)
-				expr = rel.NewDArrowExpr(source, lhs, pred)
+				expr = rel.NewDArrowExpr(source, lhs, transform)
 			}
 		}
 	}
