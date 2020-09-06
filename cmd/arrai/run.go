@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/arr-ai/arrai/pkg/arrai"
 	"github.com/arr-ai/arrai/pkg/arraictx"
 	"github.com/arr-ai/arrai/pkg/ctxfs"
 	"github.com/arr-ai/arrai/syntax"
@@ -67,5 +68,5 @@ func runBundled(ctx context.Context, buf []byte, w io.Writer, out string) error 
 		return err
 	}
 
-	return handleEvalOut(ctx, val, w, out)
+	return arrai.OutputValue(ctx, val, w, out)
 }

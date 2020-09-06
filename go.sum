@@ -54,6 +54,8 @@ github.com/anz-bank/pkg v0.0.22/go.mod h1:NSkF/h+NBS8lADLotCb1Exmdmt7wdmr1yOqAEb
 github.com/arr-ai/frozen v0.11.1/go.mod h1:YEr4TubkrAoA3f9U1R4PcEVB5ocBUdiS3NKh03cbVts=
 github.com/arr-ai/frozen v0.14.0 h1:eByyaJpEPnIQ9drLxWEkn3lEXbQ0x18DZmTltfhefHA=
 github.com/arr-ai/frozen v0.14.0/go.mod h1:YEr4TubkrAoA3f9U1R4PcEVB5ocBUdiS3NKh03cbVts=
+github.com/arr-ai/frozen v0.15.0 h1:oipNAhjDUVZcjPSHeIZrF+9cB03+oVmn+iUN6sWw3EM=
+github.com/arr-ai/frozen v0.15.0/go.mod h1:YEr4TubkrAoA3f9U1R4PcEVB5ocBUdiS3NKh03cbVts=
 github.com/arr-ai/hash v0.4.0 h1:VPIDl5nkhq8qntxmsNd00bdj+UVs2vRKFzzM7HZkR7Q=
 github.com/arr-ai/hash v0.4.0/go.mod h1:2fLB6qpmZbH+dpvNooTW2m9o5z1pEsUQxfGmZs6Z8QQ=
 github.com/arr-ai/hash v0.5.0 h1:jXzEJvrVYC87mot2l0n8qBRl7X3bqUd47Fvv4mQnehQ=
