@@ -7,7 +7,6 @@ import (
 
 	"github.com/arr-ai/arrai/pkg/arrai"
 	"github.com/arr-ai/arrai/pkg/arraictx"
-
 	"github.com/arr-ai/arrai/syntax"
 	"github.com/arr-ai/arrai/tools"
 	"github.com/urfave/cli/v2"

@@ -35,3 +35,6 @@ test: parser
 
 docker:
 	docker build . -t arrai
+
+static:
+	go-bindata -o cmd/arrai/static.go internal/build/main.arrai

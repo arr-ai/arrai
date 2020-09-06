@@ -89,6 +89,17 @@ func GetMainBundleSource(ctx context.Context) (context.Context, []byte, string) 
 	return ctx, buf, mainFile
 }
 
+// GetModuleFromBundle fetches the module path of the bundle from the bundle's buffer.
+func GetModuleFromBundle(ctx context.Context, buf []byte) (context.Context, string, error) {
+	ctx, err := WithBundleRun(ctx, buf)
+	if err != nil {
+		return ctx, "", err
+	}
+	ctx = withBundledConfig(ctx)
+	module := bundleToValidPath(ctx, fromBundleConfig(ctx).mainRoot)
+	return ctx, module, nil
+}
+
 // OutputArraiz writes the zip binary to the provided writer.
 func OutputArraiz(ctx context.Context, w io.Writer) error {
 	if !isBundling(ctx) {

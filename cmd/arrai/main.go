@@ -21,6 +21,7 @@ var cmds = []*cli.Command{
 	runCommand,
 	bundleCommand,
 	evalCommand,
+	compileCommand,
 	jsonCommand,
 	observeCommand,
 	serveCommand,
