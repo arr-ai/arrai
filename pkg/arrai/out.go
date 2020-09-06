@@ -1,4 +1,4 @@
-package output
+package arrai
 
 import (
 	"context"
@@ -13,8 +13,8 @@ import (
 	"github.com/spf13/afero"
 )
 
-// HandleEvalOut handles output writing for evaluated values.
-func HandleEvalOut(ctx context.Context, value rel.Value, w io.Writer, out string) error {
+// OutputValue handles output writing for evaluated values.
+func OutputValue(ctx context.Context, value rel.Value, w io.Writer, out string) error {
 	if out != "" {
 		return outputValue(ctx, value, out)
 	}

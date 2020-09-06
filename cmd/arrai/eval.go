@@ -5,8 +5,8 @@ import (
 	"io"
 	"os"
 
+	"github.com/arr-ai/arrai/pkg/arrai"
 	"github.com/arr-ai/arrai/pkg/arraictx"
-	"github.com/arr-ai/arrai/pkg/output"
 
 	"github.com/arr-ai/arrai/syntax"
 	"github.com/arr-ai/arrai/tools"
@@ -48,5 +48,5 @@ func evalExpr(ctx context.Context, path, source string, w io.Writer, out string)
 		return err
 	}
 
-	return output.HandleEvalOut(ctx, value, w, out)
+	return arrai.OutputValue(ctx, value, w, out)
 }
