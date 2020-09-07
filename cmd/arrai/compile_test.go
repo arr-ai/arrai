@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"os/exec"
@@ -58,10 +57,8 @@ func testExec(t *testing.T, path, expected string, args ...string) {
 	path, err := filepath.Abs(path)
 	assert.NoError(t, err)
 	c := exec.Command(path, args...)
-	actual := bytes.Buffer{}
-	c.Stdout = &actual
 
-	assert.NoError(t, c.Run())
-
-	assert.Equal(t, expected, actual.String())
+	actual, err := c.Output()
+	assert.NoError(t, err)
+	assert.Equal(t, expected, string(actual))
 }
