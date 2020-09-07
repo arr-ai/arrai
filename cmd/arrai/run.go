@@ -34,7 +34,7 @@ func run(c *cli.Context) error {
 }
 
 func evalFile(ctx context.Context, path string, w io.Writer, out string) error {
-	if err := runFileExists(ctx, path); err != nil {
+	if err := fileExists(ctx, path); err != nil {
 		return err
 	}
 	buf, err := ctxfs.ReadFile(ctxfs.SourceFsFrom(ctx), path)
@@ -50,7 +50,7 @@ func evalFile(ctx context.Context, path string, w io.Writer, out string) error {
 	return evalExpr(ctx, path, string(buf), w, out)
 }
 
-func runFileExists(ctx context.Context, path string) error {
+func fileExists(ctx context.Context, path string) error {
 	if exists, err := tools.FileExists(ctx, path); err != nil {
 		return err
 	} else if !exists {

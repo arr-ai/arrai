@@ -42,6 +42,10 @@ const (
 	BundleConfig = "/config.arrai"
 	arraiExt     = ".arrai"
 
+	// random name for scripts without modules. This value is used if a script with
+	// no module is compiled into binary.
+	unnamedModule = "unnamed.com/unnamed/unnamed"
+
 	bundleFsKey bundleKey = iota
 	bundleConfKey
 	runBundleMode
@@ -89,6 +93,16 @@ func GetMainBundleSource(ctx context.Context) (context.Context, []byte, string) 
 	return ctx, buf, mainFile
 }
 
+// GetModuleFromBundle fetches the module path of the bundle from the bundle's buffer.
+func GetModuleFromBundle(ctx context.Context, buf []byte) (context.Context, string, error) {
+	ctx, err := WithBundleRun(ctx, buf)
+	if err != nil {
+		return ctx, "", err
+	}
+	ctx = withBundledConfig(ctx)
+	return ctx, fromBundleConfig(ctx).mainRoot, nil
+}
+
 // OutputArraiz writes the zip binary to the provided writer.
 func OutputArraiz(ctx context.Context, w io.Writer) error {
 	if !isBundling(ctx) {
@@ -122,8 +136,14 @@ func withBundledConfig(ctx context.Context) context.Context {
 		panic(err)
 	}
 	t := val.(rel.Tuple)
+	root := t.MustGet("main_root").String()
+	if root == "{}" {
+		root = unnamedModule
+	}
+	root = toUnixPath(root)
+
 	return context.WithValue(ctx, bundleConfKey, bundleConfig{
-		mainRoot: t.MustGet("main_root").String(),
+		mainRoot: root,
 		mainFile: t.MustGet("main_file").String(),
 	})
 }
