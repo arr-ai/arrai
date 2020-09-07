@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"testing"
 
 	"github.com/arr-ai/arrai/pkg/arraictx"
@@ -28,7 +29,7 @@ func TestCompileFile(t *testing.T) {
 func testCompileScript(t *testing.T, script, mod, expected string, args ...string) {
 	ctx := arraictx.InitRunCtx(context.Background())
 	fs := ctxfs.SourceFsFrom(ctx)
-	temp, err := afero.TempDir(fs, "", "*")
+	temp, err := afero.TempDir(fs, "", "arraibuildtest")
 	require.NoError(t, err)
 	defer func() {
 		require.NoError(t, fs.RemoveAll(temp))
@@ -49,6 +50,9 @@ func testCompileScript(t *testing.T, script, mod, expected string, args ...strin
 	}
 
 	outFile := filepath.Join(temp, "test")
+	if runtime.GOOS == "windows" {
+		outFile += ".exe"
+	}
 	assert.NoError(t, compileFile(ctx, filename, outFile))
 	testExec(t, outFile, expected+"\n", args...)
 }

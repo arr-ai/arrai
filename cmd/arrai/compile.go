@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"context"
+	"os"
 	"os/exec"
 	"path"
 	"path/filepath"
@@ -125,7 +126,7 @@ func buildBinary(ctx context.Context, bundledScripts []byte, out afero.File) err
 
 	fs := ctxfs.SourceFsFrom(ctx)
 
-	buildDir, err := afero.TempDir(fs, "", path.Base(module)+"*")
+	buildDir, err := afero.TempDir(fs, "", path.Base(module))
 	if err != nil {
 		return err
 	}

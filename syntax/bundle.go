@@ -100,8 +100,7 @@ func GetModuleFromBundle(ctx context.Context, buf []byte) (context.Context, stri
 		return ctx, "", err
 	}
 	ctx = withBundledConfig(ctx)
-	module := bundleToValidPath(ctx, fromBundleConfig(ctx).mainRoot)
-	return ctx, module, nil
+	return ctx, fromBundleConfig(ctx).mainRoot, nil
 }
 
 // OutputArraiz writes the zip binary to the provided writer.
@@ -141,6 +140,8 @@ func withBundledConfig(ctx context.Context) context.Context {
 	if root == "{}" {
 		root = unnamedModule
 	}
+	root = toUnixPath(root)
+
 	return context.WithValue(ctx, bundleConfKey, bundleConfig{
 		mainRoot: root,
 		mainFile: t.MustGet("main_file").String(),
