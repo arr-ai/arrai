@@ -42,6 +42,10 @@ const (
 	BundleConfig = "/config.arrai"
 	arraiExt     = ".arrai"
 
+	// random name for scripts without modules. This value is used if a script with
+	// no module is compiled into binary.
+	unnamedModule = "unnamed.com/unnamed/unnamed"
+
 	bundleFsKey bundleKey = iota
 	bundleConfKey
 	runBundleMode
@@ -133,8 +137,12 @@ func withBundledConfig(ctx context.Context) context.Context {
 		panic(err)
 	}
 	t := val.(rel.Tuple)
+	root := t.MustGet("main_root").String()
+	if root == "{}" {
+		root = unnamedModule
+	}
 	return context.WithValue(ctx, bundleConfKey, bundleConfig{
-		mainRoot: t.MustGet("main_root").String(),
+		mainRoot: root,
 		mainFile: t.MustGet("main_file").String(),
 	})
 }
