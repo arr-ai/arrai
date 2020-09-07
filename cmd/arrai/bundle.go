@@ -28,14 +28,18 @@ var bundleCommand = &cli.Command{
 func bundle(c *cli.Context) error {
 	tools.SetArgs(c)
 	file := c.Args().Get(0)
-	return bundleFiles(
+	return bundleFilesTo(
 		arraictx.InitRunCtx(context.Background()),
 		file, os.Stdout, c.Value("out").(string),
 	)
 }
 
-func bundleFiles(ctx context.Context, path string, w io.Writer, out string) (err error) {
-	if err := runFileExists(ctx, path); err != nil {
+func bundleFiles(ctx context.Context, path string, w io.Writer) error {
+	return bundleFilesTo(ctx, path, w, "")
+}
+
+func bundleFilesTo(ctx context.Context, path string, w io.Writer, out string) (err error) {
+	if err := fileExists(ctx, path); err != nil {
 		return err
 	}
 

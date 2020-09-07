@@ -86,7 +86,7 @@ func TestRunBundle(t *testing.T) {
 			ctx := ctxfs.SourceFsOnto(context.Background(), getImportFs(t))
 			ctx = ctxrootcache.WithRootCache(ctx)
 			zipped := &bytes.Buffer{}
-			require.NoError(t, bundleFiles(ctx, syntax.MustAbs(t, c.filePath), zipped, ""))
+			require.NoError(t, bundleFilesTo(ctx, syntax.MustAbs(t, c.filePath), zipped, ""))
 			out := &bytes.Buffer{}
 			assert.NoError(t, runBundled(ctx, zipped.Bytes(), out, ""))
 			assert.Equal(t, c.result+"\n", out.String())
@@ -160,7 +160,7 @@ func TestRunBundleWithoutRoot(t *testing.T) {
 	ctx := ctxfs.SourceFsOnto(context.Background(), fs)
 	ctx = ctxrootcache.WithRootCache(ctx)
 	zipped := &bytes.Buffer{}
-	require.NoError(t, bundleFiles(ctx, path, zipped, ""))
+	require.NoError(t, bundleFiles(ctx, path, zipped))
 	out := &bytes.Buffer{}
 	assert.NoError(t, runBundled(ctx, zipped.Bytes(), out, ""))
 	assert.Equal(t, expectedOut, out.String())
