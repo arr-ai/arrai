@@ -17,6 +17,7 @@ wasm: parser
 
 install: parser
 	go install -ldflags=$(LDFLAGS) ./cmd/arrai
+	arrai info
 	[ -f $$(dirname $$(which arrai))/ai ] || ln -s arrai $$(dirname $$(which arrai))/ai
 	[ -f $$(dirname $$(which arrai))/ax ] || ln -s arrai $$(dirname $$(which arrai))/ax
 
