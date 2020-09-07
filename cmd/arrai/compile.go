@@ -3,7 +3,6 @@ package main
 import (
 	"bytes"
 	"context"
-	"os"
 	"os/exec"
 	"path"
 	"path/filepath"
@@ -47,10 +46,6 @@ func main() {
     }
 }
 `
-
-type bin struct {
-	Data string
-}
 
 var compileCommand = &cli.Command{
 	Name:    "compile",
@@ -107,7 +102,7 @@ func createGoFile(bundledScripts []byte) ([]byte, error) {
 	}
 
 	mainGo := bytes.Buffer{}
-	if err := mainFile.Execute(&mainGo, bin{strings.Join(data, ",")}); err != nil {
+	if err := mainFile.Execute(&mainGo, struct{ Data string }{strings.Join(data, ",")}); err != nil {
 		return nil, err
 	}
 	return mainGo.Bytes(), nil
