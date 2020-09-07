@@ -7,27 +7,31 @@ jobs:
     name: Lint
     runs-on: ubuntu-latest
     steps:
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v2
 
-    - name: Set up Go 1.14
-      uses: actions/setup-go@v1
-      with:
-        go-version: 1.14
-      id: go
+      - uses: Logerfo/newline-action@0.0.2
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+  
+      - name: Run golangci-lint
+        uses: golangci/golangci-lint-action@v2
+        with:
+          version: v1.29
 
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    container: golang:1.14-stretch
+    steps:
     - name: Check out code into the Go module directory
-      uses: actions/checkout@v1
+      uses: actions/checkout@v2
 
-    - uses: Logerfo/newline-action@0.0.2
-      with:
-        github-token: ${{ secrets.GITHUB_TOKEN }}
+    - name: Get dependencies
+      run: go get -v -t -d ./...
 
-    - name: Install golangci-lint
-      run: go get github.com/golangci/golangci-lint/cmd/golangci-lint
-
-    - name: Run linters
-      run: |
-        export PATH=$PATH:$(go env GOPATH)/bin   
-        golangci-lint run -e unused ./...
+    - name: Build
+      run: go build -v -race ./cmd/arrai
 
   test:
     name: Test
@@ -36,7 +40,6 @@ jobs:
         platform: [ubuntu-latest, macos-latest, windows-latest]
     runs-on: ${{ matrix.platform }}
     steps:
-
     - name: Set up Go 1.14
       if: success()
       uses: actions/setup-go@v1
@@ -44,7 +47,7 @@ jobs:
         go-version: 1.14
 
     - name: Check out code into the Go module directory
-      uses: actions/checkout@v1
+      uses: actions/checkout@v2
 
     - name: Run tests
       run: make test
@@ -52,50 +55,36 @@ jobs:
   coverage:
     name: Coverage
     runs-on: ubuntu-latest
+    container: golang:1.14-stretch
     steps:
-
-    - name: Set up Go 1.14
-      uses: actions/setup-go@v1
-      with:
-        go-version: 1.14
-      id: go
-
     - name: Check out code into the Go module directory
-      uses: actions/checkout@v1
+      uses: actions/checkout@v2
 
-    - name: Calc coverage 
-      run: |
-        export PATH=$PATH:$(go env GOPATH)/bin   
-        go test -v -covermode=atomic -coverprofile=coverage.out -race ./...
+    - name: Calculate coverage
+      run: go test -v -covermode=atomic -coverprofile=coverage.out -race ./...
 
     - name: Convert coverage to lcov
-      uses: jandelgado/gcov2lcov-action@v1.0.0
+      uses: jandelgado/gcov2lcov-action@v1.0.2
       with:
           infile: coverage.out
           outfile: coverage.lcov
 
     - name: Coveralls
-      uses: coverallsapp/github-action@v1.0.1
+      uses: coverallsapp/github-action@v1.0.2
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
         path-to-lcov: coverage.lcov
 
-  build:
-    name: Build
+  downstream:
+    name: Test downstream repos
     runs-on: ubuntu-latest
+    container: golang:1.14-stretch
     steps:
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v2
 
-    - name: Set up Go 1.14
-      uses: actions/setup-go@v1
-      with:
-        go-version: 1.14
-      id: go
-
-    - name: Check out code into the Go module directory
-      uses: actions/checkout@v1
-
-    - name: Get dependencies
-      run: go get -v -t -d ./...
-
-    - name: Build
-      run: go build -v -race ./cmd/arrai
+      - name: Run downstream tests
+        env:
+          DOWNSTREAM_TEST: ${{ secrets.DOWNSTREAM_TEST }}
+          ORG_GITHUB_TOKEN: ${{ secrets.ORG_GITHUB_TOKEN }}
+        run: eval "${DOWNSTREAM_TEST:-echo 'no downstream repos to test'}"
