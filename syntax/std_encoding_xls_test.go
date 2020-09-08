@@ -15,14 +15,20 @@ func TestXlsDecode(t *testing.T) {
 			(3, 'bar', 'Checking', '200'),
 			(4, 'bar', 'Savings', '300'),
 		}`,
-		`//encoding.xls.decode(//os.file('../examples/xlsx/foo.xlsx'), 0)`)
+		`//encoding.xls.decodeToRelation(//os.file('../examples/xlsx/foo.xlsx'), 0)`)
 }
 
 func TestXlsDecode_error(t *testing.T) {
 	t.Parallel()
 
-	AssertCodeErrors(t, "first arg to xls.decode must be string or bytes, not *rel.GenericTuple", `//encoding.xls.decode((), 0)`)
+	AssertCodeErrors(t,
+		"first arg to xls.decodeToRelation must be string or bytes, not *rel.GenericTuple",
+		`//encoding.xls.decodeToRelation((), 0)`)
 
-	AssertCodeErrors(t, "second arg to xls.decode must be integer, not *rel.GenericTuple", `//encoding.xls.decode(<<"1">>, ())`)
-	AssertCodeErrors(t, "second arg to xls.decode must be integer, not 1.5", `//encoding.xls.decode(<<"1">>, 1.5)`)
+	AssertCodeErrors(t,
+		"second arg to xls.decodeToRelation must be integer, not *rel.GenericTuple",
+		`//encoding.xls.decodeToRelation(<<"1">>, ())`)
+	AssertCodeErrors(t,
+		"second arg to xls.decodeToRelation must be integer, not 1.5",
+		`//encoding.xls.decodeToRelation(<<"1">>, 1.5)`)
 }
