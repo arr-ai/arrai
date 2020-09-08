@@ -79,7 +79,7 @@ func bytesXlsxToArrai(bs []byte, sheetIndex int) (rel.Value, error) {
 			if err != nil {
 				return "", err
 			}
-			if col+1 >= scol && col+1 <= ecol && row >= srow && row <= erow {
+			if col+1 >= scol && col+1 <= ecol && row+1 >= srow && row+1 <= erow {
 				return m.GetCellValue(), nil
 			}
 		}
@@ -94,6 +94,7 @@ func bytesXlsxToArrai(bs []byte, sheetIndex int) (rel.Value, error) {
 	rowTuples := []rel.Value{}
 	for i := 1; i < len(rows); i++ {
 		attrs := []rel.Attr{rel.NewIntAttr("@row", i)}
+		hasVals := false
 		for j, name := range cols {
 			if name == "" {
 				continue
@@ -102,9 +103,12 @@ func bytesXlsxToArrai(bs []byte, sheetIndex int) (rel.Value, error) {
 			if err != nil {
 				return nil, err
 			}
+			if val != "" {
+				hasVals = true
+			}
 			attrs = append(attrs, rel.NewStringAttr(name, []rune(val)))
 		}
-		if len(attrs) > 0 {
+		if hasVals && len(attrs) > 0 {
 			rowTuples = append(rowTuples, rel.NewTuple(attrs...))
 		}
 	}
