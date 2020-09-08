@@ -16,7 +16,7 @@ It touches a variety of edge cases that XLSX decoding is designed to handle, inc
 - Rows with no values are ignored.
 - Values after the last header column are ignored.
 - Formatting is ignored altogether.
-- Column names are snaked_cased, with capital letters used as WorkBreaks (`=> word_breaks`).
+- Column names are snaked_cased, with capital letters used as WordBreaks (`=> word_breaks`).
 - Merged cells are treated as though the merged value was copied to every merged cell.
 
 The output is the relation:
