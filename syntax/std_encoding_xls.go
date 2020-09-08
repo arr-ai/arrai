@@ -3,11 +3,11 @@ package syntax
 import (
 	"bytes"
 	"context"
-	"fmt"
+	"strings"
+
 	"github.com/360EntSecGroup-Skylar/excelize/v2"
 	"github.com/go-errors/errors"
 	"github.com/iancoleman/strcase"
-	"strings"
 
 	"github.com/arr-ai/arrai/rel"
 )
@@ -47,7 +47,7 @@ func bytesXlsxToArrai(bs []byte, sheetIndex int) (rel.Value, error) {
 	}
 	sheets := f.GetSheetList()
 	if len(sheets) < sheetIndex+1 {
-		return nil, fmt.Errorf("no sheet at index %d", sheetIndex)
+		return nil, errors.Errorf("no sheet at index %d", sheetIndex)
 	}
 	rows, err := f.GetRows(sheets[sheetIndex])
 	if err != nil {
@@ -58,26 +58,32 @@ func bytesXlsxToArrai(bs []byte, sheetIndex int) (rel.Value, error) {
 	if err != nil {
 		return nil, err
 	}
-	getValue := func(sheet [][]string, row, col int) string {
+	getValue := func(sheet [][]string, row, col int) (string, error) {
 		if row >= len(sheet) {
-			return ""
+			return "", nil
 		}
 		r := sheet[row]
 		if col >= len(r) {
-			return ""
+			return "", nil
 		}
 		cell := r[col]
 		if cell != "" {
-			return cell
+			return cell, nil
 		}
 		for _, m := range merges {
-			scol, srow, _ := excelize.CellNameToCoordinates(m.GetStartAxis())
-			ecol, erow, _ := excelize.CellNameToCoordinates(m.GetEndAxis())
+			scol, srow, err := excelize.CellNameToCoordinates(m.GetStartAxis())
+			if err != nil {
+				return "", err
+			}
+			ecol, erow, err := excelize.CellNameToCoordinates(m.GetEndAxis())
+			if err != nil {
+				return "", err
+			}
 			if col+1 >= scol && col+1 <= ecol && row >= srow && row <= erow {
-				return m.GetCellValue()
+				return m.GetCellValue(), nil
 			}
 		}
-		return ""
+		return "", nil
 	}
 
 	cols := []string{}
@@ -92,7 +98,10 @@ func bytesXlsxToArrai(bs []byte, sheetIndex int) (rel.Value, error) {
 			if name == "" {
 				continue
 			}
-			val := getValue(rows, i, j)
+			val, err := getValue(rows, i, j)
+			if err != nil {
+				return nil, err
+			}
 			attrs = append(attrs, rel.NewStringAttr(name, []rune(val)))
 		}
 		if len(attrs) > 0 {
