@@ -9,7 +9,7 @@ func stdEncoding() rel.Attr {
 	return rel.NewTupleAttr("encoding",
 		stdEncodingJSON(),
 		stdEncodingProto(),
-		stdEncodingXls(),
+		stdEncodingXlsx(),
 		stdEncodingYAML(),
 	)
 }

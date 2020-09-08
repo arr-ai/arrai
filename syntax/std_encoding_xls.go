@@ -12,9 +12,9 @@ import (
 	"github.com/arr-ai/arrai/rel"
 )
 
-func stdEncodingXls() rel.Attr {
+func stdEncodingXlsx() rel.Attr {
 	return rel.NewTupleAttr(
-		"xls",
+		"xlsx",
 		createFunc2Attr("decodeToRelation", func(_ context.Context, x, i rel.Value) (rel.Value, error) {
 			var bs []byte
 			switch b := x.(type) {
@@ -23,18 +23,18 @@ func stdEncodingXls() rel.Attr {
 			case rel.Bytes:
 				bs = b.Bytes()
 			default:
-				return nil, errors.Errorf("first arg to xls.decodeToRelation must be string or bytes, not %T", b)
+				return nil, errors.Errorf("first arg to xlsx.decodeToRelation must be string or bytes, not %T", b)
 			}
 
 			switch iv := i.(type) {
 			case rel.Number:
 				ix, ok := iv.Int()
 				if !ok {
-					return nil, errors.Errorf("second arg to xls.decodeToRelation must be integer, not %v", i)
+					return nil, errors.Errorf("second arg to xlsx.decodeToRelation must be integer, not %v", i)
 				}
 				return bytesXlsxToArrai(bs, ix)
 			default:
-				return nil, errors.Errorf("second arg to xls.decodeToRelation must be integer, not %T", i)
+				return nil, errors.Errorf("second arg to xlsx.decodeToRelation must be integer, not %T", i)
 			}
 		}),
 	)
