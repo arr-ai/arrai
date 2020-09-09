@@ -67,15 +67,15 @@ func TestDictCallAll(t *testing.T) {
 	}
 	dict := NewDict(false, kv(1, 10), kv(2, 20), kv(3, 30))
 	ctx := arraictx.InitRunCtx(context.Background())
-	AssertEqualValues(t, NewSet(NewNumber(10)), MustCallAll(ctx, dict, NewNumber(1)))
-	AssertEqualValues(t, NewSet(NewNumber(20)), MustCallAll(ctx, dict, NewNumber(2)))
-	AssertEqualValues(t, NewSet(NewNumber(30)), MustCallAll(ctx, dict, NewNumber(3)))
-	AssertEqualValues(t, None, MustCallAll(ctx, dict, NewNumber(4)))
+	AssertEqualValues(t, NewSet(NewNumber(10)), mustCallAll(ctx, dict, NewNumber(1)))
+	AssertEqualValues(t, NewSet(NewNumber(20)), mustCallAll(ctx, dict, NewNumber(2)))
+	AssertEqualValues(t, NewSet(NewNumber(30)), mustCallAll(ctx, dict, NewNumber(3)))
+	AssertEqualValues(t, None, mustCallAll(ctx, dict, NewNumber(4)))
 
 	dict = NewDict(true, kv(1, 10), kv(1, 11), kv(2, 20), kv(3, 30))
 
-	AssertEqualValues(t, NewSet(NewNumber(10), NewNumber(11)), MustCallAll(ctx, dict, NewNumber(1)))
-	AssertEqualValues(t, NewSet(NewNumber(20)), MustCallAll(ctx, dict, NewNumber(2)))
-	AssertEqualValues(t, NewSet(NewNumber(30)), MustCallAll(ctx, dict, NewNumber(3)))
-	AssertEqualValues(t, None, MustCallAll(ctx, dict, NewNumber(4)))
+	AssertEqualValues(t, NewSet(NewNumber(10), NewNumber(11)), mustCallAll(ctx, dict, NewNumber(1)))
+	AssertEqualValues(t, NewSet(NewNumber(20)), mustCallAll(ctx, dict, NewNumber(2)))
+	AssertEqualValues(t, NewSet(NewNumber(30)), mustCallAll(ctx, dict, NewNumber(3)))
+	AssertEqualValues(t, None, mustCallAll(ctx, dict, NewNumber(4)))
 }
