@@ -22,7 +22,6 @@ func TestDeprecatedExec(t *testing.T) {
 func TestDeprecatedExecError(t *testing.T) {
 	t.Parallel()
 
-	// TODO: Not sure why the stderr string looks the way it does.
 	AssertCodesEvalToSameValue(t, `(
 		args: ['ls', 'nonexistent'],
 		exitCode: 1,
