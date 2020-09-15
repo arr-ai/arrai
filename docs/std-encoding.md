@@ -24,7 +24,7 @@ Usage:
 
 | example | equals |
 |:-|:-|
-| `//encoding.json.decode('{"hi": "abc", "hello": 123}')` | `{"hello":123,"hi":"abc"}` |
+| `//encoding.json.decode('{"hi": "abc", "hello": 123}')` | `{'hello': 123, 'hi': (s: 'abc')}` |
 
 ## `//encoding.json.encode(jsonDefinition <: set) <: string|bytes`
 
