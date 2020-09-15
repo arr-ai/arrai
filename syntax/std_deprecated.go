@@ -11,7 +11,6 @@ import (
 )
 
 func stdDeprecated() rel.Attr {
-	logrus.Warn("//deprecated is deprecated and may break or disappear at any moment")
 	return rel.NewTupleAttr("deprecated",
 		stdDeprecatedExec(),
 	)
@@ -19,6 +18,8 @@ func stdDeprecated() rel.Attr {
 
 func stdDeprecatedExec() rel.Attr {
 	return rel.NewNativeFunctionAttr("exec", func(_ context.Context, value rel.Value) (rel.Value, error) {
+		logrus.Warn("//deprecated is deprecated and may break or disappear at any moment")
+
 		var cmd *exec.Cmd
 		switch t := value.(type) {
 		case rel.Array:
