@@ -27,12 +27,9 @@ func stdDeprecatedExec() rel.Attr {
 			}
 
 			name := t.Values()[0].String()
-			args := make([]string, len(t.Values()))
-			for i, v := range t.Values() {
-				if i == 0 {
-					continue
-				}
-				args = append(args, v.String())
+			args := make([]string, len(t.Values())-1)
+			for i, v := range t.Values()[1:] {
+				args[i] = v.String()
 			}
 			cmd = exec.Command(name, args...)
 		default:
