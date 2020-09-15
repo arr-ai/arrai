@@ -6,9 +6,9 @@ import (
 	"github.com/arr-ai/arrai/rel"
 )
 
-// FromArrai translates an arrai value to an object suitable for marshalling into json/yaml
+// FromArrai translates an arrai value to an object suitable for marshalling into json/yaml.
 //
-// FromArrai translation rules is the reverse of ToArrai
+// FromArrai translation rules is the reverse of ToArrai.
 func FromArrai(v rel.Value) (interface{}, error) {
 	switch v := v.(type) {
 	case rel.Number:
@@ -18,6 +18,8 @@ func FromArrai(v rel.Value) (interface{}, error) {
 		return v.Float64(), nil
 	case rel.String:
 		return v.String(), nil
+	case rel.Array:
+		return objFromArrai(v)
 	case *rel.GenericTuple:
 		if !v.IsTrue() {
 			return nil, nil
@@ -30,13 +32,13 @@ func FromArrai(v rel.Value) (interface{}, error) {
 			case rel.GenericSet:
 				return "", nil
 			case rel.String:
-				return FromArrai(str)
+				return str.String(), nil
 			}
 		}
 		if b, ok := v.Get("b"); ok {
 			return b.(rel.GenericSet).IsTrue(), nil
 		}
-		return objFromArrai(v)
+		return nil, fmt.Errorf("cannot convert tuple %s to an object", v)
 	case rel.GenericSet:
 		return map[string]interface{}{}, nil
 	case rel.Dict:
@@ -46,7 +48,7 @@ func FromArrai(v rel.Value) (interface{}, error) {
 	}
 }
 
-// Converts a binary relation {|@,@item|, |key,val|, ...} to an object
+// objFromArrai converts a binary relation {|@,@item|, |key,val|, ...} to an object.
 func objFromArrai(v rel.Value) (map[string]interface{}, error) {
 	s := v.(rel.Dict)
 	maps := make(map[string]interface{})
@@ -65,7 +67,7 @@ func objFromArrai(v rel.Value) (map[string]interface{}, error) {
 	return maps, nil
 }
 
-// Converts an arrai array to an array
+// arrFromArrai converts an arrai array to an array.
 func arrFromArrai(v rel.Value) ([]interface{}, error) {
 	switch s := v.(type) {
 	case rel.GenericSet:

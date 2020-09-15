@@ -7,10 +7,11 @@ func TestJSONDecode(t *testing.T) {
 	AssertCodesEvalToSameValue(t, "()", `//encoding.json.decode('null')`)
 	AssertCodesEvalToSameValue(t, "{}", `//encoding.json.decode('{}')`)
 	AssertCodesEvalToSameValue(t, "(a: [])", `//encoding.json.decode('[]')`)
-	AssertCodesEvalToSameValue(t, "123", `//encoding.json.decode(123)`)
+	AssertCodeErrors(t, "", `//encoding.json.decode(123)`)
+	AssertCodesEvalToSameValue(t, "123", `//encoding.json.decode('123')`)
 
-	expected := arraiString()
-	encoding := jsonString()
+	expected := testArraiString()
+	encoding := testJSONString()
 
 	// String
 	AssertCodesEvalToSameValue(t, expected, `//encoding.json.decode(`+encoding+`)`)
@@ -25,13 +26,13 @@ func TestJSONEncode(t *testing.T) {
 	AssertCodesEvalToSameValue(t, `<<'[]'>>`, `//encoding.json.encode((a: []))`)
 	AssertCodesEvalToSameValue(t, `<<'123'>>`, `//encoding.json.encode(123)`)
 
-	encoding := arraiString()
+	encoding := testArraiString()
 	expected := `<<'{"a":"string","b":123,"c":123.321,"d":[1,"string again",[],{}],"e":{"f":{"g":"321"},"h":[]},"i":null,"j":[true,false],"k":""}'>>` //nolint:lll
 
 	AssertCodesEvalToSameValue(t, expected, `//encoding.json.encode(`+encoding+`)`)
 }
 
-func jsonString() string {
+func testJSONString() string {
 	return `'{
 		"a": "string",
 		"b": 123,
@@ -49,7 +50,7 @@ func jsonString() string {
 	}'`
 }
 
-func arraiString() string {
+func testArraiString() string {
 	return `{
 		"a": (s: "string"),
 		"b": 123,

@@ -2,6 +2,13 @@ package syntax
 
 import "testing"
 
+func TestNest(t *testing.T) {
+	AssertCodesEvalToSameValue(t,
+		`{{(a: 1, z: {(b: 3, c: 5)})}, {(a: 2, z: {(b: 4, c: 6)})}}`,
+		`{{(a: 1, b: 3, c: 5)}, {(a: 2, b: 4, c: 6)}} => ((.) nest ~|a|z)`,
+	)
+}
+
 func TestInverseNest(t *testing.T) {
 	t.Parallel()
 
@@ -21,5 +28,7 @@ func TestInverseNest(t *testing.T) {
 		`nest attrs (|b|) not a subset of relation attrs (|x, y, z|)`,
 		`{|x, y, z| (1, 1, 2), (1, 1, 3), (1, 2, 4), (1, 3, 5)} nest ~|b|a`,
 	)
-	AssertCodePanics(t, `{(x: 1, y: 1), (x: 1, y: 2, z: 3)} nest ~|x|a`)
+	AssertCodeErrors(t,
+		"not a relation; inconsistent attribute names between tuples",
+		`{(x: 1, y: 1), (x: 1, y: 2, z: 3)} nest ~|x|a`)
 }

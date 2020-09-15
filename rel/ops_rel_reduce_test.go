@@ -4,10 +4,11 @@ import (
 	"testing"
 )
 
-var nestData = intPairs("a", "b", []intPair{
+var testNestData = intPairs("a", "b", []intPair{
 	{1, 1}, {1, 2}, {1, 3},
 	{2, 1}, {2, 2},
 }...)
+var testNestNames = NewNames("a", "b")
 
 func TestNestA(t *testing.T) {
 	t.Parallel()
@@ -27,7 +28,7 @@ func TestNestA(t *testing.T) {
 				{"g", intRel("a", 1)},
 			}...),
 		),
-		Nest(nestData, NewNames("a"), "g"),
+		Nest(testNestData, testNestNames, NewNames("a"), "g"),
 	)
 }
 
@@ -45,7 +46,7 @@ func TestNestB(t *testing.T) {
 				{"g", intRel("b", 1, 2)},
 			}...),
 		),
-		Nest(nestData, NewNames("b"), "g"),
+		Nest(testNestData, testNestNames, NewNames("b"), "g"),
 	)
 }
 
@@ -65,11 +66,15 @@ func TestNestAThenB(t *testing.T) {
 		),
 		Nest(
 			Nest(
-				nestData,
+				testNestData,
+				testNestNames,
 				NewNames("a"),
-				"g"),
+				"g",
+			),
+			NewNames("b", "g"),
 			NewNames("b"),
-			"h"),
+			"h",
+		),
 	)
 }
 
@@ -89,10 +94,14 @@ func TestNestBThenA(t *testing.T) {
 		),
 		Nest(
 			Nest(
-				nestData,
+				testNestData,
+				testNestNames,
 				NewNames("b"),
-				"h"),
+				"h",
+			),
+			NewNames("a", "h"),
 			NewNames("a"),
-			"g"),
+			"g",
+		),
 	)
 }
