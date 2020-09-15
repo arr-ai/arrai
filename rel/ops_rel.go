@@ -16,16 +16,19 @@ func RelationAttrs(a Set) (Names, error) {
 	}
 	t, is := e.Current().(Tuple)
 	if !is {
-		return Names{}, fmt.Errorf("not a relation; has non-tuple element(s)")
+		return Names{}, fmt.Errorf("not a relation; has non-tuple element(s) (e.g.: %T)", t)
 	}
 	names := t.Names()
 	for e.MoveNext() {
 		t, is := e.Current().(Tuple)
 		if !is {
-			return Names{}, fmt.Errorf("not a relation; has non-tuple element(s)")
+			return Names{}, fmt.Errorf("not a relation; has non-tuple element(s) (e.g.: %T)", t)
 		}
 		if !names.Equal(t.Names()) {
-			return Names{}, fmt.Errorf("not a relation; inconsistent attribute names between tuples")
+			return Names{}, fmt.Errorf(
+				"not a relation; inconsistent attribute names between tuples (e.g.: %v vs %v)",
+				names, t.Names(),
+			)
 		}
 	}
 	return names, nil

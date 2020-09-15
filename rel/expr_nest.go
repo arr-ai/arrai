@@ -3,7 +3,6 @@ package rel
 import (
 	"context"
 	"fmt"
-	"log"
 
 	"github.com/arr-ai/wbnf/parser"
 	"github.com/go-errors/errors"
@@ -35,7 +34,6 @@ func (e *NestExpr) Eval(ctx context.Context, local Scope) (Value, error) {
 		return nil, WrapContextErr(err, e, local)
 	}
 	if set, ok := value.(Set); ok {
-		log.Print(e)
 		relAttrs, err := RelationAttrs(set)
 		if err != nil {
 			return nil, err
