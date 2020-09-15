@@ -2,6 +2,7 @@ package rel
 
 import (
 	"context"
+	"fmt"
 	"reflect"
 
 	"github.com/arr-ai/hash"
@@ -239,7 +240,11 @@ func (b Bytes) Where(p func(v Value) (bool, error)) (Set, error) {
 }
 
 func (b Bytes) CallAll(_ context.Context, arg Value) (Set, error) {
-	i := int(arg.(Number).Float64()) - b.offset
+	n, ok := arg.(Number)
+	if !ok {
+		return nil, fmt.Errorf("CallAll arg must be a number, not %T", arg)
+	}
+	i := int(n.Float64()) - b.offset
 	if i < 0 || i >= len(b.Bytes()) {
 		return None, nil
 	}
