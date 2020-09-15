@@ -19,8 +19,8 @@ var outFlag = &cli.StringFlag{
 }
 
 var extFlag = &cli.StringFlag{
-	Name:    "ext",
-	Usage:   "Control output behaviour",
+	Name:  "ext",
+	Usage: "Control output behaviour",
 }
 
 var evalCommand = &cli.Command{
