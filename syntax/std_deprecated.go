@@ -6,7 +6,6 @@ import (
 
 	"github.com/arr-ai/arrai/rel"
 	"github.com/go-errors/errors"
-	"github.com/google/shlex"
 	"github.com/sirupsen/logrus"
 )
 
@@ -36,19 +35,26 @@ func stdDeprecatedExec() rel.Attr {
 				args = append(args, v.String())
 			}
 			cmd = exec.Command(name, args...)
-		case rel.String:
-			args, err := shlex.Split(t.String())
-			if err != nil {
+		default:
+			return nil, errors.Errorf("//deprecated.exec arg must be an array, not %T", value)
+		}
+
+		var stderr []byte
+		status := 0
+		stdout, err := cmd.Output()
+		if err != nil {
+			exit, ok := err.(*exec.ExitError)
+			if !ok {
 				return nil, err
 			}
-			cmd = exec.Command(args[0], args[1:]...)
-		default:
-			return nil, errors.Errorf("//deprecated.exec arg must be a string or array, not %T", value)
+			stderr = exit.Stderr
+			status = exit.ExitCode()
 		}
-		out, err := cmd.Output()
-		if err != nil {
-			return nil, err
-		}
-		return rel.NewBytes(out), nil
+		return rel.NewTuple(
+			rel.NewAttr("args", value.(rel.Array)),
+			rel.NewAttr("exitCode", rel.NewNumber(float64(status))),
+			rel.NewAttr("stdout", rel.NewBytes(stdout)),
+			rel.NewAttr("stderr", rel.NewBytes(stderr)),
+		), nil
 	})
 }
