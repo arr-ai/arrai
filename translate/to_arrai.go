@@ -6,7 +6,7 @@ import (
 	"github.com/arr-ai/arrai/rel"
 )
 
-// ToArrai translates an object unmarshalled from json/yaml into an arrai value
+// ToArrai translates an object unmarshalled from json/yaml into an arrai value.
 //
 // translation follows the rules
 //
@@ -49,7 +49,7 @@ func ToArrai(data interface{}) (rel.Value, error) {
 	}
 }
 
-// Converts an object to a binary relation {|@,@item|, |key,val|, ...}
+// objToArrai converts an object to a binary relation {|@,@item|, |key,val|, ...}.
 func objToArrai(data map[string]interface{}) (rel.Value, error) {
 	tuples := make([]rel.Value, len(data))
 	i := 0
@@ -65,7 +65,7 @@ func objToArrai(data map[string]interface{}) (rel.Value, error) {
 	return rel.NewSet(tuples...), nil
 }
 
-// Converts an array to an arrai array
+// arrToArrai converts an array to an arrai array.
 func arrToArrai(data []interface{}) (rel.Value, error) {
 	elts := make([]rel.Value, len(data))
 	for i, val := range data {

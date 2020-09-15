@@ -19,8 +19,6 @@ func stdEncodingJSON() rel.Attr {
 				bytes = []byte(v.String())
 			case rel.Bytes:
 				bytes = v.Bytes()
-			case rel.Number:
-				bytes = []byte(v.String())
 			default:
 				return nil, fmt.Errorf("unexpected arrai object type: %T", v)
 			}
