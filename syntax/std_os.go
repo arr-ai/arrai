@@ -22,7 +22,6 @@ func stdOs() rel.Attr {
 		rel.NewNativeFunctionAttr("get_env", stdOsGetEnv),
 		rel.NewNativeFunctionAttr("&stdin", stdOsStdinVar.read),
 		rel.NewNativeFunctionAttr("isatty", stdOsIsATty),
-		rel.NewNativeFunctionAttr("exec", stdOsExec),
 	)
 }
 
