@@ -15,7 +15,7 @@ type SingleNestExpr struct {
 	attr string
 }
 
-// NewSingleNestExpr returns a new NestExpr.
+// NewSingleNestExpr returns a new SingleNestExpr.
 func NewSingleNestExpr(scanner parser.Scanner, lhs Expr, attr string) Expr {
 	return &SingleNestExpr{ExprScanner{scanner}, lhs, attr}
 }
