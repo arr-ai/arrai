@@ -30,7 +30,7 @@ type Value interface {
 	// Kind returns a number that is unique for each major kind of Value.
 	Kind() int
 
-	// Bool returns true iff the Value is non-zero or non-empty.
+	// IsTrue returns true iff the Value is non-zero or non-empty.
 	IsTrue() bool
 
 	// Less return true iff the Value is less than v. Number < Tuple < Set.
@@ -104,11 +104,14 @@ type ValueEnumerator interface {
 	Current() Value
 }
 
+// OffsetValueEnumerator defines an enumerator that can report the offset of
+// each element it enumerates.
 type OffsetValueEnumerator interface {
 	ValueEnumerator
 	Offset() int
 }
 
+// Less defines a comparator that returns true iff a < b.
 type Less func(a, b Value) bool
 
 // Set represents a Set of Values.
@@ -130,6 +133,7 @@ type Set interface {
 	ArrayEnumerator() (OffsetValueEnumerator, bool)
 }
 
+// NoReturnError is an error signififying that there was no return value.
 type NoReturnError struct {
 	input Value
 	s     Set
@@ -139,35 +143,30 @@ func (n NoReturnError) Error() string {
 	return fmt.Sprintf("Call: no return values for input %v from set %v", n.input, n.s)
 }
 
+// SetCall is a convenience wrapper to call a set and return the result or an
+// error if there isn't exactly one result.
 func SetCall(ctx context.Context, s Set, arg Value) (Value, error) {
-	result, err := s.CallAll(ctx, arg)
+	all, err := s.CallAll(ctx, arg)
 	if err != nil {
 		return nil, err
 	}
-	if !result.IsTrue() {
+	e := all.Enumerator()
+	if !e.MoveNext() {
 		return nil, NoReturnError{input: arg, s: s}
 	}
-	for i, e := 1, result.Enumerator(); e.MoveNext(); i++ {
-		if i > 1 {
-			return nil, fmt.Errorf("call: too many return values from set %v: %v", s, result)
-		}
+	result := e.Current()
+	if e.MoveNext() {
+		return nil, fmt.Errorf("call: too many return values from set %v: %v", s, all)
 	}
-	return SetAny(result), nil
+	return result, nil
 }
 
-func MustCallAll(ctx context.Context, s Set, v Value) Value {
+func mustCallAll(ctx context.Context, s Set, v Value) Value {
 	result, err := s.CallAll(ctx, v)
 	if err != nil {
 		panic(err)
 	}
 	return result
-}
-
-func SetAny(s Set) Value {
-	for e := s.Enumerator(); e.MoveNext(); {
-		return e.Current()
-	}
-	panic("SetAny: set is empty")
 }
 
 // NewValue constructs a new value from a Go value.

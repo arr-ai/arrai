@@ -1,12 +1,12 @@
 package rel
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/arr-ai/wbnf/parser"
 )
 
+// ExprScanner represents the source location of an Expr.
 type ExprScanner struct {
 	Src parser.Scanner
 }
@@ -23,6 +23,7 @@ type ContextErr struct {
 	scope  Scope
 }
 
+// NewContextErr creates a ContextErr.
 func NewContextErr(err error, source parser.Scanner, scope Scope) ContextErr {
 	return ContextErr{err, source, scope}
 }
@@ -70,19 +71,17 @@ func (c ContextErr) GetImportantFrames() []ContextErr {
 	return []ContextErr{c}
 }
 
+// GetScope gets the scope of a ContextErr.
 func (c ContextErr) GetScope() Scope {
 	return c.scope
 }
 
+// GetSource gets the source of a ContextErr.
 func (c ContextErr) GetSource() parser.Scanner {
 	return c.source
 }
 
+// WrapContextErr wraps an error in a ContextErr
 func WrapContextErr(err error, expr Expr, scope Scope) error {
 	return ContextErr{err, expr.Source(), scope}
-}
-
-func EvalExpr(ctx context.Context, expr Expr, local Scope) (_ Value, err error) {
-	//TODO: this is only the initial scope, how to get the last scope?
-	return expr.Eval(ctx, local)
 }

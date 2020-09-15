@@ -37,7 +37,7 @@ func (e *UnnestExpr) Eval(ctx context.Context, local Scope) (Value, error) {
 		return nil, WrapContextErr(err, e, local)
 	}
 	if set, ok := value.(Set); ok {
-		return Unnest(set, e.attr), nil
+		return Unnest(set, e.attr)
 	}
 	return nil, WrapContextErr(errors.Errorf("unnest not applicable to %T", value), e, local)
 }
