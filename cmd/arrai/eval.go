@@ -18,6 +18,11 @@ var outFlag = &cli.StringFlag{
 	Usage:   "Control output behaviour",
 }
 
+var extFlag = &cli.StringFlag{
+	Name:    "ext",
+	Usage:   "Control output behaviour",
+}
+
 var evalCommand = &cli.Command{
 	Name:    "eval",
 	Aliases: []string{"e"},
