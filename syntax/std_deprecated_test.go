@@ -23,11 +23,11 @@ func TestDeprecatedExecError(t *testing.T) {
 	t.Parallel()
 
 	AssertCodesEvalToSameValue(t, `(
-		args: ['ls', 'nonexistent'],
+		args: ['cat', 'nonexistent'],
 		exitCode: 1,
 		stdout: {},
-		stderr: <<'ls: nonexistent: No such file or directory\n'>>,
-	)`, `//deprecated.exec(['ls', 'nonexistent'])`)
+		stderr: <<'cat: nonexistent: No such file or directory\n'>>,
+	)`, `//deprecated.exec(['cat', 'nonexistent'])`)
 }
 
 func TestDeprecatedExecFail(t *testing.T) {
