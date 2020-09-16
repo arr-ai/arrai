@@ -318,6 +318,7 @@ func bundleRemoteFile(ctx context.Context, url string, source []byte) error {
 }
 
 func toUnixPath(p string) string {
+	//nolint:goconst
 	if runtime.GOOS == "windows" {
 		if vol := filepath.VolumeName(p); strings.HasPrefix(p, vol) {
 			p = strings.TrimPrefix(p, vol)
