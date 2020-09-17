@@ -20,6 +20,8 @@ func EvalWithScope(ctx context.Context, path, source string, scope rel.Scope) (r
 	return value, nil
 }
 
+// EvaluateExpr evaluate the passed in arrai script `source` and returns the evaluated arrai value.
+// Parameter `path` is used as source context, could be empty.
 func EvaluateExpr(ctx context.Context, path, source string) (rel.Value, error) {
 	return EvalWithScope(ctx, path, source, rel.Scope{})
 }
