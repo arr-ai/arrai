@@ -120,6 +120,7 @@ func StdScope() rel.Scope {
 				stdBits(),
 				stdFmt(),
 				stdRuntime(),
+				stdDeprecated(),
 			))
 	})
 	return stdScopeVar
