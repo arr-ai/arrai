@@ -14,6 +14,8 @@ func TestRelUnion(t *testing.T) {
 func TestRelUnionError(t *testing.T) {
 	t.Parallel()
 
-	AssertCodeErrors(t, `arg to //rel.union must be set, not *rel.GenericTuple`, `//rel.union(())`)
-	AssertCodeErrors(t, `elems of set arg to //rel.union must be sets, not *rel.GenericTuple`, `//rel.union({()})`)
+	AssertCodeErrors(t, `arg to //rel.union must be set, not tuple`, `//rel.union(())`)
+	AssertCodeErrors(t, `elems of set arg to //rel.union must be sets, not tuple`, `//rel.union({()})`)
+	// FIXME: This should error with "arg to //rel.union must be set, not closure".
+	AssertCodePanics(t, `//rel.union(\x x)`)
 }
