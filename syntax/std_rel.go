@@ -2,6 +2,7 @@ package syntax
 
 import (
 	"context"
+
 	"github.com/arr-ai/arrai/tools"
 
 	"github.com/go-errors/errors"
