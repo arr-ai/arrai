@@ -3,6 +3,7 @@ package rel
 import (
 	"context"
 	"fmt"
+	"github.com/go-errors/errors"
 	"reflect"
 	"sort"
 	"strings"
@@ -49,7 +50,7 @@ func NewDict(allowDupKeys bool, entries ...DictEntryTuple) (Set, error) {
 	for _, entry := range entries {
 		if v, has := mb.Get(entry.at); has {
 			if !allowDupKeys {
-				return nil, fmt.Errorf("duplicate key: %v", entry.at)
+				return nil, errors.Errorf("duplicate key: %v", entry.at)
 			}
 			switch v := v.(type) {
 			case multipleValues:
