@@ -64,7 +64,7 @@ func (b BytesExpr) Eval(ctx context.Context, local Scope) (Value, error) {
 
 func (b BytesExpr) handleOffset(s String) error {
 	if s.offset != 0 {
-		return errors.Errorf("BytesExpr.Eval: offsetted String is not supported: %v", s)
+		return errors.Errorf("BytesExpr.Eval: offset string is not supported: %v", s)
 	}
 	return nil
 }
