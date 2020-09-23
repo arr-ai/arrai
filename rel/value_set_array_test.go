@@ -4,6 +4,8 @@ import (
 	"context"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+
 	"github.com/arr-ai/arrai/pkg/arraictx"
 	"github.com/stretchr/testify/require"
 )
@@ -103,6 +105,9 @@ func TestArrayCallAll(t *testing.T) {
 	AssertEqualValues(t, MustNewSet(NewNumber(12)), mustCallAll(ctx, three, NewNumber(4)))
 	AssertEqualValues(t, None, mustCallAll(ctx, three, NewNumber(1)))
 	AssertEqualValues(t, None, mustCallAll(ctx, three, NewNumber(5)))
+
+	_, err := three.CallAll(ctx, NewString([]rune("0")))
+	assert.Error(t, err, `arg to CallAll must be a number, not rel.String`)
 }
 
 func TestArrayWhere(t *testing.T) {
