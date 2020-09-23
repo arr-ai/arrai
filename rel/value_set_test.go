@@ -33,7 +33,7 @@ func TestAsString(t *testing.T) {
 func TestGenericSetCallAll(t *testing.T) {
 	t.Parallel()
 
-	set := NewSet(
+	set := MustNewSet(
 		NewTuple(
 			NewAttr("@", NewNumber(1)),
 			NewAttr("@fooo", NewNumber(42)),

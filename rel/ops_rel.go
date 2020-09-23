@@ -54,7 +54,7 @@ func nestWithFunc(a Set, relAttrs, attrs Names, attr string, fn func(Set, Tuple)
 			for e := tuples.Enumerator(); e.MoveNext(); {
 				nested = fn(nested, e.Current().(Tuple))
 			}
-			return NewSet(Merge(key.(Tuple), NewTuple(Attr{attr, nested})))
+			return MustNewSet(Merge(key.(Tuple), NewTuple(Attr{attr, nested})))
 		},
 	)
 }
@@ -129,7 +129,7 @@ func Reduce(
 
 	result := None
 	for i := buckets.Range(); i.Next(); {
-		result = Union(result, reduce(i.Key().(Value), i.Value().(Set)))
+		result, _ = Union(result, reduce(i.Key().(Value), i.Value().(Set)))
 	}
 	return result
 }
@@ -167,7 +167,7 @@ func Joiner(combine func(common Names, a, b Tuple) Tuple) func(a, b Set) (Set, e
 						))
 					}
 				}
-				return NewSet(values...)
+				return MustNewSet(values...)
 			},
 		), nil
 	}
@@ -254,7 +254,7 @@ func GenericJoin(
 		slots := v.([2]Set)
 		aSet := slots[aSlot]
 		bSet := slots[bSlot]
-		result = Union(result, join(key, aSet, bSet))
+		result, _ = Union(result, join(key, aSet, bSet))
 	}
 	return result
 }
@@ -283,7 +283,7 @@ func Concatenate(a, b Set) (Set, error) {
 		}
 		return nil, errors.Errorf("Mismatched elt in set + set: %v", elt)
 	}
-	return NewSet(values...), nil
+	return NewSet(values...)
 }
 
 // NConcatenate applies concatenate to one or more sets.

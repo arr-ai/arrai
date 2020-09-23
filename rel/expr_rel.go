@@ -53,22 +53,22 @@ func NewRelationExpr(scanner parser.Scanner, names []string, tuples ...[]Expr) (
 			charExprs = append(charExprs, e.(StringCharTupleExpr))
 		}
 		// TODO: Implement NewStringCharSetExpr.
-		return NewSetExpr(scanner, charExprs...), nil
+		return NewSetExpr(scanner, charExprs...)
 	case arrayItemTuples:
 		entryExprs := make([]Expr, 0, len(elements))
 		for _, e := range elements {
 			entryExprs = append(entryExprs, e.(ArrayItemTupleExpr))
 		}
 		// TODO: Implement NewArrayItemSetExpr.
-		return NewSetExpr(scanner, entryExprs...), nil
+		return NewSetExpr(scanner, entryExprs...)
 	case dictEntryTuples:
 		entryExprs := make([]DictEntryTupleExpr, 0, len(elements))
 		for _, e := range elements {
 			entryExprs = append(entryExprs, e.(DictEntryTupleExpr))
 		}
-		return NewDictExpr(scanner, true, false, entryExprs...), nil
+		return NewDictExpr(scanner, true, false, entryExprs...)
 	}
-	return NewSetExpr(scanner, elements...), nil
+	return NewSetExpr(scanner, elements...)
 }
 
 func newSetBinExpr(scanner parser.Scanner, a, b Expr, op string, f func(x, y Set) (Set, error)) Expr {
@@ -140,7 +140,7 @@ func NewLeftResidueExpr(scanner parser.Scanner, a, b Expr) Expr {
 
 // NewUnionExpr evaluates a | b.
 func NewUnionExpr(scanner parser.Scanner, a, b Expr) Expr {
-	return newSetBinExpr(scanner, a, b, "|", func(a, b Set) (Set, error) { return Union(a, b), nil })
+	return newSetBinExpr(scanner, a, b, "|", func(a, b Set) (Set, error) { return Union(a, b) })
 }
 
 // NewDiffExpr evaluates a &~ b.
@@ -150,7 +150,7 @@ func NewDiffExpr(scanner parser.Scanner, a, b Expr) Expr {
 
 // NewSymmDiffExpr evaluates a ~~ b.
 func NewSymmDiffExpr(scanner parser.Scanner, a, b Expr) Expr {
-	return newSetBinExpr(scanner, a, b, "~~", func(a, b Set) (Set, error) { return SymmetricDifference(a, b), nil })
+	return newSetBinExpr(scanner, a, b, "~~", func(a, b Set) (Set, error) { return SymmetricDifference(a, b) })
 }
 
 // NewConcatExpr evaluates a ++ b.

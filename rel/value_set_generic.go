@@ -27,8 +27,17 @@ var (
 	dictEntryTupleType  = reflect.TypeOf(DictEntryTuple{})
 )
 
+// MustNewSet constructs a genericSet from a set of Values, or panics if construction fails.
+func MustNewSet(values ...Value) Set {
+	s, err := NewSet(values...)
+	if err != nil {
+		panic(err)
+	}
+	return s
+}
+
 // NewSet constructs a genericSet from a set of Values.
-func NewSet(values ...Value) Set {
+func NewSet(values ...Value) (Set, error) {
 	set := None
 	if len(values) > 0 {
 		typ := reflect.TypeOf(values[0])
@@ -48,7 +57,7 @@ func NewSet(values ...Value) Set {
 				if !is {
 					panic("unsupported array expr")
 				}
-				return s
+				return s, nil
 			case bytesByteTupleType:
 				for _, value := range values {
 					set = set.With(value)
@@ -57,7 +66,7 @@ func NewSet(values ...Value) Set {
 				if !is {
 					panic("unsupported array expr")
 				}
-				return b
+				return b, nil
 			case arrayItemTupleType:
 				for _, value := range values {
 					set = set.With(value)
@@ -66,7 +75,7 @@ func NewSet(values ...Value) Set {
 				if !is {
 					panic("unsupported array expr")
 				}
-				return array
+				return array, nil
 			case dictEntryTupleType:
 				tuples := make([]DictEntryTuple, 0, len(values))
 				for _, value := range values {
@@ -79,10 +88,10 @@ func NewSet(values ...Value) Set {
 			set = set.With(value)
 		}
 	}
-	return set
+	return set, nil
 }
 
-func CanonicalSet(s Set) Set {
+func CanonicalSet(s Set) (Set, error) {
 	if s, ok := s.(GenericSet); ok {
 		values := make([]Value, 0, s.Count())
 		for e := s.Enumerator(); e.MoveNext(); {
@@ -90,7 +99,7 @@ func CanonicalSet(s Set) Set {
 		}
 		return NewSet(values...)
 	}
-	return s
+	return s, nil
 }
 
 // NewSetFrom constructs a genericSet from interfaces.
@@ -266,7 +275,7 @@ func (s GenericSet) Without(value Value) Set {
 
 // Map maps values per f.
 func (s GenericSet) Map(f func(v Value) (Value, error)) (Set, error) {
-	result := NewSet()
+	result, _ := NewSet()
 	for e := s.Enumerator(); e.MoveNext(); {
 		v, err := f(e.Current())
 		if err != nil {

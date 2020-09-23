@@ -29,7 +29,7 @@ func NIntersect(a Set, bs ...Set) Set {
 }
 
 // Union returns every Values that is in either input Set or both.
-func Union(a, b Set) Set {
+func Union(a, b Set) (Set, error) {
 	if ga, ok := a.(GenericSet); ok {
 		if gb, ok := b.(GenericSet); ok {
 			return CanonicalSet(GenericSet{set: ga.set.Union(gb.set)})
@@ -41,12 +41,16 @@ func Union(a, b Set) Set {
 	return CanonicalSet(a)
 }
 
-func NUnion(sets ...Set) Set {
+func NUnion(sets ...Set) (Set, error) {
+	var err error
 	result := None
 	for _, s := range sets {
-		result = Union(result, s)
+		result, err = Union(result, s)
+		if err != nil {
+			return nil, err
+		}
 	}
-	return result
+	return result, nil
 }
 
 // Difference returns every Value from the first Set that is not in the second.
@@ -64,10 +68,10 @@ func Difference(a, b Set) Set {
 }
 
 // SymmetricDifference returns Values in either Set, but not in both.
-func SymmetricDifference(a, b Set) Set {
+func SymmetricDifference(a, b Set) (Set, error) {
 	if ga, ok := a.(GenericSet); ok {
 		if gb, ok := b.(GenericSet); ok {
-			return GenericSet{set: ga.set.SymmetricDifference(gb.set)}
+			return GenericSet{set: ga.set.SymmetricDifference(gb.set)}, nil
 		}
 	}
 	return Union(Difference(a, b), Difference(b, a))
@@ -146,22 +150,29 @@ func (o *orderer) Swap(i, j int) {
 }
 
 // PowerSet computes the power set of a set.
-func PowerSet(s Set) Set {
+func PowerSet(s Set) (Set, error) {
 	if gs, ok := s.(GenericSet); ok {
 		var sb frozen.SetBuilder
 		for i := gs.set.Powerset().Range(); i.Next(); {
 			sb.Add(GenericSet{set: i.Value().(frozen.Set)})
 		}
-		return GenericSet{set: sb.Finish()}
+		return GenericSet{set: sb.Finish()}, nil
 	}
-	result := NewSet(None)
+	result, err := NewSet(None)
+	if err != nil {
+		return nil, err
+	}
 	for e := s.Enumerator(); e.MoveNext(); {
 		c := e.Current()
-		newSets := NewSet()
+		newSets, _ := NewSet()
 		for s := result.Enumerator(); s.MoveNext(); {
 			newSets = newSets.With(s.Current().(Set).With(c))
 		}
-		result = Union(result, newSets)
+		result, err = Union(result, newSets)
+		if err != nil {
+			return nil, err
+		}
+
 	}
-	return result
+	return result, nil
 }

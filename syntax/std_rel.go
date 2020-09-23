@@ -14,7 +14,7 @@ func stdRel() rel.Attr {
 			for e := s.Enumerator(); e.MoveNext(); {
 				sets = append(sets, e.Current().(rel.Set))
 			}
-			return rel.NUnion(sets...), nil
+			return rel.NUnion(sets...)
 		}),
 	)
 }

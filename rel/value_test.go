@@ -16,7 +16,7 @@ func TestSetCall(t *testing.T) {
 		return NewTuple(NewAttr("@", NewNumber(float64(at))), NewAttr("@foo", v))
 	}
 
-	set := NewSet(
+	set := MustNewSet(
 		foo(1, NewNumber(42)),
 		foo(1, NewNumber(24)),
 	)
@@ -26,7 +26,7 @@ func TestSetCall(t *testing.T) {
 	result, err = SetCall(ctx, set, NewNumber(0))
 	assert.Error(t, err, "%v", result)
 
-	set = NewSet(
+	set = MustNewSet(
 		foo(1, NewNumber(42)),
 		foo(2, NewNumber(24)),
 	)

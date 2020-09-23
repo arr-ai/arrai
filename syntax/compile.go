@@ -633,9 +633,9 @@ func (pc ParseContext) compileCondWithoutControlVar(ctx context.Context, c ast.C
 	}
 	if entryExprs != nil {
 		// Generates type DictExpr always to make sure it is easy to do Eval, only process type DictExpr.
-		result = rel.NewDictExpr(c.(ast.One).Node.Scanner(), false, true, entryExprs...)
+		result, _ = rel.NewDictExpr(c.(ast.One).Node.Scanner(), false, true, entryExprs...)
 	} else {
-		result = rel.NewDict(false)
+		result, _ = rel.NewDict(false)
 	}
 
 	// Note, the default case `_:expr` which can match anything is parsed to condition/value pairs by current syntax.
@@ -890,9 +890,13 @@ func (pc ParseContext) compileSet(ctx context.Context, b ast.Branch, c ast.Child
 		if err != nil {
 			return nil, err
 		}
-		return rel.NewSetExpr(scanner, exprs...), nil
+		return rel.NewSetExpr(scanner, exprs...)
 	}
-	return rel.NewLiteralExpr(scanner, rel.NewSet()), nil
+	s, err := rel.NewSet()
+	if err != nil {
+		return nil, err
+	}
+	return rel.NewLiteralExpr(scanner, s), nil
 }
 
 func (pc ParseContext) compileDict(ctx context.Context, b ast.Branch, c ast.Children) (rel.Expr, error) {
@@ -902,10 +906,14 @@ func (pc ParseContext) compileDict(ctx context.Context, b ast.Branch, c ast.Chil
 		return nil, err
 	}
 	if entryExprs != nil {
-		return rel.NewDictExpr(scanner, false, false, entryExprs...), nil
+		return rel.NewDictExpr(scanner, false, false, entryExprs...)
 	}
 
-	return rel.NewLiteralExpr(scanner, rel.NewDict(false)), nil
+	d, err := rel.NewDict(false)
+	if err != nil {
+		return nil, err
+	}
+	return rel.NewLiteralExpr(scanner, d), nil
 }
 
 func (pc ParseContext) compileDictEntryExprs(ctx context.Context, b ast.Branch) ([]rel.DictEntryTupleExpr, error) {

@@ -16,16 +16,20 @@ type SetExpr struct {
 }
 
 // NewSetExpr returns a new TupleExpr.
-func NewSetExpr(scanner parser.Scanner, elements ...Expr) Expr {
+func NewSetExpr(scanner parser.Scanner, elements ...Expr) (Expr, error) {
 	values := make([]Value, len(elements))
 	for i, expr := range elements {
 		value, is := exprIsValue(expr)
 		if !is {
-			return &SetExpr{ExprScanner{scanner}, elements}
+			return &SetExpr{ExprScanner{scanner}, elements}, nil
 		}
 		values[i] = value
 	}
-	return NewLiteralExpr(scanner, NewSet(values...))
+	s, err := NewSet(values...)
+	if err != nil {
+		return nil, err
+	}
+	return NewLiteralExpr(scanner, s), nil
 }
 
 // String returns a string representation of the expression.
@@ -52,7 +56,11 @@ func (e *SetExpr) Eval(ctx context.Context, local Scope) (Value, error) {
 		}
 		values = append(values, value)
 	}
-	return NewSet(values...), nil
+	s, err := NewSet(values...)
+	if err != nil {
+		return nil, WrapContextErr(err, e, local)
+	}
+	return s, nil
 }
 
 // NewIntersectExpr evaluates a <&> b.

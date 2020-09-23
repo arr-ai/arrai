@@ -96,11 +96,11 @@ func TestIsSimple(t *testing.T) {
 	assert.True(t, isSimple(rel.NewString([]rune("a"))))
 	assert.True(t, isSimple(rel.NewNumber(12345)))
 	assert.True(t, isSimple(rel.NewArray(rel.NewNumber(1))))
-	assert.True(t, isSimple(rel.NewSet()))
-	assert.True(t, isSimple(rel.NewSet(rel.NewString([]rune("a")), rel.NewNumber(12345))))
-	assert.True(t, isSimple(rel.NewDict(false)))
+	assert.True(t, isSimple(rel.MustNewSet()))
+	assert.True(t, isSimple(rel.MustNewSet(rel.NewString([]rune("a")), rel.NewNumber(12345))))
+	assert.True(t, isSimple(rel.MustNewDict(false)))
 
-	d := rel.NewDict(false, rel.NewDictEntryTuple(rel.NewString([]rune("a")), rel.NewNumber(1)))
+	d := rel.MustNewDict(false, rel.NewDictEntryTuple(rel.NewString([]rune("a")), rel.NewNumber(1)))
 	assert.False(t, isSimple(d))
 	assert.False(t, isSimple(rel.NewTuple(rel.NewAttr("a", rel.NewNumber(1)))))
 }
