@@ -895,7 +895,7 @@ func (pc ParseContext) compileSet(ctx context.Context, b ast.Branch, c ast.Child
 		}
 		return rel.NewSetExpr(scanner, exprs...)
 	}
-	return rel.NewLiteralExpr(scanner, rel.MustNewSet()), nil
+	return rel.NewLiteralExpr(scanner, rel.None), nil
 }
 
 func (pc ParseContext) compileDict(ctx context.Context, b ast.Branch, c ast.Children) (rel.Expr, error) {

@@ -277,7 +277,7 @@ func (s GenericSet) Without(value Value) Set {
 
 // Map maps values per f.
 func (s GenericSet) Map(f func(v Value) (Value, error)) (Set, error) {
-	result := MustNewSet()
+	result := None
 	for e := s.Enumerator(); e.MoveNext(); {
 		v, err := f(e.Current())
 		if err != nil {

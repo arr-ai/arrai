@@ -43,12 +43,12 @@ func Union(a, b Set) Set {
 	return CanonicalSet(a)
 }
 
-func NUnion(sets ...Set) (Set, error) {
+func NUnion(sets ...Set) Set {
 	result := None
 	for _, s := range sets {
 		result = Union(result, s)
 	}
-	return result, nil
+	return result
 }
 
 // Difference returns every Value from the first Set that is not in the second.
@@ -162,7 +162,7 @@ func PowerSet(s Set) (Set, error) {
 	}
 	for e := s.Enumerator(); e.MoveNext(); {
 		c := e.Current()
-		newSets := MustNewSet()
+		newSets := None
 		for s := result.Enumerator(); s.MoveNext(); {
 			newSets = newSets.With(s.Current().(Set).With(c))
 		}

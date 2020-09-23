@@ -44,7 +44,7 @@ func TestIntSetMatcherMixedTypes(t *testing.T) {
 
 	values := []int{}
 	matcher := NewSetMatcher(MatchInt(func(i int) { values = append(values, i) }))
-	set := MustNewSet(NewNumber(1), NewNumber(2), MustNewSet())
+	set := MustNewSet(NewNumber(1), NewNumber(2), None)
 
 	assert.Equal(t, false, matcher.Match(set))
 	assert.Equal(t, []int{}, values)

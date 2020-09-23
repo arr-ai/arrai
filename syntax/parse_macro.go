@@ -49,7 +49,7 @@ func (pc ParseContext) unpackMacro(
 		return Macro{ruleName: ruleName}, err
 	}
 
-	transform := rel.MustNewSet()
+	transform := rel.None
 	if transforms, ok := macroTuple.Get("@transform"); ok {
 		// If @transform is present but there is no named transform for ruleName, fail
 		// loudly rather than falling back on the default rule or nothing. A macro's

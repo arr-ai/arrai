@@ -222,7 +222,7 @@ func (s String) Without(value Value) Set {
 
 // Map maps values per f.
 func (s String) Map(f func(v Value) (Value, error)) (Set, error) {
-	result := MustNewSet()
+	result := None
 	for e := s.Enumerator().(*stringValueEnumerator); e.MoveNext(); {
 		v, err := f(e.currentStringCharTuple())
 		if err != nil {

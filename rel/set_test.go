@@ -11,7 +11,7 @@ import (
 
 func TestNewSet(t *testing.T) {
 	t.Parallel()
-	assert.NotNil(t, MustNewSet())
+	assert.NotNil(t, None)
 	assert.NotNil(t, MustNewSet(NewNumber(42)))
 }
 
@@ -20,7 +20,7 @@ func TestNewSetFrom(t *testing.T) {
 	a, err := NewSetFrom()
 	if assert.NoError(t, err) {
 		assert.Equal(t, 0, a.Count())
-		assert.Equal(t, MustNewSet(), a)
+		assert.Equal(t, None, a)
 	}
 	a, err = NewSetFrom(42)
 	if assert.NoError(t, err) {

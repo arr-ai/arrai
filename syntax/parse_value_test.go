@@ -68,8 +68,8 @@ func TestParseTuple(t *testing.T) {
 
 func TestParseSet(t *testing.T) { //nolint:dupl
 	t.Parallel()
-	assertParse(t, rel.MustNewSet(), `{}`)
-	assertParse(t, rel.MustNewSet(), `false`)
+	assertParse(t, rel.None, `{}`)
+	assertParse(t, rel.None, `false`)
 	assertParse(t, rel.MustNewSet(rel.NewNumber(1)), `{1}`)
 	assertParse(t, rel.MustNewSet(rel.NewNumber(1), rel.NewNumber(2)), `{1,2}`)
 	assertParse(t, rel.MustNewSet(
