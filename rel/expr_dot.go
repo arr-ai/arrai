@@ -3,7 +3,6 @@ package rel
 import (
 	"context"
 	"fmt"
-
 	"github.com/arr-ai/wbnf/parser"
 	"github.com/go-errors/errors"
 )
@@ -93,7 +92,7 @@ func (x *DotExpr) Eval(ctx context.Context, local Scope) (_ Value, err error) {
 		}
 		return nil, WrapContextErr(errors.Errorf("Cannot get attr %q from non-tuple set elt", x.attr), x, local)
 	default:
-		return nil, WrapContextErr(errors.Errorf(
-			"(%s).%s: lhs must be a Tuple, not %T", x.lhs, x.attr, a), x, local)
+		return nil, WrapContextErr(errors.Errorf("(%s).%s: lhs must be a tuple, not %s",
+			x.lhs, x.attr, ValueTypeAsString(a)), x, local)
 	}
 }

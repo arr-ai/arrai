@@ -56,7 +56,7 @@ func (b BytesExpr) Eval(ctx context.Context, local Scope) (Value, error) {
 			}
 			return nil, WrapContextErr(errors.Errorf("BytesExpr.Eval: Set %v is not supported", expr), b, local)
 		default:
-			return nil, WrapContextErr(errors.Errorf("BytesExpr.Eval: %T is not supported", v), b, local)
+			return nil, WrapContextErr(errors.Errorf("BytesExpr.Eval: %s is not supported", ValueTypeAsString(v)), b, local)
 		}
 	}
 	return NewBytes(bytes), nil

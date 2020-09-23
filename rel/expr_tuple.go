@@ -56,7 +56,7 @@ func (e *AttrExpr) Apply(
 			return tuple, nil
 		}
 		return nil, errors.Errorf(
-			"LHS of wildcard must be tuple, not %T", value)
+			"LHS of wildcard must be tuple, not %s", ValueTypeAsString(value))
 	}
 	tuple = tuple.With(e.name, value)
 	return tuple, nil

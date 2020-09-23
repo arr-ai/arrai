@@ -44,7 +44,7 @@ func FromArrai(v rel.Value) (interface{}, error) {
 	case rel.Dict:
 		return objFromArrai(v)
 	default:
-		return nil, fmt.Errorf("unexpected rel.Value type %T", v)
+		return nil, fmt.Errorf("unexpected rel.Value type %s", tools.ValueTypeAsString(v))
 	}
 }
 
@@ -88,6 +88,6 @@ func arrFromArrai(v rel.Value) ([]interface{}, error) {
 		}
 		return elts, nil
 	default:
-		return nil, fmt.Errorf("unexpected array type %T", s)
+		return nil, fmt.Errorf("unexpected array type %s", tools.ValueTypeAsString(s))
 	}
 }

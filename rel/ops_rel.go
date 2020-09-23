@@ -16,13 +16,13 @@ func RelationAttrs(a Set) (Names, error) {
 	}
 	t, is := e.Current().(Tuple)
 	if !is {
-		return Names{}, fmt.Errorf("not a relation; has non-tuple element(s) (e.g.: %T)", t)
+		return Names{}, fmt.Errorf("not a relation; has non-tuple element(s) (e.g.: %s)", ValueTypeAsString(t))
 	}
 	names := t.Names()
 	for e.MoveNext() {
 		t, is := e.Current().(Tuple)
 		if !is {
-			return Names{}, fmt.Errorf("not a relation; has non-tuple element(s) (e.g.: %T)", t)
+			return Names{}, fmt.Errorf("not a relation; has non-tuple element(s) (e.g.: %s)", ValueTypeAsString(t))
 		}
 		if !names.Equal(t.Names()) {
 			return Names{}, fmt.Errorf(

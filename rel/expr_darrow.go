@@ -48,5 +48,5 @@ func (e *DArrowExpr) Eval(ctx context.Context, local Scope) (_ Value, err error)
 		}
 		return NewSet(values...), nil
 	}
-	return nil, WrapContextErr(errors.Errorf("=> not applicable to %T: %[1]v", value), e, local)
+	return nil, WrapContextErr(errors.Errorf("=> not applicable to %s: %[1]v", ValueTypeAsString(value)), e, local)
 }

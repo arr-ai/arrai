@@ -185,7 +185,7 @@ func reprValue(v Value, w io.Writer) {
 	case *NativeFunction:
 		reprNativeFunction(v, w)
 	default:
-		panic(fmt.Errorf("Repr(): unexpected Value type %T: %[1]v", v)) //nolint:golint
+		panic(fmt.Errorf("Repr(): unexpected Value type %s: %[1]v", ValueTypeAsString(v))) //nolint:golint
 	}
 }
 

@@ -3,7 +3,6 @@ package rel
 import (
 	"context"
 	"fmt"
-
 	"github.com/arr-ai/wbnf/parser"
 	"github.com/go-errors/errors"
 )
@@ -134,5 +133,5 @@ func (e *SeqArrowExpr) Eval(ctx context.Context, local Scope) (_ Value, err erro
 		}
 		return NewSet(values...), nil
 	}
-	return nil, WrapContextErr(errors.Errorf("%s not applicable to %T", e.op, value), e, local)
+	return nil, WrapContextErr(errors.Errorf("%s not applicable to %s", e.op, ValueTypeAsString(value)), e, local)
 }

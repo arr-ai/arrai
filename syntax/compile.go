@@ -1116,7 +1116,7 @@ func (pc ParseContext) compileTuple(ctx context.Context, b ast.Branch, c ast.Chi
 				case rel.IdentExpr:
 					k = v.Ident()
 				default:
-					return nil, fmt.Errorf("unnamed attr expression must be name or end in .name: %T(%[1]v)", v)
+					return nil, fmt.Errorf("unnamed attr expression must be name or end in .name: %s(%[1]v)", tools.ValueTypeAsString(v))
 				}
 			}
 			scanner := pair.One("v").(ast.Branch).Scanner()

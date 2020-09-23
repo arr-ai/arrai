@@ -53,5 +53,5 @@ func (e *NestExpr) Eval(ctx context.Context, local Scope) (Value, error) {
 		}
 		return Nest(set, relAttrs, attrs, e.attr), nil
 	}
-	return nil, WrapContextErr(errors.Errorf("nest not applicable to %T", value), e, local)
+	return nil, WrapContextErr(errors.Errorf("nest not applicable to %s", ValueTypeAsString(value)), e, local)
 }

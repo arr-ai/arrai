@@ -48,7 +48,8 @@ func newArithExpr(scanner parser.Scanner, a, b Expr, op string, eval arithEval) 
 				}
 			}
 			return nil, errors.Errorf(
-				"Both args to %q must be numbers, not %T and %T", op, a, b)
+				"Both args to %q must be numbers, not %s and %s",
+				op, ValueTypeAsString(a), ValueTypeAsString(b))
 		})
 }
 
@@ -69,8 +70,8 @@ func addValues(a, b Value) (Value, error) {
 		}
 	}
 	return nil, errors.Errorf(
-		"Both args to %q must be numbers or tuples, not %T and %T",
-		"+", a, b)
+		"Both args to %q must be numbers or tuples, not %s and %s",
+		"+", ValueTypeAsString(a), ValueTypeAsString(b))
 }
 
 // NewAddExpr evaluates a + b, given two Numbers.
@@ -139,7 +140,7 @@ func NewWithExpr(scanner parser.Scanner, a, b Expr) Expr {
 			if x, ok := a.(Set); ok {
 				return x.With(b), nil
 			}
-			return nil, errors.Errorf("'with' lhs must be a Set, not %T", a)
+			return nil, errors.Errorf("'with' lhs must be a Set, not %s", ValueTypeAsString(a))
 		})
 }
 
@@ -150,7 +151,7 @@ func NewWithoutExpr(scanner parser.Scanner, a, b Expr) Expr {
 			if x, ok := a.(Set); ok {
 				return x.Without(b), nil
 			}
-			return nil, errors.Errorf("'without' lhs must be a Set, not %T", a)
+			return nil, errors.Errorf("'without' lhs must be a Set, not %s", ValueTypeAsString(a))
 		})
 }
 
@@ -169,9 +170,9 @@ func NewWhereExpr(scanner parser.Scanner, a, pred Expr) Expr {
 						return r.IsTrue(), nil
 					})
 				}
-				return nil, errors.Errorf("'where' rhs must be a Fn, not %T", a)
+				return nil, errors.Errorf("'where' rhs must be a Fn, not %s", ValueTypeAsString(a))
 			}
-			return nil, errors.Errorf("'where' lhs must be a Set, not %T", a)
+			return nil, errors.Errorf("'where' lhs must be a Set, not %s", ValueTypeAsString(a))
 		})
 }
 
@@ -194,9 +195,9 @@ func NewOrderByExpr(scanner parser.Scanner, a, key Expr) Expr {
 					}
 					return NewArray(values...), nil
 				}
-				return nil, errors.Errorf("'order' rhs must be a Fn, not %T", a)
+				return nil, errors.Errorf("'order' rhs must be a Fn, not %s", ValueTypeAsString(a))
 			}
-			return nil, errors.Errorf("'order' lhs must be a Set, not %T", a)
+			return nil, errors.Errorf("'order' lhs must be a Set, not %s", ValueTypeAsString(a))
 		})
 }
 
@@ -227,9 +228,9 @@ func NewOrderExpr(scanner parser.Scanner, a, key Expr) Expr {
 					}
 					return NewArray(values...), nil
 				}
-				return nil, errors.Errorf("'order' rhs must be a Fn, not %T", a)
+				return nil, errors.Errorf("'order' rhs must be a Fn, not %s", ValueTypeAsString(a))
 			}
-			return nil, errors.Errorf("'order' lhs must be a Set, not %T", a)
+			return nil, errors.Errorf("'order' lhs must be a Set, not %s", ValueTypeAsString(a))
 		})
 }
 
@@ -250,9 +251,9 @@ func NewRankExpr(scanner parser.Scanner, a, key Expr) Expr {
 						return result.(Tuple), nil
 					})
 				}
-				return nil, errors.Errorf("'order' rhs must be a Fn, not %T", a)
+				return nil, errors.Errorf("'order' rhs must be a Fn, not %s", ValueTypeAsString(a))
 			}
-			return nil, errors.Errorf("'order' lhs must be a Set, not %T", a)
+			return nil, errors.Errorf("'order' lhs must be a Set, not %s", ValueTypeAsString(a))
 		})
 }
 
@@ -261,7 +262,7 @@ func Call(ctx context.Context, a, b Value, _ Scope) (Value, error) {
 		return SetCall(ctx, x, b)
 	}
 	return nil, errors.Errorf(
-		"call lhs must be a function, not %T", a)
+		"call lhs must be a function, not %s", ValueTypeAsString(a))
 }
 
 // NewCallExpr evaluates a without b, given a set lhs.
@@ -329,8 +330,8 @@ func evalValForAddArrow(lhs, rhs Value) (Value, error) {
 	}
 
 	return nil, errors.Errorf(
-		"Args to %q must be both tuples or both dicts, not %T and %T",
-		"+>", lhs, rhs)
+		"Args to %q must be both tuples or both dicts, not %s and %s",
+		"+>", ValueTypeAsString(lhs), ValueTypeAsString(rhs))
 }
 
 func mergeDicts(lhs Dict, rhs Dict) Dict {
