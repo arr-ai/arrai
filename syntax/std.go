@@ -62,7 +62,7 @@ func StdScope() rel.Scope {
 								key = ""
 							} else {
 								return nil, fmt.Errorf(
-									"all keys of arg to //tuple must be strings, not %s", tools.ValueTypeAsString(keyVal))
+									"all keys of arg to //tuple must be strings, not %s", rel.ValueTypeAsString(keyVal))
 							}
 							attrs = append(attrs, rel.NewAttr(key, value))
 						}

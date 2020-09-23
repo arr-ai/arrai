@@ -5,10 +5,10 @@ import (
 	"archive/zip"
 	"bytes"
 	"context"
-	"github.com/arr-ai/arrai/tools"
-	"github.com/pkg/errors"
 	"io"
 	"path"
+
+	"github.com/pkg/errors"
 
 	"github.com/arr-ai/arrai/rel"
 )
@@ -86,7 +86,7 @@ func writeDictToArchive(d rel.Dict, w func(string, []byte) (io.Writer, error), p
 				}
 			}
 		default:
-			return errors.Errorf("unsupported entry %q: %s %v", subpath, tools.ValueTypeAsString(v), v)
+			return errors.Errorf("unsupported entry %q: %s %v", subpath, rel.ValueTypeAsString(v), v)
 		}
 	}
 	return nil

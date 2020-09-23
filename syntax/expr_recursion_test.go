@@ -31,7 +31,7 @@ func TestRecursionExpr(t *testing.T) {
 		eo.even(eo.num)`,
 	)
 	AssertCodeErrors(t,
-		`Recursion does not support rel.Number`,
+		`Recursion does not support number`,
 		`let rec random = 1; random`,
 	)
 	AssertCodeErrors(t,

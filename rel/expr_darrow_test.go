@@ -14,7 +14,7 @@ func TestDArrowExprErrorOnInvalidType(t *testing.T) {
 	ident := NewIdentExpr(*parser.NewScanner("."), ".")
 	expr := NewDArrowExpr(*parser.NewScanner(""), NewTuple(), ident)
 
-	AssertExprErrorEquals(t, expr, "=> not applicable to *rel.GenericTuple: ()")
+	AssertExprErrorEquals(t, expr, "=> not applicable to tuple: ()")
 }
 
 func TestDArrowExprErrorOnFnEvalError(t *testing.T) {
