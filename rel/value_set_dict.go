@@ -3,10 +3,11 @@ package rel
 import (
 	"context"
 	"fmt"
-	"github.com/go-errors/errors"
 	"reflect"
 	"sort"
 	"strings"
+
+	"github.com/go-errors/errors"
 
 	"github.com/arr-ai/frozen"
 	"github.com/arr-ai/wbnf/parser"
