@@ -130,7 +130,7 @@ func (f *NativeFunction) CallAll(ctx context.Context, arg Value) (Set, error) {
 	if err != nil {
 		return nil, err
 	}
-	return NewSet(v), nil
+	return NewSet(v)
 }
 
 func (*NativeFunction) ArrayEnumerator() (OffsetValueEnumerator, bool) {

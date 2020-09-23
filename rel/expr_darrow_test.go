@@ -26,7 +26,7 @@ func TestDArrowExprErrorOnFnEvalError(t *testing.T) {
 	_, err := badFn.Eval(arraictx.InitRunCtx(context.Background()), EmptyScope)
 
 	// When this fails, it will propagate the err above, wrapped in expr's context.
-	wrapper := NewDArrowExpr(*parser.NewScanner("{1} => () => ."), NewSet(NewNumber(1)), badFn)
+	wrapper := NewDArrowExpr(*parser.NewScanner("{1} => () => ."), MustNewSet(NewNumber(1)), badFn)
 
 	AssertExprErrorEquals(t, wrapper, err.Error())
 }

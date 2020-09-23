@@ -44,7 +44,7 @@ func StdScope() rel.Scope {
 							name, value := e.Current()
 							entries = append(entries, rel.NewDictEntryTuple(rel.NewString([]rune(name)), value))
 						}
-						return rel.NewDict(false, entries...), nil
+						return rel.NewDict(false, entries...)
 					}
 					return nil, fmt.Errorf("dict(): not a tuple")
 				}),

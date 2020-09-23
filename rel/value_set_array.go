@@ -331,7 +331,7 @@ func (a Array) Map(f func(v Value) (Value, error)) (Set, error) {
 		}
 		values = append(values, v)
 	}
-	return NewSet(values...), nil
+	return NewSet(values...)
 }
 
 // Where returns a new Array with all the Values satisfying predicate p.
@@ -384,7 +384,7 @@ func (a Array) CallAll(_ context.Context, arg Value) (Set, error) {
 		return None, nil
 	}
 	if v := a.values[i]; v != nil {
-		return NewSet(v), nil
+		return NewSet(v)
 	}
 	return None, nil
 }

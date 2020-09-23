@@ -28,7 +28,7 @@ func NIntersect(a Set, bs ...Set) Set {
 	return a
 }
 
-// Union returns every Values that is in either input Set or both.
+// Union returns every value that is in either input Set (or both).
 func Union(a, b Set) Set {
 	if ga, ok := a.(GenericSet); ok {
 		if gb, ok := b.(GenericSet); ok {
@@ -146,22 +146,25 @@ func (o *orderer) Swap(i, j int) {
 }
 
 // PowerSet computes the power set of a set.
-func PowerSet(s Set) Set {
+func PowerSet(s Set) (Set, error) {
 	if gs, ok := s.(GenericSet); ok {
 		var sb frozen.SetBuilder
 		for i := gs.set.Powerset().Range(); i.Next(); {
 			sb.Add(GenericSet{set: i.Value().(frozen.Set)})
 		}
-		return GenericSet{set: sb.Finish()}
+		return GenericSet{set: sb.Finish()}, nil
 	}
-	result := NewSet(None)
+	result, err := NewSet(None)
+	if err != nil {
+		return nil, err
+	}
 	for e := s.Enumerator(); e.MoveNext(); {
 		c := e.Current()
-		newSets := NewSet()
+		newSets := None
 		for s := result.Enumerator(); s.MoveNext(); {
 			newSets = newSets.With(s.Current().(Set).With(c))
 		}
 		result = Union(result, newSets)
 	}
-	return result
+	return result, nil
 }

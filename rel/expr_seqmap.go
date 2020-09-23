@@ -115,7 +115,11 @@ func (e *SeqArrowExpr) Eval(ctx context.Context, local Scope) (_ Value, err erro
 			}
 			entries = append(entries, NewDictEntryTuple(entry.at, newValue))
 		}
-		return NewDict(true, entries...), nil
+		d, err := NewDict(true, entries...)
+		if err != nil {
+			return nil, WrapContextErr(err, e, local)
+		}
+		return d, nil
 	case Set:
 		values := []Value{}
 		for i := value.Enumerator(); i.MoveNext(); {
@@ -135,7 +139,11 @@ func (e *SeqArrowExpr) Eval(ctx context.Context, local Scope) (_ Value, err erro
 			}
 			values = append(values, NewTuple(Attr{"@", at}, Attr{attr, newItem}))
 		}
-		return NewSet(values...), nil
+		s, err := NewSet(values...)
+		if err != nil {
+			return nil, WrapContextErr(err, e, local)
+		}
+		return s, nil
 	}
 	return nil, WrapContextErr(errors.Errorf("%s not applicable to %T", e.op, value), e, local)
 }

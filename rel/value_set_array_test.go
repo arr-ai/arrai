@@ -14,14 +14,14 @@ func TestAsArray(t *testing.T) {
 	t.Parallel()
 	AssertEqualValues(t,
 		NewArray(NewNumber(10), NewNumber(11)),
-		NewSet(
+		MustNewSet(
 			NewArrayItemTuple(0, NewNumber(10)),
 			NewArrayItemTuple(1, NewNumber(11)),
 		),
 	)
 	AssertEqualValues(t,
 		NewOffsetArray(2, NewNumber(10), NewNumber(11)),
-		NewSet(
+		MustNewSet(
 			NewArrayItemTuple(2, NewNumber(10)),
 			NewArrayItemTuple(3, NewNumber(11)),
 		),
@@ -32,14 +32,14 @@ func TestAsArrayHoles(t *testing.T) {
 	t.Parallel()
 	AssertEqualValues(t,
 		NewArray(NewNumber(1), nil, nil, NewNumber(2)),
-		NewSet(
+		MustNewSet(
 			NewArrayItemTuple(0, NewNumber(1)),
 			NewArrayItemTuple(3, NewNumber(2)),
 		),
 	)
 	AssertEqualValues(t,
 		NewOffsetArray(2, NewNumber(1), nil, nil, NewNumber(2)),
-		NewSet(
+		MustNewSet(
 			NewArrayItemTuple(2, NewNumber(1)),
 			NewArrayItemTuple(5, NewNumber(2)),
 		),
@@ -86,23 +86,23 @@ func TestArrayCallAll(t *testing.T) {
 
 	three := NewArray(NewNumber(10), NewNumber(11), NewNumber(12))
 	ctx := arraictx.InitRunCtx(context.Background())
-	AssertEqualValues(t, NewSet(NewNumber(10)), mustCallAll(ctx, three, NewNumber(0)))
-	AssertEqualValues(t, NewSet(NewNumber(11)), mustCallAll(ctx, three, NewNumber(1)))
-	AssertEqualValues(t, NewSet(NewNumber(12)), mustCallAll(ctx, three, NewNumber(2)))
+	AssertEqualValues(t, MustNewSet(NewNumber(10)), mustCallAll(ctx, three, NewNumber(0)))
+	AssertEqualValues(t, MustNewSet(NewNumber(11)), mustCallAll(ctx, three, NewNumber(1)))
+	AssertEqualValues(t, MustNewSet(NewNumber(12)), mustCallAll(ctx, three, NewNumber(2)))
 	AssertEqualValues(t, None, mustCallAll(ctx, three, NewNumber(5)))
 	AssertEqualValues(t, None, mustCallAll(ctx, three, NewNumber(-1)))
 
 	three = NewOffsetArray(-2, NewNumber(10), NewNumber(11), NewNumber(12))
-	AssertEqualValues(t, NewSet(NewNumber(10)), mustCallAll(ctx, three, NewNumber(-2)))
-	AssertEqualValues(t, NewSet(NewNumber(11)), mustCallAll(ctx, three, NewNumber(-1)))
-	AssertEqualValues(t, NewSet(NewNumber(12)), mustCallAll(ctx, three, NewNumber(0)))
+	AssertEqualValues(t, MustNewSet(NewNumber(10)), mustCallAll(ctx, three, NewNumber(-2)))
+	AssertEqualValues(t, MustNewSet(NewNumber(11)), mustCallAll(ctx, three, NewNumber(-1)))
+	AssertEqualValues(t, MustNewSet(NewNumber(12)), mustCallAll(ctx, three, NewNumber(0)))
 	AssertEqualValues(t, None, mustCallAll(ctx, three, NewNumber(1)))
 	AssertEqualValues(t, None, mustCallAll(ctx, three, NewNumber(-3)))
 
 	three = NewOffsetArray(2, NewNumber(10), NewNumber(11), NewNumber(12))
-	AssertEqualValues(t, NewSet(NewNumber(10)), mustCallAll(ctx, three, NewNumber(2)))
-	AssertEqualValues(t, NewSet(NewNumber(11)), mustCallAll(ctx, three, NewNumber(3)))
-	AssertEqualValues(t, NewSet(NewNumber(12)), mustCallAll(ctx, three, NewNumber(4)))
+	AssertEqualValues(t, MustNewSet(NewNumber(10)), mustCallAll(ctx, three, NewNumber(2)))
+	AssertEqualValues(t, MustNewSet(NewNumber(11)), mustCallAll(ctx, three, NewNumber(3)))
+	AssertEqualValues(t, MustNewSet(NewNumber(12)), mustCallAll(ctx, three, NewNumber(4)))
 	AssertEqualValues(t, None, mustCallAll(ctx, three, NewNumber(1)))
 	AssertEqualValues(t, None, mustCallAll(ctx, three, NewNumber(5)))
 
