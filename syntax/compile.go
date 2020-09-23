@@ -633,9 +633,12 @@ func (pc ParseContext) compileCondWithoutControlVar(ctx context.Context, c ast.C
 	}
 	if entryExprs != nil {
 		// Generates type DictExpr always to make sure it is easy to do Eval, only process type DictExpr.
-		result, _ = rel.NewDictExpr(c.(ast.One).Node.Scanner(), false, true, entryExprs...)
+		result, err = rel.NewDictExpr(c.(ast.One).Node.Scanner(), false, true, entryExprs...)
+		if err != nil {
+			return nil, err
+		}
 	} else {
-		result, _ = rel.NewDict(false)
+		result = rel.MustNewDict(false)
 	}
 
 	// Note, the default case `_:expr` which can match anything is parsed to condition/value pairs by current syntax.
@@ -892,11 +895,7 @@ func (pc ParseContext) compileSet(ctx context.Context, b ast.Branch, c ast.Child
 		}
 		return rel.NewSetExpr(scanner, exprs...)
 	}
-	s, err := rel.NewSet()
-	if err != nil {
-		return nil, err
-	}
-	return rel.NewLiteralExpr(scanner, s), nil
+	return rel.NewLiteralExpr(scanner, rel.MustNewSet()), nil
 }
 
 func (pc ParseContext) compileDict(ctx context.Context, b ast.Branch, c ast.Children) (rel.Expr, error) {

@@ -6,6 +6,8 @@ import (
 	"reflect"
 	"sort"
 
+	"github.com/pkg/errors"
+
 	"github.com/arr-ai/frozen"
 	"github.com/arr-ai/wbnf/parser"
 )
@@ -55,7 +57,7 @@ func NewSet(values ...Value) (Set, error) {
 				}
 				s, is := AsString(set)
 				if !is {
-					panic("unsupported array expr")
+					return nil, errors.Errorf("unsupported string array expr")
 				}
 				return s, nil
 			case bytesByteTupleType:
@@ -64,7 +66,7 @@ func NewSet(values ...Value) (Set, error) {
 				}
 				b, is := AsBytes(set)
 				if !is {
-					panic("unsupported array expr")
+					return nil, errors.Errorf("unsupported byte array expr")
 				}
 				return b, nil
 			case arrayItemTupleType:
@@ -73,7 +75,7 @@ func NewSet(values ...Value) (Set, error) {
 				}
 				array, is := asArray(set)
 				if !is {
-					panic("unsupported array expr")
+					return nil, errors.Errorf("unsupported array expr")
 				}
 				return array, nil
 			case dictEntryTupleType:
@@ -91,15 +93,15 @@ func NewSet(values ...Value) (Set, error) {
 	return set, nil
 }
 
-func CanonicalSet(s Set) (Set, error) {
+func CanonicalSet(s Set) Set {
 	if s, ok := s.(GenericSet); ok {
 		values := make([]Value, 0, s.Count())
 		for e := s.Enumerator(); e.MoveNext(); {
 			values = append(values, e.Current())
 		}
-		return NewSet(values...)
+		return MustNewSet(values...)
 	}
-	return s, nil
+	return s
 }
 
 // NewSetFrom constructs a genericSet from interfaces.
@@ -275,7 +277,7 @@ func (s GenericSet) Without(value Value) Set {
 
 // Map maps values per f.
 func (s GenericSet) Map(f func(v Value) (Value, error)) (Set, error) {
-	result, _ := NewSet()
+	result := MustNewSet()
 	for e := s.Enumerator(); e.MoveNext(); {
 		v, err := f(e.Current())
 		if err != nil {

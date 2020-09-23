@@ -16,7 +16,12 @@ type DictExpr struct {
 }
 
 // NewDictExpr returns a new DictExpr from pairs.
-func NewDictExpr(scanner parser.Scanner, allowDupKeys bool, dictExprAlways bool, entryExprs ...DictEntryTupleExpr) (Expr, error) {
+func NewDictExpr(
+	scanner parser.Scanner,
+	allowDupKeys bool,
+	dictExprAlways bool,
+	entryExprs ...DictEntryTupleExpr,
+) (Expr, error) {
 	entries := make([]DictEntryTuple, 0, len(entryExprs))
 	for _, expr := range entryExprs {
 		if !dictExprAlways {

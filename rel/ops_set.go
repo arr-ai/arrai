@@ -28,8 +28,10 @@ func NIntersect(a Set, bs ...Set) Set {
 	return a
 }
 
-// Union returns every Values that is in either input Set or both.
-func Union(a, b Set) (Set, error) {
+// Union returns every value that is in either input Set (or both).
+
+// Union returns every value that is in either input Set (or both).
+func Union(a, b Set) Set {
 	if ga, ok := a.(GenericSet); ok {
 		if gb, ok := b.(GenericSet); ok {
 			return CanonicalSet(GenericSet{set: ga.set.Union(gb.set)})
@@ -42,13 +44,9 @@ func Union(a, b Set) (Set, error) {
 }
 
 func NUnion(sets ...Set) (Set, error) {
-	var err error
 	result := None
 	for _, s := range sets {
-		result, err = Union(result, s)
-		if err != nil {
-			return nil, err
-		}
+		result = Union(result, s)
 	}
 	return result, nil
 }
@@ -68,10 +66,10 @@ func Difference(a, b Set) Set {
 }
 
 // SymmetricDifference returns Values in either Set, but not in both.
-func SymmetricDifference(a, b Set) (Set, error) {
+func SymmetricDifference(a, b Set) Set {
 	if ga, ok := a.(GenericSet); ok {
 		if gb, ok := b.(GenericSet); ok {
-			return GenericSet{set: ga.set.SymmetricDifference(gb.set)}, nil
+			return GenericSet{set: ga.set.SymmetricDifference(gb.set)}
 		}
 	}
 	return Union(Difference(a, b), Difference(b, a))
@@ -164,15 +162,11 @@ func PowerSet(s Set) (Set, error) {
 	}
 	for e := s.Enumerator(); e.MoveNext(); {
 		c := e.Current()
-		newSets, _ := NewSet()
+		newSets := MustNewSet()
 		for s := result.Enumerator(); s.MoveNext(); {
 			newSets = newSets.With(s.Current().(Set).With(c))
 		}
-		result, err = Union(result, newSets)
-		if err != nil {
-			return nil, err
-		}
-
+		result = Union(result, newSets)
 	}
 	return result, nil
 }

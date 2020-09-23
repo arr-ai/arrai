@@ -212,7 +212,7 @@ func (b Bytes) Without(value Value) Set {
 
 // Map maps values per f.
 func (b Bytes) Map(f func(v Value) (Value, error)) (Set, error) {
-	result, _ := NewSet()
+	result := MustNewSet()
 	for e := b.Enumerator().(*BytesEnumerator); e.MoveNext(); {
 		v, err := f(e.CurrentBytesByteTuple())
 		if err != nil {

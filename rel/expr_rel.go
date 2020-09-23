@@ -140,7 +140,7 @@ func NewLeftResidueExpr(scanner parser.Scanner, a, b Expr) Expr {
 
 // NewUnionExpr evaluates a | b.
 func NewUnionExpr(scanner parser.Scanner, a, b Expr) Expr {
-	return newSetBinExpr(scanner, a, b, "|", func(a, b Set) (Set, error) { return Union(a, b) })
+	return newSetBinExpr(scanner, a, b, "|", func(a, b Set) (Set, error) { return Union(a, b), nil })
 }
 
 // NewDiffExpr evaluates a &~ b.
@@ -150,7 +150,7 @@ func NewDiffExpr(scanner parser.Scanner, a, b Expr) Expr {
 
 // NewSymmDiffExpr evaluates a ~~ b.
 func NewSymmDiffExpr(scanner parser.Scanner, a, b Expr) Expr {
-	return newSetBinExpr(scanner, a, b, "~~", func(a, b Set) (Set, error) { return SymmetricDifference(a, b) })
+	return newSetBinExpr(scanner, a, b, "~~", func(a, b Set) (Set, error) { return SymmetricDifference(a, b), nil })
 }
 
 // NewConcatExpr evaluates a ++ b.

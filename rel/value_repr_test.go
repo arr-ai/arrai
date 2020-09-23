@@ -48,9 +48,9 @@ func TestReprDictEntryTuple(t *testing.T) {
 func TestReprSet(t *testing.T) {
 	t.Parallel()
 
-	assert.Equal(t, `{}`, Repr(NewSet()))
-	assert.Equal(t, `{1}`, Repr(NewSet(NewNumber(1))))
-	assert.Equal(t, `{1, 'abc'}`, Repr(NewSet(NewNumber(1), NewString([]rune("abc")))))
+	assert.Equal(t, `{}`, Repr(MustNewSet()))
+	assert.Equal(t, `{1}`, Repr(MustNewSet(NewNumber(1))))
+	assert.Equal(t, `{1, 'abc'}`, Repr(MustNewSet(NewNumber(1), NewString([]rune("abc")))))
 }
 
 func TestReprArray(t *testing.T) {
@@ -64,9 +64,9 @@ func TestReprArray(t *testing.T) {
 func TestReprDict(t *testing.T) {
 	t.Parallel()
 
-	assert.Equal(t, `{1: 2, {42, 'a'}: 43}`, Repr(NewDict(false,
+	assert.Equal(t, `{1: 2, {42, 'a'}: 43}`, Repr(MustNewDict(false,
 		NewDictEntryTuple(NewNumber(1), NewNumber(2)),
-		NewDictEntryTuple(NewSet(NewString([]rune("a")), NewNumber(42)), NewNumber(43)),
+		NewDictEntryTuple(MustNewSet(NewString([]rune("a")), NewNumber(42)), NewNumber(43)),
 	)))
 }
 

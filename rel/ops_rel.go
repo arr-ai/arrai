@@ -129,7 +129,7 @@ func Reduce(
 
 	result := None
 	for i := buckets.Range(); i.Next(); {
-		result, _ = Union(result, reduce(i.Key().(Value), i.Value().(Set)))
+		result = Union(result, reduce(i.Key().(Value), i.Value().(Set)))
 	}
 	return result
 }
@@ -254,7 +254,7 @@ func GenericJoin(
 		slots := v.([2]Set)
 		aSet := slots[aSlot]
 		bSet := slots[bSlot]
-		result, _ = Union(result, join(key, aSet, bSet))
+		result = Union(result, join(key, aSet, bSet))
 	}
 	return result
 }
