@@ -49,8 +49,6 @@ func ValueTypeAsString(v rel.Value) string {
 		return "string"
 	case rel.GenericSet, *rel.GenericSet:
 		return "set"
-	case rel.Tuple, *rel.GenericTuple:
-		return "tuple"
 	case rel.ArrayItemTuple, *rel.ArrayItemTuple:
 		return "array item tuple"
 	case rel.BytesByteTuple, *rel.BytesByteTuple:
@@ -59,6 +57,8 @@ func ValueTypeAsString(v rel.Value) string {
 		return "dict entry tuple"
 	case rel.StringCharTuple, *rel.StringCharTuple:
 		return "string char tuple"
+	case rel.Tuple, *rel.GenericTuple:
+		return "tuple"
 	}
 	return fmt.Sprintf("%T", v)
 }
