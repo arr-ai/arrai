@@ -45,4 +45,7 @@ func TestStringCallAll(t *testing.T) {
 	AssertEqualValues(t, NewSet(NewNumber(float64('c'))), mustCallAll(ctx, abc, NewNumber(4)))
 	AssertEqualValues(t, None, mustCallAll(ctx, abc, NewNumber(1)))
 	AssertEqualValues(t, None, mustCallAll(ctx, abc, NewNumber(5)))
+
+	_, err := abc.CallAll(ctx, NewString([]rune("0")))
+	assert.Error(t, err, `arg to CallAll must be a number, not rel.String`)
 }

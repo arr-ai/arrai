@@ -119,10 +119,13 @@ func (e *SeqArrowExpr) Eval(ctx context.Context, local Scope) (_ Value, err erro
 	case Set:
 		values := []Value{}
 		for i := value.Enumerator(); i.MoveNext(); {
-			t := i.Current().(Tuple)
+			t, ok := i.Current().(Tuple)
+			if !ok {
+				return nil, WrapContextErr(errors.Errorf("%s not applicable to unindexed type %T", e.op, value), e, local)
+			}
 			at, has := t.Get("@")
 			if !has {
-				return nil, WrapContextErr(errors.Errorf("%s not applicable to unindexed type %v", e.op, value), e, local)
+				return nil, WrapContextErr(errors.Errorf("%s not applicable to unindexed type %T", e.op, value), e, local)
 			}
 			attr := t.Names().Without("@").Any()
 			item, _ := t.Get(attr)
