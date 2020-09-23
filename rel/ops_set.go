@@ -29,8 +29,6 @@ func NIntersect(a Set, bs ...Set) Set {
 }
 
 // Union returns every value that is in either input Set (or both).
-
-// Union returns every value that is in either input Set (or both).
 func Union(a, b Set) Set {
 	if ga, ok := a.(GenericSet); ok {
 		if gb, ok := b.(GenericSet); ok {
