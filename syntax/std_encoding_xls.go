@@ -53,6 +53,9 @@ func bytesXlsxToArrai(bs []byte, sheetIndex int) (rel.Value, error) {
 	if err != nil {
 		return nil, err
 	}
+	if len(rows) == 0 {
+		return rel.None, nil
+	}
 
 	merges, err := f.GetMergeCells(sheets[sheetIndex])
 	if err != nil {
