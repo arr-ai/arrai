@@ -115,5 +115,5 @@ func bytesXlsxToArrai(bs []byte, sheetIndex int) (rel.Value, error) {
 			rowTuples = append(rowTuples, rel.NewTuple(attrs...))
 		}
 	}
-	return rel.NewSet(rowTuples...), nil
+	return rel.NewSet(rowTuples...)
 }
