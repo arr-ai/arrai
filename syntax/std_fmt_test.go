@@ -13,7 +13,7 @@ func TestFmtPrettyDict(t *testing.T) {
 	AssertCodesEvalToSameValue(t, `"{
   'a': 1,
   'b': 2,
-  'c': 3
+  'c': 3,
 }"`, `//fmt.pretty({'b':2, 'a':1,'c':3})`)
 
 	AssertCodesEvalToSameValue(t, `"{
@@ -21,13 +21,13 @@ func TestFmtPrettyDict(t *testing.T) {
   'b': 2,
   'c': {
     'd': 11,
-    'e': 22
-  }
+    'e': 22,
+  },
 }"`, `//fmt.pretty({'b':2,'a':1,'c':{'d':11,'e':22}})`)
 
 	AssertCodesEvalToSameValue(t, `"{
   42: 1,
-  '42': 2
+  '42': 2,
 }"`, `//fmt.pretty({'42':2,42:1})`)
 }
 
@@ -37,15 +37,15 @@ func TestFmtPrettyTuple(t *testing.T) {
 	AssertCodesEvalToSameValue(t, `"(
   a: 1,
   b: 2,
-  c: 3
+  c: 3,
 )"`, `//fmt.pretty((a:1,c:3,b:2))`)
 	AssertCodesEvalToSameValue(t, `"(
   a: 1,
   b: 2,
   c: (
     d: 11,
-    e: 22
-  )
+    e: 22,
+  ),
 )"`, `//fmt.pretty((a:1,b:2,c:(d:11,e:22)))`)
 }
 
@@ -62,19 +62,19 @@ func TestFmtPrettyArrayComplex(t *testing.T) {
 	AssertCodesEvalToSameValue(t, `"[
   (
     a: 1,
-    b: 2
+    b: 2,
   ),
   3,
   {
     'c': 4,
-    [5, 6]: [7, 8]
-  }
+    [5, 6]: [7, 8],
+  },
 ]"`, `//fmt.pretty([(a:1, b:2),3,{"c":4,[5,6]:[7,8]}])`)
 
 	AssertCodesEvalToSameValue(t, `"[
   (
-    a: 1
-  )
+    a: 1,
+  ),
 ]"`, `//fmt.pretty([(a:1)])`)
 }
 
