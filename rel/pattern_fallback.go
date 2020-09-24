@@ -20,7 +20,7 @@ func NewFallbackPattern(pattern Pattern, fallback Expr) FallbackPattern {
 
 func (p FallbackPattern) Bind(ctx context.Context, local Scope, value Value) (context.Context, Scope, error) {
 	if value != nil {
-		return p.pattern.Bind(ctx, EmptyScope, value)
+		return p.pattern.Bind(ctx, local, value)
 	}
 
 	if p.fallback == nil {
