@@ -13,7 +13,7 @@ func TestFmtPrettyDict(t *testing.T) {
 	AssertCodesEvalToSameValue(t, `"{
   'a': 1,
   'b': 2,
-  'c': 3
+  'c': 3,
 }"`, `//fmt.pretty({'b':2, 'a':1,'c':3})`)
 
 	AssertCodesEvalToSameValue(t, `"{
@@ -21,13 +21,13 @@ func TestFmtPrettyDict(t *testing.T) {
   'b': 2,
   'c': {
     'd': 11,
-    'e': 22
-  }
+    'e': 22,
+  },
 }"`, `//fmt.pretty({'b':2,'a':1,'c':{'d':11,'e':22}})`)
 
 	AssertCodesEvalToSameValue(t, `"{
   42: 1,
-  '42': 2
+  '42': 2,
 }"`, `//fmt.pretty({'42':2,42:1})`)
 }
 
@@ -37,15 +37,15 @@ func TestFmtPrettyTuple(t *testing.T) {
 	AssertCodesEvalToSameValue(t, `"(
   a: 1,
   b: 2,
-  c: 3
+  c: 3,
 )"`, `//fmt.pretty((a:1,c:3,b:2))`)
 	AssertCodesEvalToSameValue(t, `"(
   a: 1,
   b: 2,
   c: (
     d: 11,
-    e: 22
-  )
+    e: 22,
+  ),
 )"`, `//fmt.pretty((a:1,b:2,c:(d:11,e:22)))`)
 }
 
@@ -62,19 +62,19 @@ func TestFmtPrettyArrayComplex(t *testing.T) {
 	AssertCodesEvalToSameValue(t, `"[
   (
     a: 1,
-    b: 2
+    b: 2,
   ),
   3,
   {
     'c': 4,
-    [5, 6]: [7, 8]
-  }
+    [5, 6]: [7, 8],
+  },
 ]"`, `//fmt.pretty([(a:1, b:2),3,{"c":4,[5,6]:[7,8]}])`)
 
 	AssertCodesEvalToSameValue(t, `"[
   (
-    a: 1
-  )
+    a: 1,
+  ),
 ]"`, `//fmt.pretty([(a:1)])`)
 }
 
@@ -96,11 +96,11 @@ func TestIsSimple(t *testing.T) {
 	assert.True(t, isSimple(rel.NewString([]rune("a"))))
 	assert.True(t, isSimple(rel.NewNumber(12345)))
 	assert.True(t, isSimple(rel.NewArray(rel.NewNumber(1))))
-	assert.True(t, isSimple(rel.NewSet()))
-	assert.True(t, isSimple(rel.NewSet(rel.NewString([]rune("a")), rel.NewNumber(12345))))
-	assert.True(t, isSimple(rel.NewDict(false)))
+	assert.True(t, isSimple(rel.None))
+	assert.True(t, isSimple(rel.MustNewSet(rel.NewString([]rune("a")), rel.NewNumber(12345))))
+	assert.True(t, isSimple(rel.MustNewDict(false)))
 
-	d := rel.NewDict(false, rel.NewDictEntryTuple(rel.NewString([]rune("a")), rel.NewNumber(1)))
+	d := rel.MustNewDict(false, rel.NewDictEntryTuple(rel.NewString([]rune("a")), rel.NewNumber(1)))
 	assert.False(t, isSimple(d))
 	assert.False(t, isSimple(rel.NewTuple(rel.NewAttr("a", rel.NewNumber(1)))))
 }

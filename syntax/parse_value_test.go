@@ -68,13 +68,13 @@ func TestParseTuple(t *testing.T) {
 
 func TestParseSet(t *testing.T) { //nolint:dupl
 	t.Parallel()
-	assertParse(t, rel.NewSet(), `{}`)
-	assertParse(t, rel.NewSet(), `false`)
-	assertParse(t, rel.NewSet(rel.NewNumber(1)), `{1}`)
-	assertParse(t, rel.NewSet(rel.NewNumber(1), rel.NewNumber(2)), `{1,2}`)
-	assertParse(t, rel.NewSet(
+	assertParse(t, rel.None, `{}`)
+	assertParse(t, rel.None, `false`)
+	assertParse(t, rel.MustNewSet(rel.NewNumber(1)), `{1}`)
+	assertParse(t, rel.MustNewSet(rel.NewNumber(1), rel.NewNumber(2)), `{1,2}`)
+	assertParse(t, rel.MustNewSet(
 		rel.NewNumber(1),
-		rel.NewSet(rel.NewNumber(3), rel.NewNumber(4)),
+		rel.MustNewSet(rel.NewNumber(3), rel.NewNumber(4)),
 		rel.NewNumber(2),
 	), `{1, {3, 4}, 2}`)
 }
@@ -96,7 +96,7 @@ func TestParseMixed(t *testing.T) {
 	t.Parallel()
 	assertParse(t, rel.NewTuple(
 		rel.Attr{Name: "a", Value: rel.NewNumber(1)},
-		rel.Attr{Name: "b", Value: rel.NewSet(
+		rel.Attr{Name: "b", Value: rel.MustNewSet(
 			rel.NewTuple(rel.Attr{Name: "d", Value: rel.NewNumber(3)}),
 			rel.NewNumber(4),
 		)},
@@ -106,7 +106,7 @@ func TestParseMixed(t *testing.T) {
 
 func TestParseRelationShortcut(t *testing.T) {
 	t.Parallel()
-	assertParse(t, rel.NewSet(
+	assertParse(t, rel.MustNewSet(
 		rel.NewTuple(
 			rel.Attr{Name: "a", Value: rel.NewNumber(1)},
 			rel.Attr{Name: "b", Value: rel.NewNumber(2)},

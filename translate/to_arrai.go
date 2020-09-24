@@ -62,7 +62,7 @@ func objToArrai(data map[string]interface{}) (rel.Value, error) {
 		tuples[i] = rel.NewDictEntryTuple(rel.NewString([]rune(key)), item)
 		i++
 	}
-	return rel.NewSet(tuples...), nil
+	return rel.NewSet(tuples...)
 }
 
 // arrToArrai converts an array to an arrai array.

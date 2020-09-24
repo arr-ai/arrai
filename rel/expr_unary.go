@@ -42,7 +42,7 @@ func NewPowerSetExpr(scanner parser.Scanner, a Expr) Expr {
 	return newUnaryExpr(scanner, a, "**", "(**%s)",
 		func(_ context.Context, a Value, _ Scope) (Value, error) {
 			if s, ok := a.(Set); ok {
-				return PowerSet(s), nil
+				return PowerSet(s)
 			}
 			return nil, errors.Errorf("eval arg must be a Set, not %s", ValueTypeAsString(a))
 		},

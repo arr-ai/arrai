@@ -38,7 +38,7 @@ func Rank(s Set, rankerf func(v Tuple) (Tuple, error)) (Set, error) {
 	for _, entry := range entries {
 		values = append(values, entry.input)
 	}
-	return NewSet(values...), nil
+	return NewSet(values...)
 }
 
 type rankerEntry struct {

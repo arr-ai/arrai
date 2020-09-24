@@ -53,22 +53,22 @@ func NewRelationExpr(scanner parser.Scanner, names []string, tuples ...[]Expr) (
 			charExprs = append(charExprs, e.(StringCharTupleExpr))
 		}
 		// TODO: Implement NewStringCharSetExpr.
-		return NewSetExpr(scanner, charExprs...), nil
+		return NewSetExpr(scanner, charExprs...)
 	case arrayItemTuples:
 		entryExprs := make([]Expr, 0, len(elements))
 		for _, e := range elements {
 			entryExprs = append(entryExprs, e.(ArrayItemTupleExpr))
 		}
 		// TODO: Implement NewArrayItemSetExpr.
-		return NewSetExpr(scanner, entryExprs...), nil
+		return NewSetExpr(scanner, entryExprs...)
 	case dictEntryTuples:
 		entryExprs := make([]DictEntryTupleExpr, 0, len(elements))
 		for _, e := range elements {
 			entryExprs = append(entryExprs, e.(DictEntryTupleExpr))
 		}
-		return NewDictExpr(scanner, true, false, entryExprs...), nil
+		return NewDictExpr(scanner, true, false, entryExprs...)
 	}
-	return NewSetExpr(scanner, elements...), nil
+	return NewSetExpr(scanner, elements...)
 }
 
 func newSetBinExpr(scanner parser.Scanner, a, b Expr, op string, f func(x, y Set) (Set, error)) Expr {

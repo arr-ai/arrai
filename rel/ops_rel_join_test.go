@@ -64,7 +64,7 @@ func TestJoinSpecialSet(t *testing.T) {
 	assertJoin(t,
 		NewString([]rune("do")),
 		NewString([]rune("dots")),
-		NewSet(NewTuple(NewAttr("@", NewNumber(0))), NewTuple(NewAttr("@", NewNumber(1)))),
+		MustNewSet(NewTuple(NewAttr("@", NewNumber(0))), NewTuple(NewAttr("@", NewNumber(1)))),
 	)
 }
 

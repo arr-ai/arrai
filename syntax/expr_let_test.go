@@ -125,7 +125,7 @@ func TestExprLetDictPattern(t *testing.T) {
 	AssertCodeErrors(t, "", `let {"x": a, "y": b} = {"x": 4, "y": 5, "z": 6}; a`)
 	AssertCodeErrors(t, "", `let {"x": a, "x": a} = {"x": 4}; a`)
 	AssertCodeErrors(t, "", `let a = 4; let {"x": (a)} = {"x": 5}; a`)
-	AssertCodePanics(t, `let {"x": a, "x": a} = {"x": 4, "x": 4}; a`)
+	AssertCodeParseErrors(t, "", `let {"x": a, "x": a} = {"x": 4, "x": 4}; a`)
 }
 
 func TestExprLetSetPattern(t *testing.T) { //nolint:dupl

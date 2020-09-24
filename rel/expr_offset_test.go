@@ -149,7 +149,7 @@ func TestOffsetExprEvalFail(t *testing.T) {
 	_, err = NewOffsetExpr(
 		*parser.NewScanner(""),
 		Number(float64(0)),
-		NewSet(Number(float64(0))),
+		MustNewSet(Number(float64(0))),
 	).Eval(arraictx.InitRunCtx(context.Background()), EmptyScope)
 	expected = errors.Errorf("\\ not applicable to set").Error()
 	assert.EqualError(t, errors.New(err.Error()[:len(expected)]), expected)

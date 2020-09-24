@@ -87,7 +87,7 @@ func convertProtoValToSyslVal(val protoreflect.Value) (rel.Value, error) {
 		if err != nil {
 			return nil, err
 		}
-		return rel.NewDict(false, entries...), nil
+		return rel.NewDict(false, entries...)
 
 	case protoreflect.List:
 		list := []rel.Value{}
