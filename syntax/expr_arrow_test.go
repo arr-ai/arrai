@@ -51,7 +51,7 @@ func TestISeqArrow(t *testing.T) {
 		`{"stuff": "random", "ten": 10, 3: (2)} >>> \i \n ("key": i, "val": n)`,
 	)
 	AssertCodeErrors(t,
-		`>>> not applicable to unindexed type {(a: z), (b: y)}`,
+		`>>> not applicable to unindexed type rel.GenericSet`,
 		`{("a": "z"), ("b": "y")} >>> \i \n (i ++ n)`,
 	)
 }

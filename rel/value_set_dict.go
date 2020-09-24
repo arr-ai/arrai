@@ -7,6 +7,8 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/go-errors/errors"
+
 	"github.com/arr-ai/frozen"
 	"github.com/arr-ai/wbnf/parser"
 )
@@ -31,16 +33,25 @@ type Dict struct {
 	m frozen.Map
 }
 
+// MustNewDict constructs a dict as a relation {|@, @value|...}, or panics if construction fails.
+func MustNewDict(allowDupKeys bool, entries ...DictEntryTuple) Set {
+	d, err := NewDict(allowDupKeys, entries...)
+	if err != nil {
+		panic(err)
+	}
+	return d
+}
+
 // NewDict constructs a dict as a relation {|@, @value|...}.
-func NewDict(allowDupKeys bool, entries ...DictEntryTuple) Set {
+func NewDict(allowDupKeys bool, entries ...DictEntryTuple) (Set, error) {
 	if len(entries) == 0 {
-		return None
+		return None, nil
 	}
 	var mb frozen.MapBuilder
 	for _, entry := range entries {
 		if v, has := mb.Get(entry.at); has {
 			if !allowDupKeys {
-				panic(fmt.Errorf("duplicate key: %v", entry.at))
+				return nil, errors.Errorf("duplicate key: %v", entry.at)
 			}
 			switch v := v.(type) {
 			case multipleValues:
@@ -52,7 +63,7 @@ func NewDict(allowDupKeys bool, entries ...DictEntryTuple) Set {
 			mb.Put(entry.at, entry.value)
 		}
 	}
-	return Dict{m: mb.Finish()}
+	return Dict{m: mb.Finish()}, nil
 }
 
 func (d Dict) Hash(seed uintptr) uintptr {
@@ -118,7 +129,7 @@ func (d Dict) Source() parser.Scanner {
 	return *parser.NewScanner("")
 }
 
-var dictKind = registerKind(209, reflect.TypeOf(String{}))
+var dictKind = registerKind(209, reflect.TypeOf(Dict{}))
 
 // Kind returns a number that is unique for each major kind of Value.
 func (d Dict) Kind() int {
@@ -278,13 +289,13 @@ func (d Dict) CallAll(_ context.Context, arg Value) (Set, error) {
 	if exists {
 		switch v := val.(type) {
 		case Value:
-			return NewSet(v), nil
+			return NewSet(v)
 		case multipleValues:
 			values := make([]Value, 0, frozen.Set(v).Count())
 			for e := frozen.Set(v).Range(); e.Next(); {
 				values = append(values, e.Value().(Value))
 			}
-			return NewSet(values...), nil
+			return NewSet(values...)
 		}
 	}
 	return None, nil

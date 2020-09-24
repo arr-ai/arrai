@@ -26,6 +26,16 @@ Usage:
 |:-|:-|
 | `//encoding.json.decode('{"hi": "abc", "hello": 123}')` | `{'hello': 123, 'hi': (s: 'abc')}` |
 
+## `//encoding.json.encode(jsonDefinition <: set) <: string|bytes`
+
+`encode` is the reverse of `decode`. It takes a built-in arr.ai value to `bytes` that represents a JSON object.
+
+Usage:
+
+| example | equals |
+|:-|:-|
+| `//encoding.json.encode({'hello': 123, 'hi': (s: 'abc'), 'yo': (a: [1,2,3])})` | `'{"hello":123,"hi":"abc","yo":[1,2,3]}'` |
+
 ## `//encoding.yaml.decode(json <: string|bytes) <: set`
 
 Exactly the same as `//encoding.json.decode`, but takes either a `string` or `bytes` that represents a YAML object.

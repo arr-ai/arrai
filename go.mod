@@ -2,6 +2,8 @@ module github.com/arr-ai/arrai
 
 go 1.13
 
+replace github.com/spf13/afero v1.3.5 => github.com/anz-bank/afero v1.2.4
+
 require (
 	github.com/360EntSecGroup-Skylar/excelize/v2 v2.3.0
 	github.com/alecthomas/repr v0.0.0-20200325044227-4184120f674c // indirect

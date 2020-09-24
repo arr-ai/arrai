@@ -3,6 +3,7 @@ package syntax
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 
 	"github.com/arr-ai/arrai/rel"
 	"github.com/arr-ai/arrai/translate"
@@ -18,8 +19,21 @@ func stdEncodingJSON() rel.Attr {
 				bytes = []byte(v.String())
 			case rel.Bytes:
 				bytes = v.Bytes()
+			default:
+				return nil, fmt.Errorf("unexpected arrai object type: %T", v)
 			}
 			return bytesJSONToArrai(bytes)
+		}),
+		rel.NewNativeFunctionAttr("encode", func(_ context.Context, v rel.Value) (rel.Value, error) {
+			data, err := translate.FromArrai(v)
+			if err != nil {
+				return nil, err
+			}
+			bytes, err := json.Marshal(data)
+			if err != nil {
+				return nil, err
+			}
+			return rel.NewBytes(bytes), nil
 		}),
 	)
 }

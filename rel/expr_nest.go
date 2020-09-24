@@ -34,20 +34,24 @@ func (e *NestExpr) Eval(ctx context.Context, local Scope) (Value, error) {
 		return nil, WrapContextErr(err, e, local)
 	}
 	if set, ok := value.(Set); ok {
+		relAttrs, err := RelationAttrs(set)
+		if err != nil {
+			return nil, err
+		}
+		attrs := e.attrs
 		if e.inverse {
-			setRelAttrs := mustGetRelationAttrs(set)
-			if err := validNestOp(setRelAttrs, e.attrs); err != nil {
+			if err := validNestOp(relAttrs, attrs); err != nil {
 				return nil, WrapContextErr(err, e, local)
 			}
-			e.attrs = setRelAttrs.Minus(e.attrs)
-			if !e.attrs.IsTrue() {
+			attrs = relAttrs.Minus(attrs)
+			if !attrs.IsTrue() {
 				return nil, WrapContextErr(
-					fmt.Errorf("nest attrs cannot be on all of relation attrs (%v)", setRelAttrs),
+					fmt.Errorf("nest attrs cannot be on all of relation attrs (%v)", relAttrs),
 					e, local,
 				)
 			}
 		}
-		return Nest(set, e.attrs, e.attr), nil
+		return Nest(set, relAttrs, attrs, e.attr), nil
 	}
 	return nil, WrapContextErr(errors.Errorf("nest not applicable to %T", value), e, local)
 }

@@ -2,6 +2,7 @@ package rel
 
 import (
 	"context"
+	"fmt"
 	"reflect"
 
 	"github.com/arr-ai/hash"
@@ -222,7 +223,7 @@ func (s String) Without(value Value) Set {
 
 // Map maps values per f.
 func (s String) Map(f func(v Value) (Value, error)) (Set, error) {
-	result := NewSet()
+	result := None
 	for e := s.Enumerator().(*stringValueEnumerator); e.MoveNext(); {
 		v, err := f(e.currentStringCharTuple())
 		if err != nil {
@@ -246,15 +247,19 @@ func (s String) Where(p func(v Value) (bool, error)) (Set, error) {
 			values = append(values, value)
 		}
 	}
-	return NewSet(values...), nil
+	return NewSet(values...)
 }
 
 func (s String) CallAll(_ context.Context, arg Value) (Set, error) {
-	i := int(arg.(Number).Float64()) - s.offset
+	n, ok := arg.(Number)
+	if !ok {
+		return nil, fmt.Errorf("arg to CallAll must be a number, not %T", arg)
+	}
+	i := int(n.Float64()) - s.offset
 	if i < 0 || i >= len(s.s) {
 		return None, nil
 	}
-	return NewSet(NewNumber(float64(string(s.s)[i]))), nil
+	return NewSet(NewNumber(float64(string(s.s)[i])))
 }
 
 func (s String) index(pos int) int {

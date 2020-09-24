@@ -21,7 +21,7 @@ func GetBuildInfo(version, date, fullCommit, tags, os, arch, goVersion string) r
 		rel.NewAttr("git", rel.NewTuple(
 			rel.NewAttr("commit", rel.NewString([]rune(fullCommit))),
 			// param tags has only one tag now.
-			rel.NewAttr("tags", rel.NewSet(rel.NewString([]rune(tags))))),
+			rel.NewAttr("tags", rel.MustNewSet(rel.NewString([]rune(tags))))),
 		),
 		rel.NewAttr("go", rel.NewTuple(
 			rel.NewAttr("os", rel.NewString([]rune(os))),

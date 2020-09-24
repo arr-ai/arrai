@@ -8,14 +8,14 @@ import (
 	"github.com/go-errors/errors"
 )
 
-// NestExpr returns the relation with names grouped into a nested relation.
+// SingleNestExpr returns the relation with names grouped into a nested relation.
 type SingleNestExpr struct {
 	ExprScanner
 	lhs  Expr
 	attr string
 }
 
-// NewNestExpr returns a new NestExpr.
+// NewSingleNestExpr returns a new SingleNestExpr.
 func NewSingleNestExpr(scanner parser.Scanner, lhs Expr, attr string) Expr {
 	return &SingleNestExpr{ExprScanner{scanner}, lhs, attr}
 }
@@ -32,7 +32,11 @@ func (e *SingleNestExpr) Eval(ctx context.Context, local Scope) (Value, error) {
 		return nil, WrapContextErr(err, e, local)
 	}
 	if set, ok := value.(Set); ok {
-		return SingleAttrNest(set, e.attr), nil
+		relAttrs, err := RelationAttrs(set)
+		if err != nil {
+			return nil, err
+		}
+		return SingleAttrNest(set, relAttrs, e.attr), nil
 	}
 	return nil, WrapContextErr(errors.Errorf("nest not applicable to %T", value), e, local)
 }

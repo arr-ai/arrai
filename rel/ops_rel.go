@@ -7,33 +7,43 @@ import (
 	"github.com/go-errors/errors"
 )
 
-// RelationAttrs returns the set of names for a relation type, or false if the
-// set isn't a regular relation.
-func RelationAttrs(a Set) (Names, bool) {
+// RelationAttrs returns the set of names for a relation type, or an error if
+// the set isn't a regular relation.
+func RelationAttrs(a Set) (Names, error) {
 	e := a.Enumerator()
 	if !e.MoveNext() {
-		return Names{}, true
+		return Names{}, nil
 	}
-	names := e.Current().(Tuple).Names()
+	t, is := e.Current().(Tuple)
+	if !is {
+		return Names{}, fmt.Errorf("not a relation; has non-tuple element(s) (e.g.: %T)", t)
+	}
+	names := t.Names()
 	for e.MoveNext() {
-		if !names.Equal(e.Current().(Tuple).Names()) {
-			return Names{}, false
+		t, is := e.Current().(Tuple)
+		if !is {
+			return Names{}, fmt.Errorf("not a relation; has non-tuple element(s) (e.g.: %T)", t)
+		}
+		if !names.Equal(t.Names()) {
+			return Names{}, fmt.Errorf(
+				"not a relation; inconsistent attribute names between tuples (e.g.: %v vs %v)",
+				names, t.Names(),
+			)
 		}
 	}
-	return names, true
+	return names, nil
 }
 
-func NestWithFunc(a Set, attrs Names, attr string, fn func(Set, Tuple) Set) Set {
+func nestWithFunc(a Set, relAttrs, attrs Names, attr string, fn func(Set, Tuple) Set) Set {
 	if !a.IsTrue() {
 		return a
 	}
-	names := mustGetRelationAttrs(a)
 
-	if err := validNestOp(names, attrs); err != nil {
+	if err := validNestOp(relAttrs, attrs); err != nil {
 		panic(err)
 	}
 
-	key := names.Minus(attrs)
+	key := relAttrs.Minus(attrs)
 	return Reduce(
 		a,
 		func(value Value) Value {
@@ -44,17 +54,9 @@ func NestWithFunc(a Set, attrs Names, attr string, fn func(Set, Tuple) Set) Set 
 			for e := tuples.Enumerator(); e.MoveNext(); {
 				nested = fn(nested, e.Current().(Tuple))
 			}
-			return NewSet(Merge(key.(Tuple), NewTuple(Attr{attr, nested})))
+			return MustNewSet(Merge(key.(Tuple), NewTuple(Attr{attr, nested})))
 		},
 	)
-}
-
-func mustGetRelationAttrs(a Set) Names {
-	names, ok := RelationAttrs(a)
-	if !ok {
-		panic("Tuple names mismatch in nest lhs")
-	}
-	return names
 }
 
 func validNestOp(setAttrs, nestAttrs Names) error {
@@ -65,26 +67,27 @@ func validNestOp(setAttrs, nestAttrs Names) error {
 }
 
 // Nest groups the given attributes into nested relations.
-func Nest(a Set, attrs Names, attr string) Set {
-	return NestWithFunc(a, attrs, attr, func(nest Set, t Tuple) Set {
+func Nest(a Set, relAttrs, attrs Names, attr string) Set {
+	return nestWithFunc(a, relAttrs, attrs, attr, func(nest Set, t Tuple) Set {
 		return nest.With(t.Project(attrs))
 	})
 }
 
-func SingleAttrNest(a Set, attr string) Set {
-	return NestWithFunc(a, NewNames(attr), attr, func(nest Set, t Tuple) Set {
+// SingleAttrNest nests a single attribute as a set.
+func SingleAttrNest(a Set, relAttrs Names, attr string) Set {
+	return nestWithFunc(a, relAttrs, NewNames(attr), attr, func(nest Set, t Tuple) Set {
 		return nest.With(t.MustGet(attr))
 	})
 }
 
 // Unnest unpacks the attributes of a nested relation into the outer relation.
-func Unnest(a Set, attr string) Set {
-	key, ok := RelationAttrs(a)
-	if !ok {
-		panic("Tuple names mismatch in unnest lhs")
+func Unnest(a Set, attr string) (Set, error) {
+	key, err := RelationAttrs(a)
+	if err != nil {
+		return nil, err
 	}
 	if !key.Has(attr) {
-		panic("Unnest attr not found in relation")
+		return nil, fmt.Errorf("unnest attr %q not found in relation (%v)", attr, key)
 	}
 	return Reduce(
 		a,
@@ -101,7 +104,7 @@ func Unnest(a Set, attr string) Set {
 			}
 			return unnested
 		},
-	)
+	), nil
 }
 
 // Reduce reduces a set using the given key and reducer functions.
@@ -139,13 +142,13 @@ func Reduce(
 // The combine function determines how to combine matching tuples from a and b.
 func Joiner(combine func(common Names, a, b Tuple) Tuple) func(a, b Set) (Set, error) {
 	return func(a, b Set) (Set, error) {
-		aNames, ok := RelationAttrs(a)
-		if !ok {
-			return nil, fmt.Errorf("tuple names mismatch in join lhs")
+		aNames, err := RelationAttrs(a)
+		if err != nil {
+			return nil, err
 		}
-		bNames, ok := RelationAttrs(b)
-		if !ok {
-			return nil, fmt.Errorf("tuple names mismatch in join rhs")
+		bNames, err := RelationAttrs(b)
+		if err != nil {
+			return nil, err
 		}
 		common := aNames.Intersect(bNames)
 		return GenericJoin(
@@ -164,7 +167,7 @@ func Joiner(combine func(common Names, a, b Tuple) Tuple) func(a, b Set) (Set, e
 						))
 					}
 				}
-				return NewSet(values...)
+				return MustNewSet(values...)
 			},
 		), nil
 	}
@@ -280,9 +283,10 @@ func Concatenate(a, b Set) (Set, error) {
 		}
 		return nil, errors.Errorf("Mismatched elt in set + set: %v", elt)
 	}
-	return NewSet(values...), nil
+	return NewSet(values...)
 }
 
+// NConcatenate applies concatenate to one or more sets.
 func NConcatenate(a Set, bs ...Set) (Set, error) {
 	for _, b := range bs {
 		var err error

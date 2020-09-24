@@ -30,14 +30,6 @@ func NewAttrExpr(scanner parser.Scanner, name string, expr Expr) (AttrExpr, erro
 	return AttrExpr{ExprScanner{scanner}, name, expr}, nil
 }
 
-func MustNewAttrExpr(scanner parser.Scanner, name string, expr Expr) AttrExpr {
-	attrExpr, err := NewAttrExpr(scanner, name, expr)
-	if err != nil {
-		panic(err)
-	}
-	return attrExpr
-}
-
 // NewWildcardExpr constructs a new wildcard AttrExpr.
 func NewWildcardExpr(scanner parser.Scanner, lhs Expr) AttrExpr {
 	return AttrExpr{ExprScanner{scanner}, "*", lhs}

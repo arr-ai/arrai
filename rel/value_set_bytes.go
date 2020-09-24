@@ -2,6 +2,7 @@ package rel
 
 import (
 	"context"
+	"fmt"
 	"reflect"
 
 	"github.com/arr-ai/hash"
@@ -211,7 +212,7 @@ func (b Bytes) Without(value Value) Set {
 
 // Map maps values per f.
 func (b Bytes) Map(f func(v Value) (Value, error)) (Set, error) {
-	result := NewSet()
+	result := None
 	for e := b.Enumerator().(*BytesEnumerator); e.MoveNext(); {
 		v, err := f(e.CurrentBytesByteTuple())
 		if err != nil {
@@ -239,11 +240,15 @@ func (b Bytes) Where(p func(v Value) (bool, error)) (Set, error) {
 }
 
 func (b Bytes) CallAll(_ context.Context, arg Value) (Set, error) {
-	i := int(arg.(Number).Float64()) - b.offset
+	n, ok := arg.(Number)
+	if !ok {
+		return nil, fmt.Errorf("arg to CallAll must be a number, not %T", arg)
+	}
+	i := int(n.Float64()) - b.offset
 	if i < 0 || i >= len(b.Bytes()) {
 		return None, nil
 	}
-	return NewSet(NewNumber(float64(string(b.b)[i]))), nil
+	return NewSet(NewNumber(float64(string(b.b)[i])))
 }
 
 func (b Bytes) index(pos int) int {

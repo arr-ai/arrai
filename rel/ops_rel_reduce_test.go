@@ -4,16 +4,17 @@ import (
 	"testing"
 )
 
-var nestData = intPairs("a", "b", []intPair{
+var testNestData = intPairs("a", "b", []intPair{
 	{1, 1}, {1, 2}, {1, 3},
 	{2, 1}, {2, 2},
 }...)
+var testNestNames = NewNames("a", "b")
 
 func TestNestA(t *testing.T) {
 	t.Parallel()
 	AssertEqualValues(
 		t,
-		NewSet(
+		MustNewSet(
 			NewTuple([]Attr{
 				{"b", NewNumber(1)},
 				{"g", intRel("a", 1, 2)},
@@ -27,7 +28,7 @@ func TestNestA(t *testing.T) {
 				{"g", intRel("a", 1)},
 			}...),
 		),
-		Nest(nestData, NewNames("a"), "g"),
+		Nest(testNestData, testNestNames, NewNames("a"), "g"),
 	)
 }
 
@@ -35,7 +36,7 @@ func TestNestB(t *testing.T) {
 	t.Parallel()
 	AssertEqualValues(
 		t,
-		NewSet(
+		MustNewSet(
 			NewTuple([]Attr{
 				{"a", NewNumber(1)},
 				{"g", intRel("b", 1, 2, 3)},
@@ -45,7 +46,7 @@ func TestNestB(t *testing.T) {
 				{"g", intRel("b", 1, 2)},
 			}...),
 		),
-		Nest(nestData, NewNames("b"), "g"),
+		Nest(testNestData, testNestNames, NewNames("b"), "g"),
 	)
 }
 
@@ -53,7 +54,7 @@ func TestNestAThenB(t *testing.T) {
 	t.Parallel()
 	AssertEqualValues(
 		t,
-		NewSet(
+		MustNewSet(
 			NewTuple([]Attr{
 				{"g", intRel("a", 1)},
 				{"h", intRel("b", 3)},
@@ -65,11 +66,15 @@ func TestNestAThenB(t *testing.T) {
 		),
 		Nest(
 			Nest(
-				nestData,
+				testNestData,
+				testNestNames,
 				NewNames("a"),
-				"g"),
+				"g",
+			),
+			NewNames("b", "g"),
 			NewNames("b"),
-			"h"),
+			"h",
+		),
 	)
 }
 
@@ -77,7 +82,7 @@ func TestNestBThenA(t *testing.T) {
 	t.Parallel()
 	AssertEqualValues(
 		t,
-		NewSet(
+		MustNewSet(
 			NewTuple([]Attr{
 				{"g", intRel("a", 1)},
 				{"h", intRel("b", 1, 2, 3)},
@@ -89,10 +94,14 @@ func TestNestBThenA(t *testing.T) {
 		),
 		Nest(
 			Nest(
-				nestData,
+				testNestData,
+				testNestNames,
 				NewNames("b"),
-				"h"),
+				"h",
+			),
+			NewNames("a", "h"),
 			NewNames("a"),
-			"g"),
+			"g",
+		),
 	)
 }
