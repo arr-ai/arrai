@@ -129,7 +129,7 @@ func (d Dict) Source() parser.Scanner {
 	return *parser.NewScanner("")
 }
 
-var dictKind = registerKind(209, reflect.TypeOf(String{}))
+var dictKind = registerKind(209, reflect.TypeOf(Dict{}))
 
 // Kind returns a number that is unique for each major kind of Value.
 func (d Dict) Kind() int {
