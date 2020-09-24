@@ -12,8 +12,8 @@ Usage:
 $ arrai eval "//fmt.pretty({'a': (b: [1,2])})"
 {
   'a': (
-    b: [1, 2]
-  )
+    b: [1, 2],
+  ),
 }
 ```
 
@@ -23,5 +23,5 @@ Note: the rendering of output strings differs between `arrai eval` and the inter
 
 ```bash
 @> //fmt.pretty({'a': (b: [1,2])})
-"{\n  'a': (\n    b: [1, 2]\n  )\n}"
+"{\n  'a': (\n    b: [1, 2],\n  ),\n}"
 ```
