@@ -33,15 +33,12 @@ type Enumerable interface {
 func PrettifyString(val interface{}, indentsNum int) (string, error) {
 	switch t := val.(type) {
 	case rel.DictEntryTuple:
-		key, found := t.Get("@")
+		key := t.MustGet("@")
 		prettyKey, err := PrettifyString(key, indentsNum)
 		if err != nil {
 			return "", err
 		}
-		val, found := t.Get(rel.DictValueAttr)
-		if !found {
-			return "", fmt.Errorf("couldn't find value in %s", t)
-		}
+		val := t.MustGet(rel.DictValueAttr)
 		prettyVal, err := PrettifyString(val, indentsNum)
 		if err != nil {
 			return "", err
