@@ -1,3 +1,4 @@
+//nolint:dupl
 package syntax
 
 import (
@@ -189,4 +190,7 @@ func TestEvalCondPatternMatchingWithControlVar(t *testing.T) { //nolint:dupl
 
 	AssertCodesEvalToSameValue(t, `{}`, `let a = 2; cond a {[1,2,3]: 6}`)
 	AssertCodesEvalToSameValue(t, `2`, `let a = {"a":3}; cond a {(a:x): x + 5,_:2}`)
+
+	AssertCodesEvalToSameValue(t, `1`, `let a = 2; cond (x: 2) {(x: (a)): 1, _: 2}`)
+	AssertCodesEvalToSameValue(t, `2`, `let a = 3; cond (x: 2) {(x: (a)): 1, _: 2}`)
 }
