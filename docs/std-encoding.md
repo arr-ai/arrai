@@ -85,10 +85,13 @@ The output is `shop`, a tuple representing a `Module`. It contains a field `apps
 [More sample code and data details](https://github.com/arr-ai/arrai/blob/master/syntax/pb_test.go)
 
 
-## `//encoding.xlsx.decodeToRelation(xlsx <: string|bytes, sheet <: int) <: relation`
+## `//encoding.xlsx.decodeToRelation(xlsx <: string|bytes, sheet <: int, headRow <: int) <: relation`
 
 `decodeToRelation` transforms one sheet of an Excel workbook (XLSX format) to an arr.ai relation: a set of tuples (rows) with attributes names corresponding to the column headers and values to the cells.
 
-`decodeToRelation` can only decode simple tabular spreadsheets with a single header row in row 1. The decoding will ignore columns without headings and rows without values, and convert column names to `snake_case`.
+`decodeToRelation` can only decode relatively simple tabular spreadsheets with a single header given by `headRow`. The decoding:
+ - ignores columns without heading values;
+ - ignores rows with no cell values;
+ - converts heading/column names to `snake_case`, replacing various special characters with `_`.
 
 Note that unlike standard `decode` functions, this is not reversible; its output cannot be passed to an `encode` function to produce the original XLSX. Expect this function to be superseded by more canonical decoding functions in the future.
