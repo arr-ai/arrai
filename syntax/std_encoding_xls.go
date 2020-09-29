@@ -3,10 +3,11 @@ package syntax
 import (
 	"bytes"
 	"context"
+	"regexp"
+
 	"github.com/360EntSecGroup-Skylar/excelize/v2"
 	"github.com/go-errors/errors"
 	"github.com/iancoleman/strcase"
-	"regexp"
 
 	"github.com/arr-ai/arrai/rel"
 )
