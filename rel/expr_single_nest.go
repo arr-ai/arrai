@@ -38,5 +38,5 @@ func (e *SingleNestExpr) Eval(ctx context.Context, local Scope) (Value, error) {
 		}
 		return SingleAttrNest(set, relAttrs, e.attr), nil
 	}
-	return nil, WrapContextErr(errors.Errorf("nest not applicable to %s", ValueTypeAsString(value)), e, local)
+	return nil, WrapContextErr(errors.Errorf("nest lhs must be relation, not %s", ValueTypeAsString(value)), e, local)
 }

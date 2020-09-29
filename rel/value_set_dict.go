@@ -370,7 +370,7 @@ func (a *DictEnumerator) MoveNext() bool {
 func (a *DictEnumerator) Current() (key, value Value) {
 	k, ok := a.i.Key().(Value)
 	if !ok {
-		panic(fmt.Errorf("key is not a Value: %T %[1]s", a.i.Key()))
+		panic(fmt.Errorf("key is not a Value: %s %[1]s", a.i.Key()))
 	}
 	v, ok := a.i.Value().(Value)
 	if !ok {

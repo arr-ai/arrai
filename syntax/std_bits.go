@@ -53,5 +53,5 @@ func mask(_ context.Context, v rel.Value) (rel.Value, error) {
 		}
 		return rel.NewNumber(total), nil
 	}
-	return nil, fmt.Errorf("mask: arg not a Set: %v", v)
+	return nil, fmt.Errorf("arg to mask must be a set, not %s", rel.ValueTypeAsString(v))
 }

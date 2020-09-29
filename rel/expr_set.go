@@ -71,8 +71,8 @@ func NewIntersectExpr(scanner parser.Scanner, a, b Expr) Expr {
 				if y, ok := b.(Set); ok {
 					return Intersect(x, y), nil
 				}
-				return nil, errors.Errorf("<&> rhs must be a Set, not %s", ValueTypeAsString(b))
+				return nil, errors.Errorf("<&> rhs must be a set, not %s", ValueTypeAsString(b))
 			}
-			return nil, errors.Errorf("<&> lhs must be a Set, not %s", ValueTypeAsString(a))
+			return nil, errors.Errorf("<&> lhs must be a set, not %s", ValueTypeAsString(a))
 		})
 }

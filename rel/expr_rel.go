@@ -78,9 +78,9 @@ func newSetBinExpr(scanner parser.Scanner, a, b Expr, op string, f func(x, y Set
 				if y, ok := b.(Set); ok {
 					return f(x, y)
 				}
-				return nil, errors.Errorf(op+" rhs must be a Set, not %s", ValueTypeAsString(b))
+				return nil, errors.Errorf(op+" rhs must be a set, not %s", ValueTypeAsString(b))
 			}
-			return nil, errors.Errorf(op+" lhs must be a Set, not %s", ValueTypeAsString(a))
+			return nil, errors.Errorf(op+" lhs must be a set, not %s", ValueTypeAsString(a))
 		})
 }
 

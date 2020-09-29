@@ -174,7 +174,7 @@ func jsonUnescape(i interface{}) (Value, error) {
 						return result, nil
 					}
 					return nil, errors.Errorf(
-						`x must be array in {"{||}": x}, not %T`, value)
+						`x must be array in {"{||}": x}, not %s`, ValueTypeAsString(value))
 				}
 			}
 		}

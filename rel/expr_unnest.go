@@ -39,5 +39,5 @@ func (e *UnnestExpr) Eval(ctx context.Context, local Scope) (Value, error) {
 	if set, ok := value.(Set); ok {
 		return Unnest(set, e.attr)
 	}
-	return nil, WrapContextErr(errors.Errorf("unnest not applicable to %s", ValueTypeAsString(value)), e, local)
+	return nil, WrapContextErr(errors.Errorf("unnest lhs must be relation, not %s", ValueTypeAsString(value)), e, local)
 }

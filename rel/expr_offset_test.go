@@ -142,7 +142,7 @@ func TestOffsetExprEvalFail(t *testing.T) {
 	// None in LHS instead of a Number
 	_, err := NewOffsetExpr(
 		*parser.NewScanner(""), None, None).Eval(arraictx.InitRunCtx(context.Background()), EmptyScope)
-	expected := errors.Errorf("\\ not applicable to set").Error()
+	expected := errors.Errorf("offset must be a number, not set").Error()
 	assert.EqualError(t, errors.New(err.Error()[:len(expected)]), expected)
 
 	// Randomg set in RHS instead of an Array
@@ -151,6 +151,6 @@ func TestOffsetExprEvalFail(t *testing.T) {
 		Number(float64(0)),
 		MustNewSet(Number(float64(0))),
 	).Eval(arraictx.InitRunCtx(context.Background()), EmptyScope)
-	expected = errors.Errorf("\\ not applicable to set").Error()
+	expected = errors.Errorf("offset not applicable to set").Error()
 	assert.EqualError(t, errors.New(err.Error()[:len(expected)]), expected)
 }
