@@ -14,7 +14,7 @@ func TestValueTypeAsString(t *testing.T) {
 	assert.Equal(t, `bytes`, ValueTypeAsString(NewBytes([]byte{0})))
 	assert.Equal(t, `closure`, ValueTypeAsString(NewClosure(Scope{}, nil)))
 	assert.Equal(t, `dict`, ValueTypeAsString(
-		NewDict(false, NewDictEntryTuple(NewNumber(0), NewNumber(0)))))
+		MustNewDict(false, NewDictEntryTuple(NewNumber(0), NewNumber(0)))))
 	assert.Equal(t, `expr closure`, ValueTypeAsString(NewExprClosure(Scope{}, nil)))
 	assert.Equal(t, `string`, ValueTypeAsString(NewString([]rune(" "))))
 	assert.Equal(t, `set`, ValueTypeAsString(None))
@@ -26,7 +26,7 @@ func TestValueTypeAsString(t *testing.T) {
 
 	// Less obvious cases resulting from implementation details.
 	assert.Equal(t, `set`, ValueTypeAsString(NewString([]rune{})))
-	assert.Equal(t, `set`, ValueTypeAsString(NewDict(false)))
+	assert.Equal(t, `set`, ValueTypeAsString(MustNewDict(false)))
 	assert.Equal(t, `set`, ValueTypeAsString(NewArray()))
 	assert.Equal(t, `set`, ValueTypeAsString(NewBytes([]byte{})))
 }
