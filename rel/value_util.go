@@ -16,7 +16,7 @@ func ValueTypeAsString(v Value) string {
 	case Closure, *Closure:
 		return "closure"
 	case ExprClosure, *ExprClosure:
-		return "expr closure"
+		return "expr-closure"
 	case Dict, *Dict:
 		return "dict"
 	case String, *String:
@@ -24,13 +24,13 @@ func ValueTypeAsString(v Value) string {
 	case GenericSet, *GenericSet:
 		return "set"
 	case ArrayItemTuple, *ArrayItemTuple:
-		return "array item tuple"
+		return "array-item-tuple"
 	case BytesByteTuple, *BytesByteTuple:
-		return "bytes byte tuple"
+		return "bytes-byte-tuple"
 	case DictEntryTuple, *DictEntryTuple:
-		return "dict entry tuple"
+		return "dict-entry-tuple"
 	case StringCharTuple, *StringCharTuple:
-		return "string char tuple"
+		return "string-char-tuple"
 	case Tuple, *GenericTuple:
 		return "tuple"
 	}
