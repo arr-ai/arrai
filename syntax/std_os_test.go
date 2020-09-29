@@ -40,12 +40,7 @@ func TestStdOsTree(t *testing.T) {
 		(name: "full", path: "std_os_test/no files/full", is_dir: true, size: true, mod_time: true),
 		(name: "README.md", path: "std_os_test/no files/full/README.md", is_dir: false, size: true, mod_time: true),
  		(name: "root.ln", path: "std_os_test/no files/full/root.ln", is_dir: false, size: true, mod_time: true),
-		(name: "empty", path: "std_os_test/no files/full/empty", is_dir: true, size: true, mod_time: true),
 	}`, fmt.Sprintf(`//os.tree('std_os_test') => %s`, predx))
-
-	AssertCodesEvalToSameValue(t, `{
-		(name: "empty", path: "std_os_test/no files/full/empty/", is_dir: true, size: true, mod_time: true),
-	}`, fmt.Sprintf(`//os.tree('std_os_test/no files/full/empty/') => %s`, predx))
 
 	AssertCodesEvalToSameValue(t, `{'.'}`, `//os.tree('.') => .path where . = '.'`)
 
