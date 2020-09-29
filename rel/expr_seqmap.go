@@ -125,11 +125,13 @@ func (e *SeqArrowExpr) Eval(ctx context.Context, local Scope) (_ Value, err erro
 		for i := value.Enumerator(); i.MoveNext(); {
 			t, ok := i.Current().(Tuple)
 			if !ok {
-				return nil, WrapContextErr(errors.Errorf("%s lhs must be an indexed type, not %s", e.op, ValueTypeAsString(value)), e, local)
+				return nil, WrapContextErr(errors.Errorf(
+					"%s lhs must be an indexed type, not %s", e.op, ValueTypeAsString(value)), e, local)
 			}
 			at, has := t.Get("@")
 			if !has {
-				return nil, WrapContextErr(errors.Errorf("%s lhs must be an indexed type, not %s", e.op, ValueTypeAsString(value)), e, local)
+				return nil, WrapContextErr(errors.Errorf(
+					"%s lhs must be an indexed type, not %s", e.op, ValueTypeAsString(value)), e, local)
 			}
 			attr := t.Names().Without("@").Any()
 			item, _ := t.Get(attr)
@@ -145,5 +147,6 @@ func (e *SeqArrowExpr) Eval(ctx context.Context, local Scope) (_ Value, err erro
 		}
 		return s, nil
 	}
-	return nil, WrapContextErr(errors.Errorf("%s lhs must be an indexed type, not %s", e.op, ValueTypeAsString(value)), e, local)
+	return nil, WrapContextErr(errors.Errorf(
+		"%s lhs must be an indexed type, not %s", e.op, ValueTypeAsString(value)), e, local)
 }
