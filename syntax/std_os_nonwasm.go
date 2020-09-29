@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
+	"strings"
 
 	"github.com/arr-ai/arrai/pkg/ctxfs"
 	"github.com/arr-ai/arrai/rel"
@@ -79,6 +81,10 @@ func stdOsTree(_ context.Context, v rel.Value) (rel.Value, error) {
 	err := filepath.Walk(d.String(), func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
+		}
+		// Fix for consistent behavior on Windows.
+		if path == d.String() && runtime.GOOS == "windows" {
+			path = strings.ReplaceAll(path, `/`, string(filepath.Separator))
 		}
 		fs = append(fs, rel.NewTuple(
 			rel.NewStringAttr("name", []rune(info.Name())),
