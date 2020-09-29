@@ -3,8 +3,18 @@ package syntax
 import (
 	"bytes"
 	"fmt"
+	"runtime"
+	"strings"
 	"testing"
 )
+
+// fixPaths replaces all /s with \s if running on Windows.
+func fixPaths(code string) string {
+	if runtime.GOOS != "windows" {
+		return code
+	}
+	return strings.ReplaceAll(code, `/`, `\`)
+}
 
 func TestStdOsStdin(t *testing.T) {
 	// Not parallelisable
@@ -32,7 +42,7 @@ func TestStdOsTree(t *testing.T) {
 	// size and mod_time are non-deterministic, so evaluate some predicate of them instead.
 	predx := `. +> (mod_time: .mod_time > 0, size: .size > 0)`
 
-	AssertCodesEvalToSameValue(t, `{
+	AssertCodesEvalToSameValue(t, fixPaths(`{
 		(name: "std_os_test", path: "std_os_test", is_dir: true, size: true, mod_time: true),
 		(name: ".empty", path: "std_os_test/.empty", is_dir: false, size: false, mod_time: true),
 		(name: "README.md", path: "std_os_test/README.md", is_dir: false, size: true, mod_time: true),
@@ -40,13 +50,13 @@ func TestStdOsTree(t *testing.T) {
 		(name: "full", path: "std_os_test/no files/full", is_dir: true, size: true, mod_time: true),
 		(name: "README.md", path: "std_os_test/no files/full/README.md", is_dir: false, size: true, mod_time: true),
  		(name: "root.ln", path: "std_os_test/no files/full/root.ln", is_dir: false, size: true, mod_time: true),
-	}`, fmt.Sprintf(`//os.tree('std_os_test') => %s`, predx))
+	}`), fmt.Sprintf(`//os.tree('std_os_test') => %s`, predx))
 
 	AssertCodesEvalToSameValue(t, `{'.'}`, `//os.tree('.') => .path where . = '.'`)
 
-	AssertCodesEvalToSameValue(t, `{
+	AssertCodesEvalToSameValue(t, fixPaths(`{
 		(name: "README.md", path: "std_os_test/README.md", is_dir: false, size: true, mod_time: true),
-	}`, fmt.Sprintf(`//os.tree('std_os_test/README.md') => %s`, predx))
+	}`), fmt.Sprintf(`//os.tree('std_os_test/README.md') => %s`, predx))
 
 	AssertCodeErrors(t, ``, `//os.tree(['std_os_test'])`)
 	AssertCodeErrors(t, ``, `//os.tree('doesntexist')`)
