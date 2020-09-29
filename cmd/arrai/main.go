@@ -2,8 +2,12 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"path"
+	"runtime"
+	"runtime/pprof"
+	"strings"
 
 	"github.com/arr-ai/arrai/rel"
 	"github.com/arr-ai/arrai/syntax"
@@ -15,7 +19,9 @@ import (
 var cmds = []*cli.Command{
 	shellCommand,
 	runCommand,
+	bundleCommand,
 	evalCommand,
+	compileCommand,
 	jsonCommand,
 	observeCommand,
 	serveCommand,
@@ -27,6 +33,8 @@ var cmds = []*cli.Command{
 }
 
 func main() {
+	prepareProfilers()
+
 	app := cli.NewApp()
 	// logrus.SetLevel(logrus.InfoLevel)
 
@@ -117,4 +125,50 @@ func setupVersion(app *cli.App) {
 	}
 	// Construct build information here as these data are stored in main package only.
 	syntax.BuildInfo = syntax.GetBuildInfo(Version, BuildDate, GitFullCommit, GitTags, BuildOS, BuildArch, GoVersion)
+}
+
+func prepareProfilers() {
+	args := os.Args[1:]
+loop:
+	for len(args) >= 1 {
+		flag := strings.SplitN(args[0], "=", 2)
+		switch flag[0] {
+		case "-cpuprofile":
+			cpuprofile := flag[1]
+			f, err := os.Create(cpuprofile)
+			if err != nil {
+				log.Fatalf("could not create cpu profile: %v", err)
+			}
+			defer func() {
+				if err := f.Close(); err != nil {
+					log.Printf("error closing cpu profile: %v", err)
+				}
+			}()
+			if err := pprof.StartCPUProfile(f); err != nil {
+				logrus.Fatal(err)
+			}
+			defer pprof.StopCPUProfile()
+		case "-memprofile":
+			memprofile := flag[1]
+			defer func() {
+				f, err := os.Create(memprofile)
+				if err != nil {
+					log.Fatalf("could not create memory profile: %v", err)
+				}
+				defer func() {
+					if err := f.Close(); err != nil {
+						log.Printf("error closing memory profile: %v", err)
+					}
+				}()
+				runtime.GC()
+				if err := pprof.WriteHeapProfile(f); err != nil {
+					log.Fatal("could not write memory profile: ", err)
+				}
+			}()
+		default:
+			break loop
+		}
+		args = args[1:]
+	}
+	os.Args = append(os.Args[:1], args...)
 }

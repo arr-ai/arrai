@@ -6,6 +6,8 @@ import (
 	"reflect"
 	"sort"
 
+	"github.com/pkg/errors"
+
 	"github.com/arr-ai/frozen"
 	"github.com/arr-ai/wbnf/parser"
 )
@@ -27,8 +29,17 @@ var (
 	dictEntryTupleType  = reflect.TypeOf(DictEntryTuple{})
 )
 
+// MustNewSet constructs a genericSet from a set of Values, or panics if construction fails.
+func MustNewSet(values ...Value) Set {
+	s, err := NewSet(values...)
+	if err != nil {
+		panic(err)
+	}
+	return s
+}
+
 // NewSet constructs a genericSet from a set of Values.
-func NewSet(values ...Value) Set {
+func NewSet(values ...Value) (Set, error) {
 	set := None
 	if len(values) > 0 {
 		typ := reflect.TypeOf(values[0])
@@ -46,27 +57,27 @@ func NewSet(values ...Value) Set {
 				}
 				s, is := AsString(set)
 				if !is {
-					panic("unsupported array expr")
+					return nil, errors.Errorf("unsupported string array expr")
 				}
-				return s
+				return s, nil
 			case bytesByteTupleType:
 				for _, value := range values {
 					set = set.With(value)
 				}
 				b, is := AsBytes(set)
 				if !is {
-					panic("unsupported array expr")
+					return nil, errors.Errorf("unsupported byte array expr")
 				}
-				return b
+				return b, nil
 			case arrayItemTupleType:
 				for _, value := range values {
 					set = set.With(value)
 				}
 				array, is := asArray(set)
 				if !is {
-					panic("unsupported array expr")
+					return nil, errors.Errorf("unsupported array expr")
 				}
-				return array
+				return array, nil
 			case dictEntryTupleType:
 				tuples := make([]DictEntryTuple, 0, len(values))
 				for _, value := range values {
@@ -79,7 +90,7 @@ func NewSet(values ...Value) Set {
 			set = set.With(value)
 		}
 	}
-	return set
+	return set, nil
 }
 
 func CanonicalSet(s Set) Set {
@@ -88,7 +99,7 @@ func CanonicalSet(s Set) Set {
 		for e := s.Enumerator(); e.MoveNext(); {
 			values = append(values, e.Current())
 		}
-		return NewSet(values...)
+		return MustNewSet(values...)
 	}
 	return s
 }
@@ -266,7 +277,7 @@ func (s GenericSet) Without(value Value) Set {
 
 // Map maps values per f.
 func (s GenericSet) Map(f func(v Value) (Value, error)) (Set, error) {
-	result := NewSet()
+	result := None
 	for e := s.Enumerator(); e.MoveNext(); {
 		v, err := f(e.Current())
 		if err != nil {

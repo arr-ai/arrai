@@ -44,7 +44,9 @@ func Compile(ctx context.Context, filePath, source string) (rel.Expr, error) {
 		}
 	}
 	pc := ParseContext{SourceDir: dirpath}
-	if !filepath.IsAbs(filePath) {
+	// bundle run will always get absolute UNIX filePath. This needs to happen
+	// with windows too.
+	if !filepath.IsAbs(filePath) && !isRunningBundle(ctx) {
 		var err error
 		filePath, err = filepath.Rel(".", filePath)
 		if err != nil {
@@ -55,6 +57,7 @@ func Compile(ctx context.Context, filePath, source string) (rel.Expr, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	return pc.CompileExpr(ctx, ast)
 }
 
@@ -370,12 +373,23 @@ func (pc ParseContext) compileArrow(ctx context.Context, b ast.Branch, name stri
 				}
 				expr = binops["->"](source, expr, rhs)
 			case "FILTER":
-				pred, err := pc.CompileExpr(ctx, arrow.(ast.Branch))
+				transform, err := pc.CompileExpr(ctx, arrow.(ast.Branch))
 				if err != nil {
 					return nil, err
 				}
+				t := transform.(rel.CondPatternControlVarExpr)
+				conditions := t.Conditions()
+				trueConds := make([]rel.PatternExprPair, 0, len(conditions))
+				for _, c := range conditions {
+					trueConds = append(trueConds, rel.NewPatternExprPair(c.Pattern(), rel.True))
+				}
+				pred := rel.NewCondPatternControlVarExpr(
+					t.ExprScanner.Src,
+					t.Control(),
+					trueConds...,
+				)
 				lhs := rel.NewWhereExpr(source, expr, pred)
-				expr = rel.NewDArrowExpr(source, lhs, pred)
+				expr = rel.NewDArrowExpr(source, lhs, transform)
 			}
 		}
 	}
@@ -619,9 +633,12 @@ func (pc ParseContext) compileCondWithoutControlVar(ctx context.Context, c ast.C
 	}
 	if entryExprs != nil {
 		// Generates type DictExpr always to make sure it is easy to do Eval, only process type DictExpr.
-		result = rel.NewDictExpr(c.(ast.One).Node.Scanner(), false, true, entryExprs...)
+		result, err = rel.NewDictExpr(c.(ast.One).Node.Scanner(), false, true, entryExprs...)
+		if err != nil {
+			return nil, err
+		}
 	} else {
-		result = rel.NewDict(false)
+		result = rel.MustNewDict(false)
 	}
 
 	// Note, the default case `_:expr` which can match anything is parsed to condition/value pairs by current syntax.
@@ -876,9 +893,9 @@ func (pc ParseContext) compileSet(ctx context.Context, b ast.Branch, c ast.Child
 		if err != nil {
 			return nil, err
 		}
-		return rel.NewSetExpr(scanner, exprs...), nil
+		return rel.NewSetExpr(scanner, exprs...)
 	}
-	return rel.NewLiteralExpr(scanner, rel.NewSet()), nil
+	return rel.NewLiteralExpr(scanner, rel.None), nil
 }
 
 func (pc ParseContext) compileDict(ctx context.Context, b ast.Branch, c ast.Children) (rel.Expr, error) {
@@ -888,10 +905,14 @@ func (pc ParseContext) compileDict(ctx context.Context, b ast.Branch, c ast.Chil
 		return nil, err
 	}
 	if entryExprs != nil {
-		return rel.NewDictExpr(scanner, false, false, entryExprs...), nil
+		return rel.NewDictExpr(scanner, false, false, entryExprs...)
 	}
 
-	return rel.NewLiteralExpr(scanner, rel.NewDict(false)), nil
+	d, err := rel.NewDict(false)
+	if err != nil {
+		return nil, err
+	}
+	return rel.NewLiteralExpr(scanner, d), nil
 }
 
 func (pc ParseContext) compileDictEntryExprs(ctx context.Context, b ast.Branch) ([]rel.DictEntryTupleExpr, error) {

@@ -137,7 +137,7 @@ func (c Closure) CallAll(ctx context.Context, arg Value) (Set, error) {
 		if err != nil {
 			return nil, err
 		}
-		return NewSet(val), nil
+		return NewSet(val)
 	}
 	ctx, scope, err := c.f.arg.Bind(ctx, c.scope, arg)
 	if err != nil {
@@ -147,7 +147,7 @@ func (c Closure) CallAll(ctx context.Context, arg Value) (Set, error) {
 	if err != nil {
 		return nil, err
 	}
-	return NewSet(val), nil
+	return NewSet(val)
 }
 
 func (c Closure) ArrayEnumerator() (OffsetValueEnumerator, bool) {

@@ -20,17 +20,22 @@ func NewCondPatternControlVarExpr(scanner parser.Scanner, controlVar Expr, patte
 	return CondPatternControlVarExpr{ExprScanner{scanner}, controlVar, patternExprs}
 }
 
-func (expr CondPatternControlVarExpr) String() string {
-	var b bytes.Buffer
-	b.WriteByte('(')
-	fmt.Fprintf(&b, "(control_var: %v)", expr.controlVarExpr.String())
+// Control returns the cond's control expr.
+func (e CondPatternControlVarExpr) Control() Expr {
+	return e.controlVarExpr
+}
 
-	if len(expr.conditionPairs) > 0 {
-		b.WriteByte(',')
-	}
+// Conditions returns the cond's conditions.
+func (e CondPatternControlVarExpr) Conditions() []PatternExprPair {
+	return e.conditionPairs
+}
+
+func (e CondPatternControlVarExpr) String() string {
+	var b bytes.Buffer
+	fmt.Fprintf(&b, "cond %v ", e.controlVarExpr.String())
 
 	b.WriteByte('{')
-	for i, conditionPair := range expr.conditionPairs {
+	for i, conditionPair := range e.conditionPairs {
 		if i > 0 {
 			b.WriteString(", ")
 		}
@@ -38,27 +43,26 @@ func (expr CondPatternControlVarExpr) String() string {
 	}
 
 	b.WriteByte('}')
-	b.WriteByte(')')
 	return b.String()
 }
 
 // Eval evaluates to find the first valid condition and return its value.
-func (expr CondPatternControlVarExpr) Eval(ctx context.Context, scope Scope) (Value, error) {
-	varVal, err := expr.controlVarExpr.Eval(ctx, scope)
+func (e CondPatternControlVarExpr) Eval(ctx context.Context, scope Scope) (Value, error) {
+	varVal, err := e.controlVarExpr.Eval(ctx, scope)
 	if err != nil {
-		return nil, WrapContextErr(err, expr.controlVarExpr, scope)
+		return nil, WrapContextErr(err, e.controlVarExpr, scope)
 	}
 
-	for _, conditionPair := range expr.conditionPairs {
+	for _, conditionPair := range e.conditionPairs {
 		ctx, bindings, err := conditionPair.Bind(ctx, scope, varVal)
 		if err == nil {
 			l, err := scope.MatchedUpdate(bindings)
 			if err != nil {
-				return nil, WrapContextErr(err, expr.controlVarExpr, scope)
+				return nil, WrapContextErr(err, e.controlVarExpr, scope)
 			}
-			val, err := conditionPair.Eval(ctx, l)
+			val, err := conditionPair.eval(ctx, l)
 			if err != nil {
-				return nil, WrapContextErr(err, expr.controlVarExpr, l)
+				return nil, WrapContextErr(err, e.controlVarExpr, l)
 			}
 			return val, nil
 		}

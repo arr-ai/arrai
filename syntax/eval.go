@@ -20,6 +20,19 @@ func EvalWithScope(ctx context.Context, path, source string, scope rel.Scope) (r
 	return value, nil
 }
 
+// EvaluateExpr evaluate the passed in arrai script `source` and returns the evaluated arrai value.
+// Parameter `path` is used as source context, could be empty.
 func EvaluateExpr(ctx context.Context, path, source string) (rel.Value, error) {
 	return EvalWithScope(ctx, path, source, rel.Scope{})
+}
+
+// EvaluateBundle evaluates the buffer of a bundled scripts using the arrai bundle cmd.
+func EvaluateBundle(ctx context.Context, bundle []byte) (rel.Value, error) {
+	ctx, err := WithBundleRun(ctx, bundle)
+	if err != nil {
+		return nil, err
+	}
+
+	ctx, mainFileSource, path := GetMainBundleSource(ctx)
+	return EvaluateExpr(ctx, path, string(mainFileSource))
 }

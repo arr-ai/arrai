@@ -115,14 +115,21 @@ func (e *SeqArrowExpr) Eval(ctx context.Context, local Scope) (_ Value, err erro
 			}
 			entries = append(entries, NewDictEntryTuple(entry.at, newValue))
 		}
-		return NewDict(true, entries...), nil
+		d, err := NewDict(true, entries...)
+		if err != nil {
+			return nil, WrapContextErr(err, e, local)
+		}
+		return d, nil
 	case Set:
 		values := []Value{}
 		for i := value.Enumerator(); i.MoveNext(); {
-			t := i.Current().(Tuple)
+			t, ok := i.Current().(Tuple)
+			if !ok {
+				return nil, WrapContextErr(errors.Errorf("%s not applicable to unindexed type %T", e.op, value), e, local)
+			}
 			at, has := t.Get("@")
 			if !has {
-				return nil, WrapContextErr(errors.Errorf("%s not applicable to unindexed type %v", e.op, value), e, local)
+				return nil, WrapContextErr(errors.Errorf("%s not applicable to unindexed type %T", e.op, value), e, local)
 			}
 			attr := t.Names().Without("@").Any()
 			item, _ := t.Get(attr)
@@ -132,7 +139,11 @@ func (e *SeqArrowExpr) Eval(ctx context.Context, local Scope) (_ Value, err erro
 			}
 			values = append(values, NewTuple(Attr{"@", at}, Attr{attr, newItem}))
 		}
-		return NewSet(values...), nil
+		s, err := NewSet(values...)
+		if err != nil {
+			return nil, WrapContextErr(err, e, local)
+		}
+		return s, nil
 	}
 	return nil, WrapContextErr(errors.Errorf("%s not applicable to %T", e.op, value), e, local)
 }

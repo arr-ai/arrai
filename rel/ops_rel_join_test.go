@@ -2,6 +2,8 @@ package rel
 
 import (
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 var (
@@ -62,7 +64,7 @@ func TestJoinSpecialSet(t *testing.T) {
 	assertJoin(t,
 		NewString([]rune("do")),
 		NewString([]rune("dots")),
-		NewSet(NewTuple(NewAttr("@", NewNumber(0))), NewTuple(NewAttr("@", NewNumber(1)))),
+		MustNewSet(NewTuple(NewAttr("@", NewNumber(0))), NewTuple(NewAttr("@", NewNumber(1)))),
 	)
 }
 
@@ -93,6 +95,10 @@ func intPairs(a, b string, pairs ...intPair) Set { //nolint:unparam
 }
 
 func assertJoin(t *testing.T, expected, a, b Set) bool { //nolint:unparam
-	return AssertEqualValues(t, expected, join(a, b)) &&
-		AssertEqualValues(t, expected, join(b, a))
+	ab, err := join(a, b)
+	require.NoError(t, err)
+	ba, err := join(a, b)
+	require.NoError(t, err)
+	return AssertEqualValues(t, expected, ab) &&
+		AssertEqualValues(t, expected, ba)
 }

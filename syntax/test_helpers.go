@@ -3,7 +3,7 @@ package syntax
 import (
 	"context"
 	"errors"
-	"strings"
+	"path/filepath"
 	"testing"
 
 	"github.com/arr-ai/arrai/pkg/arraictx"
@@ -108,6 +108,16 @@ func AssertCodePanics(t *testing.T, code string) bool {
 	})
 }
 
+// AssertCodeParseErrors asserts that code fails with a certain
+// message when parsed.
+func AssertCodeParseErrors(t *testing.T, errString, code string) bool {
+	pc := ParseContext{SourceDir: ".."}
+	ctx := arraictx.InitRunCtx(context.Background())
+	_, err := pc.Parse(ctx, parser.NewScanner(code))
+	return assert.Error(t, err) &&
+		assert.EqualError(t, errors.New(err.Error()[:len(errString)]), errString)
+}
+
 // AssertCodeErrors asserts that code fails with a certain
 // message when executed.
 func AssertCodeErrors(t *testing.T, errString, code string) bool {
@@ -160,5 +170,11 @@ func AssertEvalExprString(t *testing.T, expected, source string) bool {
 	expr, err := Compile(arraictx.InitRunCtx(context.Background()), ".", source)
 	return assert.NoError(t, err) &&
 		assert.NotNil(t, expr) &&
-		assert.Equal(t, expected, strings.Replace(expr.String(), ` `, ``, -1))
+		assert.Equal(t, expected, expr.String())
+}
+
+func MustAbs(t *testing.T, filePath string) string {
+	abs, err := filepath.Abs(filePath)
+	require.NoError(t, err)
+	return abs
 }

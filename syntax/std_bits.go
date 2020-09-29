@@ -27,7 +27,7 @@ func set(_ context.Context, v rel.Value) (rel.Value, error) {
 	} else {
 		bitmask = maskFloat(float64(n))
 	}
-	return rel.NewSet(bitmask...), nil
+	return rel.NewSet(bitmask...)
 }
 
 func setInt(v int) (bitmask []rel.Value) {
