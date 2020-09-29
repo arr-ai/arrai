@@ -28,6 +28,13 @@ func (m multipleValues) Hash(seed uintptr) uintptr {
 	return frozen.Set(m).Hash(seed)
 }
 
+func (m multipleValues) String() string {
+	return frozen.Set(m).String()
+	//for i, v := range frozen.Set(m).Elements() {
+	//
+	//}m).Hash(seed)
+}
+
 // Dict is a map from keys to values.
 type Dict struct {
 	m frozen.Map
@@ -364,7 +371,15 @@ func (a *DictEnumerator) MoveNext() bool {
 }
 
 func (a *DictEnumerator) Current() (key, value Value) {
-	return a.i.Key().(Value), a.i.Value().(Value)
+	k, ok := a.i.Key().(Value)
+	if !ok {
+		panic(fmt.Errorf("key is not a Value: %T %s", a.i.Key()))
+	}
+	v, ok := a.i.Value().(Value)
+	if !ok {
+		panic(fmt.Errorf("dict value for key %s is not a Value: %T", k, a.i.Value()))
+	}
+	return k, v
 }
 
 type dictEntryTupleSort []DictEntryTuple

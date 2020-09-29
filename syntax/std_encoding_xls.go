@@ -3,11 +3,10 @@ package syntax
 import (
 	"bytes"
 	"context"
-	"strings"
-
 	"github.com/360EntSecGroup-Skylar/excelize/v2"
 	"github.com/go-errors/errors"
 	"github.com/iancoleman/strcase"
+	"regexp"
 
 	"github.com/arr-ai/arrai/rel"
 )
@@ -15,7 +14,7 @@ import (
 func stdEncodingXlsx() rel.Attr {
 	return rel.NewTupleAttr(
 		"xlsx",
-		createFunc2Attr("decodeToRelation", func(_ context.Context, x, i rel.Value) (rel.Value, error) {
+		createFunc3Attr("decodeToRelation", func(_ context.Context, x, i, h rel.Value) (rel.Value, error) {
 			var bs []byte
 			switch b := x.(type) {
 			case rel.String:
@@ -26,21 +25,28 @@ func stdEncodingXlsx() rel.Attr {
 				return nil, errors.Errorf("first arg to xlsx.decodeToRelation must be string or bytes, not %T", b)
 			}
 
-			switch iv := i.(type) {
-			case rel.Number:
-				ix, ok := iv.Int()
-				if !ok {
-					return nil, errors.Errorf("second arg to xlsx.decodeToRelation must be integer, not %v", i)
-				}
-				return bytesXlsxToArrai(bs, ix)
-			default:
+			iv, ok := i.(rel.Number)
+			if !ok {
 				return nil, errors.Errorf("second arg to xlsx.decodeToRelation must be integer, not %T", i)
 			}
+			ix, ok := iv.Int()
+			if !ok {
+				return nil, errors.Errorf("second arg to xlsx.decodeToRelation must be integer, not %v", i)
+			}
+			hv, ok := h.(rel.Number)
+			if !ok {
+				return nil, errors.Errorf("third arg to xlsx.decodeToRelation must be integer, not %T", h)
+			}
+			hx, ok := hv.Int()
+			if !ok {
+				return nil, errors.Errorf("third arg to xlsx.decodeToRelation must be integer, not %v", h)
+			}
+			return bytesXlsxToArrai(bs, ix, hx)
 		}),
 	)
 }
 
-func bytesXlsxToArrai(bs []byte, sheetIndex int) (rel.Value, error) {
+func bytesXlsxToArrai(bs []byte, sheetIndex int, headerRow int) (rel.Value, error) {
 	f, err := excelize.OpenReader(bytes.NewBuffer(bs))
 	if err != nil {
 		return nil, err
@@ -53,7 +59,7 @@ func bytesXlsxToArrai(bs []byte, sheetIndex int) (rel.Value, error) {
 	if err != nil {
 		return nil, err
 	}
-	if len(rows) == 0 {
+	if len(rows) <= headerRow {
 		return rel.None, nil
 	}
 
@@ -89,13 +95,19 @@ func bytesXlsxToArrai(bs []byte, sheetIndex int) (rel.Value, error) {
 		return "", nil
 	}
 
+	badChars, err := regexp.Compile(`[,.'"?:/\s(){}\[\]]`)
+	if err != nil {
+		return nil, err
+	}
 	cols := []string{}
-	for _, cell := range rows[0] {
+	for _, cell := range rows[headerRow] {
 		// Commas in names are difficult to use in arr.ai (e.g. in nest attr lists).
-		cols = append(cols, strings.ReplaceAll(strcase.ToSnake(cell), ",", ""))
+		name := strcase.ToSnake(cell)
+		name = badChars.ReplaceAllString(name, "_")
+		cols = append(cols, name)
 	}
 	rowTuples := []rel.Value{}
-	for i := 1; i < len(rows); i++ {
+	for i := headerRow + 1; i < len(rows); i++ {
 		attrs := []rel.Attr{rel.NewIntAttr("@row", i)}
 		hasVals := false
 		for j, name := range cols {
