@@ -13,7 +13,7 @@ func fixPaths(code string) string {
 	if runtime.GOOS != "windows" {
 		return code
 	}
-	return strings.ReplaceAll(code, `/`, `\`)
+	return strings.ReplaceAll(code, `/`, `\\`)
 }
 
 func TestStdOsStdin(t *testing.T) {
