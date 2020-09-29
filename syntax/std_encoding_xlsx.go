@@ -15,34 +15,46 @@ import (
 func stdEncodingXlsx() rel.Attr {
 	return rel.NewTupleAttr(
 		"xlsx",
-		createFunc3Attr("decodeToRelation", func(_ context.Context, x, i, h rel.Value) (rel.Value, error) {
+		createFunc2Attr("decodeToRelation", func(_ context.Context, config rel.Value, x rel.Value) (rel.Value, error) {
+			fn := "xlsx.decodeToRelation"
 			var bs []byte
+			c, ok := config.(*rel.GenericTuple)
+			if !ok {
+				return nil, errors.Errorf("second arg to %s must be tuple, not %T", fn, config)
+			}
 			switch b := x.(type) {
 			case rel.String:
 				bs = []byte(b.String())
 			case rel.Bytes:
 				bs = b.Bytes()
 			default:
-				return nil, errors.Errorf("first arg to xlsx.decodeToRelation must be string or bytes, not %T", b)
+				return nil, errors.Errorf("second arg to %s must be string or bytes, not %T", fn, b)
 			}
 
-			iv, ok := i.(rel.Number)
-			if !ok {
-				return nil, errors.Errorf("second arg to xlsx.decodeToRelation must be integer, not %T", i)
+			getConfigInt := func(key string, defaultVal int) (int, error) {
+				if vv, ok := c.Get(key); ok {
+					vn, ok := vv.(rel.Number)
+					if !ok {
+						return 0, errors.Errorf("%s config param to %s must be integer, not %T", key, fn, vv)
+					}
+					v, ok := vn.Int()
+					if !ok {
+						return 0, errors.Errorf("%s config param to %s must be integer, not %v", key, fn, vn)
+					}
+					return v, nil
+				}
+				return defaultVal, nil
 			}
-			ix, ok := iv.Int()
-			if !ok {
-				return nil, errors.Errorf("second arg to xlsx.decodeToRelation must be integer, not %v", i)
+
+			i, err := getConfigInt("sheet", 0)
+			if err != nil {
+				return nil, err
 			}
-			hv, ok := h.(rel.Number)
-			if !ok {
-				return nil, errors.Errorf("third arg to xlsx.decodeToRelation must be integer, not %T", h)
+			h, err := getConfigInt("headRow", 0)
+			if err != nil {
+				return nil, err
 			}
-			hx, ok := hv.Int()
-			if !ok {
-				return nil, errors.Errorf("third arg to xlsx.decodeToRelation must be integer, not %v", h)
-			}
-			return bytesXlsxToArrai(bs, ix, hx)
+			return bytesXlsxToArrai(bs, i, h)
 		}),
 	)
 }

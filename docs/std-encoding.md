@@ -85,7 +85,7 @@ The output is `shop`, a tuple representing a `Module`. It contains a field `apps
 [More sample code and data details](https://github.com/arr-ai/arrai/blob/master/syntax/pb_test.go)
 
 
-## `//encoding.xlsx.decodeToRelation(xlsx <: string|bytes, sheet <: int, headRow <: int) <: relation`
+## `//encoding.xlsx.decodeToRelation((sheet <: int, headRow <: int) <: tuple, xlsx <: string|bytes) <: relation`
 
 `decodeToRelation` transforms one sheet of an Excel workbook (XLSX format) to an arr.ai relation: a set of tuples (rows) with attributes names corresponding to the column headers and values to the cells.
 
