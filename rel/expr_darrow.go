@@ -52,5 +52,6 @@ func (e *DArrowExpr) Eval(ctx context.Context, local Scope) (_ Value, err error)
 		}
 		return s, nil
 	}
-	return nil, WrapContextErr(errors.Errorf("=> not applicable to %T: %[1]v", value), e, local)
+	return nil, WrapContextErr(errors.Errorf(
+		"=> lhs must be set, not %s: %v", ValueTypeAsString(value), value), e, local)
 }

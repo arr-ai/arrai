@@ -107,7 +107,7 @@ func TestArrayCallAll(t *testing.T) {
 	AssertEqualValues(t, None, mustCallAll(ctx, three, NewNumber(5)))
 
 	_, err := three.CallAll(ctx, NewString([]rune("0")))
-	assert.Error(t, err, `arg to CallAll must be a number, not rel.String`)
+	assert.Error(t, err)
 }
 
 func TestArrayWhere(t *testing.T) {
