@@ -3,7 +3,6 @@ package syntax
 import (
 	"bytes"
 	"fmt"
-	"path/filepath"
 	"runtime"
 	"strings"
 	"testing"
@@ -16,7 +15,7 @@ func fixWindows(code string) string {
 	}
 
 	// Windows uses \\ as the path separator.
-	code = strings.ReplaceAll(code, `/`, string(filepath.Separator))
+	code = strings.ReplaceAll(code, `/`, `\\`)
 	// Windows directories have zero size.
 	code = strings.ReplaceAll(code, `is_dir: true, size: true`, `is_dir: true, size: false`)
 	// Symlinks on Windows have zero size.
