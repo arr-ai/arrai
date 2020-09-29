@@ -19,7 +19,7 @@ func fixWindows(code string) string {
 	// Windows directories have zero size.
 	code = strings.ReplaceAll(code, `is_dir: true, size: true`, `is_dir: true, size: false`)
 	// Symlinks on Windows have zero size.
-	code = strings.ReplaceAll(code, `.ln", is_dir: false, size: false`, `.ln", is_dir: false, size: false`)
+	code = strings.ReplaceAll(code, `.ln', size: true`, `.ln', size: false`)
 	return code
 }
 
