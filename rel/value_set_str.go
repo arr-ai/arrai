@@ -7,7 +7,6 @@ import (
 
 	"github.com/arr-ai/hash"
 	"github.com/arr-ai/wbnf/parser"
-	"github.com/pkg/errors"
 )
 
 // StringCharAttr is the standard name for the value-attr of a character tuple.

@@ -92,7 +92,7 @@ func stdOsTree(_ context.Context, v rel.Value) (rel.Value, error) {
 	if err != nil {
 		return nil, err
 	}
-	return rel.NewSet(fs...), nil
+	return rel.NewSet(fs...)
 }
 
 func stdOsIsATty(_ context.Context, value rel.Value) (rel.Value, error) {
