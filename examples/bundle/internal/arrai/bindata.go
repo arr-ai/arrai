@@ -92,7 +92,7 @@ func internalArraiEchoArraiz() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "internal/arrai/echo.arraiz", size: 808, mode: os.FileMode(420), modTime: time.Unix(1601467767, 0)}
+	info := bindataFileInfo{name: "internal/arrai/echo.arraiz", size: 808, mode: os.FileMode(420), modTime: time.Unix(1601467995, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }

@@ -18,8 +18,7 @@ func eval() (rel.Value, error) {
 		return nil, err
 	}
 
-	args := append([]string{""}, os.Args[1:]...)
-	return syntax.EvaluateBundle(arraictx.InitRunCtx(context.Background()), bundle, args...)
+	return syntax.EvaluateBundle(arraictx.InitRunCtx(context.Background()), bundle, os.Args...)
 }
 
 func main() {
