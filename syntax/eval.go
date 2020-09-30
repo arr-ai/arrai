@@ -3,9 +3,8 @@ package syntax
 import (
 	"context"
 
-	"github.com/arr-ai/arrai/tools"
-
 	"github.com/arr-ai/arrai/rel"
+	"github.com/arr-ai/arrai/tools"
 )
 
 func EvalWithScope(ctx context.Context, path, source string, scope rel.Scope) (rel.Value, error) {
