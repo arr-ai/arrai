@@ -81,7 +81,7 @@ func (p SetPattern) Bind(ctx context.Context, local Scope, value Value) (context
 				set = set.Without(v.(Value)).(GenericSet)
 			}
 		default:
-			panic(fmt.Errorf("pattern typt %T not supported yet", t))
+			panic(fmt.Errorf("pattern type %T not supported yet", t))
 		}
 	}
 	for i := range extraElements {

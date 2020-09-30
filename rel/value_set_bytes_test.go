@@ -15,5 +15,5 @@ func TestBytesSetCallAll(t *testing.T) {
 
 	ctx := arraictx.InitRunCtx(context.Background())
 	_, err := NewBytes([]byte("abc")).CallAll(ctx, NewString([]rune("0")))
-	assert.Error(t, err, "CallAll arg must be a number, not rel.String")
+	assert.Error(t, err)
 }

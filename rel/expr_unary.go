@@ -44,7 +44,7 @@ func NewPowerSetExpr(scanner parser.Scanner, a Expr) Expr {
 			if s, ok := a.(Set); ok {
 				return PowerSet(s)
 			}
-			return nil, errors.Errorf("eval arg must be a Set, not %T", a)
+			return nil, errors.Errorf("eval arg must be a set, not %s", ValueTypeAsString(a))
 		},
 	)
 }
@@ -62,7 +62,7 @@ func NewEvalExpr(scanner parser.Scanner, a Expr) Expr {
 			if x, ok := a.(Closure); ok {
 				return SetCall(ctx, x, None)
 			}
-			return nil, errors.Errorf("eval arg must be a Function, not %T", a)
+			return nil, errors.Errorf("eval arg must be a function, not %s", ValueTypeAsString(a))
 		})
 }
 
@@ -73,7 +73,7 @@ func NewCountExpr(scanner parser.Scanner, a Expr) Expr {
 			if x, ok := a.(Set); ok {
 				return NewNumber(float64(x.Count())), nil
 			}
-			return nil, errors.Errorf("eval arg must be a Set, not %T", a)
+			return nil, errors.Errorf("eval arg must be a set, not %s", ValueTypeAsString(a))
 		})
 }
 
@@ -94,7 +94,7 @@ func NewSingleExpr(scanner parser.Scanner, a Expr) Expr {
 				}
 				return result, nil
 			}
-			return nil, errors.Errorf("eval arg must be a Set, not %T", a)
+			return nil, errors.Errorf("eval arg must be a set, not %s", ValueTypeAsString(a))
 		})
 }
 
