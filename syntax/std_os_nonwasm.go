@@ -6,15 +6,13 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"path/filepath"
-	"runtime"
-	"strings"
+
+	"github.com/mattn/go-isatty"
 
 	"github.com/arr-ai/arrai/pkg/ctxfs"
-	"github.com/arr-ai/arrai/rel"
 	"github.com/arr-ai/arrai/tools"
-	"github.com/mattn/go-isatty"
-	"github.com/pkg/errors"
+
+	"github.com/arr-ai/arrai/rel"
 )
 
 func stdOsGetArgs() rel.Value {
@@ -70,41 +68,10 @@ func stdOsFile(ctx context.Context, v rel.Value) (rel.Value, error) {
 	return rel.NewBytes(buf), nil
 }
 
-// stdOsTree returns an array of paths to files within the given directory path.
-func stdOsTree(_ context.Context, v rel.Value) (rel.Value, error) {
-	d, ok := v.(rel.String)
-	if !ok {
-		return nil, errors.Errorf("tree arg must be a string, not %T", v)
-	}
-
-	fs := []rel.Value{}
-	err := filepath.Walk(d.String(), func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
-		// Fix for consistent behavior on Windows.
-		if path == d.String() && runtime.GOOS == "windows" {
-			path = strings.ReplaceAll(path, `/`, string(filepath.Separator))
-		}
-		fs = append(fs, rel.NewTuple(
-			rel.NewStringAttr("name", []rune(info.Name())),
-			rel.NewStringAttr("path", []rune(path)),
-			rel.NewBoolAttr("is_dir", info.IsDir()),
-			rel.NewFloatAttr("size", float64(info.Size())),
-			rel.NewFloatAttr("mod_time", float64(info.ModTime().UnixNano())),
-		))
-		return nil
-	})
-	if err != nil {
-		return nil, err
-	}
-	return rel.NewSet(fs...)
-}
-
 func stdOsIsATty(_ context.Context, value rel.Value) (rel.Value, error) {
 	n, ok := value.(rel.Number)
 	if !ok {
-		return nil, fmt.Errorf("isatty arg must be a number, not %s", rel.ValueTypeAsString(value))
+		return nil, fmt.Errorf("isatty arg must be a number, not %T", value)
 	}
 	fd, ok := n.Int()
 	if !ok {

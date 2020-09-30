@@ -19,7 +19,6 @@ func stdOs() rel.Attr {
 		rel.NewAttr("cwd", stdOsCwd()),
 		rel.NewNativeFunctionAttr("exists", stdOsExists),
 		rel.NewNativeFunctionAttr("file", stdOsFile),
-		rel.NewNativeFunctionAttr("tree", stdOsTree),
 		rel.NewNativeFunctionAttr("get_env", stdOsGetEnv),
 		rel.NewNativeFunctionAttr("&stdin", stdOsStdinVar.read),
 		rel.NewNativeFunctionAttr("isatty", stdOsIsATty),

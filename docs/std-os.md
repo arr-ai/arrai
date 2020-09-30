@@ -33,14 +33,6 @@ Usage:
 |`//os.file("path/to/file")` | `<<...>>` |
 |`//os.file("/absolute/path/to/file")` | `<<...>>` |
 
-## `//os.tree(dirPath <: string) <: set`
-
-`tree` returns a set of `stat` details about all directories and files in the tree rooted at `dirPath` (including `dirPath` itself). Each file and directory is a tuple with the attributes `(name, path, is_dir, size, mod_time)`.
-
-If `dirPath` is a file, `tree` returns a set containing details for just that file.
-
-The `path` attribute is relative to the current working directory, *not* `dirPath`.
-
 ## `//os.get_env(key <: string) <: string`
 
 `get_env` returns the environment variable that corresponds to `key` in the form of a `string`.
