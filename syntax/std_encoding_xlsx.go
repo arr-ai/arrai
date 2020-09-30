@@ -20,22 +20,19 @@ func stdEncodingXlsx() rel.Attr {
 			var bs []byte
 			c, ok := config.(*rel.GenericTuple)
 			if !ok {
-				return nil, errors.Errorf("second arg to %s must be tuple, not %T", fn, config)
+				return nil, errors.Errorf("first arg to %s must be tuple, not %s", fn, rel.ValueTypeAsString(config))
 			}
-			switch b := x.(type) {
-			case rel.String:
-				bs = []byte(b.String())
-			case rel.Bytes:
-				bs = b.Bytes()
-			default:
-				return nil, errors.Errorf("second arg to %s must be string or bytes, not %T", fn, b)
+			b, ok := x.(rel.Bytes)
+			if !ok {
+				return nil, errors.Errorf("second arg to %s must be string or bytes, not %s", fn, rel.ValueTypeAsString(x))
 			}
+			bs = b.Bytes()
 
 			getConfigInt := func(key string, defaultVal int) (int, error) {
 				if vv, ok := c.Get(key); ok {
 					vn, ok := vv.(rel.Number)
 					if !ok {
-						return 0, errors.Errorf("%s config param to %s must be integer, not %T", key, fn, vv)
+						return 0, errors.Errorf("%s config param to %s must be integer, not %s", key, fn, rel.ValueTypeAsString(vv))
 					}
 					v, ok := vn.Int()
 					if !ok {

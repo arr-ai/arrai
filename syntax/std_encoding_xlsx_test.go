@@ -22,18 +22,18 @@ func TestXlsxDecode_error(t *testing.T) {
 	t.Parallel()
 
 	AssertCodeErrors(t,
-		"second arg to xlsx.decodeToRelation must be string or bytes, not *rel.GenericTuple",
+		"second arg to xlsx.decodeToRelation must be string or bytes, not tuple",
 		`//encoding.xlsx.decodeToRelation((sheet: 0, headRow: 1), ())`)
 
 	AssertCodeErrors(t,
-		"sheet config param to xlsx.decodeToRelation must be integer, not *rel.GenericTuple",
+		"sheet config param to xlsx.decodeToRelation must be integer, not tuple",
 		`//encoding.xlsx.decodeToRelation((sheet: ()), <<"1">>)`)
 	AssertCodeErrors(t,
 		"sheet config param to xlsx.decodeToRelation must be integer, not 1.5",
 		`//encoding.xlsx.decodeToRelation((sheet: 1.5), <<"1">>)`)
 
 	AssertCodeErrors(t,
-		"headRow config param to xlsx.decodeToRelation must be integer, not *rel.GenericTuple",
+		"headRow config param to xlsx.decodeToRelation must be integer, not tuple",
 		`//encoding.xlsx.decodeToRelation((headRow: ()), <<"1">>)`)
 	AssertCodeErrors(t,
 		"headRow config param to xlsx.decodeToRelation must be integer, not 1.5",
