@@ -15,7 +15,6 @@ func TestEvaluateBundle(t *testing.T) {
 	bundle, err := ioutil.ReadFile("../examples/os/echo.arraiz")
 	require.NoError(t, err)
 
-	tools.Arguments = nil
 	out, err := EvaluateBundle(arraictx.InitRunCtx(context.Background()), bundle, "", "hello", "world")
 	require.NoError(t, err)
 	assert.Equal(t, "hello world", out.String())
