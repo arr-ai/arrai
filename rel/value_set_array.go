@@ -377,7 +377,7 @@ func (a Array) Where(p func(v Value) (bool, error)) (Set, error) {
 func (a Array) CallAll(_ context.Context, arg Value) (Set, error) {
 	n, ok := arg.(Number)
 	if !ok {
-		return nil, fmt.Errorf("arg to CallAll must be a number, not %T", arg)
+		return nil, fmt.Errorf("arg to CallAll must be a number, not %s", ValueTypeAsString(arg))
 	}
 	i := int(n.Float64()) - a.offset
 	if i < 0 || i >= len(a.values) {

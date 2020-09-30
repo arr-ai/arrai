@@ -104,7 +104,7 @@ func stdOsTree(_ context.Context, v rel.Value) (rel.Value, error) {
 func stdOsIsATty(_ context.Context, value rel.Value) (rel.Value, error) {
 	n, ok := value.(rel.Number)
 	if !ok {
-		return nil, fmt.Errorf("isatty arg must be a number, not %T", value)
+		return nil, fmt.Errorf("isatty arg must be a number, not %s", rel.ValueTypeAsString(value))
 	}
 	fd, ok := n.Int()
 	if !ok {

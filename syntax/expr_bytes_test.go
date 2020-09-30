@@ -26,16 +26,16 @@ func TestBytesExpr(t *testing.T) {
 		"BytesExpr.Eval: Number does not represent a byte: -2",
 		`<<(-2)>>`)
 	AssertCodeErrors(t,
-		"BytesExpr.Eval: offsetted String is not supported: offset",
+		"BytesExpr.Eval: offset string is not supported: offset",
 		`<<(2\"offset")>>`)
 	AssertCodeErrors(t,
 		"BytesExpr.Eval: Set {1, 2, 3} is not supported",
 		`<<({1, 2, 3})>>`)
 	AssertCodeErrors(t,
-		"BytesExpr.Eval: *rel.GenericTuple is not supported",
+		"BytesExpr.Eval: tuple is not supported",
 		`<<((a: 1))>>`)
 	AssertCodeErrors(t,
-		"BytesExpr.Eval: rel.Array is not supported",
+		"BytesExpr.Eval: array is not supported",
 		`<<([1, 2, 3])>>`)
 }
 

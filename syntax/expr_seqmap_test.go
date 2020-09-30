@@ -30,5 +30,5 @@ func TestExprSequenceMapIdentHoles(t *testing.T) {
 func TestExprSequenceMapNonSeq(t *testing.T) {
 	t.Parallel()
 
-	AssertCodeErrors(t, `>> not applicable to unindexed type rel.GenericSet`, `{1,2,3} >> .`)
+	AssertCodeErrors(t, `>> lhs must be an indexed type, not set`, `{1,2,3} >> .`)
 }
