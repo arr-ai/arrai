@@ -31,7 +31,7 @@ func TestStdOsIsATty(t *testing.T) {
 	AssertCodesEvalToSameValue(t, `false`, `//os.isatty(0)`)
 	AssertCodesEvalToSameValue(t, `false`, `//os.isatty(1)`)
 
-	AssertCodeErrors(t, "isatty arg must be a number, not rel.String", `//os.isatty("0")`)
+	AssertCodeErrors(t, "isatty arg must be a number, not string", `//os.isatty("0")`)
 	AssertCodeErrors(t, "isatty arg must be an integer, not 0.1", `//os.isatty(0.1)`)
 	AssertCodeErrors(t, "isatty not implemented for 2", `//os.isatty(2)`)
 	AssertCodeErrors(t, "isatty not implemented for -1", `//os.isatty(-1)`)
