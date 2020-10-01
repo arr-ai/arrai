@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/joshcarp/gop/gop/cli"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -11,12 +12,12 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/anz-bank/pkg/mod"
 	"github.com/arr-ai/arrai/pkg/ctxfs"
 	"github.com/arr-ai/arrai/pkg/ctxrootcache"
 	"github.com/arr-ai/arrai/rel"
 	"github.com/arr-ai/arrai/tools"
 	"github.com/arr-ai/arrai/translate"
+	"github.com/joshcarp/gop/gop"
 )
 
 // ModuleRootSentinel is a file which marks the module root of a project.
@@ -81,32 +82,35 @@ func importModuleFile(ctx context.Context, importPath string) (rel.Expr, error) 
 	if isRunningBundle(ctx) {
 		return fileValue(ctx, path.Join(ModuleDir, importPath))
 	}
+	repo, resource, ver, _ := gop.ProcessRequest(importPath)
+	if path.Ext(resource) == ""{
+		resource += ".arrai"
+	}
+	if ver == ""{
+		ver = "HEAD"
+	}
+	if repo != ""{
+		repo += "/"
+	}
+	var tokens map[string]string
+	f, _ := os.Open("~/.git-credentials")
+	if f != nil{
+		a, _ := ioutil.ReadAll(f)
+		tokens, _ = cli.TokensFromGitCredentialsFile(a)
+	}
 
-	wd, err := os.Getwd()
-	if err != nil {
+	r := cli.Moduler(ctxfs.SourceFsFrom(ctx), "arrai_modules.yaml","arrai_modules", os.Getenv("ARRAI_PROXY"), tokens)
+	bytes, _, err := r.Retrieve(path.Join(repo,resource)+"@"+ver)
+	if err != nil{
 		return nil, err
 	}
-	if err := mod.Config(mod.GoModulesMode,
-		mod.GoModulesOptions{ModName: filepath.Base(wd)}, mod.GitHubOptions{}); err != nil {
-		return nil, err
+	switch filepath.Ext(resource) {
+	case ".json":
+		return bytesJSONToArrai(bytes)
+	case ".yml", ".yaml":
+		return translate.BytesYamlToArrai(bytes)
 	}
-
-	path, ver := mod.ExtractVersion(importPath)
-	if ver != "" {
-		return nil, errors.New("per-importing versioning is not allowed")
-	}
-
-	m, err := mod.Retrieve(path, ver)
-	if err != nil {
-		return nil, err
-	}
-
-	relImportPath := strings.TrimPrefix(importPath, m.Name)
-	if err := bundleModule(ctx, relImportPath, m); err != nil {
-		return nil, err
-	}
-
-	return fileValue(ctx, filepath.Join(m.Dir, relImportPath))
+	return bytesValue(ctx, resource, bytes)
 }
 
 func findRootFromModule(ctx context.Context, modulePath string) (string, error) {

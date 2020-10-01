@@ -3,7 +3,6 @@ package syntax
 import (
 	"io/ioutil"
 	"os"
-	"os/exec"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -82,9 +81,6 @@ func TestPackageExternalImportModule(t *testing.T) {
 	require.NoError(t, err)
 	defer func() { require.NoError(t, os.Chdir(wd)) }()
 
-	cmd := exec.Command("go", "mod", "init", "github.com/arr-ai/arrai/fake")
-	require.NoError(t, cmd.Run())
-
 	t.Run("", func(t *testing.T) {
 		run := func(name string, f func(t *testing.T)) {
 			t.Run(name, func(t *testing.T) {
@@ -97,11 +93,6 @@ func TestPackageExternalImportModule(t *testing.T) {
 		run("ModuleExt", func(t *testing.T) { AssertCodesEvalToSameValue(t, `3`, `//{`+repo+`/add.arrai}`) })
 		run("ModuleJson", func(t *testing.T) { AssertCodesEvalToSameValue(t, `{}`, `//{`+repo+`/empty.json}`) })
 
-		raw := "raw.githubusercontent.com/ChloePlanet/arrai-examples/master"
-		run("URLArraiHttps", func(t *testing.T) { AssertCodesEvalToSameValue(t, `3`, `//{https://`+raw+`/add.arrai}`) })
-		run("URLArraiNoHttps", func(t *testing.T) { AssertCodesEvalToSameValue(t, `3`, `//{`+raw+`/add.arrai}`) })
-		run("URLJsonHttps", func(t *testing.T) { AssertCodesEvalToSameValue(t, `{}`, `//{https://`+raw+`/empty.json}`) })
-		run("URLJsonNoHttps", func(t *testing.T) { AssertCodesEvalToSameValue(t, `{}`, `//{`+raw+`/empty.json}`) })
 	})
 }
 
