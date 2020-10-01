@@ -83,3 +83,15 @@ The second line uses the `sysl` file descriptor to parse `//os.file('petshop.pb'
 The output is `shop`, a tuple representing a `Module`. It contains a field `apps`, which maps names to tuple representations of `Application`. `Application` contains a field `attrs`, which maps names to tuple representation of `Attribute`. The data type of attribute `package` is `string`, so `.s` will get its `string` value.
 
 [More sample code and data details](https://github.com/arr-ai/arrai/blob/master/syntax/pb_test.go)
+
+
+## `//encoding.xlsx.decodeToRelation((sheet <: int, headRow <: int) <: tuple, xlsx <: bytes) <: relation`
+
+`decodeToRelation` transforms one sheet of an Excel workbook (XLSX format, loaded as bytes) to an arr.ai relation: a set of tuples (rows) with attributes names corresponding to the column headers and values to the cells.
+
+`decodeToRelation` can only decode relatively simple tabular spreadsheets with a single header given by `headRow`. The decoding:
+ - ignores columns without heading values;
+ - ignores rows with no cell values;
+ - converts heading/column names to `snake_case`, replacing various special characters with `_`.
+
+Note that unlike standard `decode` functions, this is not reversible; its output cannot be passed to an `encode` function to produce the original XLSX. Expect this function to be superseded by more canonical decoding functions in the future.
