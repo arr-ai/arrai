@@ -20,7 +20,7 @@ func TestEvaluateBundle(t *testing.T) {
 	assert.Equal(t, "hello world", out.String())
 }
 
-func TestEvaluateBundle_Empty(t *testing.T) {
+func TestEvaluateBundle_NoArgs(t *testing.T) {
 	t.Parallel()
 
 	bundle, err := ioutil.ReadFile("../examples/os/echo.arraiz")
