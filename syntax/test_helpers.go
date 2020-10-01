@@ -108,6 +108,16 @@ func AssertCodePanics(t *testing.T, code string) bool {
 	})
 }
 
+// AssertCodeParseErrors asserts that code fails with a certain
+// message when parsed.
+func AssertCodeParseErrors(t *testing.T, errString, code string) bool {
+	pc := ParseContext{SourceDir: ".."}
+	ctx := arraictx.InitRunCtx(context.Background())
+	_, err := pc.Parse(ctx, parser.NewScanner(code))
+	return assert.Error(t, err) &&
+		assert.EqualError(t, errors.New(err.Error()[:len(errString)]), errString)
+}
+
 // AssertCodeErrors asserts that code fails with a certain
 // message when executed.
 func AssertCodeErrors(t *testing.T, errString, code string) bool {

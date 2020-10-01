@@ -35,6 +35,7 @@ func TestExprLetExprPattern(t *testing.T) { //nolint:dupl
 	AssertCodesEvalToSameValue(t, `5`, `let (1 + 2) = 3; 5`)
 	AssertCodesEvalToSameValue(t, `3`, `let a = 1 + 2; a`)
 	AssertCodesEvalToSameValue(t, `3`, `let a = 3; let a = 1 + 2; a`)
+	AssertCodesEvalToSameValue(t, `3`, `let a = 3; let (x: (a)) = (x: 3); a`)
 	AssertCodesEvalToSameValue(t, `3`, `let true = true; 3`)
 	AssertCodesEvalToSameValue(t, `3`, `let false = false; 3`)
 	AssertCodesEvalToSameValue(t, `3`, `let true = {()}; 3`)
@@ -47,6 +48,7 @@ func TestExprLetExprPattern(t *testing.T) { //nolint:dupl
 	AssertCodeErrors(t, "", `let 1 = 1 + 2; 5`)
 	AssertCodeErrors(t, "", `let (1 + 2) = 6; 5`)
 	AssertCodeErrors(t, "", `let a = 5; let (a) = 1 + 2; a`)
+	AssertCodeErrors(t, "", `let a = 1; let (x: (a)) = (x: 3); a`)
 	AssertCodeErrors(t, "", `let true = false; 3`)
 	AssertCodeErrors(t, "", `let true = {}; 3`)
 }
@@ -125,7 +127,7 @@ func TestExprLetDictPattern(t *testing.T) {
 	AssertCodeErrors(t, "", `let {"x": a, "y": b} = {"x": 4, "y": 5, "z": 6}; a`)
 	AssertCodeErrors(t, "", `let {"x": a, "x": a} = {"x": 4}; a`)
 	AssertCodeErrors(t, "", `let a = 4; let {"x": (a)} = {"x": 5}; a`)
-	AssertCodePanics(t, `let {"x": a, "x": a} = {"x": 4, "x": 4}; a`)
+	AssertCodeParseErrors(t, "", `let {"x": a, "x": a} = {"x": 4, "x": 4}; a`)
 }
 
 func TestExprLetSetPattern(t *testing.T) { //nolint:dupl

@@ -5,9 +5,10 @@ import (
 	"archive/zip"
 	"bytes"
 	"context"
-	"fmt"
 	"io"
 	"path"
+
+	"github.com/pkg/errors"
 
 	"github.com/arr-ai/arrai/rel"
 )
@@ -49,7 +50,7 @@ func createArchive(
 	closer, create := creator(&b)
 	d, ok := v.(rel.Dict)
 	if !ok {
-		return nil, fmt.Errorf("//archive.zip.zip arg not a dict: %v", v)
+		return nil, errors.Errorf("//archive.zip.zip arg not a dict: %v", v)
 	}
 	if err := writeDictToArchive(d, create, ""); err != nil {
 		return nil, err
@@ -65,7 +66,7 @@ func writeDictToArchive(d rel.Dict, w func(string, []byte) (io.Writer, error), p
 		k, v := e.Current()
 		name, is := rel.AsString(k.(rel.Set))
 		if !is {
-			return fmt.Errorf("dict key %v not a string", k)
+			return errors.Errorf("dict key %v not a string", k)
 		}
 		subpath := path.Join(parent, name.String())
 		switch v := v.(type) {
@@ -85,7 +86,7 @@ func writeDictToArchive(d rel.Dict, w func(string, []byte) (io.Writer, error), p
 				}
 			}
 		default:
-			return fmt.Errorf("unsupported entry %q: %T %[2]v", subpath, v)
+			return errors.Errorf("unsupported entry %q: %s %v", subpath, rel.ValueTypeAsString(v), v)
 		}
 	}
 	return nil

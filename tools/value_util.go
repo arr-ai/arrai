@@ -1,6 +1,8 @@
 package tools
 
-import "github.com/arr-ai/arrai/rel"
+import (
+	"github.com/arr-ai/arrai/rel"
+)
 
 // ValueAsString transform rel.Value to string.
 // In arr.ai, all empty sets are the same and `""`, `{}` and `[]` will be parsed to rel.GenericSet.

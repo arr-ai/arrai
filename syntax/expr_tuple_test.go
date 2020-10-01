@@ -78,6 +78,11 @@ func TestTupleRec(t *testing.T) {
 		t.fact(t.rec)
 		`,
 	)
+	// to test compile variables with the prefix rec
+	AssertCodesEvalToSameValue(t,
+		`3`,
+		`let t = (recTest: 1, rec: 2); t.recTest + t.rec`,
+	)
 }
 
 func TestTuplePattern(t *testing.T) {

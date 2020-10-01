@@ -44,7 +44,7 @@ func StdScope() rel.Scope {
 							name, value := e.Current()
 							entries = append(entries, rel.NewDictEntryTuple(rel.NewString([]rune(name)), value))
 						}
-						return rel.NewDict(false, entries...), nil
+						return rel.NewDict(false, entries...)
 					}
 					return nil, fmt.Errorf("dict(): not a tuple")
 				}),
@@ -62,7 +62,7 @@ func StdScope() rel.Scope {
 								key = ""
 							} else {
 								return nil, fmt.Errorf(
-									"all keys of arg to //tuple must be strings, not %T", keyVal)
+									"all keys of arg to //tuple must be strings, not %s", rel.ValueTypeAsString(keyVal))
 							}
 							attrs = append(attrs, rel.NewAttr(key, value))
 						}

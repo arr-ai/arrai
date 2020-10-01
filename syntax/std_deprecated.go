@@ -33,7 +33,7 @@ func stdDeprecatedExec() rel.Attr {
 			}
 			cmd = exec.Command(name, args...)
 		default:
-			return nil, errors.Errorf("//deprecated.exec arg must be an array, not %T", value)
+			return nil, errors.Errorf("//deprecated.exec arg must be an array, not %s", rel.ValueTypeAsString(value))
 		}
 
 		var stderr []byte

@@ -33,7 +33,7 @@ func TestAsString(t *testing.T) {
 func TestGenericSetCallAll(t *testing.T) {
 	t.Parallel()
 
-	set := NewSet(
+	set := MustNewSet(
 		NewTuple(
 			NewAttr("@", NewNumber(1)),
 			NewAttr("@fooo", NewNumber(42)),
@@ -56,9 +56,9 @@ func TestGenericSetCallAll(t *testing.T) {
 		),
 	)
 	ctx := arraictx.InitRunCtx(context.Background())
-	AssertEqualValues(t, NewSet(NewNumber(42), NewNumber(24)), mustCallAll(ctx, set, NewNumber(1)))
+	AssertEqualValues(t, MustNewSet(NewNumber(42), NewNumber(24)), mustCallAll(ctx, set, NewNumber(1)))
 	assert.Panics(t, func() { mustCallAll(ctx, set, NewNumber(2)) })
 	assert.Panics(t, func() { mustCallAll(ctx, set, NewNumber(3)) })
-	AssertEqualValues(t, NewSet(NewNumber(5)), mustCallAll(ctx, set, NewNumber(4)))
+	AssertEqualValues(t, MustNewSet(NewNumber(5)), mustCallAll(ctx, set, NewNumber(4)))
 	AssertEqualValues(t, None, mustCallAll(ctx, set, NewNumber(5)))
 }

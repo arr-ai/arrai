@@ -41,7 +41,7 @@ func (r RecursionExpr) Eval(ctx context.Context, local Scope) (Value, error) {
 	case Closure:
 		return Call(ctx, r.fix, NewClosure(local, NewFunction(f.Source(), r.name, f.f).(*Function)), local)
 	}
-	return nil, WrapContextErr(errors.Errorf("Recursion does not support %T", val), r, local)
+	return nil, WrapContextErr(errors.Errorf("Recursion does not support %s", ValueTypeAsString(val)), r, local)
 }
 
 func (r RecursionExpr) String() string {

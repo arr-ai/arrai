@@ -53,22 +53,22 @@ func NewRelationExpr(scanner parser.Scanner, names []string, tuples ...[]Expr) (
 			charExprs = append(charExprs, e.(StringCharTupleExpr))
 		}
 		// TODO: Implement NewStringCharSetExpr.
-		return NewSetExpr(scanner, charExprs...), nil
+		return NewSetExpr(scanner, charExprs...)
 	case arrayItemTuples:
 		entryExprs := make([]Expr, 0, len(elements))
 		for _, e := range elements {
 			entryExprs = append(entryExprs, e.(ArrayItemTupleExpr))
 		}
 		// TODO: Implement NewArrayItemSetExpr.
-		return NewSetExpr(scanner, entryExprs...), nil
+		return NewSetExpr(scanner, entryExprs...)
 	case dictEntryTuples:
 		entryExprs := make([]DictEntryTupleExpr, 0, len(elements))
 		for _, e := range elements {
 			entryExprs = append(entryExprs, e.(DictEntryTupleExpr))
 		}
-		return NewDictExpr(scanner, true, false, entryExprs...), nil
+		return NewDictExpr(scanner, true, false, entryExprs...)
 	}
-	return NewSetExpr(scanner, elements...), nil
+	return NewSetExpr(scanner, elements...)
 }
 
 func newSetBinExpr(scanner parser.Scanner, a, b Expr, op string, f func(x, y Set) (Set, error)) Expr {
@@ -78,9 +78,9 @@ func newSetBinExpr(scanner parser.Scanner, a, b Expr, op string, f func(x, y Set
 				if y, ok := b.(Set); ok {
 					return f(x, y)
 				}
-				return nil, errors.Errorf(op+" rhs must be a Set, not %T", b)
+				return nil, errors.Errorf(op+" rhs must be a set, not %s", ValueTypeAsString(b))
 			}
-			return nil, errors.Errorf(op+" lhs must be a Set, not %T", a)
+			return nil, errors.Errorf(op+" lhs must be a set, not %s", ValueTypeAsString(a))
 		})
 }
 

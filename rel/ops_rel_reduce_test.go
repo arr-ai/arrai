@@ -14,7 +14,7 @@ func TestNestA(t *testing.T) {
 	t.Parallel()
 	AssertEqualValues(
 		t,
-		NewSet(
+		MustNewSet(
 			NewTuple([]Attr{
 				{"b", NewNumber(1)},
 				{"g", intRel("a", 1, 2)},
@@ -36,7 +36,7 @@ func TestNestB(t *testing.T) {
 	t.Parallel()
 	AssertEqualValues(
 		t,
-		NewSet(
+		MustNewSet(
 			NewTuple([]Attr{
 				{"a", NewNumber(1)},
 				{"g", intRel("b", 1, 2, 3)},
@@ -54,7 +54,7 @@ func TestNestAThenB(t *testing.T) {
 	t.Parallel()
 	AssertEqualValues(
 		t,
-		NewSet(
+		MustNewSet(
 			NewTuple([]Attr{
 				{"g", intRel("a", 1)},
 				{"h", intRel("b", 3)},
@@ -82,7 +82,7 @@ func TestNestBThenA(t *testing.T) {
 	t.Parallel()
 	AssertEqualValues(
 		t,
-		NewSet(
+		MustNewSet(
 			NewTuple([]Attr{
 				{"g", intRel("a", 1)},
 				{"h", intRel("b", 1, 2, 3)},

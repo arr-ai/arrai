@@ -1,8 +1,9 @@
 package syntax
 
 import (
-	"fmt"
 	"strings"
+
+	"github.com/pkg/errors"
 
 	"github.com/arr-ai/arrai/rel"
 	"github.com/arr-ai/arrai/tools"
@@ -31,12 +32,12 @@ func bytesSplit(delimiter rel.Value, subject rel.Bytes) (rel.Value, error) {
 	case rel.GenericSet:
 		delimStr, is := tools.ValueAsString(delimiter)
 		if !is {
-			return nil, fmt.Errorf("//seq.split: delim not a string: %v", delimiter)
+			return nil, errors.Errorf("//seq.split: delim not a string: %v", delimiter)
 		}
 		splitted = strings.Split(subject.String(), delimStr)
 	default:
-		return nil, fmt.Errorf("//seq.split: delimiter and subject different types: "+
-			"delimiter: %T, subject: %T", delimiter, subject)
+		return nil, errors.Errorf("//seq.split: delimiter and subject different types: "+
+			"delimiter: %s, subject: %s", rel.ValueTypeAsString(delimiter), rel.ValueTypeAsString(subject))
 	}
 
 	result := make([]rel.Value, 0, len(splitted))
