@@ -8,7 +8,7 @@ import (
 	"github.com/arr-ai/arrai/rel"
 )
 
-func stdOsGetArgs() rel.Value {
+func stdOsGetArgs(ctx context.Context, _ rel.Value) (rel.Value, error) {
 	panic("not implemented")
 }
 
@@ -41,6 +41,10 @@ func stdOsFile(context.Context, rel.Value) (rel.Value, error) {
 }
 
 func stdOsExec(context.Context, rel.Value) (rel.Value, error) {
+	panic("not implemented")
+}
+
+func stdOsTree(context.Context, rel.Value) (rel.Value, error) {
 	panic("not implemented")
 }
 

@@ -9,7 +9,6 @@ import (
 	"github.com/arr-ai/arrai/pkg/arraictx"
 	"github.com/arr-ai/arrai/pkg/ctxfs"
 	"github.com/arr-ai/arrai/syntax"
-	"github.com/arr-ai/arrai/tools"
 	"github.com/urfave/cli/v2"
 )
 
@@ -26,10 +25,9 @@ var bundleCommand = &cli.Command{
 }
 
 func bundle(c *cli.Context) error {
-	tools.SetArgs(c)
 	file := c.Args().Get(0)
 	return bundleFilesTo(
-		arraictx.InitRunCtx(context.Background()),
+		arraictx.InitCliCtx(context.Background(), c),
 		file, os.Stdout, c.Value("out").(string),
 	)
 }
