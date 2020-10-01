@@ -5,11 +5,9 @@ import (
 	"io/ioutil"
 	"testing"
 
-	"github.com/arr-ai/arrai/tools"
-
-	"github.com/arr-ai/arrai/rel"
-
 	"github.com/arr-ai/arrai/pkg/arraictx"
+	"github.com/arr-ai/arrai/rel"
+	"github.com/arr-ai/arrai/tools"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
