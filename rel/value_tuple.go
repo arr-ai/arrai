@@ -16,9 +16,9 @@ import (
 
 // GenericTuple is the default implementation of Tuple.
 type GenericTuple struct {
-	tuple frozen.Map
-	names []string
-	once  sync.Once
+	tuple          frozen.Map
+	names          []string
+	orderNamesOnce sync.Once
 }
 
 var (
@@ -400,7 +400,7 @@ func (t *GenericTuple) Enumerator() AttrEnumerator {
 
 // TupleOrderedNames returns the names of this tuple in sorted order.
 func TupleOrderedNames(t *GenericTuple) []string {
-	t.once.Do(func() {
+	t.orderNamesOnce.Do(func() {
 		if len(t.names) == 0 {
 			for e := t.Enumerator(); e.MoveNext(); {
 				name, _ := e.Current()
