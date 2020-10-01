@@ -10,15 +10,17 @@ import (
 	"runtime"
 	"strings"
 
+	"github.com/arr-ai/arrai/pkg/arraictx"
+
 	"github.com/arr-ai/arrai/pkg/ctxfs"
 	"github.com/arr-ai/arrai/rel"
-	"github.com/arr-ai/arrai/tools"
 	"github.com/mattn/go-isatty"
 	"github.com/pkg/errors"
 )
 
-func stdOsGetArgs() rel.Value {
-	return strArrToRelArr(tools.Arguments)
+// stdOsGetArgs returns a rel.Array of the program arguments in the context.
+func stdOsGetArgs(ctx context.Context, _ rel.Value) (rel.Value, error) {
+	return strArrToRelArr(arraictx.Args(ctx)), nil
 }
 
 func stdOsGetEnv(_ context.Context, value rel.Value) (rel.Value, error) {

@@ -8,7 +8,6 @@ import (
 	"github.com/arr-ai/arrai/pkg/arrai"
 	"github.com/arr-ai/arrai/pkg/arraictx"
 	"github.com/arr-ai/arrai/syntax"
-	"github.com/arr-ai/arrai/tools"
 	"github.com/urfave/cli/v2"
 )
 
@@ -29,10 +28,8 @@ var evalCommand = &cli.Command{
 }
 
 func eval(c *cli.Context) error {
-	tools.SetArgs(c)
 	source := c.Args().Get(0)
-
-	ctx := arraictx.InitRunCtx(context.Background())
+	ctx := arraictx.InitCliCtx(context.Background(), c)
 
 	return evalImpl(ctx, source, os.Stdout, c.Value("out").(string))
 }

@@ -27,10 +27,10 @@ var runCommand = &cli.Command{
 }
 
 func run(c *cli.Context) error {
-	tools.SetArgs(c)
 	file := c.Args().Get(0)
+	ctx := arraictx.InitCliCtx(context.Background(), c)
 
-	return evalFile(arraictx.InitRunCtx(context.Background()), file, os.Stdout, c.Value("out").(string))
+	return evalFile(ctx, file, os.Stdout, c.Value("out").(string))
 }
 
 func evalFile(ctx context.Context, path string, w io.Writer, out string) error {
@@ -63,7 +63,7 @@ func fileExists(ctx context.Context, path string) error {
 }
 
 func runBundled(ctx context.Context, buf []byte, w io.Writer, out string) error {
-	val, err := syntax.EvaluateBundle(ctx, buf)
+	val, err := syntax.EvaluateBundleCtx(ctx, buf)
 	if err != nil {
 		return err
 	}

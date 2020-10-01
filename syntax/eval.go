@@ -3,8 +3,9 @@ package syntax
 import (
 	"context"
 
+	"github.com/arr-ai/arrai/pkg/arraictx"
+
 	"github.com/arr-ai/arrai/rel"
-	"github.com/arr-ai/arrai/tools"
 )
 
 func EvalWithScope(ctx context.Context, path, source string, scope rel.Scope) (rel.Value, error) {
@@ -29,10 +30,15 @@ func EvaluateExpr(ctx context.Context, path, source string) (rel.Value, error) {
 
 // EvaluateBundle evaluates the buffer of a bundled scripts using the arrai bundle cmd.
 // If args are provided, they override the values of //os.args.
-func EvaluateBundle(ctx context.Context, bundle []byte, args ...string) (rel.Value, error) {
-	if len(args) != 0 {
-		tools.Arguments = args
-	}
+func EvaluateBundle(bundle []byte, args ...string) (rel.Value, error) {
+	ctx := arraictx.InitRunCtx(context.Background())
+	return EvaluateBundleCtx(ctx, bundle, args...)
+}
+
+// EvaluateBundle evaluates the buffer of a bundled scripts using the arrai bundle cmd.
+// If args are provided, they override the values of //os.args.
+func EvaluateBundleCtx(ctx context.Context, bundle []byte, args ...string) (rel.Value, error) {
+	ctx = arraictx.WithArgs(ctx, args...)
 	ctx, err := WithBundleRun(ctx, bundle)
 	if err != nil {
 		return nil, err
