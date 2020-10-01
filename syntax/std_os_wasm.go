@@ -8,7 +8,7 @@ import (
 	"github.com/arr-ai/arrai/rel"
 )
 
-func stdOsGetArgs() rel.Value {
+func stdOsGetArgs(ctx context.Context, _ rel.Value) (rel.Value, error) {
 	panic("not implemented")
 }
 

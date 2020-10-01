@@ -2,9 +2,6 @@ package syntax
 
 import (
 	"testing"
-
-	"github.com/arr-ai/arrai/rel"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestStdTuple(t *testing.T) {
@@ -35,25 +32,4 @@ func TestStdDict(t *testing.T) {
 
 	AssertCodeErrors(t, "", `//dict({42:43})`)
 	AssertCodeErrors(t, "", `//dict(42)`)
-}
-
-func TestStdScope(t *testing.T) {
-	scope := rel.EmptyScope.With("//",
-		rel.NewTuple(rel.NewTupleAttr("a",
-			rel.NewTupleAttr("b",
-				rel.NewFloatAttr("c", 1),
-			),
-		)),
-	)
-	expected := rel.EmptyScope.With("//",
-		rel.NewTuple(rel.NewTupleAttr("a",
-			rel.NewTupleAttr("b",
-				rel.NewFloatAttr("c", 2),
-			),
-		)),
-	)
-
-	out := addToScope(scope, []string{"a", "b", "c"}, func() rel.Value { return rel.NewNumber(2) })
-
-	assert.True(t, expected.MustGet("//").(rel.Tuple).Equal(out.MustGet("//")))
 }

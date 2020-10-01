@@ -9,11 +9,9 @@ import (
 	"github.com/arr-ai/arrai/rel"
 )
 
-var RunOmitted = false
-
 func stdOs() rel.Attr {
 	return rel.NewTupleAttr("os",
-		rel.NewAttr("args", stdOsGetArgs()),
+		rel.NewNativeFunctionAttr("&args", stdOsGetArgs),
 		rel.NewAttr("path_separator", stdOsPathSeparator()),
 		rel.NewAttr("path_list_separator", stdOsPathListSeparator()),
 		rel.NewAttr("cwd", stdOsCwd()),

@@ -18,8 +18,14 @@ import (
 // AssertCodesEvalToSameValue asserts that code evaluate to the same value as
 // expected.
 func AssertCodesEvalToSameValue(t *testing.T, expected, code string) bool {
-	pc := ParseContext{SourceDir: ".."}
 	ctx := arraictx.InitRunCtx(context.Background())
+	return AssertCodesEvalToSameValueCtx(t, ctx, expected, code)
+}
+
+// AssertCodesEvalToSameValueCtx asserts that code evaluate to the same value as
+// expected under the given context.
+func AssertCodesEvalToSameValueCtx(t *testing.T, ctx context.Context, expected, code string) bool {
+	pc := ParseContext{SourceDir: ".."}
 
 	ast, err := pc.Parse(ctx, parser.NewScanner(expected))
 	if !assert.NoError(t, err, "parsing expected: %s", expected) {

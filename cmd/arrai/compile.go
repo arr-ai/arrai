@@ -13,7 +13,6 @@ import (
 	"github.com/arr-ai/arrai/pkg/arraictx"
 	"github.com/arr-ai/arrai/pkg/ctxfs"
 	"github.com/arr-ai/arrai/syntax"
-	"github.com/arr-ai/arrai/tools"
 	"github.com/spf13/afero"
 	"github.com/urfave/cli/v2"
 )
@@ -58,10 +57,10 @@ var compileCommand = &cli.Command{
 }
 
 func compile(c *cli.Context) error {
-	tools.SetArgs(c)
 	file := c.Args().Get(0)
+	ctx := arraictx.InitCliCtx(context.Background(), c)
 
-	return compileFile(arraictx.InitRunCtx(context.Background()), file, c.Value("out").(string))
+	return compileFile(ctx, file, c.Value("out").(string))
 }
 
 func compileFile(ctx context.Context, path, out string) error {

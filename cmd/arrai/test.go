@@ -9,8 +9,6 @@ import (
 
 	"github.com/arr-ai/arrai/internal/test"
 	"github.com/arr-ai/arrai/pkg/arraictx"
-	"github.com/arr-ai/arrai/tools"
-
 	"github.com/urfave/cli/v2"
 )
 
@@ -22,9 +20,10 @@ var testCommand = &cli.Command{
 }
 
 func doTest(c *cli.Context) error {
-	tools.SetArgs(c)
 	file := c.Args().Get(0)
-	return testPath(arraictx.InitRunCtx(context.Background()), file, os.Stdout)
+	ctx := arraictx.InitCliCtx(context.Background(), c)
+
+	return testPath(ctx, file, os.Stdout)
 }
 
 // testPath runs and reports on all tests in the subtree of the given path.

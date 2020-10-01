@@ -2,28 +2,29 @@ package syntax
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"runtime"
 	"strings"
 	"testing"
 
-	"github.com/arr-ai/arrai/tools"
+	"github.com/arr-ai/arrai/pkg/arraictx"
 )
 
 func TestStdOsArgs(t *testing.T) {
-	defer func() {
-		tools.Arguments = nil
-	}()
+	t.Parallel()
 
-	AssertCodesEvalToSameValue(t, `[]`, `//os.args`)
+	ctx := arraictx.InitRunCtx(context.Background())
 
-	tools.Arguments = []string{"a", "b"}
+	AssertCodesEvalToSameValueCtx(t, ctx, `[]`, `//os.args`)
 
-	AssertCodesEvalToSameValue(t, `['a', 'b']`, `//os.args`)
+	ctx = arraictx.WithArgs(ctx, "a", "b")
 
-	tools.Arguments = []string{"a", "b", "c"}
+	AssertCodesEvalToSameValueCtx(t, ctx, `['a', 'b']`, `//os.args`)
 
-	AssertCodesEvalToSameValue(t, `['a', 'b', 'c']`, `//os.args`)
+	ctx = arraictx.WithArgs(ctx, "a", "b", "c")
+
+	AssertCodesEvalToSameValueCtx(t, ctx, `['a', 'b', 'c']`, `//os.args`)
 }
 
 func TestStdOsStdin(t *testing.T) {
