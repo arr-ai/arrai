@@ -6,21 +6,22 @@ import (
 	"runtime"
 	"strings"
 	"testing"
+
+	"github.com/arr-ai/arrai/tools"
 )
 
-// fixWindows replaces all /s with \s if running on Windows.
-func fixWindows(code string) string {
-	if runtime.GOOS != "windows" {
-		return code
-	}
+func TestStdOsArgs(t *testing.T) {
+	t.Parallel()
 
-	// Windows uses \\ as the path separator.
-	code = strings.ReplaceAll(code, `/`, `\\`)
-	// Windows directories have zero size.
-	code = strings.ReplaceAll(code, `is_dir: true, size: true`, `is_dir: true, size: false`)
-	// Symlinks on Windows have zero size.
-	code = strings.ReplaceAll(code, `.ln", is_dir: false, size: true`, `.ln", is_dir: false, size: false`)
-	return code
+	AssertCodesEvalToSameValue(t, `[]`, `//os.args`)
+
+	tools.Arguments = []string{"a", "b"}
+
+	AssertCodesEvalToSameValue(t, `['a', 'b']`, `//os.args`)
+
+	tools.Arguments = []string{"a", "b", "c"}
+
+	AssertCodesEvalToSameValue(t, `['a', 'b', 'c']`, `//os.args`)
 }
 
 func TestStdOsStdin(t *testing.T) {
@@ -39,6 +40,8 @@ func TestStdOsStdin(t *testing.T) {
 }
 
 func TestStdOsExists(t *testing.T) {
+	t.Parallel()
+
 	AssertCodesEvalToSameValue(t, `true`, `//os.exists('std_os_test.go')`)
 	AssertCodesEvalToSameValue(t, `false`, `//os.exists('doesntexist.anywhere')`)
 }
@@ -79,4 +82,19 @@ func TestStdOsIsATty(t *testing.T) {
 	AssertCodeErrors(t, "isatty arg must be an integer, not 0.1", `//os.isatty(0.1)`)
 	AssertCodeErrors(t, "isatty not implemented for 2", `//os.isatty(2)`)
 	AssertCodeErrors(t, "isatty not implemented for -1", `//os.isatty(-1)`)
+}
+
+// fixWindows replaces all /s with \s if running on Windows.
+func fixWindows(code string) string {
+	if runtime.GOOS != "windows" {
+		return code
+	}
+
+	// Windows uses \\ as the path separator.
+	code = strings.ReplaceAll(code, `/`, `\\`)
+	// Windows directories have zero size.
+	code = strings.ReplaceAll(code, `is_dir: true, size: true`, `is_dir: true, size: false`)
+	// Symlinks on Windows have zero size.
+	code = strings.ReplaceAll(code, `.ln", is_dir: false, size: true`, `.ln", is_dir: false, size: false`)
+	return code
 }

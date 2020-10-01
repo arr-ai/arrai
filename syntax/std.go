@@ -123,7 +123,27 @@ func StdScope() rel.Scope {
 				stdDeprecated(),
 			))
 	})
-	return stdScopeVar
+
+	// Re-add os.args to stdScope so that it is dynamically evaluated each time, allowing a parent
+	// process to control the value.
+	return addToScope(stdScopeVar, []string{"os", "args"}, stdOsGetArgs)
+}
+
+// addToScope returns a copy of scope with the value corresponding to a path of keys replaced with
+// the result of valFn.
+func addToScope(scope rel.Scope, path []string, fn func() rel.Value) rel.Scope {
+	std := scope.MustGet("//").(rel.Tuple)
+	return scope.With("//", addToTuple(std, path, fn))
+}
+
+// addToTuple returns a copy of tuple with the value corresponding to a path of keys replaced with
+// the result of valFn.
+func addToTuple(tuple rel.Tuple, path []string, valFn func() rel.Value) rel.Value {
+	k := path[0]
+	if len(path) == 1 {
+		return tuple.With(k, valFn())
+	}
+	return tuple.With(k, addToTuple(tuple.MustGet(k).(rel.Tuple), path[1:], valFn))
 }
 
 type fnArgs struct {
