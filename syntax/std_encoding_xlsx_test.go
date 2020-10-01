@@ -11,9 +11,9 @@ func TestXlsxDecode(t *testing.T) {
 	AssertCodesEvalToSameValue(t,
 		`{
 			|@row, customer_id, account_type, account__balance|
-			(2, 'foo', 'Checking', '100'), 
-			(4, 'bar', 'Checking', '200'),
-			(5, 'bar', 'Savings', '300'),
+			(2,    'foo',       'Checking',   '100'           ), 
+			(4,    'bar',       'Checking',   '200'           ),
+			(5,    'bar',       'Savings',    '300'           ),
 		}`,
 		`//encoding.xlsx.decodeToRelation((sheet: 0, headRow: 1), //os.file('../examples/xlsx/foo.xlsx'))`)
 }
