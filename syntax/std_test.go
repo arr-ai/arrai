@@ -1,8 +1,6 @@
 package syntax
 
-import (
-	"testing"
-)
+import "testing"
 
 func TestStdTuple(t *testing.T) {
 	t.Parallel()

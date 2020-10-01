@@ -11,7 +11,6 @@ import (
 
 func stdOs() rel.Attr {
 	return rel.NewTupleAttr("os",
-		rel.NewNativeFunctionAttr("&args", stdOsGetArgs),
 		rel.NewAttr("path_separator", stdOsPathSeparator()),
 		rel.NewAttr("path_list_separator", stdOsPathListSeparator()),
 		rel.NewAttr("cwd", stdOsCwd()),
@@ -19,6 +18,7 @@ func stdOs() rel.Attr {
 		rel.NewNativeFunctionAttr("file", stdOsFile),
 		rel.NewNativeFunctionAttr("tree", stdOsTree),
 		rel.NewNativeFunctionAttr("get_env", stdOsGetEnv),
+		rel.NewNativeFunctionAttr("&args", stdOsGetArgs),
 		rel.NewNativeFunctionAttr("&stdin", stdOsStdinVar.read),
 		rel.NewNativeFunctionAttr("isatty", stdOsIsATty),
 	)
