@@ -11,7 +11,9 @@ import (
 )
 
 func TestStdOsArgs(t *testing.T) {
-	t.Parallel()
+	defer func() {
+		tools.Arguments = nil
+	}()
 
 	AssertCodesEvalToSameValue(t, `[]`, `//os.args`)
 
