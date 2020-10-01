@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/arr-ai/arrai/rel"
+	"github.com/arr-ai/arrai/tools"
 )
 
 func EvalWithScope(ctx context.Context, path, source string, scope rel.Scope) (rel.Value, error) {
@@ -27,12 +28,15 @@ func EvaluateExpr(ctx context.Context, path, source string) (rel.Value, error) {
 }
 
 // EvaluateBundle evaluates the buffer of a bundled scripts using the arrai bundle cmd.
-func EvaluateBundle(ctx context.Context, bundle []byte) (rel.Value, error) {
+// If args are provided, they override the values of //os.args.
+func EvaluateBundle(ctx context.Context, bundle []byte, args ...string) (rel.Value, error) {
+	if len(args) != 0 {
+		tools.Arguments = args
+	}
 	ctx, err := WithBundleRun(ctx, bundle)
 	if err != nil {
 		return nil, err
 	}
-
 	ctx, mainFileSource, path := GetMainBundleSource(ctx)
 	return EvaluateExpr(ctx, path, string(mainFileSource))
 }
