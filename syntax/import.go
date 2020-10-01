@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/joshcarp/gop/gop/cli"
+	"github.com/arr-ai/arrai/pkg/mod"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -92,14 +92,7 @@ func importModuleFile(ctx context.Context, importPath string) (rel.Expr, error) 
 	if repo != ""{
 		repo += "/"
 	}
-	var tokens map[string]string
-	f, _ := os.Open("~/.git-credentials")
-	if f != nil{
-		a, _ := ioutil.ReadAll(f)
-		tokens, _ = cli.TokensFromGitCredentialsFile(a)
-	}
-
-	r := cli.Moduler(ctxfs.SourceFsFrom(ctx), "arrai_modules.yaml","arrai_modules", os.Getenv("ARRAI_PROXY"), tokens)
+	r := mod.New(ctxfs.SourceFsFrom(ctx))
 	bytes, _, err := r.Retrieve(path.Join(repo,resource)+"@"+ver)
 	if err != nil{
 		return nil, err

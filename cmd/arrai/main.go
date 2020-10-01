@@ -30,6 +30,7 @@ var cmds = []*cli.Command{
 	updateCommand,
 	infoCommand,
 	testCommand,
+	modCommand,
 }
 
 func main() {

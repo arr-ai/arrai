@@ -263,6 +263,8 @@ github.com/joshcarp/gop v0.0.0-20200922043230-a225272c1746 h1:spKLSLegvrmy/T/OBa
 github.com/joshcarp/gop v0.0.0-20200922043230-a225272c1746/go.mod h1:NffrC8QpSNI+2Opd/dYUJB06JmycO2yyY4nri7bc1kg=
 github.com/joshcarp/gop v0.0.0-20200924011502-d6f2efad81c9 h1:TvFLj8xHBUG2/Tde8FdKS/hxU82OmseCNG2tAuB9pMc=
 github.com/joshcarp/gop v0.0.0-20200924011502-d6f2efad81c9/go.mod h1:98A2HEQ0Jp3UdlL+Yu/Jncy31bBmBc8fbNsWXM1iCkQ=
+github.com/joshcarp/gop v0.0.0-20201001035053-59b45b6f9a72 h1:L2W7i6+BNWGgn7CfjzJVCIwyLCd4ogKyUqjUv3XcBzA=
+github.com/joshcarp/gop v0.0.0-20201001035053-59b45b6f9a72/go.mod h1:ktfUHEyxdCoGFYg3N9jAieSan0kQrNUS0wzEWA593Ic=
 github.com/json-iterator/go v1.1.6/go.mod h1:+SdeFBvtyEkXs7REEP0seUULqWtbJapLOCVDaaPEHmU=
 github.com/json-iterator/go v1.1.7/go.mod h1:KdQUCv79m/52Kvf8AW2vK1V8akMuk1QjK/uOdHXbAo4=
 github.com/jstemmer/go-junit-report v0.0.0-20190106144839-af01ea7f8024/go.mod h1:6v2b51hI/fHJwM22ozAgKL4VKDeJcHhJFhtBdhmNjmU=

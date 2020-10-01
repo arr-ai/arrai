@@ -3,11 +3,11 @@ module github.com/arr-ai/arrai
 go 1.13
 
 replace github.com/spf13/afero v1.3.5 => github.com/anz-bank/afero v1.2.4
-replace github.com/joshcarp/gop => ../gop
 
 require (
 	cloud.google.com/go/storage v1.12.0 // indirect
 	github.com/anz-bank/pkg v0.0.22
+	github.com/anz-bank/sysl v0.207.0 // indirect
 	github.com/arr-ai/frozen v0.15.0
 	github.com/arr-ai/hash v0.5.0
 	github.com/arr-ai/proto v0.0.0-20180422074755-2ffbedebee50
@@ -16,8 +16,9 @@ require (
 	github.com/go-errors/errors v1.1.1
 	github.com/gorilla/websocket v1.4.2
 	github.com/imdario/mergo v0.3.11 // indirect
-	github.com/joshcarp/gop v0.0.0-20200924011502-d6f2efad81c9
+	github.com/joshcarp/gop v0.0.0-20201001035053-59b45b6f9a72
 	github.com/mattn/go-isatty v0.0.12
+	github.com/pingcap/log v0.0.0-20200828042413-fce0951f1463 // indirect
 	github.com/pkg/errors v0.9.1
 	github.com/rjeczalik/notify v0.9.2
 	github.com/sirupsen/logrus v1.6.0
