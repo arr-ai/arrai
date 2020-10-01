@@ -19,12 +19,12 @@ import (
 // expected.
 func AssertCodesEvalToSameValue(t *testing.T, expected, code string) bool {
 	ctx := arraictx.InitRunCtx(context.Background())
-	return AssertCodesEvalToSameValueCtx(t, ctx, expected, code)
+	return AssertCodesEvalToSameValueCtx(ctx, t, expected, code)
 }
 
 // AssertCodesEvalToSameValueCtx asserts that code evaluate to the same value as
 // expected under the given context.
-func AssertCodesEvalToSameValueCtx(t *testing.T, ctx context.Context, expected, code string) bool {
+func AssertCodesEvalToSameValueCtx(ctx context.Context, t *testing.T, expected, code string) bool {
 	pc := ParseContext{SourceDir: ".."}
 
 	ast, err := pc.Parse(ctx, parser.NewScanner(expected))

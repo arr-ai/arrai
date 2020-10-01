@@ -67,7 +67,6 @@ func main() {
 		if len(os.Args) > 1 {
 			if execCmd := fetchCommand(args[1:]); execCmd != "" && !isExecCommand(execCmd, app.Commands) {
 				args = insertRunCommand(app.Flags, os.Args)
-
 			}
 		}
 

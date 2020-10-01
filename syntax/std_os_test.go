@@ -16,15 +16,15 @@ func TestStdOsArgs(t *testing.T) {
 
 	ctx := arraictx.InitRunCtx(context.Background())
 
-	AssertCodesEvalToSameValueCtx(t, ctx, `[]`, `//os.args`)
+	AssertCodesEvalToSameValueCtx(ctx, t, `[]`, `//os.args`)
 
 	ctx = arraictx.WithArgs(ctx, "a", "b")
 
-	AssertCodesEvalToSameValueCtx(t, ctx, `['a', 'b']`, `//os.args`)
+	AssertCodesEvalToSameValueCtx(ctx, t, `['a', 'b']`, `//os.args`)
 
 	ctx = arraictx.WithArgs(ctx, "a", "b", "c")
 
-	AssertCodesEvalToSameValueCtx(t, ctx, `['a', 'b', 'c']`, `//os.args`)
+	AssertCodesEvalToSameValueCtx(ctx, t, `['a', 'b', 'c']`, `//os.args`)
 }
 
 func TestStdOsStdin(t *testing.T) {
