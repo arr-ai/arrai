@@ -18,7 +18,7 @@ main: internal/arrai/bindata.go
 
 # Generates bindata.go, containing a []byte constant for internal/arrai/echo.arraiz.
 internal/arrai/bindata.go: internal/arrai/echo.arraiz
-	go-bindata -pkg arrai -o $@ $<
+	go-bindata -pkg arrai -o $@ $^
 
 # Generates .arraiz files by calling arrai bundle on .arrai files.
 %.arraiz: %.arrai
