@@ -23,7 +23,6 @@ func TestEvaluateBundle(t *testing.T) {
 	out, err := EvaluateBundle(arraictx.InitRunCtx(context.Background()), bundle, "", "hello", "world")
 	require.NoError(t, err)
 	assert.Equal(t, "hello world", out.String())
-
 }
 
 func TestEvaluateBundle_Empty(t *testing.T) {
