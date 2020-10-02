@@ -28,14 +28,11 @@ import (
     "github.com/arr-ai/arrai/pkg/arraictx"
     "github.com/arr-ai/arrai/pkg/arrai"
     "github.com/arr-ai/arrai/syntax"
-    "github.com/arr-ai/arrai/tools"
 )
 
 func main() {
-    // TODO: set //os.args argument without global var assignment
-    tools.Arguments = os.Args
-    ctx := arraictx.InitRunCtx(context.Background())
-    value, err := syntax.EvaluateBundle(ctx, []byte{ {{.Data}} })
+	ctx := arraictx.InitRunCtx(context.Background())
+    value, err := syntax.EvaluateBundleCtx(ctx, []byte{ {{.Data}} }, os.Args...)
     if err != nil {
         panic(err)
     }
