@@ -89,7 +89,7 @@ func TestStdOsIsATty(t *testing.T) {
 
 // fixWindows replaces all /s with \s if running on Windows.
 func fixWindows(code string) string {
-	if runtime.GOOS != "windows" {
+	if runtime.GOOS != windows {
 		return code
 	}
 

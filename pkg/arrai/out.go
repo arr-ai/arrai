@@ -10,8 +10,21 @@ import (
 
 	"github.com/arr-ai/arrai/pkg/ctxfs"
 	"github.com/arr-ai/arrai/rel"
+	"github.com/go-errors/errors"
 	"github.com/spf13/afero"
 )
+
+const (
+	dirField        = "dir"
+	fileField       = "file"
+	ifExistsConfig  = "ifExists"
+	ifExistsReplace = "replace"
+	ifExistsMerge   = "merge"
+	ifExistsIgnore  = "ignore"
+	ifExistsFail    = "fail"
+)
+
+var errFileOrDirMustExist = errors.Errorf("one of %s or %s must exist", dirField, fileField)
 
 // OutputValue handles output writing for evaluated values.
 func OutputValue(ctx context.Context, value rel.Value, w io.Writer, out string) error {
@@ -68,13 +81,23 @@ func outputValue(ctx context.Context, value rel.Value, out string) error {
 	return fmt.Errorf("invalid --out flag: %s", out)
 }
 
-func outputTupleDir(t rel.Dict, dir string, fs afero.Fs, dryRun bool) error {
+func outputTupleDir(v rel.Value, dir string, fs afero.Fs, dryRun bool) error {
+	t, err := getDirField(v)
+	if err != nil {
+		return err
+	}
 	if _, err := fs.Stat(dir); os.IsNotExist(err) {
 		if err := fs.Mkdir(dir, 0755); err != nil {
 			return err
 		}
 	}
-	for e := t.DictEnumerator(); e.MoveNext(); {
+
+	// this is to allow empty directory
+	if !t.IsTrue() {
+		return nil
+	}
+
+	for e := t.(rel.Dict).DictEnumerator(); e.MoveNext(); {
 		k, v := e.Current()
 		name, is := k.(rel.String)
 		if !is {
@@ -82,6 +105,10 @@ func outputTupleDir(t rel.Dict, dir string, fs afero.Fs, dryRun bool) error {
 		}
 		subpath := path.Join(dir, name.String())
 		switch content := v.(type) {
+		case rel.Tuple:
+			if err := configureOutput(content, subpath, fs, dryRun); err != nil {
+				return err
+			}
 		case rel.Dict:
 			if err := outputTupleDir(content, subpath, fs, dryRun); err != nil {
 				return err
@@ -126,4 +153,113 @@ func outputFile(content rel.Value, path string, fs afero.Fs, dryRun bool) error 
 	}
 	_, err = f.Write(bytes)
 	return err
+}
+
+func configureOutput(t rel.Tuple, dir string, fs afero.Fs, dryRun bool) error {
+	configNames := []string{ifExistsConfig}
+
+	for _, c := range configNames {
+		if t.HasName(c) {
+			for _, applier := range getConfigurators() {
+				if err := applier(t, dir, fs, dryRun); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}
+	return applyFilesFields(t, dir, fs, dryRun)
+}
+
+func getConfigurators() []func(rel.Tuple, string, afero.Fs, bool) error {
+	// mind the order when adding new configurations
+	return []func(rel.Tuple, string, afero.Fs, bool) error{
+		applyIfExistsConfig,
+	}
+}
+
+func applyIfExistsConfig(t rel.Tuple, dir string, fs afero.Fs, dryRun bool) (err error) {
+	conf, has := t.Get(ifExistsConfig)
+	if !has {
+		return nil
+	}
+	errInvalidConfig := errors.Errorf(
+		"%s: value '%s' is not valid value. It has to be one of %s",
+		ifExistsConfig, conf,
+		strings.Join([]string{ifExistsMerge, ifExistsReplace, ifExistsIgnore, ifExistsFail}, ", "),
+	)
+
+	if _, isString := conf.(rel.String); !isString {
+		return errInvalidConfig
+	}
+	switch conf.String() {
+	case ifExistsIgnore, ifExistsReplace, ifExistsFail:
+	case ifExistsMerge:
+		if t.HasName(fileField) {
+			return errors.Errorf("%s: '%s' config must not have '%s' field", ifExistsConfig, fileField, ifExistsMerge)
+		}
+	default:
+		return errInvalidConfig
+	}
+
+	if _, err := fs.Stat(dir); os.IsNotExist(err) {
+		return applyFilesFields(t, dir, fs, dryRun)
+	} else if err != nil {
+		return err
+	}
+
+	switch conf.String() {
+	case ifExistsReplace:
+		if dryRun {
+			return nil
+		}
+		if err := fs.RemoveAll(dir); err != nil {
+			return err
+		}
+		return applyFilesFields(t, dir, fs, dryRun)
+	case ifExistsMerge:
+		if v, has := t.Get(dirField); has {
+			d, err := getDirField(v)
+			if err != nil {
+				return err
+			}
+			return outputTupleDir(d, dir, fs, dryRun)
+		}
+		return errors.Errorf("%s: '%s' field must exist", ifExistsConfig, dirField)
+	case ifExistsIgnore:
+		return nil
+	case ifExistsFail:
+		return errors.Errorf("%s: '%s' exists", ifExistsConfig, dir)
+	}
+	// impossible
+	return nil
+}
+
+func applyFilesFields(t rel.Tuple, dir string, fs afero.Fs, dryRun bool) error {
+	dirs, hasDirs := t.Get(dirField)
+	file, hasFiles := t.Get(fileField)
+	if !(hasDirs || hasFiles) || (hasDirs && hasFiles) {
+		return errFileOrDirMustExist
+	}
+
+	if hasDirs {
+		d, err := getDirField(dirs)
+		if err != nil {
+			return err
+		}
+		return outputTupleDir(d, dir, fs, dryRun)
+	}
+	return outputFile(file, dir, fs, dryRun)
+}
+
+func getDirField(v rel.Value) (rel.Set, error) {
+	switch k := v.(type) {
+	case rel.Dict:
+		return k, nil
+	case rel.GenericSet:
+		if !k.IsTrue() {
+			return k, nil
+		}
+	}
+	return nil, errors.Errorf("%s must be of type Dictionary, not %T", dirField, v)
 }

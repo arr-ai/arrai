@@ -85,7 +85,7 @@ func stdOsTree(_ context.Context, v rel.Value) (rel.Value, error) {
 			return err
 		}
 		// Fix for consistent behavior on Windows.
-		if path == d.String() && runtime.GOOS == "windows" {
+		if path == d.String() && runtime.GOOS == windows {
 			path = strings.ReplaceAll(path, `/`, string(filepath.Separator))
 		}
 		fs = append(fs, rel.NewTuple(

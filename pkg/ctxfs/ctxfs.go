@@ -3,6 +3,9 @@ package ctxfs
 import (
 	"context"
 	"io/ioutil"
+	"path/filepath"
+	"runtime"
+	"strings"
 
 	"github.com/spf13/afero"
 )
@@ -57,4 +60,15 @@ func ReadFile(fs afero.Fs, filePath string) ([]byte, error) {
 	defer f.Close()
 
 	return ioutil.ReadAll(f)
+}
+
+func ToUnixPath(p string) string {
+	//nolint:goconst
+	if runtime.GOOS == "windows" {
+		if vol := filepath.VolumeName(p); strings.HasPrefix(p, vol) {
+			p = strings.TrimPrefix(p, vol)
+		}
+		return strings.ReplaceAll(p, "\\", "/")
+	}
+	return p
 }

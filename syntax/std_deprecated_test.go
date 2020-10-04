@@ -9,7 +9,7 @@ func TestDeprecatedExec(t *testing.T) {
 	t.Parallel()
 
 	lineSep := "\n"
-	if runtime.GOOS == "windows" {
+	if runtime.GOOS == windows {
 		lineSep = "\r\n"
 	}
 

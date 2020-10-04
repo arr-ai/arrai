@@ -20,6 +20,8 @@ import (
 	"github.com/spf13/afero/zipfs"
 )
 
+const windows = "windows"
+
 type bundleConfig struct {
 	mainRoot, mainFile string
 
@@ -140,7 +142,7 @@ func withBundledConfig(ctx context.Context) context.Context {
 	if root == "{}" {
 		root = unnamedModule
 	}
-	root = toUnixPath(root)
+	root = ctxfs.ToUnixPath(root)
 
 	return context.WithValue(ctx, bundleConfKey, bundleConfig{
 		mainRoot: root,
@@ -209,7 +211,7 @@ func SetupBundle(ctx context.Context, filePath string, source []byte) (_ context
 		return ctx, err
 	}
 
-	filePathRelativeToSentinel := toUnixPath(strings.TrimPrefix(filePath, root))
+	filePathRelativeToSentinel := ctxfs.ToUnixPath(strings.TrimPrefix(filePath, root))
 	mainPath := path.Join(ModuleDir, moduleRoot[1], filePathRelativeToSentinel)
 
 	if err = ctxfs.ZipCreate(ctx, bundleFsKey, mainPath, source); err != nil {
@@ -238,7 +240,7 @@ func addLocalRoot(ctx context.Context, rootPath string) (err error) {
 	}
 	rootPath = strings.TrimPrefix(rootPath, fromBundleConfig(ctx).absRootPath)
 
-	pathInBundle := path.Join(ModuleDir, fromBundleConfig(ctx).mainRoot, toUnixPath(rootPath))
+	pathInBundle := path.Join(ModuleDir, fromBundleConfig(ctx).mainRoot, ctxfs.ToUnixPath(rootPath))
 	if exists, err := ctxfs.FileExists(ctx, bundleFsKey, rootPath); err != nil {
 		return err
 	} else if exists {
@@ -276,10 +278,10 @@ func bundleLocalFile(ctx context.Context, filePath string) (err error) {
 	config := fromBundleConfig(ctx)
 	if config.mainRoot != "" {
 		dir = ModuleDir
-		filePath = path.Join(config.mainRoot, toUnixPath(strings.TrimPrefix(filePath, config.absRootPath)))
+		filePath = path.Join(config.mainRoot, ctxfs.ToUnixPath(strings.TrimPrefix(filePath, config.absRootPath)))
 	} else {
 		dir = NoModuleDir
-		filePath = toUnixPath(strings.TrimPrefix(filePath, config.absRootPath))
+		filePath = ctxfs.ToUnixPath(strings.TrimPrefix(filePath, config.absRootPath))
 	}
 
 	return ctxfs.ZipCreate(ctx, bundleFsKey, path.Join(dir, filePath), source)
@@ -317,21 +319,10 @@ func bundleRemoteFile(ctx context.Context, url string, source []byte) error {
 	return ctxfs.ZipCreate(ctx, bundleFsKey, path.Join(ModuleDir, url), source)
 }
 
-func toUnixPath(p string) string {
-	//nolint:goconst
-	if runtime.GOOS == "windows" {
-		if vol := filepath.VolumeName(p); strings.HasPrefix(p, vol) {
-			p = strings.TrimPrefix(p, vol)
-		}
-		return strings.ReplaceAll(p, "\\", "/")
-	}
-	return p
-}
-
 // since config file uses UNIX path, they need to be converted to windows path
 // (without volume) to work with afero zipfs.
 func bundleToValidPath(ctx context.Context, p string) string {
-	if runtime.GOOS == "windows" && isRunningBundle(ctx) {
+	if runtime.GOOS == windows && isRunningBundle(ctx) {
 		p = strings.TrimPrefix(p, filepath.VolumeName(p))
 		return strings.ReplaceAll(p, "/", "\\")
 	}
