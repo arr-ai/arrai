@@ -1,0 +1,23 @@
+let (:markdown, :html, ...) = //{./table};
+
+let single = {'a': 1};
+let multiple = {'a': 1, 'b': [1,2,3]};
+
+let multipleHtml = 
+'<table>
+    <tr><th>Key</th><th>Value</th></tr>
+    <tr><td>a</td><td>1</td></tr>
+    <tr><td>b</td><td>[1, 2, 3]</td></tr>
+</table>';
+
+(
+    markdown: (
+        empty: markdown({}) = '|Key|Value|\n',
+        single: markdown(single) = '|Key|Value|\n|a|1|',
+        multiple: markdown(multiple) = '|Key|Value|\n|a|1|\n|b|[1, 2, 3]|',
+    ),
+    html: (
+        empty: html({}) = '<table>\n    <tr><th>Key</th><th>Value</th></tr>\n</table>',
+        multiple: html(multiple) = multipleHtml,
+    ),
+)
