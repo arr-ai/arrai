@@ -94,6 +94,24 @@ func TestRunBundle(t *testing.T) {
 	}
 }
 
+func TestRunBundleOsArgs(t *testing.T) {
+	t.Parallel()
+
+	files := map[string]string{
+		sentinelFile("github.com/args"):          "module github.com/args\n",
+		moduleFile("github.com/args/args.arrai"): "//os.args",
+		syntax.BundleConfig:                      config("github.com/args", moduleFile("github.com/args/args.arrai")),
+	}
+
+	buf := createBundle(t, files)
+
+	ctx := arraictx.InitRunCtx(context.Background())
+	ctx = arraictx.WithArgs(ctx, "1", "2", "3")
+	actual := &bytes.Buffer{}
+	assert.NoError(t, runBundled(ctx, buf, actual, ""))
+	assert.Equal(t, "['1', '2', '3']\n", actual.String())
+}
+
 //nolint: lll
 func TestRunBundleWithHttp(t *testing.T) {
 	t.Parallel()

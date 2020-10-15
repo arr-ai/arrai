@@ -35,10 +35,12 @@ func EvaluateBundle(bundle []byte, args ...string) (rel.Value, error) {
 	return EvaluateBundleCtx(ctx, bundle, args...)
 }
 
-// EvaluateBundle evaluates the buffer of a bundled scripts using the arrai bundle cmd.
+// EvaluateBundleCtx evaluates the buffer of a bundled scripts using the arrai bundle cmd.
 // If args are provided, they override the values of //os.args.
 func EvaluateBundleCtx(ctx context.Context, bundle []byte, args ...string) (rel.Value, error) {
-	ctx = arraictx.WithArgs(ctx, args...)
+	if len(args) > 0 {
+		ctx = arraictx.WithArgs(ctx, args...)
+	}
 	ctx, err := WithBundleRun(ctx, bundle)
 	if err != nil {
 		return nil, err
