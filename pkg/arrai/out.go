@@ -18,13 +18,15 @@ const (
 	dirField        = "dir"
 	fileField       = "file"
 	ifExistsConfig  = "ifExists"
+	ifExistsRemove  = "remove"
 	ifExistsReplace = "replace"
 	ifExistsMerge   = "merge"
 	ifExistsIgnore  = "ignore"
 	ifExistsFail    = "fail"
 )
 
-var errFileOrDirMustExist = errors.Errorf("one of %s or %s must exist", dirField, fileField)
+var errFileAndDirMustNotExist = errors.Errorf("%s and %s must not exist", dirField, fileField)
+var errFileOrDirMustExist = errors.Errorf("exactly one of %s or %s must exist", dirField, fileField)
 
 // OutputValue handles output writing for evaluated values.
 func OutputValue(ctx context.Context, value rel.Value, w io.Writer, out string) error {
@@ -186,14 +188,14 @@ func applyIfExistsConfig(t rel.Tuple, dir string, fs afero.Fs, dryRun bool) (err
 	errInvalidConfig := errors.Errorf(
 		"%s: value '%s' is not valid value. It has to be one of %s",
 		ifExistsConfig, conf,
-		strings.Join([]string{ifExistsMerge, ifExistsReplace, ifExistsIgnore, ifExistsFail}, ", "),
+		strings.Join([]string{ifExistsMerge, ifExistsRemove, ifExistsReplace, ifExistsIgnore, ifExistsFail}, ", "),
 	)
 
 	if _, isString := conf.(rel.String); !isString {
 		return errInvalidConfig
 	}
 	switch conf.String() {
-	case ifExistsIgnore, ifExistsReplace, ifExistsFail:
+	case ifExistsIgnore, ifExistsRemove, ifExistsReplace, ifExistsFail:
 	case ifExistsMerge:
 		if t.HasName(fileField) {
 			return errors.Errorf("%s: '%s' config must not have '%s' field", ifExistsConfig, fileField, ifExistsMerge)
@@ -203,13 +205,26 @@ func applyIfExistsConfig(t rel.Tuple, dir string, fs afero.Fs, dryRun bool) (err
 	}
 
 	if _, err := fs.Stat(dir); os.IsNotExist(err) {
-		return applyFilesFields(t, dir, fs, dryRun)
+		if conf.String() != ifExistsRemove {
+			return applyFilesFields(t, dir, fs, dryRun)
+		}
 	} else if err != nil {
 		return err
 	}
 
 	switch conf.String() {
+	case ifExistsRemove:
+		if err := checkNotDirAndNotFileField(t); err != nil {
+			return err
+		}
+		if dryRun {
+			return nil
+		}
+		return fs.RemoveAll(dir)
 	case ifExistsReplace:
+		if err := checkDirXorFileField(t); err != nil {
+			return err
+		}
 		if dryRun {
 			return nil
 		}
@@ -231,25 +246,39 @@ func applyIfExistsConfig(t rel.Tuple, dir string, fs afero.Fs, dryRun bool) (err
 	case ifExistsFail:
 		return errors.Errorf("%s: '%s' exists", ifExistsConfig, dir)
 	}
-	// impossible
+	panic("impossible")
+}
+
+func checkNotDirAndNotFileField(t rel.Tuple) error {
+	_, hasDirs := t.Get(dirField)
+	_, hasFiles := t.Get(fileField)
+	if hasDirs || hasFiles {
+		return errFileAndDirMustNotExist
+	}
 	return nil
 }
 
-func applyFilesFields(t rel.Tuple, dir string, fs afero.Fs, dryRun bool) error {
-	dirs, hasDirs := t.Get(dirField)
-	file, hasFiles := t.Get(fileField)
-	if !(hasDirs || hasFiles) || (hasDirs && hasFiles) {
+func checkDirXorFileField(t rel.Tuple) error {
+	_, hasDirs := t.Get(dirField)
+	_, hasFiles := t.Get(fileField)
+	if hasDirs == hasFiles {
 		return errFileOrDirMustExist
 	}
+	return nil
+}
 
-	if hasDirs {
-		d, err := getDirField(dirs)
+func applyFilesFields(t rel.Tuple, path string, fs afero.Fs, dryRun bool) error {
+	if dir, has := t.Get(dirField); has {
+		d, err := getDirField(dir)
 		if err != nil {
 			return err
 		}
-		return outputTupleDir(d, dir, fs, dryRun)
+		return outputTupleDir(d, path, fs, dryRun)
 	}
-	return outputFile(file, dir, fs, dryRun)
+	if file, has := t.Get(fileField); has {
+		return outputFile(file, path, fs, dryRun)
+	}
+	return errFileOrDirMustExist
 }
 
 func getDirField(v rel.Value) (rel.Set, error) {

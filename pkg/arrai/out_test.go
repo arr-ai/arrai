@@ -142,6 +142,74 @@ func TestCreateMultipleFiles(t *testing.T) {
 	)
 }
 
+func TestRemoveIfExists(t *testing.T) {
+	t.Parallel()
+
+	testAssertFiles(t,
+		".",
+		`{'dir': {'to': {'replace': (ifExists: 'remove')}}}`,
+		map[string]string{
+			"dir/to/notreplace/dummy.txt": "dummy",
+		},
+		ctxfs.CreateTestMemMapFs(t, map[string]string{
+			"dir/to/replace/file1.txt":    "replace",
+			"dir/to/replace/file2.txt":    "RePlAcE",
+			"dir/to/notreplace/dummy.txt": "dummy",
+		}),
+	)
+
+	testAssertFiles(t,
+		".",
+		`{'dir': {'to': {'replace': {'file3.txt': (ifExists: 'remove')}}}}`,
+		map[string]string{
+			"dir/to/replace/file4.txt":    "retained",
+			"dir/to/notreplace/dummy.txt": "dummy",
+		},
+		ctxfs.CreateTestMemMapFs(t, map[string]string{
+			"dir/to/replace/file3.txt":    "removed",
+			"dir/to/replace/file4.txt":    "retained",
+			"dir/to/notreplace/dummy.txt": "dummy",
+		}),
+	)
+
+	testAssertFiles(t,
+		".",
+		`{'dir': {'to': {'replace': {'file333.txt': (ifExists: 'remove')}}}}`,
+		map[string]string{
+			"dir/to/notreplace/dummy.txt": "dummy",
+		},
+		ctxfs.CreateTestMemMapFs(t, map[string]string{
+			"dir/to/notreplace/dummy.txt": "dummy",
+		}),
+	)
+
+	testAssertFilesError(t, errFileAndDirMustNotExist.Error(),
+		".",
+		`{'dir': {'to': {'replace': (
+			ifExists: 'remove',
+			dir: {'file': 'foo'},
+		)}}}`,
+		ctxfs.CreateTestMemMapFs(t, map[string]string{
+			"dir/to/replace/file3.txt":    "rEPlaCEd",
+			"dir/to/replace/file4.txt":    "retained",
+			"dir/to/notreplace/dummy.txt": "dummy",
+		}),
+	)
+
+	testAssertFilesError(t, errFileAndDirMustNotExist.Error(),
+		".",
+		`{'dir': {'to': {'replace': (
+			ifExists: 'remove',
+			file: 'foo',
+		)}}}`,
+		ctxfs.CreateTestMemMapFs(t, map[string]string{
+			"dir/to/replace/file3.txt":    "rEPlaCEd",
+			"dir/to/replace/file4.txt":    "retained",
+			"dir/to/notreplace/dummy.txt": "dummy",
+		}),
+	)
+}
+
 func TestReplaceIfExists(t *testing.T) {
 	t.Parallel()
 
@@ -340,17 +408,13 @@ func TestFail(t *testing.T) {
 		fmt.Sprintf(
 			"%s: value 'random value' is not valid value. It has to be one of %s",
 			ifExistsConfig,
-			strings.Join([]string{ifExistsMerge, ifExistsReplace, ifExistsIgnore, ifExistsFail}, ", "),
+			strings.Join([]string{ifExistsMerge, ifExistsRemove, ifExistsReplace, ifExistsIgnore, ifExistsFail}, ", "),
 		),
 		".",
-		`
-		{
-			'test': (
-				ifExists: 'random value',
-				'file': '123'
-			)
-		}
-		`,
+		`{'test': (
+			ifExists: 'random value',
+			'file': '123'
+		)}`,
 		afero.NewMemMapFs(),
 	)
 
@@ -358,28 +422,19 @@ func TestFail(t *testing.T) {
 		errFileOrDirMustExist.Error(),
 		".",
 		`
-		{
-			'test': (
-				ifExists: 'replace'
-			)
-		}
-		`,
+		{'test': (ifExists: 'replace')}`,
 		afero.NewMemMapFs(),
 	)
 	testAssertFilesError(t,
 		errFileOrDirMustExist.Error(),
 		".",
-		`
-		{
-			'test': (
-				ifExists: 'replace',
-				file: 'random',
-				dir: {
-					'random': 'random'
-				}
-			)
-		}
-		`,
+		`{'test': (
+			ifExists: 'replace',
+			file: 'random',
+			dir: {
+				'random': 'random'
+			}
+		)}`,
 		afero.NewMemMapFs(),
 	)
 }
