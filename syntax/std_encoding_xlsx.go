@@ -105,7 +105,7 @@ func bytesXlsxToArrai(bs []byte, sheetIndex int, headerRow int) (rel.Value, erro
 		return "", nil
 	}
 
-	badChars, err := regexp.Compile(`[,.'"?:/\s(){}\[\]]`)
+	badChars, err := regexp.Compile(`[,.'"%?:/\s(){}\[\]]`)
 	if err != nil {
 		return nil, err
 	}
