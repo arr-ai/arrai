@@ -105,6 +105,7 @@ func TestExprLetTuplePattern(t *testing.T) { //nolint:dupl
 	AssertCodesEvalToSameValue(t, `4`, `let (a: [x]) = (a: [4]); x`)
 	AssertCodesEvalToSameValue(t, `1`, `let (:x) = (x: 1); x`)
 	AssertCodesEvalToSameValue(t, `2`, `let (:x, :y) = (x: 1, y: 2); y`)
+	AssertCodesEvalToSameValue(t, `2`, `let a = 1; let (:a, b: (a)) = (a: 2, b: 1); a`)
 	AssertCodeErrors(t, "", `let (a: x) = (b: 7, a: 4); x`)
 	AssertCodeErrors(t, "", `let (a: x, a: x) = (a: 4, a: 4); x`)
 	AssertCodeErrors(t, "", `let (a: x, a: x) = (a: 4); x`)

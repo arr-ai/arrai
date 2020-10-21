@@ -73,7 +73,7 @@ func (p ExprsPattern) Bind(ctx context.Context, scope Scope, value Value) (conte
 			return ctx, EmptyScope, err
 		}
 		if incomingVal.Equal(val) {
-			return ctx, scope, nil
+			return ctx, EmptyScope, nil
 		}
 	}
 
