@@ -35,6 +35,17 @@ func stdEncodingJSON() rel.Attr {
 			}
 			return rel.NewBytes(bytes), nil
 		}),
+		rel.NewNativeFunctionAttr("encode_indent", func(_ context.Context, v rel.Value) (rel.Value, error) {
+			data, err := translate.FromArrai(v)
+			if err != nil {
+				return nil, err
+			}
+			bytes, err := json.MarshalIndent(data, "", "  ")
+			if err != nil {
+				return nil, err
+			}
+			return rel.NewBytes(bytes), nil
+		}),
 	)
 }
 
