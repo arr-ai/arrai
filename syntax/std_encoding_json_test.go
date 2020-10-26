@@ -25,6 +25,7 @@ func TestJSONEncode(t *testing.T) {
 	AssertCodesEvalToSameValue(t, `<<'{}'>>`, `//encoding.json.encode({})`)
 	AssertCodesEvalToSameValue(t, `<<'[]'>>`, `//encoding.json.encode((a: []))`)
 	AssertCodesEvalToSameValue(t, `<<'123'>>`, `//encoding.json.encode(123)`)
+	AssertCodesEvalToSameValue(t, `<<'[123]'>>`, `//encoding.json.encode([123])`)
 
 	encoding := testArraiString()
 	expected := `<<'{"a":"string","b":123,"c":123.321,"d":[1,"string again",[],{}],"e":{"f":{"g":"321"},"h":[]},"i":null,"j":[true,false],"k":""}'>>` //nolint:lll

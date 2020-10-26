@@ -19,7 +19,7 @@ func FromArrai(v rel.Value) (interface{}, error) {
 	case rel.String:
 		return v.String(), nil
 	case rel.Array:
-		return objFromArrai(v)
+		return arrFromArrai(v)
 	case *rel.GenericTuple:
 		if !v.IsTrue() {
 			return nil, nil
