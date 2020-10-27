@@ -1,6 +1,7 @@
 package syntax
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -29,22 +30,29 @@ func stdEncodingJSON() rel.Attr {
 			if err != nil {
 				return nil, err
 			}
-			bytes, err := json.Marshal(data)
+			result := bytes.NewBuffer([]byte{})
+			enc := json.NewEncoder(result)
+			enc.SetEscapeHTML(false)
+			err = enc.Encode(data)
 			if err != nil {
 				return nil, err
 			}
-			return rel.NewBytes(bytes), nil
+			return rel.NewBytes(result.Bytes()), nil
 		}),
 		rel.NewNativeFunctionAttr("encode_indent", func(_ context.Context, v rel.Value) (rel.Value, error) {
 			data, err := translate.FromArrai(v)
 			if err != nil {
 				return nil, err
 			}
-			bytes, err := json.MarshalIndent(data, "", "  ")
+			result := bytes.NewBuffer([]byte{})
+			enc := json.NewEncoder(result)
+			enc.SetEscapeHTML(false)
+			enc.SetIndent("", "  ")
+			err = enc.Encode(data)
 			if err != nil {
 				return nil, err
 			}
-			return rel.NewBytes(bytes), nil
+			return rel.NewBytes(result.Bytes()), nil
 		}),
 	)
 }

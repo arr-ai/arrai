@@ -21,24 +21,27 @@ func TestJSONDecode(t *testing.T) {
 
 func TestJSONEncode(t *testing.T) {
 	t.Parallel()
-	AssertCodesEvalToSameValue(t, `<<'null'>>`, `//encoding.json.encode(())`)
-	AssertCodesEvalToSameValue(t, `<<'{}'>>`, `//encoding.json.encode({})`)
-	AssertCodesEvalToSameValue(t, `<<'[]'>>`, `//encoding.json.encode((a: []))`)
-	AssertCodesEvalToSameValue(t, `<<'123'>>`, `//encoding.json.encode(123)`)
-	AssertCodesEvalToSameValue(t, `<<'[123]'>>`, `//encoding.json.encode([123])`)
+	AssertCodesEvalToSameValue(t, `<<'null\n'>>`, `//encoding.json.encode(())`)
+	AssertCodesEvalToSameValue(t, `<<'{}\n'>>`, `//encoding.json.encode({})`)
+	AssertCodesEvalToSameValue(t, `<<'[]\n'>>`, `//encoding.json.encode((a: []))`)
+	AssertCodesEvalToSameValue(t, `<<'123\n'>>`, `//encoding.json.encode(123)`)
+	AssertCodesEvalToSameValue(t, `<<'[123]\n'>>`, `//encoding.json.encode([123])`)
+	AssertCodesEvalToSameValue(t, `<<'"abcde"\n'>>`, `//encoding.json.encode("abcde")`)
+	AssertCodesEvalToSameValue(t, `<<'">"\n'>>`, `//encoding.json.encode(">")`)
 
 	encoding := testArraiString()
-	expected := `<<'{"a":"string","b":123,"c":123.321,"d":[1,"string again",[],{}],"e":{"f":{"g":"321"},"h":[]},"i":null,"j":[true,false],"k":""}'>>` //nolint:lll
+	expected := `<<'{"a":"string","b":123,"c":123.321,"d":[1,"string again",[],{}],"e":{"f":{"g":"321"},"h":[]},"i":null,"j":[true,false],"k":""}\n'>>` //nolint:lll
 
 	AssertCodesEvalToSameValue(t, expected, `//encoding.json.encode(`+encoding+`)`)
 }
 
 func TestJSONEncodeIndent(t *testing.T) {
 	t.Parallel()
-	AssertCodesEvalToSameValue(t, `<<'null'>>`, `//encoding.json.encode_indent(())`)
-	AssertCodesEvalToSameValue(t, `<<'{}'>>`, `//encoding.json.encode_indent({})`)
-	AssertCodesEvalToSameValue(t, `<<'[]'>>`, `//encoding.json.encode_indent((a: []))`)
-	AssertCodesEvalToSameValue(t, `<<'123'>>`, `//encoding.json.encode_indent(123)`)
+	AssertCodesEvalToSameValue(t, `<<'null\n'>>`, `//encoding.json.encode_indent(())`)
+	AssertCodesEvalToSameValue(t, `<<'{}\n'>>`, `//encoding.json.encode_indent({})`)
+	AssertCodesEvalToSameValue(t, `<<'[]\n'>>`, `//encoding.json.encode_indent((a: []))`)
+	AssertCodesEvalToSameValue(t, `<<'123\n'>>`, `//encoding.json.encode_indent(123)`)
+	AssertCodesEvalToSameValue(t, `<<'">"\n'>>`, `//encoding.json.encode_indent(">")`)
 
 	encoding := testArraiString()
 	expected := `<<` + testJSONString() + `>>`
@@ -69,7 +72,7 @@ func testJSONString() string {
     false
   ],
   "k": ""
-}'`
+}\n'`
 }
 
 func testArraiString() string {
