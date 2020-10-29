@@ -1,6 +1,6 @@
 # str
 
-The `str` library contains functions that are used for string manipulations.
+The `str` library contains functions that are used for string manipulations. Note: Many of the functions typically found in a `string` standard library are found in the [seq](./std-seq) library instead as they work for any sequenced data structure. These include standard operations such as `contains`, `concat`,`join`, `sub`, `split`, `trim_prefix`, `trim_suffix`.
 
 ## `//str.lower(s <: string) <: string`
 
