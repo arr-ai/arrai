@@ -208,6 +208,47 @@ number:
         "::\i}
         "`,
 	)
+	AssertCodesEvalToSameValue(t,
+		`
+"a:
+
+	1:
+		2
+	2:
+		3
+	3:
+		4"`,
+		`$"
+			a:
+
+				${[1, 2, 3] >>
+					$"
+						${.}:
+							${. + 1}
+					"
+				::\i}
+        "`,
+	)
+	AssertCodesEvalToSameValue(t,
+		`
+"a:
+	1:
+		2
+	2:
+		3
+	3:
+		4"`,
+		`$"
+			a:
+				${''}
+				${[1, 2, 3] >>
+					$"
+						${.}:
+							${. + 1}
+					"
+				::\i}
+        "`,
+	)
 }
 
 func TestXStringWS(t *testing.T) {
@@ -221,6 +262,8 @@ func TestXStringSuppressEmptyComputedLines(t *testing.T) {
 	AssertCodesEvalToSameValue(t, `"x\ny\n2"`, "$'\n  x\n  ${'y'}\n  ${2}'")
 	AssertCodesEvalToSameValue(t, `"x\n2"`, "$'\n  x\n  ${''}\n  ${2}'")
 	AssertCodesEvalToSameValue(t, `"x\n2"`, "$'\n  x\n  ${''}\n  ${''}\n  ${2}'")
+	AssertCodesEvalToSameValue(t, `"x\n"`, "$'\n    x\n        ${''}\n'")
+	AssertCodesEvalToSameValue(t, `"x\n"`, "$'\n    x\n        ${''}\n        ${''}'")
 }
 
 func TestXStringSuppressNewlinesAfterEmptyComputedLines(t *testing.T) {

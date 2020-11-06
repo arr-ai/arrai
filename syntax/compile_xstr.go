@@ -14,7 +14,7 @@ var (
 	leadingWSRE   = regexp.MustCompile(`\A[\t ]*`)
 	lastWSRE      = regexp.MustCompile(`\n[\t ]*\z`)
 	expansionRE   = regexp.MustCompile(`(?::([-+#*\.\_0-9a-z]*))(:(?:\\.|[^\\:}])*)?(?::((?:\\.|[^\\:}])*))?`)
-	indentRE      = regexp.MustCompile(`(\n[\t ]*)(?:[^\t ]|\z)[^\n]*\z`)
+	indentRE      = regexp.MustCompile(`(\n[\t ]*)\z`)
 	firstIndentRE = regexp.MustCompile(`\A((\n[\t ]+)(?:\n)|(\n))`)
 	lastSpacesRE  = regexp.MustCompile(`\n([ \t]*)\z`)
 )
@@ -172,68 +172,112 @@ func xstrConcat(_ context.Context, seq rel.Value) (rel.Value, error) {
 func cleanEmptyVal(values rel.Array) []rel.Value {
 	arr := values.Values()
 	length := len(arr)
-	cleanRE := func(re *regexp.Regexp, index int, cleaner func(string, string) string) {
-		if index < 0 || index >= length {
+	if length == 1 {
+		return arr
+	}
+
+	getStr := func(i int) string {
+		if t, isBareString := arr[i].(rel.Tuple); isBareString {
+			if s := t.MustGet("s"); s.IsTrue() {
+				return s.String()
+			}
+		}
+		return ""
+	}
+	clean := func(i int) {
+		if i < 0 || i >= length {
 			return
 		}
 
-		// anything that is wrapped in a tuple is considered bare string
-		if t, isBareString := arr[index].(rel.Tuple); isBareString {
-			if s := t.MustGet("s"); s.IsTrue() {
-				match := ""
-				if m := re.FindStringSubmatch(s.String()); m != nil {
-					match = m[1]
+		switch {
+		// e.g.
+		// $`
+		//     ${''}
+		//         a
+		// `
+		case i == 0:
+			if s := getStr(i + 1); s != "" {
+				if m := firstIndentRE.FindStringSubmatch(s); m != nil && m[1] != "" {
+					match := m[1]
+					arr[i+1] = arr[i+1].(rel.Tuple).With(
+						"s",
+						rel.NewString([]rune(strings.TrimPrefix(s, match))),
+					)
 				}
-				arr[index] = t.With("s", rel.NewString([]rune(cleaner(match, s.String()))))
+			}
+		// e.g.
+		// $`
+		//     a:
+		//         ${''}
+		// `
+		case i == length-1:
+			if s := getStr(i - 1); s != "" {
+				if m := lastSpacesRE.FindStringSubmatch(s); m != nil && m[1] != "" {
+					match := m[1]
+					arr[i-1] = arr[i-1].(rel.Tuple).With(
+						"s",
+						rel.NewString([]rune(strings.TrimSuffix(s, match))),
+					)
+				} else if trimmed := strings.TrimLeft(s, " "); trimmed == "" {
+					// this is to remove any whitespace to the left the last empty evaluated str
+					arr[i-1] = arr[i-1].(rel.Tuple).With(
+						"s",
+						rel.NewString([]rune("")),
+					)
+				}
+			}
+		case i > 0 && i < length-1:
+			left, right := getStr(i-1), getStr(i+1)
+			leftMatch, rightMatch := "", ""
+			if m := lastSpacesRE.FindStringSubmatch(left); m != nil {
+				leftMatch = m[1]
+			}
+			if m := firstIndentRE.FindStringSubmatch(right); m != nil {
+				rightMatch = m[1]
+			}
+
+			// left and right needs to be cleaned
+			// e.g.
+			// $`
+			//     a
+			//         ${''}
+			//         b
+			// `
+			if leftMatch != "" && rightMatch != "" {
+				rightStr := strings.TrimPrefix(right, rightMatch)
+				leftStr := strings.TrimSuffix(left, leftMatch)
+				// Ensures indentation spaces are on the left string.
+				// This is done because indentation processing in xstrConcat
+				// is done from left to right.
+				if m := leadingWSRE.FindStringSubmatch(rightStr); m != nil {
+					newIndent := m[0]
+					rightStr = strings.TrimPrefix(rightStr, newIndent)
+					leftStr += newIndent
+				}
+				arr[i+1] = arr[i+1].(rel.Tuple).With("s", rel.NewString([]rune(rightStr)))
+				arr[i-1] = arr[i-1].(rel.Tuple).With("s", rel.NewString([]rune(leftStr)))
 			}
 		}
 	}
-	clean := func(i int) {
-		// cleans bare string after the empty computed string
-		cleanRE(firstIndentRE, i+1, func(rightMatch, rightStr string) string {
-			if rightMatch == "" {
-				return rightStr
-			}
-			changeRight := false
-
-			// Cleans bare string before the empty computed string.
-			//
-			// Cleaning happens if and only if both strings before and after
-			// the empty string. This is meant to remove the whole line if
-			// the empty string is the only thing in that line. For example:
-			// $`
-			//   root:
-			//       ${''}
-			//       children
-			//  `
-			//
-			// If one of the sides don't require cleaning (if only one of the
-			// regex match), cleaning isn't done to both sides to retain
-			// whitespaces. Essentially, to handle these cases:
-			// $`                               $`
-			//   root: ${''}           or         root:
-			//       children                         ${''}children
-			//  `                                `
-			cleanRE(lastSpacesRE, i-1, func(leftMatch, leftStr string) string {
-				if leftMatch != "" {
-					changeRight = true
-					return strings.TrimSuffix(leftStr, leftMatch)
-				}
-				return leftStr
-			})
-			if changeRight {
-				return strings.TrimPrefix(rightStr, rightMatch)
-			}
-			return rightStr
-		})
+	shorten := func(i int) {
+		arr = append(arr[:i], arr[i+1:]...)
+		length--
 	}
-	for i := 0; i < length; i++ {
+	for i := 0; i < length; {
 		switch v := arr[i].(type) {
 		case rel.Set:
 			if !v.IsTrue() {
 				clean(i)
+				shorten(i)
+				continue
+			}
+		case rel.Tuple:
+			if getStr(i) == "" {
+				shorten(i)
+				continue
 			}
 		}
+		i++
 	}
 	return arr
 }
