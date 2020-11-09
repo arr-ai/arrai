@@ -195,7 +195,7 @@ func cleanEmptyVal(values rel.Array) []rel.Value {
 		//     ${''}
 		//         a
 		// `
-		case i == 0:
+		case i == 0 && i < length-1:
 			if s := getStr(i + 1); s != "" {
 				if m := firstIndentRE.FindStringSubmatch(s); m != nil && m[1] != "" {
 					match := m[1]
@@ -210,7 +210,7 @@ func cleanEmptyVal(values rel.Array) []rel.Value {
 		//     a:
 		//         ${''}
 		// `
-		case i == length-1:
+		case i == length-1 && i > 0:
 			if s := getStr(i - 1); s != "" {
 				if m := lastSpacesRE.FindStringSubmatch(s); m != nil && m[1] != "" {
 					match := m[1]
