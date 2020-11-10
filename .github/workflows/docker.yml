@@ -4,6 +4,9 @@ on:
   push:
     tags:
       - 'v*.*.*'
+  pull_request:
+    branches:
+      - "*"
 
 env:
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -15,12 +18,32 @@ jobs:
     steps:
       - name: Check out code
         uses: actions/checkout@master
-      - name: Build and push docker image
+
+      - name: Build docker container image
+        uses: docker/build-push-action@v1
+        with:
+          repository: docker.io/anzbank/arrai
+          push: false
+          tag_with_ref: true
+          add_git_labels: true
+          tags: latest
+          labels: org.opencontainers.image.revision=${{ github.sha }},org.opencontainers.image.url=https://arr.ai
+
+      - name: Test container image
+        uses: plexsystems/container-structure-test-action@v0.1.0
+        with:
+          # this is intended to resolve to the local docker image we just built above
+          image: anzbank/arrai:latest
+          config: container-structure-tests.yaml
+
+      - name: Build and push docker container image
         uses: docker/build-push-action@v1
         with:
           username: ${{ secrets.DOCKER_USER }}
           password: ${{ secrets.DOCKER_PASS }}
           repository: docker.io/anzbank/arrai
+          # only attempt to push if we are in the open source repo that has credentials, and there's been a push, not merely a pull request.
+          push: ${{ github.repository == 'arr-ai/arrai' && github.event_name == 'push'}}
           tag_with_ref: true
           add_git_labels: true
           tags: latest
