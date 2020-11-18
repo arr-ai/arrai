@@ -13,7 +13,7 @@ jobs:
       - uses: Logerfo/newline-action@0.0.2
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-  
+
       - name: Run golangci-lint
         uses: golangci/golangci-lint-action@v2
         with:
