@@ -169,12 +169,14 @@ func parseResponse(resp *http.Response) (rel.Value, error) {
 	defer resp.Body.Close()
 
 	entries := make([]rel.DictEntryTuple, len(resp.Header))
+	i := 0
 	for k, vs := range resp.Header {
-		vals := make([]rel.Value, 0, len(vs))
-		for _, v := range vs {
-			vals = append(vals, rel.NewString([]rune(v)))
+		vals := make([]rel.Value, len(vs))
+		for j, v := range vs {
+			vals[j] = rel.NewString([]rune(v))
 		}
-		entries = append(entries, rel.NewDictEntryTuple(rel.NewString([]rune(k)), rel.NewArray(vals...)))
+		entries[i] = rel.NewDictEntryTuple(rel.NewString([]rune(k)), rel.NewArray(vals...))
+		i++
 	}
 	header := rel.MustNewDict(false, entries...)
 
