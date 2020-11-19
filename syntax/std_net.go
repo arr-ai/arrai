@@ -122,7 +122,8 @@ func parseHeader(header rel.Value) (map[string][]string, error) {
 			for _, val := range t.Values() {
 				valStr, is := tools.ValueAsString(val)
 				if !is {
-					return nil, errors.Errorf("header values must be strings or string arrays, not arrays of %s", rel.ValueTypeAsString(val))
+					return nil, errors.Errorf(
+						"header values must be strings or string arrays, not arrays of %s", rel.ValueTypeAsString(val))
 				}
 				vs = append(vs, valStr)
 			}
@@ -166,7 +167,7 @@ func parseResponse(resp *http.Response) (rel.Value, error) {
 	}
 	defer resp.Body.Close()
 
-	var entries []rel.DictEntryTuple
+	entries := make([]rel.DictEntryTuple, len(resp.Header))
 	for k, vs := range resp.Header {
 		vals := make([]rel.Value, 0, len(vs))
 		for _, v := range vs {
