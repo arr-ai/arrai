@@ -1,7 +1,9 @@
 package syntax
 
 import (
+	"bytes"
 	"context"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -12,63 +14,144 @@ import (
 	"github.com/arr-ai/arrai/tools"
 )
 
+type httpConfig struct {
+	header map[string][]string
+}
+
 func stdNet() rel.Attr {
 	return rel.NewTupleAttr(
 		"net",
 		rel.NewTupleAttr(
 			"http",
-			rel.NewNativeFunctionAttr("get", func(_ context.Context, v rel.Value) (rel.Value, error) {
-				url, is := tools.ValueAsString(v)
-				if !is {
-					return nil, errors.Errorf("//net.http.get: url not a string: %v", url)
+			createFunc2Attr("get", func(_ context.Context, configArg rel.Value, urlArg rel.Value) (rel.Value, error) {
+				config, err := parseConfig(configArg)
+				if err != nil {
+					return nil, err
 				}
-				return get(url)
+				url, err := parseURL(urlArg)
+				if err != nil {
+					return nil, err
+				}
+				return get(url, config.header)
 			}),
-			createFunc2Attr("post", func(_ context.Context, config rel.Value, v rel.Value) (rel.Value, error) {
-				c, ok := config.(*rel.GenericTuple)
-				if !ok {
-					return nil, errors.Errorf("//net.http.post: first arg must be tuple, not %s", rel.ValueTypeAsString(config))
-				}
-				url, is := tools.ValueAsString(v)
-				if !is {
-					return nil, errors.Errorf("//net.http.post: url not a string: %v", url)
-				}
-
-				var contentType string
-				if ct, ok := c.Get("contentType"); !ok {
-					contentType = "text/plan"
-				} else {
-					contentType = ct.String()
-				}
-
-				var body string
-				if b, ok := c.Get("body"); !ok {
-					body = ""
-				} else {
-					body = b.String()
-				}
-				return post(url, contentType, body)
-			}),
+			createFunc3Attr("post",
+				func(_ context.Context, configArg rel.Value, urlArg rel.Value, bodyArg rel.Value) (rel.Value, error) {
+					config, err := parseConfig(configArg)
+					if err != nil {
+						return nil, err
+					}
+					url, err := parseURL(urlArg)
+					if err != nil {
+						return nil, err
+					}
+					body, err := parseBody(bodyArg)
+					if err != nil {
+						return nil, err
+					}
+					return post(url, config.header, body)
+				}),
 		),
 	)
 }
 
 // get sends a GET request and returns a value wrapping the response.
-func get(url string) (rel.Value, error) {
-	r, err := http.Get(url) //nolint:gosec
+func send(url string, headers map[string][]string, body io.Reader) (rel.Value, error) {
+	req, err := http.NewRequest("GET", url, body)
 	if err != nil {
 		return nil, err
 	}
-	return parseResponse(r)
+	if len(headers) > 0 {
+		req.Header = headers
+	}
+
+	res, err := http.DefaultClient.Do(req) //nolint:gosec
+	if err != nil {
+		return nil, err
+	}
+	return parseResponse(res)
+}
+
+// get sends a GET request and returns a value wrapping the response.
+func get(url string, headers map[string][]string) (rel.Value, error) {
+	return send(url, headers, strings.NewReader(""))
 }
 
 // post sends a POST request and returns a value wrapping the response.
-func post(url, contentType, body string) (rel.Value, error) {
-	r, err := http.Post(url, contentType, strings.NewReader(body)) //nolint:gosec
+func post(url string, headers map[string][]string, body io.Reader) (rel.Value, error) {
+	return send(url, headers, body)
+}
+
+// parseConfig returns the config arg as a httpConfig.
+func parseConfig(configArg rel.Value) (*httpConfig, error) {
+	config, ok := configArg.(*rel.GenericTuple)
+	if !ok {
+		return nil, errors.Errorf("first arg (config) must be tuple, not %s", rel.ValueTypeAsString(configArg))
+	}
+	head, ok := config.Get("header")
+	if !ok {
+		return &httpConfig{}, nil
+	}
+
+	header, err := parseHeader(head)
 	if err != nil {
 		return nil, err
 	}
-	return parseResponse(r)
+
+	return &httpConfig{header: header}, nil
+}
+
+// parseHeader returns the header of the config arg as a map.
+func parseHeader(header rel.Value) (map[string][]string, error) {
+	headDict, ok := header.(rel.Dict)
+	if !ok {
+		return nil, errors.Errorf("header must be a dict, not %s", rel.ValueTypeAsString(headDict))
+	}
+
+	out := map[string][]string{}
+	for e := headDict.DictEnumerator(); e.MoveNext(); {
+		kv, vv := e.Current()
+		k, ok := tools.ValueAsString(kv)
+		if !ok {
+			return nil, errors.Errorf("header keys must be strings, not %s", rel.ValueTypeAsString(kv))
+		}
+		switch t := vv.(type) {
+		case rel.String:
+			out[k] = []string{t.String()}
+		case rel.Array:
+			var vs []string
+			for _, val := range t.Values() {
+				vs = append(vs, val.String())
+			}
+			out[k] = vs
+		default:
+			return nil, errors.Errorf("header values must be strings or string arrays, not %s", rel.ValueTypeAsString(vv))
+		}
+	}
+	return out, nil
+}
+
+// parseURL returns the URL arg as a string.
+func parseURL(urlArg rel.Value) (string, error) {
+	url, is := tools.ValueAsString(urlArg)
+	if !is {
+		return "", errors.Errorf("second arg (url) must be a string, not %s", rel.ValueTypeAsString(urlArg))
+	}
+	return url, nil
+}
+
+// parseBody returns the body arg as a Reader.
+func parseBody(bodyArg rel.Value) (io.Reader, error) {
+	body, is := tools.ValueAsString(bodyArg)
+	if is {
+		return strings.NewReader(body), nil
+	}
+
+	bodyBytes, is := tools.ValueAsBytes(bodyArg)
+	if is {
+		return bytes.NewReader(bodyBytes), nil
+	}
+
+	return nil, errors.Errorf("third arg (body) must be a string or bytes, not %s", rel.ValueTypeAsString(bodyArg))
 }
 
 // parseResponse parses an HTTP response into an arr.ai value.

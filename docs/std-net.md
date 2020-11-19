@@ -4,10 +4,12 @@ The `net` library provides functions for performing network operations.
 
 ## net.http
 
-### `//net.http.get(url <: string) <: tuple`
+### `//net.http.get(config <: (header: <: dict), url <: string) <: tuple`
 
-`get` sends a GET request to the provided `url` and returns a tuple that represents
-the response.
+`get` sends an HTTP `GET` request to the provided `url` and returns a tuple that represents the response.
+
+- `config` is a tuple with an optional `header` dictionary of `{string: string}`, or `{string: [string]}` for multi-value headers.
+- `url` is the destination of the request.
 
 The schema of the response is a tuple, as follows:
 ```
@@ -70,5 +72,27 @@ wasm:
     ),
   status: '200 OK',
   status_code: 200
+)
+```
+
+### `//net.http.post(config <: (header: <: dict), url <: string, body <: string|bytes) <: tuple`
+
+`post` sends an HTTP `POST` request to the provided `url` and returns a tuple that represents the response.
+
+- `config` is a tuple with an optional `header` dictionary of `{string: string}`, or `{string: [string]}` for multi-value headers.
+    - This should typically contain at least the `Content-Type` header describing the format of the `body`. If not provided, this defaults to `text/plain`.
+- `url` is the destination of the request.
+- `body` is the content to send in the body of the request. It will be interpreted by the server using the `Content-Type` header from the request.
+
+The schema of the response is a tuple (as above):
+```
+(
+    status: "200 OK", # A string indicating the status of the response
+    status_code: 200, # A number indicating the status code of the response
+    header: (         # A tuple containing the response header
+        "Content-Type": ["application/json; charset=utf-8"],
+        ...,
+    ),
+    body: ...,        # The body of the response as a byte array
 )
 ```

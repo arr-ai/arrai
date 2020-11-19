@@ -17,13 +17,13 @@ func TestNetGet(t *testing.T) {
 
 	addr := "localhost:57511"
 	url := fmt.Sprintf("http://%s", addr)
-	srv := startHttpServer(t, addr)
+	srv := startHTTPServer(t, addr)
 	defer func() {
 		if err := srv.Shutdown(context.Background()); err != nil {
 			panic(err)
 		}
 	}()
-	wait(t, context.Background(), url)
+	wait(context.Background(), t, url)
 
 	AssertCodesEvalToSameValue(t, `(
 		status_code: 200,
@@ -33,14 +33,21 @@ func TestNetGet(t *testing.T) {
 			"Content-Length": ["11"],
 			"Content-Type": ["text/plain; charset=utf-8"],
 		),
-	)`, fmt.Sprintf(`//net.http.get("%s")`, url))
+	)`, fmt.Sprintf(`//net.http.get((), "%s")`, url))
 }
 
 func TestNetGet_NoUrl(t *testing.T) {
 	t.Parallel()
 
-	AssertCodeErrors(t, "", `//net.http.get("")`)
-	AssertCodeErrors(t, "", `//net.http.get(["localhost"])`)
+	AssertCodeErrors(t, "", `//net.http.get((), "")`)
+	AssertCodeErrors(t, "", `//net.http.get((), ["localhost"])`)
+}
+
+func TestNetGet_BadHeader(t *testing.T) {
+	t.Parallel()
+
+	AssertCodeErrors(t, "", `//net.http.get((), "")`)
+	AssertCodeErrors(t, "", `//net.http.get((), ["localhost"])`)
 }
 
 func TestNetPost(t *testing.T) {
@@ -48,13 +55,13 @@ func TestNetPost(t *testing.T) {
 
 	addr := "localhost:57512"
 	url := fmt.Sprintf("http://%s", addr)
-	srv := startHttpServer(t, addr)
+	srv := startHTTPServer(t, addr)
 	defer func() {
 		if err := srv.Shutdown(context.Background()); err != nil {
 			panic(err)
 		}
 	}()
-	wait(t, context.Background(), url)
+	wait(context.Background(), t, url)
 
 	AssertCodesEvalToSameValue(t, `(
 		status_code: 200,
@@ -62,51 +69,52 @@ func TestNetPost(t *testing.T) {
 		body: <<"foo">>,
 		header: (
 			"Content-Length": ["3"],
-			"Content-Type": ["text/plain; charset=utf-8"],
+			"Content-Type": ["application/sysl"],
 		),
-	)`, fmt.Sprintf(`//net.http.post((body: "foo"), "%s")`, url))
+	)`, fmt.Sprintf(`//net.http.post((header: {"Content-Type": "application/sysl"}), "%s", "foo")`, url))
 }
 
 func TestNetPost_NoConfig(t *testing.T) {
 	t.Parallel()
 
-	AssertCodeErrors(t, "", `//net.http.post({}, "localhost")`)
+	AssertCodeErrors(t, "", `//net.http.post({}, "localhost", "")`)
 }
 
 func TestNetPost_NoUrl(t *testing.T) {
 	t.Parallel()
 
-	AssertCodeErrors(t, "", `//net.http.post((), "")`)
-	AssertCodeErrors(t, "", `//net.http.post((), ["localhost"])`)
+	AssertCodeErrors(t, "", `//net.http.post((), "", "")`)
+	AssertCodeErrors(t, "", `//net.http.post((), ["localhost"], "")`)
 }
 
-// testHttpHandler is a dummy HTTP handler that serves "hello world".
-type testHttpHandler struct{}
+// testHTTPHandler is a dummy HTTP handler that serves "hello world".
+type testHTTPHandler struct {
+	t *testing.T
+}
 
 // ServeHTTP writes responses based on the content of the request.
-func (h testHttpHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (h testHTTPHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.Header()["Date"] = nil // Remove non-deterministic Date header.
 
 	bs, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		w.WriteHeader(500)
-		return
-	}
+	require.NoError(h.t, err)
 
 	if ct, ok := r.Header["Content-Type"]; ok {
 		w.Header()["Content-Type"] = ct
 	}
 
-	if bs != nil {
-		w.Write(bs)
+	if len(bs) > 0 {
+		_, err = w.Write(bs)
+		require.NoError(h.t, err)
 	} else {
-		w.Write([]byte("hello world"))
+		_, err = w.Write([]byte("hello world"))
+		require.NoError(h.t, err)
 	}
 }
 
-// startHttpServer creates, starts and returns a test server at addr.
-func startHttpServer(t *testing.T, addr string) *http.Server {
-	srv := &http.Server{Addr: addr, Handler: testHttpHandler{}}
+// startHTTPServer creates, starts and returns a test server at addr.
+func startHTTPServer(t *testing.T, addr string) *http.Server {
+	srv := &http.Server{Addr: addr, Handler: testHTTPHandler{t}}
 	go func() {
 		if err := srv.ListenAndServe(); err != http.ErrServerClosed {
 			t.Fail()
@@ -116,7 +124,7 @@ func startHttpServer(t *testing.T, addr string) *http.Server {
 }
 
 // wait pings the server at url until it responds successfully or times out.
-func wait(t *testing.T, ctx context.Context, url string) {
+func wait(ctx context.Context, t *testing.T, url string) {
 	backoff, err := retry.NewFibonacci(10 * time.Millisecond)
 	require.Nil(t, err)
 	backoff = retry.WithMaxDuration(3*time.Second, backoff)
