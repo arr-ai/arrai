@@ -29,10 +29,11 @@ func TestNetGet(t *testing.T) {
 		status_code: 200,
 		status: "200 OK",
 		body: <<"hello world">>,
-		header: (
+		header: {
 			"Content-Length": ["11"],
 			"Content-Type": ["text/plain; charset=utf-8"],
-		),
+			"Method": ["GET"],
+		},
 	)`, fmt.Sprintf(`//net.http.get((), "%s")`, url))
 }
 
@@ -67,10 +68,11 @@ func TestNetPost(t *testing.T) {
 		status_code: 200,
 		status: "200 OK",
 		body: <<"foo">>,
-		header: (
+		header: {
 			"Content-Length": ["3"],
 			"Content-Type": ["application/sysl"],
-		),
+			"Method": ["POST"],
+		},
 	)`, fmt.Sprintf(`//net.http.post((header: {"Content-Type": "application/sysl"}), "%s", "foo")`, url))
 }
 
@@ -102,6 +104,7 @@ func (h testHTTPHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	bs, err := ioutil.ReadAll(r.Body)
 	require.NoError(h.t, err)
 
+	w.Header()["Method"] = []string{r.Method}
 	if ct, ok := r.Header["Content-Type"]; ok {
 		w.Header()["Content-Type"] = ct
 	}

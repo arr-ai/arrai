@@ -16,10 +16,10 @@ The schema of the response is a tuple, as follows:
 (
     status: "200 OK", # A string indicating the status of the response
     status_code: 200, # A number indicating the status code of the response
-    header: (         # A tuple containing the response header
+    header: {         # A dictionary containing the response header
         "Content-Type": ["application/json; charset=utf-8"],
         ...,
-    ),
+    },
     body: ...,        # The body of the response as a byte array
 )
 ```
@@ -46,7 +46,7 @@ lint:
 wasm:
 	GOOS=js GOARCH=wasm go build -o /tmp/arrai.wasm ./cmd/arrai"
   ,
-  header:(
+  header:{
     'Accept-Ranges': ['bytes'],
     'Access-Control-Allow-Origin': ['*'],
     'Cache-Control': ['max-age=300'],
@@ -69,7 +69,7 @@ wasm:
     'X-Served-By': ['cache-mel19034-MEL'],
     'X-Timer': ['S1586780220.448718,VS0,VE1'],
     'X-Xss-Protection': ['1; mode=block']
-    ),
+  },
   status: '200 OK',
   status_code: 200
 )
@@ -89,10 +89,10 @@ The schema of the response is a tuple (as above):
 (
     status: "200 OK", # A string indicating the status of the response
     status_code: 200, # A number indicating the status code of the response
-    header: (         # A tuple containing the response header
+    header: {         # A dictionary containing the response header
         "Content-Type": ["application/json; charset=utf-8"],
         ...,
-    ),
+    },
     body: ...,        # The body of the response as a byte array
 )
 ```

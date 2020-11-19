@@ -55,8 +55,8 @@ func stdNet() rel.Attr {
 }
 
 // get sends a GET request and returns a value wrapping the response.
-func send(url string, headers map[string][]string, body io.Reader) (rel.Value, error) {
-	req, err := http.NewRequest("GET", url, body)
+func send(method, url string, headers map[string][]string, body io.Reader) (rel.Value, error) {
+	req, err := http.NewRequest(method, url, body)
 	if err != nil {
 		return nil, err
 	}
@@ -73,12 +73,12 @@ func send(url string, headers map[string][]string, body io.Reader) (rel.Value, e
 
 // get sends a GET request and returns a value wrapping the response.
 func get(url string, headers map[string][]string) (rel.Value, error) {
-	return send(url, headers, strings.NewReader(""))
+	return send("GET", url, headers, strings.NewReader(""))
 }
 
 // post sends a POST request and returns a value wrapping the response.
 func post(url string, headers map[string][]string, body io.Reader) (rel.Value, error) {
-	return send(url, headers, body)
+	return send("POST", url, headers, body)
 }
 
 // parseConfig returns the config arg as a httpConfig.
@@ -162,14 +162,15 @@ func parseResponse(resp *http.Response) (rel.Value, error) {
 	}
 	defer resp.Body.Close()
 
-	header := rel.NewTuple()
+	var entries []rel.DictEntryTuple
 	for k, vs := range resp.Header {
 		vals := make([]rel.Value, 0, len(vs))
 		for _, v := range vs {
 			vals = append(vals, rel.NewString([]rune(v)))
 		}
-		header = header.With(k, rel.NewArray(vals...))
+		entries = append(entries, rel.NewDictEntryTuple(rel.NewString([]rune(k)), rel.NewArray(vals...)))
 	}
+	header := rel.MustNewDict(false, entries...)
 
 	return rel.NewTuple(
 		rel.NewAttr("status", rel.NewString([]rune(resp.Status))),
