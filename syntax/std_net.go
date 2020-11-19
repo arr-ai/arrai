@@ -120,13 +120,13 @@ func parseHeader(header rel.Value) (map[string][]string, error) {
 			out[k] = []string{t.String()}
 		case rel.Array:
 			vs := make([]string, t.Count())
-			for _, val := range t.Values() {
+			for i, val := range t.Values() {
 				valStr, is := tools.ValueAsString(val)
 				if !is {
 					return nil, errors.Errorf(
 						"header values must be strings or string arrays, not arrays of %s", rel.ValueTypeAsString(val))
 				}
-				vs = append(vs, valStr)
+				vs[i] = valStr
 			}
 			out[k] = vs
 		default:
@@ -168,15 +168,13 @@ func parseResponse(resp *http.Response) (rel.Value, error) {
 	}
 	defer resp.Body.Close()
 
-	entries := make([]rel.DictEntryTuple, len(resp.Header))
-	i := 0
+	entries := make([]rel.DictEntryTuple, 0, len(resp.Header))
 	for k, vs := range resp.Header {
 		vals := make([]rel.Value, len(vs))
 		for j, v := range vs {
 			vals[j] = rel.NewString([]rune(v))
 		}
-		entries[i] = rel.NewDictEntryTuple(rel.NewString([]rune(k)), rel.NewArray(vals...))
-		i++
+		entries = append(entries, rel.NewDictEntryTuple(rel.NewString([]rune(k)), rel.NewArray(vals...)))
 	}
 	header := rel.MustNewDict(false, entries...)
 
