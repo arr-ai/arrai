@@ -19,6 +19,7 @@ require (
 	github.com/mattn/go-isatty v0.0.12
 	github.com/pkg/errors v0.9.1
 	github.com/rjeczalik/notify v0.9.2
+	github.com/sethvargo/go-retry v0.1.0
 	github.com/sirupsen/logrus v1.6.0
 	github.com/spf13/afero v1.3.5
 	github.com/stretchr/objx v0.3.0 // indirect
