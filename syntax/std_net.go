@@ -54,7 +54,8 @@ func stdNet() rel.Attr {
 	)
 }
 
-// get sends a GET request and returns a value wrapping the response.
+// send sends a request of type method to url with headers and body and returns a value wrapping the
+// response.
 func send(method, url string, headers map[string][]string, body io.Reader) (rel.Value, error) {
 	req, err := http.NewRequest(method, url, body)
 	if err != nil {
