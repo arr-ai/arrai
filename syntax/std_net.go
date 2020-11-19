@@ -120,7 +120,11 @@ func parseHeader(header rel.Value) (map[string][]string, error) {
 		case rel.Array:
 			var vs []string
 			for _, val := range t.Values() {
-				vs = append(vs, val.String())
+				valStr, is := tools.ValueAsString(val)
+				if !is {
+					return nil, errors.Errorf("header values must be strings or string arrays, not arrays of %s", rel.ValueTypeAsString(val))
+				}
+				vs = append(vs, valStr)
 			}
 			out[k] = vs
 		default:

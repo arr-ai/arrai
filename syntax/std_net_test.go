@@ -82,6 +82,7 @@ func TestNetPost_BadConfig(t *testing.T) {
 	AssertCodeErrors(t, "", `//net.http.post({}, "localhost", "")`)
 	AssertCodeErrors(t, "", `//net.http.post((header: 'Content-Type: text/plain'), "localhost", "")`)
 	AssertCodeErrors(t, "", `//net.http.post((header: ('Content-Type': 'text/plain')), "localhost", "")`)
+	AssertCodeErrors(t, "", `//net.http.post((header: ('Content-Type': [123])), "localhost", "")`)
 	AssertCodeErrors(t, "", `//net.http.post((header: {123: 'text/plain'}), "localhost", "")`)
 }
 
