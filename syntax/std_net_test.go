@@ -74,10 +74,13 @@ func TestNetPost(t *testing.T) {
 	)`, fmt.Sprintf(`//net.http.post((header: {"Content-Type": "application/sysl"}), "%s", "foo")`, url))
 }
 
-func TestNetPost_NoConfig(t *testing.T) {
+func TestNetPost_BadConfig(t *testing.T) {
 	t.Parallel()
 
 	AssertCodeErrors(t, "", `//net.http.post({}, "localhost", "")`)
+	AssertCodeErrors(t, "", `//net.http.post((header: 'Content-Type: text/plain'), "localhost", "")`)
+	AssertCodeErrors(t, "", `//net.http.post((header: ('Content-Type': 'text/plain')), "localhost", "")`)
+	AssertCodeErrors(t, "", `//net.http.post((header: {123: 'text/plain'}), "localhost", "")`)
 }
 
 func TestNetPost_NoUrl(t *testing.T) {
