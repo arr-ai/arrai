@@ -23,7 +23,7 @@ func stdNet() rel.Attr {
 		"net",
 		rel.NewTupleAttr(
 			"http",
-			createFunc2Attr("get", func(_ context.Context, configArg rel.Value, urlArg rel.Value) (rel.Value, error) {
+			createFunc2Attr("get", func(_ context.Context, configArg, urlArg rel.Value) (rel.Value, error) {
 				config, err := parseConfig(configArg)
 				if err != nil {
 					return nil, err
