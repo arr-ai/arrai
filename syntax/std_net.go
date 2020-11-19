@@ -35,7 +35,7 @@ func stdNet() rel.Attr {
 				return get(url, config.header)
 			}),
 			createFunc3Attr("post",
-				func(_ context.Context, configArg rel.Value, urlArg rel.Value, bodyArg rel.Value) (rel.Value, error) {
+				func(_ context.Context, configArg, urlArg, bodyArg rel.Value) (rel.Value, error) {
 					config, err := parseConfig(configArg)
 					if err != nil {
 						return nil, err
