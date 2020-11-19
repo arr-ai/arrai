@@ -108,7 +108,7 @@ func parseHeader(header rel.Value) (map[string][]string, error) {
 		return nil, errors.Errorf("header must be a dict, not %s", rel.ValueTypeAsString(headDict))
 	}
 
-	out := map[string][]string{}
+	out := make(map[string][]string, headDict.Count())
 	for e := headDict.DictEnumerator(); e.MoveNext(); {
 		kv, vv := e.Current()
 		k, ok := tools.ValueAsString(kv)
