@@ -118,7 +118,7 @@ func parseHeader(header rel.Value) (map[string][]string, error) {
 		case rel.String:
 			out[k] = []string{t.String()}
 		case rel.Array:
-			var vs []string
+			vs := make([]string, t.Count())
 			for _, val := range t.Values() {
 				vs = append(vs, val.String())
 			}
