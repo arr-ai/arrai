@@ -12,6 +12,7 @@ func stdEncoding() rel.Attr {
 		stdEncodingProto(),
 		stdEncodingXlsx(),
 		stdEncodingYAML(),
+		stdEncodingXML(),
 	)
 }
 
