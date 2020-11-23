@@ -34,6 +34,9 @@ func (e *NestExpr) Eval(ctx context.Context, local Scope) (Value, error) {
 		return nil, WrapContextErr(err, e, local)
 	}
 	if set, ok := value.(Set); ok {
+		if !set.IsTrue() {
+			return set, nil
+		}
 		relAttrs, err := RelationAttrs(set)
 		if err != nil {
 			return nil, err

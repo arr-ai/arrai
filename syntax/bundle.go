@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"path"
 	"path/filepath"
 	"regexp"
@@ -31,6 +30,16 @@ type bundleConfig struct {
 	absRootPath string
 }
 
+// module that is currently being imported by a script
+type moduleData struct {
+	// moduleName is the name of the go module e.h. github.com/arr-ai/arrai
+	moduleName string
+
+	// modulePath is the location of the module. Modules are cached by go mod
+	// e.g. /go/pkg/mod/github.com/arr-ai/arrai@v0.200.0/
+	modulePath string
+}
+
 type bundleKey int
 
 const (
@@ -51,6 +60,7 @@ const (
 	bundleFsKey bundleKey = iota
 	bundleConfKey
 	runBundleMode
+	currentModule
 )
 
 var (
@@ -189,13 +199,8 @@ func SetupBundle(ctx context.Context, filePath string, source []byte) (_ context
 		ctx = withBundleConfig(ctx, bundleConfig{mainFile: mainFile, absRootPath: filepath.Dir(filePath)})
 		return ctx, createConfig(ctx)
 	}
-	f, err := ctxfs.SourceFsFrom(ctx).Open(filepath.Join(root, ModuleRootSentinel))
-	if err != nil {
-		return nil, err
-	}
-	defer f.Close()
 
-	buf, err := ioutil.ReadAll(f)
+	buf, err := ctxfs.ReadFile(ctxfs.SourceFsFrom(ctx), filepath.Join(root, ModuleRootSentinel))
 	if err != nil {
 		return ctx, err
 	}
@@ -222,7 +227,7 @@ func SetupBundle(ctx context.Context, filePath string, source []byte) (_ context
 	return ctx, createConfig(ctx)
 }
 
-func addLocalRoot(ctx context.Context, rootPath string) (err error) {
+func addModuleSentinel(ctx context.Context, rootPath string) (err error) {
 	if !isBundling(ctx) {
 		return nil
 	}
@@ -238,16 +243,39 @@ func addLocalRoot(ctx context.Context, rootPath string) (err error) {
 	if err != nil {
 		return err
 	}
-	rootPath = strings.TrimPrefix(rootPath, fromBundleConfig(ctx).absRootPath)
+	var sentinelLocation string
+	if isImportModule(ctx) {
+		sentinelLocation, err = createModulePath(ctx, rootPath)
+		if err != nil {
+			return err
+		}
+	} else {
+		rootPath = strings.TrimPrefix(rootPath, fromBundleConfig(ctx).absRootPath)
+		sentinelLocation = path.Join(fromBundleConfig(ctx).mainRoot, rootPath)
+	}
 
-	pathInBundle := path.Join(ModuleDir, fromBundleConfig(ctx).mainRoot, ctxfs.ToUnixPath(rootPath))
-	if exists, err := ctxfs.FileExists(ctx, bundleFsKey, rootPath); err != nil {
+	pathInBundle := path.Join(ModuleDir, sentinelLocation)
+	if exists, err := ctxfs.FileExists(ctx, bundleFsKey, pathInBundle); err != nil {
 		return err
 	} else if exists {
 		return nil
 	}
 
 	return ctxfs.ZipCreate(ctx, bundleFsKey, pathInBundle, buf)
+}
+
+func createModulePath(ctx context.Context, filePath string) (modulePath string, err error) {
+	if !filepath.IsAbs(filePath) {
+		return "", fmt.Errorf("filepath is not absolute: %s", filePath)
+	}
+	filePath = ctxfs.ToUnixPath(filePath)
+	currModule := getCurrentModule(ctx)
+
+	relPath, err := filepath.Rel(currModule.modulePath, filePath)
+	if err != nil {
+		return "", err
+	}
+	return path.Join(currModule.moduleName, ctxfs.ToUnixPath(relPath)), nil
 }
 
 func bundleLocalFile(ctx context.Context, filePath string) (err error) {
@@ -264,49 +292,56 @@ func bundleLocalFile(ctx context.Context, filePath string) (err error) {
 		filePath += arraiExt
 	}
 
-	f, err := ctxfs.SourceFsFrom(ctx).Open(filePath)
-	if err != nil {
-		return err
-	}
-
-	source, err := ioutil.ReadAll(f)
+	source, err := ctxfs.ReadFile(ctxfs.SourceFsFrom(ctx), filePath)
 	if err != nil {
 		return err
 	}
 
 	var dir string
-	config := fromBundleConfig(ctx)
-	if config.mainRoot != "" {
+	if isImportModule(ctx) {
 		dir = ModuleDir
-		filePath = path.Join(config.mainRoot, ctxfs.ToUnixPath(strings.TrimPrefix(filePath, config.absRootPath)))
+		filePath, err = createModulePath(ctx, filePath)
+		if err != nil {
+			return err
+		}
 	} else {
-		dir = NoModuleDir
-		filePath = ctxfs.ToUnixPath(strings.TrimPrefix(filePath, config.absRootPath))
+		config := fromBundleConfig(ctx)
+		if config.mainRoot != "" {
+			dir = ModuleDir
+			filePath = path.Join(config.mainRoot, ctxfs.ToUnixPath(strings.TrimPrefix(filePath, config.absRootPath)))
+		} else {
+			dir = NoModuleDir
+			filePath = ctxfs.ToUnixPath(strings.TrimPrefix(filePath, config.absRootPath))
+		}
 	}
 
 	return ctxfs.ZipCreate(ctx, bundleFsKey, path.Join(dir, filePath), source)
 }
 
-func bundleModule(ctx context.Context, relImportPath string, m *mod.Module) error {
+func bundleModule(ctx context.Context, relImportPath string, m *mod.Module) (context.Context, error) {
 	if !isBundling(ctx) {
-		return nil
+		return ctx, nil
 	}
 
 	if filepath.Ext(relImportPath) == "" {
 		relImportPath += arraiExt
 	}
 
-	f, err := ctxfs.SourceFsFrom(ctx).Open(filepath.Join(m.Dir, relImportPath))
+	source, err := ctxfs.ReadFile(ctxfs.SourceFsFrom(ctx), filepath.Join(m.Dir, relImportPath))
 	if err != nil {
-		return err
+		return ctx, err
 	}
 
-	source, err := ioutil.ReadAll(f)
-	if err != nil {
-		return err
-	}
+	ctx = context.WithValue(ctx, currentModule, moduleData{ctxfs.ToUnixPath(m.Name), ctxfs.ToUnixPath(m.Dir)})
+	return ctx, ctxfs.ZipCreate(ctx, bundleFsKey, path.Join(ModuleDir, m.Name, relImportPath), source)
+}
 
-	return ctxfs.ZipCreate(ctx, bundleFsKey, path.Join(ModuleDir, m.Name, relImportPath), source)
+func isImportModule(ctx context.Context) bool {
+	return ctx.Value(currentModule) != nil
+}
+
+func getCurrentModule(ctx context.Context) moduleData {
+	return ctx.Value(currentModule).(moduleData)
 }
 
 func bundleRemoteFile(ctx context.Context, url string, source []byte) error {

@@ -126,6 +126,8 @@ func TestParseNestExpr(t *testing.T) {
 		`{|a,b,c| (1, 2, {|c| (1), (2)})}`,
 		`{|a,b,c| (1,2,1), (1,2,2)} nest |c|c`,
 	)
+	AssertCodesEvalToSameValue(t, `{}`, `{} nest |a|a`)
+	AssertCodesEvalToSameValue(t, `{}`, `{} nest ~|a|a`)
 }
 
 func TestParseWhereExpr(t *testing.T) {

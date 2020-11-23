@@ -1,0 +1,16 @@
+# ref: https://github.com/GoogleContainerTools/container-structure-test
+schemaVersion: '2.0.0'
+fileExistenceTests:
+- name: 'arrai'
+  path: '/go/bin/arrai'
+  shouldExist: true
+  permissions: '-rwxr-xr-x'
+  uid: 0
+  gid: 0
+
+commandTests:
+  - name: "arrai info"
+    command: "arrai"
+    args: ["info"]
+    expectedOutput: ["OS/arch    : linux/amd64"]
+    exitCode: 0

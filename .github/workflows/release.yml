@@ -39,8 +39,8 @@ jobs:
           version: v0.134.0
           args: check -f .github/goreleaser_configs/goreleaser.yml
 
-      - name: Set env
-        run: echo ::set-env name=GOVERSION::$(go version | awk '{print $3, $4;}')
+      - name: Set GOVERSION env var
+        run: echo "GOVERSION=$(go version | awk '{print $3, $4;}')" >> $GITHUB_ENV
 
       # Configured via `.github/goreleaser_config/.goreleaser.yml`
       - name: Release binaries via goreleaser

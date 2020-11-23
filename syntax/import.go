@@ -33,7 +33,7 @@ func importLocalFile(ctx context.Context, fromRoot bool, importPath, sourceDir s
 		if err != nil {
 			return nil, err
 		}
-		if err = addLocalRoot(ctx, rootPath); err != nil {
+		if err = addModuleSentinel(ctx, rootPath); err != nil {
 			return nil, err
 		}
 		if !strings.HasPrefix(importPath, "/") {
@@ -102,7 +102,7 @@ func importModuleFile(ctx context.Context, importPath string) (rel.Expr, error) 
 	}
 
 	relImportPath := strings.TrimPrefix(importPath, m.Name)
-	if err := bundleModule(ctx, relImportPath, m); err != nil {
+	if ctx, err = bundleModule(ctx, relImportPath, m); err != nil {
 		return nil, err
 	}
 
