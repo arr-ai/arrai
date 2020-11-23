@@ -6,8 +6,8 @@ let rec simplify = \j
     cond j {
         [...]: j >> simplify(.),
         (:a): simplify(a),
-        (:b): simplify(b),
-        (:s): simplify(s),
+        (:b): b,
+        (:s): s,
         (): {},
         _: cond {
             # Base case: j is a number.
@@ -30,6 +30,36 @@ let rec tuplify = \v
     }
 ;
 
+# Returns a copy of v restructured in the arr.ai encoding of JSON.
+let rec toJson = \v
+    cond v {
+        # empty set => null
+        {}: (),
+        # Tuple => object
+        (...): toJson(//dict(v)),
+        # Array => array
+        [...]: (a: v >> toJson(.)),
+        # Dictionary => object
+        {k: ...}: v => (@: $`${.@}`, @value: toJson(.@value)),
+        # true => boolean
+        true: (b: true),
+        # Other sets are tricky:
+        {...}:
+            cond {
+                # String
+                (v => cond . {(:@, :@char): true}) = {true}: (s: v),
+                # Other set => array
+                _: toJson(v orderby .),
+            }
+        ,
+        # Number => number
+        _: v,
+    }
+;
+
+# Returns a JSON string encoding of v.
+let toJsonString = \v //seq.trim_suffix('\n', $`${//encoding.json.encode(toJson(v))}`);
+
 # Returns a simplified, tuplified copy of json.
 # json is the content of a JSON file (string or bytes).
 let decodeSimple = \json tuplify(simplify(//encoding.json.decode(json)));
@@ -38,4 +68,6 @@ let decodeSimple = \json tuplify(simplify(//encoding.json.decode(json)));
     :simplify,
     :tuplify,
     :decodeSimple,
+    :toJson,
+    :toJsonString,
 )

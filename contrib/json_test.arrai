@@ -1,11 +1,16 @@
-let (:simplify, :tuplify, :decodeSimple, ...) = //{./json};
+let (:simplify, :tuplify, :decodeSimple, :toJson, :toJsonString, ...) = //{./json};
 
 (
     simplify: (
         empty: simplify({}) = {},
         same: simplify({'a': {'b': {}}}) = {'a': {'b': {}}},
         nulls: simplify({'a': (a: []), 'b': (b: <<''>>), 's': (s: '')}) = {'a': {}, 'b': {}, 's': {}},
-        values: simplify({'a': (a: [1, 2]), 's': (s: 'hi')}) = {'a': [1, 2], 's': 'hi'},
+        values: simplify({
+            'a': (a: [1, 2]),
+            's': (s: 'hi'),
+            'true': (b: true),
+            'false': (b: false),
+        }) = {'a': [1, 2], 's': 'hi', 'true': true, 'false': false},
     ),
 
     tuplify: (
@@ -17,5 +22,44 @@ let (:simplify, :tuplify, :decodeSimple, ...) = //{./json};
     decodeSimple: (
         empty: decodeSimple(`{}`) = {},
         full: decodeSimple(`{"a": ["b", 0, [], ""]}`) = (a: ['b', 0, {}, {}]),
-    )
+    ),
+
+    toJson: (
+        empty: toJson({}) = (),
+        number: toJson(1) = 1,
+        tuple: toJson((a:1)) = {"a": 1},
+        set: toJson({1}) = (a: [1]),
+        string: toJson("abc") = (s: "abc"),
+        array: toJson([1]) = (a: [1]),
+        dict: toJson({"a": 1, 1: "a"}) = {"a": 1, "1": (s: "a")},
+        all: toJson({
+            "a": 1,
+            1: {{}, {2, 1}, [2, 1], "zyx", {"a": {"b": "c"}}},
+            true: true,
+            false: false,
+        }) = {
+            "a": 1,
+            "1": (a: [(), (a: [1, 2]), (s: "zyx"), (a: [2, 1]), {"a": {"b": (s: "c")}}]),
+            "true": (b: true),
+            {}: (),
+        },
+    ),
+
+    toJsonString: (
+        empty: toJsonString({}) = 'null',
+        arrayWithEmpty: toJsonString([{}]) = '[null]',
+        number: toJsonString(1) = '1',
+        tuple: toJsonString((a:1)) = '{"a":1}',
+        set: toJsonString({1}) = '[1]',
+        string: toJsonString("abc") = '"abc"',
+        array: toJsonString([1]) = '[1]',
+        dict: toJsonString({"a": 1, "1": "a"}) = '{"1":"a","a":1}',
+        all: toJsonString({
+            "a": 1,
+            1: {{}, {2, 1}, [2, 1], "zyx", {"a": {"b": "c"}}},
+            true: true,
+            # FIXME: interface conversion error.
+            # false: false,
+        }) = '{"1":[null,[1,2],"zyx",[2,1],{"a":{"b":"c"}}],"a":1,"true":true}',
+    ),
 )
