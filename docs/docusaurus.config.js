@@ -4,7 +4,7 @@ module.exports = {
     url: 'https://arr.ai',
     baseUrl: '/',
     onBrokenLinks: 'throw',
-    favicon: 'img/favicon.png',
+    favicon: 'img/favicon.svg',
     organizationName: 'arr-ai',
     projectName: 'arrai',
     themeConfig: {
@@ -12,7 +12,7 @@ module.exports = {
             title: 'Arr.ai',
             logo: {
                 alt: 'Arr.ai Logo',
-                src: 'img/favicon.png',
+                src: 'img/favicon.svg',
             },
             items: [
                 {
