@@ -110,3 +110,12 @@ arrai info
 ## VS Code Extension
 
 Arr.ai has a VS Code extension which provides syntax highlighting for `.arrai` files. [Get it from here](https://marketplace.visualstudio.com/items?itemName=arr-ai.vscode-arrai), or search Extensions for "arrai".
+
+## Shortcuts
+
+Installing via `make install` will set up symlinks:
+
+- `ai` => `arrai i`: interactive shell
+- `ax` => `arrai x`: transform
+
+If your installation method did not set up similar shortcuts, you may like to do so yourself (e.g. with `alias ai="arrai i"` in Bash).

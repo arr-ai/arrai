@@ -11,8 +11,8 @@ Names are sequences of one or more ASCII letters and digits as well as `_`, `$`
 and `@`. They may not begin with a digit. The single character, `.`,  is also a
 valid name by itself. It has special properties that we'll explore below.
 
-There are only two ways to bind names in arr.ai: let-bindings and function
-parameters.
+There are only three ways to bind names in arr.ai: let-bindings, function
+parameters, and pattern matching.
 
 ## Let-bindings
 
@@ -58,16 +58,15 @@ Try a few variations of allowable characters:
  > $x + foo@1 * __z__
 ```
 
+
+:::info
 ### Important caveats
 
-1. Names prefixed with `@` are reserved for special purposes as defined by the
-   language. Arr.ai will not prevent you from using them as regular names, but
-   you might find that they cause intended problems in your code. Never use
-   `@`-prefixed names for anything but the intended usage as documented by
-   arr.ai. This also applies to names that don't currently have a defined use.
-   In future, arr.ai may explicitly disallow `@`-prefixed names that aren't in a
-   whitelist of names with a defined purpose.
-2. Names prefixed with `$` are currently not special, but might soon be. Avoid.
+1. Names prefixed with `@` are reserved for special purposes as defined by the language. Arr.ai will not prevent you from using them as regular names, but you might find that they cause problems in your code. Never use `@`-prefixed names for anything but the intended usage as documented by arr.ai.
+  
+   This also applies to names that don't currently have a defined use. In future, arr.ai may explicitly disallow `@`-prefixed names that aren't in a whitelist of names with a defined purpose.
+2. Names prefixed with `$` are currently not special, but might be one day. Avoid.
+:::
 
 ### The special name: `.`
 
@@ -82,7 +81,7 @@ The name `.` can be used as a regular name, with some qualifiers:
 ```
 
 As you can see, `.` can be used as an "implied" value with the `.` operator.
-However, explicitly assigning `.` is not generally recommended. Below, we'll
+However, explicitly assigning `.` is generally discouraged. Below, we'll
 explore how this special name is normally used.
 
 ## Function parameters
@@ -100,15 +99,136 @@ below) is necessity. It is how the function refers to the argument passed in.
 In the above example, the function `length` is passed a vector, whose value is
 bound to the name `v` inside the function's body.
 
+## Pattern matching
+
+Let-bindings, function parameters and `cond` statements support pattern matching. This is a
+very powerful mechanism to extract elements from a complex structure and also
+restrict what values may be used as input.
+
+Bare literals are supported and will simply match their own value:
+
+```arrai
+@> let 42 = 42; 1
+@> let "hello" = "hello"; 1
+@> let 3 = 1 + 2; 5
+@> let true = true; 3
+@> let true = {()}; 3
+```
+
+Try out the following examples to use pattern with arrays:
+
+```arrai
+@> let [] = []; 1
+@> let [a, b, c] = [1, 2, 3]; b
+@> let arr = [1, 2]; let [a, b] = arr; b
+@> let [x, x] = [1, 1]; x
+@> let [x, x] = [1, 2]; x                  # should fail
+@> [1, 2] -> \[x, y] x + y
+@> let f = \[x, y] x + y; f([1, 2])
+@> (\[x, y] x + y)([1, 2])
+@> (\z \[x, y] z/(x + y))(9, [1, 2])
+```
+
+with tuples:
+
+```arrai
+@> let () = (); 1
+@> let (a: x, b: y) = (a: 4, b: 7); x
+@> let (a: x, b: x) = (a: 4, b: 4); x
+@> let (:x) = (x: 1); x
+@> (m: 1, n: 2) -> \(m: x, n: y) x + y
+```
+
+with dictionaries:
+
+```arrai
+@> let {"a": f, "b": k} = {"a": 1, "b": 2}; [f, k]
+@> {"m": 1, "n": 2} -> \{"m": x, "n": y} x + y
+```
+
+and with sets:
+
+```arrai
+@> let {} = {}; 1
+@> let {a, 42} = {3, 42}; a
+@> let {a, b} = {3, 42}; [a, b]        # should fail because it is a non-deterministic situation
+```
+
+Also, nested patterns are supported as:
+
+```arrai
+@> let [[x, y], z] = [[1, 2], 3]; x
+@> let [{"a": x}, (b: y), z] = [{"a": 1}, (b: 2), 3]; [x, y, z]
+@> [1, [2, 3]] -> \[x, [y, z]] x + y + z
+```
+
+Underscore `_` matches any value and ignores it.
+
+```arrai
+@> let [x, _, _] = [1, 2, 3]; x
+@> let [_, x, _] = [1, 2, 3]; x
+```
+
+A name within parentheses like `(x)` refers to the value bound to the name `x`.
+
+```arrai
+@> let x = 3; let [b, x] = [2, 4]; x
+@> let x = 3; let [b, (x)] = [2, 3]; b
+@> let x = 3; let [_, b, (x)] = [1, 2, 3]; b
+@> let x = 1; [1, 2] -> \[(x), y] y
+@> let x = 1; let y = 42; let {(x), (y)} = {42, 1}; 5
+@> let x = 3; let [b, (x)] = [2, 4]; b     # should fail because (x) != 4
+@> let [(x)] = [2]; x                      # should fail because `x` isn't in scope
+```
+
+`let a = 56; let {"x": a, "y": (a)} = {"x": 42, "y": 56}; a` is valid 
+but `let a = 56; let {"x": a, "y": (a)} = {"x": 42, "y": 42}; a` should fail. 
+Using the same name in an expression, `(a)`, and a newly bound name, `a`, is
+confusing and should be avoided.
+
+Complex expressions are supported and will also match their own value. However, they must be enclosed in parentheses, `(...)`:
+```arrai
+@> let (1 + 2) = 3; 5
+```
+
+What's more, arr.ai allows extra elements `...` or `...x` in addition to 
+the explicitly bound ones and binds name `x` to any additional elements 
+that weren't explicitly matched by other patterns.
+```arrai
+@> let [x, y, ...] = [1, 2]; [x, y]
+@> let [x, y, ...t] = [1, 2]; [x, y, t]
+@> let [x, y, ...] = [1, 2, 3, 4, 5, 6]; [x, y]
+@> let [x, y, ...t] = [1, 2, 3, 4, 5, 6]; [x, y, t]
+@> let [..., x, y] = [1, 2, 3, 4, 5, 6]; [x, y]
+@> let [...t, x, y] = [1, 2, 3, 4, 5, 6]; [x, y, t]
+@> let [x, ..., y] = [1, 2, 3, 4, 5, 6]; [x, y]
+@> let [x, ...t, y] = [1, 2, 3, 4, 5, 6]; [x, y, t]
+@> let (m: x, n: y, ...t) = (m: 1, n: 2, j: 3, k: 4); [x, y, t]
+@> let {"m": x, "n": y, ...t} = {"m": 1, "n": 2, "j": 3, "k": 4}; [x, y, t]
+@> let {1, 2, 3, ...t} = {1, 2, 3, 42, 43}; t
+@> let x = 1; let y = 42; let {(x), (y), ...t} = {1, 42, 5, 6}; t
+@> [1, 2, 3, 4] -> \[x, y, ...t] [x + y, t]
+```
+
+[Conditional accessor syntax](./exprs) is also supported in pattern matching:
+
+```arrai
+@> let {"a"?: x:42} = {"a": 1}; x = 1
+@> let {"b"?: x:42} = {"a": 1}; x = 42
+@> let (b?: x:42) = (a: 1); x = 42
+@> let [x, y, z?:0] = [1, 2]; [x, y, z] = [1, 2, 0]
+@> let {"b"?: x:42, ...t} = {"a": 1}; [x, t] = [42, {"a": 1}]
+@> let (x?: (y: (k?: w:42))) = (x: (y: (z: 1))); w
+@> let {"a"?: {"b": {"c"?: x:42}}} = {"a": {"b": {"k": 1}}}; x
+@> let [x, [y, ?z:0]] = [1, [2]]; [x, y, z]        # syntax [?z:0] is a simplified syntax for [@index? z:0] - consistent with dicts and tuples
+```
+
 ## Transform operators
 
 There is in fact a third way to bind names. Technically, it is just a variant of
 function parameter syntax, though it might not seem like it at first.
 
-Arr.ai offers a family of generalised transform operators: `->`, `=>`, `>>` and
-`:>`. The intent here is not to go into the details of how these operators work.
-We will explore these in a subsequent tutorial. For now, we'll just focus on
-`->` and `=>`. The other two work in basically the same way when it comes to
+Arr.ai offers a family of generalised [transform operators](./transforms): `->`, `=>`, `>>` and `:>`. The intent here is not to go into the details of how these operators work. For now, we'll just focus on `->` and `=>`. The other two work in basically the same way when it comes to
 name binding.
 
 The `->` operator is an alternative syntax for function calls.
@@ -178,121 +298,51 @@ have the same number of elements:
 
 We'll learn more about `=>` in a later tutorial.
 
-## Pattern matching
+## Dynamically scoped bindings
 
-Both let-bindings and function parameters support pattern matching. This is a
-very powerful mechanism to extract elements from a complex structure and also
-restrict what values may be used as input.
+It is often useful to bind a value to a name somewhere high up in a program
+and have it visible to any code that is invoked under that binding's scope. For
+example, you might want to provide a math library that implements customisable
+rounding behaviour, but you don't want to have every single operator call take
+a rounding or configuration parameter. Dynamically scope variables address this
+need.
 
-Bare literals are supported and will simply match their own value:
-
-```arrai
-@> let 42 = 42; 1
-@> let "hello" = "hello"; 1
-@> let 3 = 1 + 2; 5
-@> let true = true; 3
-@> let true = {()}; 3
-```
-
-Try out the following examples to use pattern with arrays:
+Any variable of the form `@{...}` is a dynamically scoped variable. Here is the
+library example using a dynamically scoped variable.
 
 ```arrai
-@> let [] = []; 1
-@> let [a, b, c] = [1, 2, 3]; b
-@> let arr = [1, 2]; let [a, b] = arr; b
-@> let [x, x] = [1, 1]; x
-@> let [x, x] = [1, 2]; x                  # should fail
-@> [1, 2] -> \[x, y] x + y
-@> let f = \[x, y] x + y; f([1, 2])
-@> (\[x, y] x + y)([1, 2])
-@> (\z \[x, y] z/(x + y))(9, [1, 2])
+# math.arrai
+let round = \x cond @{round} {
+   'down': x//1,
+   'nearest': (x + 0.5)//1,
+   'up': -(-x//1),
+   _: x,
+};
+(
+   round: round,
+   add: \x \y round(x + y),
+   sub: \x \y round(x - y),
+   mul: \x \y round(x * y),
+   div: \x \y round(x / y),
+)
+
+# app.arrai
+let (:add, :div, ...) = math;
+let f = add(1, div(5, 2));
+(
+   none   : let @{round} = ''       ; f,
+   down   : let @{round} = 'down'   ; f,
+   nearest: let @{round} = 'nearest'; f,
+   up     : let @{round} = 'up'     ; f,
+)
 ```
 
-with tuples:
-```arrai
-@> let () = (); 1
-@> let (a: x, b: y) = (a: 4, b: 7); x
-@> let (a: x, b: x) = (a: 4, b: 4); x
-@> let (:x) = (x: 1); x
-@> (m: 1, n: 2) -> \(m: x, n: y) x + y
+```sh
+$ arrai run app.arrai
+(down: 3, nearest: 4, none: 3.5, up: 4)
 ```
 
-with dictionaries:
-```arrai
-@> let {"a": f, "b": k} = {"a": 1, "b": 2}; [f, k]
-@> {"m": 1, "n": 2} -> \{"m": x, "n": y} x + y
-```
-
-and with sets:
-```arrai
-@> let {} = {}; 1
-@> let {a, 42} = {3, 42}; a
-@> let {a, b} = {3, 42}; [a, b]        # should fail because it is a non-deterministic situation
-```
-
-Also, nested patterns are supported as:
-```arrai
-@> let [[x, y], z] = [[1, 2], 3]; x
-@> let [{"a": x}, (b: y), z] = [{"a": 1}, (b: 2), 3]; [x, y, z]
-@> [1, [2, 3]] -> \[x, [y, z]] x + y + z
-```
-
-Underscore `_` matches any value and ignores it.
-
-```arrai
-@> let [x, _, _] = [1, 2, 3]; x
-@> let [_, x, _] = [1, 2, 3]; x
-```
-
-A name within parentheses like `(x)` refers to the value bound to the name `x`.
-
-```arrai
-@> let x = 3; let [b, x] = [2, 4]; x
-@> let x = 3; let [b, (x)] = [2, 3]; b
-@> let x = 3; let [_, b, (x)] = [1, 2, 3]; b
-@> let x = 1; [1, 2] -> \[(x), y] y
-@> let x = 1; let y = 42; let {(x), (y)} = {42, 1}; 5
-@> let x = 3; let [b, (x)] = [2, 4]; b     # should fail because (x) != 4
-@> let [(x)] = [2]; x                      # should fail because `x` isn't in scope
-```
-
-`let a = 56; let {"x": a, "y": (a)} = {"x": 42, "y": 56}; a` is valid 
-but `let a = 56; let {"x": a, "y": (a)} = {"x": 42, "y": 42}; a` should fail. 
-Using the same name in an expression, `(a)`, and a newly bound name, `a`, is
-confusing and should be avoided.
-
-Complex expressions are supported and will also match their own value. However, they must be enclosed in parentheses, `(...)`:
-```arrai
-@> let (1 + 2) = 3; 5
-```
-
-What's more, arr.ai allows extra elements `...` or `...x` in addition to 
-the explicitly bound ones and binds name `x` to any additional elements 
-that weren't explicitly matched by other patterns.
-```arrai
-@> let [x, y, ...] = [1, 2]; [x, y]
-@> let [x, y, ...t] = [1, 2]; [x, y, t]
-@> let [x, y, ...] = [1, 2, 3, 4, 5, 6]; [x, y]
-@> let [x, y, ...t] = [1, 2, 3, 4, 5, 6]; [x, y, t]
-@> let [..., x, y] = [1, 2, 3, 4, 5, 6]; [x, y]
-@> let [...t, x, y] = [1, 2, 3, 4, 5, 6]; [x, y, t]
-@> let [x, ..., y] = [1, 2, 3, 4, 5, 6]; [x, y]
-@> let [x, ...t, y] = [1, 2, 3, 4, 5, 6]; [x, y, t]
-@> let (m: x, n: y, ...t) = (m: 1, n: 2, j: 3, k: 4); [x, y, t]
-@> let {"m": x, "n": y, ...t} = {"m": 1, "n": 2, "j": 3, "k": 4}; [x, y, t]
-@> let {1, 2, 3, ...t} = {1, 2, 3, 42, 43}; t
-@> let x = 1; let y = 42; let {(x), (y), ...t} = {1, 42, 5, 6}; t
-@> [1, 2, 3, 4] -> \[x, y, ...t] [x + y, t]
-```
-
-(Conditional Accessor Syntax)[../lang/intro] is also supported in pattern matching:
-```arrai
-@> let {"a"?: x:42} = {"a": 1}; x = 1
-@> let {"b"?: x:42} = {"a": 1}; x = 42
-@> let (b?: x:42) = (a: 1); x = 42
-@> let [x, y, z?:0] = [1, 2]; [x, y, z] = [1, 2, 0]
-@> let {"b"?: x:42, ...t} = {"a": 1}; [x, t] = [42, {"a": 1}]
-@> let (x?: (y: (k?: w:42))) = (x: (y: (z: 1))); w
-@> let {"a"?: {"b": {"c"?: x:42}}} = {"a": {"b": {"k": 1}}}; x
-@> let [x, [y, ?z:0]] = [1, [2]]; [x, y, z]        # syntax [?z:0] is a simplified syntax for [@index? z:0] - consistent with dicts and tuples
-```
+:::caution
+This feature is currently under development and will undergo significant changes
+in the near future.
+:::

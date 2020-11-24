@@ -1,4 +1,7 @@
-# Arr.ai values
+---
+id: values
+title: Arr.ai values
+---
 
 Arr.ai has three kinds of values: numbers, tuples and sets.
 

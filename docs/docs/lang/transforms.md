@@ -1,4 +1,7 @@
-# Transforms
+---
+id: transforms
+title: Transforms
+---
 
 Among arr.ai's powerful features, transform operators are perhaps the most
 heavily used. They come in four flavors, each operating on a different kind of
