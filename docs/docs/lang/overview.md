@@ -48,13 +48,12 @@ chapters.
 
 ## Arr.ai command line
 
-In addition to the interactive shell, arr.ai provides a range of additional
-commands to run programs, start an arr.ai server or client, etc.
+In addition to the interactive shell, arr.ai provides additional commands to run programs, start an arr.ai server or client, etc.
 
-1. (TODO) run, r: evaluate an arrai file
-2. (TODO) eval, e: evaluate an arrai expression
-3. (TODO) observe, o: observe an expression on a server
-4. (TODO) serve, s: start arrai as a gRPC server
-5. (TODO) sync, s: sync local files to a server
-6. (TODO) transform, x: transform a stream of input data with an expression
-7. (TODO) update, u: update a server with an expression
+1. [run](../cli/run), r: evaluate an arr.ai file
+1. [eval](../cli/eval), e: evaluate an arr.ai expression
+1. (TODO) observe, o: observe an expression on a server
+1. (TODO) serve, s: start arrai as a gRPC server
+1. (TODO) sync, s: sync local files to a server
+1. (TODO) transform, x: transform a stream of input data with an expression
+1. (TODO) update, u: update a server with an expression
