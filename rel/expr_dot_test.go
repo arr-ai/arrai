@@ -49,3 +49,15 @@ func TestDotExprErrorOnEvalError(t *testing.T) {
 
 	AssertExprErrorEquals(t, expr, err.Error())
 }
+
+func TestDotExprErrorOnNonEnumerableSet(t *testing.T) {
+	t.Parallel()
+
+	expr := NewDotExpr(*parser.NewScanner("native.a"), NewNativeFunction("native", nil), "a")
+
+	AssertExprErrorEquals(t, expr, `Cannot get attr "a" from native-function`)
+
+	expr = NewDotExpr(*parser.NewScanner("closure.a"), NewClosure(Scope{}, nil), "a")
+
+	AssertExprErrorEquals(t, expr, `Cannot get attr "a" from closure`)
+}

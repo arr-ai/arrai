@@ -33,6 +33,8 @@ func ValueTypeAsString(v Value) string {
 		return "string-char-tuple"
 	case Tuple, *GenericTuple:
 		return "tuple"
+	case *NativeFunction:
+		return "native-function"
 	}
 	return fmt.Sprintf("%T", v)
 }
