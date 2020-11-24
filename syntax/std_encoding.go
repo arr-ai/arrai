@@ -7,6 +7,7 @@ import (
 
 func stdEncoding() rel.Attr {
 	return rel.NewTupleAttr("encoding",
+		stdEncodingCSV(),
 		stdEncodingJSON(),
 		stdEncodingProto(),
 		stdEncodingXlsx(),

@@ -28,26 +28,11 @@ func stdEncodingXlsx() rel.Attr {
 			}
 			bs = b.Bytes()
 
-			getConfigInt := func(key string, defaultVal int) (int, error) {
-				if vv, ok := c.Get(key); ok {
-					vn, ok := vv.(rel.Number)
-					if !ok {
-						return 0, errors.Errorf("%s config param to %s must be integer, not %s", key, fn, rel.ValueTypeAsString(vv))
-					}
-					v, ok := vn.Int()
-					if !ok {
-						return 0, errors.Errorf("%s config param to %s must be integer, not %v", key, fn, vn)
-					}
-					return v, nil
-				}
-				return defaultVal, nil
-			}
-
-			i, err := getConfigInt("sheet", 0)
+			i, err := getConfigInt(c, fn, "sheet", 0)
 			if err != nil {
 				return nil, err
 			}
-			h, err := getConfigInt("headRow", 0)
+			h, err := getConfigInt(c, fn, "headRow", 0)
 			if err != nil {
 				return nil, err
 			}

@@ -1,6 +1,70 @@
 The `encoding` library provides functions to convert data into built-in arr.ai values.
 The following functions are available by accessing the `//encoding` attribute.
 
+## `//encoding.csv.decode(csv <: string|bytes) <: array`
+
+`decode` takes either a `string` or `bytes` that represents a CSV object and transforms it into an two-dimensional string array.
+
+Usage:
+
+| example | equals |
+|:-|:-|
+| `//encoding.csv.decode('a,b,c\n1,2,3')` | `[['a', 'b', 'c'], ['1', '2', '3']]` |
+
+## `//encoding.csv.decoder(config <: (comma <: int, comment <: int)) <: (\(csv <: string|bytes) <: array)`
+
+`decoder` takes a tuple used to configure decoding and returns the decoding function.
+| config | description |
+|:-|:-|
+| `comma` | Configures the separator used (defaults to `%,`). |
+| `comment` | Ignores lines from the input that start with the given character (defaults to regarding all lines as value input). |
+| `trimLeadingSpace` | Leading white space in a field is ignored. This is ignored even if the field delimiter, comma, is white space. |
+| `fieldsPerRecord` | The number of expected fields per record. If positive, each record must have the given number of fields. If zero, each record must have the same number as the first row. If negative, no check is made and records may have a variable number of fields. |
+| `lazyQuotes` | If true, a quote may appear in an unquoted field and a non-doubled quote may appear in a quoted field. |
+
+Usage:
+
+| example | equals |
+|:-|:-|
+| `//encoding.csv.decoder((comma: %:))('a:b:c\n1:2:3')` | `[['a', 'b', 'c'], ['1', '2', '3']]` |
+| `//encoding.csv.decoder((comment: %#))('a,b,c\n#1,2,3')` | `[['a', 'b', 'c']]` |
+
+## `//encoding.csv.encode(csv <: array) <: bytes`
+
+`encode` takes a two-dimensional string array and converts it into a CSV object.
+
+Usage:
+
+| example | equals |
+|:-|:-|
+| `//encoding.csv.encode([['a', 'b', 'c'], ['1', '2', '3']])` | `<<'a,b,c\n1,2,3'>>` |
+
+## `//encoding.csv.encoder(config <: (comma <: int, crlf <: bool)) <: (\(csv <: array) <: bytes)`
+
+`encoder` takes a tuple used to configure encoding and returns the encoding function:
+| config | description |
+|:-|:-|
+| `comma` | Configures the separator used (defaults to `%,`). |
+| `crlf` | Encodes new lines as either `'\r\n'` when `true` or `'\n'` when `false` (defaults to `false`). |
+
+Usage:
+
+| example | equals |
+|:-|:-|
+| `//encoding.csv.encoder((comma: %:))([['a', 'b', 'c'], ['1', '2', '3']])` | `<<'a:b:c\n1:2:3'>>` |
+| `//encoding.csv.encoder((crlf: true))([['a', 'b', 'c'], ['1', '2', '3']])` | `<<'a,b,c\r\n1,2,3'>>` |
+
+## `//encoding.json.encode(jsonDefinition <: set) <: string|bytes`
+
+`encode` is the reverse of `decode`. It takes a built-in arr.ai value to `bytes` that represents a JSON object.
+
+Usage:
+
+| example | equals |
+|:-|:-|
+| `//encoding.json.encode({'hello': 123, 'hi': (s: 'abc'), 'yo': (a: [1,2,3])})` | `'{"hello":123,"hi":"abc","yo":[1,2,3]}'` |
+
+
 ## `//encoding.json.decode(json <: string|bytes) <: set`
 
 `decode` takes either a `string` or `bytes` that represents a JSON object. `json`
