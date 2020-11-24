@@ -20,4 +20,4 @@ jobs:
 
       - name: yarn build docs
         working-directory: docs
-        run: yarn build
+        run: yarn install && yarn build
