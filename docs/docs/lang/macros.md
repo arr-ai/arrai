@@ -1,4 +1,7 @@
-# Macros
+---
+id: macros
+title: Macros
+---
 
 Macros are a powerful tool for data representation and transformation. They are
 very similar to functions, except that they operate at parsing time rather than
@@ -15,7 +18,7 @@ Macros are invoked via the syntax `macro[rule]?{content}`. In reverse order:
   macro itself, not regular arr.ai syntax.
 * `[rule]`, if provided, specifies which rule of the grammar to use as the root.
   If not provided, the parser will use the first rule declared in the grammar.
-* `macro` is either a [grammar](grammars.md) AST, or a tuple with an `@grammar` 
+* `macro` is either a [grammar](./grammars) AST, or a tuple with an `@grammar` 
   key corresponding to a grammar AST. Thus each macro can define its own 
   grammar with which to parse its `content`.
   

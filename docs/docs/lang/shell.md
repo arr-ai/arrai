@@ -1,4 +1,8 @@
-# Arr.ai shell basics
+---
+id: shell
+title: Arr.ai shell basics
+---
+
 
 This tutorial will provide a brief walkthrough of the features of arr.ai's
 interactive shell.
@@ -13,8 +17,7 @@ $ arrai i
 @> _
 ```
 
-Alternately, if the `ai` shortcut is set up correctly (see the main
-[README](../../README.md) for instructions), you can use it instead.
+Alternately, if the `ai` shortcut is set up correctly (see the [introduction to arr.ai](./intro) for instructions), you can use it instead.
 
 ```bash
 $ ai

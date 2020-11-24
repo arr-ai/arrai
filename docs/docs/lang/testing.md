@@ -1,4 +1,7 @@
-# Writing tests
+---
+id: testing
+title: Writing tests
+---
 
 Arr.ai is a functional language designed for the representation and transformation of data. As such, testing arr.ai code is different from testing more stateful, imperative code.
 

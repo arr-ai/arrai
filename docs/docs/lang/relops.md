@@ -1,4 +1,8 @@
-# Relational operators
+---
+id: relops
+title: Relational operators
+---
+
 
 Recall that relations are sets of tuples wherein every tuple has the same
 attribute names.

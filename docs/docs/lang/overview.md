@@ -1,9 +1,12 @@
-# Arr.ai tutorial
+---
+id: overview
+title: Overview
+---
 
 This tutorial will take you step by step through the arr.ai language. It will be
 light on theory, focusing more on learning by doing. If you want a more
 theoretical introduction to the features of the language, [Introduction to
-Arr.ai](../README.md) is a good place to start.
+Arr.ai](./intro) is a good place to start.
 
 The following chapters start with the basics of the language, and develop
 steadily towards the more advanced features.
@@ -15,7 +18,7 @@ $ arrai i
 @> _
 ```
 
-or, if an appropriate symlink is set up (see the main [README](../../README.md)
+or, if an appropriate symlink is set up (see the main [README](./intro)
 for instructions):
 
 ```bash
@@ -26,22 +29,22 @@ $ ai
 Once you see the `@>` prompt, you can try the code examples in the following
 chapters.
 
-0. [Arr.ai shell basics](shell.md)
-1. [Values](values.md)
-2. [Name bindings](binding.md)
-3. [Comparison operators](comparison.md)
-4. [Arithmetic and logical operators](arithmetic.md)
-5. [Set operators](setops.md)
-6. [Relational operators](relops.md)
-7. (TODO) [Functions and function calls](function.md)
-8. [Transforms](transforms.md)
-9. (TODO) [Standard library](stdlib.md)
-10. (TODO) [Importing external code and data](import.md)
-11. [Writing tests](testing.md)
-12. (TODO) [Expression strings](exprstr.md)
-13. (TODO) [Templating with expression strings](templating.md)
-14. (TODO) [Grammars](grammars.md)
-15. [Macros](macros.md)
+1. [Arr.ai shell basics](./shell)
+1. [Values](./values)
+1. [Name bindings](./binding)
+1. [Comparison operators](./comparison)
+1. [Arithmetic and logical operators](./arithmetic)
+1. [Set operators](./setops)
+1. [Relational operators](./relops)
+1. (TODO) [Functions and function calls](./function)
+1. [Transforms](./transforms)
+1. (TODO) [Standard library](./stdlib)
+1. (TODO) [Importing external code and data](./import)
+1. [Writing tests](./testing)
+1. [Expression strings](./exprstr)
+1. (TODO) [Templating with expression strings](./templating)
+1. (TODO) [Grammars](./grammars)
+1. [Macros](./macros)
 
 ## Arr.ai command line
 
