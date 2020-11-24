@@ -1,5 +1,3 @@
-# math
-
 The `math` library contains functions that are used for mathematical
 operations. The library can be accessed by the expression `//math`
 

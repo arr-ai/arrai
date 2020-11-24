@@ -1,4 +1,7 @@
-# Expression strings
+---
+id: expr-str
+title: Expression Strings
+---
 
 Expressions strings turn arr.ai into a sophisticated text templating engine.
 Conceptually, they are a simple extension to strings, allowing expressions to be

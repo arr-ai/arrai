@@ -1,5 +1,3 @@
-# re
-
 The `re` library contains functions that are used for regular expression matching.
 The library uses [RE2 syntax](https://github.com/google/re2/wiki/Syntax).
 

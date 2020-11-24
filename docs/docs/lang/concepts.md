@@ -1,4 +1,7 @@
-# Core concepts in arr.ai
+---
+id: concepts
+title: Concepts
+---
 
 This document provides an overview of some of the key ideas in arr.ai. It
 strives to steer clear of syntax and semantics as much as practicable in order

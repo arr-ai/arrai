@@ -1,4 +1,7 @@
-# Examples
+---
+id: all
+title: All Examples
+---
 
 ### Evaluate an expression
 

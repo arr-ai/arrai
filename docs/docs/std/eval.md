@@ -1,5 +1,3 @@
-# eval
-
 The `eval` contains functions which converts raw string into a built-in arrai values.
 
 ## `//eval.value(s <: string|array_of_bytes) <: any`

@@ -1,5 +1,3 @@
-# rel
-
 The `rel` library contains functions for relational operations.
 
 ## `//rel.union(s <: set_of_sets) <: set`

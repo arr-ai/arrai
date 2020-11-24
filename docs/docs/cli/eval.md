@@ -1,7 +1,5 @@
-# arrai eval and run
-
-Arr.ai's `eval` and `run` commands evaluate argument as an arr.ai expression
-and, by default, print the result to stdout.
+Arr.ai's `eval` (alias `e`) command evaluates its argument as an arr.ai expression
+and, by default, prints the result to stdout.
 
 The `eval` command evaluates its argument as an arr.ai expression.
 
@@ -15,18 +13,6 @@ The `e` command is a shortcut and behaves identically to `eval`.
 ```bash
 $ arrai e '2 + 2'
 4
-```
-
-The `run` command evalutes the contents of the source file specified by its
-argument.
-
-```bash
-$ cat hi.arrai
-$"Hello, ${//os.args(1)}!"
-$ arrai run hi.arrai Alice
-Hello, Alice!
-$ arrai r hi.arrai Alice
-Hello, Alice!
 ```
 
 ## Output controls

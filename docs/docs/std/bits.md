@@ -1,5 +1,3 @@
-# bits
-
 The `bits` library contains functions related to bit operations.
 
 ## `//bits.set(n <: number) <: set`

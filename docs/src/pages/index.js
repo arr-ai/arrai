@@ -9,7 +9,7 @@ import styles from './styles.module.css';
 const features = [
     {
         title: 'Simple, Immutable Types',
-        imageUrl: 'img/favicon.png',
+        imageUrl: 'img/favicon.svg',
         description: (
             <>
                 <p>A core premise of arr.ai is that the type system should be made as simple as
@@ -22,7 +22,7 @@ const features = [
     },
     {
         title: 'Expressive Syntax',
-        imageUrl: 'img/favicon.png',
+        imageUrl: 'img/favicon.svg',
         description: (
             <>
                 <p>Arr.ai is optimised for expressivity, <em>not</em> ease of learning. As a
@@ -37,7 +37,7 @@ const features = [
     },
     {
         title: 'Hermetic runtime',
-        imageUrl: 'img/favicon.png',
+        imageUrl: 'img/favicon.svg',
         description: (
             <>
                 Extend or customize your website layout by reusing React. Docusaurus can
