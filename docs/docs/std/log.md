@@ -1,5 +1,3 @@
-# log
-
 The `log` library contains functions for printing values to stdout.
 
 ## `//log.print(v <: any) <: any`

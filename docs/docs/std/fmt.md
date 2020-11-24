@@ -1,5 +1,3 @@
-# fmt
-
 The `fmt` library contains helper functions for formatting strings.
 
 ## `//fmt.pretty(v <: value) <: string`
@@ -19,7 +17,7 @@ $ arrai eval "//fmt.pretty({'a': (b: [1,2])})"
 
 Note: the rendering of output strings differs between `arrai eval` and the interactive shell. As such, the result of `//fmt.pretty` in the interactive shell will not appear very pretty:
 
-<!-- TODO: Update once `/print` is implemented. --> 
+[//]: # <!-- TODO: Update once `/print` is implemented. --> 
 
 ```bash
 @> //fmt.pretty({'a': (b: [1,2])})

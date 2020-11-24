@@ -1,5 +1,3 @@
-# test
-
 The `test` library contains functions that are used to write tests.
 
 ## `//test.suite(tests <: set)`

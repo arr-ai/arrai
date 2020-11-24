@@ -1,5 +1,3 @@
-# fn
-
 The `fn` library contains helper functions that are related to arrai `functions`.
 
 ## `//fn.fix(f <: function) <: function`

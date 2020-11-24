@@ -1,5 +1,3 @@
-# os
-
 The `os` contains functions that are related to the operating system.
 
 ## `//os.args <: array_of_strings`

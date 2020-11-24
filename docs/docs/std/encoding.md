@@ -1,5 +1,3 @@
-# encoding
-
 The `encoding` library provides functions to convert data into built-in arr.ai values.
 The following functions are available by accessing the `//encoding` attribute.
 
