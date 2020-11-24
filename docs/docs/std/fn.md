@@ -2,10 +2,7 @@ The `fn` library contains helper functions that are related to arrai `functions`
 
 ## `//fn.fix(f <: function) <: function`
 
-Due to the current implementation of arrai, recursive functions cannot be created
-without the helper function `fix`. `fix` takes the function recursive `f` and returns
-`f` whose recursive nature can now be utilized. For more information, please read
-the functions section in [intro](intro.md).
+Due to the current implementation of arrai, recursive functions cannot be created without the helper function `fix`. `fix` takes the function recursive `f` and returns `f` whose recursive nature can now be utilized. For more information, please read the functions section in the [introduction to arr.ai](../lang/intro).
 
 This function uses the concept of a [fixed-point combinator](https://en.wikipedia.org/wiki/Fixed-point_combinator).
 
@@ -17,7 +14,7 @@ Usage:
 
 ## `//fn.fixt(f <: tuple_of_functions) <: tuple_of_function`
 
-`fixt` is a variant of fix. This allows mutual recursion. For more information, please read the functions section in [intro](intro.md).
+`fixt` is a variant of fix. This allows mutual recursion. For more information, please read the functions section in the [introduction to arr.ai](../lang/intro).
 
 Usage:
 

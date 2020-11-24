@@ -1,4 +1,7 @@
-# Set operators
+---
+id: setops
+title: Set operators
+---
 
 ```arrai
 @> {'you', 'them', 'and', 'me'} with 'or' without 'you'

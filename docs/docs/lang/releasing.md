@@ -1,4 +1,7 @@
-# Releasing
+---
+id: releasing
+title: Releasing
+---
 
 When a version tag is pushed, it triggers the [Release
 workflow](https://github.com/arr-ai/arrai/blob/master/.github/workflows/release.yml)

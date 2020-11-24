@@ -1,4 +1,7 @@
-# Name bindings
+---
+id: binding
+title: Name bindings
+---
 
 Aside from being able to express literal values, one of the most basic needs
 almost any programming language must satisfy is the ability to name values so
@@ -282,7 +285,7 @@ that weren't explicitly matched by other patterns.
 @> [1, 2, 3, 4] -> \[x, y, ...t] [x + y, t]
 ```
 
-(Conditional Accessor Syntax)[../README.md] is also supported in pattern matching:
+(Conditional Accessor Syntax)[../lang/intro] is also supported in pattern matching:
 ```arrai
 @> let {"a"?: x:42} = {"a": 1}; x = 1
 @> let {"b"?: x:42} = {"a": 1}; x = 42

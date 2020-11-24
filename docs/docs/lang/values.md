@@ -106,7 +106,7 @@ set (the set with the empty tuple, to be precise). Similarly, `false` is
 actually the empty set. However, while `{()}` very rarely means anything other
 than `true`, the empty set often means something other than `false`, so it is
 usually printed in its base form: a set. If you want to output Boolean values as
-"true" and "false", you can do this in an [expression string](../expr-str.md).
+"true" and "false", you can do this in an [expression string](./exprstr).
 
 ```arrai
 @> let passed = false; $"...${passed:t}..."

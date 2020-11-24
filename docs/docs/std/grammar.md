@@ -26,4 +26,4 @@ Then use those grammars to parse code:
 ('': '1')
 ```
 
-Read about [Macros](tutorial/macros.md) for more applications of grammars.
+Read about [macros](../lang/macros) for more applications of grammars.

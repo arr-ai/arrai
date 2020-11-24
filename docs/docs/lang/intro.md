@@ -319,7 +319,7 @@ function sum(x, y) {
 }
 ```
 
-Expression strings are fully described in [Expression strings](expr-str.md).
+Expression strings are fully described in [Expression strings](./exprstr).
 
 ##### Array syntax
 

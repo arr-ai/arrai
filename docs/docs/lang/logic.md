@@ -1,73 +1,7 @@
-# Arithmetic and logical operators
-
-## Core arithmetic operators
-
-Arr.ai supports most conventional arithmetic operators over numbers. The usual
-suspects, `+`, `-`, `*` and `/` perform the four basic operations If you're new
-to programming, `*` means × ("times" or "multiplied by") and `/` means ÷
-("divided by").
-
-```arrai
-@> 1 + 2 * 3
-@> 4 - 5 / 7
-```
-
-Operators follow standard precedence rules, so the above expressions first
-evaluate the multiplication and division, and then evaluate the addition and
-subtraction. Thus, `1 + 2 * 3` is equivalent to `1 + (2 * 3)`.
-
-## Parentheses
-
-You can use parenthesis to force an evaluation order that doesn't follow regular
-precedence rules:
-
-```arrai
-@> (1 + 2) * 3
-@> (4 - 5) / 7
-```
-
-## Negative and positive
-
-If you want the negative of a number, you can use the prefix `-` operator. `-x`
-is effectively the same as `0 - x`. For completeness, prefix `+` is also
-available and simply evaluates to its argument.
-
-```arrai
-@> -42
-@> -42 + 41
-@> -42 + -42
-@> 42 - -42
-@> 42--42
-@> 42 + +42
-@> 42++42  # FAIL. ++ is a different operator
-```
-
-Many languages overload `+` to also mean concatenation, e.g. `"hots" + "hots"`
-in Python, Go and JavaScript. Arr.ai avoids this in order to promote clarity of
-expression. `+` always means mathematical addition, never anything else. The
-`++` operator defines concatenation. It will be discussed in more detail in a
-later tutorial.
-
-## Exponentiation
-
-Arr.ai can exponentiate, *x*<sup>*y*</sup>, using the `^` or "power" operator.
-`x ^ y` represents *x* raised to the *y*th power.
-
-```arrai
-@> 2 ^ 3
-@> 3 ^ 2
-@> 2 ^ 0.5
-@> 10 * 2 ^ -3
-@> 4 ^ 3 ^ 2
-```
-
-`^` has higher precedence than the other four operators. It also associates
-right-to-left. The final example above was interpreted as `4 ^ (3 ^ 2)`, not `(4
-^ 3) ^ 2`. From a mathematical point of view, right-to-left is more useful,
-since `(a ^ b) ^ c` can be reduced to a single exponentiation, `a ^ (b * c)`,
-whereas there is no reduced form of `a ^ (b ^ c)`.
-
-## Logical operators
+---
+id: logic
+title: Logical operators
+---
 
 The logical operators work on Boolean values. Actually, every value serves as a
 Boolean value. When used with logical operators, every value behaves either like

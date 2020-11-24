@@ -1,4 +1,7 @@
-# Comparison operators
+---
+id: comparison
+title: Comparison operators
+---
 
 Comparison operators compare values with each other and return `true` or `false`
 to indicate whether relationship between them holds.
