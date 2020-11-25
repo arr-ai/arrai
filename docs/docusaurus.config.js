@@ -29,7 +29,7 @@ module.exports = {
             ],
         },
         googleAnalytics: {
-            trackingID: "UA-173443254-1", // GA account owner: sysl.usr@gmail.com
+            trackingID: "G-HKGSHFG2D0", // GA account owner: sysl.usr@gmail.com
             anonymizeIP: true,
         },
     },
