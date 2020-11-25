@@ -1656,19 +1656,19 @@
   dependencies:
     "@docusaurus/core" "2.0.0-alpha.66"
 
-"@docusaurus/plugin-google-analytics@^2.0.0-alpha.69":
-  version "2.0.0-alpha.69"
-  resolved "https://registry.yarnpkg.com/@docusaurus/plugin-google-analytics/-/plugin-google-analytics-2.0.0-alpha.69.tgz#031e0e4431842b1c9ba99fb6dd6dd258ee91f05e"
-  integrity sha512-CrGy8DeJqMZdNmbLNyfgLtjMcapOoqY8jbJiKYCELI8SZ8Ns28i8Yh5W9qe4KxGqSQXvVWHg36xJVG/xAF/6jA==
-  dependencies:
-    "@docusaurus/core" "2.0.0-alpha.69"
-
 "@docusaurus/plugin-google-gtag@2.0.0-alpha.66":
   version "2.0.0-alpha.66"
   resolved "https://registry.yarnpkg.com/@docusaurus/plugin-google-gtag/-/plugin-google-gtag-2.0.0-alpha.66.tgz#d780ea3ed91a065eb9cf4042fafbdd6a7e7c7d75"
   integrity sha512-MVnzApLSQaC38nVS+A/WkXEV4kHeX6Q/KM2DqkLeovNWLBtkQ0aHL3bvn1clAEmB33Pia0v93mzG+I1+9mrquA==
   dependencies:
     "@docusaurus/core" "2.0.0-alpha.66"
+
+"@docusaurus/plugin-google-gtag@^2.0.0-alpha.69":
+  version "2.0.0-alpha.69"
+  resolved "https://registry.yarnpkg.com/@docusaurus/plugin-google-gtag/-/plugin-google-gtag-2.0.0-alpha.69.tgz#b6d9c77e99f60dbffe2622f0567fce589bc420b3"
+  integrity sha512-mDAKBRkB3UJMuAUPqC43mNr8PPu3QuUbCLisJIvg7VMp9XoAcOImNZWmY2Smd+Law2tJkW3cBFPvm3fcVvJ1vA==
+  dependencies:
+    "@docusaurus/core" "2.0.0-alpha.69"
 
 "@docusaurus/plugin-sitemap@2.0.0-alpha.66":
   version "2.0.0-alpha.66"

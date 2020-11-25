@@ -28,7 +28,7 @@ module.exports = {
                 },
             ],
         },
-        googleAnalytics: {
+        gtag: {
             trackingID: "G-HKGSHFG2D0", // GA account owner: sysl.usr@gmail.com
             anonymizeIP: true,
         },
