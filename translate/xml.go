@@ -12,18 +12,16 @@ import (
 )
 
 const ProcInst = "decl"
-const Directive = "dir"
+const Directive = "directive"
 const CharData = "text"
-const Comment = "cmt"
+const Comment = "comment"
 const Element = "elem"
 
 const TextKey = "text"
-const NamespaceKey = "ns"
-const TargetKey = "target"
 const NameKey = "name"
+const TargetKey = "target"
 const AttributesKey = "attrs"
 const ChildrenKey = "children"
-const TypeKey = "type"
 
 func BytesXMLToArrai(bs []byte) (rel.Value, error) {
 	decoder := xml.NewDecoder(bytes.NewBuffer(bs))
@@ -77,58 +75,69 @@ func unparseXMLDFS(v rel.Value) ([]xml.Token, error) {
 		if !ok {
 			return nil, errors.New("value is not a tuple")
 		}
-		vType := tup.MustGet(TypeKey)
 
-		switch RawString(vType) {
+		// assume there is only a single attribute in the set
+		switch tup.Names().TheOne() {
 		case ProcInst:
-			target := tup.MustGet(TargetKey)
-			text := tup.MustGet(TextKey)
+			mTup, ok := tup.MustGet(ProcInst).(rel.Tuple)
+			if !ok {
+				return nil, errors.New("value is not a tuple")
+			}
+
+			target := mTup.MustGet(TargetKey)
+			text := mTup.MustGet(TextKey)
 			xmlTokens = append(xmlTokens, xml.ProcInst{Target: RawString(target), Inst: []byte(RawString(text))})
 		case Directive:
-			text := tup.MustGet(TextKey)
+			text := tup.MustGet(Directive)
 			var directive xml.Directive = []byte(RawString(text))
 			xmlTokens = append(xmlTokens, directive)
 		case Comment:
-			text := tup.MustGet(TextKey)
+			text := tup.MustGet(Comment)
 			var comment xml.Comment = []byte(RawString(text))
 			xmlTokens = append(xmlTokens, comment)
 		case CharData:
 			// NOTE: for some reason the xml.Encoder escapes the CharData text
 			// https://golang.org/src/encoding/xml/marshal.go?s=7625:7671#L192
-			text := tup.MustGet(TextKey)
+			text := tup.MustGet(CharData)
 			var chardata xml.CharData = []byte(RawString(text))
 			xmlTokens = append(xmlTokens, chardata)
 		case Element:
-			ns := tup.MustGet(NamespaceKey)
+			tup, ok := tup.MustGet(Element).(rel.Tuple)
+			if !ok {
+				return nil, errors.New("value is not a tuple")
+			}
+
 			name := tup.MustGet(NameKey)
 			attrs := tup.MustGet(AttributesKey)
-			tAttrs, ok := rel.AsArray(attrs)
+			children := tup.MustGet(ChildrenKey)
+
+			// load attributes
+			tAttrs, ok := attrs.(rel.Set)
 			if !ok {
-				return nil, errors.New("attributes is not an array")
+				return nil, errors.New("attributes is not a set")
 			}
 			xmlAttrs := []xml.Attr{}
-			for _, attr := range tAttrs.Values() {
-				tup, ok := attr.(rel.Tuple)
+			enum := tAttrs.Enumerator()
+			for enum.MoveNext() {
+				tup, ok := enum.Current().(rel.Tuple)
 				if !ok {
 					return nil, errors.New("attribute is not a tuple")
 				}
-				ns := tup.MustGet(NamespaceKey)
-				name := tup.MustGet(NameKey)
-				value := tup.MustGet(TextKey)
+				name := tup.Names().TheOne()
+				value := tup.MustGet(name)
 				xmlAttrs = append(xmlAttrs, xml.Attr{
-					Name:  xml.Name{Local: RawString(name), Space: RawString(ns)},
+					Name:  xmlNameFromArrai(name),
 					Value: RawString(value),
 				})
 			}
 
-			xmlName := xml.Name{Local: RawString(name), Space: RawString(ns)}
+			xmlName := xmlNameFromArrai(RawString(name))
 
 			// start element dir
 			startelement := xml.StartElement{Name: xmlName, Attr: xmlAttrs}
 			xmlTokens = append(xmlTokens, startelement)
 
 			// parse child nodes
-			children := tup.MustGet(ChildrenKey)
 			childTokens, err := unparseXMLDFS(children)
 			if err != nil {
 				return nil, err
@@ -181,22 +190,22 @@ func parseXMLDFS(decoder *xml.Decoder) (rel.Value, error) {
 		// otherwise token should not be nil
 		switch t := token.(type) {
 		case xml.ProcInst:
-			tuple = rel.NewTuple(rel.NewStringAttr(TypeKey, []rune(ProcInst)),
-				rel.NewStringAttr(TargetKey, []rune(t.Target)),
-				rel.NewStringAttr(TextKey, []rune(string(t.Inst))))
+			tuple = rel.NewTuple(
+				rel.NewTupleAttr(ProcInst,
+					rel.NewStringAttr(TargetKey, []rune(t.Target)),
+					rel.NewStringAttr(TextKey, []rune(string(t.Inst))),
+				),
+			)
 		case xml.Directive:
-			tuple = rel.NewTuple(rel.NewStringAttr(TypeKey, []rune(Directive)),
-				rel.NewStringAttr(TextKey, []rune(string(t))))
+			tuple = rel.NewTuple(rel.NewStringAttr(Directive, []rune(string(t))))
 		case xml.CharData:
 			// ignore formatting new lines
 			if strings.Trim(string(t), " ") == "\n" {
 				continue
 			}
-			tuple = rel.NewTuple(rel.NewStringAttr(TypeKey, []rune(CharData)),
-				rel.NewStringAttr(TextKey, []rune(string(t))))
+			tuple = rel.NewTuple(rel.NewStringAttr(CharData, []rune(string(t))))
 		case xml.Comment:
-			tuple = rel.NewTuple(rel.NewStringAttr(TypeKey, []rune(Comment)),
-				rel.NewStringAttr(TextKey, []rune(string(t))))
+			tuple = rel.NewTuple(rel.NewStringAttr(Comment, []rune(string(t))))
 		case xml.StartElement:
 			// NOTE: xml.Token() automatically expands self-closing tags. According to:
 			// https://stackoverflow.com/questions/57494936/is-there-a-semantical-difference-between-tag-and-tag-tag-in-xml
@@ -211,16 +220,20 @@ func parseXMLDFS(decoder *xml.Decoder) (rel.Value, error) {
 			// parse attributes
 			attrs := []rel.Value{}
 			for _, attr := range t.Attr {
-				attrs = append(attrs, rel.NewTuple(rel.NewStringAttr(TextKey, []rune(attr.Value)),
-					rel.NewStringAttr(NamespaceKey, []rune(attr.Name.Space)),
-					rel.NewStringAttr(NameKey, []rune(attr.Name.Local))))
+				attrs = append(attrs, rel.NewTuple(
+					rel.NewStringAttr(xmlNameToArrai(&attr.Name), []rune(attr.Value)),
+				))
+			}
+			attrSet, err := rel.NewSet(attrs...)
+			if err != nil {
+				return nil, err
 			}
 
-			tuple = rel.NewTuple(rel.NewStringAttr(TypeKey, []rune(Element)),
-				rel.NewStringAttr(NamespaceKey, []rune(t.Name.Space)),
-				rel.NewAttr(AttributesKey, rel.NewArray(attrs...)),
+			tuple = rel.NewTuple(rel.NewTupleAttr(Element,
+				rel.NewStringAttr(NameKey, []rune(xmlNameToArrai(&t.Name))),
+				rel.NewAttr(AttributesKey, attrSet),
 				rel.NewAttr(ChildrenKey, child),
-				rel.NewStringAttr(NameKey, []rune(t.Name.Local)))
+			))
 		case xml.EndElement:
 			//  NOTE: xml.Token() guarantees matching Start and End elements (so this will not prematurely exit)
 			return rel.NewArray(values...), nil
@@ -230,4 +243,14 @@ func parseXMLDFS(decoder *xml.Decoder) (rel.Value, error) {
 	}
 
 	return rel.NewArray(values...), nil
+}
+
+func xmlNameToArrai(name *xml.Name) string {
+	return name.Space + ":" + name.Local
+}
+
+// assume the string is in the format "namespace:localname"
+func xmlNameFromArrai(name string) xml.Name {
+	var s = strings.Split(name, ":")
+	return xml.Name{Local: s[1], Space: s[0]}
 }
