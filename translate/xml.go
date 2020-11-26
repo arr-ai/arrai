@@ -3,25 +3,25 @@ package translate
 import (
 	"bytes"
 	"encoding/xml"
+	"fmt"
 	"io"
-	"log"
 	"strings"
 
 	"github.com/arr-ai/arrai/rel"
 	"github.com/pkg/errors"
 )
 
-const ProcInst = "decl"
-const Directive = "directive"
-const CharData = "text"
-const Comment = "comment"
-const Element = "elem"
+const procInst = "decl"
+const directive = "directive"
+const charData = "text"
+const comment = "comment"
+const element = "elem"
 
-const TextKey = "text"
-const NameKey = "name"
-const TargetKey = "target"
-const AttributesKey = "attrs"
-const ChildrenKey = "children"
+const textKey = "text"
+const nameKey = "name"
+const targetKey = "target"
+const attributesKey = "attrs"
+const childrenKey = "children"
 
 func BytesXMLToArrai(bs []byte) (rel.Value, error) {
 	decoder := xml.NewDecoder(bytes.NewBuffer(bs))
@@ -60,8 +60,6 @@ func BytesXMLFromArrai(v rel.Value) (rel.Value, error) {
 	return rel.NewBytes(b.Bytes()), nil
 }
 
-// NOTE: kind of shabby, both panics and returns and error. inconsisistent error handling
-// panic due to MustGet(). Used to reduce LOC
 func unparseXMLDFS(v rel.Value) ([]xml.Token, error) {
 	var xmlTokens []xml.Token
 
@@ -76,40 +74,79 @@ func unparseXMLDFS(v rel.Value) ([]xml.Token, error) {
 			return nil, errors.New("value is not a tuple")
 		}
 
+		if tup.Names().Count() != 1 {
+			return nil, errors.New("tuple has multiple attributes")
+		}
+
 		// assume there is only a single attribute in the set
 		switch tup.Names().TheOne() {
-		case ProcInst:
-			mTup, ok := tup.MustGet(ProcInst).(rel.Tuple)
+		case procInst:
+			mTup, ok := tup.MustGet(procInst).(rel.Tuple)
 			if !ok {
 				return nil, errors.New("value is not a tuple")
 			}
 
-			target := mTup.MustGet(TargetKey)
-			text := mTup.MustGet(TextKey)
-			xmlTokens = append(xmlTokens, xml.ProcInst{Target: RawString(target), Inst: []byte(RawString(text))})
-		case Directive:
-			text := tup.MustGet(Directive)
-			var directive xml.Directive = []byte(RawString(text))
+			target, ok := mTup.Get(targetKey)
+			if !ok {
+				return nil, fmt.Errorf("attribute does not exist: %s", targetKey)
+			}
+			text, ok := mTup.Get(textKey)
+			if !ok {
+				return nil, fmt.Errorf("attribute does not exist: %s", textKey)
+			}
+			rawTarget, err := RawString(target)
+			if err != nil {
+				return nil, err
+			}
+			rawText, err := RawString(text)
+			if err != nil {
+				return nil, err
+			}
+			xmlTokens = append(xmlTokens, xml.ProcInst{Target: rawTarget, Inst: []byte(rawText)})
+		case directive:
+			text := tup.MustGet(directive)
+			rawText, err := RawString(text)
+			if err != nil {
+				return nil, err
+			}
+			var directive xml.Directive = []byte(rawText)
 			xmlTokens = append(xmlTokens, directive)
-		case Comment:
-			text := tup.MustGet(Comment)
-			var comment xml.Comment = []byte(RawString(text))
+		case comment:
+			text := tup.MustGet(comment)
+			rawText, err := RawString(text)
+			if err != nil {
+				return nil, err
+			}
+			var comment xml.Comment = []byte(rawText)
 			xmlTokens = append(xmlTokens, comment)
-		case CharData:
+		case charData:
 			// NOTE: for some reason the xml.Encoder escapes the CharData text
 			// https://golang.org/src/encoding/xml/marshal.go?s=7625:7671#L192
-			text := tup.MustGet(CharData)
-			var chardata xml.CharData = []byte(RawString(text))
+			text := tup.MustGet(charData)
+			rawText, err := RawString(text)
+			if err != nil {
+				return nil, err
+			}
+			var chardata xml.CharData = []byte(rawText)
 			xmlTokens = append(xmlTokens, chardata)
-		case Element:
-			tup, ok := tup.MustGet(Element).(rel.Tuple)
+		case element:
+			tup, ok := tup.MustGet(element).(rel.Tuple)
 			if !ok {
 				return nil, errors.New("value is not a tuple")
 			}
 
-			name := tup.MustGet(NameKey)
-			attrs := tup.MustGet(AttributesKey)
-			children := tup.MustGet(ChildrenKey)
+			name, ok := tup.Get(nameKey)
+			if !ok {
+				return nil, fmt.Errorf("attribute does not exist: %s", nameKey)
+			}
+			attrs, ok := tup.Get(attributesKey)
+			if !ok {
+				return nil, fmt.Errorf("attribute does not exist: %s", attributesKey)
+			}
+			children, ok := tup.Get(childrenKey)
+			if !ok {
+				return nil, fmt.Errorf("attribute does not exist: %s", childrenKey)
+			}
 
 			// load attributes
 			tAttrs, ok := attrs.(rel.Set)
@@ -124,14 +161,25 @@ func unparseXMLDFS(v rel.Value) ([]xml.Token, error) {
 					return nil, errors.New("attribute is not a tuple")
 				}
 				name := tup.Names().TheOne()
-				value := tup.MustGet(name)
+				value, ok := tup.Get(name)
+				if !ok {
+					return nil, fmt.Errorf("attribute does not exist: %s", name)
+				}
+				rawValue, err := RawString(value)
+				if err != nil {
+					return nil, err
+				}
 				xmlAttrs = append(xmlAttrs, xml.Attr{
 					Name:  xmlNameFromArrai(name),
-					Value: RawString(value),
+					Value: rawValue,
 				})
 			}
 
-			xmlName := xmlNameFromArrai(RawString(name))
+			rawName, err := RawString(name)
+			if err != nil {
+				return nil, err
+			}
+			xmlName := xmlNameFromArrai(rawName)
 
 			// start element dir
 			startelement := xml.StartElement{Name: xmlName, Attr: xmlAttrs}
@@ -154,20 +202,20 @@ func unparseXMLDFS(v rel.Value) ([]xml.Token, error) {
 
 // Helper function for printing
 // given value if {} -> "" or {ss} -> "ss"
-func RawString(v rel.Value) string {
+func RawString(v rel.Value) (string, error) {
 	set, ok := v.(rel.Set)
 	if !ok {
-		log.Fatal("value is not a set")
+		return "", errors.New("value is not a set")
 	}
 	str, ok := rel.AsString(set)
 	if !ok {
-		log.Fatal("set is not a string")
+		return "", errors.New("set is not a string")
 	}
 
-	return str.String()
+	return str.String(), nil
 }
 
-// NOTE: encoding/xml only handles well-formed xml. it does not validate the xml structure.
+// NOTE: encoding/xml only handles somewhat well-formed xml. it does not validate the xml structure.
 func parseXMLDFS(decoder *xml.Decoder) (rel.Value, error) {
 	values := []rel.Value{}
 
@@ -191,21 +239,21 @@ func parseXMLDFS(decoder *xml.Decoder) (rel.Value, error) {
 		switch t := token.(type) {
 		case xml.ProcInst:
 			tuple = rel.NewTuple(
-				rel.NewTupleAttr(ProcInst,
-					rel.NewStringAttr(TargetKey, []rune(t.Target)),
-					rel.NewStringAttr(TextKey, []rune(string(t.Inst))),
+				rel.NewTupleAttr(procInst,
+					rel.NewStringAttr(targetKey, []rune(t.Target)),
+					rel.NewStringAttr(textKey, []rune(string(t.Inst))),
 				),
 			)
 		case xml.Directive:
-			tuple = rel.NewTuple(rel.NewStringAttr(Directive, []rune(string(t))))
+			tuple = rel.NewTuple(rel.NewStringAttr(directive, []rune(string(t))))
 		case xml.CharData:
 			// ignore formatting new lines
 			if strings.Trim(string(t), " ") == "\n" {
 				continue
 			}
-			tuple = rel.NewTuple(rel.NewStringAttr(CharData, []rune(string(t))))
+			tuple = rel.NewTuple(rel.NewStringAttr(charData, []rune(string(t))))
 		case xml.Comment:
-			tuple = rel.NewTuple(rel.NewStringAttr(Comment, []rune(string(t))))
+			tuple = rel.NewTuple(rel.NewStringAttr(comment, []rune(string(t))))
 		case xml.StartElement:
 			// NOTE: xml.Token() automatically expands self-closing tags. According to:
 			// https://stackoverflow.com/questions/57494936/is-there-a-semantical-difference-between-tag-and-tag-tag-in-xml
@@ -229,10 +277,10 @@ func parseXMLDFS(decoder *xml.Decoder) (rel.Value, error) {
 				return nil, err
 			}
 
-			tuple = rel.NewTuple(rel.NewTupleAttr(Element,
-				rel.NewStringAttr(NameKey, []rune(xmlNameToArrai(&t.Name))),
-				rel.NewAttr(AttributesKey, attrSet),
-				rel.NewAttr(ChildrenKey, child),
+			tuple = rel.NewTuple(rel.NewTupleAttr(element,
+				rel.NewStringAttr(nameKey, []rune(xmlNameToArrai(&t.Name))),
+				rel.NewAttr(attributesKey, attrSet),
+				rel.NewAttr(childrenKey, child),
 			))
 		case xml.EndElement:
 			//  NOTE: xml.Token() guarantees matching Start and End elements (so this will not prematurely exit)
@@ -246,11 +294,21 @@ func parseXMLDFS(decoder *xml.Decoder) (rel.Value, error) {
 }
 
 func xmlNameToArrai(name *xml.Name) string {
-	return name.Space + ":" + name.Local
+	if len(name.Space) > 0 {
+		return name.Space + ":" + name.Local
+	}
+
+	return name.Local
 }
 
-// assume the string is in the format "namespace:localname"
+// XML names should only contain : as a namespace character https://www.w3.org/TR/xml/#NT-S
+// technically it can prepent a localname but i doubt authors would want to do that
+// assume the string is in the format "namespace:localname" or "localname" (if there is no namespace)
 func xmlNameFromArrai(name string) xml.Name {
 	var s = strings.Split(name, ":")
+	if len(s) == 1 {
+		return xml.Name{Local: s[0], Space: ""}
+	}
+
 	return xml.Name{Local: s[1], Space: s[0]}
 }
