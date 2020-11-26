@@ -19,3 +19,13 @@ yarn start
 ```
 
 The site will be served on http://localhost:3000.
+
+## Technologies
+
+The arr.ai website is built on and with:
+
+- [Docusaurus 2](https://v2.docusaurus.io/)
+- [Algolia DocSearch](https://docsearch.algolia.com/)
+- [Google Analytics](https://marketingplatform.google.com/about/analytics/)
+- [GitHub](https://github.com/arr-ai/arrai)
+- [Netlify](https://www.netlify.com/)
