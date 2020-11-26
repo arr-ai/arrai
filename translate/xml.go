@@ -23,10 +23,14 @@ const targetKey = "target"
 const attributesKey = "attrs"
 const childrenKey = "children"
 
-func BytesXMLToArrai(bs []byte) (rel.Value, error) {
+type DecodeConfig struct {
+	StripFormatting bool
+}
+
+func BytesXMLToArrai(bs []byte, config DecodeConfig) (rel.Value, error) {
 	decoder := xml.NewDecoder(bytes.NewBuffer(bs))
 
-	return parseXMLDFS(decoder)
+	return parseXMLDFS(decoder, config)
 }
 
 // NOTE: there are subtle differences in a full xml -> arrai -> xml cycle
@@ -216,7 +220,7 @@ func RawString(v rel.Value) (string, error) {
 }
 
 // NOTE: encoding/xml only handles somewhat well-formed xml. it does not validate the xml structure.
-func parseXMLDFS(decoder *xml.Decoder) (rel.Value, error) {
+func parseXMLDFS(decoder *xml.Decoder, config DecodeConfig) (rel.Value, error) {
 	values := []rel.Value{}
 
 	var token interface{}
@@ -248,7 +252,7 @@ func parseXMLDFS(decoder *xml.Decoder) (rel.Value, error) {
 			tuple = rel.NewTuple(rel.NewStringAttr(directive, []rune(string(t))))
 		case xml.CharData:
 			// ignore formatting new lines
-			if strings.Trim(string(t), " ") == "\n" {
+			if config.StripFormatting && strings.Trim(string(t), " ") == "\n" {
 				continue
 			}
 			tuple = rel.NewTuple(rel.NewStringAttr(charData, []rune(string(t))))
@@ -260,7 +264,7 @@ func parseXMLDFS(decoder *xml.Decoder) (rel.Value, error) {
 			// there is no semantic differnce between them
 
 			// recurse for child nodes
-			child, err := parseXMLDFS(decoder)
+			child, err := parseXMLDFS(decoder, config)
 			if err != nil {
 				return nil, err
 			}
