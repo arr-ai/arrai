@@ -1,6 +1,47 @@
 The `encoding` library provides functions to convert data into built-in arr.ai values.
 The following functions are available by accessing the `//encoding` attribute.
 
+## XML Encoding format
+
+| XML encoding | Arrai structure | golang "encoding/xml" struct type |
+|:-|:-|:-|
+| `<?xml version="1.0"?>` | `(decl: (target: 'xml', text: 'version="1.0"'))` | declaration |
+| `texthello` | `(text: "texthello")` | text |
+| `<!--helloworld-->` | `(comment: "helloworld")` | comment |
+| `<!DOCTYPE foo <!ELEMENT foo (#PCDATA)>>` | `(directive: 'DOCTYPE foo <!ELEMENT foo (#PCDATA)>')` | directive |
+| `<root><hello:node woot:id="test">Hello world!</hello:node></root>` | `[(elem: (attrs: {}, children: [(elem: (attrs: {('woot:id': 'test')}, children: [(text: 'Hello world!')], name: 'hello:node'))], name: 'root')), (text: '\n')]` | element |
+
+## `//encoding.xml.decode(xml <: string|bytes) <: array`
+
+`decode` takes either a `string` or `bytes` that represents a XML object and transforms it into an two-dimensional string array. By default, it does not strip formatting.
+
+Usage:
+
+| example | equals |
+|:-|:-|
+| `//encoding.xml.decode('<?xml version="1.0"?><root></root>')` | `[(decl: (target: 'xml', text: 'version="1.0"')), (elem: (attrs: {}, children: {}, name: 'root'))]` |
+
+## `//encoding.xml.decoder(strip_formatting <: bool) <: (\(csv <: string|bytes) <: array)`
+
+`decoder` takes a boolean used to configure decoding and returns the decode function. When true, the decoder will be configured to strip text which is just used for formatting (e.g. newlines and spaces).
+
+Usage:
+
+| example | equals |
+|:-|:-|
+| `//encoding.xml.decoder(true)('<?xml version="1.0"?>\n')` | `[(decl: (target: 'xml', text: 'version="1.0"'))` |
+| `//encoding.xml.decoder(false)('<?xml version="1.0"?>\n')` | `[(decl: (target: 'xml', text: 'version="1.0"')), (text: '\n')]` |
+
+## `//encoding.xml.encode(xml <: array) <: bytes`
+
+`encode` takes an array of tuples and converts it into a XML object.
+
+Usage:
+
+| example | equals |
+|:-|:-|
+| `//encoding.csv.encode([(decl: (target: 'xml', text: 'version="1.0"'))])` | `<?xml version="1.0"?>` |
+
 ## `//encoding.csv.decode(csv <: string|bytes) <: array`
 
 `decode` takes either a `string` or `bytes` that represents a CSV object and transforms it into an two-dimensional string array.
