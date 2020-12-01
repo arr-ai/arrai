@@ -4,7 +4,7 @@ import (
 	"testing"
 )
 
-func TestXMLEncode(t *testing.T) {
+func TestXMLEncode_declaration(t *testing.T) {
 	t.Parallel()
 
 	expected := `<<'<?xml version="1.0"?>'>>`
@@ -12,10 +12,55 @@ func TestXMLEncode(t *testing.T) {
 	AssertCodesEvalToSameValue(t, expected, `//encoding.xml.encode([(decl: (target: 'xml', text: 'version="1.0"'))])`)
 }
 
+func TestXMLEncode_element(t *testing.T) {
+	t.Parallel()
+
+	expected := `<<'<catalog>
+   <book id="bk101">
+      <author>Gambardella, Matthew</author>
+      <title>XML Developers Guide</title>
+      <genre>Computer</genre>
+      <price>44.95</price>
+      <publish_date>2000-10-01</publish_date>
+      <description>An in-depth look at creating applications with XML.</description>
+   </book>
+</catalog>
+'>>`
+
+	data := `[(elem: (attrs: {}, children: [(text: '\n   '), (elem: (attrs: {(id: 'bk101')}, children: [(text: '\n      '), (elem: (attrs: {}, children: [(text: 'Gambardella, Matthew')], name: 'author')), (text: '\n      '), (elem: (attrs: {}, children: [(text: 'XML Developers Guide')], name: 'title')), (text: '\n      '), (elem: (attrs: {}, children: [(text: 'Computer')], name: 'genre')), (text: '\n      '), (elem: (attrs: {}, children: [(text: '44.95')], name: 'price')), (text: '\n      '), (elem: (attrs: {}, children: [(text: '2000-10-01')], name: 'publish_date')), (text: '\n      '), (elem: (attrs: {}, children: [(text: 'An in-depth look at creating applications with XML.')], name: 'description')), (text: '\n   ')], name: 'book')), (text: '\n')], name: 'catalog')), (text: '\n')]`
+
+	AssertCodesEvalToSameValue(t, expected, `//encoding.xml.encode(`+data+`)`)
+}
+
+func TestXMLEncode_text(t *testing.T) {
+	t.Parallel()
+
+	expected := `<<'hello world'>>`
+
+	data := `[(text: 'hello world')]`
+	AssertCodesEvalToSameValue(t, expected, `//encoding.xml.encode(`+data+`)`)
+}
+
+func TestXMLEncode_comment(t *testing.T) {
+	t.Parallel()
+
+	expected := `<<'<!--hello world comment-->'>>`
+
+	data := `[(comment: 'hello world comment')]`
+	AssertCodesEvalToSameValue(t, expected, `//encoding.xml.encode(`+data+`)`)
+}
+
+func TestXMLEncode_directive(t *testing.T) {
+	t.Parallel()
+
+	expected := `<<'<?xml version="1.0"?>'>>`
+	AssertCodesEvalToSameValue(t, expected, `//encoding.xml.encode([(decl: (target: 'xml', text: 'version="1.0"'))])`)
+}
+
+//nolint:lll
 func TestXMLEncodeLarge(t *testing.T) {
 	t.Parallel()
 
-	// this broken
 	expected := `<<'<?xml version="1.0"?>
 <catalog>
    <book id="bk101">
@@ -69,12 +114,59 @@ func TestXMLDecode(t *testing.T) {
 	AssertCodesEvalToSameValue(t, expected, "//encoding.xml.decode('woop')")
 }
 
+func TestXMLDecode_element(t *testing.T) {
+	t.Parallel()
+
+	expected := `[(elem: (attrs: {}, children: [(text: '\n   '), (elem: (attrs: {(id: 'bk101')}, children: [(text: '\n      '), (elem: (attrs: {}, children: [(text: 'Gambardella, Matthew')], name: 'author')), (text: '\n      '), (elem: (attrs: {}, children: [(text: 'XML Developers Guide')], name: 'title')), (text: '\n      '), (elem: (attrs: {}, children: [(text: 'Computer')], name: 'genre')), (text: '\n      '), (elem: (attrs: {}, children: [(text: '44.95')], name: 'price')), (text: '\n      '), (elem: (attrs: {}, children: [(text: '2000-10-01')], name: 'publish_date')), (text: '\n      '), (elem: (attrs: {}, children: [(text: 'An in-depth look at creating applications with XML.')], name: 'description')), (text: '\n   ')], name: 'book')), (text: '\n')], name: 'catalog')), (text: '\n')]`
+
+	data := `<<'<catalog>
+   <book id="bk101">
+      <author>Gambardella, Matthew</author>
+      <title>XML Developers Guide</title>
+      <genre>Computer</genre>
+      <price>44.95</price>
+      <publish_date>2000-10-01</publish_date>
+      <description>An in-depth look at creating applications with XML.</description>
+   </book>
+</catalog>
+'>>`
+
+	AssertCodesEvalToSameValue(t, expected, `//encoding.xml.decode(`+data+`)`)
+}
+
+func TestXMLDecode_text(t *testing.T) {
+	t.Parallel()
+
+	expected := `[(text: 'hello world')]`
+	data := `<<'hello world'>>`
+
+	AssertCodesEvalToSameValue(t, expected, `//encoding.xml.decode(`+data+`)`)
+}
+
+func TestXMLDecode_comment(t *testing.T) {
+	t.Parallel()
+
+	expected := `[(comment: 'hello world comment')]`
+	data := `<<'<!--hello world comment-->'>>`
+
+	AssertCodesEvalToSameValue(t, expected, `//encoding.xml.decode(`+data+`)`)
+}
+
+func TestXMLDecode_directive(t *testing.T) {
+	t.Parallel()
+
+	expected := `[(decl: (target: 'xml', text: 'version="1.0"'))]`
+	data := `<<'<?xml version="1.0"?>'>>`
+	AssertCodesEvalToSameValue(t, expected, `//encoding.xml.decode(`+data+`)`)
+}
+
 func TestXMLDecode_error(t *testing.T) {
 	t.Parallel()
 
 	AssertCodeErrors(t, "", "//encoding.xml.decode(`<root>`)")
 }
 
+//nolint:lll
 func TestXMLDecoder_strip(t *testing.T) {
 	t.Parallel()
 
@@ -108,6 +200,7 @@ func TestXMLDecoder_strip(t *testing.T) {
 	AssertCodesEvalToSameValue(t, expected, "//encoding.xml.decoder(true)(`"+xml+"`)")
 }
 
+//nolint:lll
 func TestXMLDecoder_dont_strip(t *testing.T) {
 	t.Parallel()
 
@@ -147,6 +240,7 @@ func TestXMLDecoder_error(t *testing.T) {
 	AssertCodeErrors(t, "", "//encoding.xml.decoder(false)(`<root>`)")
 }
 
+//nolint:lll
 func TestXMLDecode_round_trip(t *testing.T) {
 	t.Parallel()
 
@@ -179,6 +273,5 @@ func TestXMLDecode_round_trip(t *testing.T) {
 	expected := `[(decl: (target: 'xml', text: 'version="1.0"')), (text: '\n'), (elem: (attrs: {}, children: [(text: '\n   '), (elem: (attrs: {(id: 'bk101')}, children: [(text: '\n      '), (elem: (attrs: {}, children: [(text: 'Gambardella, Matthew')], name: 'author')), (text: '\n      '), (elem: (attrs: {}, children: [(text: "XML Developers Guide")], name: 'title')), (text: '\n      '), (elem: (attrs: {}, children: [(text: 'Computer')], name: 'genre')), (text: '\n      '), (elem: (attrs: {}, children: [(text: '44.95')], name: 'price')), (text: '\n      '), (elem: (attrs: {}, children: [(text: '2000-10-01')], name: 'publish_date')), (text: '\n      '), (elem: (attrs: {}, children: [(text: 'An in-depth look at creating applications \n      with XML.')], name: 'description')), (text: '\n   ')], name: 'book')), (text: '\n   '), (elem: (attrs: {(id: 'bk112')}, children: [(text: '\n      '), (elem: (attrs: {}, children: [(text: 'Galos, Mike')], name: 'author')), (text: '\n      '), (elem: (attrs: {}, children: [(text: 'Visual Studio 7: A Comprehensive Guide')], name: 'title')), (text: '\n      '), (elem: (attrs: {}, children: [(text: 'Computer')], name: 'genre')), (text: '\n      '), (elem: (attrs: {}, children: [(text: '49.95')], name: 'price')), (text: '\n      '), (elem: (attrs: {}, children: [(text: '2001-04-16')], name: 'publish_date')), (text: '\n      '), (elem: (attrs: {}, children: [(text: 'Microsoft Visual Studio 7 is explored in depth,\n      looking at how Visual Basic, Visual C++, C#, and ASP+ are \n      integrated into a comprehensive development \n      environment.')], name: 'description')), (text: '\n   ')], name: 'book')), (text: '\n')], name: 'catalog')), (text: '\n')]`
 
 	AssertCodesEvalToSameValue(t, expected, "//encoding.xml.decode("+xml+")")
-	// this broken
 	AssertCodesEvalToSameValue(t, xml, "//encoding.xml.encode("+expected+")")
 }

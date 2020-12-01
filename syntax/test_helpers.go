@@ -45,7 +45,7 @@ func AssertCodesEvalToSameValueCtx(ctx context.Context, t *testing.T, expected, 
 	}
 	// log.Printf("code=%v, codeExpr=%v", code, codeExpr)
 	if !rel.AssertExprsEvalToSameValue(t, expectedExpr, value) {
-		t.Errorf("\nexpected: %s\ncode:     %s", expected, code)
+		t.Errorf("\nexpected: %s\ncode: %s", expected, code)
 		return false
 	}
 	return true
