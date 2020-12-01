@@ -21,16 +21,19 @@ Usage:
 |:-|:-|
 | `//encoding.xml.decode('<?xml version="1.0"?><root></root>')` | `[(decl: (target: 'xml', text: 'version="1.0"')), (elem: (attrs: {}, children: {}, name: 'root'))]` |
 
-## `//encoding.xml.decoder(strip_formatting <: bool) <: (\(csv <: string|bytes) <: array)`
+## `//encoding.xml.decoder(config <: (strip_formatting <: bool)) <: (\(csv <: string|bytes) <: array)`
 
-`decoder` takes a boolean used to configure decoding and returns the decode function. When true, the decoder will be configured to strip text which is just used for formatting (e.g. newlines and spaces).
+`decoder` takes a tuple used to configure decoding and returns the decoding function:
+| config | description |
+|:-|:-|
+| `strip_formatting` | Strips newline strings `'\n'` used only for xml file formatting |
 
 Usage:
 
 | example | equals |
 |:-|:-|
-| `//encoding.xml.decoder(true)('<?xml version="1.0"?>\n')` | `[(decl: (target: 'xml', text: 'version="1.0"'))` |
-| `//encoding.xml.decoder(false)('<?xml version="1.0"?>\n')` | `[(decl: (target: 'xml', text: 'version="1.0"')), (text: '\n')]` |
+| `//encoding.xml.decoder((strip_formatting: true))('<?xml version="1.0"?>\n')` | `[(decl: (target: 'xml', text: 'version="1.0"'))` |
+| `//encoding.xml.decoder((strip_formatting: false))('<?xml version="1.0"?>\n')` | `[(decl: (target: 'xml', text: 'version="1.0"')), (text: '\n')]` |
 
 ## `//encoding.xml.encode(xml <: array) <: bytes`
 

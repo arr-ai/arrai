@@ -23,11 +23,11 @@ const targetKey = "target"
 const attributesKey = "attrs"
 const childrenKey = "children"
 
-type DecodeConfig struct {
+type XMLDecodeConfig struct {
 	StripFormatting bool
 }
 
-func BytesXMLToArrai(bs []byte, config DecodeConfig) (rel.Value, error) {
+func BytesXMLToArrai(bs []byte, config XMLDecodeConfig) (rel.Value, error) {
 	decoder := xml.NewDecoder(bytes.NewBuffer(bs))
 
 	return parseXMLDFS(decoder, config)
@@ -220,7 +220,7 @@ func RawString(v rel.Value) (string, error) {
 }
 
 // NOTE: encoding/xml only handles somewhat well-formed xml. it does not validate the xml structure.
-func parseXMLDFS(decoder *xml.Decoder, config DecodeConfig) (rel.Value, error) {
+func parseXMLDFS(decoder *xml.Decoder, config XMLDecodeConfig) (rel.Value, error) {
 	values := []rel.Value{}
 
 	var token interface{}

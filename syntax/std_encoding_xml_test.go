@@ -7,11 +7,13 @@ import (
 func TestXMLEncode_declaration(t *testing.T) {
 	t.Parallel()
 
+	//nolint:goconst
 	expected := `<<'<?xml version="1.0"?>'>>`
 
 	AssertCodesEvalToSameValue(t, expected, `//encoding.xml.encode([(decl: (target: 'xml', text: 'version="1.0"'))])`)
 }
 
+//nolint:lll
 func TestXMLEncode_element(t *testing.T) {
 	t.Parallel()
 
@@ -114,6 +116,7 @@ func TestXMLDecode(t *testing.T) {
 	AssertCodesEvalToSameValue(t, expected, "//encoding.xml.decode('woop')")
 }
 
+//nolint:lll
 func TestXMLDecode_element(t *testing.T) {
 	t.Parallel()
 
@@ -197,7 +200,7 @@ func TestXMLDecoder_strip(t *testing.T) {
 
 	expected := `[(decl: (target: 'xml', text: 'version="1.0"')), (elem: (attrs: {}, children: [(elem: (attrs: {(id: 'bk101')}, children: [(elem: (attrs: {}, children: [(text: 'Gambardella, Matthew')], name: 'author')), (elem: (attrs: {}, children: [(text: "XML Developer's Guide")], name: 'title')), (elem: (attrs: {}, children: [(text: 'Computer')], name: 'genre')), (elem: (attrs: {}, children: [(text: '44.95')], name: 'price')), (elem: (attrs: {}, children: [(text: '2000-10-01')], name: 'publish_date')), (elem: (attrs: {}, children: [(text: 'An in-depth look at creating applications \n      with XML.')], name: 'description'))], name: 'book')), (elem: (attrs: {(id: 'bk112')}, children: [(elem: (attrs: {}, children: [(text: 'Galos, Mike')], name: 'author')), (elem: (attrs: {}, children: [(text: 'Visual Studio 7: A Comprehensive Guide')], name: 'title')), (elem: (attrs: {}, children: [(text: 'Computer')], name: 'genre')), (elem: (attrs: {}, children: [(text: '49.95')], name: 'price')), (elem: (attrs: {}, children: [(text: '2001-04-16')], name: 'publish_date')), (elem: (attrs: {}, children: [(text: 'Microsoft Visual Studio 7 is explored in depth,\n      looking at how Visual Basic, Visual C++, C#, and ASP+ are \n      integrated into a comprehensive development \n      environment.')], name: 'description'))], name: 'book'))], name: 'catalog'))]`
 
-	AssertCodesEvalToSameValue(t, expected, "//encoding.xml.decoder(true)(`"+xml+"`)")
+	AssertCodesEvalToSameValue(t, expected, "//encoding.xml.decoder((strip_formatting: true))(`"+xml+"`)")
 }
 
 //nolint:lll
@@ -231,13 +234,13 @@ func TestXMLDecoder_dont_strip(t *testing.T) {
 
 	expected := `[(decl: (target: 'xml', text: 'version="1.0"')), (text: '\n'), (elem: (attrs: {}, children: [(text: '\n   '), (elem: (attrs: {(id: 'bk101')}, children: [(text: '\n      '), (elem: (attrs: {}, children: [(text: 'Gambardella, Matthew')], name: 'author')), (text: '\n      '), (elem: (attrs: {}, children: [(text: "XML Developer's Guide")], name: 'title')), (text: '\n      '), (elem: (attrs: {}, children: [(text: 'Computer')], name: 'genre')), (text: '\n      '), (elem: (attrs: {}, children: [(text: '44.95')], name: 'price')), (text: '\n      '), (elem: (attrs: {}, children: [(text: '2000-10-01')], name: 'publish_date')), (text: '\n      '), (elem: (attrs: {}, children: [(text: 'An in-depth look at creating applications \n      with XML.')], name: 'description')), (text: '\n   ')], name: 'book')), (text: '\n   '), (elem: (attrs: {(id: 'bk112')}, children: [(text: '\n      '), (elem: (attrs: {}, children: [(text: 'Galos, Mike')], name: 'author')), (text: '\n      '), (elem: (attrs: {}, children: [(text: 'Visual Studio 7: A Comprehensive Guide')], name: 'title')), (text: '\n      '), (elem: (attrs: {}, children: [(text: 'Computer')], name: 'genre')), (text: '\n      '), (elem: (attrs: {}, children: [(text: '49.95')], name: 'price')), (text: '\n      '), (elem: (attrs: {}, children: [(text: '2001-04-16')], name: 'publish_date')), (text: '\n      '), (elem: (attrs: {}, children: [(text: 'Microsoft Visual Studio 7 is explored in depth,\n      looking at how Visual Basic, Visual C++, C#, and ASP+ are \n      integrated into a comprehensive development \n      environment.')], name: 'description')), (text: '\n   ')], name: 'book')), (text: '\n')], name: 'catalog')), (text: '\n')]`
 
-	AssertCodesEvalToSameValue(t, expected, "//encoding.xml.decoder(false)(`"+xml+"`)")
+	AssertCodesEvalToSameValue(t, expected, "//encoding.xml.decoder((strip_formatting: false))(`"+xml+"`)")
 }
 
 func TestXMLDecoder_error(t *testing.T) {
 	t.Parallel()
 
-	AssertCodeErrors(t, "", "//encoding.xml.decoder(false)(`<root>`)")
+	AssertCodeErrors(t, "", "//encoding.xml.decoder((strip_formatting: false))(`<root>`)")
 }
 
 //nolint:lll
