@@ -22,7 +22,7 @@ func stdEncodingXML() rel.Attr {
 				return nil, errors.Errorf("first arg to xml.decoder must be tuple, not %s", rel.ValueTypeAsString(config))
 			}
 
-			xmlConfig.StripFormatting = getConfigBool(configTuple, "strip_formatting")
+			xmlConfig.StripFormatting = getConfigBool(configTuple, "stripFormatting")
 
 			return rel.NewNativeFunction("decode", func(_ context.Context, v rel.Value) (rel.Value, error) {
 				return stdXMLDecode(v, xmlConfig)
@@ -35,12 +35,9 @@ func stdEncodingXML() rel.Attr {
 }
 
 func stdXMLDecode(v rel.Value, config translate.XMLDecodeConfig) (rel.Value, error) {
-	var bytes []byte
-	switch v := v.(type) {
-	case rel.String:
-		bytes = []byte(v.String())
-	case rel.Bytes:
-		bytes = v.Bytes()
+	bytes, ok := stdEncodingBytesOrStringAsUTF8(v)
+	if !ok {
+		return nil, errors.New("unhandled type for xml decoding")
 	}
 	return translate.BytesXMLToArrai(bytes, config)
 }

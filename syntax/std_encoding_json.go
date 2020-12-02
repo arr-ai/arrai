@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"fmt"
+	"errors"
 
 	"github.com/arr-ai/arrai/rel"
 	"github.com/arr-ai/arrai/translate"
@@ -14,14 +14,9 @@ func stdEncodingJSON() rel.Attr {
 	return rel.NewTupleAttr(
 		"json",
 		rel.NewNativeFunctionAttr("decode", func(_ context.Context, v rel.Value) (rel.Value, error) {
-			var bytes []byte
-			switch v := v.(type) {
-			case rel.String:
-				bytes = []byte(v.String())
-			case rel.Bytes:
-				bytes = v.Bytes()
-			default:
-				return nil, fmt.Errorf("unexpected arrai object type: %s", rel.ValueTypeAsString(v))
+			bytes, ok := stdEncodingBytesOrStringAsUTF8(v)
+			if !ok {
+				return nil, errors.New("unhandled type for json decoding")
 			}
 			return bytesJSONToArrai(bytes)
 		}),

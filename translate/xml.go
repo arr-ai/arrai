@@ -37,7 +37,6 @@ func BytesXMLToArrai(bs []byte, config XMLDecodeConfig) (rel.Value, error) {
 // 1. xml.CharData when written has escaped strings (looks like for http safety)
 // 2. Self-closing tags are automatically expanded
 func BytesXMLFromArrai(v rel.Value) (rel.Value, error) {
-	var xmlTokens []xml.Token
 	var b bytes.Buffer
 	encoder := xml.NewEncoder(&b)
 

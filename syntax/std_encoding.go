@@ -23,3 +23,17 @@ func stdEncodingProto() rel.Attr {
 		rel.NewAttr("descriptor", pb.StdProtobufDescriptor),
 	)
 }
+
+func stdEncodingBytesOrStringAsUTF8(v rel.Value) ([]byte, bool) {
+	var bytes []byte
+	switch v := v.(type) {
+	case rel.String:
+		bytes = []byte(v.String())
+	case rel.Bytes:
+		bytes = v.Bytes()
+	default:
+		return nil, false
+	}
+
+	return bytes, true
+}

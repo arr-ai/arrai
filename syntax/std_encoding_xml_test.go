@@ -103,7 +103,10 @@ func TestXMLEncode_error(t *testing.T) {
 	AssertCodeErrors(t, "", "//encoding.xml.encode(`:`)")
 	AssertCodeErrors(t, "", "//encoding.xml.encode(`<root></hi>`)")
 	AssertCodeErrors(t, "", "//encoding.xml.encode(`<?xx?>`)")
-	AssertCodeErrors(t, "", "//encoding.xml.encode(`<root></root>`)")
+	AssertCodeErrors(t, "", "//encoding.xml.encode(`<?xx?>`)")
+	AssertCodeErrors(t, "", "//encoding.xml.encode(hello)")
+	AssertCodeErrors(t, "", "//encoding.xml.encode(`<<'hel'>>`)")
+	AssertCodeErrors(t, "", "//encoding.xml.encode(`<<'[]'>>`)")
 }
 
 func TestXMLDecode(t *testing.T) {
