@@ -55,8 +55,9 @@ func TestXMLEncode_comment(t *testing.T) {
 func TestXMLEncode_directive(t *testing.T) {
 	t.Parallel()
 
-	expected := `<<'<?xml version="1.0"?>'>>`
-	AssertCodesEvalToSameValue(t, expected, `//encoding.xml.encode([(decl: (target: 'xml', text: 'version="1.0"'))])`)
+	expected := `<<'<!ATTLIST foo a CDATA #IMPLIED>'>>`
+	data := `[(directive: 'ATTLIST foo a CDATA #IMPLIED')]`
+	AssertCodesEvalToSameValue(t, expected, `//encoding.xml.encode(`+data+`)`)
 }
 
 //nolint:lll
@@ -158,8 +159,8 @@ func TestXMLDecode_comment(t *testing.T) {
 func TestXMLDecode_directive(t *testing.T) {
 	t.Parallel()
 
-	expected := `[(decl: (target: 'xml', text: 'version="1.0"'))]`
-	data := `<<'<?xml version="1.0"?>'>>`
+	data := `<<'<!ATTLIST foo a CDATA #IMPLIED>'>>`
+	expected := `[(directive: 'ATTLIST foo a CDATA #IMPLIED')]`
 	AssertCodesEvalToSameValue(t, expected, `//encoding.xml.decode(`+data+`)`)
 }
 
