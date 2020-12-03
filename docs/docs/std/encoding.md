@@ -3,13 +3,13 @@ The following functions are available by accessing the `//encoding` attribute.
 
 ## XML Encoding format
 
-| XML encoding | Arrai structure | golang "encoding/xml" struct type |
-|:-|:-|:-|
+| XML encoding | Arrai structure | golang "encoding/xml" struct type | Notes |
+|:-|:-|:-|:-|
 | `<?xml version="1.0"?>` | `(decl: (target: 'xml', text: 'version="1.0"'))` | declaration |
 | `texthello` | `(text: "texthello")` | text |
 | `<!--helloworld-->` | `(comment: "helloworld")` | comment |
 | `<!DOCTYPE foo <!ELEMENT foo (#PCDATA)>>` | `(directive: 'DOCTYPE foo <!ELEMENT foo (#PCDATA)>')` | directive |
-| `<root><hello:node woot:id="test">Hello world!</hello:node></root>` | `[(elem: (attrs: {}, children: [(elem: (attrs: {('woot:id': 'test')}, children: [(text: 'Hello world!')], name: 'hello:node'))], name: 'root')), (text: '\n')]` | element |
+| `<root><hello:node woot:id="test">Hello world!</hello:node></root>` | `[(elem: (children: [(elem: (attrs: {'woot:id': 'test'}, children: [(text: 'Hello world!')], name: 'hello:node'))], name: 'root')), (text: '\n')]` | element | attributes are optional dictionaries
 
 ## `//encoding.xml.decode(xml <: string|bytes) <: array`
 

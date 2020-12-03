@@ -5,6 +5,7 @@ import (
 	"encoding/xml"
 	"fmt"
 	"io"
+	"log"
 	"strings"
 
 	"github.com/arr-ai/arrai/rel"
@@ -142,40 +143,37 @@ func unparseXMLDFS(v rel.Value) ([]xml.Token, error) {
 			if !ok {
 				return nil, fmt.Errorf("attribute does not exist: %s", nameKey)
 			}
-			attrs, ok := tup.Get(attributesKey)
-			if !ok {
-				return nil, fmt.Errorf("attribute does not exist: %s", attributesKey)
-			}
 			children, ok := tup.Get(childrenKey)
 			if !ok {
 				return nil, fmt.Errorf("attribute does not exist: %s", childrenKey)
 			}
+			// attributes are ommited if empty
+			attrs, attrOk := tup.Get(attributesKey)
+			xmlAttrs := []xml.Attr{}
 
 			// load attributes
-			tAttrs, ok := attrs.(rel.Set)
-			if !ok {
-				return nil, errors.New("attributes is not a set")
-			}
-			xmlAttrs := []xml.Attr{}
-			enum := tAttrs.Enumerator()
-			for enum.MoveNext() {
-				tup, ok := enum.Current().(rel.Tuple)
+			if attrOk {
+				tAttrs, ok := attrs.(rel.Dict)
+				log.Print(tAttrs)
 				if !ok {
-					return nil, errors.New("attribute is not a tuple")
+					return nil, errors.New("attributes is not a dictionary")
 				}
-				name := tup.Names().TheOne()
-				value, ok := tup.Get(name)
-				if !ok {
-					return nil, fmt.Errorf("attribute does not exist: %s", name)
+				enum := tAttrs.DictEnumerator()
+				for enum.MoveNext() {
+					key, value := enum.Current()
+					rawKey, err := RawString(key)
+					if err != nil {
+						return nil, err
+					}
+					rawValue, err := RawString(value)
+					if err != nil {
+						return nil, err
+					}
+					xmlAttrs = append(xmlAttrs, xml.Attr{
+						Name:  xmlNameFromArrai(rawKey),
+						Value: rawValue,
+					})
 				}
-				rawValue, err := RawString(value)
-				if err != nil {
-					return nil, err
-				}
-				xmlAttrs = append(xmlAttrs, xml.Attr{
-					Name:  xmlNameFromArrai(name),
-					Value: rawValue,
-				})
 			}
 
 			rawName, err := RawString(name)
@@ -269,22 +267,28 @@ func parseXMLDFS(decoder *xml.Decoder, config XMLDecodeConfig) (rel.Value, error
 			}
 
 			// parse attributes
-			attrs := []rel.Value{}
+			xmlAttrs := []rel.DictEntryTuple{}
 			for _, attr := range t.Attr {
-				attrs = append(attrs, rel.NewTuple(
-					rel.NewStringAttr(xmlNameToArrai(&attr.Name), []rune(attr.Value)),
+				xmlAttrs = append(xmlAttrs, rel.NewDictEntryTuple(
+					rel.NewString([]rune(xmlNameToArrai(&attr.Name))),
+					rel.NewString([]rune(attr.Value)),
 				))
 			}
-			attrSet, err := rel.NewSet(attrs...)
+			xmlAttrDict, err := rel.NewDict(false, xmlAttrs...)
 			if err != nil {
 				return nil, err
 			}
 
-			tuple = rel.NewTuple(rel.NewTupleAttr(element,
-				rel.NewStringAttr(nameKey, []rune(xmlNameToArrai(&t.Name))),
-				rel.NewAttr(attributesKey, attrSet),
-				rel.NewAttr(childrenKey, child),
-			))
+			// element tuple attributes
+			attrList := []rel.Attr{}
+			attrList = append(attrList, rel.NewStringAttr(nameKey, []rune(xmlNameToArrai(&t.Name))))
+			attrList = append(attrList, rel.NewAttr(childrenKey, child))
+			// add attributes if there are some
+			if xmlAttrDict.IsTrue() {
+				attrList = append(attrList, rel.NewAttr(attributesKey, xmlAttrDict))
+			}
+
+			tuple = rel.NewTuple(rel.NewTupleAttr(element, attrList...))
 		case xml.EndElement:
 			//  NOTE: xml.Token() guarantees matching Start and End elements (so this will not prematurely exit)
 			return rel.NewArray(values...), nil
