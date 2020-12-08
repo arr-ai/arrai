@@ -12,7 +12,7 @@ func stdEncodingYAML() rel.Attr {
 	return rel.NewTupleAttr(
 		"yaml",
 		rel.NewNativeFunctionAttr("decode", func(_ context.Context, v rel.Value) (rel.Value, error) {
-			bytes, ok := stdEncodingBytesOrStringAsUTF8(v)
+			bytes, ok := bytesOrStringAsUTF8(v)
 			if !ok {
 				return nil, errors.New("unhandled type for yaml decoding")
 			}

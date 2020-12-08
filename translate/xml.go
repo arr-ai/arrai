@@ -5,10 +5,10 @@ import (
 	"encoding/xml"
 	"fmt"
 	"io"
-	"log"
 	"strings"
 
 	"github.com/arr-ai/arrai/rel"
+	"github.com/arr-ai/arrai/tools"
 	"github.com/pkg/errors"
 )
 
@@ -31,10 +31,10 @@ type XMLDecodeConfig struct {
 func BytesXMLToArrai(bs []byte, config XMLDecodeConfig) (rel.Value, error) {
 	decoder := xml.NewDecoder(bytes.NewBuffer(bs))
 
-	return parseXMLDFS(decoder, config)
+	return parseXML(decoder, config)
 }
 
-// NOTE: there are subtle differences in a full xml -> arrai -> xml cycle
+// NOTE: There are subtle differences in a full XML -> Arr.ai -> XML cycle:
 // 1. xml.CharData when written has escaped strings (looks like for http safety)
 // 2. Self-closing tags are automatically expanded
 func BytesXMLFromArrai(v rel.Value) (rel.Value, error) {
@@ -42,7 +42,7 @@ func BytesXMLFromArrai(v rel.Value) (rel.Value, error) {
 	encoder := xml.NewEncoder(&b)
 
 	// generate tokens from arrai rel.Value
-	xmlTokens, err := unparseXMLDFS(v)
+	xmlTokens, err := unparseXML(v)
 	if err != nil {
 		return nil, err
 	}
@@ -55,7 +55,6 @@ func BytesXMLFromArrai(v rel.Value) (rel.Value, error) {
 		}
 	}
 
-	// flush everything into the buffer
 	err = encoder.Flush()
 	if err != nil {
 		return nil, err
@@ -64,18 +63,18 @@ func BytesXMLFromArrai(v rel.Value) (rel.Value, error) {
 	return rel.NewBytes(b.Bytes()), nil
 }
 
-func unparseXMLDFS(v rel.Value) ([]xml.Token, error) {
+func unparseXML(v rel.Value) ([]xml.Token, error) {
 	var xmlTokens []xml.Token
 
 	arr, ok := rel.AsArray(v)
 	if !ok {
-		return nil, errors.New("node is not an array")
+		return nil, errors.Errorf("value must be an array, not %s: %v", rel.ValueTypeAsString(v), v)
 	}
 
 	for _, val := range arr.Values() {
 		tup, ok := val.(rel.Tuple)
 		if !ok {
-			return nil, errors.New("value is not a tuple")
+			return nil, errors.Errorf("value must be tuple, not %s: %v", rel.ValueTypeAsString(val), val)
 		}
 
 		if tup.Names().Count() != 1 {
@@ -85,9 +84,10 @@ func unparseXMLDFS(v rel.Value) ([]xml.Token, error) {
 		// assume there is only a single attribute in the set
 		switch tup.Names().TheOne() {
 		case procInst:
-			mTup, ok := tup.MustGet(procInst).(rel.Tuple)
+			val := tup.MustGet(procInst)
+			mTup, ok := val.(rel.Tuple)
 			if !ok {
-				return nil, errors.New("value is not a tuple")
+				return nil, errors.Errorf("value must be tuple, not %s: %v", rel.ValueTypeAsString(val), val)
 			}
 
 			target, ok := mTup.Get(targetKey)
@@ -98,28 +98,28 @@ func unparseXMLDFS(v rel.Value) ([]xml.Token, error) {
 			if !ok {
 				return nil, fmt.Errorf("attribute does not exist: %s", textKey)
 			}
-			rawTarget, err := RawString(target)
-			if err != nil {
-				return nil, err
+			rawTarget, ok := tools.ValueAsString(target)
+			if !ok {
+				return nil, fmt.Errorf("value is cannot be converted to string: %s", target)
 			}
-			rawText, err := RawString(text)
-			if err != nil {
-				return nil, err
+			rawText, ok := tools.ValueAsString(text)
+			if !ok {
+				return nil, fmt.Errorf("value is cannot be converted to string: %s", text)
 			}
 			xmlTokens = append(xmlTokens, xml.ProcInst{Target: rawTarget, Inst: []byte(rawText)})
 		case directive:
 			text := tup.MustGet(directive)
-			rawText, err := RawString(text)
-			if err != nil {
-				return nil, err
+			rawText, ok := tools.ValueAsString(text)
+			if !ok {
+				return nil, fmt.Errorf("value is cannot be converted to string: %s", text)
 			}
 			var directive xml.Directive = []byte(rawText)
 			xmlTokens = append(xmlTokens, directive)
 		case comment:
 			text := tup.MustGet(comment)
-			rawText, err := RawString(text)
-			if err != nil {
-				return nil, err
+			rawText, ok := tools.ValueAsString(text)
+			if !ok {
+				return nil, fmt.Errorf("value is cannot be converted to string: %s", text)
 			}
 			var comment xml.Comment = []byte(rawText)
 			xmlTokens = append(xmlTokens, comment)
@@ -127,16 +127,17 @@ func unparseXMLDFS(v rel.Value) ([]xml.Token, error) {
 			// NOTE: for some reason the xml.Encoder escapes the CharData text
 			// https://golang.org/src/encoding/xml/marshal.go?s=7625:7671#L192
 			text := tup.MustGet(charData)
-			rawText, err := RawString(text)
-			if err != nil {
-				return nil, err
+			rawText, ok := tools.ValueAsString(text)
+			if !ok {
+				return nil, fmt.Errorf("value is cannot be converted to string: %s", text)
 			}
 			var chardata xml.CharData = []byte(rawText)
 			xmlTokens = append(xmlTokens, chardata)
 		case element:
-			tup, ok := tup.MustGet(element).(rel.Tuple)
+			val := tup.MustGet(element)
+			tup, ok := val.(rel.Tuple)
 			if !ok {
-				return nil, errors.New("value is not a tuple")
+				return nil, errors.Errorf("value must be tuple, not %s: %v", rel.ValueTypeAsString(val), val)
 			}
 
 			name, ok := tup.Get(nameKey)
@@ -147,27 +148,26 @@ func unparseXMLDFS(v rel.Value) ([]xml.Token, error) {
 			if !ok {
 				return nil, fmt.Errorf("attribute does not exist: %s", childrenKey)
 			}
-			// attributes are ommited if empty
+			// attributes are omitted if empty
 			attrs, attrOk := tup.Get(attributesKey)
 			xmlAttrs := []xml.Attr{}
 
 			// load attributes
 			if attrOk {
 				tAttrs, ok := attrs.(rel.Dict)
-				log.Print(tAttrs)
 				if !ok {
-					return nil, errors.New("attributes is not a dictionary")
+					return nil, errors.Errorf("value must be a dictionary, not %s: %v", rel.ValueTypeAsString(attrs), attrs)
 				}
 				enum := tAttrs.DictEnumerator()
 				for enum.MoveNext() {
 					key, value := enum.Current()
-					rawKey, err := RawString(key)
-					if err != nil {
-						return nil, err
+					rawKey, ok := tools.ValueAsString(key)
+					if !ok {
+						return nil, fmt.Errorf("value is cannot be converted to string: %s", key)
 					}
-					rawValue, err := RawString(value)
-					if err != nil {
-						return nil, err
+					rawValue, ok := tools.ValueAsString(value)
+					if !ok {
+						return nil, fmt.Errorf("value is cannot be converted to string: %s", value)
 					}
 					xmlAttrs = append(xmlAttrs, xml.Attr{
 						Name:  xmlNameFromArrai(rawKey),
@@ -176,9 +176,9 @@ func unparseXMLDFS(v rel.Value) ([]xml.Token, error) {
 				}
 			}
 
-			rawName, err := RawString(name)
-			if err != nil {
-				return nil, err
+			rawName, ok := tools.ValueAsString(name)
+			if !ok {
+				return nil, fmt.Errorf("value is cannot be converted to string: %s", name)
 			}
 			xmlName := xmlNameFromArrai(rawName)
 
@@ -187,7 +187,7 @@ func unparseXMLDFS(v rel.Value) ([]xml.Token, error) {
 			xmlTokens = append(xmlTokens, startelement)
 
 			// parse child nodes
-			childTokens, err := unparseXMLDFS(children)
+			childTokens, err := unparseXML(children)
 			if err != nil {
 				return nil, err
 			}
@@ -201,23 +201,9 @@ func unparseXMLDFS(v rel.Value) ([]xml.Token, error) {
 	return xmlTokens, nil
 }
 
-// Helper function for printing
-// given value if {} -> "" or {ss} -> "ss"
-func RawString(v rel.Value) (string, error) {
-	set, ok := v.(rel.Set)
-	if !ok {
-		return "", errors.New("value is not a set")
-	}
-	str, ok := rel.AsString(set)
-	if !ok {
-		return "", errors.New("set is not a string")
-	}
-
-	return str.String(), nil
-}
-
-// NOTE: encoding/xml only handles somewhat well-formed xml. it does not validate the xml structure.
-func parseXMLDFS(decoder *xml.Decoder, config XMLDecodeConfig) (rel.Value, error) {
+// Parses xml via the golang std library "encoding/xml" tokeniser into an arrai structure.
+// NOTE: encoding/xml only handles well-formed xml. It does not validate the xml structure.
+func parseXML(decoder *xml.Decoder, config XMLDecodeConfig) (rel.Value, error) {
 	values := []rel.Value{}
 
 	var token interface{}
@@ -231,7 +217,6 @@ func parseXMLDFS(decoder *xml.Decoder, config XMLDecodeConfig) (rel.Value, error
 		}
 
 		if err != nil {
-			// something fishy happened
 			return nil, err
 		}
 
@@ -261,7 +246,7 @@ func parseXMLDFS(decoder *xml.Decoder, config XMLDecodeConfig) (rel.Value, error
 			// there is no semantic differnce between them
 
 			// recurse for child nodes
-			child, err := parseXMLDFS(decoder, config)
+			child, err := parseXML(decoder, config)
 			if err != nil {
 				return nil, err
 			}

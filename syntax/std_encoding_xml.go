@@ -35,7 +35,7 @@ func stdEncodingXML() rel.Attr {
 }
 
 func stdXMLDecode(v rel.Value, config translate.XMLDecodeConfig) (rel.Value, error) {
-	bytes, ok := stdEncodingBytesOrStringAsUTF8(v)
+	bytes, ok := bytesOrStringAsUTF8(v)
 	if !ok {
 		return nil, errors.New("unhandled type for xml decoding")
 	}

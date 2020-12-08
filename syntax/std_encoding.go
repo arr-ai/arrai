@@ -24,16 +24,13 @@ func stdEncodingProto() rel.Attr {
 	)
 }
 
-func stdEncodingBytesOrStringAsUTF8(v rel.Value) ([]byte, bool) {
-	var bytes []byte
+func bytesOrStringAsUTF8(v rel.Value) ([]byte, bool) {
 	switch v := v.(type) {
 	case rel.String:
-		bytes = []byte(v.String())
+		return []byte(v.String()), true
 	case rel.Bytes:
-		bytes = v.Bytes()
+		return v.Bytes(), true
 	default:
 		return nil, false
 	}
-
-	return bytes, true
 }
