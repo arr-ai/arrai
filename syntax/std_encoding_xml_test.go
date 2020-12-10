@@ -5,14 +5,14 @@ import (
 )
 
 //nolint:lll
-const arraiData = `[(decl: (target: 'xml', text: 'version="1.0"')), (text: '\n'), (elem: (attrs: {(name: 'xmlns', text: 'doop')}, children: [(text: '\n   '), (elem: (attrs: {(name: 'id', text: 'bk101'), (name: 'xmlns', text: 'woop')}, children: [(text: '\n      '), (elem: (children: [(text: 'yesman')], name: 'author', ns: 'woop')), (text: '\n      '), (elem: (children: [(text: 'An in-depth look at creating applications \n      with XML.')], name: 'description', ns: 'woop')), (text: '\n   ')], name: 'book', ns: 'woop')), (text: '\n')], name: 'catalog', ns: 'doop')), (text: '\n')]`
+const arraiData = `[(decl: (target: 'xml', text: 'version="1.0"')), (text: '\n'), (elem: (attrs: {(name: 'xmlns', text: 'doop')}, children: [(text: '\n   '), (elem: (attrs: {(name: 'xmlns', text: 'woop')}, children: [(text: '\n      '), (elem: (attrs: {(name: 'id', text: 'bk101')}, children: [(text: 'yesman')], name: 'author', ns: 'woop')), (text: '\n      '), (elem: (children: [(text: 'An in-depth look at creating applications \n      with XML.')], name: 'description', ns: 'woop')), (text: '\n   ')], name: 'book', ns: 'woop')), (text: '\n')], name: 'catalog', ns: 'doop')), (text: '\n')]`
 
 //nolint:lll
-const strippedArraiData = `[(decl: (target: 'xml', text: 'version="1.0"')), (elem: (attrs: {(name: 'xmlns', text: 'doop')}, children: [(elem: (attrs: {(name: 'id', text: 'bk101'), (name: 'xmlns', text: 'woop')}, children: [(elem: (children: [(text: 'yesman')], name: 'author', ns: 'woop')), (elem: (children: [(text: 'An in-depth look at creating applications \n      with XML.')], name: 'description', ns: 'woop'))], name: 'book', ns: 'woop'))], name: 'catalog', ns: 'doop'))]`
+const strippedArraiData = `[(decl: (target: 'xml', text: 'version="1.0"')), (elem: (attrs: {(name: 'xmlns', text: 'doop')}, children: [(elem: (attrs: {(name: 'xmlns', text: 'woop')}, children: [(elem: (attrs: {(name: 'id', text: 'bk101')}, children: [(text: 'yesman')], name: 'author', ns: 'woop')), (elem: (children: [(text: 'An in-depth look at creating applications \n      with XML.')], name: 'description', ns: 'woop'))], name: 'book', ns: 'woop'))], name: 'catalog', ns: 'doop'))]`
 const xmlData = `<<'<?xml version="1.0"?>
 <catalog xmlns="doop">
-   <book xmlns="woop" id="bk101">
-      <author>yesman</author>
+   <book xmlns="woop">
+      <author id="bk101">yesman</author>
       <description>An in-depth look at creating applications 
       with XML.</description>
    </book>
@@ -127,6 +127,37 @@ func TestXMLDecode_directive(t *testing.T) {
 
 	data := `<<'<!ATTLIST foo a CDATA #IMPLIED>'>>`
 	expected := `[(directive: 'ATTLIST foo a CDATA #IMPLIED')]`
+	AssertCodesEvalToSameValue(t, expected, `//encoding.xml.decode(`+data+`)`)
+}
+
+//nolint:lll
+// children node inherits parent's implicit namespace
+func TestXMLDecode_implicitNamespace(t *testing.T) {
+	t.Parallel()
+
+	data := `<<'<catalog xmlns="doop"><book>harry potter</book></catalog>'>>`
+	expected := `[(elem: (attrs: {(name: 'xmlns', text: 'doop')}, children: [(elem: (children: [(text: 'harry potter')], name: 'book', ns: 'doop'))], name: 'catalog', ns: 'doop'))]`
+	AssertCodesEvalToSameValue(t, expected, `//encoding.xml.decode(`+data+`)`)
+}
+
+//nolint:lll
+// parent node uses explicit namespace
+func TestXMLDecode_explicitNamespace(t *testing.T) {
+	t.Parallel()
+
+	data := `<<'<hello:catalog xmlns:hello="doop"><book>harry potter</book></hello:catalog>'>>`
+	expected := `[(elem: (attrs: {(name: 'hello', ns: 'xmlns', text: 'doop')}, children: [(elem: (children: [(text: 'harry potter')], name: 'book'))], name: 'catalog', ns: 'doop'))]`
+	AssertCodesEvalToSameValue(t, expected, `//encoding.xml.decode(`+data+`)`)
+}
+
+//nolint:lll
+// children node inherits parent's implicit namespace
+// parent node uses explicit namespace
+func TestXMLDecode_dualNamespace(t *testing.T) {
+	t.Parallel()
+
+	data := `<<'<hello:catalog xmlns:hello="doop" xmlns="maaw"><book>harry potter</book></hello:catalog>'>>`
+	expected := `[(elem: (attrs: {(name: 'hello', ns: 'xmlns', text: 'doop'), (name: 'xmlns', text: 'maaw')}, children: [(elem: (children: [(text: 'harry potter')], name: 'book', ns: 'maaw'))], name: 'catalog', ns: 'doop'))]`
 	AssertCodesEvalToSameValue(t, expected, `//encoding.xml.decode(`+data+`)`)
 }
 

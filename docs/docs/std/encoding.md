@@ -3,13 +3,15 @@ The following functions are available by accessing the `//encoding` attribute.
 
 ## XML Encoding format
 
+NOTE: Currently the XML transform does not support documents with explicit namespaces.
+
 | XML encoding | Arrai structure | golang "encoding/xml" struct type | Notes |
 |:-|:-|:-|:-|
 | `<?xml version="1.0"?>` | `(decl: (target: 'xml', text: 'version="1.0"'))` | declaration |
 | `texthello` | `(text: "texthello")` | text |
 | `<!--helloworld-->` | `(comment: "helloworld")` | comment |
 | `<!DOCTYPE foo <!ELEMENT foo (#PCDATA)>>` | `(directive: 'DOCTYPE foo <!ELEMENT foo (#PCDATA)>')` | directive |
-| `<root><hello:node woot:id="test">Hello world!</hello:node></root>` | `[(elem: (children: [(elem: (attrs: {'woot:id': 'test'}, children: [(text: 'Hello world!')], name: 'hello:node'))], name: 'root')), (text: '\n')]` | element | attributes are optional dictionaries
+| `<root><node xmlns="space.com" woot:id="test">Hello world!</node></root>` | `[(elem: (children: [(elem: (attrs: {(name: 'id', ns: 'woot', text: 'test'), (name: 'xmlns', text: 'space.com')}, children: [(text: 'Hello world!')], name: 'node', ns: 'space.com'))], name: 'root'))]` | element | attributes are optional sets. elements have an optional namespace parameter `ns` |
 
 ## `//encoding.xml.decode(xml <: string|bytes) <: array`
 
@@ -19,7 +21,7 @@ Usage:
 
 | example | equals |
 |:-|:-|
-| `//encoding.xml.decode('<?xml version="1.0"?><root></root>')` | `[(decl: (target: 'xml', text: 'version="1.0"')), (elem: (attrs: {}, children: {}, name: 'root'))]` |
+| `//encoding.xml.decode('<?xml version="1.0"?><root></root>')` | `[(decl: (target: 'xml', text: 'version="1.0"')), (elem: (children: {}, name: 'root'))]` |
 
 ## `//encoding.xml.decoder(config <: (stripFormatting <: bool)) <: (\(csv <: string|bytes) <: array)`
 

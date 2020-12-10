@@ -25,6 +25,9 @@ const targetKey = "target"
 const attributesKey = "attrs"
 const childrenKey = "children"
 
+// NOTE: Currently the XML transform does not support documents with explicit namespaces.
+// NOTE: A full cycle from XML -> Arr.ai -> XML reproduces semantically similar documents
+//       with possibly different content.
 type XMLDecodeConfig struct {
 	StripFormatting bool
 }
@@ -35,9 +38,6 @@ func BytesXMLToArrai(bs []byte, config XMLDecodeConfig) (rel.Value, error) {
 	return parseXML(decoder, config)
 }
 
-// NOTE: There are subtle differences in a full XML -> Arr.ai -> XML cycle:
-// 1. xml.CharData when written has escaped strings (looks like for http safety)
-// 2. Self-closing tags are automatically expanded
 func BytesXMLFromArrai(v rel.Value) (rel.Value, error) {
 	var b bytes.Buffer
 	encoder := xml.NewEncoder(&b)
@@ -241,7 +241,6 @@ func parseXML(decoder *xml.Decoder, config XMLDecodeConfig) (rel.Value, error) {
 	for {
 		token, err = decoder.Token()
 		if err == io.EOF {
-			// end of file (break out of loop) (this is fine)
 			break
 		}
 
@@ -250,7 +249,6 @@ func parseXML(decoder *xml.Decoder, config XMLDecodeConfig) (rel.Value, error) {
 		}
 
 		var tuple rel.Tuple
-		// otherwise token should not be nil
 		switch t := token.(type) {
 		case xml.ProcInst:
 			tuple = rel.NewTuple(
