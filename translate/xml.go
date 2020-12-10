@@ -20,6 +20,7 @@ const element = "elem"
 
 const textKey = "text"
 const nameKey = "name"
+const nsKey = "ns"
 const targetKey = "target"
 const attributesKey = "attrs"
 const childrenKey = "children"
@@ -154,24 +155,48 @@ func unparseXML(v rel.Value) ([]xml.Token, error) {
 
 			// load attributes
 			if attrOk {
-				tAttrs, ok := attrs.(rel.Dict)
+				tAttrs, ok := attrs.(rel.Set)
 				if !ok {
-					return nil, errors.Errorf("value must be a dictionary, not %s: %v", rel.ValueTypeAsString(attrs), attrs)
+					return nil, errors.Errorf("value must be a set, not %s: %v", rel.ValueTypeAsString(attrs), attrs)
 				}
-				enum := tAttrs.DictEnumerator()
+				enum := tAttrs.Enumerator()
 				for enum.MoveNext() {
-					key, value := enum.Current()
-					rawKey, ok := tools.ValueAsString(key)
+					tup, ok := enum.Current().(rel.Tuple)
 					if !ok {
-						return nil, fmt.Errorf("value is cannot be converted to string: %s", key)
+						return nil, errors.Errorf("value must be tuple, not %s: %v", rel.ValueTypeAsString(tup), tup)
 					}
-					rawValue, ok := tools.ValueAsString(value)
+					tupName, ok := tup.Get(nameKey)
 					if !ok {
-						return nil, fmt.Errorf("value is cannot be converted to string: %s", value)
+						return nil, fmt.Errorf("tuple missing name attribute")
 					}
+					tupValue, ok := tup.Get(textKey)
+					if !ok {
+						return nil, fmt.Errorf("tuple missing value attribute")
+					}
+					tupNS, ok := tup.Get(nsKey)
+					if !ok {
+						tupNS = rel.NewString([]rune(""))
+					}
+
+					xmlValue, ok := tools.ValueAsString(tupValue)
+					if !ok {
+						return nil, fmt.Errorf("value is cannot be converted to string: %s", tupValue)
+					}
+					xmlName, ok := tools.ValueAsString(tupName)
+					if !ok {
+						return nil, fmt.Errorf("value is cannot be converted to string: %s", tupName)
+					}
+					xmlNS, ok := tools.ValueAsString(tupNS)
+					if !ok {
+						return nil, fmt.Errorf("value is cannot be converted to string: %s", tupNS)
+					}
+
 					xmlAttrs = append(xmlAttrs, xml.Attr{
-						Name:  xmlNameFromArrai(rawKey),
-						Value: rawValue,
+						Name: xml.Name{
+							Local: xmlName,
+							Space: xmlNS,
+						},
+						Value: xmlValue,
 					})
 				}
 			}
@@ -180,9 +205,13 @@ func unparseXML(v rel.Value) ([]xml.Token, error) {
 			if !ok {
 				return nil, fmt.Errorf("value is cannot be converted to string: %s", name)
 			}
-			xmlName := xmlNameFromArrai(rawName)
+			// NOTE: namespace does not need to be populated because the encoding/xml does not handle xml prefixes correctly.
+			// namespace attributes are parsed in the attributes tuple
+			xmlName := xml.Name{
+				Local: rawName,
+				Space: "",
+			}
 
-			// start element dir
 			startelement := xml.StartElement{Name: xmlName, Attr: xmlAttrs}
 			xmlTokens = append(xmlTokens, startelement)
 
@@ -245,32 +274,39 @@ func parseXML(decoder *xml.Decoder, config XMLDecodeConfig) (rel.Value, error) {
 			// https://stackoverflow.com/questions/57494936/is-there-a-semantical-difference-between-tag-and-tag-tag-in-xml
 			// there is no semantic differnce between them
 
+			// parse attributes
+			xmlAttrs := []rel.Value{}
+			for _, attr := range t.Attr {
+				tupList := []rel.Attr{}
+				tupList = append(tupList, rel.NewStringAttr(nameKey, []rune(attr.Name.Local)))
+				tupList = append(tupList, rel.NewStringAttr(textKey, []rune(attr.Value)))
+				if len(attr.Name.Space) > 0 {
+					tupList = append(tupList, rel.NewStringAttr(nsKey, []rune(attr.Name.Space)))
+				}
+				xmlAttrs = append(xmlAttrs, rel.NewTuple(tupList...))
+			}
+
 			// recurse for child nodes
 			child, err := parseXML(decoder, config)
 			if err != nil {
 				return nil, err
 			}
 
-			// parse attributes
-			xmlAttrs := []rel.DictEntryTuple{}
-			for _, attr := range t.Attr {
-				xmlAttrs = append(xmlAttrs, rel.NewDictEntryTuple(
-					rel.NewString([]rune(xmlNameToArrai(&attr.Name))),
-					rel.NewString([]rune(attr.Value)),
-				))
-			}
-			xmlAttrDict, err := rel.NewDict(false, xmlAttrs...)
+			xmlAttrSet, err := rel.NewSet(xmlAttrs...)
 			if err != nil {
 				return nil, err
 			}
 
 			// element tuple attributes
 			attrList := []rel.Attr{}
-			attrList = append(attrList, rel.NewStringAttr(nameKey, []rune(xmlNameToArrai(&t.Name))))
+			if len(t.Name.Space) > 0 {
+				attrList = append(attrList, rel.NewStringAttr(nsKey, []rune(t.Name.Space)))
+			}
+			attrList = append(attrList, rel.NewStringAttr(nameKey, []rune(t.Name.Local)))
 			attrList = append(attrList, rel.NewAttr(childrenKey, child))
 			// add attributes if there are some
-			if xmlAttrDict.IsTrue() {
-				attrList = append(attrList, rel.NewAttr(attributesKey, xmlAttrDict))
+			if xmlAttrSet.IsTrue() {
+				attrList = append(attrList, rel.NewAttr(attributesKey, xmlAttrSet))
 			}
 
 			tuple = rel.NewTuple(rel.NewTupleAttr(element, attrList...))
@@ -283,24 +319,4 @@ func parseXML(decoder *xml.Decoder, config XMLDecodeConfig) (rel.Value, error) {
 	}
 
 	return rel.NewArray(values...), nil
-}
-
-func xmlNameToArrai(name *xml.Name) string {
-	if len(name.Space) > 0 {
-		return name.Space + ":" + name.Local
-	}
-
-	return name.Local
-}
-
-// XML names should only contain : as a namespace character https://www.w3.org/TR/xml/#NT-S
-// technically it can prepent a localname but i doubt authors would want to do that
-// assume the string is in the format "namespace:localname" or "localname" (if there is no namespace)
-func xmlNameFromArrai(name string) xml.Name {
-	var s = strings.Split(name, ":")
-	if len(s) == 1 {
-		return xml.Name{Local: s[0], Space: ""}
-	}
-
-	return xml.Name{Local: s[1], Space: s[0]}
 }

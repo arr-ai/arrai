@@ -5,18 +5,14 @@ import (
 )
 
 //nolint:lll
-const arraiData = `[(decl: (target: 'xml', text: 'version="1.0"')), (text: '\n'), (elem: (children: [(text: '\n   '), (elem: (attrs: {'id': 'bk101'}, children: [(text: '\n      '), (elem: (children: [(text: 'Gambardella, Matthew')], name: 'author')), (text: '\n      '), (elem: (children: [(text: 'XML Developers Guide')], name: 'title')), (text: '\n      '), (elem: (children: [(text: 'Computer')], name: 'genre')), (text: '\n      '), (elem: (children: [(text: '44.95')], name: 'price')), (text: '\n      '), (elem: (children: [(text: '2000-10-01')], name: 'publish_date')), (text: '\n      '), (elem: (children: [(text: 'An in-depth look at creating applications \n      with XML.')], name: 'description')), (text: '\n   ')], name: 'book')), (text: '\n')], name: 'catalog')), (text: '\n')]`
+const arraiData = `[(decl: (target: 'xml', text: 'version="1.0"')), (text: '\n'), (elem: (attrs: {(name: 'xmlns', text: 'doop')}, children: [(text: '\n   '), (elem: (attrs: {(name: 'id', text: 'bk101'), (name: 'xmlns', text: 'woop')}, children: [(text: '\n      '), (elem: (children: [(text: 'yesman')], name: 'author', ns: 'woop')), (text: '\n      '), (elem: (children: [(text: 'An in-depth look at creating applications \n      with XML.')], name: 'description', ns: 'woop')), (text: '\n   ')], name: 'book', ns: 'woop')), (text: '\n')], name: 'catalog', ns: 'doop')), (text: '\n')]`
 
 //nolint:lll
-const strippedArraiData = `[(decl: (target: 'xml', text: 'version="1.0"')), (elem: (children: [(elem: (attrs: {'id': 'bk101'}, children: [(elem: (children: [(text: 'Gambardella, Matthew')], name: 'author')), (elem: (children: [(text: 'XML Developers Guide')], name: 'title')), (elem: (children: [(text: 'Computer')], name: 'genre')), (elem: (children: [(text: '44.95')], name: 'price')), (elem: (children: [(text: '2000-10-01')], name: 'publish_date')), (elem: (children: [(text: 'An in-depth look at creating applications \n      with XML.')], name: 'description'))], name: 'book'))], name: 'catalog'))]`
+const strippedArraiData = `[(decl: (target: 'xml', text: 'version="1.0"')), (elem: (attrs: {(name: 'xmlns', text: 'doop')}, children: [(elem: (attrs: {(name: 'id', text: 'bk101'), (name: 'xmlns', text: 'woop')}, children: [(elem: (children: [(text: 'yesman')], name: 'author', ns: 'woop')), (elem: (children: [(text: 'An in-depth look at creating applications \n      with XML.')], name: 'description', ns: 'woop'))], name: 'book', ns: 'woop'))], name: 'catalog', ns: 'doop'))]`
 const xmlData = `<<'<?xml version="1.0"?>
-<catalog>
-   <book id="bk101">
-      <author>Gambardella, Matthew</author>
-      <title>XML Developers Guide</title>
-      <genre>Computer</genre>
-      <price>44.95</price>
-      <publish_date>2000-10-01</publish_date>
+<catalog xmlns="doop">
+   <book xmlns="woop" id="bk101">
+      <author>yesman</author>
       <description>An in-depth look at creating applications 
       with XML.</description>
    </book>
@@ -163,14 +159,4 @@ func TestXMLDecoder_error(t *testing.T) {
 
 	AssertCodeErrors(t, "", "//encoding.xml.decoder((stripFormatting: false))(`<root>`)")
 	AssertCodeErrors(t, "", "//encoding.xml.decoder((unknown: false))(`<root>`)")
-}
-
-func TestXMLDecode_roundTrip(t *testing.T) {
-	t.Parallel()
-
-	xml := xmlData
-	expected := arraiData
-
-	AssertCodesEvalToSameValue(t, expected, "//encoding.xml.decode("+xml+")")
-	AssertCodesEvalToSameValue(t, xml, "//encoding.xml.encode("+expected+")")
 }
