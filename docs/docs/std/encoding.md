@@ -3,7 +3,7 @@ The following functions are available by accessing the `//encoding` attribute.
 
 ## XML Encoding format
 
-NOTE: Currently the XML transform does not support documents with explicit namespaces.
+NOTE: Currently the XML transform does not support encoding documents with explicit namespaces (implicit namespace are supported). This is due to a limited to the current implementation of the underlying xml golang parser `encoding/xml`. Attempting to encode documents from arr.ai objects to xml documents with explicit namespaces will result in undefined behaviour.
 
 | XML encoding | Arrai structure | golang "encoding/xml" struct type | Notes |
 |:-|:-|:-|:-|
@@ -11,7 +11,8 @@ NOTE: Currently the XML transform does not support documents with explicit names
 | `texthello` | `(text: "texthello")` | text |
 | `<!--helloworld-->` | `(comment: "helloworld")` | comment |
 | `<!DOCTYPE foo <!ELEMENT foo (#PCDATA)>>` | `(directive: 'DOCTYPE foo <!ELEMENT foo (#PCDATA)>')` | directive |
-| `<root><node xmlns="space.com" woot:id="test">Hello world!</node></root>` | `[(elem: (children: [(elem: (attrs: {(name: 'id', ns: 'woot', text: 'test'), (name: 'xmlns', text: 'space.com')}, children: [(text: 'Hello world!')], name: 'node', ns: 'space.com'))], name: 'root'))]` | element | attributes are optional sets. elements have an optional namespace parameter `ns` |
+| `<root><child></child></root>` | `[(elem: (attrs: {}, children: [(elem: (attrs: {}, children: {}, name: 'child'))], name: 'root'))]` | element | elements have an optional namespace parameter `ns` |
+| `<root><node xmlns="space.com" id="test">Hello world!</node></root>` | `[(elem: (attrs: {}, children: [(elem: (attrs: {(name: 'id', text: 'test'), (name: 'xmlns', text: 'space.com')}, children: [(text: 'Hello world!')], name: 'node', ns: 'space.com'))], name: 'root'))]` | element | showcasing support for implicit namespaces |
 
 ## `//encoding.xml.decode(xml <: string|bytes) <: array`
 

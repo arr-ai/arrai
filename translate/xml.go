@@ -9,7 +9,6 @@ import (
 
 	"github.com/arr-ai/arrai/rel"
 	"github.com/arr-ai/arrai/tools"
-	"github.com/pkg/errors"
 )
 
 const procInst = "decl"
@@ -69,17 +68,17 @@ func unparseXML(v rel.Value) ([]xml.Token, error) {
 
 	arr, ok := rel.AsArray(v)
 	if !ok {
-		return nil, errors.Errorf("value must be an array, not %s: %v", rel.ValueTypeAsString(v), v)
+		return nil, fmt.Errorf("value must be an array, not %s: %v", rel.ValueTypeAsString(v), v)
 	}
 
 	for _, val := range arr.Values() {
 		tup, ok := val.(rel.Tuple)
 		if !ok {
-			return nil, errors.Errorf("value must be tuple, not %s: %v", rel.ValueTypeAsString(val), val)
+			return nil, fmt.Errorf("value must be tuple, not %s: %v", rel.ValueTypeAsString(val), val)
 		}
 
 		if tup.Names().Count() != 1 {
-			return nil, errors.New("tuple has multiple attributes")
+			return nil, fmt.Errorf("tuple has multiple attributes: %v", tup)
 		}
 
 		// assume there is only a single attribute in the set
@@ -88,31 +87,31 @@ func unparseXML(v rel.Value) ([]xml.Token, error) {
 			val := tup.MustGet(procInst)
 			mTup, ok := val.(rel.Tuple)
 			if !ok {
-				return nil, errors.Errorf("value must be tuple, not %s: %v", rel.ValueTypeAsString(val), val)
+				return nil, fmt.Errorf("value must be tuple, not %s: %v", rel.ValueTypeAsString(val), val)
 			}
 
 			target, ok := mTup.Get(targetKey)
 			if !ok {
-				return nil, fmt.Errorf("attribute does not exist: %s", targetKey)
+				return nil, fmt.Errorf("tuple attribute missing: %s", targetKey)
 			}
 			text, ok := mTup.Get(textKey)
 			if !ok {
-				return nil, fmt.Errorf("attribute does not exist: %s", textKey)
+				return nil, fmt.Errorf("tuple attribute missing: %s", textKey)
 			}
 			rawTarget, ok := tools.ValueAsString(target)
 			if !ok {
-				return nil, fmt.Errorf("value is cannot be converted to string: %s", target)
+				return nil, fmt.Errorf("value cannot be converted to string: %s", target)
 			}
 			rawText, ok := tools.ValueAsString(text)
 			if !ok {
-				return nil, fmt.Errorf("value is cannot be converted to string: %s", text)
+				return nil, fmt.Errorf("value cannot be converted to string: %s", text)
 			}
 			xmlTokens = append(xmlTokens, xml.ProcInst{Target: rawTarget, Inst: []byte(rawText)})
 		case directive:
 			text := tup.MustGet(directive)
 			rawText, ok := tools.ValueAsString(text)
 			if !ok {
-				return nil, fmt.Errorf("value is cannot be converted to string: %s", text)
+				return nil, fmt.Errorf("value cannot be converted to string: %s", text)
 			}
 			var directive xml.Directive = []byte(rawText)
 			xmlTokens = append(xmlTokens, directive)
@@ -120,7 +119,7 @@ func unparseXML(v rel.Value) ([]xml.Token, error) {
 			text := tup.MustGet(comment)
 			rawText, ok := tools.ValueAsString(text)
 			if !ok {
-				return nil, fmt.Errorf("value is cannot be converted to string: %s", text)
+				return nil, fmt.Errorf("value cannot be converted to string: %s", text)
 			}
 			var comment xml.Comment = []byte(rawText)
 			xmlTokens = append(xmlTokens, comment)
@@ -130,7 +129,7 @@ func unparseXML(v rel.Value) ([]xml.Token, error) {
 			text := tup.MustGet(charData)
 			rawText, ok := tools.ValueAsString(text)
 			if !ok {
-				return nil, fmt.Errorf("value is cannot be converted to string: %s", text)
+				return nil, fmt.Errorf("value cannot be converted to string: %s", text)
 			}
 			var chardata xml.CharData = []byte(rawText)
 			xmlTokens = append(xmlTokens, chardata)
@@ -138,72 +137,71 @@ func unparseXML(v rel.Value) ([]xml.Token, error) {
 			val := tup.MustGet(element)
 			tup, ok := val.(rel.Tuple)
 			if !ok {
-				return nil, errors.Errorf("value must be tuple, not %s: %v", rel.ValueTypeAsString(val), val)
+				return nil, fmt.Errorf("value must be tuple, not %s: %v", rel.ValueTypeAsString(val), val)
 			}
 
 			name, ok := tup.Get(nameKey)
 			if !ok {
-				return nil, fmt.Errorf("attribute does not exist: %s", nameKey)
+				return nil, fmt.Errorf("tuple attribute missing: %s", nameKey)
 			}
 			children, ok := tup.Get(childrenKey)
 			if !ok {
-				return nil, fmt.Errorf("attribute does not exist: %s", childrenKey)
+				return nil, fmt.Errorf("tuple attribute missing: %s", childrenKey)
 			}
-			// attributes are omitted if empty
-			attrs, attrOk := tup.Get(attributesKey)
+			attrs, ok := tup.Get(attributesKey)
+			if !ok {
+				return nil, fmt.Errorf("tuple attribute missing: %s", attributesKey)
+			}
+
 			xmlAttrs := []xml.Attr{}
-
-			// load attributes
-			if attrOk {
-				tAttrs, ok := attrs.(rel.Set)
+			tAttrs, ok := attrs.(rel.Set)
+			if !ok {
+				return nil, fmt.Errorf("value must be a set, not %s: %v", rel.ValueTypeAsString(attrs), attrs)
+			}
+			enum := tAttrs.Enumerator()
+			for enum.MoveNext() {
+				tup, ok := enum.Current().(rel.Tuple)
 				if !ok {
-					return nil, errors.Errorf("value must be a set, not %s: %v", rel.ValueTypeAsString(attrs), attrs)
+					return nil, fmt.Errorf("value must be tuple, not %s: %v", rel.ValueTypeAsString(tup), tup)
 				}
-				enum := tAttrs.Enumerator()
-				for enum.MoveNext() {
-					tup, ok := enum.Current().(rel.Tuple)
-					if !ok {
-						return nil, errors.Errorf("value must be tuple, not %s: %v", rel.ValueTypeAsString(tup), tup)
-					}
-					tupName, ok := tup.Get(nameKey)
-					if !ok {
-						return nil, fmt.Errorf("tuple missing name attribute")
-					}
-					tupValue, ok := tup.Get(textKey)
-					if !ok {
-						return nil, fmt.Errorf("tuple missing value attribute")
-					}
-					tupNS, ok := tup.Get(nsKey)
-					if !ok {
-						tupNS = rel.NewString([]rune(""))
-					}
-
-					xmlValue, ok := tools.ValueAsString(tupValue)
-					if !ok {
-						return nil, fmt.Errorf("value is cannot be converted to string: %s", tupValue)
-					}
-					xmlName, ok := tools.ValueAsString(tupName)
-					if !ok {
-						return nil, fmt.Errorf("value is cannot be converted to string: %s", tupName)
-					}
-					xmlNS, ok := tools.ValueAsString(tupNS)
-					if !ok {
-						return nil, fmt.Errorf("value is cannot be converted to string: %s", tupNS)
-					}
-
-					xmlAttrs = append(xmlAttrs, xml.Attr{
-						Name: xml.Name{
-							Local: xmlName,
-							Space: xmlNS,
-						},
-						Value: xmlValue,
-					})
+				tupName, ok := tup.Get(nameKey)
+				if !ok {
+					return nil, fmt.Errorf("tuple attribute missing: %s", nameKey)
 				}
+				tupValue, ok := tup.Get(textKey)
+				if !ok {
+					return nil, fmt.Errorf("tuple attribute missing: %s", textKey)
+				}
+				tupNS, ok := tup.Get(nsKey)
+				if !ok {
+					tupNS = rel.NewString([]rune(""))
+				}
+
+				xmlValue, ok := tools.ValueAsString(tupValue)
+				if !ok {
+					return nil, fmt.Errorf("value cannot be converted to string: %s", tupValue)
+				}
+				xmlName, ok := tools.ValueAsString(tupName)
+				if !ok {
+					return nil, fmt.Errorf("value cannot be converted to string: %s", tupName)
+				}
+				xmlNS, ok := tools.ValueAsString(tupNS)
+				if !ok {
+					return nil, fmt.Errorf("value cannot be converted to string: %s", tupNS)
+				}
+
+				xmlAttrs = append(xmlAttrs, xml.Attr{
+					Name: xml.Name{
+						Local: xmlName,
+						Space: xmlNS,
+					},
+					Value: xmlValue,
+				})
 			}
 
 			rawName, ok := tools.ValueAsString(name)
 			if !ok {
-				return nil, fmt.Errorf("value is cannot be converted to string: %s", name)
+				return nil, fmt.Errorf("value cannot be converted to string: %s", name)
 			}
 			// NOTE: namespace does not need to be populated because the encoding/xml does not handle xml prefixes correctly.
 			// namespace attributes are parsed in the attributes tuple
@@ -260,8 +258,8 @@ func parseXML(decoder *xml.Decoder, config XMLDecodeConfig) (rel.Value, error) {
 		case xml.Directive:
 			tuple = rel.NewTuple(rel.NewStringAttr(directive, []rune(string(t))))
 		case xml.CharData:
-			// ignore formatting new lines
-			if config.StripFormatting && strings.Trim(string(t), " ") == "\n" {
+			// ignore formatting new lines, tabs and spaces
+			if config.StripFormatting && strings.TrimSpace(string(t)) == "" {
 				continue
 			}
 			tuple = rel.NewTuple(rel.NewStringAttr(charData, []rune(string(t))))
@@ -270,7 +268,7 @@ func parseXML(decoder *xml.Decoder, config XMLDecodeConfig) (rel.Value, error) {
 		case xml.StartElement:
 			// NOTE: xml.Token() automatically expands self-closing tags. According to:
 			// https://stackoverflow.com/questions/57494936/is-there-a-semantical-difference-between-tag-and-tag-tag-in-xml
-			// there is no semantic differnce between them
+			// there is no semantic difference between them
 
 			// parse attributes
 			xmlAttrs := []rel.Value{}
@@ -302,10 +300,7 @@ func parseXML(decoder *xml.Decoder, config XMLDecodeConfig) (rel.Value, error) {
 			}
 			attrList = append(attrList, rel.NewStringAttr(nameKey, []rune(t.Name.Local)))
 			attrList = append(attrList, rel.NewAttr(childrenKey, child))
-			// add attributes if there are some
-			if xmlAttrSet.IsTrue() {
-				attrList = append(attrList, rel.NewAttr(attributesKey, xmlAttrSet))
-			}
+			attrList = append(attrList, rel.NewAttr(attributesKey, xmlAttrSet))
 
 			tuple = rel.NewTuple(rel.NewTupleAttr(element, attrList...))
 		case xml.EndElement:
