@@ -16,7 +16,9 @@ NOTE: Currently the XML transform does not support encoding documents with expli
 
 ## `//encoding.xml.decode(xml <: string|bytes) <: array`
 
-`decode` takes either a `string` or `bytes` that represents a XML object and transforms it into an two-dimensional string array. By default, it does not strip formatting.
+`decode` takes either a `string` or `bytes` that represents a XML object and transforms it into an two-dimensional string array.
+
+For details of how Arr.ai encodes XML, see [Encoding](#Encoding) below.
 
 Usage:
 
@@ -41,6 +43,10 @@ Usage:
 ## `//encoding.xml.encode(xml <: array) <: bytes`
 
 `encode` takes an array of tuples and converts it into a XML object.
+
+For details of how Arr.ai encodes XML, see [Encoding](#Encoding) below.
+
+For details of the limitations of XML encodeing, see [Limitations](#Limitations) below.
 
 Usage:
 
@@ -101,17 +107,6 @@ Usage:
 | `//encoding.csv.encoder((comma: %:))([['a', 'b', 'c'], ['1', '2', '3']])` | `<<'a:b:c\n1:2:3'>>` |
 | `//encoding.csv.encoder((crlf: true))([['a', 'b', 'c'], ['1', '2', '3']])` | `<<'a,b,c\r\n1,2,3'>>` |
 
-## `//encoding.json.encode(jsonDefinition <: set) <: string|bytes`
-
-`encode` is the reverse of `decode`. It takes a built-in arr.ai value to `bytes` that represents a JSON object.
-
-Usage:
-
-| example | equals |
-|:-|:-|
-| `//encoding.json.encode({'hello': 123, 'hi': (s: 'abc'), 'yo': (a: [1,2,3])})` | `'{"hello":123,"hi":"abc","yo":[1,2,3]}'` |
-
-
 ## `//encoding.json.decode(json <: string|bytes) <: set`
 
 `decode` takes either a `string` or `bytes` that represents a JSON object. `json`
@@ -152,7 +147,7 @@ Usage:
 ## `//encoding.yaml.decode(json <: string|bytes) <: set`
 
 Exactly the same as `//encoding.json.decode`, but takes either a `string` or `bytes` that represents a YAML object.
-ss
+
 ## `//encoding.proto.descriptor(protobufDefinition <: bytes) <: tuple`
 
 This method accepts [protobuf](https://github.com/protocolbuffers/protobuf) binary files and returns a tuple representation of a [`FileDescriptorSet`](https://pkg.go.dev/google.golang.org/protobuf@v1.25.0/types/descriptorpb?tab=doc#FileDescriptorSet), which describes message types in the binary file. This tuple can be passed as the first parameter to `decode`.
@@ -197,14 +192,34 @@ The output is `shop`, a tuple representing a `Module`. It contains a field `apps
 
 [More sample code and data details](https://github.com/arr-ai/arrai/blob/master/syntax/pb_test.go)
 
-
 ## `//encoding.xlsx.decodeToRelation((sheet <: int, headRow <: int) <: tuple, xlsx <: bytes) <: relation`
 
 `decodeToRelation` transforms one sheet of an Excel workbook (XLSX format, loaded as bytes) to an arr.ai relation: a set of tuples (rows) with attributes names corresponding to the column headers and values to the cells.
 
 `decodeToRelation` can only decode relatively simple tabular spreadsheets with a single header given by `headRow`. The decoding:
- - ignores columns without heading values;
- - ignores rows with no cell values;
- - converts heading/column names to `snake_case`, replacing various special characters with `_`.
+
+- ignores columns without heading values;
+- ignores rows with no cell values;
+- converts heading/column names to `snake_case`, replacing various special characters with `_`.
 
 Note that unlike standard `decode` functions, this is not reversible; its output cannot be passed to an `encode` function to produce the original XLSX. Expect this function to be superseded by more canonical decoding functions in the future.
+
+## XML
+
+### Encoding
+
+| Description | Encoding |
+|:-|:-|
+| Declaration | XML:<br/>`<?xml version="1.0"?>`<br/><br/>Arr.ai<br/>`(decl: (target: 'xml', text: 'version="1.0"'))` |
+| Directive | XML:<br/>`<!DOCTYPE foo <!ELEMENT foo (#PCDATA)>>`<br/><br/>Arr.ai:<br/>`(directive: 'DOCTYPE foo <!ELEMENT foo (#PCDATA)>')` |
+| Text | XML:<br/>`Hello world`<br/><br/>Arr.ai<br/>`(text: "Hello world")` |
+| Comment | XML:<br/>`<!-- hello world -->`<br/><br/>Arr.ai:<br/>`(comment: "helloworld")` |
+| Element | XML:<br/>`<root><child/></root>`<br/><br/>Arr.ai:<br/>`[(elem: (attrs: {}, children: [(elem: (attrs: {}, children: {}, name: 'child'))], name: 'root'))]` |
+| Element with namespace | XML:<br/>`<root xmlns="foo"><child/></root>`<br/><br/>Arr.ai:<br/>`[(elem: (attrs: {(name: 'xmlns', text: 'foo')}, children: [(elem: (attrs: {}, children: {}, name: 'child', ns: 'foo'))], name: 'root', ns: 'foo'))]` |
+| Attribute | XML:<br/>`<root key="value"/>`<br/><br/>Arr.ai:<br/>`[(elem: (attrs: {(name: 'key', text: 'value')}, children: {}, name: 'root'))]` |
+| Attribute with namespace | XML:<br/>`<root xmlns:foo="foo.com" foo:key="value"/>`<br/><br/>Arr.ai:<br/>`[(elem: (attrs: {(name: 'foo', ns: 'xmlns', text: 'foo.com'), (name: 'key', ns: 'foo.com', text: 'value')}, children: {}, name: 'root'))]` |
+
+### Limitations
+
+XML encoding does not currently support documents that have items with explicit namespaces (e.g. `<namespace:element />` or `namespace:attribute="value"`).
+This is due to a limitation of the underlying XML parser ([tracking github issue](https://github.com/golang/go/issues/9519)). Attempting to encode an XML document that includes explicit namespaces may result in an invalid document.
