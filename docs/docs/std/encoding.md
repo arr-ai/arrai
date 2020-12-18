@@ -1,19 +1,6 @@
 The `encoding` library provides functions to convert data into built-in arr.ai values.
 The following functions are available by accessing the `//encoding` attribute.
 
-## XML Encoding format
-
-NOTE: Currently the XML transform does not support encoding documents with explicit namespaces (implicit namespace are supported). This is due to a limited to the current implementation of the underlying xml golang parser `encoding/xml`. Attempting to encode documents from arr.ai objects to xml documents with explicit namespaces will result in undefined behaviour.
-
-| XML encoding | Arrai structure | golang "encoding/xml" struct type | Notes |
-|:-|:-|:-|:-|
-| `<?xml version="1.0"?>` | `(decl: (target: 'xml', text: 'version="1.0"'))` | declaration |
-| `texthello` | `(text: "texthello")` | text |
-| `<!--helloworld-->` | `(comment: "helloworld")` | comment |
-| `<!DOCTYPE foo <!ELEMENT foo (#PCDATA)>>` | `(directive: 'DOCTYPE foo <!ELEMENT foo (#PCDATA)>')` | directive |
-| `<root><child></child></root>` | `[(elem: (attrs: {}, children: [(elem: (attrs: {}, children: {}, name: 'child'))], name: 'root'))]` | element | elements have an optional namespace parameter `ns` |
-| `<root><node xmlns="space.com" id="test">Hello world!</node></root>` | `[(elem: (attrs: {}, children: [(elem: (attrs: {(name: 'id', text: 'test'), (name: 'xmlns', text: 'space.com')}, children: [(text: 'Hello world!')], name: 'node', ns: 'space.com'))], name: 'root'))]` | element | showcasing support for implicit namespaces |
-
 ## `//encoding.xml.decode(xml <: string|bytes) <: array`
 
 `decode` takes either a `string` or `bytes` that represents a XML object and transforms it into an two-dimensional string array.

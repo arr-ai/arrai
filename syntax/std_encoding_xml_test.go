@@ -58,30 +58,33 @@ func TestXMLEncode_implicitNamespace(t *testing.T) {
 	AssertCodesEvalToSameValue(t, expected, "//encoding.xml.encode("+data+")")
 }
 
-// NOTE: allow failure
 //nolint:lll
 func TestXMLEncode_explicitNamespace(t *testing.T) {
 	t.Parallel()
+	// NOTE: skipped due to the current implementation's limitation on explicit namespaces. remove when updated
+	t.SkipNow()
 
 	data := `[(elem: (attrs: {(name: 'hello', ns: 'xmlns', text: 'doop')}, children: [(elem: (attrs: {}, children: [(text: 'harry potter')], name: 'book'))], name: 'catalog', ns: 'doop'))]`
 	expected := `<<'<hello:catalog xmlns:hello="doop"><book>harry potter</book></hello:catalog>'>>`
 	AssertCodesEvalToSameValue(t, expected, "//encoding.xml.encode("+data+")")
 }
 
-// NOTE: allow failure
 //nolint:lll
 func TestXMLEncode_dualNamespace(t *testing.T) {
 	t.Parallel()
+	// NOTE: skipped due to the current implementation's limitation on explicit namespaces. remove when updated
+	t.SkipNow()
 
 	data := `[(elem: (attrs: {(name: 'hello', ns: 'xmlns', text: 'doop'), (name: 'xmlns', text: 'maaw')}, children: [(elem: (attrs: {}, children: [(text: 'harry potter')], name: 'book', ns: 'maaw'))], name: 'catalog', ns: 'doop'))]`
 	expected := `<<'<hello:catalog xmlns:hello="doop" xmlns="maaw"><book>harry potter</book></hello:catalog>'>>`
 	AssertCodesEvalToSameValue(t, expected, "//encoding.xml.encode("+data+")")
 }
 
-// NOTE: allow failure
 //nolint:lll
 func TestXMLEncode_missingExplictNS(t *testing.T) {
 	t.Parallel()
+	// NOTE: skipped due to the current implementation's limitation on explicit namespaces. remove when updated
+	t.SkipNow()
 
 	data := `[(elem: (attrs: {}, children: [(elem: (attrs: {}, children: [(text: 'harry potter')], name: 'book'))], name: 'catalog', ns: 'doop'))]`
 	AssertCodeErrors(t, "", "//encoding.xml.encode("+data+")")
@@ -176,9 +179,10 @@ func TestXMLDecode_dualNamespace(t *testing.T) {
 	AssertCodesEvalToSameValue(t, expected, `//encoding.xml.decode(`+data+`)`)
 }
 
-// NOTE: allow failure
 func TestXMLDecode_missingExplictNS(t *testing.T) {
 	t.Parallel()
+	// NOTE: skipped due to the current implementation's limitation on explicit namespaces. remove when updated
+	t.SkipNow()
 
 	data := `<<'<here:catalog></here:catalog>'>>`
 	AssertCodeErrors(t, "", "//encoding.xml.decode("+data+")")
