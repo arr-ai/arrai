@@ -195,18 +195,18 @@ Note that unlike standard `decode` functions, this is not reversible; its output
 
 ### Encoding
 
-| Description | Encoding |
-|:-|:-|
-| Declaration | XML:<br/>`<?xml version="1.0"?>`<br/><br/>Arr.ai<br/>`(decl: (target: 'xml', text: 'version="1.0"'))` |
-| Directive | XML:<br/>`<!DOCTYPE foo <!ELEMENT foo (#PCDATA)>>`<br/><br/>Arr.ai:<br/>`(directive: 'DOCTYPE foo <!ELEMENT foo (#PCDATA)>')` |
-| Text | XML:<br/>`Hello world`<br/><br/>Arr.ai<br/>`(text: "Hello world")` |
-| Comment | XML:<br/>`<!-- hello world -->`<br/><br/>Arr.ai:<br/>`(comment: "helloworld")` |
-| Element | XML:<br/>`<root><child/></root>`<br/><br/>Arr.ai:<br/>`[(elem: (attrs: {}, children: [(elem: (attrs: {}, children: {}, name: 'child'))], name: 'root'))]` |
-| Element with namespace | XML:<br/>`<root xmlns="foo"><child/></root>`<br/><br/>Arr.ai:<br/>`[(elem: (attrs: {(name: 'xmlns', text: 'foo')}, children: [(elem: (attrs: {}, children: {}, name: 'child', ns: 'foo'))], name: 'root', ns: 'foo'))]` |
-| Attribute | XML:<br/>`<root key="value"/>`<br/><br/>Arr.ai:<br/>`[(elem: (attrs: {(name: 'key', text: 'value')}, children: {}, name: 'root'))]` |
-| Attribute with namespace | XML:<br/>`<root xmlns:foo="foo.com" foo:key="value"/>`<br/><br/>Arr.ai:<br/>`[(elem: (attrs: {(name: 'foo', ns: 'xmlns', text: 'foo.com'), (name: 'key', ns: 'foo.com', text: 'value')}, children: {}, name: 'root'))]` |
+| Description | XML Encoding | Arr.ai Encoding |
+|:-|:-|:-|
+| Declaration | `<?xml version="1.0"?>` | `(decl: (target: 'xml', text: 'version="1.0"'))` |
+| Directive |`<!DOCTYPE foo <!ELEMENT foo (#PCDATA)>>` | `(directive: 'DOCTYPE foo <!ELEMENT foo (#PCDATA)>')` |
+| Text | `Hello world` | `(text: "Hello world")` |
+| Comment | `<!-- hello world -->` | `(comment: "helloworld")` |
+| Element | `<root><child/></root>` | `[(elem: (attrs: {}, children: [(elem: (attrs: {}, children: {}, name: 'child'))], name: 'root'))]` |
+| Element with namespace | `<root xmlns="foo"><child/></root>` | `[(elem: (attrs: {(name: 'xmlns', text: 'foo')}, children: [(elem: (attrs: {}, children: {}, name: 'child', ns: 'foo'))], name: 'root', ns: 'foo'))]` |
+| Attribute | `<root key="value"/>` | `[(elem: (attrs: {(name: 'key', text: 'value')}, children: {}, name: 'root'))]` |
+| Attribute with namespace | `<root xmlns:foo="foo.com" foo:key="value"/>` | `[(elem: (attrs: {(name: 'foo', ns: 'xmlns', text: 'foo.com'), (name: 'key', ns: 'foo.com', text: 'value')}, children: {}, name: 'root'))]` |
 
 ### Limitations
 
 XML encoding does not currently support documents that have items with explicit namespaces (e.g. `<namespace:element />` or `namespace:attribute="value"`).
-This is due to a limitation of the underlying XML parser ([tracking github issue](https://github.com/golang/go/issues/9519)). Attempting to encode an XML document that includes explicit namespaces may result in an invalid document.
+This is due to [a limitation of the underlying XML parser](https://github.com/golang/go/issues/9519). Attempting to encode an XML document that includes explicit namespaces may result in an invalid document.

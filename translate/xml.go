@@ -31,12 +31,15 @@ type XMLDecodeConfig struct {
 	StripFormatting bool
 }
 
+// BytesXMLToArrai converts a well formatted XML document in byte representation
+// to a structured Arr.ai object
 func BytesXMLToArrai(bs []byte, config XMLDecodeConfig) (rel.Value, error) {
 	decoder := xml.NewDecoder(bytes.NewBuffer(bs))
 
 	return parseXML(decoder, config)
 }
 
+// BytesXMLFromArrai converts an Arr.ai object to an XML document in byte resentation
 func BytesXMLFromArrai(v rel.Value) (rel.Value, error) {
 	var b bytes.Buffer
 	encoder := xml.NewEncoder(&b)
@@ -228,8 +231,8 @@ func unparseXML(v rel.Value) ([]xml.Token, error) {
 	return xmlTokens, nil
 }
 
-// Parses xml via the golang std library "encoding/xml" tokeniser into an arrai structure.
-// NOTE: encoding/xml only handles well-formed xml. It does not validate the xml structure.
+// Parses XML via the Go standard library "encoding/xml" tokeniser into an arr.ai structure.
+// NOTE: encoding/xml only handles well-formed XML. It does not validate the XML structure.
 func parseXML(decoder *xml.Decoder, config XMLDecodeConfig) (rel.Value, error) {
 	values := []rel.Value{}
 
