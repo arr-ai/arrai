@@ -106,6 +106,10 @@ func StdScope() rel.Scope {
 						return b, nil
 					}),
 				),
+				rel.NewNativeFunctionAttr("error", func(_ context.Context, value rel.Value) (rel.Value, error) {
+					// FIXME: this is a temporary error handling
+					return nil, errors.New(value.String())
+				}),
 				stdArchive(),
 				stdEncoding(),
 				stdEval(),
