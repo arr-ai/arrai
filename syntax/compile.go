@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"path"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -1080,8 +1081,15 @@ func (pc ParseContext) compilePackage(ctx context.Context, b ast.Branch, c ast.C
 		scanner := pkgpath.One("").(ast.Leaf).Scanner()
 		name := scanner.String()
 		if strings.HasPrefix(name, "/") {
-			filePath := strings.Trim(name, "/")
 			fromRoot := pkg["dot"] == nil
+			if !fromRoot {
+				name = "." + name
+			}
+			name = path.Clean(name)
+			if strings.HasPrefix(name, "..") {
+				return nil, fmt.Errorf("import path can not be pointing outside of the script's module directory: %s", name)
+			}
+			filePath := strings.Trim(name, "/")
 			if pc.SourceDir == "" {
 				return nil, fmt.Errorf("local import %q invalid; no local context", name)
 			}

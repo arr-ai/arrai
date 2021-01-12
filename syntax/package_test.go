@@ -1,6 +1,7 @@
 package syntax
 
 import (
+	"fmt"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -47,6 +48,23 @@ func TestPackageImportFromRoot(t *testing.T) {
 func TestJsonPackageImportFromModuleRoot(t *testing.T) {
 	t.Parallel()
 	AssertCodesEvalToSameValue(t, `{'location': (s: 'Melbourne'), 'name': (s: 'foo')}`, `//{/examples/json/foo.json}`)
+}
+
+func TestIllegalImport(t *testing.T) {
+	t.Parallel()
+
+	errMessage := func(x string) string {
+		return fmt.Sprintf("import path can not be pointing outside of the script's module directory: %s", x)
+	}
+
+	AssertCodeErrors(t, errMessage("../test"), `//{./../test}`)
+	AssertCodeErrors(t, errMessage("../../../../test"), `//{./../../../../test}`)
+
+	// this is allowed because .. on absolute import does not affect anything
+	AssertCodesEvalToSameValue(t, `{1, 4, 9, 16}`, `//{/../../../examples/simple/simple}`)
+
+	// this is allowed because it does not import outside the parent directory
+	AssertCodesEvalToSameValue(t, `{1, 4, 9, 16}`, `//{./examples/../examples/simple/simple}`)
 }
 
 func TestJsonPackageImport(t *testing.T) {
