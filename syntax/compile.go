@@ -14,6 +14,7 @@ import (
 	"github.com/anz-bank/pkg/log"
 	"github.com/arr-ai/wbnf/ast"
 
+	"github.com/arr-ai/arrai/pkg/arraictx"
 	"github.com/arr-ai/arrai/rel"
 	"github.com/arr-ai/wbnf/parser"
 )
@@ -59,7 +60,7 @@ func Compile(ctx context.Context, filePath, source string) (rel.Expr, error) {
 		return nil, err
 	}
 
-	return pc.CompileExpr(ctx, ast)
+	return pc.CompileExpr(arraictx.ContextWithIsCompiling(ctx, true), ast)
 }
 
 func MustCompile(ctx context.Context, filePath, source string) rel.Expr {

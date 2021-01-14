@@ -4,6 +4,7 @@ import (
 	"context"
 	"os/exec"
 
+	"github.com/arr-ai/arrai/pkg/arraictx"
 	"github.com/arr-ai/arrai/rel"
 	"github.com/go-errors/errors"
 	"github.com/sirupsen/logrus"
@@ -16,7 +17,15 @@ func stdDeprecated() rel.Attr {
 }
 
 func stdDeprecatedExec() rel.Attr {
-	return rel.NewNativeFunctionAttr("exec", func(_ context.Context, value rel.Value) (rel.Value, error) {
+	return rel.NewNativeFunctionAttr("exec", func(ctx context.Context, value rel.Value) (rel.Value, error) {
+		if arraictx.IsCompiling(ctx) {
+			return rel.NewTuple(
+				rel.NewAttr("args", rel.None),
+				rel.NewAttr("exitCode", rel.NewNumber(0)),
+				rel.NewAttr("stdout", rel.None),
+				rel.NewAttr("stderr", rel.None),
+			), nil
+		}
 		logrus.Warn("//deprecated is deprecated and may break or disappear at any moment")
 
 		var cmd *exec.Cmd

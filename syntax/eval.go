@@ -14,7 +14,7 @@ func EvalWithScope(ctx context.Context, path, source string, scope rel.Scope) (r
 		return nil, err
 	}
 
-	value, err := expr.Eval(ctx, scope)
+	value, err := expr.Eval(arraictx.ContextWithIsCompiling(ctx, false), scope)
 	if err != nil {
 		return nil, err
 	}
