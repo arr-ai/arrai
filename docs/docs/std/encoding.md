@@ -13,19 +13,19 @@ Usage:
 |:-|:-|
 | `//encoding.xml.decode('<?xml version="1.0"?><root></root>')` | `[(decl: (target: 'xml', text: 'version="1.0"')), (elem: (children: {}, name: 'root'))]` |
 
-## `//encoding.xml.decoder(config <: (stripFormatting <: bool)) <: (\(csv <: string|bytes) <: array)`
+## `//encoding.xml.decoder(config <: (:trimSurroundingWhitespace <: bool)) <: ((csv <: string|bytes) <: array)`
 
 `decoder` takes a tuple used to configure decoding and returns the decoding function:
 | config | description |
 |:-|:-|
-| `stripFormatting` | Strips newline strings `'\n'` used only for xml file formatting |
+| `trimSurroundingWhitespace` | Strips newline strings `'\n'` used only for xml file formatting |
 
 Usage:
 
 | example | equals |
 |:-|:-|
-| `//encoding.xml.decoder((stripFormatting: true))('<?xml version="1.0"?>\n')` | `[(decl: (target: 'xml', text: 'version="1.0"'))` |
-| `//encoding.xml.decoder((stripFormatting: false))('<?xml version="1.0"?>\n')` | `[(decl: (target: 'xml', text: 'version="1.0"')), (text: '\n')]` |
+| `//encoding.xml.decoder((trimSurroundingWhitespace: true))('<?xml version="1.0"?>\n')` | `[(decl: (target: 'xml', text: 'version="1.0"'))` |
+| `//encoding.xml.decoder((trimSurroundingWhitespace: false))('<?xml version="1.0"?>\n')` | `[(decl: (target: 'xml', text: 'version="1.0"')), (text: '\n')]` |
 
 ## `//encoding.xml.encode(xml <: array) <: bytes`
 
@@ -33,7 +33,7 @@ Usage:
 
 For details of how Arr.ai encodes XML, see [Encoding](#Encoding) below.
 
-For details of the limitations of XML encodeing, see [Limitations](#Limitations) below.
+For details of the limitations of XML encoding, see [Limitations](#Limitations) below.
 
 Usage:
 
@@ -51,7 +51,7 @@ Usage:
 |:-|:-|
 | `//encoding.csv.decode('a,b,c\n1,2,3')` | `[['a', 'b', 'c'], ['1', '2', '3']]` |
 
-## `//encoding.csv.decoder(config <: (comma <: int, comment <: int)) <: (\(csv <: string|bytes) <: array)`
+## `//encoding.csv.decoder(config <: (comma <: int, comment <: int)) <: ((csv <: string|bytes) <: array)`
 
 `decoder` takes a tuple used to configure decoding and returns the decoding function.
 | config | description |

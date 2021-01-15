@@ -12,17 +12,17 @@ func stdEncodingXML() rel.Attr {
 	return rel.NewTupleAttr(
 		"xml",
 		rel.NewNativeFunctionAttr("decode", func(_ context.Context, v rel.Value) (rel.Value, error) {
-			return stdXMLDecode(v, translate.XMLDecodeConfig{StripFormatting: false})
+			return stdXMLDecode(v, translate.XMLDecodeConfig{TrimSurroundingWhitespace: false})
 		}),
 		rel.NewNativeFunctionAttr("decoder", func(_ context.Context, config rel.Value) (rel.Value, error) {
-			xmlConfig := translate.XMLDecodeConfig{StripFormatting: false}
+			xmlConfig := translate.XMLDecodeConfig{TrimSurroundingWhitespace: false}
 
 			configTuple, ok := config.(rel.Tuple)
 			if !ok {
 				return nil, errors.Errorf("first arg to xml.decoder must be tuple, not %s", rel.ValueTypeAsString(config))
 			}
 
-			xmlConfig.StripFormatting = getConfigBool(configTuple, "stripFormatting")
+			xmlConfig.TrimSurroundingWhitespace = getConfigBool(configTuple, "trimSurroundingWhitespace")
 
 			return rel.NewNativeFunction("decode", func(_ context.Context, v rel.Value) (rel.Value, error) {
 				return stdXMLDecode(v, xmlConfig)

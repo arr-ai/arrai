@@ -28,7 +28,7 @@ const childrenKey = "children"
 // NOTE: A full cycle from XML -> Arr.ai -> XML reproduces semantically similar documents
 //       with possibly different content.
 type XMLDecodeConfig struct {
-	StripFormatting bool
+	TrimSurroundingWhitespace bool
 }
 
 // BytesXMLToArrai converts a well formatted XML document in byte representation
@@ -262,7 +262,7 @@ func parseXML(decoder *xml.Decoder, config XMLDecodeConfig) (rel.Value, error) {
 			tuple = rel.NewTuple(rel.NewStringAttr(directive, []rune(string(t))))
 		case xml.CharData:
 			// ignore formatting new lines, tabs and spaces
-			if config.StripFormatting && strings.TrimSpace(string(t)) == "" {
+			if config.TrimSurroundingWhitespace && strings.TrimSpace(string(t)) == "" {
 				continue
 			}
 			tuple = rel.NewTuple(rel.NewStringAttr(charData, []rune(string(t))))

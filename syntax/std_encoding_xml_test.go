@@ -201,7 +201,7 @@ func TestXMLDecoder_strip(t *testing.T) {
 	xml := `<<'<catalog>\n\t<book>Harry\nPotter</book>\n</catalog>'>>`
 	expected := `[(elem: (attrs: {}, children: [(elem: (attrs: {}, children: [(text: 'Harry\nPotter')], name: 'book'))], name: 'catalog'))]`
 
-	AssertCodesEvalToSameValue(t, expected, "//encoding.xml.decoder((stripFormatting: true))("+xml+")")
+	AssertCodesEvalToSameValue(t, expected, "//encoding.xml.decoder((trimSurroundingWhitespace: true))("+xml+")")
 }
 
 //nolint:lll
@@ -211,12 +211,12 @@ func TestXMLDecoder_dontStrip(t *testing.T) {
 	xml := `<<'<catalog>\n\t<book>Harry\nPotter</book>\n</catalog>'>>`
 	expected := `[(elem: (attrs: {}, children: [(text: '\n\t'), (elem: (attrs: {}, children: [(text: 'Harry\nPotter')], name: 'book')), (text: '\n')], name: 'catalog'))]`
 
-	AssertCodesEvalToSameValue(t, expected, "//encoding.xml.decoder((stripFormatting: false))("+xml+")")
+	AssertCodesEvalToSameValue(t, expected, "//encoding.xml.decoder((trimSurroundingWhitespace: false))("+xml+")")
 }
 
 func TestXMLDecoder_error(t *testing.T) {
 	t.Parallel()
 
-	AssertCodeErrors(t, "", "//encoding.xml.decoder((stripFormatting: false))(`<root>`)")
+	AssertCodeErrors(t, "", "//encoding.xml.decoder((trimSurroundingWhitespace: false))(`<root>`)")
 	AssertCodeErrors(t, "", "//encoding.xml.decoder((unknown: false))(`<root>`)")
 }
