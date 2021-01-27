@@ -49,40 +49,42 @@ func (p TuplePattern) Bind(ctx context.Context, local Scope, value Value) (conte
 		return ctx, EmptyScope, fmt.Errorf("%s is not a tuple", value)
 	}
 
-	extraElements := make(map[int]int)
-	for i, attr := range p.attrs {
-		if _, is := attr.pattern.pattern.(ExtraElementPattern); is {
-			if len(extraElements) == 1 {
-				return ctx, EmptyScope, fmt.Errorf("non-deterministic pattern is not supported yet")
-			}
-			extraElements[i] = tuple.Count() - len(p.attrs)
+	bind := func(
+		ctx context.Context,
+		attr TuplePatternAttr,
+		base Scope,
+		tupleValue Value,
+	) (context.Context, Scope, error) {
+		var scope Scope
+		var err error
+		ctx, scope, err = attr.pattern.Bind(ctx, local, tupleValue)
+		if err != nil {
+			return ctx, EmptyScope, err
 		}
-		if attr.pattern.fallback != nil {
-			if len(extraElements) == 1 {
-				return ctx, EmptyScope, fmt.Errorf("non-deterministic pattern is not supported yet")
-			}
-			extraElements[i] = tuple.Count() - len(p.attrs)
+		result, err := base.MatchedUpdate(scope)
+		if err != nil {
+			return ctx, EmptyScope, err
 		}
-	}
-
-	if len(p.attrs) > tuple.Count()+len(extraElements) {
-		return ctx, EmptyScope, fmt.Errorf("length of tuple %s shorter than tuple pattern %s", tuple, p)
-	}
-
-	if len(extraElements) == 0 && len(p.attrs) < tuple.Count() {
-		return ctx, EmptyScope, fmt.Errorf("length of tuple %s longer than tuple pattern %s", tuple, p)
+		return ctx, result, nil
 	}
 
 	result := EmptyScope
 	names := tuple.Names()
-	for _, attr := range p.attrs {
+	var extraPattern *TuplePatternAttr
+
+	for i, attr := range p.attrs {
 		var tupleValue Value
 		if _, is := attr.pattern.pattern.(ExtraElementPattern); is {
-			tupleValue = tuple.Project(names)
-			if tupleValue == nil {
-				return ctx, EmptyScope, fmt.Errorf("tuple %s cannot match tuple pattern %s", tuple, p)
+			// detects a second `...`
+			if extraPattern != nil {
+				return ctx, EmptyScope, fmt.Errorf("non-deterministic pattern is not supported yet")
 			}
+			extraPattern = &p.attrs[i]
+			continue
 		} else {
+			if attr.pattern.fallback == nil && !names.IsTrue() {
+				return ctx, EmptyScope, fmt.Errorf("length of tuple %s shorter than tuple pattern %s", tuple, p)
+			}
 			var found bool
 			tupleValue, found = tuple.Get(attr.name)
 			if !found {
@@ -96,17 +98,29 @@ func (p TuplePattern) Bind(ctx context.Context, local Scope, value Value) (conte
 				}
 			}
 		}
-		var scope Scope
 		var err error
-		ctx, scope, err = attr.pattern.Bind(ctx, local, tupleValue)
-		if err != nil {
-			return ctx, EmptyScope, err
-		}
-		result, err = result.MatchedUpdate(scope)
+		ctx, result, err = bind(ctx, attr, result, tupleValue)
 		if err != nil {
 			return ctx, EmptyScope, err
 		}
 		names = names.Without(attr.name)
+	}
+
+	if extraPattern != nil {
+		tupleValue := tuple.Project(names)
+		if tupleValue == nil {
+			return ctx, EmptyScope, fmt.Errorf("tuple %s cannot match tuple pattern %s", tuple, p)
+		}
+		var err error
+		ctx, result, err = bind(ctx, *extraPattern, result, tupleValue)
+		if err != nil {
+			return ctx, EmptyScope, err
+		}
+		names = EmptyNames
+	}
+
+	if names.IsTrue() {
+		return ctx, EmptyScope, fmt.Errorf("length of tuple %s longer than tuple pattern %s", tuple, p)
 	}
 
 	return ctx, result, nil

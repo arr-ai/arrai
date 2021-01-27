@@ -106,12 +106,64 @@ func TestExprLetTuplePattern(t *testing.T) { //nolint:dupl
 	AssertCodesEvalToSameValue(t, `1`, `let (:x) = (x: 1); x`)
 	AssertCodesEvalToSameValue(t, `2`, `let (:x, :y) = (x: 1, y: 2); y`)
 	AssertCodesEvalToSameValue(t, `2`, `let a = 1; let (:a, b: (a)) = (a: 2, b: 1); a`)
-	AssertCodeErrors(t, "", `let (a: x) = (b: 7, a: 4); x`)
-	AssertCodeErrors(t, "", `let (a: x, a: x) = (a: 4, a: 4); x`)
-	AssertCodeErrors(t, "", `let (a: x, a: x) = (a: 4); x`)
-	AssertCodeErrors(t, "", `let x = 5; let (a: (x)) = (a: 4); x`)
-	AssertCodeErrors(t, "", `let (a: x, b: x) = (a: 4, b: 7); x`)
-	AssertCodeErrors(t, "", `let x = 5; let (a: [(x)]) = (a: [4]); x`)
+	AssertCodesEvalToSameValue(t, `2`, `let (?:a:1) = (a: 2); a`)
+	AssertCodesEvalToSameValue(t, `2`, `let (a?: x:1) = (a: 2); x`)
+	AssertCodesEvalToSameValue(t, `(b: 2, c: 3)`, `let (a: 1, ...tail) = (a: 1, b: 2, c: 3); tail`)
+	AssertCodesEvalToSameValue(t, `(b: 2)`, `let (a: 1, ...tail, c: 3) = (a: 1, b: 2, c: 3); tail`)
+	AssertCodesEvalToSameValue(t, `()`, `let (a: 1, b: 2, c: 3, ...tail) = (a: 1, b: 2, c: 3); tail`)
+	AssertCodesEvalToSameValue(t, `1`, `let (?:a:1, b: 2) = (b: 2); a`)
+	AssertCodesEvalToSameValue(t, `[1, 2, 3]`, `let (?:a:1, ?:b:2, ?:c:3, d: 4) = (d: 4); [a, b, c]`)
+	AssertCodesEvalToSameValue(t, `[1, 2, 3]`, `let (?:a:1, ?:b:2, ?:c:3) = (); [a, b, c]`)
+	AssertCodesEvalToSameValue(t, `1`, `let (?:a:1, ...) = (b: 2); a`)
+	AssertCodesEvalToSameValue(t, `[(b: 2), 1]`, `let (?:a:1, ...tail) = (b: 2); [tail, a]`)
+	AssertCodesEvalToSameValue(t, `[(), 1]`, `let (?:a:1, b: 2, ...tail) = (b: 2); [tail, a]`)
+	AssertCodesEvalToSameValue(t, `[(), 3]`, `let (?:a:1, b: 2, ...tail) = (a: 3, b: 2); [tail, a]`)
+	AssertCodesEvalToSameValue(t, `[(), 3, 5]`, `let (?:a:1, b: 2, ?:c: 5, ...tail) = (a: 3, b: 2); [tail, a, c]`)
+
+	AssertCodeErrors(t,
+		"length of tuple (a: 4, b: 7) longer than tuple pattern (a: x)",
+		`let (a: x) = (b: 7, a: 4); x`,
+	)
+	AssertCodeErrors(t,
+		"length of tuple (b: 7) longer than tuple pattern (a?: a:1)",
+		`let (?:a:1) = (b: 7); a`,
+	)
+	AssertCodeErrors(t,
+		"length of tuple (d: 4) longer than tuple pattern (a?: a:1, b?: b:2, c?: c:3)",
+		`let (?:a:1, ?:b:2, ?:c:3) = (d: 4); a`,
+	)
+	AssertCodeErrors(t,
+		"length of tuple (a: 4, b: 7) longer than tuple pattern (a: x, c?: c:2)",
+		`let (a: x, ?:c:2) = (b: 7, a: 4); x`,
+	)
+	AssertCodeErrors(t,
+		"length of tuple (b: 7, c: 8) longer than tuple pattern (a?: a:1, b: 7)",
+		`let (?:a:1, b: 7) = (b: 7, c: 8); a`,
+	)
+	AssertCodeErrors(t,
+		"length of tuple (a: 4) shorter than tuple pattern (a: x, a: x)",
+		`let (a: x, a: x) = (a: 4, a: 4); x`,
+	)
+	AssertCodeErrors(t,
+		"length of tuple (a: 4) shorter than tuple pattern (a: x, a: x)",
+		`let (a: x, a: x) = (a: 4); x`,
+	)
+	AssertCodeErrors(t,
+		"non-deterministic pattern is not supported",
+		`let (a: 1, ..., c: 3, ..., e: 5) = (a: 1, b: 2, c: 3, d: 4, e: 5); a`,
+	)
+	AssertCodeErrors(t,
+		"didn't find matched value\n\n\x1b[1;37m:1:12:\x1b[",
+		`let x = 5; let (a: (x)) = (a: 4); x`,
+	)
+	AssertCodeErrors(t,
+		"the value of x is different in both scopes",
+		`let (a: x, b: x) = (a: 4, b: 7); x`,
+	)
+	AssertCodeErrors(t,
+		"didn't find matched value\n\n\x1b[1;37m:1:12:\x1b[",
+		`let x = 5; let (a: [(x)]) = (a: [4]); x`,
+	)
 }
 
 func TestExprLetDictPattern(t *testing.T) {
@@ -208,10 +260,10 @@ func TestExprLetGetPattern(t *testing.T) { //nolint:dupl
 	AssertCodesEvalToSameValue(t, `42`, `let {"a"?: {"b": {"c"?: x:42}}} = {"a": {"b": {"k": 1}}}; x`)
 
 	AssertCodesEvalToSameValue(t, `1`, `let (a?: x:42) = (a: 1); x`)
-	AssertCodesEvalToSameValue(t, `42`, `let (b?: x:42) = (a: 1); x`)
+	AssertCodesEvalToSameValue(t, `42`, `let (b?: x:42, a: 1) = (a: 1); x`)
 	AssertCodesEvalToSameValue(t, `[1, 42]`, `let (a: x, b?: y:42) = (a: 1); [x, y]`)
 	AssertCodesEvalToSameValue(t, `1`, `let (x?: (y: (z?: w:42))) = (x: (y: (z: 1))); w`)
-	AssertCodesEvalToSameValue(t, `42`, `let (x?: (y: (k?: w:42))) = (x: (y: (z: 1))); w`)
+	AssertCodesEvalToSameValue(t, `42`, `let (x?: (y: (k?: w:42, z: 1))) = (x: (y: (z: 1))); w`)
 
 	AssertCodesEvalToSameValue(t, `[1, 2, 0]`, `let [x, y, ?z:0] = [1, 2]; [x, y, z]`)
 	AssertCodesEvalToSameValue(t, `[1, 2, 3]`, `let [x, y, ?z:0] = [1, 2, 3]; [x, y, z]`)
