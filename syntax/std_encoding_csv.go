@@ -35,11 +35,11 @@ type encodeConfig struct {
 func stdEncodingCSV() rel.Attr {
 	return rel.NewTupleAttr(
 		"csv",
-		rel.NewNativeFunctionAttr("decode", func(_ context.Context, value rel.Value) (rel.Value, error) {
-			return csvDecodeFnBody("csv.decode", value, newDecodeConfig())
+		rel.NewNativeFunctionAttr(decodeAttr, func(_ context.Context, value rel.Value) (rel.Value, error) {
+			return csvDefaultDecode(value)
 		}),
 
-		rel.NewNativeFunctionAttr("decoder", func(_ context.Context, configValue rel.Value) (rel.Value, error) {
+		rel.NewNativeFunctionAttr(decoderAttr, func(_ context.Context, configValue rel.Value) (rel.Value, error) {
 			fn := "csv.decoder"
 			config := newDecodeConfig()
 
@@ -101,6 +101,10 @@ func stdEncodingCSV() rel.Attr {
 			}), nil
 		}),
 	)
+}
+
+func csvDefaultDecode(v rel.Value) (rel.Value, error) {
+	return csvDecodeFnBody("csv.decode", v, newDecodeConfig())
 }
 
 func csvDecodeFnBody(fn string, value rel.Value, config decodeConfig) (rel.Value, error) {

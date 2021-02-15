@@ -10,24 +10,41 @@ import (
 	"path"
 	"path/filepath"
 	"strings"
+	"sync"
 
 	"github.com/anz-bank/pkg/mod"
 	"github.com/arr-ai/arrai/pkg/ctxfs"
 	"github.com/arr-ai/arrai/pkg/ctxrootcache"
 	"github.com/arr-ai/arrai/rel"
 	"github.com/arr-ai/arrai/tools"
-	"github.com/arr-ai/arrai/translate"
+	"github.com/arr-ai/wbnf/parser"
+	"github.com/sirupsen/logrus"
 )
 
 // ModuleRootSentinel is a file which marks the module root of a project.
 const ModuleRootSentinel = "go.mod"
 
 var (
+	implicitDecoderSyncOnce sync.Once
+	implicitDecode          rel.Value
+
 	cache             = newCache()
 	errModuleNotExist = errors.New("module root not found")
 )
 
-func importLocalFile(ctx context.Context, fromRoot bool, importPath, sourceDir string) (rel.Expr, error) {
+func implicitDecoder() rel.Value {
+	implicitDecoderSyncOnce.Do(func() {
+		implicitDecode = mustParseLit(string(MustAsset("syntax/implicit_import.arrai")))
+	})
+	return implicitDecode
+}
+
+func importLocalFile(
+	ctx context.Context,
+	decoder rel.Tuple,
+	fromRoot bool,
+	importPath, sourceDir string,
+) (rel.Expr, error) {
 	if fromRoot {
 		rootPath, err := findRootFromModule(ctx, sourceDir)
 		if err != nil {
@@ -45,7 +62,7 @@ func importLocalFile(ctx context.Context, fromRoot bool, importPath, sourceDir s
 		return nil, err
 	}
 
-	v, err := fileValue(ctx, importPath)
+	v, err := fileValue(ctx, decoder, importPath)
 	if err != nil {
 		return nil, err
 	}
@@ -53,10 +70,10 @@ func importLocalFile(ctx context.Context, fromRoot bool, importPath, sourceDir s
 	return v, nil
 }
 
-func importExternalContent(ctx context.Context, importPath string) (rel.Expr, error) {
+func importExternalContent(ctx context.Context, decoder rel.Tuple, importPath string) (rel.Expr, error) {
 	var moduleErr error
 	if !strings.HasPrefix(importPath, "http://") && !strings.HasPrefix(importPath, "https://") {
-		v, err := importModuleFile(ctx, importPath)
+		v, err := importModuleFile(ctx, decoder, importPath)
 		if err == nil {
 			return v, nil
 		}
@@ -66,7 +83,7 @@ func importExternalContent(ctx context.Context, importPath string) (rel.Expr, er
 		importPath = "https://" + importPath
 	}
 
-	v, err := importURL(ctx, importPath)
+	v, err := importURL(ctx, decoder, importPath)
 	if err != nil {
 		if moduleErr != nil {
 			return nil, fmt.Errorf("failed to import %s - %s, and %s", importPath, moduleErr.Error(), err.Error())
@@ -77,9 +94,9 @@ func importExternalContent(ctx context.Context, importPath string) (rel.Expr, er
 	return v, nil
 }
 
-func importModuleFile(ctx context.Context, importPath string) (rel.Expr, error) {
+func importModuleFile(ctx context.Context, decoder rel.Tuple, importPath string) (rel.Expr, error) {
 	if isRunningBundle(ctx) {
-		return fileValue(ctx, path.Join(ModuleDir, importPath))
+		return fileValue(ctx, decoder, path.Join(ModuleDir, importPath))
 	}
 
 	wd, err := os.Getwd()
@@ -106,7 +123,7 @@ func importModuleFile(ctx context.Context, importPath string) (rel.Expr, error) 
 		return nil, err
 	}
 
-	return fileValue(ctx, filepath.Join(m.Dir, relImportPath))
+	return fileValue(ctx, decoder, filepath.Join(m.Dir, relImportPath))
 }
 
 func findRootFromModule(ctx context.Context, modulePath string) (string, error) {
@@ -155,10 +172,10 @@ func findRootFromModule(ctx context.Context, modulePath string) (string, error) 
 	}
 }
 
-func importURL(ctx context.Context, url string) (rel.Expr, error) {
+func importURL(ctx context.Context, decoder rel.Tuple, url string) (rel.Expr, error) {
 	if isRunningBundle(ctx) {
 		url = strings.TrimPrefix(strings.TrimPrefix(url, "https://"), "http://")
-		return fileValue(ctx, path.Join(ModuleDir, url))
+		return fileValue(ctx, decoder, path.Join(ModuleDir, url))
 	}
 	resp, err := http.Get(url) //nolint:gosec
 	if err != nil {
@@ -180,7 +197,7 @@ func importURL(ctx context.Context, url string) (rel.Expr, error) {
 	return nil, fmt.Errorf("request %s failed: %s", url, resp.Status)
 }
 
-func fileValue(ctx context.Context, filename string) (rel.Expr, error) {
+func fileValue(ctx context.Context, decoder rel.Tuple, filename string) (rel.Expr, error) {
 	if filepath.Ext(filename) == "" {
 		filename += ".arrai"
 	}
@@ -190,12 +207,28 @@ func fileValue(ctx context.Context, filename string) (rel.Expr, error) {
 		return nil, err
 	}
 
-	switch filepath.Ext(filename) {
-	case ".json":
-		return bytesJSONToArrai(bytes)
-	case ".yml", ".yaml":
-		return translate.BytesYamlToArrai(bytes)
+	// TODO: add cache of decoded values
+	if decoder != nil {
+		return decode(ctx, decoder, bytes)
 	}
+	if ext := filepath.Ext(filename); ext != ".arrai" {
+		decoded, err := rel.NewCallExprCurry(
+			parser.Scanner{},
+			implicitDecoder(),
+			rel.NewString([]rune(ext)),
+			rel.NewBytes(bytes),
+		).Eval(ctx, StdScope())
+		if err != nil {
+			return nil, err
+		}
+
+		if decoded.Equal(rel.EmptyTuple) {
+			logrus.Debugf("implicit decoding failed for %s. Importing with bytes decoder.", filename)
+			return rel.NewBytes(bytes), nil
+		}
+		return decoded, nil
+	}
+
 	return bytesValue(ctx, filename, bytes)
 }
 

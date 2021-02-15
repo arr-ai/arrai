@@ -13,7 +13,7 @@ import (
 func stdEncodingJSON() rel.Attr {
 	return rel.NewTupleAttr(
 		"json",
-		rel.NewNativeFunctionAttr("decode", func(_ context.Context, v rel.Value) (rel.Value, error) {
+		rel.NewNativeFunctionAttr(decodeAttr, func(_ context.Context, v rel.Value) (rel.Value, error) {
 			var bytes []byte
 			switch v := v.(type) {
 			case rel.String:

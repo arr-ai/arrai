@@ -44,7 +44,7 @@ expr   -> C* amp="&"* @ C* arrow=(
         | C* "{:" C* embed=(macro=@ rule? ":" subgrammar=%%ast) ":}" C*
         | C* op="\\\\" @ C*
         | C* fn="\\" pattern @ C*
-        | C* import="//" pkg=( "{" dot="."? PKGPATH "}" | std=IDENT?)
+        | C* import="//" pkg=( decoder=("[" @ "]")? "{" dot="."? PKGPATH "}" | std=IDENT?)
         | C* odelim="(" @ cdelim=")" C*
         | C* let=("let" C* rec=/{\brec\b}? pat=(C* pattern C* "=")? C* @ %%bind C* ";" C* @) C*
         | C* xstr C*

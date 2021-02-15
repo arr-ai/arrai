@@ -1,13 +1,18 @@
 include VersionReport.mk
 
 .PHONY: all
-all: lint test wasm
+all: lint test wasm bindata
 
 .PHONY: parser
 parser: syntax/parser.go
 
 syntax/parser.go: tools/parser/generate_parser.go syntax/arrai.wbnf
 	go run $^ $@
+
+bindata: syntax/bindata.go
+
+syntax/bindata.go: syntax/implicit_import.arrai
+	go-bindata -pkg syntax -o syntax/bindata.go syntax/implicit_import.arrai
 
 build: parser
 	go build -ldflags=$(LDFLAGS) ./cmd/arrai
