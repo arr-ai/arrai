@@ -284,6 +284,9 @@ func (a Array) withItem(index int, item Value) Set {
 
 // With returns the original Array with given value added. Iff the value was
 // already present, the original Array is returned.
+//
+// Where value is an ArrayItemTuple, its item is inserted at its at index. If
+// a value is already present at the index, this is an error.
 func (a Array) With(value Value) Set {
 	if t, ok := value.(ArrayItemTuple); ok {
 		return a.withItem(t.at, t.item)
@@ -293,6 +296,10 @@ func (a Array) With(value Value) Set {
 
 // Without returns the original Array without the given value. Iff the value
 // was already absent, the original Array is returned.
+//
+// Value is expected to be an ArrayItemTuple; no other values can be present in
+// an array, so any other type will be a no-op. Both the value's at (index) and
+// item must exactly match an element of the array in order to remove it.
 func (a Array) Without(value Value) Set {
 	if t, ok := value.(ArrayItemTuple); ok {
 		if i := t.at - a.offset; 0 <= i && i < len(a.values) {
@@ -315,6 +322,7 @@ func (a Array) Without(value Value) Set {
 				result := a.clone()
 				result.values[i] = nil
 				result.count--
+				return result
 			}
 		}
 	}
