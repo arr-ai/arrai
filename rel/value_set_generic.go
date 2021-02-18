@@ -294,6 +294,9 @@ func (s GenericSet) Where(p func(v Value) (bool, error)) (_ Set, err error) {
 		if err != nil {
 			return false
 		}
+		if elem == nil {
+			return false
+		}
 		match, err2 := p(elem.(Value))
 		if err2 != nil {
 			err = err2
