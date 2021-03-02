@@ -20,4 +20,6 @@ func TestSetPatternWithTupleSet(t *testing.T) {
 	AssertCodesEvalToSameValue(t,
 		`2`, `let x={(y:0, z:2), (y:1, z:3)}; let w = x where .y=1; cond w{ {(:y, ...)}: 2*y }`)
 	AssertCodesEvalToSameValue(t, `{}`, `let x={(y:0, z:2), (y:0, z:3)}; cond x{ {(:y, :z)}: 2*y }`)
+
+	AssertCodePanics(t, `let x = {(y:0, z:2), (y:0, z:3)}; cond x { {(:y, :z), ...}: 2*y }`)
 }
