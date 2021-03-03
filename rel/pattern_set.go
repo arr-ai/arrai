@@ -86,6 +86,7 @@ func (p SetPattern) Bind(ctx context.Context, local Scope, value Value) (context
 					return t.Bind(ctx, local, e.Current())
 				}
 			}
+			// TODO: This is should return an error
 			panic(fmt.Errorf("pattern type %T not supported yet", t))
 		}
 	}

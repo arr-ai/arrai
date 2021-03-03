@@ -55,6 +55,7 @@ func (e CondPatternControlVarExpr) Eval(ctx context.Context, scope Scope) (Value
 
 	for _, conditionPair := range e.conditionPairs {
 		ctx, bindings, err := conditionPair.Bind(ctx, scope, varVal)
+		// TODO: This will misbehave if there's a genuine error in pattern matching, err !=nil gets through as nil
 		if err == nil {
 			l, err := scope.MatchedUpdate(bindings)
 			if err != nil {
