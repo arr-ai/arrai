@@ -5,6 +5,7 @@ import (
 
 	"github.com/urfave/cli/v2"
 
+	"github.com/arr-ai/arrai/pkg/buildinfo"
 	"github.com/arr-ai/arrai/pkg/ctxfs"
 	"github.com/arr-ai/arrai/pkg/ctxrootcache"
 	"github.com/spf13/afero"
@@ -30,6 +31,7 @@ func InitRunCtx(ctx context.Context) context.Context {
 	ctx = ctxfs.SourceFsOnto(ctx, afero.NewOsFs())
 	ctx = ctxfs.RuntimeFsOnto(ctx, afero.NewOsFs())
 	ctx = ctxrootcache.WithRootCache(ctx)
+	ctx = buildinfo.WithPackageBuildData(ctx)
 	return ctx
 }
 
