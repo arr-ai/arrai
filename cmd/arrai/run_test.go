@@ -217,13 +217,68 @@ func TestNoImportRoot(t *testing.T) {
 	require.NoError(t, err)
 	defer f.Close()
 	mustWrite(t, f, []byte("1"))
-	require.EqualError(t,
-		evalFile(
-			ctxrootcache.WithRootCache(ctxfs.SourceFsOnto(context.Background(), fs)),
-			syntax.MustAbs(t, "path/to/file/test.arrai"), &bytes.Buffer{}, "",
-		),
-		"module root not found")
+	err = evalFile(
+		ctxrootcache.WithRootCache(ctxfs.SourceFsOnto(context.Background(), fs)),
+		syntax.MustAbs(t, "path/to/file/test.arrai"), &bytes.Buffer{}, "",
+	)
+	require.Error(t, err)
+	//FIXME: the error contains stack trace that is specific to local machine due to module imports
+	assert.Contains(t, err.Error(), "module root not found")
 }
+
+func TestLocalImportErrors(t *testing.T) {
+	t.Parallel()
+	// syntax error in let expression
+	fs := ctxfs.CreateTestMemMapFs(t, map[string]string{
+		"a.arrai": "let x = //{./b}; x",
+		"b.arrai": "//{./c}",
+		"c.arrai": "123string",
+	})
+	err := evalFile(
+		ctxfs.SourceFsOnto(context.Background(), fs),
+		"a.arrai", &bytes.Buffer{}, "",
+	)
+	assert.EqualError(t, err, "unconsumed input\n \n\x1b[1;37mc.arrai:1:4:\x1b[0m\n123\x1b[1;31mstring\x1b[0m")
+
+	// file not found error
+	fs = ctxfs.CreateTestMemMapFs(t, map[string]string{
+		"a.arrai": "let x = //{./b}; x",
+	})
+	err = evalFile(
+		ctxfs.SourceFsOnto(context.Background(), fs),
+		"a.arrai", &bytes.Buffer{}, "",
+	)
+	require.Error(t, err)
+	// error contains local directory
+	assert.Contains(t,
+		err.Error(),
+		"file does not exist\n\n\x1b[1;37ma.arrai:1:11:\x1b[0m\nlet x = //\x1b[1;31m{./b}\x1b[0m; x",
+	)
+}
+
+// FIXME: remote import cannot be tested as it requires downloading modules into cache and the memory filesystem
+// does not have access to the cache.
+// func TestRemoteImportErrors(t *testing.T) {
+// 	t.Parallel()
+// 	fs := ctxfs.CreateTestMemMapFs(t, map[string]string{
+// 		"a.arrai": "//{github.com/nofun97/test-arrai/syntax-error}",
+// 		"b.arrai": "//{github.com/nofun97/test-arrai/wrong-import}",
+// 		"c.arrai": "//{github.com/nofun97/test-arrai/import-syntax-error}",
+// 	})
+// 	ctx := ctxfs.SourceFsOnto(context.Background(), fs)
+// 	assert.EqualError(t,
+// 		evalFile(ctx, "a.arrai", &bytes.Buffer{}, ""),
+// 		"",
+// 	)
+// 	assert.EqualError(t,
+// 		evalFile(ctx, "b.arrai", &bytes.Buffer{}, ""),
+// 		"",
+// 	)
+// 	assert.EqualError(t,
+// 		evalFile(ctx, "c.arrai", &bytes.Buffer{}, ""),
+// 		"",
+// 	)
+// }
 
 func mustWrite(t *testing.T, f afero.File, content []byte) {
 	_, err := f.Write(content)

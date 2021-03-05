@@ -39,8 +39,28 @@ func implicitDecoder() rel.Value {
 	return implicitDecode
 }
 
+type localImportError struct {
+	err     error
+	scanner parser.Scanner
+}
+
+func (l *localImportError) Error() string {
+	return fmt.Sprintf("%s\n%s", l.err, l.scanner.Context(parser.DefaultLimit))
+}
+
+func handleImportErrors(err, wrapped error) error {
+	// all of these errors contain scanner, this ensures that only the deepest scanner in the stack
+	// prints the stack.
+	switch err.(type) {
+	case parser.UnconsumedInputError, *localImportError, *externalImportErr, *urlImportErr:
+		return err
+	}
+	return wrapped
+}
+
 func importLocalFile(
 	ctx context.Context,
+	scanner parser.Scanner,
 	decoder rel.Tuple,
 	fromRoot bool,
 	importPath, sourceDir string,
@@ -48,10 +68,10 @@ func importLocalFile(
 	if fromRoot {
 		rootPath, err := findRootFromModule(ctx, sourceDir)
 		if err != nil {
-			return nil, err
+			return nil, &localImportError{err: err, scanner: scanner}
 		}
 		if err = addModuleSentinel(ctx, rootPath); err != nil {
-			return nil, err
+			return nil, &localImportError{err: err, scanner: scanner}
 		}
 		if !strings.HasPrefix(importPath, "/") {
 			importPath = rootPath + "/" + strings.ReplaceAll(importPath, "../", "")
@@ -59,18 +79,48 @@ func importLocalFile(
 	}
 
 	if err := bundleLocalFile(ctx, importPath); err != nil {
-		return nil, err
+		return nil, &localImportError{err: err, scanner: scanner}
 	}
 
 	v, err := fileValue(ctx, decoder, importPath)
 	if err != nil {
-		return nil, err
+		return nil, handleImportErrors(err, &localImportError{err: err, scanner: scanner})
 	}
 
 	return v, nil
 }
 
-func importExternalContent(ctx context.Context, decoder rel.Tuple, importPath string) (rel.Expr, error) {
+type externalImportErr struct {
+	importPath        string
+	moduleErr, urlErr error
+	scanner           parser.Scanner
+}
+
+func (e *externalImportErr) Error() string {
+	return fmt.Sprintf(
+		"failed to import %s - %s, and %s\n%s",
+		e.importPath,
+		e.moduleErr,
+		e.urlErr, e.scanner.Context(parser.DefaultLimit),
+	)
+}
+
+type urlImportErr struct {
+	importPath string
+	err        error
+	scanner    parser.Scanner
+}
+
+func (u *urlImportErr) Error() string {
+	return fmt.Sprintf("import %s failed - %s\n%s", u.importPath, u.err, u.scanner.Context(parser.DefaultLimit))
+}
+
+func importExternalContent(
+	ctx context.Context,
+	scanner parser.Scanner,
+	decoder rel.Tuple,
+	importPath string,
+) (rel.Expr, error) {
 	var moduleErr error
 	if !strings.HasPrefix(importPath, "http://") && !strings.HasPrefix(importPath, "https://") {
 		v, err := importModuleFile(ctx, decoder, importPath)
@@ -86,9 +136,17 @@ func importExternalContent(ctx context.Context, decoder rel.Tuple, importPath st
 	v, err := importURL(ctx, decoder, importPath)
 	if err != nil {
 		if moduleErr != nil {
-			return nil, fmt.Errorf("failed to import %s - %s, and %s", importPath, moduleErr.Error(), err.Error())
+			return nil, handleImportErrors(
+				moduleErr,
+				&externalImportErr{
+					importPath: importPath,
+					moduleErr:  moduleErr,
+					urlErr:     err,
+					scanner:    scanner,
+				},
+			)
 		}
-		return nil, err
+		return nil, handleImportErrors(err, &urlImportErr{importPath: importPath, err: err, scanner: scanner})
 	}
 
 	return v, nil

@@ -1110,13 +1110,13 @@ func (pc ParseContext) compilePackage(ctx context.Context, b ast.Branch, c ast.C
 			if !fromRoot {
 				importPath = filepath.Join(pc.SourceDir, filePath)
 			}
-			expr, err := importLocalFile(ctx, decoderTuple, fromRoot, importPath, pc.SourceDir)
+			expr, err := importLocalFile(ctx, pkg.Scanner(), decoderTuple, fromRoot, importPath, pc.SourceDir)
 			if err != nil {
 				return nil, err
 			}
 			return NewImportExpr(scanner, expr, importPath), nil
 		}
-		expr, err := importExternalContent(ctx, decoderTuple, name)
+		expr, err := importExternalContent(ctx, pkg.Scanner(), decoderTuple, name)
 		if err != nil {
 			return nil, err
 		}
