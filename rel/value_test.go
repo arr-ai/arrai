@@ -2,6 +2,9 @@ package rel
 
 import (
 	"context"
+	"go/parser"
+	"go/token"
+	"io/ioutil"
 	"testing"
 
 	"github.com/arr-ai/arrai/pkg/arraictx"
@@ -37,4 +40,18 @@ func TestSetCall(t *testing.T) {
 	result, err = SetCall(ctx, set, NewNumber(2))
 	require.NoError(t, err)
 	assert.True(t, result.Equal(NewNumber(24)))
+}
+
+func TestReflect(t *testing.T) {
+	fset := token.NewFileSet()
+	bs, err := ioutil.ReadFile("value.go")
+	assert.NoError(t, err)
+
+	f, err := parser.ParseFile(fset, "", string(bs), 0)
+	assert.NoError(t, err)
+
+	v, err := NewValue(f)
+	assert.NoError(t, err)
+
+	assert.NotNil(t, v)
 }

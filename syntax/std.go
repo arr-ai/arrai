@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	goparser "go/parser"
+	"go/token"
 	"log"
 	"math"
 	"strconv"
@@ -113,6 +115,7 @@ func StdScope() rel.Scope {
 				stdArchive(),
 				stdEncoding(),
 				stdEval(),
+				stdLang(),
 				stdOs(),
 				stdNet(),
 				stdRe(),
@@ -230,4 +233,26 @@ func parseGrammar(_ context.Context, v rel.Value) (rel.Value, error) {
 				return rel.ASTNodeToValue(ast.FromParserNode(parsers.Grammar(), node)), nil
 			}), nil
 	}), nil
+}
+
+func parseGo(v rel.Value) (rel.Value, error) {
+	if sv, ok := v.(rel.String); ok {
+		s, err := rel.NewValue(sv.String())
+		if err != nil {
+			return nil, err
+		}
+
+		fset := token.NewFileSet()
+		f, err := goparser.ParseFile(fset, "", s.String(), 0)
+		if err != nil {
+			return nil, err
+		}
+		r, err := rel.NewValue(f)
+		if err != nil {
+			return nil, err
+		}
+		return r, nil
+	} else {
+		return nil, fmt.Errorf("go file must be a string, not %T", v)
+	}
 }
