@@ -1,0 +1,4 @@
+# This script provides a way for some functions in the standard library to be written in arr.ai. It takes the standard
+# library written in golang as a tuple and returns another tuple with additional functions written in arr.ai.
+\stdlib
+    stdlib

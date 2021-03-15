@@ -18,7 +18,6 @@ import (
 	"github.com/arr-ai/arrai/rel"
 	"github.com/arr-ai/arrai/tools"
 	"github.com/arr-ai/wbnf/parser"
-	"github.com/sirupsen/logrus"
 )
 
 // ModuleRootSentinel is a file which marks the module root of a project.
@@ -26,15 +25,15 @@ const ModuleRootSentinel = "go.mod"
 
 var (
 	implicitDecoderSyncOnce sync.Once
-	implicitDecode          rel.Value
+	implicitDecode          rel.Expr
 
 	cache             = newCache()
 	errModuleNotExist = errors.New("module root not found")
 )
 
-func implicitDecoder() rel.Value {
+func implicitDecoder() rel.Expr {
 	implicitDecoderSyncOnce.Do(func() {
-		implicitDecode = mustParseLit(string(MustAsset("syntax/implicit_import.arrai")))
+		implicitDecode = mustParseExpr(string(MustAsset("syntax/implicit_import.arrai")))
 	})
 	return implicitDecode
 }
@@ -270,21 +269,13 @@ func fileValue(ctx context.Context, decoder rel.Tuple, filename string) (rel.Exp
 		return decode(ctx, decoder, bytes)
 	}
 	if ext := filepath.Ext(filename); ext != ".arrai" {
-		decoded, err := rel.NewCallExprCurry(
+		// return expression so that implicit decoding is lazy, when implicit decoder fails, it returns the file bytes.
+		return rel.NewCallExprCurry(
 			parser.Scanner{},
 			implicitDecoder(),
 			rel.NewString([]rune(ext)),
 			rel.NewBytes(bytes),
-		).Eval(ctx, StdScope())
-		if err != nil {
-			return nil, err
-		}
-
-		if decoded.Equal(rel.EmptyTuple) {
-			logrus.Debugf("implicit decoding failed for %s. Importing with bytes decoder.", filename)
-			return rel.NewBytes(bytes), nil
-		}
-		return decoded, nil
+		), nil
 	}
 
 	return bytesValue(ctx, filename, bytes)

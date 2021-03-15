@@ -19,4 +19,6 @@ let decoders = (
 
 \extension \byte
     let extension = cond {//seq.has_prefix('.', extension): //seq.trim_prefix('.', extension), _: extension};
-    decoders(extension)?(byte):()
+    decoders(extension)?(byte):(
+        //log.print($`implicit decoding failed for extension ${extension}. Importing with bytes decoder`) && byte
+    )

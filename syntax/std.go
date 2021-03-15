@@ -32,100 +32,110 @@ func FixFuncs() (rel.Value, rel.Value) {
 func StdScope() rel.Scope {
 	stdScopeOnce.Do(func() {
 		fixFn, fixtFn := FixFuncs()
-		stdScopeVar = rel.EmptyScope.
-			With("//", rel.NewTuple(
-				rel.NewNativeFunctionAttr("dict", func(_ context.Context, value rel.Value) (rel.Value, error) {
-					if t, ok := value.(rel.Tuple); ok {
-						if !t.IsTrue() {
-							return rel.None, nil
-						}
-						entries := make([]rel.DictEntryTuple, 0, t.Count())
-						for e := t.Enumerator(); e.MoveNext(); {
-							name, value := e.Current()
-							entries = append(entries, rel.NewDictEntryTuple(rel.NewString([]rune(name)), value))
-						}
-						return rel.NewDict(false, entries...)
+		goStdlib := rel.NewTuple(
+			rel.NewNativeFunctionAttr("dict", func(_ context.Context, value rel.Value) (rel.Value, error) {
+				if t, ok := value.(rel.Tuple); ok {
+					if !t.IsTrue() {
+						return rel.None, nil
 					}
-					return nil, fmt.Errorf("dict(): not a tuple")
-				}),
-				rel.NewNativeFunctionAttr("tuple", func(_ context.Context, value rel.Value) (rel.Value, error) {
-					switch t := value.(type) {
-					case rel.Dict:
-						attrs := make([]rel.Attr, 0, t.Count())
-						for e := t.DictEnumerator(); e.MoveNext(); {
-							keyVal, value := e.Current()
-							var key string
-							// keyVal won't be a rel.String if it's empty.
-							if _, ok := keyVal.(rel.String); ok {
-								key = keyVal.String()
-							} else if _, ok := keyVal.(rel.GenericSet); ok && !keyVal.IsTrue() {
-								key = ""
-							} else {
-								return nil, fmt.Errorf(
-									"all keys of arg to //tuple must be strings, not %s", rel.ValueTypeAsString(keyVal))
-							}
-							attrs = append(attrs, rel.NewAttr(key, value))
-						}
-						return rel.NewTuple(attrs...), nil
-					case rel.Set:
-						if !t.IsTrue() {
-							return rel.NewTuple(), nil
-						}
+					entries := make([]rel.DictEntryTuple, 0, t.Count())
+					for e := t.Enumerator(); e.MoveNext(); {
+						name, value := e.Current()
+						entries = append(entries, rel.NewDictEntryTuple(rel.NewString([]rune(name)), value))
 					}
-					return nil, fmt.Errorf("tuple(): not a dict")
-				}),
-				rel.NewTupleAttr("math",
-					rel.NewFloatAttr("pi", math.Pi),
-					rel.NewFloatAttr("e", math.E),
-					newFloatFuncAttr("sin", math.Sin),
-					newFloatFuncAttr("cos", math.Cos),
-				),
-				rel.NewTupleAttr("grammar",
-					rel.NewNativeFunctionAttr("parse", parseGrammar),
-					rel.NewTupleAttr("lang",
-						rel.NewAttr("arrai", rel.ASTNodeToValue(arraiParsers.Node().(ast.Node))),
-						rel.NewAttr("wbnf", rel.ASTNodeToValue(wbnf.Core().Node().(ast.Node))),
-					),
-				),
-				rel.NewTupleAttr("fn",
-					rel.NewAttr("fix", fixFn),
-					rel.NewAttr("fixt", fixtFn),
-				),
-				rel.NewTupleAttr("log",
-					rel.NewNativeFunctionAttr("print", func(_ context.Context, value rel.Value) (rel.Value, error) {
-						log.Print(rel.Repr(value))
-						return value, nil
-					}),
-					createFunc2Attr("printf", func(ctx context.Context, a, b rel.Value) (rel.Value, error) {
-						format := a.(rel.String).String()
-						strs := make([]interface{}, 0, b.(rel.Set).Count())
-						for i, ok := b.(rel.Set).ArrayEnumerator(); ok && i.MoveNext(); {
-							strs = append(strs, i.Current())
+					return rel.NewDict(false, entries...)
+				}
+				return nil, fmt.Errorf("dict(): not a tuple")
+			}),
+			rel.NewNativeFunctionAttr("tuple", func(_ context.Context, value rel.Value) (rel.Value, error) {
+				switch t := value.(type) {
+				case rel.Dict:
+					attrs := make([]rel.Attr, 0, t.Count())
+					for e := t.DictEnumerator(); e.MoveNext(); {
+						keyVal, value := e.Current()
+						var key string
+						// keyVal won't be a rel.String if it's empty.
+						if _, ok := keyVal.(rel.String); ok {
+							key = keyVal.String()
+						} else if _, ok := keyVal.(rel.GenericSet); ok && !keyVal.IsTrue() {
+							key = ""
+						} else {
+							return nil, fmt.Errorf(
+								"all keys of arg to //tuple must be strings, not %s", rel.ValueTypeAsString(keyVal))
 						}
-						log.Printf(format, strs...)
-						return b, nil
-					}),
+						attrs = append(attrs, rel.NewAttr(key, value))
+					}
+					return rel.NewTuple(attrs...), nil
+				case rel.Set:
+					if !t.IsTrue() {
+						return rel.NewTuple(), nil
+					}
+				}
+				return nil, fmt.Errorf("tuple(): not a dict")
+			}),
+			rel.NewTupleAttr("math",
+				rel.NewFloatAttr("pi", math.Pi),
+				rel.NewFloatAttr("e", math.E),
+				newFloatFuncAttr("sin", math.Sin),
+				newFloatFuncAttr("cos", math.Cos),
+			),
+			rel.NewTupleAttr("grammar",
+				rel.NewNativeFunctionAttr("parse", parseGrammar),
+				rel.NewTupleAttr("lang",
+					rel.NewAttr("arrai", rel.ASTNodeToValue(arraiParsers.Node().(ast.Node))),
+					rel.NewAttr("wbnf", rel.ASTNodeToValue(wbnf.Core().Node().(ast.Node))),
 				),
-				rel.NewNativeFunctionAttr("error", func(_ context.Context, value rel.Value) (rel.Value, error) {
-					// FIXME: this is a temporary error handling
-					return nil, errors.New(value.String())
+			),
+			rel.NewTupleAttr("fn",
+				rel.NewAttr("fix", fixFn),
+				rel.NewAttr("fixt", fixtFn),
+			),
+			rel.NewTupleAttr("log",
+				rel.NewNativeFunctionAttr("print", func(_ context.Context, value rel.Value) (rel.Value, error) {
+					log.Print(rel.Repr(value))
+					return value, nil
 				}),
-				stdArchive(),
-				stdEncoding(),
-				stdEval(),
-				stdOs(),
-				stdNet(),
-				stdRe(),
-				stdReflect(),
-				stdRel(),
-				stdSeq(),
-				stdStr(),
-				stdTest(),
-				stdBits(),
-				stdFmt(),
-				stdRuntime(),
-				stdDeprecated(),
-			))
+				createFunc2Attr("printf", func(ctx context.Context, a, b rel.Value) (rel.Value, error) {
+					format := a.(rel.String).String()
+					strs := make([]interface{}, 0, b.(rel.Set).Count())
+					for i, ok := b.(rel.Set).ArrayEnumerator(); ok && i.MoveNext(); {
+						strs = append(strs, i.Current())
+					}
+					log.Printf(format, strs...)
+					return b, nil
+				}),
+			),
+			rel.NewNativeFunctionAttr("error", func(_ context.Context, value rel.Value) (rel.Value, error) {
+				// FIXME: this is a temporary error handling
+				return nil, errors.New(value.String())
+			}),
+			stdArchive(),
+			stdEncoding(),
+			stdEval(),
+			stdOs(),
+			stdNet(),
+			stdRe(),
+			stdReflect(),
+			stdRel(),
+			stdSeq(),
+			stdStr(),
+			stdTest(),
+			stdBits(),
+			stdFmt(),
+			stdRuntime(),
+			stdDeprecated(),
+		)
+		arraiStdlib := mustParseBundle(MustAsset("syntax/stdlib.arraiz"))
+		stdlibVal, err := rel.NewCallExprCurry(*parser.NewScanner("stdlib"), arraiStdlib, goStdlib).
+			Eval(context.Background(), rel.EmptyScope)
+		if err != nil {
+			panic(err)
+		}
+		t, isTuple := stdlibVal.(rel.Tuple)
+		if !isTuple {
+			panic("standard library does not evaluate to a tuple")
+		}
+		stdScopeVar = rel.EmptyScope.With("//", t)
 	})
 	return stdScopeVar
 }
@@ -198,10 +208,28 @@ func createFunc3Attr(name string, f func(ctx context.Context, a, b, c rel.Value)
 	return rel.NewAttr(name, createFunc3(name, f))
 }
 
+func mustParseExpr(s string) rel.Expr {
+	return MustCompile(context.TODO(), NoPath, s)
+}
+
 func mustParseLit(s string) rel.Value {
 	// this shouldn't require any special key-value pairs in the context
 	ctx := context.TODO()
-	lit, err := MustCompile(ctx, NoPath, s).Eval(ctx, rel.EmptyScope)
+	lit, err := mustParseExpr(s).Eval(ctx, rel.EmptyScope)
+	if err != nil {
+		panic(err)
+	}
+	return lit
+}
+
+func mustParseBundle(b []byte) rel.Value {
+	ctx := context.TODO()
+	ctx, err := WithBundleRun(ctx, b)
+	if err != nil {
+		panic(err)
+	}
+	ctx, mainFileSource, path := GetMainBundleSource(ctx)
+	lit, err := MustCompile(ctx, path, string(mainFileSource)).Eval(ctx, rel.EmptyScope)
 	if err != nil {
 		panic(err)
 	}
