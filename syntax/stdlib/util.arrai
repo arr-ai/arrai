@@ -1,0 +1,13 @@
+# moved from contrib/util.arrai to use for stdlib. contrib/util.arrai uses stdlib.
+let reduce = \f
+    let rec r = \acc \arr
+        cond arr {
+            []: acc,
+            [x, ...tail]: r(f(acc, x), tail),
+        }
+    ;
+
+    r
+;
+
+(:reduce)

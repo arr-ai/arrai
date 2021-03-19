@@ -1,0 +1,154 @@
+let flag = //{./flag}((re: //re, error: //error, eval: //eval));
+let justTypeConf = flag.parser({'str': 'string', 'num': 'number', 'bool': 'bool'});
+let mixDefaults = flag.parser({
+    'strNoDefault':    (type: 'string'),
+    'numNoDefault':    (type: 'number'),
+    'boolNoDefault':   (type: 'bool'),
+    'strWithDefault':  (type: 'string', default: 'hello'),
+    'numWithDefault':  (type: 'number', default: 123),
+    'boolWithDefault': (type: 'bool', default: false),
+});
+let alias = flag.parser({'alias': (type: 'string', alias: 'a')});
+
+# FIXME: test for errors
+(
+    justType: (
+        regular: justTypeConf.parse(['--str', 'hi', '--num', '123', '--bool']) = (
+            args: [], flags: {'bool': true, 'num': 123, 'str': 'hi'}
+        ),
+        regularOneDash: justTypeConf.parse(['-str', 'hi', '-num', '123', '-bool']) = (
+            args: [], flags: {'bool': true, 'num': 123, 'str': 'hi'}
+        ),
+        missing: justTypeConf.parse(['--str', 'hi', '--bool']) = (
+            args: [], flags: {'bool': true, 'str': 'hi'}
+        ),
+        justBool: justTypeConf.parse(['--bool']) = (args: [], flags: {'bool': true}),
+        empty: justTypeConf.parse([]) = (args: [], flags: {}),
+        unrecognizedFlags: (
+            spreadAround: justTypeConf.parse(['--random', '--str', 'hi', '-in-the-middle' ,'--bool', '--another-one']) = (
+                args: ['--random', '-in-the-middle', '--another-one'], flags: {'bool': true, 'str': 'hi'}
+            ),
+            all: justTypeConf.parse(['--random', 'random_without_dashes', '-one-dash']) = (
+                args: ['--random', 'random_without_dashes', '-one-dash'], flags: {}
+            ),
+            similar: justTypeConf.parse(['---str', 'hi', 'bool']) = (
+                args: ['---str', 'hi', 'bool'], flags: {}
+            )
+        ),
+    ),
+    defaultsTest: (
+        all: mixDefaults.parse([
+                '--strNoDefault',
+                'string_value',
+                '--numNoDefault',
+                '1',
+                '--boolNoDefault',
+                '--strWithDefault',
+                'another_string_value',
+                '--numWithDefault',
+                '2',
+                '--boolWithDefault',
+            ]) = (
+                args: [],
+                flags: {
+                    'strNoDefault': 'string_value',
+                    'numNoDefault': 1,
+                    'boolNoDefault': true,
+                    'strWithDefault': 'another_string_value',
+                    'numWithDefault': 2,
+                    'boolWithDefault': true,
+                }
+            ),
+        withoutDefaults: mixDefaults.parse([
+                            '--strNoDefault',
+                            'string_value',
+                            '--numNoDefault',
+                            '1',
+                            '--boolNoDefault',
+                        ]) = (
+                            args: [],
+                            flags: {
+                                'strNoDefault': 'string_value',
+                                'numNoDefault': 1,
+                                'boolNoDefault': true,
+                                'strWithDefault': 'hello',
+                                'numWithDefault': 123,
+                                'boolWithDefault': false,
+                            }
+                        ),
+        withoutSomeDefaults: mixDefaults.parse([
+                                '--strNoDefault',
+                                'string_value',
+                                '--numNoDefault',
+                                '1',
+                                '--boolNoDefault',
+                                '--strWithDefault',
+                                'another_string_value',
+                            ]) = (
+                                args: [],
+                                flags: {
+                                    'strNoDefault': 'string_value',
+                                    'numNoDefault': 1,
+                                    'boolNoDefault': true,
+                                    'strWithDefault': 'another_string_value',
+                                    'numWithDefault': 123,
+                                    'boolWithDefault': false,
+                                }
+                            ),
+        withoutNoDefaults: mixDefaults.parse([
+                                '--strWithDefault',
+                                'another_string_value',
+                                '--numWithDefault',
+                                '2',
+                                '--boolWithDefault',
+                            ]) = (
+                                args: [],
+                                flags: {
+                                    'strWithDefault': 'another_string_value',
+                                    'numWithDefault': 2,
+                                    'boolWithDefault': true,
+                                }
+                            ),
+        withoutSomeNoDefaults: mixDefaults.parse([
+                                    '--strWithDefault',
+                                    'another_string_value',
+                                    '--numWithDefault',
+                                    '2',
+                                    '--boolWithDefault',
+                                    '--numNoDefault',
+                                    '1',
+                                ]) = (
+                                    args: [],
+                                    flags: {
+                                        'numNoDefault': 1,
+                                        'strWithDefault': 'another_string_value',
+                                        'numWithDefault': 2,
+                                        'boolWithDefault': true,
+                                    }
+                                ),
+    ),
+    alias: alias.parse(['-a', 'alias_string']) = (args: [], flags: {'alias': 'alias_string'}),
+    duplicateArgs: (
+        same: justTypeConf.parse(['--str', '1', '--str', '2']) = (args: [], flags: {'str': '2'}),
+        withAlias: alias.parse(['--alias', '1', '-a', '2']) = (args: [], flags: {'alias': '2'}),
+    ),
+    emptyConfig: flag.parser({}).parse(['--a', 'b', '-c']) = (args: ['--a', 'b', '-c'], flags: {}),
+    usages:
+        let help = flag.help({
+            'str': 'string',
+            'num': (type: 'number', alias: 'n', usage: 'takes a number'),
+            'bool': (type: 'bool', alias: 'b'),
+            'default': (type: 'string', default: 'abc')
+        });
+        {
+            'Options:',
+            '--bool, -b',
+            '--default string (default: abc)',
+            '--num, -n number',
+            'takes a number',
+            '--str string',
+        } => //test.assert.true(
+            //seq.contains(., help)
+        )
+    # TODO: test overlapping alias when errors can be tested
+)
