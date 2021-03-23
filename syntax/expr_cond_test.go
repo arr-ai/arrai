@@ -193,4 +193,7 @@ func TestEvalCondPatternMatchingWithControlVar(t *testing.T) { //nolint:dupl
 
 	AssertCodesEvalToSameValue(t, `1`, `let a = 2; cond (x: 2) {(x: (a)): 1, _: 2}`)
 	AssertCodesEvalToSameValue(t, `2`, `let a = 3; cond (x: 2) {(x: (a)): 1, _: 2}`)
+
+	AssertCodesEvalToSameValue(t, `2`, `let a = 1; cond (x: 2) {(x: a): a, _: false}`)
+	AssertCodesEvalToSameValue(t, `2`, `let a = 1; cond ({"x": 2}) {{"x": a}: a, _: false}`)
 }
