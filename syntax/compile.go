@@ -74,7 +74,7 @@ func MustCompile(ctx context.Context, filePath, source string) rel.Expr {
 func (pc ParseContext) CompileExpr(ctx context.Context, b ast.Branch) (rel.Expr, error) {
 	// Note: please make sure if it is necessary to add new syntax name before `expr`.
 	name, c := which(b,
-		"amp", "arrow", "let", "unop", "binop", "compare", "rbinop", "if", "get",
+		"amp", "arrow", "let", "unop", "binop", "compare", "mergeop", "rbinop", "if", "get",
 		"tail_op", "postfix", "touch", "get", "rel", "set", "dict", "array", "bytes",
 		"embed", "op", "fn", "pkg", "tuple", "xstr", "IDENT", "STR", "NUM", "CHAR",
 		"cond", exprTag,
@@ -95,6 +95,8 @@ func (pc ParseContext) CompileExpr(ctx context.Context, b ast.Branch) (rel.Expr,
 		return pc.compileCompare(ctx, b, c)
 	case "rbinop":
 		return pc.compileRbinop(ctx, b, c)
+	case "mergeop":
+		return pc.compileMergeop(ctx, b, c)
 	case "if":
 		return pc.compileIf(ctx, b, c)
 	case "cond":
@@ -483,6 +485,189 @@ func (pc ParseContext) compileBinop(ctx context.Context, b ast.Branch, c ast.Chi
 		result = f(source, result, rhs)
 	}
 	return result, nil
+}
+
+type keyOpType int
+
+// keyOpNode represent either a get or a call operation that should
+// be syntactic sugar done as you descend one level in the nested
+type keyOpNode struct {
+	op   keyOpType
+	attr string
+	key  rel.Expr
+}
+
+type mergeOpKeyType int
+
+const (
+	fallbackIdent = "((fallback))"
+	parentIdent   = "((parent))"
+
+	mergeOpKey mergeOpKeyType = iota
+	desugarKey
+	keysPathKey
+
+	keyGet keyOpType = iota
+	keyCall
+)
+
+func getKeyPaths(ctx context.Context) []keyOpNode {
+	if n := ctx.Value(keysPathKey); n != nil {
+		return n.([]keyOpNode)
+	}
+	return []keyOpNode{}
+}
+
+func appendKeyPath(ctx context.Context, ops ...keyOpNode) context.Context {
+	return context.WithValue(ctx, keysPathKey, append(getKeyPaths(ctx), ops...))
+}
+
+func emptyKeyPaths(ctx context.Context) context.Context {
+	return context.WithValue(ctx, keysPathKey, nil)
+}
+
+func popKeyPaths(ctx context.Context) context.Context {
+	arr := getKeyPaths(ctx)
+	if len(arr) > 0 {
+		arr = arr[:len(arr)-1]
+	}
+	return context.WithValue(ctx, keysPathKey, arr)
+}
+
+func buildKeyPatterns(arr []keyOpNode, base rel.Pattern) rel.Pattern {
+	pattern := base
+	extra := rel.NewFallbackPattern(rel.NewExtraElementPattern(""), nil)
+	for i := len(arr) - 1; i >= 0; i-- {
+		e := arr[i]
+		switch e.op {
+		case keyGet:
+			pattern = rel.NewTuplePattern(
+				rel.NewTuplePatternAttr(e.attr, rel.NewFallbackPattern(pattern, nil)),
+				rel.NewTuplePatternAttr("", extra),
+			)
+		case keyCall:
+			pattern = rel.NewDictPattern(
+				rel.NewDictPatternEntry(e.key, rel.NewFallbackPattern(pattern, nil)),
+				rel.NewDictPatternEntry(nil, extra),
+			)
+		default:
+			panic(errors.New("buildKeyPatterns: unexpected type"))
+		}
+	}
+	return pattern
+}
+
+// withMerging adds the context of merging operation.
+func withMerging(ctx context.Context, status bool) context.Context {
+	return context.WithValue(ctx, mergeOpKey, status)
+}
+
+// a compilation process isMerging when it is at the right hand side of a `+>` operation. This is meant to restrict
+// expression so that user can not just write `(x+>: a)` everywhere.
+func isMerging(ctx context.Context) bool {
+	if b := ctx.Value(mergeOpKey); b != nil {
+		return b.(bool)
+	}
+	return false
+}
+
+// withDesugaring adds the context to desugar tuples and dictionaries for merging operations.
+func withDesugaring(ctx context.Context, status bool) context.Context {
+	return context.WithValue(ctx, desugarKey, status)
+}
+
+// a compilation process isDesugaring at certain locations.
+// Currently it is used during the RHS of `+>` operation. In the RHS of `+>`, the syntactic sugar requires compilation
+// of the RHS as a normal code. This means compiling `(x+>: a)` as `(x: a)`. The isDesugaring function is currently used
+// to toggle between compiling it as a normal expression or desugar it.
+func isDesugaring(ctx context.Context) bool {
+	if b := ctx.Value(desugarKey); b != nil {
+		return b.(bool)
+	}
+	return false
+}
+
+func (pc ParseContext) compileMergeop(ctx context.Context, b ast.Branch, c ast.Children) (rel.Expr, error) {
+	// There's only one merge op, so the first one is enough
+	op := c.(ast.Many)[0].One("").Scanner()
+	f := binops[op.String()]
+	args := b.Many(exprTag)
+	result, err := pc.CompileExpr(ctx, args[0].(ast.Branch))
+	if err != nil {
+		return nil, err
+	}
+	// withMerging allows the rhs to be parsed as a normal value
+	ctx = withMerging(ctx, true)
+	for _, arg := range args[1:] {
+		source, err := parser.MergeScanners(op, result.Source(), arg.Scanner())
+		if err != nil {
+			return nil, err
+		}
+		fallback, err := pc.CompileExpr(ctx, arg.(ast.Branch))
+		if err != nil {
+			return nil, err
+		}
+		// withDesugar allows the RHS to be desugared
+		transformedRHS, err := pc.CompileExpr(withDesugaring(ctx, true), arg.(ast.Branch))
+		if err != nil {
+			return nil, err
+		}
+		result = f(source, result, transformNestedRHS(arg.Scanner(), result, fallback, transformedRHS))
+	}
+	return result, nil
+}
+
+func errMergeSyntacticSugar(scanner parser.Scanner) error {
+	return fmt.Errorf(
+		"attr/key operation only allowed in rhs of a merge operation: %v",
+		scanner.String(),
+	)
+}
+
+// let parent = ...;
+// let fallback = ...;
+// transformedRHS
+func transformNestedRHS(scanner parser.Scanner, parent, fallback, transformedRHS rel.Expr) rel.Expr {
+	bind := binops["->"]
+	return bind(
+		scanner, parent,
+		rel.NewFunction(scanner, rel.NewIdentPattern(parentIdent),
+			bind(
+				scanner, fallback,
+				rel.NewFunction(scanner, rel.NewIdentPattern(fallbackIdent), transformedRHS),
+			),
+		),
+	)
+}
+
+// this transformation assumes that fallback and parent are available
+// transforms into
+// let pattern = fallback;
+// cond parent {
+//	 pattern: parent `op` rhs,
+//   _: fallback,
+// }
+func desugarNestedRHS(
+	arr []keyOpNode,
+	scanner parser.Scanner,
+	op string,
+	rhs rel.Expr,
+) rel.Expr {
+	parentPattern := buildKeyPatterns(arr, rel.NewIdentPattern(parentIdent))
+	parentIdentExpr := rel.NewIdentExpr(scanner, parentIdent)
+	fallbackPattern := buildKeyPatterns(arr, rel.NewIdentPattern(fallbackIdent))
+	fallbackIdentExpr := rel.NewIdentExpr(scanner, fallbackIdent)
+	return binops["->"](
+		scanner,
+		fallbackIdentExpr,
+		rel.NewFunction(scanner, fallbackPattern,
+			rel.NewCondPatternControlVarExpr(
+				scanner, parentIdentExpr,
+				rel.NewPatternExprPair(parentPattern, binops[op](scanner, parentIdentExpr, rhs)),
+				rel.NewPatternExprPair(rel.NewIdentPattern("_"), fallbackIdentExpr),
+			),
+		),
+	)
 }
 
 func (pc ParseContext) compileCompare(ctx context.Context, b ast.Branch, c ast.Children) (rel.Expr, error) {
@@ -921,15 +1106,38 @@ func (pc ParseContext) compileDictEntryExprs(ctx context.Context, b ast.Branch) 
 	if pairs := b.Many("pairs"); pairs != nil {
 		entryExprs := make([]rel.DictEntryTupleExpr, 0, len(pairs))
 		for _, pair := range pairs {
+			nestedOp := pair.One("nested_op")
+			if nestedOp != nil && !isMerging(ctx) {
+				return nil, errMergeSyntacticSugar(pair.Scanner())
+			}
 			key := pair.One("key")
 			value := pair.One("value")
 			keyExpr, err := pc.CompileExpr(ctx, key.(ast.Branch))
 			if err != nil {
 				return nil, err
 			}
+			keyPaths := []keyOpNode{}
+			// this is done here so that value compilation gets the next pattern or starts a new pattern
+			if isMerging(ctx) && isDesugaring(ctx) {
+				keyNode := keyOpNode{op: keyCall, key: keyExpr}
+				if nestedOp != nil {
+					keyPaths = append(getKeyPaths(ctx), keyNode)
+					ctx = emptyKeyPaths(ctx)
+				} else {
+					ctx = appendKeyPath(ctx, keyNode)
+				}
+			}
 			valueExpr, err := pc.CompileExpr(ctx, value.(ast.Branch))
 			if err != nil {
 				return nil, err
+			}
+			if isMerging(ctx) && isDesugaring(ctx) {
+				if nestedOp != nil {
+					op := nestedOp.One("").(ast.Leaf).Scanner().String()
+					valueExpr = desugarNestedRHS(keyPaths, pair.Scanner(), op, valueExpr)
+				}
+				// remove current attr name for the next pair
+				ctx = popKeyPaths(ctx)
 			}
 			entryExprs = append(entryExprs, rel.NewDictEntryTupleExpr(pair.Scanner(), keyExpr, valueExpr))
 		}
@@ -1130,14 +1338,49 @@ func (pc ParseContext) compileTuple(ctx context.Context, b ast.Branch, c ast.Chi
 	if pairs := c.(ast.One).Node.Many("pairs"); pairs != nil {
 		attrs := make([]rel.AttrExpr, 0, len(pairs))
 		for _, pair := range pairs {
+			nestedOp := pair.One("nested_op")
+			if nestedOp != nil && !isMerging(ctx) {
+				return nil, errMergeSyntacticSugar(pair.Scanner())
+			}
+
 			var k string
+			name := pair.One("name")
+			if name != nil {
+				k = parseName(name.(ast.Branch))
+			}
+
+			keyPaths := []keyOpNode{}
+			if isMerging(ctx) && isDesugaring(ctx) {
+				keyNode := keyOpNode{op: keyGet, attr: k}
+				if nestedOp != nil {
+					if k == "" {
+						return nil, fmt.Errorf(
+							"attr name must be explicitly defined for attr operation: %v",
+							pair.Scanner().Context(-1),
+						)
+					}
+					// get the key paths at this point because there is a nestedOp. Empty it for the next key paths.
+					keyPaths = append(getKeyPaths(ctx), keyNode)
+					ctx = emptyKeyPaths(ctx)
+				} else {
+					ctx = appendKeyPath(ctx, keyNode)
+				}
+			}
+
 			v, err := pc.CompileExpr(ctx, pair.One("v").(ast.Branch))
 			if err != nil {
 				return nil, err
 			}
-			if name := pair.One("name"); name != nil {
-				k = parseName(name.(ast.Branch))
-			} else {
+
+			if isMerging(ctx) && isDesugaring(ctx) {
+				if nestedOp != nil {
+					v = desugarNestedRHS(keyPaths, pair.Scanner(), nestedOp.One("").(ast.Leaf).Scanner().String(), v)
+				}
+				// remove current attr name for the next pair
+				ctx = popKeyPaths(ctx)
+			}
+
+			if name == nil {
 				switch v := v.(type) {
 				case *rel.DotExpr:
 					k = v.Attr()
@@ -1152,6 +1395,7 @@ func (pc ParseContext) compileTuple(ctx context.Context, b ast.Branch, c ast.Chi
 				fix, fixt := FixFuncs()
 				v = rel.NewRecursionExpr(scanner, k, v, fix, fixt)
 			}
+
 			attr, err := rel.NewAttrExpr(scanner, k, v)
 			if err != nil {
 				return nil, err
