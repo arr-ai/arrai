@@ -49,31 +49,29 @@ func NewSet(values ...Value) (Set, error) {
 				break
 			}
 		}
+		buildSet := func(values []Value) Set {
+			sb := frozen.SetBuilder{}
+			for _, value := range values {
+				sb.Add(value)
+			}
+			return GenericSet{sb.Finish()}
+		}
 		if typ != nil {
 			switch typ {
 			case stringCharTupleType:
-				for _, value := range values {
-					set = set.With(value)
-				}
-				s, is := AsString(set)
+				s, is := AsString(buildSet(values))
 				if !is {
 					return nil, errors.Errorf("unsupported string array expr")
 				}
 				return s, nil
 			case bytesByteTupleType:
-				for _, value := range values {
-					set = set.With(value)
-				}
-				b, is := AsBytes(set)
+				b, is := AsBytes(buildSet(values))
 				if !is {
 					return nil, errors.Errorf("unsupported byte array expr")
 				}
 				return b, nil
 			case arrayItemTupleType:
-				for _, value := range values {
-					set = set.With(value)
-				}
-				array, is := asArray(set)
+				array, is := asArray(buildSet(values))
 				if !is {
 					return nil, errors.Errorf("unsupported array expr")
 				}
@@ -86,9 +84,7 @@ func NewSet(values ...Value) (Set, error) {
 				return NewDict(true, tuples...)
 			}
 		}
-		for _, value := range values {
-			set = set.With(value)
-		}
+		set = buildSet(values)
 	}
 	return set, nil
 }
@@ -106,23 +102,23 @@ func CanonicalSet(s Set) Set {
 
 // NewSetFrom constructs a genericSet from interfaces.
 func NewSetFrom(intfs ...interface{}) (Set, error) {
-	set := None
+	sb := frozen.SetBuilder{}
 	for _, intf := range intfs {
 		value, err := NewValue(intf)
 		if err != nil {
 			return nil, err
 		}
-		set = set.With(value)
+		sb.Add(value)
 	}
-	return set, nil
+	return GenericSet{sb.Finish()}, nil
 }
 
 func newSetFromSet(s Set) Set {
-	set := None
+	sb := frozen.SetBuilder{}
 	for e := s.Enumerator(); e.MoveNext(); {
-		set = set.With(e.Current())
+		sb.Add(e.Current())
 	}
-	return set
+	return GenericSet{sb.Finish()}
 }
 
 // NewBool constructs a bool as a relation.
