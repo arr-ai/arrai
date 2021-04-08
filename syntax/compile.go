@@ -603,16 +603,21 @@ func (pc ParseContext) compileMergeop(ctx context.Context, b ast.Branch, c ast.C
 		if err != nil {
 			return nil, err
 		}
-		fallback, err := pc.CompileExpr(ctx, arg.(ast.Branch))
+		argExpr, err := pc.CompileExpr(ctx, arg.(ast.Branch))
 		if err != nil {
 			return nil, err
+		}
+		// transformation only matters if there is a nested_op in the argument.
+		if !hasRule(arg.(ast.Branch), "nested_op") {
+			result = f(source, result, argExpr)
+			continue
 		}
 		// withDesugar allows the RHS to be desugared
 		transformedRHS, err := pc.CompileExpr(withDesugaring(ctx, true), arg.(ast.Branch))
 		if err != nil {
 			return nil, err
 		}
-		result = f(source, result, transformNestedRHS(arg.Scanner(), result, fallback, transformedRHS))
+		result = f(source, result, transformNestedRHS(arg.Scanner(), result, argExpr, transformedRHS))
 	}
 	return result, nil
 }
