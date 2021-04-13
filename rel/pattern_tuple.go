@@ -35,9 +35,9 @@ type TuplePattern struct {
 
 func NewTuplePattern(attrs ...TuplePatternAttr) TuplePattern {
 	p := TuplePattern{attrs}
-	//if err := validTuplePattern(p); err != nil {
-	//	panic(err)
-	//}
+	if err := validTuplePattern(p); err != nil {
+		panic(err)
+	}
 	return p
 }
 
