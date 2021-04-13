@@ -164,6 +164,10 @@ func TestExprLetTuplePattern(t *testing.T) { //nolint:dupl
 		"didn't find matched value\n\n\x1b[1;37m:1:12:\x1b[",
 		`let x = 5; let (a: [(x)]) = (a: [4]); x`,
 	)
+	AssertCodeErrors(t,
+		"duplicate fields found in pattern (x: a, x: b, : ...)",
+		`let (x: a, x: b, ...) = (x: 1, y: 2, z: 3); (:a, :b)`,
+	)
 }
 
 func TestExprLetDictPattern(t *testing.T) {
