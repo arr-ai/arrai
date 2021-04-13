@@ -35,19 +35,24 @@ type TuplePattern struct {
 
 func NewTuplePattern(attrs ...TuplePatternAttr) TuplePattern {
 	p := TuplePattern{attrs}
-	checkTuplePatternAttrUniqueness(p)
+	//if err := validTuplePattern(p); err != nil {
+	//	panic(err)
+	//}
 	return p
 }
 
-func checkTuplePatternAttrUniqueness(p TuplePattern) {
-	names := make(map[string]bool)
+func validTuplePattern(p TuplePattern) error {
+	names := make(map[string]struct{})
 	for _, attr := range p.attrs {
-		if names[attr.name] {
-			panic(fmt.Errorf("duplicate fields found in pattern %s ", p))
+		if _, has := names[attr.name]; has {
+			return fmt.Errorf("duplicate fields found in pattern %s ", p)
 		} else {
-			names[attr.name] = true
+			if _, is := attr.pattern.pattern.(ExtraElementPattern); !is {
+				names[attr.name] = struct{}{}
+			}
 		}
 	}
+	return nil
 }
 
 func (p TuplePattern) Bind(ctx context.Context, local Scope, value Value) (context.Context, Scope, error) {
@@ -55,7 +60,10 @@ func (p TuplePattern) Bind(ctx context.Context, local Scope, value Value) (conte
 	if !is {
 		return ctx, EmptyScope, fmt.Errorf("%s is not a tuple", value)
 	}
-	checkTuplePatternAttrUniqueness(p)
+
+	if err := validTuplePattern(p); err != nil {
+		return ctx, EmptyScope, err
+	}
 	bind := func(
 		ctx context.Context,
 		attr TuplePatternAttr,

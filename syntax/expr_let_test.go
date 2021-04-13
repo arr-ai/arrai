@@ -141,11 +141,11 @@ func TestExprLetTuplePattern(t *testing.T) { //nolint:dupl
 		`let (?:a:1, b: 7) = (b: 7, c: 8); a`,
 	)
 	AssertCodeErrors(t,
-		"length of tuple (a: 4) shorter than tuple pattern (a: x, a: x)",
+		"duplicate fields found in pattern (a: x, a: x)",
 		`let (a: x, a: x) = (a: 4, a: 4); x`,
 	)
 	AssertCodeErrors(t,
-		"length of tuple (a: 4) shorter than tuple pattern (a: x, a: x)",
+		"duplicate fields found in pattern (a: x, a: x)",
 		`let (a: x, a: x) = (a: 4); x`,
 	)
 	AssertCodeErrors(t,
