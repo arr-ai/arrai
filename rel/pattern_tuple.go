@@ -46,10 +46,9 @@ func validTuplePattern(p TuplePattern) error {
 	for _, attr := range p.attrs {
 		if _, has := names[attr.name]; has {
 			return fmt.Errorf("duplicate fields found in pattern %s ", p)
-		} else {
-			if _, is := attr.pattern.pattern.(ExtraElementPattern); !is {
-				names[attr.name] = struct{}{}
-			}
+		}
+		if _, is := attr.pattern.pattern.(ExtraElementPattern); !is {
+			names[attr.name] = struct{}{}
 		}
 	}
 	return nil
