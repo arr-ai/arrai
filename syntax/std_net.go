@@ -10,6 +10,7 @@ import (
 
 	"github.com/pkg/errors"
 
+	"github.com/arr-ai/arrai/pkg/arraictx"
 	"github.com/arr-ai/arrai/rel"
 	"github.com/arr-ai/arrai/tools"
 )
@@ -23,7 +24,10 @@ func stdNet() rel.Attr {
 		"net",
 		rel.NewTupleAttr(
 			"http",
-			createFunc2Attr("get", func(_ context.Context, configArg, urlArg rel.Value) (rel.Value, error) {
+			createFunc2Attr("get", func(ctx context.Context, configArg, urlArg rel.Value) (rel.Value, error) {
+				if arraictx.IsCompiling(ctx) {
+					return nil, errors.New("//net.get is disabled during compilation")
+				}
 				config, err := parseConfig(configArg)
 				if err != nil {
 					return nil, err
@@ -35,7 +39,10 @@ func stdNet() rel.Attr {
 				return get(url, config.header)
 			}),
 			createFunc3Attr("post",
-				func(_ context.Context, configArg, urlArg, bodyArg rel.Value) (rel.Value, error) {
+				func(ctx context.Context, configArg, urlArg, bodyArg rel.Value) (rel.Value, error) {
+					if arraictx.IsCompiling(ctx) {
+						return nil, errors.New("//net.post is disabled during compilation")
+					}
 					config, err := parseConfig(configArg)
 					if err != nil {
 						return nil, err

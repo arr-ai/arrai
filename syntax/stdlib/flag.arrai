@@ -1,0 +1,108 @@
+\stdlib
+    let (:re, :error, :eval, ...) = stdlib;
+    let dashes = re.compile(`^--?`);
+    let trimDashes = dashes.sub('');
+    # regex from arrai.wbnf
+    let isNumber = re.compile(`^\-?(?:\d+(?:\.\d*)?|\.\d+)(?:[Ee][-+]?\d+)?$`).match;
+    let types = {'string', 'bool', 'number'};
+    (
+        help: \config
+                let config = config orderby .@ >> \(@: flagName, @value: flagConfig)
+                    cond flagConfig {
+                        (:type, ?:usage:'', ?:alias:'', ?:default:'', ...): (:flagName, :usage, :alias, :type, :default),
+                        type: (:flagName, :type, alias: '', usage: '', default: ''),
+                    }
+                ;
+                $`
+                    Options:
+                        ${config >> $`
+                            --${.flagName}${.alias && $`, -${.alias}`}${.type != 'bool' && ' ' ++ .type}${
+                                .default && ' ' ++ $`(default: ${.default})`
+                            }
+                                    ${.usage}
+                            `::\i}
+                `,
+        parser: \config
+            let _ = cond config {{...}: '', _: error($`config must be a dictionary, not ${config}`)};
+            let fn = \val \head
+                let _ = cond head {(@: _, @value: _): '', _: error($`config must be a dictionary, not ${config}`)};
+                let alias = cond head {
+                    (@: name, @value: (:alias, ...)):
+                        let dupl = val.alias(alias)?:false;
+                        cond {
+                            dupl: error($`alias '${alias}' aliases multiple flags: '${dupl}' and '${name}'`),
+                            _: {alias: name},
+                        }
+                    ,
+                    _: {},
+                };
+                let flagConfigs = cond head {
+                    (@: name, @value: (:default, :type, ...)): {name: (:type, :default, hasDefault: true)},
+                    (@: name, @value: (:type, ...)):           {name: (:type, hasDefault: false)},
+                    (@: name, @value: type): cond {
+                        (type <: types): {name: (:type, hasDefault: false)},
+                        _: error($`type must be one of ${types orderby .}, not ${type}`),
+                    },
+                    _: error($`flag config invalid: ${head}`),
+                };
+
+                (alias: val.alias +> alias, flagConfigs: val.flagConfigs +> flagConfigs)
+            ;
+            let config = //{./util}.reduce(
+                fn, (alias: {}, flagConfigs: {}), config orderby .,
+            );
+
+            # TODO: help message
+            let parse = \args
+                let flagConfig = \flagName
+                    cond {
+                        dashes.match(flagName):
+                            let trimmed = trimDashes(flagName);
+                            let name = config.alias(trimmed)?:trimmed;
+                            (flagName: name, type: config.flagConfigs(name)?.type:'')
+                        ,
+                        _: (flagName: '', type: ''),
+                    }
+                ;
+
+                let rec parseFlag = \args \val
+                    cond args {
+                        [flag, ...tail]:
+                            let (:flagName, :type) = flagConfig(flag);
+                            let withFlagValue = \value val +> (flags: val.flags +> {flagName: value});
+                            cond type {
+                                'bool': parseFlag(tail, withFlagValue(true)),
+                                'string':
+                                    cond tail {
+                                        [value, ...rest]:
+                                            parseFlag(rest, withFlagValue(value))
+                                        ,
+                                        _: error($`string flag does not have a value: '${flagName}'`),
+                                    },
+                                'number': cond tail {
+                                    [value, ...rest]: cond {
+                                        isNumber(value): parseFlag(
+                                            rest, withFlagValue(eval.value(value)),
+                                        ),
+                                        _: error($`value is not a number: '${value}'`),
+                                    },
+                                    _: error($`number flag does not have a value: '${flagName}'`),
+                                },
+                                _: parseFlag(tail, val +> (args: val.args ++ [flag])),
+                            }
+                        ,
+                        _: val
+                    }
+                ;
+                let parsed = parseFlag(args, (args: [], flags: {}));
+                (
+                    :parsed.args,
+                    flags: parsed.flags |
+                        # add the flags with defaults
+                        let existingFlags = parsed.flags => .@;
+                        (config.flagConfigs where .@value.hasDefault && .@ !<: existingFlags) >> .default
+                )
+            ;
+
+            (:parse)
+    )

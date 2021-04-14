@@ -1,0 +1,24 @@
+# This script handles the mapping of decoders in implicit imports depending on
+# the extension of the imported file.
+
+# decoders maps file formats to the standard decoders used to decode files in that format.
+let decoders = {
+    'csv': //encoding.csv.decode,
+    'json': //encoding.json.decode,
+    'xlsx': //encoding.xlsx.decode,
+    'yaml': (decoder: //encoding.yaml.decode, alias: {'yml'}),
+};
+
+# converts everything to a dictionary {extension: decoderFn}
+let decoders = (
+    decoders filter .@value {
+        (:decoder, :alias): {(:.@, @value: decoder)} | (alias => (@:., @value: decoder)),
+        _: {.},
+    }
+) -> //rel.union(.);
+
+\extension \byte
+    let extension = cond {//seq.has_prefix('.', extension): //seq.trim_prefix('.', extension), _: extension};
+    decoders(extension)?(byte):(
+        //log.print($`implicit decoding failed for extension ${extension}. Importing with bytes decoder`) && byte
+    )

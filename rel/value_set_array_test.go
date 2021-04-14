@@ -51,6 +51,7 @@ func TestArrayWithout(t *testing.T) {
 
 	three := NewArray(NewNumber(10), NewNumber(11), NewNumber(12))
 
+	// Without first item
 	AssertEqualValues(t,
 		NewOffsetArray(1, NewNumber(11), NewNumber(12)),
 		three.Without(NewArrayItemTuple(0, NewNumber(10))),
@@ -60,6 +61,17 @@ func TestArrayWithout(t *testing.T) {
 		three.Without(NewArrayItemTuple(0, NewNumber(10))),
 	)
 
+	// Without middle item
+	AssertEqualValues(t,
+		NewArray(NewNumber(10), nil, NewNumber(12)),
+		three.Without(NewArrayItemTuple(1, NewNumber(11))),
+	)
+	AssertExprEvalsToType(t,
+		Array{},
+		three.Without(NewArrayItemTuple(1, NewNumber(11))),
+	)
+
+	// Without last item
 	AssertEqualValues(t,
 		NewArray(NewNumber(10), NewNumber(11)),
 		three.Without(NewArrayItemTuple(2, NewNumber(12))),

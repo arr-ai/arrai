@@ -60,6 +60,8 @@ func (pc ParseContext) ParseString(ctx context.Context, s string) (ast.Branch, e
 // Parse parses input and returns the parsed Expr or an error.
 func (pc ParseContext) Parse(ctx context.Context, s *parser.Scanner) (ast.Branch, error) {
 	rscopes := []rel.Scope{{}}
+	//FIXME: create a cut error in wbnf so that deep import errors don't get thrown away
+	var deepImportError error
 	v, err := arraiParsers.ParseWithExternals(parser.Rule("expr"), s, parser.ExternalRefs{
 		"bind": func(pscope parser.Scope, _ *parser.Scanner) (parser.TreeElement, error) {
 			_, exprElt, has := pscope.GetVal("expr@1")
@@ -73,7 +75,13 @@ func (pc ParseContext) Parse(ctx context.Context, s *parser.Scanner) (ast.Branch
 			}
 			exprNode := ast.FromParserNode(arraiParsers.Grammar(), exprElt)
 			expr, err := pc.CompileExpr(ctx, exprNode)
+			// this handles any error that happens in imported module as ParseWithExternals always return the top level
+			// file unconsumed input error.
 			if err != nil {
+				switch err.(type) {
+				case parser.UnconsumedInputError, *localImportError, *externalImportErr, *urlImportErr:
+					deepImportError = err
+				}
 				return nil, err
 			}
 			exprClosure := rel.NewExprClosure(rscopes[len(rscopes)-1], expr)
@@ -163,6 +171,9 @@ func (pc ParseContext) Parse(ctx context.Context, s *parser.Scanner) (ast.Branch
 			}}, nil
 		},
 	})
+	if deepImportError != nil {
+		return nil, deepImportError
+	}
 	if err != nil {
 		return nil, err
 	}

@@ -20,10 +20,16 @@ import (
 
 // stdOsGetArgs returns a rel.Array of the program arguments in the context.
 func stdOsGetArgs(ctx context.Context, _ rel.Value) (rel.Value, error) {
+	if arraictx.IsCompiling(ctx) {
+		return rel.None, nil
+	}
 	return strArrToRelArr(arraictx.Args(ctx)), nil
 }
 
-func stdOsGetEnv(_ context.Context, value rel.Value) (rel.Value, error) {
+func stdOsGetEnv(ctx context.Context, value rel.Value) (rel.Value, error) {
+	if arraictx.IsCompiling(ctx) {
+		return rel.None, nil
+	}
 	return rel.NewString([]rune(os.Getenv(value.(rel.String).String()))), nil
 }
 
@@ -44,6 +50,9 @@ func stdOsCwd() rel.Value {
 }
 
 func stdOsExists(ctx context.Context, v rel.Value) (rel.Value, error) {
+	if arraictx.IsCompiling(ctx) {
+		return rel.None, nil
+	}
 	filePath, err := toString("os.exists", v)
 	if err != nil {
 		return nil, err
@@ -59,6 +68,9 @@ func stdOsExists(ctx context.Context, v rel.Value) (rel.Value, error) {
 }
 
 func stdOsFile(ctx context.Context, v rel.Value) (rel.Value, error) {
+	if arraictx.IsCompiling(ctx) {
+		return nil, os.ErrNotExist
+	}
 	filePath, err := toString("os.file", v)
 	if err != nil {
 		return nil, err
@@ -73,7 +85,10 @@ func stdOsFile(ctx context.Context, v rel.Value) (rel.Value, error) {
 }
 
 // stdOsTree returns an array of paths to files within the given directory path.
-func stdOsTree(_ context.Context, v rel.Value) (rel.Value, error) {
+func stdOsTree(ctx context.Context, v rel.Value) (rel.Value, error) {
+	if arraictx.IsCompiling(ctx) {
+		return rel.None, nil
+	}
 	d, ok := v.(rel.String)
 	if !ok {
 		return nil, errors.Errorf("tree arg must be a string, not %T", v)
@@ -103,7 +118,10 @@ func stdOsTree(_ context.Context, v rel.Value) (rel.Value, error) {
 	return rel.NewSet(fs...)
 }
 
-func stdOsIsATty(_ context.Context, value rel.Value) (rel.Value, error) {
+func stdOsIsATty(ctx context.Context, value rel.Value) (rel.Value, error) {
+	if arraictx.IsCompiling(ctx) {
+		return rel.None, nil
+	}
 	n, ok := value.(rel.Number)
 	if !ok {
 		return nil, fmt.Errorf("isatty arg must be a number, not %s", rel.ValueTypeAsString(value))

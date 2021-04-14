@@ -4,8 +4,16 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/arr-ai/arrai/pkg/deprecate"
 	"github.com/arr-ai/wbnf/parser"
 	"github.com/go-errors/errors"
+)
+
+var (
+	setDotDeprecate = deprecate.MustNewDeprecator(
+		`use of "." for singleton set`,
+		"2021-03-03", "2021-04-03", "2021-06-03",
+	)
 )
 
 type MissingAttrError struct {
@@ -79,6 +87,9 @@ func (x *DotExpr) Eval(ctx context.Context, local Scope) (_ Value, err error) {
 	case Tuple:
 		return get(ctx, t)
 	case Set:
+		if err := setDotDeprecate.Deprecate(ctx, x.Src); err != nil {
+			return nil, err
+		}
 		if !t.IsTrue() {
 			return nil, WrapContextErr(errors.Errorf("Cannot get attr %q from empty set", x.attr), x, local)
 		}

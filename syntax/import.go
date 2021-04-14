@@ -10,31 +10,67 @@ import (
 	"path"
 	"path/filepath"
 	"strings"
+	"sync"
 
 	"github.com/anz-bank/pkg/mod"
 	"github.com/arr-ai/arrai/pkg/ctxfs"
 	"github.com/arr-ai/arrai/pkg/ctxrootcache"
 	"github.com/arr-ai/arrai/rel"
 	"github.com/arr-ai/arrai/tools"
-	"github.com/arr-ai/arrai/translate"
+	"github.com/arr-ai/wbnf/parser"
 )
 
 // ModuleRootSentinel is a file which marks the module root of a project.
 const ModuleRootSentinel = "go.mod"
 
 var (
+	implicitDecoderSyncOnce sync.Once
+	implicitDecode          rel.Expr
+
 	cache             = newCache()
 	errModuleNotExist = errors.New("module root not found")
 )
 
-func importLocalFile(ctx context.Context, fromRoot bool, importPath, sourceDir string) (rel.Expr, error) {
+func implicitDecoder() rel.Expr {
+	implicitDecoderSyncOnce.Do(func() {
+		implicitDecode = mustParseExpr(string(MustAsset("syntax/implicit_import.arrai")))
+	})
+	return implicitDecode
+}
+
+type localImportError struct {
+	err     error
+	scanner parser.Scanner
+}
+
+func (l *localImportError) Error() string {
+	return fmt.Sprintf("%s\n%s", l.err, l.scanner.Context(parser.DefaultLimit))
+}
+
+func handleImportErrors(err, wrapped error) error {
+	// all of these errors contain scanner, this ensures that only the deepest scanner in the stack
+	// prints the stack.
+	switch err.(type) {
+	case parser.UnconsumedInputError, *localImportError, *externalImportErr, *urlImportErr:
+		return err
+	}
+	return wrapped
+}
+
+func importLocalFile(
+	ctx context.Context,
+	scanner parser.Scanner,
+	decoder rel.Tuple,
+	fromRoot bool,
+	importPath, sourceDir string,
+) (rel.Expr, error) {
 	if fromRoot {
 		rootPath, err := findRootFromModule(ctx, sourceDir)
 		if err != nil {
-			return nil, err
+			return nil, &localImportError{err: err, scanner: scanner}
 		}
 		if err = addModuleSentinel(ctx, rootPath); err != nil {
-			return nil, err
+			return nil, &localImportError{err: err, scanner: scanner}
 		}
 		if !strings.HasPrefix(importPath, "/") {
 			importPath = rootPath + "/" + strings.ReplaceAll(importPath, "../", "")
@@ -42,21 +78,51 @@ func importLocalFile(ctx context.Context, fromRoot bool, importPath, sourceDir s
 	}
 
 	if err := bundleLocalFile(ctx, importPath); err != nil {
-		return nil, err
+		return nil, &localImportError{err: err, scanner: scanner}
 	}
 
-	v, err := fileValue(ctx, importPath)
+	v, err := fileValue(ctx, decoder, importPath)
 	if err != nil {
-		return nil, err
+		return nil, handleImportErrors(err, &localImportError{err: err, scanner: scanner})
 	}
 
 	return v, nil
 }
 
-func importExternalContent(ctx context.Context, importPath string) (rel.Expr, error) {
+type externalImportErr struct {
+	importPath        string
+	moduleErr, urlErr error
+	scanner           parser.Scanner
+}
+
+func (e *externalImportErr) Error() string {
+	return fmt.Sprintf(
+		"failed to import %s - %s, and %s\n%s",
+		e.importPath,
+		e.moduleErr,
+		e.urlErr, e.scanner.Context(parser.DefaultLimit),
+	)
+}
+
+type urlImportErr struct {
+	importPath string
+	err        error
+	scanner    parser.Scanner
+}
+
+func (u *urlImportErr) Error() string {
+	return fmt.Sprintf("import %s failed - %s\n%s", u.importPath, u.err, u.scanner.Context(parser.DefaultLimit))
+}
+
+func importExternalContent(
+	ctx context.Context,
+	scanner parser.Scanner,
+	decoder rel.Tuple,
+	importPath string,
+) (rel.Expr, error) {
 	var moduleErr error
 	if !strings.HasPrefix(importPath, "http://") && !strings.HasPrefix(importPath, "https://") {
-		v, err := importModuleFile(ctx, importPath)
+		v, err := importModuleFile(ctx, decoder, importPath)
 		if err == nil {
 			return v, nil
 		}
@@ -66,20 +132,28 @@ func importExternalContent(ctx context.Context, importPath string) (rel.Expr, er
 		importPath = "https://" + importPath
 	}
 
-	v, err := importURL(ctx, importPath)
+	v, err := importURL(ctx, decoder, importPath)
 	if err != nil {
 		if moduleErr != nil {
-			return nil, fmt.Errorf("failed to import %s - %s, and %s", importPath, moduleErr.Error(), err.Error())
+			return nil, handleImportErrors(
+				moduleErr,
+				&externalImportErr{
+					importPath: importPath,
+					moduleErr:  moduleErr,
+					urlErr:     err,
+					scanner:    scanner,
+				},
+			)
 		}
-		return nil, err
+		return nil, handleImportErrors(err, &urlImportErr{importPath: importPath, err: err, scanner: scanner})
 	}
 
 	return v, nil
 }
 
-func importModuleFile(ctx context.Context, importPath string) (rel.Expr, error) {
+func importModuleFile(ctx context.Context, decoder rel.Tuple, importPath string) (rel.Expr, error) {
 	if isRunningBundle(ctx) {
-		return fileValue(ctx, path.Join(ModuleDir, importPath))
+		return fileValue(ctx, decoder, path.Join(ModuleDir, importPath))
 	}
 
 	wd, err := os.Getwd()
@@ -106,7 +180,7 @@ func importModuleFile(ctx context.Context, importPath string) (rel.Expr, error) 
 		return nil, err
 	}
 
-	return fileValue(ctx, filepath.Join(m.Dir, relImportPath))
+	return fileValue(ctx, decoder, filepath.Join(m.Dir, relImportPath))
 }
 
 func findRootFromModule(ctx context.Context, modulePath string) (string, error) {
@@ -155,10 +229,10 @@ func findRootFromModule(ctx context.Context, modulePath string) (string, error) 
 	}
 }
 
-func importURL(ctx context.Context, url string) (rel.Expr, error) {
+func importURL(ctx context.Context, decoder rel.Tuple, url string) (rel.Expr, error) {
 	if isRunningBundle(ctx) {
 		url = strings.TrimPrefix(strings.TrimPrefix(url, "https://"), "http://")
-		return fileValue(ctx, path.Join(ModuleDir, url))
+		return fileValue(ctx, decoder, path.Join(ModuleDir, url))
 	}
 	resp, err := http.Get(url) //nolint:gosec
 	if err != nil {
@@ -180,7 +254,7 @@ func importURL(ctx context.Context, url string) (rel.Expr, error) {
 	return nil, fmt.Errorf("request %s failed: %s", url, resp.Status)
 }
 
-func fileValue(ctx context.Context, filename string) (rel.Expr, error) {
+func fileValue(ctx context.Context, decoder rel.Tuple, filename string) (rel.Expr, error) {
 	if filepath.Ext(filename) == "" {
 		filename += ".arrai"
 	}
@@ -190,12 +264,20 @@ func fileValue(ctx context.Context, filename string) (rel.Expr, error) {
 		return nil, err
 	}
 
-	switch filepath.Ext(filename) {
-	case ".json":
-		return bytesJSONToArrai(bytes)
-	case ".yml", ".yaml":
-		return translate.BytesYamlToArrai(bytes)
+	// TODO: add cache of decoded values
+	if decoder != nil {
+		return decode(ctx, decoder, bytes)
 	}
+	if ext := filepath.Ext(filename); ext != ".arrai" {
+		// return expression so that implicit decoding is lazy, when implicit decoder fails, it returns the file bytes.
+		return rel.NewCallExprCurry(
+			parser.Scanner{},
+			implicitDecoder(),
+			rel.NewString([]rune(ext)),
+			rel.NewBytes(bytes),
+		), nil
+	}
+
 	return bytesValue(ctx, filename, bytes)
 }
 

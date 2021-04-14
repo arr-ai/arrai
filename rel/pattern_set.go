@@ -81,6 +81,12 @@ func (p SetPattern) Bind(ctx context.Context, local Scope, value Value) (context
 				set = set.Without(v.(Value)).(GenericSet)
 			}
 		default:
+			if len(p.patterns) == 1 {
+				for e := set.Enumerator(); e.MoveNext(); {
+					return t.Bind(ctx, local, e.Current())
+				}
+			}
+			// TODO: This is should return an error
 			panic(fmt.Errorf("pattern type %T not supported yet", t))
 		}
 	}

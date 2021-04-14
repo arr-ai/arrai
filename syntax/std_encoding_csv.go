@@ -35,11 +35,11 @@ type encodeConfig struct {
 func stdEncodingCSV() rel.Attr {
 	return rel.NewTupleAttr(
 		"csv",
-		rel.NewNativeFunctionAttr("decode", func(_ context.Context, value rel.Value) (rel.Value, error) {
-			return csvDecodeFnBody("csv.decode", value, newDecodeConfig())
+		rel.NewNativeFunctionAttr(decodeAttr, func(_ context.Context, value rel.Value) (rel.Value, error) {
+			return csvDefaultDecode(value)
 		}),
 
-		rel.NewNativeFunctionAttr("decoder", func(_ context.Context, configValue rel.Value) (rel.Value, error) {
+		rel.NewNativeFunctionAttr(decoderAttr, func(_ context.Context, configValue rel.Value) (rel.Value, error) {
 			fn := "csv.decoder"
 			config := newDecodeConfig()
 
@@ -103,6 +103,10 @@ func stdEncodingCSV() rel.Attr {
 	)
 }
 
+func csvDefaultDecode(v rel.Value) (rel.Value, error) {
+	return csvDecodeFnBody("csv.decode", v, newDecodeConfig())
+}
+
 func csvDecodeFnBody(fn string, value rel.Value, config decodeConfig) (rel.Value, error) {
 	var bs []byte
 	switch t := value.(type) {
@@ -155,7 +159,11 @@ func csvEncodeFnBody(fn string, value rel.Value, config encodeConfig) (rel.Value
 		}
 		record := make([]string, rowArray.Count())
 		for j, value := range rowArray.Values() {
-			valueString, ok := value.(rel.String)
+			valueSet, ok := value.(rel.Set)
+			if !ok {
+				return nil, errors.Errorf("value %v of record %v must be string, not %v", j, i, rel.ValueTypeAsString(value))
+			}
+			valueString, ok := rel.AsString(valueSet)
 			if !ok {
 				return nil, errors.Errorf("value %v of record %v must be string, not %v", j, i, rel.ValueTypeAsString(value))
 			}

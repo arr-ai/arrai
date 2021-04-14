@@ -93,6 +93,9 @@ func (d Dict) Equal(v interface{}) bool {
 				if dvalue, has := d.m.Get(key); !(has && value.Equal(dvalue)) {
 					return false
 				}
+			} else {
+				// does not match the dictionary tuple format
+				return false
 			}
 		}
 		return true

@@ -5,8 +5,16 @@ import (
 	"fmt"
 	"math"
 
+	"github.com/arr-ai/arrai/pkg/deprecate"
 	"github.com/arr-ai/wbnf/parser"
 	"github.com/go-errors/errors"
+)
+
+var (
+	plusDeprecation = deprecate.MustNewDeprecator(
+		"use of + for concatenation",
+		"2021-03-03", "2021-04-03", "2021-06-03",
+	)
 )
 
 type binEval func(ctx context.Context, a, b Value, local Scope) (Value, error)
@@ -53,7 +61,7 @@ func newArithExpr(scanner parser.Scanner, a, b Expr, op string, eval arithEval) 
 		})
 }
 
-func addValues(a, b Value) (Value, error) {
+func addValues(ctx context.Context, scanner parser.Scanner, a, b Value) (Value, error) {
 	if a, ok := a.(Number); ok {
 		if b, ok := b.(Number); ok {
 			return NewNumber(a.Float64() + b.Float64()), nil
@@ -61,11 +69,17 @@ func addValues(a, b Value) (Value, error) {
 	}
 	if a, ok := a.(Tuple); ok {
 		if b, ok := b.(Tuple); ok {
+			if err := plusDeprecation.Deprecate(ctx, scanner); err != nil {
+				return nil, err
+			}
 			return MergeLeftToRight(a, b), nil
 		}
 	}
 	if a, ok := a.(Set); ok {
 		if b, ok := b.(Set); ok {
+			if err := plusDeprecation.Deprecate(ctx, scanner); err != nil {
+				return nil, err
+			}
 			return Concatenate(a, b)
 		}
 	}
@@ -77,8 +91,8 @@ func addValues(a, b Value) (Value, error) {
 // NewAddExpr evaluates a + b, given two Numbers.
 func NewAddExpr(scanner parser.Scanner, a, b Expr) Expr {
 	return newBinExpr(scanner, a, b, "+", "(%s + %s)",
-		func(_ context.Context, a, b Value, _ Scope) (Value, error) {
-			return addValues(a, b)
+		func(ctx context.Context, a, b Value, _ Scope) (Value, error) {
+			return addValues(ctx, scanner, a, b)
 		})
 }
 

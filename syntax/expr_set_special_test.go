@@ -73,3 +73,16 @@ func TestDictExpand(t *testing.T) {
 		`"{'a': 'a', 'a': 'b', 'b': 'a'}"`,
 		`//str.expand("", {"b": "a", "a": "b"} | {"a": "a"}, "", "")`)
 }
+
+func TestDictEqual(t *testing.T) {
+	t.Parallel()
+	AssertCodesEvalToSameValue(t, `true `, `{'a': 1} = {'a': 1}                                `)
+	AssertCodesEvalToSameValue(t, `true `, `{'a': 1, 'b': 2, 'c': 3} = {'a': 1, 'b': 2, 'c': 3}`)
+	AssertCodesEvalToSameValue(t, `false`, `{'a': 1} = {1}                                     `)
+	AssertCodesEvalToSameValue(t, `false`, `{'a': 1} = {1}                                     `)
+	AssertCodesEvalToSameValue(t, `false`, `{'a': 1, 'b': 1, 'c': 1} = {1, 2, 3}               `)
+	AssertCodesEvalToSameValue(t, `false`, `{'a': 1} = [1]                                     `)
+	AssertCodesEvalToSameValue(t, `false`, `{'a': 1, 'b': 1, 'c': 1} = [1, 2, 3]               `)
+	AssertCodesEvalToSameValue(t, `false`, `{'a': 1} = 1                                       `)
+	AssertCodesEvalToSameValue(t, `false`, `{'a': 1} = (a: 1)                                  `)
+}

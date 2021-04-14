@@ -9,8 +9,8 @@ import (
 	"runtime/pprof"
 	"strings"
 
+	"github.com/arr-ai/arrai/pkg/buildinfo"
 	"github.com/arr-ai/arrai/rel"
-	"github.com/arr-ai/arrai/syntax"
 	"github.com/arr-ai/arrai/tools"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
@@ -122,8 +122,9 @@ func setupVersion(app *cli.App) {
 	cli.VersionPrinter = func(c *cli.Context) {
 		fmt.Printf("arrai %s %s/%s\n", Version, BuildOS, BuildArch)
 	}
+
 	// Construct build information here as these data are stored in main package only.
-	syntax.BuildInfo = syntax.GetBuildInfo(Version, BuildDate, GitFullCommit, GitTags, BuildOS, BuildArch, GoVersion)
+	buildinfo.SetBuildInfo(Version, BuildDate, GitFullCommit, GitTags, BuildOS, BuildArch, GoVersion)
 }
 
 func prepareProfilers() {

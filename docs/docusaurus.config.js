@@ -28,6 +28,10 @@ module.exports = {
                 },
             ],
         },
+        algolia: {
+          apiKey: '5031cdb2b03a3286d0430a3cded5d3f0',
+          indexName: 'arr_ai',
+        },
         gtag: {
             trackingID: "G-HKGSHFG2D0", // GA account owner: sysl.usr@gmail.com
             anonymizeIP: true,

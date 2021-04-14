@@ -5,6 +5,7 @@ import (
 
 	"github.com/urfave/cli/v2"
 
+	"github.com/arr-ai/arrai/pkg/buildinfo"
 	"github.com/arr-ai/arrai/pkg/ctxfs"
 	"github.com/arr-ai/arrai/pkg/ctxrootcache"
 	"github.com/spf13/afero"
@@ -14,6 +15,7 @@ type ctxKey int
 
 const (
 	argsKey ctxKey = iota
+	isCompilingKey
 )
 
 // InitCliCtx returns an arr.ai context with the arguments set from the CLI context.
@@ -29,6 +31,7 @@ func InitRunCtx(ctx context.Context) context.Context {
 	ctx = ctxfs.SourceFsOnto(ctx, afero.NewOsFs())
 	ctx = ctxfs.RuntimeFsOnto(ctx, afero.NewOsFs())
 	ctx = ctxrootcache.WithRootCache(ctx)
+	ctx = buildinfo.WithPackageBuildData(ctx)
 	return ctx
 }
 
@@ -44,4 +47,16 @@ func Args(ctx context.Context) []string {
 		return []string{}
 	}
 	return a
+}
+
+// ContextWithIsCompiling returns a context with a flag indicating
+// whether compiling mode is on.
+func ContextWithIsCompiling(ctx context.Context, on bool) context.Context {
+	return context.WithValue(ctx, isCompilingKey, on)
+}
+
+// IsCompiling checks if the context is in compiling mode.
+func IsCompiling(ctx context.Context) bool {
+	is := ctx.Value(isCompilingKey)
+	return is != nil && is.(bool)
 }

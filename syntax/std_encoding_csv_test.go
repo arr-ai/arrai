@@ -28,6 +28,14 @@ func TestCsvDecode_comment(t *testing.T) {
 		`//encoding.csv.decoder((comment: %#))(<<'a,b,c\n#comment\n1,2,3\n'>>)`)
 }
 
+func TestCsvDecodeEmpty(t *testing.T) {
+	t.Parallel()
+
+	AssertCodesEvalToSameValue(t,
+		`[['a', 'b', ''], ['1', '', '3']]`,
+		`//encoding.csv.decode(<<'a,b,\n1,,3\n'>>)`)
+}
+
 func TestCsvDecode_trimLeadingSpace(t *testing.T) {
 	t.Parallel()
 
@@ -144,6 +152,14 @@ func TestCsvEncode_crlf(t *testing.T) {
 		`//encoding.csv.encoder((crlf: true))([['a', 'b', 'c'], ['1', '2', '3']])`)
 }
 
+func TestCsvEncodeEmpty(t *testing.T) {
+	t.Parallel()
+
+	AssertCodesEvalToSameValue(t,
+		`<<'a,b,\n1,,3\n'>>`,
+		`//encoding.csv.encode([['a', 'b', ''], ['1', {}, '3']])`)
+}
+
 func TestCsvEncode_error(t *testing.T) {
 	t.Parallel()
 
@@ -170,4 +186,8 @@ func TestCsvEncode_error(t *testing.T) {
 	AssertCodeErrors(t,
 		"value 0 of record 1 must be string, not num",
 		`//encoding.csv.encode([['a'], [1]])`)
+
+	AssertCodeErrors(t,
+		"value 0 of record 1 must be string, not set",
+		`//encoding.csv.encode([['a'], [{1}]])`)
 }

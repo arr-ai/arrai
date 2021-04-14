@@ -2,7 +2,7 @@
 schemaVersion: '2.0.0'
 fileExistenceTests:
 - name: 'arrai'
-  path: '/go/bin/arrai'
+  path: '/bin/arrai'
   shouldExist: true
   permissions: '-rwxr-xr-x'
   uid: 0

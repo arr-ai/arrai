@@ -12,33 +12,44 @@ import (
 	"github.com/arr-ai/arrai/rel"
 )
 
+const (
+	defaultSheetIndex = 0
+	defaultHeadRow    = 0
+)
+
 func stdEncodingXlsx() rel.Attr {
 	return rel.NewTupleAttr(
 		"xlsx",
+		rel.NewNativeFunctionAttr(decodeAttr, func(_ context.Context, v rel.Value) (rel.Value, error) {
+			return arraiBytesXlsxToArrai(v, defaultSheetIndex, defaultHeadRow, "xlsx.decode")
+		}),
 		createFunc2Attr("decodeToRelation", func(_ context.Context, config rel.Value, x rel.Value) (rel.Value, error) {
+			//TODO: replace this with decoder instead of decodeToRelation
 			fn := "xlsx.decodeToRelation"
-			var bs []byte
 			c, ok := config.(*rel.GenericTuple)
 			if !ok {
 				return nil, errors.Errorf("first arg to %s must be tuple, not %s", fn, rel.ValueTypeAsString(config))
 			}
-			b, ok := x.(rel.Bytes)
-			if !ok {
-				return nil, errors.Errorf("second arg to %s must be string or bytes, not %s", fn, rel.ValueTypeAsString(x))
-			}
-			bs = b.Bytes()
 
-			i, err := getConfigInt(c, fn, "sheet", 0)
+			i, err := getConfigInt(c, fn, "sheet", defaultSheetIndex)
 			if err != nil {
 				return nil, err
 			}
-			h, err := getConfigInt(c, fn, "headRow", 0)
+			h, err := getConfigInt(c, fn, "headRow", defaultHeadRow)
 			if err != nil {
 				return nil, err
 			}
-			return bytesXlsxToArrai(bs, i, h)
+			return arraiBytesXlsxToArrai(x, i, h, fn)
 		}),
 	)
+}
+
+func arraiBytesXlsxToArrai(v rel.Value, sheetIndex, headRow int, fn string) (rel.Value, error) {
+	b, ok := v.(rel.Bytes)
+	if !ok {
+		return nil, errors.Errorf("second arg to %s must be string or bytes, not %s", fn, rel.ValueTypeAsString(v))
+	}
+	return bytesXlsxToArrai(b.Bytes(), sheetIndex, headRow)
 }
 
 func bytesXlsxToArrai(bs []byte, sheetIndex int, headerRow int) (rel.Value, error) {
