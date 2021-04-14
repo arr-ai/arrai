@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"github.com/spf13/afero"
 	"io"
 	"os"
 	"path/filepath"
@@ -37,7 +38,7 @@ func evalFile(ctx context.Context, path string, w io.Writer, out string) error {
 	if err := fileExists(ctx, path); err != nil {
 		return err
 	}
-	buf, err := ctxfs.ReadFile(ctxfs.SourceFsFrom(ctx), path)
+	buf, err := afero.ReadFile(ctxfs.SourceFsFrom(ctx), path)
 	if err != nil {
 		return err
 	}

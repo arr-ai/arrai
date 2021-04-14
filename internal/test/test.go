@@ -3,6 +3,7 @@ package test
 import (
 	"context"
 	"fmt"
+	"github.com/spf13/afero"
 	"io"
 	"os"
 	"path/filepath"
@@ -14,45 +15,82 @@ import (
 	"github.com/arr-ai/arrai/syntax"
 )
 
-// Test runs all tests in the subtree of path and returns the results.
-func Test(ctx context.Context, w io.Writer, path string) ([]TestFile, error) {
-	var files []string
-	err := filepath.Walk(path, func(path string, info os.FileInfo, err error) error {
-		if strings.HasSuffix(path, "_test.arrai") {
-			files = append(files, path)
+func RunTestsInPath(ctx context.Context, w io.Writer, path string) error {
+	if path == "" {
+		path = "."
+	}
+
+	files, err := FindTestFiles(ctx, w, path)
+	if err != nil {
+		return err
+	}
+
+	err = RunTests(ctx, &files)
+	if err != nil {
+		return err
+	}
+
+	err = Report(w, files)
+	return err
+}
+
+func FindTestFiles(ctx context.Context, w io.Writer, path string) ([]TestFile, error) {
+	var files []TestFile
+	fs := ctxfs.SourceFsFrom(ctx)
+
+	err := afero.Walk(fs, path, func(path string, info os.FileInfo, walkErr error) error {
+		if walkErr != nil {
+			return walkErr
 		}
+
+		if info.IsDir() {
+			// Skip hidden dirs.
+			if strings.HasPrefix(info.Name(), ".") {
+				return filepath.SkipDir
+			}
+
+			// Not a file, continue walking into it.
+			return nil
+		}
+
+		if strings.HasSuffix(path, "_test.arrai") == false {
+			return nil
+		}
+
+		bytes, readErr := afero.ReadFile(fs, path)
+		if readErr != nil {
+			fmt.Fprintf(w, "\nFailed reading test file %s\n", path)
+			return readErr
+		}
+
+		file := TestFile{
+			path:   path,
+			source: string(bytes),
+		}
+		files = append(files, file)
 		return nil
 	})
+
 	if err != nil {
 		return nil, err
 	}
-
 	if len(files) == 0 {
-		return nil, fmt.Errorf("no test files (filenames ending in '_test.arrai') were found in path: %v", path)
+		return nil, fmt.Errorf("no test files (ending in '_test.arrai') were found in path: %v", path)
 	}
+	return files, nil
+}
 
-	testFiles := make([]TestFile, 0)
-
-	for _, file := range files {
-		bytes, err := ctxfs.ReadFile(ctxfs.SourceFsFrom(ctx), file)
-		if err != nil {
-			fmt.Fprintf(w, "\nFailed reading test file %s\n", file)
-			return nil, err
-		}
-
+// RunTestsInPath runs all tests in the subtree and adds the results to the []TestFile.
+func RunTests(ctx context.Context, testFiles *[]TestFile) error {
+	for _, file := range *testFiles {
 		start := time.Now()
-		result, err := syntax.EvaluateExpr(ctx, file, string(bytes))
+		result, err := syntax.EvaluateExpr(ctx, file.path, file.source)
 		if err != nil {
-			fmt.Fprintf(w, "\nFailed evaluating tests file %s\n", file)
-			return nil, err
+			return fmt.Errorf("failed evaluating tests file '%s': %v", file.path, err)
 		}
+		file.wallTime = time.Since(start)
 
-		testFile := TestFile{
-			name:     file,
-			wallTime: time.Since(start),
-			results:  make([]TestResult, 0),
-		}
-
+		file.results = make([]TestResult, 0)
 		ForeachLeaf(result, "<root>", func(val rel.Value, path string) {
 			result := TestResult{
 				name: path,
@@ -72,76 +110,11 @@ func Test(ctx context.Context, w io.Writer, path string) ([]TestFile, error) {
 				}
 			}
 
-			testFile.results = append(testFile.results, result)
+			file.results = append(file.results, result)
 		})
 
-		testFiles = append(testFiles, testFile)
+		*testFiles = append(*testFiles, file)
 	}
 
-	return testFiles, nil
-}
-
-type TestFile struct {
-	name     string
-	wallTime time.Duration
-	results  []TestResult
-}
-
-type TestResult struct {
-	name    string
-	outcome TestOutcome
-	message string
-}
-
-type TestOutcome int
-
-const (
-	Failed TestOutcome = iota
-	Invalid
-	Ignored
-	Passed
-)
-
-func ForeachLeaf(val rel.Value, path string, leafAction func(val rel.Value, path string)) {
-	path = strings.TrimPrefix(path, "<root>.")
-
-	if isLiteralTrue(val) || isLiteralFalse(val) {
-		leafAction(val, path)
-		return
-	}
-
-	switch v := val.(type) {
-	case rel.Array:
-		for i, item := range v.Values() {
-			ForeachLeaf(item, fmt.Sprintf("%s(%d)", path, i), leafAction)
-		}
-	case rel.Dict:
-		for _, entry := range v.OrderedEntries() {
-			key := entry.MustGet("@")
-			keyStr := key.String()
-			if _, ok := key.(rel.String); ok {
-				keyStr = "'" + keyStr + "'"
-			}
-			ForeachLeaf(entry.MustGet(rel.DictValueAttr), fmt.Sprintf("%s(%s)", path, keyStr), leafAction)
-		}
-	case rel.Tuple:
-		for e := v.Enumerator(); e.MoveNext(); {
-			name, attr := e.Current()
-			ForeachLeaf(attr, fmt.Sprintf("%s.%s", path, name), leafAction)
-		}
-	default:
-		leafAction(val, path)
-	}
-}
-
-var emptyTuple = rel.NewTuple()
-
-func isLiteralTrue(val rel.Value) bool {
-	v, ok := val.(rel.GenericSet)
-	return ok && v.Count() == 1 && v.Has(emptyTuple)
-}
-
-func isLiteralFalse(val rel.Value) bool {
-	v, ok := val.(rel.GenericSet)
-	return ok && v.Count() == 0
+	return nil
 }

@@ -5,6 +5,7 @@ package syntax
 import (
 	"context"
 	"fmt"
+	"github.com/spf13/afero"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -75,7 +76,7 @@ func stdOsFile(ctx context.Context, v rel.Value) (rel.Value, error) {
 	if err != nil {
 		return nil, err
 	}
-	buf, err := ctxfs.ReadFile(ctxfs.RuntimeFsFrom(ctx), filePath.String())
+	buf, err := afero.ReadFile(ctxfs.RuntimeFsFrom(ctx), filePath.String())
 	if err != nil {
 		//TODO: wrap this in an arrai error message
 		return nil, err

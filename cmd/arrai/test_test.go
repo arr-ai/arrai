@@ -2,6 +2,11 @@ package main
 
 import (
 	"context"
+	"fmt"
+	"github.com/arr-ai/arrai/internal/test"
+	"github.com/arr-ai/arrai/rel"
+	"github.com/arr-ai/arrai/syntax"
+	"io/ioutil"
 	"strings"
 	"testing"
 
@@ -9,21 +14,35 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestTest(t *testing.T) {
+func TestNewTest(t *testing.T) {
 	t.Parallel()
 
 	var s strings.Builder
-	err := testPath(arraictx.InitRunCtx(context.Background()), "./../../examples/test", &s)
-	require.Nil(t, err)
-	windowsOsStr := `Tests:
-..\..\examples\test\multiple_cases_test.arrai
-..\..\examples\test\single_case_test.arrai
-all tests passed
-`
-	linuxOsStr := `Tests:
-../../examples/test/multiple_cases_test.arrai
-../../examples/test/single_case_test.arrai
-all tests passed
-`
-	require.True(t, (windowsOsStr == s.String()) || (linuxOsStr == s.String()))
+	err := test.RunTestsInPath(arraictx.InitRunCtx(context.Background()), &s, "./../../examples/test_new")
+	require.NotNil(t, err)
+
+	fmt.Println("\n\n*****\n" + s.String() + "*****\n\n")
+}
+
+func TestWalkLeaves(t *testing.T) {
+	t.Parallel()
+
+	bytes, err := ioutil.ReadFile("./../../examples/test_new/multiple_cases_test.arrai")
+	require.NoError(t, err)
+	val, err := syntax.EvaluateExpr(context.Background(), "", string(bytes))
+	require.NoError(t, err)
+
+	fmt.Print("\n\n*****\n")
+	test.ForeachLeaf(val, "", func(val rel.Value, path string) {
+		fmt.Println(path + ": " + val.String())
+	})
+	fmt.Print("*****\n\n")
+}
+
+func TestColor(t *testing.T) {
+	const text = "%d: \033[38;5;255;%d;1mTEST\033[0m\n"
+
+	for i := 0; i < 100; i++ {
+		fmt.Printf(text, i, i)
+	}
 }

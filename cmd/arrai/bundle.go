@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"github.com/spf13/afero"
 	"io"
 	"os"
 	"path/filepath"
@@ -53,7 +54,7 @@ func bundleFilesTo(ctx context.Context, path string, w io.Writer, out string) (e
 		w = f
 	}
 
-	buf, err := ctxfs.ReadFile(ctxfs.SourceFsFrom(ctx), path)
+	buf, err := afero.ReadFile(ctxfs.SourceFsFrom(ctx), path)
 	if err != nil {
 		return err
 	}

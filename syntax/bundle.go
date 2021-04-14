@@ -6,6 +6,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/spf13/afero"
 	"io"
 	"path"
 	"path/filepath"
@@ -98,7 +99,7 @@ func GetMainBundleSource(ctx context.Context) (context.Context, []byte, string) 
 	ctx = withBundledConfig(ctx)
 	mainFile := bundleToValidPath(ctx, fromBundleConfig(ctx).mainFile)
 	fs := ctxfs.SourceFsFrom(ctx)
-	buf, err := ctxfs.ReadFile(fs, mainFile)
+	buf, err := afero.ReadFile(fs, mainFile)
 	if err != nil {
 		panic(fmt.Errorf("not bundled properly, main file not accessible: %s", err))
 	}
@@ -131,7 +132,7 @@ func withBundledConfig(ctx context.Context) context.Context {
 		return ctx
 	}
 
-	buf, err := ctxfs.ReadFile(ctxfs.SourceFsFrom(ctx), BundleConfig)
+	buf, err := afero.ReadFile(ctxfs.SourceFsFrom(ctx), BundleConfig)
 	if err != nil {
 		// config file not generated
 		panic(err)
@@ -200,7 +201,7 @@ func SetupBundle(ctx context.Context, filePath string, source []byte) (_ context
 		return ctx, createConfig(ctx)
 	}
 
-	buf, err := ctxfs.ReadFile(ctxfs.SourceFsFrom(ctx), filepath.Join(root, ModuleRootSentinel))
+	buf, err := afero.ReadFile(ctxfs.SourceFsFrom(ctx), filepath.Join(root, ModuleRootSentinel))
 	if err != nil {
 		return ctx, err
 	}
@@ -239,7 +240,7 @@ func addModuleSentinel(ctx context.Context, rootPath string) (err error) {
 
 	rootPath = filepath.Join(rootPath, ModuleRootSentinel)
 
-	buf, err := ctxfs.ReadFile(ctxfs.SourceFsFrom(ctx), rootPath)
+	buf, err := afero.ReadFile(ctxfs.SourceFsFrom(ctx), rootPath)
 	if err != nil {
 		return err
 	}
@@ -292,7 +293,7 @@ func bundleLocalFile(ctx context.Context, filePath string) (err error) {
 		filePath += arraiExt
 	}
 
-	source, err := ctxfs.ReadFile(ctxfs.SourceFsFrom(ctx), filePath)
+	source, err := afero.ReadFile(ctxfs.SourceFsFrom(ctx), filePath)
 	if err != nil {
 		return err
 	}
@@ -327,7 +328,7 @@ func bundleModule(ctx context.Context, relImportPath string, m *mod.Module) (con
 		relImportPath += arraiExt
 	}
 
-	source, err := ctxfs.ReadFile(ctxfs.SourceFsFrom(ctx), filepath.Join(m.Dir, relImportPath))
+	source, err := afero.ReadFile(ctxfs.SourceFsFrom(ctx), filepath.Join(m.Dir, relImportPath))
 	if err != nil {
 		return ctx, err
 	}

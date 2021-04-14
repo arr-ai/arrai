@@ -2,7 +2,6 @@ package ctxfs
 
 import (
 	"context"
-	"io/ioutil"
 	"path/filepath"
 	"runtime"
 	"strings"
@@ -50,16 +49,6 @@ func RuntimeFsFrom(ctx context.Context) afero.Fs {
 		return v.(afero.Fs)
 	}
 	return defaultFs
-}
-
-func ReadFile(fs afero.Fs, filePath string) ([]byte, error) {
-	f, err := fs.Open(filePath)
-	if err != nil {
-		return nil, err
-	}
-	defer f.Close()
-
-	return ioutil.ReadAll(f)
 }
 
 func ToUnixPath(p string) string {

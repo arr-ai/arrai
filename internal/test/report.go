@@ -7,7 +7,6 @@ import (
 	"io"
 	"sort"
 	"strings"
-	"time"
 	"unicode/utf8"
 )
 
@@ -15,7 +14,7 @@ func Report(w io.Writer, testFiles []TestFile) error {
 	stats := calcStats(testFiles)
 
 	for _, testFile := range testFiles {
-		reportFile(w, testFile, stats.maxName)
+		reportFile(w, testFile, stats.maxNameLen)
 	}
 
 	reportStats(w, stats)
@@ -42,59 +41,10 @@ func reportFile(w io.Writer, testFile TestFile, maxName int) {
 		return left.outcome > right.outcome
 	})
 
-	message.NewPrinter(language.English).Fprintf(w, "\n=======  %s (%dms)\n", testFile.name, testFile.wallTime.Milliseconds())
+	message.NewPrinter(language.English).Fprintf(w, "\n=======  %s (%dms)\n", testFile.path, testFile.wallTime.Milliseconds())
 	for _, result := range results {
 		reportTest(w, result, maxName)
 	}
-}
-
-func calcStats(testFiles []TestFile) testStats {
-	var stats testStats
-
-	for _, testFile := range testFiles {
-		stats.wallTime += testFile.wallTime
-
-		for _, result := range testFile.results {
-			if count := utf8.RuneCountInString(result.name); count > stats.maxName {
-				stats.maxName = count
-			}
-
-			if count := utf8.RuneCountInString(testFile.name); count > stats.maxName {
-				stats.maxFile = count
-			}
-
-			stats.total++
-
-			switch result.outcome {
-			case Invalid:
-				stats.invalid++
-			case Passed:
-				stats.passed++
-			case Ignored:
-				stats.ignored++
-			case Failed:
-				stats.failed++
-			}
-
-			stats.runFailed = stats.failed > 0 || stats.invalid > 0
-		}
-	}
-
-	return stats
-}
-
-type testStats struct {
-	maxName int
-	maxFile int
-
-	total   int
-	invalid int
-	passed  int
-	ignored int
-	failed  int
-
-	runFailed bool
-	wallTime  time.Duration
 }
 
 func reportTest(w io.Writer, result TestResult, maxName int) {

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/spf13/afero"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -259,7 +260,7 @@ func fileValue(ctx context.Context, decoder rel.Tuple, filename string) (rel.Exp
 		filename += ".arrai"
 	}
 
-	bytes, err := ctxfs.ReadFile(ctxfs.SourceFsFrom(ctx), filename)
+	bytes, err := afero.ReadFile(ctxfs.SourceFsFrom(ctx), filename)
 	if err != nil {
 		return nil, err
 	}
