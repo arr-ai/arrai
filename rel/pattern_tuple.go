@@ -19,6 +19,9 @@ func NewTuplePatternAttr(name string, pattern FallbackPattern) TuplePatternAttr 
 }
 
 func (a TuplePatternAttr) String() string {
+	if a.name == "" {
+		return fmt.Sprintf("%s%s", a.name, a.pattern)
+	}
 	if a.pattern.fallback == nil {
 		return fmt.Sprintf("%s: %s", a.name, a.pattern)
 	}
@@ -33,12 +36,12 @@ type TuplePattern struct {
 	attrs []TuplePatternAttr
 }
 
-func NewTuplePattern(attrs ...TuplePatternAttr) TuplePattern {
+func NewTuplePattern(attrs ...TuplePatternAttr) (TuplePattern, error) {
 	p := TuplePattern{attrs}
 	if err := validTuplePattern(p); err != nil {
-		panic(err)
+		return TuplePattern{}, err
 	}
-	return p
+	return p, nil
 }
 
 func validTuplePattern(p TuplePattern) error {

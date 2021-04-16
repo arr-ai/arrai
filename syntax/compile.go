@@ -273,7 +273,7 @@ func (pc ParseContext) compileTuplePattern(ctx context.Context, b ast.Branch) (_
 				fall := pair.One("v").One("fall")
 				if fall == nil {
 					attrs = append(attrs, rel.NewTuplePatternAttr(k, rel.NewFallbackPattern(v, nil)))
-				} else if tail != nil && fall != nil {
+				} else if tail != nil {
 					fallExpr, err := pc.CompileExpr(ctx, fall.(ast.Branch))
 					if err != nil {
 						return nil, err
@@ -284,9 +284,9 @@ func (pc ParseContext) compileTuplePattern(ctx context.Context, b ast.Branch) (_
 				}
 			}
 		}
-		return rel.NewTuplePattern(attrs...), nil
+		return rel.NewTuplePattern(attrs...)
 	}
-	return rel.NewTuplePattern(), nil
+	return rel.NewTuplePattern()
 }
 
 func (pc ParseContext) compileDictPattern(ctx context.Context, b ast.Branch) (_ rel.Pattern, err error) {
@@ -541,10 +541,14 @@ func buildKeyPatterns(arr []keyOpNode, base rel.Pattern) rel.Pattern {
 		e := arr[i]
 		switch e.op {
 		case keyGet:
-			pattern = rel.NewTuplePattern(
+			tuplePattern, err := rel.NewTuplePattern(
 				rel.NewTuplePatternAttr(e.attr, rel.NewFallbackPattern(pattern, nil)),
 				rel.NewTuplePatternAttr("", extra),
 			)
+			if err != nil {
+				panic(err)
+			}
+			pattern = tuplePattern
 		case keyCall:
 			pattern = rel.NewDictPattern(
 				rel.NewDictPatternEntry(e.key, rel.NewFallbackPattern(pattern, nil)),

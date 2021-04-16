@@ -57,6 +57,16 @@ func (pc ParseContext) ParseString(ctx context.Context, s string) (ast.Branch, e
 	return pc.Parse(ctx, parser.NewScanner(s))
 }
 
+type StopError struct {
+	err error
+}
+
+func (StopError) IsStopError() {}
+
+func (e StopError) Error() string {
+	return e.err.Error()
+}
+
 // Parse parses input and returns the parsed Expr or an error.
 func (pc ParseContext) Parse(ctx context.Context, s *parser.Scanner) (ast.Branch, error) {
 	rscopes := []rel.Scope{{}}
@@ -82,7 +92,7 @@ func (pc ParseContext) Parse(ctx context.Context, s *parser.Scanner) (ast.Branch
 				case parser.UnconsumedInputError, *localImportError, *externalImportErr, *urlImportErr:
 					deepImportError = err
 				}
-				return nil, err
+				return nil, StopError{err}
 			}
 			exprClosure := rel.NewExprClosure(rscopes[len(rscopes)-1], expr)
 
@@ -103,7 +113,7 @@ func (pc ParseContext) Parse(ctx context.Context, s *parser.Scanner) (ast.Branch
 				source := expr.Source()
 				pat, err := pc.compilePattern(ctx, patNode)
 				if err != nil {
-					return nil, err
+					return nil, StopError{err}
 				}
 				bindings := pat.Bindings()
 				for _, b := range bindings {
@@ -112,7 +122,6 @@ func (pc ParseContext) Parse(ctx context.Context, s *parser.Scanner) (ast.Branch
 					rscopes = append(rscopes, rscopes[len(rscopes)-1].With(b, binops["->"](source, expr, rhs)))
 				}
 			}
-
 			return nil, nil
 		},
 		"ast": func(scope parser.Scope, input *parser.Scanner) (parser.TreeElement, error) {

@@ -119,7 +119,6 @@ func TestExprLetTuplePattern(t *testing.T) { //nolint:dupl
 	AssertCodesEvalToSameValue(t, `[(), 1]`, `let (?:a:1, b: 2, ...tail) = (b: 2); [tail, a]`)
 	AssertCodesEvalToSameValue(t, `[(), 3]`, `let (?:a:1, b: 2, ...tail) = (a: 3, b: 2); [tail, a]`)
 	AssertCodesEvalToSameValue(t, `[(), 3, 5]`, `let (?:a:1, b: 2, ?:c: 5, ...tail) = (a: 3, b: 2); [tail, a, c]`)
-
 	AssertCodeErrors(t,
 		"length of tuple (a: 4, b: 7) longer than tuple pattern (a: x)",
 		`let (a: x) = (b: 7, a: 4); x`,
@@ -140,10 +139,13 @@ func TestExprLetTuplePattern(t *testing.T) { //nolint:dupl
 		"length of tuple (b: 7, c: 8) longer than tuple pattern (a?: a:1, b: 7)",
 		`let (?:a:1, b: 7) = (b: 7, c: 8); a`,
 	)
-	AssertCodePanics(t,
+	AssertCodeParseErrors(t,
+		"duplicate fields found in pattern (a: x, a: x)",
 		`let (a: x, a: x) = (a: 4, a: 4); x`,
 	)
-	AssertCodePanics(t, `let (a: x, a: x) = (a: 4); x`)
+	AssertCodeParseErrors(t,
+		"duplicate fields found in pattern (a: x, a: x)",
+		`let (a: x, a: x) = (a: 4); x`)
 	AssertCodeErrors(t,
 		"non-deterministic pattern is not supported",
 		`let (a: 1, ..., c: 3, ..., e: 5) = (a: 1, b: 2, c: 3, d: 4, e: 5); a`,
@@ -160,7 +162,8 @@ func TestExprLetTuplePattern(t *testing.T) { //nolint:dupl
 		"didn't find matched value\n\n\x1b[1;37m:1:12:\x1b[",
 		`let x = 5; let (a: [(x)]) = (a: [4]); x`,
 	)
-	AssertCodePanics(t,
+	AssertCodeParseErrors(t,
+		"duplicate fields found in pattern (x: a, x: b, ...)",
 		`let (x: a, x: b, ...) = (x: 1, y: 2, z: 3); (:a, :b)`,
 	)
 }
