@@ -6,9 +6,12 @@ import (
 	"strings"
 )
 
+// Visits all leaves in an test tree, invoking the leafAction callback for each leaf encountered.
+// Tuples, arrays and dictionaries are considered test containers and not leaves, they are recursed into.
 func ForeachLeaf(val rel.Value, path string, leafAction func(val rel.Value, path string)) {
 	path = strings.TrimPrefix(path, "<root>.")
 
+	// TODO: Remove this if after tests confirm it's not needed (handled by default case of switch below)
 	if isLiteralTrue(val) || isLiteralFalse(val) {
 		leafAction(val, path)
 		return
