@@ -541,14 +541,14 @@ func buildKeyPatterns(arr []keyOpNode, base rel.Pattern) rel.Pattern {
 		e := arr[i]
 		switch e.op {
 		case keyGet:
-			tuplePattern, err := rel.NewTuplePattern(
+			var err error
+			pattern, err = rel.NewTuplePattern(
 				rel.NewTuplePatternAttr(e.attr, rel.NewFallbackPattern(pattern, nil)),
 				rel.NewTuplePatternAttr("", extra),
 			)
 			if err != nil {
 				panic(err)
 			}
-			pattern = tuplePattern
 		case keyCall:
 			pattern = rel.NewDictPattern(
 				rel.NewDictPatternEntry(e.key, rel.NewFallbackPattern(pattern, nil)),

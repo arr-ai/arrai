@@ -20,7 +20,7 @@ func NewTuplePatternAttr(name string, pattern FallbackPattern) TuplePatternAttr 
 
 func (a TuplePatternAttr) String() string {
 	if a.name == "" {
-		return fmt.Sprintf("%s%s", a.name, a.pattern)
+		return a.pattern.String()
 	}
 	if a.pattern.fallback == nil {
 		return fmt.Sprintf("%s: %s", a.name, a.pattern)
@@ -63,9 +63,6 @@ func (p TuplePattern) Bind(ctx context.Context, local Scope, value Value) (conte
 		return ctx, EmptyScope, fmt.Errorf("%s is not a tuple", value)
 	}
 
-	if err := validTuplePattern(p); err != nil {
-		return ctx, EmptyScope, err
-	}
 	bind := func(
 		ctx context.Context,
 		attr TuplePatternAttr,
