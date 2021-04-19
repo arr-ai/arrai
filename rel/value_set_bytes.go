@@ -35,22 +35,13 @@ func NewOffsetBytes(b []byte, offset int) Set {
 }
 
 // TODO: support byte arrays with holes.
-func AsBytes(s Set) (Bytes, bool) { //nolint:dupl
-	if b, ok := s.(Bytes); ok {
-		return b, true
-	}
-	n := s.Count()
-	if n == 0 {
-		return Bytes{}, true
-	}
-	tuples := make(bytesByteTupleArray, 0, n)
+func asBytes(values ...Value) (Bytes, bool) { //nolint:dupl
+	n := len(values)
+	tuples := make([]BytesByteTuple, 0, n)
 	minAt := int(^uint(0) >> 1)
 	maxAt := -minAt - 1
-	for i := s.Enumerator(); i.MoveNext(); {
-		t, is := i.Current().(BytesByteTuple)
-		if !is {
-			return Bytes{}, false
-		}
+	for _, v := range values {
+		t := v.(BytesByteTuple)
 		if minAt > t.at {
 			minAt = t.at
 		}
@@ -64,20 +55,6 @@ func AsBytes(s Set) (Bytes, bool) { //nolint:dupl
 		bytes[t.at-minAt] = t.byteval
 	}
 	return Bytes{b: bytes, offset: minAt}, true
-}
-
-type bytesByteTupleArray []BytesByteTuple
-
-func (a bytesByteTupleArray) Len() int {
-	return len(a)
-}
-
-func (a bytesByteTupleArray) Less(i, j int) bool {
-	return a[i].at < a[j].at
-}
-
-func (a bytesByteTupleArray) Swap(i, j int) {
-	a[i], a[j] = a[j], a[i]
 }
 
 // Bytes returns the bytes of b. The caller must not modify the contents.

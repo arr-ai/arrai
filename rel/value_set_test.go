@@ -15,8 +15,8 @@ func TestAsString(t *testing.T) {
 	generic, err := NewString([]rune("this is a test")).Map(func(v Value) (Value, error) { return v, nil })
 	require.NoError(t, err)
 
-	stringified, isString := AsString(generic)
-	require.True(t, isString)
+	stringified, isString := generic.(String)
+	require.True(t, isString, "%v", generic)
 	assert.True(t, stringified.Equal(NewString([]rune("this is a test"))), stringified.String())
 
 	// generic = NewOffsetString([]rune("this is a test"), 100).Map(func(v Value) Value { return v })

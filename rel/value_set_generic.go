@@ -40,53 +40,46 @@ func MustNewSet(values ...Value) Set {
 
 // NewSet constructs a genericSet from a set of Values.
 func NewSet(values ...Value) (Set, error) {
-	set := None
-	if len(values) > 0 {
-		typ := reflect.TypeOf(values[0])
-		for _, value := range values[1:] {
-			if reflect.TypeOf(value) != typ {
-				typ = nil
-				break
-			}
-		}
-		buildSet := func(values []Value) Set {
-			sb := frozen.SetBuilder{}
-			for _, value := range values {
-				sb.Add(value)
-			}
-			return GenericSet{sb.Finish()}
-		}
-		if typ != nil {
-			switch typ {
-			case stringCharTupleType:
-				s, is := AsString(buildSet(values))
-				if !is {
-					return nil, errors.Errorf("unsupported string array expr")
-				}
-				return s, nil
-			case bytesByteTupleType:
-				b, is := AsBytes(buildSet(values))
-				if !is {
-					return nil, errors.Errorf("unsupported byte array expr")
-				}
-				return b, nil
-			case arrayItemTupleType:
-				array, is := asArray(buildSet(values))
-				if !is {
-					return nil, errors.Errorf("unsupported array expr")
-				}
-				return array, nil
-			case dictEntryTupleType:
-				tuples := make([]DictEntryTuple, 0, len(values))
-				for _, value := range values {
-					tuples = append(tuples, value.(DictEntryTuple))
-				}
-				return NewDict(true, tuples...)
-			}
-		}
-		set = buildSet(values)
+	if len(values) == 0 {
+		return None, nil
 	}
-	return set, nil
+	typ := reflect.TypeOf(values[0])
+	for _, value := range values[1:] {
+		if reflect.TypeOf(value) != typ {
+			typ = nil
+			break
+		}
+	}
+	if typ != nil {
+		switch typ {
+		case stringCharTupleType:
+			if s, is := asString(values...); is {
+				return s, nil
+			}
+			return nil, errors.Errorf("unsupported string array expr")
+		case bytesByteTupleType:
+			if b, is := asBytes(values...); is {
+				return b, nil
+			}
+			return nil, errors.Errorf("unsupported byte array expr")
+		case arrayItemTupleType:
+			if array, is := asArray(values...); is {
+				return array, nil
+			}
+			return nil, errors.Errorf("unsupported array expr")
+		case dictEntryTupleType:
+			tuples := make([]DictEntryTuple, 0, len(values))
+			for _, value := range values {
+				tuples = append(tuples, value.(DictEntryTuple))
+			}
+			return NewDict(true, tuples...)
+		}
+	}
+	sb := frozen.SetBuilder{}
+	for _, value := range values {
+		sb.Add(value)
+	}
+	return GenericSet{sb.Finish()}, nil
 }
 
 func CanonicalSet(s Set) Set {
@@ -234,9 +227,6 @@ func (s GenericSet) Negate() Value {
 func (s GenericSet) Export(ctx context.Context) interface{} {
 	if s.set.IsEmpty() {
 		return []interface{}{}
-	}
-	if s, is := AsString(s); is {
-		return s.Export(ctx)
 	}
 	result := make([]interface{}, 0, s.set.Count())
 	for e := s.Enumerator(); e.MoveNext(); {

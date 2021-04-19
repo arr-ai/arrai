@@ -38,22 +38,13 @@ func NewOffsetString(s []rune, offset int) Set {
 	return String{s: s, offset: offset, holes: holes}
 }
 
-func AsString(s Set) (String, bool) { //nolint:dupl
-	if s, ok := s.(String); ok {
-		return s, true
-	}
-	n := s.Count()
-	if n == 0 {
-		return String{}, true
-	}
-	tuples := make(stringCharTupleArray, 0, n)
+func asString(values ...Value) (String, bool) {
+	n := len(values)
+	tuples := make([]StringCharTuple, 0, n)
 	minAt := int(^uint(0) >> 1)
 	maxAt := -minAt - 1
-	for i := s.Enumerator(); i.MoveNext(); {
-		t, is := i.Current().(StringCharTuple)
-		if !is {
-			return String{}, false
-		}
+	for _, v := range values {
+		t := v.(StringCharTuple)
 		if minAt > t.at {
 			minAt = t.at
 		}
@@ -72,18 +63,17 @@ func AsString(s Set) (String, bool) { //nolint:dupl
 	return String{s: str, offset: minAt, holes: len(str) - n}, true
 }
 
-type stringCharTupleArray []StringCharTuple
-
-func (a stringCharTupleArray) Len() int {
-	return len(a)
-}
-
-func (a stringCharTupleArray) Less(i, j int) bool {
-	return a[i].at < a[j].at
-}
-
-func (a stringCharTupleArray) Swap(i, j int) {
-	a[i], a[j] = a[j], a[i]
+// AsString returns String and the empty set as String or false otherwise.
+func AsString(v Value) (String, bool) {
+	switch s := v.(type) {
+	case String:
+		return s, true
+	case Set:
+		if !s.IsTrue() {
+			return String{}, true
+		}
+	}
+	return String{}, false
 }
 
 // Hash computes a hash for a String.
@@ -206,32 +196,35 @@ func (s String) Without(value Value) Set {
 		i := s.index(t.at)
 		switch {
 		case i == 0:
-			return String{s: s.s[:i], offset: s.offset, holes: s.holes}
+			s = String{s: s.s[:i], offset: s.offset, holes: s.holes}
 		case i == len(s.s)-1:
-			return String{s: s.s[i : len(s.s)-1], offset: s.offset, holes: s.holes}
+			s = String{s: s.s[i : len(s.s)-1], offset: s.offset, holes: s.holes}
 		case 0 < i && i < len(s.s)-1:
 			if t.char == s.s[i] {
 				newS := make([]rune, len(s.s))
 				copy(newS, s.s)
 				newS[i] = -1
-				return String{s: newS, offset: s.offset, holes: s.holes + 1}
+				s = String{s: newS, offset: s.offset, holes: s.holes + 1}
 			}
 		}
+	}
+	if s.Count() == 0 {
+		return None
 	}
 	return s
 }
 
 // Map maps values per f.
 func (s String) Map(f func(v Value) (Value, error)) (Set, error) {
-	result := None
+	var values []Value
 	for e := s.Enumerator().(*stringValueEnumerator); e.MoveNext(); {
 		v, err := f(e.currentStringCharTuple())
 		if err != nil {
 			return nil, err
 		}
-		result = result.With(v)
+		values = append(values, v)
 	}
-	return result, nil
+	return NewSet(values...)
 }
 
 // Where returns a new String with all the Values satisfying predicate p.

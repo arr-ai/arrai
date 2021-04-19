@@ -69,20 +69,11 @@ func AsArray(v Value) (Array, bool) {
 	return Array{}, false
 }
 
-func asArray(s Set) (Array, bool) {
-	if s.Count() == 0 {
-		return Array{}, true
-	}
-
+func asArray(values ...Value) (Array, bool) {
 	minIndex := math.MaxInt32
 	maxIndex := math.MinInt32
-	i := s.Enumerator()
-	for i.MoveNext() {
-		t, is := i.Current().(ArrayItemTuple)
-		if !is {
-			return Array{}, false
-		}
-
+	for _, v := range values {
+		t := v.(ArrayItemTuple)
 		if t.at < minIndex {
 			minIndex = t.at
 		}
@@ -92,15 +83,18 @@ func asArray(s Set) (Array, bool) {
 	}
 	items := make([]Value, maxIndex-minIndex+1)
 
-	i = s.Enumerator()
-	for i.MoveNext() {
-		t := i.Current().(ArrayItemTuple)
+	n := 0
+	for _, v := range values {
+		t := v.(ArrayItemTuple)
+		if items[t.at-minIndex] == nil {
+			n++
+		}
 		items[t.at-minIndex] = t.item
 	}
 	return Array{
 		values: items,
 		offset: minIndex,
-		count:  s.Count(),
+		count:  n,
 	}, true
 }
 
