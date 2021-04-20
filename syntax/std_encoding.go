@@ -20,7 +20,6 @@ func stdEncoding() rel.Attr {
 		stdEncodingProto(),
 		stdEncodingXlsx(),
 		stdEncodingYAML(),
-		stdEncodingXML(),
 		rel.NewAttr("bytes", mustParseLit(`(decode: \b b)`)),
 	)
 }
