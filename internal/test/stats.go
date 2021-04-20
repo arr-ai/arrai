@@ -16,7 +16,7 @@ func calcStats(testFiles []TestFile) testStats {
 				stats.maxNameLen = count
 			}
 
-			if count := utf8.RuneCountInString(testFile.path); count > stats.maxNameLen {
+			if count := utf8.RuneCountInString(testFile.path); count > stats.maxFileLen {
 				stats.maxFileLen = count
 			}
 

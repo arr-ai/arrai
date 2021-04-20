@@ -1,0 +1,60 @@
+package test
+
+import (
+	"github.com/stretchr/testify/require"
+	"testing"
+)
+
+var passFile = TestFile{
+	path:     "file1",
+	source:   "src1",
+	wallTime: 100,
+	results: []TestResult{
+		{name: "Test1", outcome: Passed},
+		{name: "Test22", outcome: Passed},
+		{name: "Test333", outcome: Passed},
+		{name: "Test4444", outcome: Passed},
+	},
+}
+var failFile = TestFile{
+	path:     "file22",
+	source:   "src2",
+	wallTime: 50,
+	results: []TestResult{
+		{name: "Test1", outcome: Passed},
+		{name: "Test2", outcome: Failed},
+		{name: "Test3", outcome: Ignored},
+	},
+}
+var invalidFile = TestFile{
+	path:     "file3",
+	source:   "src3",
+	wallTime: 3,
+	results: []TestResult{
+		{name: "Test1", outcome: Invalid},
+	},
+}
+
+func TestCalcStats_AllPass(t *testing.T) {
+	require.Equal(t,
+		testStats{runFailed: false, wallTime: 100, maxNameLen: 8, maxFileLen: 5, total: 4, invalid: 0, passed: 4, ignored: 0, failed: 0},
+		calcStats([]TestFile{passFile}))
+}
+
+func TestCalcStats_Mixed(t *testing.T) {
+	require.Equal(t,
+		testStats{runFailed: true, wallTime: 153, maxNameLen: 8, maxFileLen: 6, total: 8, invalid: 1, passed: 5, ignored: 1, failed: 1},
+		calcStats([]TestFile{passFile, failFile, invalidFile}))
+}
+
+func TestCalcStats_Failed(t *testing.T) {
+	require.Equal(t,
+		testStats{runFailed: true, wallTime: 50, maxNameLen: 5, maxFileLen: 6, total: 3, invalid: 0, passed: 1, ignored: 1, failed: 1},
+		calcStats([]TestFile{failFile}))
+}
+
+func TestCalcStats_Invalid(t *testing.T) {
+	require.Equal(t,
+		testStats{runFailed: true, wallTime: 3, maxNameLen: 5, maxFileLen: 5, total: 1, invalid: 1, passed: 0, ignored: 0, failed: 0},
+		calcStats([]TestFile{invalidFile}))
+}
