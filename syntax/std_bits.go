@@ -21,24 +21,16 @@ func set(_ context.Context, v rel.Value) (rel.Value, error) {
 	if !isNumber || float64(n) < 0 {
 		return nil, fmt.Errorf("argument not a non-negative number: %v", v)
 	}
-	var bitmask []rel.Value
+	b := rel.NewSetBuilder()
 	if float64(n) == float64(int(n)) {
-		bitmask = setInt(int(n))
+		for v := int(n); v != 0; v &= v - 1 {
+			b.Add(rel.NewNumber(float64(bits.TrailingZeros64(uint64(v)))))
+		}
 	} else {
-		bitmask = maskFloat(float64(n))
+		// TODO: Mask reals using negative indices.
+		panic("unimplemented")
 	}
-	return rel.NewSet(bitmask...)
-}
-
-func setInt(v int) (bitmask []rel.Value) {
-	for ; v != 0; v &= v - 1 {
-		bitmask = append(bitmask, rel.NewNumber(float64(bits.TrailingZeros64(uint64(v)))))
-	}
-	return
-}
-
-func maskFloat(v float64) (bitmask []rel.Value) {
-	panic("unimplemented")
+	return b.Finish()
 }
 
 func mask(_ context.Context, v rel.Value) (rel.Value, error) {

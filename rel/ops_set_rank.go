@@ -34,11 +34,11 @@ func Rank(s Set, rankerf func(v Tuple) (Tuple, error)) (Set, error) {
 		}
 	}
 
-	values := make([]Value, 0, len(entries))
+	b := NewSetBuilder()
 	for _, entry := range entries {
-		values = append(values, entry.input)
+		b.Add(entry.input)
 	}
-	return NewSet(values...)
+	return b.Finish()
 }
 
 type rankerEntry struct {

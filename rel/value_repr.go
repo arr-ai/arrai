@@ -105,7 +105,7 @@ func reprDict(d Dict, w io.Writer) {
 
 func reprSet(s GenericSet, w io.Writer) {
 	if s.Equal(True) {
-		fmt.Fprintf(w, "true")
+		fmt.Fprint(w, sTrue)
 		return
 	}
 	fmt.Fprint(w, "{")

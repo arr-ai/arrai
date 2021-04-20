@@ -43,8 +43,8 @@ func stdTest() rel.Attr {
 			createTestCompareFuncAttr("size", func(_ context.Context, e, a rel.Value) bool {
 				return int(e.(rel.Number).Float64()) == a.(rel.Set).Count()
 			}, "unexpected size"),
-			createTestCheckFuncAttr("false", func(_ context.Context, v rel.Value) bool { return !v.IsTrue() }),
-			createTestCheckFuncAttr("true", func(_ context.Context, v rel.Value) bool { return v.IsTrue() }),
+			createTestCheckFuncAttr(sFalse, func(_ context.Context, v rel.Value) bool { return !v.IsTrue() }),
+			createTestCheckFuncAttr(sTrue, func(_ context.Context, v rel.Value) bool { return v.IsTrue() }),
 		),
 		//TODO: reimplement testing suite
 		// rel.NewNativeExprFunctionAttr("suite", func(expr rel.Expr, local rel.Scope) (rel.Value, error) {

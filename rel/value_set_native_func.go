@@ -125,12 +125,13 @@ func (*NativeFunction) Where(p func(v Value) (bool, error)) (Set, error) {
 }
 
 // Call calls the NativeFunction with the given parameter.
-func (f *NativeFunction) CallAll(ctx context.Context, arg Value) (Set, error) {
+func (f *NativeFunction) CallAll(ctx context.Context, arg Value, b SetBuilder) error {
 	v, err := f.fn(ctx, arg)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	return NewSet(v)
+	b.Add(v)
+	return nil
 }
 
 func (*NativeFunction) ArrayEnumerator() (OffsetValueEnumerator, bool) {

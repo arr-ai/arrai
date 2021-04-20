@@ -3,10 +3,9 @@ package rel
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"reflect"
 	"sort"
-
-	"github.com/pkg/errors"
 
 	"github.com/arr-ai/frozen"
 	"github.com/arr-ai/wbnf/parser"
@@ -29,84 +28,22 @@ var (
 	dictEntryTupleType  = reflect.TypeOf(DictEntryTuple{})
 )
 
-// MustNewSet constructs a genericSet from a set of Values, or panics if construction fails.
-func MustNewSet(values ...Value) Set {
-	s, err := NewSet(values...)
-	if err != nil {
-		panic(err)
-	}
-	return s
-}
-
-// NewSet constructs a genericSet from a set of Values.
-func NewSet(values ...Value) (Set, error) {
-	if len(values) == 0 {
-		return None, nil
-	}
-	typ := reflect.TypeOf(values[0])
-	for _, value := range values[1:] {
-		if reflect.TypeOf(value) != typ {
-			typ = nil
-			break
-		}
-	}
-	if typ != nil {
-		switch typ {
-		case stringCharTupleType:
-			if s, is := asString(values...); is {
-				return s, nil
-			}
-			return nil, errors.Errorf("unsupported string array expr")
-		case bytesByteTupleType:
-			if b, is := asBytes(values...); is {
-				return b, nil
-			}
-			return nil, errors.Errorf("unsupported byte array expr")
-		case arrayItemTupleType:
-			if array, is := asArray(values...); is {
-				return array, nil
-			}
-			return nil, errors.Errorf("unsupported array expr")
-		case dictEntryTupleType:
-			tuples := make([]DictEntryTuple, 0, len(values))
-			for _, value := range values {
-				tuples = append(tuples, value.(DictEntryTuple))
-			}
-			return NewDict(true, tuples...)
-		}
-	}
-	sb := frozen.SetBuilder{}
-	for _, value := range values {
-		sb.Add(value)
-	}
-	return GenericSet{sb.Finish()}, nil
-}
-
 func CanonicalSet(s Set) Set {
 	if s, ok := s.(GenericSet); ok {
-		values := make([]Value, 0, s.Count())
+		b := NewSetBuilder()
 		for e := s.Enumerator(); e.MoveNext(); {
-			values = append(values, e.Current())
+			b.Add(e.Current())
 		}
-		return MustNewSet(values...)
+		result, err := b.Finish()
+		if err != nil {
+			panic(err)
+		}
+		return result
 	}
 	return s
 }
 
-// NewSetFrom constructs a genericSet from interfaces.
-func NewSetFrom(intfs ...interface{}) (Set, error) {
-	sb := frozen.SetBuilder{}
-	for _, intf := range intfs {
-		value, err := NewValue(intf)
-		if err != nil {
-			return nil, err
-		}
-		sb.Add(value)
-	}
-	return GenericSet{sb.Finish()}, nil
-}
-
-func newSetFromSet(s Set) Set {
+func newGenericSetFromSet(s Set) Set {
 	sb := frozen.SetBuilder{}
 	for e := s.Enumerator(); e.MoveNext(); {
 		sb.Add(e.Current())
@@ -151,7 +88,7 @@ func (s GenericSet) String() string {
 		e := s.Enumerator()
 		e.MoveNext()
 		if tuple, ok := e.Current().(Tuple); ok && !tuple.IsTrue() {
-			return "true"
+			return sTrue
 		}
 	}
 
@@ -293,23 +230,22 @@ func (s GenericSet) Where(p func(v Value) (bool, error)) (_ Set, err error) {
 	return s, err
 }
 
-func (s GenericSet) CallAll(_ context.Context, arg Value) (Set, error) {
+func (s GenericSet) CallAll(_ context.Context, arg Value, b SetBuilder) error {
 	var t Tuple
 	var at Value
 	tm := NewTupleMatcher(map[string]Matcher{"@": Bind(&at)}, Bind(&t))
-	set := None
 	for e := s.Enumerator(); e.MoveNext(); {
 		if tm.Match(e.Current()) && at.Equal(arg) {
 			if t.Count() != 1 {
-				panic("GenericSet.CallAll: only works on binary tuple with one '@' attribute")
+				return fmt.Errorf("cannot call sets with elements not matching (@: _, _: _)")
 			}
 			for attr := t.Enumerator(); attr.MoveNext(); {
 				_, value := attr.Current()
-				set = set.With(value)
+				b.Add(value)
 			}
 		}
 	}
-	return set, nil
+	return nil
 }
 
 // Enumerator returns an enumerator over the Values in the genericSet.

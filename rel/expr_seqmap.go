@@ -121,7 +121,7 @@ func (e *SeqArrowExpr) Eval(ctx context.Context, local Scope) (_ Value, err erro
 		}
 		return d, nil
 	case Set:
-		values := []Value{}
+		b := NewSetBuilder()
 		for i := value.Enumerator(); i.MoveNext(); {
 			t, ok := i.Current().(Tuple)
 			if !ok {
@@ -139,9 +139,9 @@ func (e *SeqArrowExpr) Eval(ctx context.Context, local Scope) (_ Value, err erro
 			if err != nil {
 				return nil, WrapContextErr(err, e, local)
 			}
-			values = append(values, NewTuple(Attr{"@", at}, Attr{attr, newItem}))
+			b.Add(NewTuple(Attr{"@", at}, Attr{attr, newItem}))
 		}
-		s, err := NewSet(values...)
+		s, err := b.Finish()
 		if err != nil {
 			return nil, WrapContextErr(err, e, local)
 		}

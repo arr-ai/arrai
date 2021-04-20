@@ -1,8 +1,8 @@
 package rel
 
 import (
+	"bytes"
 	"context"
-	"fmt"
 	"reflect"
 
 	"github.com/arr-ai/hash"
@@ -68,23 +68,14 @@ func (b Bytes) Hash(seed uintptr) uintptr {
 	return hash.String(string(b.b), seed)
 }
 
-// Equal tests two Sets for equality. Any other type returns false.
+// Equal tests two Byteses for equality. Any other type returns false.
 func (b Bytes) Equal(v interface{}) bool {
-	switch x := v.(type) {
-	case Bytes:
-		if len(b.b) != len(x.b) || b.offset != x.offset {
-			return false
-		}
-		for i, c := range b.b {
-			if c != x.b[i] {
-				return false
-			}
-		}
-		return true
-	case Set:
-		return newSetFromSet(b).Equal(x)
-	}
-	return false
+	c, is := v.(Bytes)
+	return is && b.EqualBytes(c)
+}
+
+func (b Bytes) EqualBytes(c Bytes) bool {
+	return b.offset == c.offset && bytes.Equal(b.b, c.b)
 }
 
 // String returns a string representation of a Bytes.
@@ -161,7 +152,7 @@ func (b Bytes) with(index int, byt byte) Set {
 			offset: b.offset - 1,
 		}
 	}
-	return newSetFromSet(b).With(newBytesTuple(index, byt))
+	return newGenericSetFromSet(b).With(newBytesTuple(index, byt))
 }
 
 // With returns the original Bytes with given value added. Iff the value was
@@ -170,7 +161,7 @@ func (b Bytes) With(value Value) Set {
 	if index, byt, ok := isBytesTuple(value); ok {
 		return b.with(index, byt)
 	}
-	return newSetFromSet(b).With(value)
+	return newGenericSetFromSet(b).With(value)
 }
 
 // Without returns the original Bytes without the given value. Iff the value
@@ -181,7 +172,7 @@ func (b Bytes) Without(value Value) Set {
 			if pos == b.offset+i {
 				return Bytes{b: b.b[:i], offset: b.offset}
 			}
-			return newSetFromSet(b).Without(value)
+			return newGenericSetFromSet(b).Without(value)
 		}
 	}
 	return b
@@ -216,16 +207,16 @@ func (b Bytes) Where(p func(v Value) (bool, error)) (Set, error) {
 	return result, nil
 }
 
-func (b Bytes) CallAll(_ context.Context, arg Value) (Set, error) {
-	n, ok := arg.(Number)
-	if !ok {
-		return nil, fmt.Errorf("arg to CallAll must be a number, not %s", ValueTypeAsString(arg))
+func (b Bytes) CallAll(_ context.Context, arg Value, sb SetBuilder) error {
+	if n, ok := arg.(Number); ok {
+		if i, is := n.Int(); is {
+			i -= b.offset
+			if 0 <= i && i < len(b.b) {
+				sb.Add(NewNumber(float64(b.b[i])))
+			}
+		}
 	}
-	i := int(n.Float64()) - b.offset
-	if i < 0 || i >= len(b.Bytes()) {
-		return None, nil
-	}
-	return NewSet(NewNumber(float64(string(b.b)[i])))
+	return nil
 }
 
 func (b Bytes) index(pos int) int {

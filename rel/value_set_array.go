@@ -69,7 +69,7 @@ func AsArray(v Value) (Array, bool) {
 	return Array{}, false
 }
 
-func asArray(values ...Value) (Array, bool) {
+func asArray(values ...Value) Array {
 	minIndex := math.MaxInt32
 	maxIndex := math.MinInt32
 	for _, v := range values {
@@ -95,7 +95,7 @@ func asArray(values ...Value) (Array, bool) {
 		values: items,
 		offset: minIndex,
 		count:  n,
-	}, true
+	}
 }
 
 func (a Array) clone() Array {
@@ -285,7 +285,7 @@ func (a Array) With(value Value) Set {
 	if t, ok := value.(ArrayItemTuple); ok {
 		return a.withItem(t.at, t.item)
 	}
-	return newSetFromSet(a).With(value)
+	return newGenericSetFromSet(a).With(value)
 }
 
 // Without returns the original Array without the given value. Iff the value
@@ -325,15 +325,15 @@ func (a Array) Without(value Value) Set {
 
 // Map maps values per f.
 func (a Array) Map(f func(v Value) (Value, error)) (Set, error) {
-	var values []Value
+	b := NewSetBuilder()
 	for e := a.Enumerator(); e.MoveNext(); {
 		v, err := f(e.Current())
 		if err != nil {
 			return nil, err
 		}
-		values = append(values, v)
+		b.Add(v)
 	}
-	return NewSet(values...)
+	return b.Finish()
 }
 
 // Where returns a new Array with all the Values satisfying predicate p.
@@ -376,19 +376,18 @@ func (a Array) Where(p func(v Value) (bool, error)) (Set, error) {
 	return result, nil
 }
 
-func (a Array) CallAll(_ context.Context, arg Value) (Set, error) {
-	n, ok := arg.(Number)
-	if !ok {
-		return nil, fmt.Errorf("arg to CallAll must be a number, not %s", ValueTypeAsString(arg))
+func (a Array) CallAll(_ context.Context, arg Value, b SetBuilder) error {
+	if n, ok := arg.(Number); ok {
+		if i, is := n.Int(); is {
+			i -= a.offset
+			if 0 <= i && i < len(a.values) {
+				if v := a.values[i]; v != nil {
+					b.Add(v)
+				}
+			}
+		}
 	}
-	i := int(n.Float64()) - a.offset
-	if i < 0 || i >= len(a.values) {
-		return None, nil
-	}
-	if v := a.values[i]; v != nil {
-		return NewSet(v)
-	}
-	return None, nil
+	return nil
 }
 
 // Enumerator returns an enumerator over the Values in the Array.

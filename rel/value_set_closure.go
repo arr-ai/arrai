@@ -125,7 +125,7 @@ func (c Closure) Where(p func(v Value) (bool, error)) (Set, error) {
 }
 
 //FIXME: context not used properly
-func (c Closure) CallAll(ctx context.Context, arg Value) (Set, error) {
+func (c Closure) CallAll(ctx context.Context, arg Value, b SetBuilder) error {
 	niladic := c.f.Arg() == "-"
 	noArg := arg == nil
 	if niladic != noArg {
@@ -135,19 +135,21 @@ func (c Closure) CallAll(ctx context.Context, arg Value) (Set, error) {
 	if niladic {
 		val, err := c.f.body.Eval(ctx, c.scope)
 		if err != nil {
-			return nil, err
+			return err
 		}
-		return NewSet(val)
+		b.Add(val)
+		return nil
 	}
 	ctx, scope, err := c.f.arg.Bind(ctx, c.scope, arg)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	val, err := c.f.body.Eval(ctx, c.scope.Update(scope))
 	if err != nil {
-		return nil, err
+		return err
 	}
-	return NewSet(val)
+	b.Add(val)
+	return nil
 }
 
 func (c Closure) ArrayEnumerator() (OffsetValueEnumerator, bool) {

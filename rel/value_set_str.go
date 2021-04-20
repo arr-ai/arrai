@@ -2,7 +2,6 @@ package rel
 
 import (
 	"context"
-	"fmt"
 	"reflect"
 
 	"github.com/arr-ai/hash"
@@ -38,7 +37,7 @@ func NewOffsetString(s []rune, offset int) Set {
 	return String{s: s, offset: offset, holes: holes}
 }
 
-func asString(values ...Value) (String, bool) {
+func asString(values ...Value) String {
 	n := len(values)
 	tuples := make([]StringCharTuple, 0, n)
 	minAt := int(^uint(0) >> 1)
@@ -60,7 +59,7 @@ func asString(values ...Value) (String, bool) {
 	for _, t := range tuples {
 		str[t.at-minAt] = t.char
 	}
-	return String{s: str, offset: minAt, holes: len(str) - n}, true
+	return String{s: str, offset: minAt, holes: len(str) - n}
 }
 
 // AsString returns String and the empty set as String or false otherwise.
@@ -84,21 +83,20 @@ func (s String) Hash(seed uintptr) uintptr {
 
 // Equal tests two Sets for equality. Any other type returns false.
 func (s String) Equal(v interface{}) bool {
-	switch x := v.(type) {
-	case String:
-		if len(s.s) != len(x.s) || s.offset != x.offset {
+	t, is := v.(String)
+	return is && s.EqualString(t)
+}
+
+func (s String) EqualString(t String) bool {
+	if s.offset != t.offset || s.holes != t.holes || len(s.s) != len(t.s) {
+		return false
+	}
+	for i, r := range s.s {
+		if r != t.s[i] {
 			return false
 		}
-		for i, c := range s.s {
-			if c != x.s[i] {
-				return false
-			}
-		}
-		return true
-	case Set:
-		return newSetFromSet(s).Equal(x)
 	}
-	return false
+	return true
 }
 
 // String returns a string representation of a String.
@@ -166,18 +164,20 @@ func (s String) Has(value Value) bool {
 	return false
 }
 
-func (s String) with(index int, char rune) Set {
+func (s String) with(at int, char rune) Set {
 	switch {
-	case s.index(index) == len(s.s):
+	case s.index(at) == len(s.s):
 		return String{s: append(s.s, char), offset: s.offset, holes: s.holes}
-	case index == s.offset-1:
+	case at == s.offset-1:
 		return String{
 			s:      append(append(make([]rune, 0, 1+len(s.s)), char), s.s...),
 			offset: s.offset - 1,
 			holes:  s.holes,
 		}
 	}
-	return newSetFromSet(s).With(NewStringCharTuple(index, char))
+	// TODO: Support adding holes and doubling up chars, removing the need to
+	// call newGenericSetFromSet here.
+	return newGenericSetFromSet(s).With(NewStringCharTuple(at, char))
 }
 
 // With returns the original String with given value added. Iff the value was
@@ -186,7 +186,7 @@ func (s String) With(value Value) Set {
 	if t, ok := value.(StringCharTuple); ok {
 		return s.with(t.at, t.char)
 	}
-	return newSetFromSet(s).With(value)
+	return newGenericSetFromSet(s).With(value)
 }
 
 // Without returns the original String without the given value. Iff the value
@@ -216,20 +216,20 @@ func (s String) Without(value Value) Set {
 
 // Map maps values per f.
 func (s String) Map(f func(v Value) (Value, error)) (Set, error) {
-	var values []Value
+	b := NewSetBuilder()
 	for e := s.Enumerator().(*stringValueEnumerator); e.MoveNext(); {
 		v, err := f(e.currentStringCharTuple())
 		if err != nil {
 			return nil, err
 		}
-		values = append(values, v)
+		b.Add(v)
 	}
-	return NewSet(values...)
+	return b.Finish()
 }
 
 // Where returns a new String with all the Values satisfying predicate p.
 func (s String) Where(p func(v Value) (bool, error)) (Set, error) {
-	values := make([]Value, 0, s.Count())
+	b := NewSetBuilder()
 	for e := s.Enumerator().(*stringValueEnumerator); e.MoveNext(); {
 		value := e.currentStringCharTuple()
 		matches, err := p(value)
@@ -237,22 +237,22 @@ func (s String) Where(p func(v Value) (bool, error)) (Set, error) {
 			return nil, err
 		}
 		if matches {
-			values = append(values, value)
+			b.Add(value)
 		}
 	}
-	return NewSet(values...)
+	return b.Finish()
 }
 
-func (s String) CallAll(_ context.Context, arg Value) (Set, error) {
-	n, ok := arg.(Number)
-	if !ok {
-		return nil, fmt.Errorf("arg to CallAll must be a number, not %s", ValueTypeAsString(arg))
+func (s String) CallAll(_ context.Context, arg Value, b SetBuilder) error {
+	if n, ok := arg.(Number); ok {
+		if i, is := n.Int(); is {
+			i -= s.offset
+			if 0 <= i && i < len(s.s) {
+				b.Add(NewNumber(float64(s.s[i])))
+			}
+		}
 	}
-	i := int(n.Float64()) - s.offset
-	if i < 0 || i >= len(s.s) {
-		return None, nil
-	}
-	return NewSet(NewNumber(float64(string(s.s)[i])))
+	return nil
 }
 
 func (s String) index(pos int) int {

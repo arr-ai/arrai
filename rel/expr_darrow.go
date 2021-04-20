@@ -32,7 +32,7 @@ func (e *DArrowExpr) Eval(ctx context.Context, local Scope) (_ Value, err error)
 		return nil, WrapContextErr(err, e, local)
 	}
 	if set, ok := value.(Set); ok {
-		values := []Value{}
+		b := NewSetBuilder()
 		for i := set.Enumerator(); i.MoveNext(); {
 			var scope Scope
 			var err error
@@ -44,9 +44,9 @@ func (e *DArrowExpr) Eval(ctx context.Context, local Scope) (_ Value, err error)
 			if err != nil {
 				return nil, WrapContextErr(err, e, local)
 			}
-			values = append(values, v)
+			b.Add(v)
 		}
-		s, err := NewSet(values...)
+		s, err := b.Finish()
 		if err != nil {
 			return nil, WrapContextErr(err, e, local)
 		}

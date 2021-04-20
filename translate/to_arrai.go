@@ -51,7 +51,7 @@ func ToArrai(data interface{}) (rel.Value, error) {
 
 // objToArrai converts an object to a binary relation {|@,@item|, |key,val|, ...}.
 func objToArrai(data map[string]interface{}) (rel.Value, error) {
-	tuples := make([]rel.Value, len(data))
+	b := rel.NewSetBuilder()
 	i := 0
 	for key, val := range data {
 		// Recursively apply ToArrai to all values
@@ -59,10 +59,10 @@ func objToArrai(data map[string]interface{}) (rel.Value, error) {
 		if err != nil {
 			return nil, err
 		}
-		tuples[i] = rel.NewDictEntryTuple(rel.NewString([]rune(key)), item)
+		b.Add(rel.NewDictEntryTuple(rel.NewString([]rune(key)), item))
 		i++
 	}
-	return rel.NewSet(tuples...)
+	return b.Finish()
 }
 
 // arrToArrai converts an array to an arrai array.

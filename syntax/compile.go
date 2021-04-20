@@ -1428,9 +1428,9 @@ func (pc ParseContext) compileIdent(_ context.Context, c ast.Children) rel.Expr 
 	scanner := c.(ast.One).Node.One("").Scanner()
 	var value rel.Value
 	switch scanner.String() {
-	case "true":
+	case sTrue:
 		value = rel.True
-	case "false":
+	case sFalse:
 		value = rel.False
 	default:
 		return rel.NewIdentExpr(scanner, scanner.String())
