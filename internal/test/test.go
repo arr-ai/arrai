@@ -91,7 +91,7 @@ func RunTests(ctx context.Context, testFiles *[]TestFile) error {
 		file.wallTime = time.Since(start)
 
 		file.results = make([]TestResult, 0)
-		ForeachLeaf(result, "<root>", func(val rel.Value, path string) {
+		ForeachLeaf(result, "", func(val rel.Value, path string) {
 			result := TestResult{
 				name: path,
 			}
