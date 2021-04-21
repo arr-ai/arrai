@@ -23,10 +23,9 @@ func parseXMLConfig(configArg rel.Value) (*translate.XMLDecodeConfig, error) {
 	if !ok {
 		return nil, errors.Errorf("first arg (config) must be tuple, not %s", rel.ValueTypeAsString(configArg))
 	}
-	whitespace, ok := config.Get("TrimSurroundingWhitespace")
+	whitespace, ok := config.Get("trimSurroundingWhitespace")
 	if !ok {
 		return &translate.XMLDecodeConfig{}, nil
 	}
-
 	return &translate.XMLDecodeConfig{TrimSurroundingWhitespace: whitespace.IsTrue()}, nil
 }

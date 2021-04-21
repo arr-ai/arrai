@@ -13,7 +13,7 @@ Usage:
 |:-|:-|
 | `//encoding.xml.decode('<?xml version="1.0"?><root></root>')` | `[(decl: (target: 'xml', text: 'version="1.0"')), (elem: (children: {}, name: 'root'))]` |
 
-## `//encoding.xml.decoder(config <: (:trimSurroundingWhitespace <: bool)) <: ((csv <: string|bytes) <: array)`
+## `//encoding.xml.decoder(config <: (:trimSurroundingWhitespace <: bool)).decode(xml <: string|bytes) <: array`
 
 `decoder` takes a tuple used to configure decoding and returns the decoding function:
 | config | description |
@@ -24,8 +24,8 @@ Usage:
 
 | example | equals |
 |:-|:-|
-| `//encoding.xml.decoder((trimSurroundingWhitespace: true))('<?xml version="1.0"?>\n')` | `[(decl: (target: 'xml', text: 'version="1.0"'))` |
-| `//encoding.xml.decoder((trimSurroundingWhitespace: false))('<?xml version="1.0"?>\n')` | `[(decl: (target: 'xml', text: 'version="1.0"')), (text: '\n')]` |
+| `//encoding.xml.decoder((trimSurroundingWhitespace: true)).decode('<?xml version="1.0"?>\n')` | `[(decl: (target: 'xml', text: 'version="1.0"'))` |
+| `//encoding.xml.decoder((trimSurroundingWhitespace: false)).decode('<?xml version="1.0"?>\n')` | `[(decl: (target: 'xml', text: 'version="1.0"')), (text: '\n')]` |
 
 ## `//encoding.xml.encode(xml <: array) <: bytes`
 
