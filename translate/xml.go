@@ -11,7 +11,9 @@ import (
 	"github.com/arr-ai/arrai/tools"
 )
 
-const procInst = "decl"
+const target = "xml"
+
+const procInst = "xmldecl"
 const directive = "directive"
 const charData = "text"
 const comment = "comment"
@@ -20,7 +22,6 @@ const element = "elem"
 const textKey = "text"
 const nameKey = "name"
 const nsKey = "ns"
-const targetKey = "target"
 const attributesKey = "attrs"
 const childrenKey = "children"
 
@@ -87,29 +88,12 @@ func unparseXML(v rel.Value) ([]xml.Token, error) {
 		// assume there is only a single attribute in the set
 		switch tup.Names().TheOne() {
 		case procInst:
-			val := tup.MustGet(procInst)
-			mTup, ok := val.(rel.Tuple)
+			decl := tup.MustGet(procInst)
+			rawDecl, ok := tools.ValueAsString(decl)
 			if !ok {
-				return nil, fmt.Errorf("value must be tuple, not %s: %v", rel.ValueTypeAsString(val), val)
+				return nil, fmt.Errorf("value cannot be converted to string: %s", decl)
 			}
-
-			target, ok := mTup.Get(targetKey)
-			if !ok {
-				return nil, fmt.Errorf("tuple attribute missing: %s", targetKey)
-			}
-			text, ok := mTup.Get(textKey)
-			if !ok {
-				return nil, fmt.Errorf("tuple attribute missing: %s", textKey)
-			}
-			rawTarget, ok := tools.ValueAsString(target)
-			if !ok {
-				return nil, fmt.Errorf("value cannot be converted to string: %s", target)
-			}
-			rawText, ok := tools.ValueAsString(text)
-			if !ok {
-				return nil, fmt.Errorf("value cannot be converted to string: %s", text)
-			}
-			xmlTokens = append(xmlTokens, xml.ProcInst{Target: rawTarget, Inst: []byte(rawText)})
+			xmlTokens = append(xmlTokens, xml.ProcInst{Target: target, Inst: []byte(rawDecl)})
 		case directive:
 			text := tup.MustGet(directive)
 			rawText, ok := tools.ValueAsString(text)
@@ -253,10 +237,7 @@ func parseXML(decoder *xml.Decoder, config XMLDecodeConfig) (rel.Value, error) {
 		switch t := token.(type) {
 		case xml.ProcInst:
 			tuple = rel.NewTuple(
-				rel.NewTupleAttr(procInst,
-					rel.NewStringAttr(targetKey, []rune(t.Target)),
-					rel.NewStringAttr(textKey, []rune(string(t.Inst))),
-				),
+				rel.NewStringAttr(procInst, []rune(string(t.Inst))),
 			)
 		case xml.Directive:
 			tuple = rel.NewTuple(rel.NewStringAttr(directive, []rune(string(t))))

@@ -9,7 +9,7 @@ func TestXMLEncode_declaration(t *testing.T) {
 
 	expected := `<<'<?xml version="1.0"?>'>>`
 
-	AssertCodesEvalToSameValue(t, expected, `//encoding.xml.encode([(decl: (target: 'xml', text: 'version="1.0"'))])`)
+	AssertCodesEvalToSameValue(t, expected, `//encoding.xml.encode([(xmldecl: 'version="1.0"')])`)
 }
 
 func TestXMLEncode_element(t *testing.T) {
@@ -105,7 +105,7 @@ func TestXMLEncode_error(t *testing.T) {
 func TestXMLDecode(t *testing.T) {
 	t.Parallel()
 
-	expected := `[(decl: (target: 'xml', text: 'version="1.0"'))]`
+	expected := `[(xmldecl:  'version="1.0"')]`
 	AssertCodesEvalToSameValue(t, expected, `//encoding.xml.decode('<?xml version="1.0"?>')`)
 	AssertCodesEvalToSameValue(t, expected, `//encoding.xml.decode(<<'<?xml version="1.0"?>'>>)`)
 
