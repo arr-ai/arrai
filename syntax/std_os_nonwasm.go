@@ -94,7 +94,7 @@ func stdOsTree(ctx context.Context, v rel.Value) (rel.Value, error) {
 		return nil, errors.Errorf("tree arg must be a string, not %T", v)
 	}
 
-	fs := []rel.Value{}
+	b := rel.NewSetBuilder()
 	err := filepath.Walk(d.String(), func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
@@ -103,7 +103,7 @@ func stdOsTree(ctx context.Context, v rel.Value) (rel.Value, error) {
 		if path == d.String() && runtime.GOOS == windows {
 			path = strings.ReplaceAll(path, `/`, string(filepath.Separator))
 		}
-		fs = append(fs, rel.NewTuple(
+		b.Add(rel.NewTuple(
 			rel.NewStringAttr("name", []rune(info.Name())),
 			rel.NewStringAttr("path", []rune(path)),
 			rel.NewBoolAttr("is_dir", info.IsDir()),
@@ -115,7 +115,7 @@ func stdOsTree(ctx context.Context, v rel.Value) (rel.Value, error) {
 	if err != nil {
 		return nil, err
 	}
-	return rel.NewSet(fs...)
+	return b.Finish()
 }
 
 func stdOsIsATty(ctx context.Context, value rel.Value) (rel.Value, error) {

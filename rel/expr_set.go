@@ -17,15 +17,15 @@ type SetExpr struct {
 
 // NewSetExpr returns a new TupleExpr.
 func NewSetExpr(scanner parser.Scanner, elements ...Expr) (Expr, error) {
-	values := make([]Value, len(elements))
-	for i, expr := range elements {
+	b := NewSetBuilder()
+	for _, expr := range elements {
 		value, is := exprIsValue(expr)
 		if !is {
 			return &SetExpr{ExprScanner{scanner}, elements}, nil
 		}
-		values[i] = value
+		b.Add(value)
 	}
-	s, err := NewSet(values...)
+	s, err := b.Finish()
 	if err != nil {
 		return nil, err
 	}
@@ -48,15 +48,15 @@ func (e *SetExpr) String() string {
 
 // Eval returns the subject
 func (e *SetExpr) Eval(ctx context.Context, local Scope) (Value, error) {
-	values := make([]Value, 0, len(e.elements))
+	b := NewSetBuilder()
 	for _, expr := range e.elements {
 		value, err := expr.Eval(ctx, local)
 		if err != nil {
 			return nil, WrapContextErr(err, e, local)
 		}
-		values = append(values, value)
+		b.Add(value)
 	}
-	s, err := NewSet(values...)
+	s, err := b.Finish()
 	if err != nil {
 		return nil, WrapContextErr(err, e, local)
 	}

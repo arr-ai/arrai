@@ -118,8 +118,13 @@ func TestArrayCallAll(t *testing.T) {
 	AssertEqualValues(t, None, mustCallAll(ctx, three, NewNumber(1)))
 	AssertEqualValues(t, None, mustCallAll(ctx, three, NewNumber(5)))
 
-	_, err := three.CallAll(ctx, NewString([]rune("0")))
-	assert.Error(t, err)
+	b := NewSetBuilder()
+	err := three.CallAll(ctx, NewString([]rune("0")), b)
+	if assert.NoError(t, err) {
+		set, err := b.Finish()
+		require.NoError(t, err)
+		assert.False(t, set.IsTrue())
+	}
 }
 
 func TestArrayWhere(t *testing.T) {

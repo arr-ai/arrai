@@ -7,6 +7,7 @@ import (
 
 	"github.com/arr-ai/arrai/pkg/arraictx"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 const hello = "hello"
@@ -46,6 +47,11 @@ func TestStringCallAll(t *testing.T) {
 	AssertEqualValues(t, None, mustCallAll(ctx, abc, NewNumber(1)))
 	AssertEqualValues(t, None, mustCallAll(ctx, abc, NewNumber(5)))
 
-	_, err := abc.CallAll(ctx, NewString([]rune("0")))
-	assert.Error(t, err)
+	b := NewSetBuilder()
+	err := abc.CallAll(ctx, NewString([]rune("0")), b)
+	if assert.NoError(t, err) {
+		set, err := b.Finish()
+		require.NoError(t, err)
+		assert.False(t, set.IsTrue())
+	}
 }

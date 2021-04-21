@@ -112,7 +112,7 @@ func bytesXlsxToArrai(bs []byte, sheetIndex int, headerRow int) (rel.Value, erro
 		name = badChars.ReplaceAllString(name, "_")
 		cols = append(cols, name)
 	}
-	rowTuples := []rel.Value{}
+	b := rel.NewSetBuilder()
 	for i := headerRow + 1; i < len(rows); i++ {
 		attrs := []rel.Attr{rel.NewIntAttr("@row", i)}
 		hasVals := false
@@ -130,8 +130,8 @@ func bytesXlsxToArrai(bs []byte, sheetIndex int, headerRow int) (rel.Value, erro
 			attrs = append(attrs, rel.NewStringAttr(name, []rune(val)))
 		}
 		if hasVals && len(attrs) > 0 {
-			rowTuples = append(rowTuples, rel.NewTuple(attrs...))
+			b.Add(rel.NewTuple(attrs...))
 		}
 	}
-	return rel.NewSet(rowTuples...)
+	return b.Finish()
 }

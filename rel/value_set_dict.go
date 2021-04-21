@@ -291,21 +291,18 @@ func (d Dict) Where(p func(v Value) (bool, error)) (Set, error) {
 	return Dict{m: m}, nil
 }
 
-func (d Dict) CallAll(_ context.Context, arg Value) (Set, error) {
-	val, exists := d.m.Get(arg)
-	if exists {
+func (d Dict) CallAll(_ context.Context, arg Value, b SetBuilder) error {
+	if val, has := d.m.Get(arg); has {
 		switch v := val.(type) {
 		case Value:
-			return NewSet(v)
+			b.Add(v)
 		case multipleValues:
-			values := make([]Value, 0, frozen.Set(v).Count())
 			for e := frozen.Set(v).Range(); e.Next(); {
-				values = append(values, e.Value().(Value))
+				b.Add(e.Value().(Value))
 			}
-			return NewSet(values...)
 		}
 	}
-	return None, nil
+	return nil
 }
 
 func (d Dict) ArrayEnumerator() (OffsetValueEnumerator, bool) {

@@ -128,7 +128,7 @@ type Set interface {
 	Without(Value) Set
 	Map(func(Value) (Value, error)) (Set, error)
 	Where(func(Value) (bool, error)) (Set, error)
-	CallAll(context.Context, Value) (Set, error)
+	CallAll(context.Context, Value, SetBuilder) error
 
 	ArrayEnumerator() (OffsetValueEnumerator, bool)
 }
@@ -146,7 +146,12 @@ func (n NoReturnError) Error() string {
 // SetCall is a convenience wrapper to call a set and return the result or an
 // error if there isn't exactly one result.
 func SetCall(ctx context.Context, s Set, arg Value) (Value, error) {
-	all, err := s.CallAll(ctx, arg)
+	b := NewSetBuilder()
+	err := s.CallAll(ctx, arg, b)
+	if err != nil {
+		return nil, err
+	}
+	all, err := b.Finish()
 	if err != nil {
 		return nil, err
 	}
@@ -162,7 +167,12 @@ func SetCall(ctx context.Context, s Set, arg Value) (Value, error) {
 }
 
 func mustCallAll(ctx context.Context, s Set, v Value) Value {
-	result, err := s.CallAll(ctx, v)
+	b := NewSetBuilder()
+	err := s.CallAll(ctx, v, b)
+	if err != nil {
+		panic(err)
+	}
+	result, err := b.Finish()
 	if err != nil {
 		panic(err)
 	}
