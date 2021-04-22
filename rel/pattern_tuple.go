@@ -48,6 +48,11 @@ func validTuplePattern(p TuplePattern) error {
 	names := make(map[string]struct{})
 	for _, attr := range p.attrs {
 		if _, has := names[attr.name]; has {
+			if _, is := attr.pattern.pattern.(ExtraElementPattern); is && attr.name == "" {
+				// Attr name is '' when its pattern is '...' which will crash with other attr whose name is '',
+				// e.g. `let ('':value, ...) = ('':2); value`. So skip it in this validation.
+				continue
+			}
 			return fmt.Errorf("duplicate fields found in pattern %s ", p)
 		}
 		if _, is := attr.pattern.pattern.(ExtraElementPattern); !is {
