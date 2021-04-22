@@ -47,6 +47,9 @@ func NewTuplePattern(attrs ...TuplePatternAttr) (TuplePattern, error) {
 func validTuplePattern(p TuplePattern) error {
 	names := make(map[string]struct{})
 	for _, attr := range p.attrs {
+		if len(attr.name) == 0 {
+			continue
+		}
 		if _, has := names[attr.name]; has {
 			return fmt.Errorf("duplicate fields found in pattern %s ", p)
 		}
