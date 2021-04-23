@@ -200,11 +200,11 @@ Note that unlike standard `decode` functions, this is not reversible; its output
 | Declaration | `<?xml version="1.0"?>` | `[(xmldecl: 'version="1.0"')]` |
 | Directive |`<!DOCTYPE foo <!ELEMENT foo (#PCDATA)>>` | `(directive: 'DOCTYPE foo <!ELEMENT foo (#PCDATA)>')` |
 | Text | `Hello world` | `'Hello world'` |
-| Comment | `<!-- hello world -->` | `(comment: "helloworld")` |
+| Comment | `<!-- hello world -->` | `(comment: " helloworld ")` |
 | Element | `<root><child/></root>` | `[(elem: root, children: [(elem: child)])]` |
-| Element with namespace | `<root xmlns="foo"><child/></root>` | `[(elem: 'root', attrs: {(name: 'xmlns', text: 'foo')}, children: [(elem: 'child', ns: 'foo')], name: 'root', ns: 'foo')]` |
-| Attribute | `<root key="value"/>` | `[(elem: 'root', attrs: {(name: 'key', text: 'value')})]` |
-| Attribute with namespace | `<root xmlns:foo="foo.com" foo:key="value"/>` | `[(elem: 'root', attrs: {(name: 'foo', ns: 'xmlns', text: 'foo.com'), (name: 'key', ns: 'foo.com', text: 'value')})]` |
+| Element with namespace | `<root xmlns="foo"><child/></root>` | `[(elem: 'root', attrs: {(name: 'xmlns', value: 'foo')}, children: [(elem: 'child', ns: 'foo')], name: 'root', ns: 'foo')]` |
+| Attribute | `<root key="value"/>` | `[(elem: 'root', attrs: {(name: 'key', value: 'value')})]` |
+| Attribute with namespace | `<root xmlns:foo="foo.com" foo:key="value"/>` | `[(elem: 'root', attrs: {(name: 'foo', ns: 'xmlns', value: 'foo.com'), (name: 'key', ns: 'foo.com', value: 'value')})]` |
 
 ### Limitations
 
