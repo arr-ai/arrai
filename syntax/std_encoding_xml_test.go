@@ -17,7 +17,7 @@ func TestXMLEncode_element(t *testing.T) {
 
 	expected := `<<'<catalog>hello</catalog>'>>`
 
-	data := `[(elem: (attrs: {}, children: [(text: 'hello')], name: 'catalog'))]`
+	data := `[(elem: 'catalog', children: ['hello'])]`
 
 	AssertCodesEvalToSameValue(t, expected, `//encoding.xml.encode(`+data+`)`)
 }
@@ -27,7 +27,7 @@ func TestXMLEncode_text(t *testing.T) {
 
 	expected := `<<'hello world'>>`
 
-	data := `[(text: 'hello world')]`
+	data := `['hello world']`
 	AssertCodesEvalToSameValue(t, expected, `//encoding.xml.encode(`+data+`)`)
 }
 
@@ -52,7 +52,7 @@ func TestXMLEncode_directive(t *testing.T) {
 func TestXMLEncode_implicitNamespace(t *testing.T) {
 	t.Parallel()
 
-	data := `[(elem: (attrs: {(name: 'xmlns', text: 'doop')}, children: [(elem: (attrs: {}, children: [(text: 'harry potter')], name: 'book', ns: 'doop'))], name: 'catalog', ns: 'doop'))]`
+	data := `[(elem: 'catalog', attrs: {(name: 'xmlns', value: 'doop')}, children: [(elem: 'book', children: ['harry potter'], ns: 'doop')], ns: 'doop')]`
 	expected := `<<'<catalog xmlns="doop"><book>harry potter</book></catalog>'>>`
 
 	AssertCodesEvalToSameValue(t, expected, "//encoding.xml.encode("+data+")")
@@ -64,7 +64,7 @@ func TestXMLEncode_explicitNamespace(t *testing.T) {
 	// NOTE: skipped due to the current implementation's limitation on explicit namespaces. remove when updated
 	t.SkipNow()
 
-	data := `[(elem: (attrs: {(name: 'hello', ns: 'xmlns', text: 'doop')}, children: [(elem: (attrs: {}, children: [(text: 'harry potter')], name: 'book'))], name: 'catalog', ns: 'doop'))]`
+	data := `[(elem: 'catalog', attrs: {(name: 'hello', ns: 'xmlns', value: 'doop')}, children: [(elem: 'book', children: ['harry potter'])], ns: 'doop')]`
 	expected := `<<'<hello:catalog xmlns:hello="doop"><book>harry potter</book></hello:catalog>'>>`
 	AssertCodesEvalToSameValue(t, expected, "//encoding.xml.encode("+data+")")
 }
@@ -75,7 +75,7 @@ func TestXMLEncode_dualNamespace(t *testing.T) {
 	// NOTE: skipped due to the current implementation's limitation on explicit namespaces. remove when updated
 	t.SkipNow()
 
-	data := `[(elem: (attrs: {(name: 'hello', ns: 'xmlns', text: 'doop'), (name: 'xmlns', text: 'maaw')}, children: [(elem: (attrs: {}, children: [(text: 'harry potter')], name: 'book', ns: 'maaw'))], name: 'catalog', ns: 'doop'))]`
+	data := `[(elem: 'catalog', attrs: {(name: 'hello', ns: 'xmlns', value: 'doop'), (name: 'xmlns', value: 'maaw')}, children: [(elem: 'book', children: ['harry potter'], ns: 'maaw')], ns: 'doop')]`
 	expected := `<<'<hello:catalog xmlns:hello="doop" xmlns="maaw"><book>harry potter</book></hello:catalog>'>>`
 	AssertCodesEvalToSameValue(t, expected, "//encoding.xml.encode("+data+")")
 }
@@ -86,7 +86,7 @@ func TestXMLEncode_missingExplictNS(t *testing.T) {
 	// NOTE: skipped due to the current implementation's limitation on explicit namespaces. remove when updated
 	t.SkipNow()
 
-	data := `[(elem: (attrs: {}, children: [(elem: (attrs: {}, children: [(text: 'harry potter')], name: 'book'))], name: 'catalog', ns: 'doop'))]`
+	data := `[(elem: 'catalog', children: [(elem: 'book', children: ['harry potter'])], ns: 'doop')]`
 	AssertCodeErrors(t, "", "//encoding.xml.encode("+data+")")
 }
 
@@ -109,15 +109,23 @@ func TestXMLDecode(t *testing.T) {
 	AssertCodesEvalToSameValue(t, expected, `//encoding.xml.decode('<?xml version="1.0"?>')`)
 	AssertCodesEvalToSameValue(t, expected, `//encoding.xml.decode(<<'<?xml version="1.0"?>'>>)`)
 
-	expected = `[(text: 'woop')]`
+	expected = `['woop']`
 	AssertCodesEvalToSameValue(t, expected, "//encoding.xml.decode('woop')")
+}
+
+func TestXMLDecode_emptyChildren(t *testing.T) {
+	t.Parallel()
+
+	expected := `[(xmldecl: 'version="1.0"'), (elem: 'root')]`
+
+	AssertCodesEvalToSameValue(t, expected, `//encoding.xml.decode('<?xml version="1.0"?><root></root>')`)
 }
 
 func TestXMLDecode_element(t *testing.T) {
 	t.Parallel()
 
 	data := `<<'<catalog>hello</catalog>'>>`
-	expected := `[(elem: (attrs: {}, children: [(text: 'hello')], name: 'catalog'))]`
+	expected := `[(elem: 'catalog', children: ['hello'])]`
 
 	AssertCodesEvalToSameValue(t, expected, `//encoding.xml.decode(`+data+`)`)
 }
@@ -125,7 +133,7 @@ func TestXMLDecode_element(t *testing.T) {
 func TestXMLDecode_text(t *testing.T) {
 	t.Parallel()
 
-	expected := `[(text: 'hello world')]`
+	expected := `['hello world']`
 	data := `<<'hello world'>>`
 
 	AssertCodesEvalToSameValue(t, expected, `//encoding.xml.decode(`+data+`)`)
@@ -154,7 +162,7 @@ func TestXMLDecode_implicitNamespace(t *testing.T) {
 	t.Parallel()
 
 	data := `<<'<catalog xmlns="doop"><book>harry potter</book></catalog>'>>`
-	expected := `[(elem: (attrs: {(name: 'xmlns', text: 'doop')}, children: [(elem: (attrs: {}, children: [(text: 'harry potter')], name: 'book', ns: 'doop'))], name: 'catalog', ns: 'doop'))]`
+	expected := `[(elem: 'catalog', attrs: {(name: 'xmlns', value: 'doop')}, children: [(elem: 'book', children: ['harry potter'], ns: 'doop')], ns: 'doop')]`
 	AssertCodesEvalToSameValue(t, expected, `//encoding.xml.decode(`+data+`)`)
 }
 
@@ -164,7 +172,7 @@ func TestXMLDecode_explicitNamespace(t *testing.T) {
 	t.Parallel()
 
 	data := `<<'<hello:catalog xmlns:hello="doop"><book>harry potter</book></hello:catalog>'>>`
-	expected := `[(elem: (attrs: {(name: 'hello', ns: 'xmlns', text: 'doop')}, children: [(elem: (attrs: {}, children: [(text: 'harry potter')], name: 'book'))], name: 'catalog', ns: 'doop'))]`
+	expected := `[(elem: 'catalog', attrs: {(name: 'hello', ns: 'xmlns', value: 'doop')}, children: [(elem: 'book', children: ['harry potter'])], ns: 'doop')]`
 	AssertCodesEvalToSameValue(t, expected, `//encoding.xml.decode(`+data+`)`)
 }
 
@@ -175,7 +183,7 @@ func TestXMLDecode_dualNamespace(t *testing.T) {
 	t.Parallel()
 
 	data := `<<'<hello:catalog xmlns:hello="doop" xmlns="maaw"><book>harry potter</book></hello:catalog>'>>`
-	expected := `[(elem: (attrs: {(name: 'hello', ns: 'xmlns', text: 'doop'), (name: 'xmlns', text: 'maaw')}, children: [(elem: (attrs: {}, children: [(text: 'harry potter')], name: 'book', ns: 'maaw'))], name: 'catalog', ns: 'doop'))]`
+	expected := `[(elem: 'catalog', attrs: {(name: 'hello', ns: 'xmlns', value: 'doop'), (name: 'xmlns', value: 'maaw')}, children: [(elem: 'book', children: ['harry potter'], ns: 'maaw')], ns: 'doop')]`
 	AssertCodesEvalToSameValue(t, expected, `//encoding.xml.decode(`+data+`)`)
 }
 
@@ -199,7 +207,7 @@ func TestXMLDecoder_strip(t *testing.T) {
 	t.Parallel()
 
 	xml := `<<'<catalog>\n\t<book>Harry\nPotter</book>\n</catalog>'>>`
-	expected := `[(elem: (attrs: {}, children: [(elem: (attrs: {}, children: [(text: 'Harry\nPotter')], name: 'book'))], name: 'catalog'))]`
+	expected := `[(elem: 'catalog', children: [(elem: 'book', children: ['Harry\nPotter'])])]`
 
 	AssertCodesEvalToSameValue(t, expected, "//encoding.xml.decoder((trimSurroundingWhitespace: true)).decode("+xml+")")
 }
@@ -209,7 +217,7 @@ func TestXMLDecoder_dontStrip(t *testing.T) {
 	t.Parallel()
 
 	xml := `<<'<catalog>\n\t<book>Harry\nPotter</book>\n</catalog>'>>`
-	expected := `[(elem: (attrs: {}, children: [(text: '\n\t'), (elem: (attrs: {}, children: [(text: 'Harry\nPotter')], name: 'book')), (text: '\n')], name: 'catalog'))]`
+	expected := `[(elem: 'catalog', children: ['\n\t', (elem: 'book', children: ['Harry\nPotter']),'\n'])]`
 
 	AssertCodesEvalToSameValue(t, expected, "//encoding.xml.decoder((trimSurroundingWhitespace: false)).decode("+xml+")")
 }

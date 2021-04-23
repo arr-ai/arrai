@@ -11,7 +11,7 @@ Usage:
 
 | example | equals |
 |:-|:-|
-| `//encoding.xml.decode('<?xml version="1.0"?><root></root>')` | `[(decl: (target: 'xml', text: 'version="1.0"')), (elem: (children: {}, name: 'root'))]` |
+| `//encoding.xml.decode('<?xml version="1.0"?><root></root>')` | `[(xmldecl: 'version="1.0"'), (elem: 'root')]` |
 
 ## `//encoding.xml.decoder(config <: (:trimSurroundingWhitespace <: bool)).decode(xml <: string|bytes) <: array`
 
@@ -24,8 +24,8 @@ Usage:
 
 | example | equals |
 |:-|:-|
-| `//encoding.xml.decoder((trimSurroundingWhitespace: true)).decode('<?xml version="1.0"?>\n')` | `[(decl: (target: 'xml', text: 'version="1.0"'))` |
-| `//encoding.xml.decoder((trimSurroundingWhitespace: false)).decode('<?xml version="1.0"?>\n')` | `[(decl: (target: 'xml', text: 'version="1.0"')), (text: '\n')]` |
+| `//encoding.xml.decoder((trimSurroundingWhitespace: true)).decode('<?xml version="1.0"?>\n')` | `[(xmldecl: 'version="1.0"')]` |
+| `//encoding.xml.decoder((trimSurroundingWhitespace: false)).decode('<?xml version="1.0"?>\n')` | `[(xmldecl: 'version="1.0"'), '\n']` |
 
 ## `//encoding.xml.encode(xml <: array) <: bytes`
 
@@ -39,7 +39,7 @@ Usage:
 
 | example | equals |
 |:-|:-|
-| `//encoding.csv.encode([(decl: (target: 'xml', text: 'version="1.0"'))])` | `<?xml version="1.0"?>` |
+| `//encoding.xml.encode([(xmldecl: 'version="1.0"')])` | `<?xml version="1.0"?>` |
 
 ## `//encoding.csv.decode(csv <: string|bytes) <: array`
 
@@ -197,14 +197,14 @@ Note that unlike standard `decode` functions, this is not reversible; its output
 
 | Description | XML Encoding | Arr.ai Encoding |
 |:-|:-|:-|
-| Declaration | `<?xml version="1.0"?>` | `(decl: (target: 'xml', text: 'version="1.0"'))` |
+| Declaration | `<?xml version="1.0"?>` | `[(xmldecl: 'version="1.0"')]` |
 | Directive |`<!DOCTYPE foo <!ELEMENT foo (#PCDATA)>>` | `(directive: 'DOCTYPE foo <!ELEMENT foo (#PCDATA)>')` |
-| Text | `Hello world` | `(text: "Hello world")` |
+| Text | `Hello world` | `'Hello world'` |
 | Comment | `<!-- hello world -->` | `(comment: "helloworld")` |
-| Element | `<root><child/></root>` | `[(elem: (attrs: {}, children: [(elem: (attrs: {}, children: {}, name: 'child'))], name: 'root'))]` |
-| Element with namespace | `<root xmlns="foo"><child/></root>` | `[(elem: (attrs: {(name: 'xmlns', text: 'foo')}, children: [(elem: (attrs: {}, children: {}, name: 'child', ns: 'foo'))], name: 'root', ns: 'foo'))]` |
-| Attribute | `<root key="value"/>` | `[(elem: (attrs: {(name: 'key', text: 'value')}, children: {}, name: 'root'))]` |
-| Attribute with namespace | `<root xmlns:foo="foo.com" foo:key="value"/>` | `[(elem: (attrs: {(name: 'foo', ns: 'xmlns', text: 'foo.com'), (name: 'key', ns: 'foo.com', text: 'value')}, children: {}, name: 'root'))]` |
+| Element | `<root><child/></root>` | `[(elem: root, children: [(elem: child)])]` |
+| Element with namespace | `<root xmlns="foo"><child/></root>` | `[(elem: 'root', attrs: {(name: 'xmlns', text: 'foo')}, children: [(elem: 'child', ns: 'foo')], name: 'root', ns: 'foo')]` |
+| Attribute | `<root key="value"/>` | `[(elem: 'root', attrs: {(name: 'key', text: 'value')})]` |
+| Attribute with namespace | `<root xmlns:foo="foo.com" foo:key="value"/>` | `[(elem: 'root', attrs: {(name: 'foo', ns: 'xmlns', text: 'foo.com'), (name: 'key', ns: 'foo.com', text: 'value')})]` |
 
 ### Limitations
 
