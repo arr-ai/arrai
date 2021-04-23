@@ -10,6 +10,7 @@ import (
 	"sync"
 
 	"github.com/arr-ai/arrai/rel"
+	"github.com/arr-ai/arrai/translate"
 	"github.com/arr-ai/wbnf/ast"
 	"github.com/arr-ai/wbnf/parser"
 	"github.com/arr-ai/wbnf/wbnf"
@@ -109,6 +110,19 @@ func StdScope() rel.Scope {
 				// FIXME: this is a temporary error handling
 				return nil, errors.New(value.String())
 			}),
+			rel.NewTupleAttr(
+				"@internal", rel.NewTupleAttr(
+					"xml", createFunc2Attr(
+						"decode", func(_ context.Context, xmlConfig, value rel.Value) (rel.Value, error) {
+							config, err := parseXMLConfig(xmlConfig)
+							if err != nil {
+								return nil, err
+							}
+							return decodeXML(value, *config)
+						}),
+					rel.NewNativeFunctionAttr("encode", func(_ context.Context, value rel.Value) (rel.Value, error) {
+						return translate.BytesXMLFromArrai(value)
+					}))),
 			stdArchive(),
 			stdEncoding(),
 			stdEval(),

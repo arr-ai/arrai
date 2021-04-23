@@ -2,6 +2,7 @@ package syntax
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/arr-ai/arrai/rel"
 	"github.com/arr-ai/arrai/translate"
@@ -11,12 +12,9 @@ func stdEncodingYAML() rel.Attr {
 	return rel.NewTupleAttr(
 		"yaml",
 		rel.NewNativeFunctionAttr(decodeAttr, func(_ context.Context, v rel.Value) (rel.Value, error) {
-			var bytes []byte
-			switch v := v.(type) {
-			case rel.String:
-				bytes = []byte(v.String())
-			case rel.Bytes:
-				bytes = v.Bytes()
+			bytes, ok := bytesOrStringAsUTF8(v)
+			if !ok {
+				return nil, fmt.Errorf("unexpected arrai object type: %s", rel.ValueTypeAsString(v))
 			}
 			return bytesYAMLToArrai(bytes)
 		}),

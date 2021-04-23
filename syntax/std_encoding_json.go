@@ -14,13 +14,8 @@ func stdEncodingJSON() rel.Attr {
 	return rel.NewTupleAttr(
 		"json",
 		rel.NewNativeFunctionAttr(decodeAttr, func(_ context.Context, v rel.Value) (rel.Value, error) {
-			var bytes []byte
-			switch v := v.(type) {
-			case rel.String:
-				bytes = []byte(v.String())
-			case rel.Bytes:
-				bytes = v.Bytes()
-			default:
+			bytes, ok := bytesOrStringAsUTF8(v)
+			if !ok {
 				return nil, fmt.Errorf("unexpected arrai object type: %s", rel.ValueTypeAsString(v))
 			}
 			return bytesJSONToArrai(bytes)
