@@ -47,10 +47,10 @@ func reportFile(w io.Writer, testFile TestFile, maxName int) {
 	}
 }
 
-func reportTest(w io.Writer, result TestResult, maxName int) {
+func reportTest(w io.Writer, test TestResult, maxName int) {
 	const color = "\033[38;5;255;%d;1m%s\033[0m"
 
-	switch result.outcome {
+	switch test.outcome {
 	case Failed:
 		fmt.Fprintf(w, color, 41, "FAIL")
 	case Invalid:
@@ -61,10 +61,10 @@ func reportTest(w io.Writer, result TestResult, maxName int) {
 		fmt.Fprintf(w, color, 32, "PASS")
 	}
 
-	fmt.Fprintf(w, "  %s\n", result.name+strings.Repeat(" ", maxName-utf8.RuneCountInString(result.name)))
+	fmt.Fprintf(w, "  %s\n", test.name+strings.Repeat(" ", maxName-utf8.RuneCountInString(test.name)))
 
-	if result.message != "" {
-		fmt.Fprintf(w, "      %s\n", strings.ReplaceAll(result.message, "\n", "\n      "))
+	if test.message != "" {
+		fmt.Fprintf(w, "      %s\n", strings.ReplaceAll(test.message, "\n", "\n      "))
 	}
 
 }

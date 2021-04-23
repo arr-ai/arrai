@@ -50,58 +50,58 @@ func TestForeachLeaf(t *testing.T) {
 
 	// No root
 	require.Equal(t,
-		shouldBe{"<root>": "true"},
+		leavesShouldBe{"<root>": "true"},
 		forInput("true"))
 	require.Equal(t,
-		shouldBe{"<root>": "false"},
+		leavesShouldBe{"<root>": "false"},
 		forInput("false"))
 	require.Equal(t,
-		shouldBe{"<root>": "42"},
+		leavesShouldBe{"<root>": "42"},
 		forInput("42"))
 
 	// Tuple root
 	require.Equal(t,
-		shouldBe{},
+		leavesShouldBe{},
 		forInput("()"))
 	require.Equal(t,
-		shouldBe{"a": "true", "b": "false"},
+		leavesShouldBe{"a": "true", "b": "false"},
 		forInput("(a: true, b: false)"))
 	require.Equal(t,
-		shouldBe{"a.b.c": "true", "d.e.f": "false"},
+		leavesShouldBe{"a.b.c": "true", "d.e.f": "false"},
 		forInput("(a: (b: (c: true)), d: (e: (f: false)))"))
 	require.Equal(t,
-		shouldBe{"a(0)": "0", "a(1)": "1", "a(2)": "'2'"},
+		leavesShouldBe{"a(0)": "0", "a(1)": "1", "a(2)": "'2'"},
 		forInput("(a: [0, 1, '2'])"))
 	require.Equal(t,
-		shouldBe{"a(0)(0)": "0", "a(0)(1)": "1", "a(1)(0)(0)": "100", "a(1)(1)": "11"},
+		leavesShouldBe{"a(0)(0)": "0", "a(0)(1)": "1", "a(1)(0)(0)": "100", "a(1)(1)": "11"},
 		forInput("(a: [[0, 1], [[100], 11]])"))
 	require.Equal(t,
-		shouldBe{"a('k0')": "0", "a('k1')": "1", "a(2)": "2", "a((x: 3))": "3"},
+		leavesShouldBe{"a('k0')": "0", "a('k1')": "1", "a(2)": "2", "a((x: 3))": "3"},
 		forInput("(a: {'k0': 0, 'k1': 1, 2: 2, (x: 3):3})"))
 
 	// Array root
 	require.Equal(t,
-		shouldBe{"<root>": "false"}, // An unfortunate side effect of everything being a set
+		leavesShouldBe{"<root>": "false"}, // An unfortunate side effect of everything being a set
 		forInput("[]"))
 	require.Equal(t,
-		shouldBe{"(0)": "true", "(1)": "false", "(2).a": "1", "(2).b": "'2'", "(2).c('three')": "3", "(2).c(4)": "'4'"},
+		leavesShouldBe{"(0)": "true", "(1)": "false", "(2).a": "1", "(2).b": "'2'", "(2).c('three')": "3", "(2).c(4)": "'4'"},
 		forInput("[true, false, (a: 1, b: '2', c: { 'three': 3, 4: '4' })]"))
 
 	// Dictionary root
 	require.Equal(t,
-		shouldBe{"(0)": "true", "(1)": "false", "(2).a": "1", "(2).b": "'2'", "(2).c('three')": "3", "(2).c(4)": "'4'"},
+		leavesShouldBe{"(0)": "true", "(1)": "false", "(2).a": "1", "(2).b": "'2'", "(2).c('three')": "3", "(2).c(4)": "'4'"},
 		forInput("{0: true, 1: false, 2: (a: 1, b: '2', c: { 'three': 3, 4: '4' })}"))
 }
 
-type shouldBe map[string]string
+type leavesShouldBe map[string]string
 
 // Runs ForeachLeaf on the result of the arrai source. Returns a dictionary of results (node path -> leaf value) or
 // or nil if it failed to parse (instead of err, so it can be inlined)
-func forInput(source string) shouldBe {
-	leaves := make(shouldBe)
+func forInput(source string) leavesShouldBe {
+	leaves := make(leavesShouldBe)
 	tree, err := evalErr(source)
 	if err != nil {
-		return shouldBe{"PARSING ERROR": err.Error()}
+		return leavesShouldBe{"PARSING ERROR": err.Error()}
 	}
 
 	ForeachLeaf(tree, "", func(val rel.Value, path string) {
