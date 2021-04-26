@@ -122,6 +122,6 @@ func (c ExprClosure) CallAll(_ context.Context, arg Value, b SetBuilder) error {
 	panic("unimplemented")
 }
 
-func (ExprClosure) ArrayEnumerator() (OffsetValueEnumerator, bool) {
+func (ExprClosure) ArrayEnumerator() ValueEnumerator {
 	panic("unimplemented")
 }

@@ -305,8 +305,18 @@ func (d Dict) CallAll(_ context.Context, arg Value, b SetBuilder) error {
 	return nil
 }
 
-func (d Dict) ArrayEnumerator() (OffsetValueEnumerator, bool) {
-	return nil, false
+type emptyEnumerator struct{}
+
+func (emptyEnumerator) Current() Value {
+	panic("wtf")
+}
+
+func (emptyEnumerator) MoveNext() bool {
+	return false
+}
+
+func (d Dict) ArrayEnumerator() ValueEnumerator {
+	return &emptyEnumerator{}
 }
 
 func (d Dict) DictEnumerator() *DictEnumerator {

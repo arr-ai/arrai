@@ -172,6 +172,8 @@ func reprValue(v Value, w io.Writer) {
 		reprSet(v, w)
 	case Closure:
 		reprClosure(v, w)
+	case BytesByteTuple:
+		fmt.Fprint(w, v.String())
 	case StringCharTuple:
 		reprStringCharTuple(v, w)
 	case ArrayItemTuple:

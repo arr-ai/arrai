@@ -152,6 +152,6 @@ func (c Closure) CallAll(ctx context.Context, arg Value, b SetBuilder) error {
 	return nil
 }
 
-func (c Closure) ArrayEnumerator() (OffsetValueEnumerator, bool) {
+func (c Closure) ArrayEnumerator() ValueEnumerator {
 	panic("unimplemented")
 }

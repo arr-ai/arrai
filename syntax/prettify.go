@@ -10,7 +10,7 @@ import (
 const indentStr = "  "
 
 type Enumerable interface {
-	ArrayEnumerator() (rel.OffsetValueEnumerator, bool)
+	ArrayEnumerator() rel.ValueEnumerator
 }
 
 // PrettifyString returns a string which represents `rel.Value` with more reabable format.

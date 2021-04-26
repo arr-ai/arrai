@@ -152,7 +152,7 @@ func (b Bytes) with(index int, byt byte) Set {
 			offset: b.offset - 1,
 		}
 	}
-	return newGenericSetFromSet(b).With(newBytesTuple(index, byt))
+	return newGenericSetFromSet(b).With(NewBytesByteTuple(index, byt))
 }
 
 // With returns the original Bytes with given value added. Iff the value was
@@ -182,7 +182,7 @@ func (b Bytes) Without(value Value) Set {
 func (b Bytes) Map(f func(v Value) (Value, error)) (Set, error) {
 	result := None
 	for e := b.Enumerator().(*BytesEnumerator); e.MoveNext(); {
-		v, err := f(e.CurrentBytesByteTuple())
+		v, err := f(e.Current())
 		if err != nil {
 			return nil, err
 		}
@@ -195,7 +195,7 @@ func (b Bytes) Map(f func(v Value) (Value, error)) (Set, error) {
 func (b Bytes) Where(p func(v Value) (bool, error)) (Set, error) {
 	result := Set(b)
 	for e := b.Enumerator().(*BytesEnumerator); e.MoveNext(); {
-		value := e.CurrentBytesByteTuple()
+		value := e.Current()
 		match, err := p(value)
 		if err != nil {
 			return nil, err
@@ -235,17 +235,15 @@ type BytesEnumerator struct {
 
 // MoveNext moves the enumerator to the next Value.
 func (e *BytesEnumerator) MoveNext() bool {
+	if e.i >= len(e.b)-1 {
+		return false
+	}
 	e.i++
-	return e.i < len(e.b)
+	return true
 }
 
 // Current returns the enumerator'b current Value.
 func (e *BytesEnumerator) Current() Value {
-	return newBytesTuple(e.i, e.b[e.i])
-}
-
-// CurrentBytesByteTuple returns the enumerator'b current Value.
-func (e *BytesEnumerator) CurrentBytesByteTuple() BytesByteTuple {
 	return NewBytesByteTuple(e.i, e.b[e.i])
 }
 
@@ -254,15 +252,16 @@ func (b Bytes) Enumerator() ValueEnumerator {
 	return &BytesEnumerator{b.b, -1}
 }
 
-func (b Bytes) ArrayEnumerator() (OffsetValueEnumerator, bool) {
-	return &bytesEnumerator{b: b.b, offset: b.offset, i: -1}, true
+type bytesValueEnumerator struct {
+	*BytesEnumerator
 }
 
-func newBytesTuple(index int, b byte) Tuple {
-	return NewTuple(
-		NewIntAttr("@", index),
-		NewIntAttr(BytesByteAttr, int(b)),
-	)
+func (e *bytesValueEnumerator) Current() Value {
+	return NewNumber(float64(e.b[e.i]))
+}
+
+func (b Bytes) ArrayEnumerator() ValueEnumerator {
+	return &bytesValueEnumerator{b.Enumerator().(*BytesEnumerator)}
 }
 
 func isBytesTuple(v Value) (index int, b byte, is bool) {
@@ -287,28 +286,6 @@ func bytesTupleMatcher(match func(index int, b byte)) TupleMatcher {
 		},
 		Lit(EmptyTuple),
 	)
-}
-
-type bytesEnumerator struct {
-	b      []byte
-	offset int
-	i      int
-}
-
-func (e *bytesEnumerator) MoveNext() bool {
-	if e.i >= len(e.b)-1 {
-		return false
-	}
-	e.i++
-	return true
-}
-
-func (e *bytesEnumerator) Current() Value {
-	return NewNumber(float64(e.b[e.i]))
-}
-
-func (e *bytesEnumerator) Offset() int {
-	return e.offset + e.i
 }
 
 // func stringSet(b Set) Set {

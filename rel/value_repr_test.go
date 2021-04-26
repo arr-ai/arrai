@@ -39,6 +39,12 @@ func TestReprArrayItemTuple(t *testing.T) {
 	assert.Equal(t, `(@: 1, @item: 'a')`, Repr(NewArrayItemTuple(1, NewString([]rune("a")))))
 }
 
+func TestReprByteItemTuple(t *testing.T) {
+	t.Parallel()
+
+	assert.Equal(t, `(@: 0, @byte: 97)`, Repr(NewBytesByteTuple(0, 97)))
+}
+
 func TestReprDictEntryTuple(t *testing.T) {
 	t.Parallel()
 

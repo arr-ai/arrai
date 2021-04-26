@@ -134,6 +134,6 @@ func (f *NativeFunction) CallAll(ctx context.Context, arg Value, b SetBuilder) e
 	return nil
 }
 
-func (*NativeFunction) ArrayEnumerator() (OffsetValueEnumerator, bool) {
+func (*NativeFunction) ArrayEnumerator() ValueEnumerator {
 	panic("unimplemented")
 }

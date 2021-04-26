@@ -119,7 +119,7 @@ func arrayHasPrefix(prefix rel.Value, subject rel.Array) (rel.Value, error) {
 
 	prefixVals := prefixArray.Values()
 	prefixOffset := 0
-	arrayEnum, _ := subject.ArrayEnumerator()
+	arrayEnum := subject.ArrayEnumerator()
 	for arrayEnum.MoveNext() {
 		if prefixOffset < prefixArray.Count() && arrayEnum.Current().Equal(prefixVals[prefixOffset]) {
 			prefixOffset++

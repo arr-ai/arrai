@@ -7,7 +7,6 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/arr-ai/frozen"
 	"github.com/arr-ai/wbnf/parser"
 )
 
@@ -395,8 +394,8 @@ func (a Array) Enumerator() ValueEnumerator {
 	return &arrayValueEnumerator{a: a, i: -1}
 }
 
-func (a Array) ArrayEnumerator() (OffsetValueEnumerator, bool) {
-	return &arrayOffsetValueEnumerator{arrayValueEnumerator{a: a, i: -1}}, true
+func (a Array) ArrayEnumerator() ValueEnumerator {
+	return &arrayItemEnumerator{a.Enumerator().(*arrayValueEnumerator)}
 }
 
 // arrayValueEnumerator represents an enumerator over a Array.
@@ -424,38 +423,12 @@ func (e *arrayValueEnumerator) Current() Value {
 	return NewArrayItemTuple(e.a.offset+e.i, e.a.values[e.i])
 }
 
-// arrayOffsetValueEnumerator represents an enumerator over a Array.
-type arrayOffsetValueEnumerator struct {
-	arrayValueEnumerator
+// arrayItemEnumerator represents an enumerator over a Array.
+type arrayItemEnumerator struct {
+	*arrayValueEnumerator
 }
 
 // Current returns the enumerator's current Value.
-func (e *arrayOffsetValueEnumerator) Current() Value {
+func (e *arrayItemEnumerator) Current() Value {
 	return e.a.values[e.i]
-}
-
-// Current returns the offset of the enumerator's current Value.
-func (e *arrayOffsetValueEnumerator) Offset() int {
-	return e.a.offset + e.i
-}
-
-type arrayEnumerator struct {
-	i frozen.Iterator
-	t Tuple
-}
-
-func (e *arrayEnumerator) MoveNext() bool {
-	if e.i.Next() {
-		e.t = e.i.Value().(Tuple)
-		return true
-	}
-	return false
-}
-
-func (e *arrayEnumerator) Current() Value {
-	return e.t.MustGet(ArrayItemAttr)
-}
-
-func (e *arrayEnumerator) Offset() int {
-	return int(e.t.MustGet("@").(Number).Float64())
 }

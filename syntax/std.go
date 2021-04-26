@@ -99,7 +99,7 @@ func StdScope() rel.Scope {
 				createFunc2Attr("printf", func(ctx context.Context, a, b rel.Value) (rel.Value, error) {
 					format := a.(rel.String).String()
 					strs := make([]interface{}, 0, b.(rel.Set).Count())
-					for i, ok := b.(rel.Set).ArrayEnumerator(); ok && i.MoveNext(); {
+					for i := b.(rel.Set).ArrayEnumerator(); i.MoveNext(); {
 						strs = append(strs, i.Current())
 					}
 					log.Printf(format, strs...)

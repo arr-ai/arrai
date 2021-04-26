@@ -217,8 +217,8 @@ func (s String) Without(value Value) Set {
 // Map maps values per f.
 func (s String) Map(f func(v Value) (Value, error)) (Set, error) {
 	b := NewSetBuilder()
-	for e := s.Enumerator().(*stringValueEnumerator); e.MoveNext(); {
-		v, err := f(e.currentStringCharTuple())
+	for e := s.Enumerator().(*stringEnumerator); e.MoveNext(); {
+		v, err := f(e.Current())
 		if err != nil {
 			return nil, err
 		}
@@ -230,8 +230,8 @@ func (s String) Map(f func(v Value) (Value, error)) (Set, error) {
 // Where returns a new String with all the Values satisfying predicate p.
 func (s String) Where(p func(v Value) (bool, error)) (Set, error) {
 	b := NewSetBuilder()
-	for e := s.Enumerator().(*stringValueEnumerator); e.MoveNext(); {
-		value := e.currentStringCharTuple()
+	for e := s.Enumerator().(*stringEnumerator); e.MoveNext(); {
+		value := e.Current()
 		matches, err := p(value)
 		if err != nil {
 			return nil, err
@@ -265,21 +265,21 @@ func (s String) index(pos int) int {
 
 // Enumerator returns an enumerator over the Values in the String.
 func (s String) Enumerator() ValueEnumerator {
-	return &stringValueEnumerator{s: s, i: -1}
+	return &stringEnumerator{s: s, i: -1}
 }
 
-func (s String) ArrayEnumerator() (OffsetValueEnumerator, bool) {
-	return &stringOffsetValueEnumerator{stringValueEnumerator{s: s, i: -1}}, true
+func (s String) ArrayEnumerator() ValueEnumerator {
+	return &stringValueEnumerator{s.Enumerator().(*stringEnumerator)}
 }
 
 // StringEnumerator represents an enumerator over a String.
-type stringValueEnumerator struct {
+type stringEnumerator struct {
 	s String
 	i int
 }
 
 // MoveNext moves the enumerator to the next Value.
-func (e *stringValueEnumerator) MoveNext() bool {
+func (e *stringEnumerator) MoveNext() bool {
 	for e.i < len(e.s.s)-1 {
 		e.i++
 		if e.s.s[e.i] >= 0 {
@@ -290,23 +290,14 @@ func (e *stringValueEnumerator) MoveNext() bool {
 }
 
 // Current returns the enumerator's current Value.
+func (e *stringEnumerator) Current() Value {
+	return NewStringCharTuple(e.s.offset+e.i, e.s.s[e.i])
+}
+
+type stringValueEnumerator struct {
+	*stringEnumerator
+}
+
 func (e *stringValueEnumerator) Current() Value {
-	return NewStringCharTuple(e.s.offset+e.i, e.s.s[e.i])
-}
-
-// This version avoids mallocs.
-func (e *stringValueEnumerator) currentStringCharTuple() StringCharTuple {
-	return NewStringCharTuple(e.s.offset+e.i, e.s.s[e.i])
-}
-
-type stringOffsetValueEnumerator struct {
-	stringValueEnumerator
-}
-
-func (e *stringOffsetValueEnumerator) Current() Value {
 	return NewNumber(float64(e.s.s[e.i]))
-}
-
-func (e *stringOffsetValueEnumerator) Offset() int {
-	return e.s.offset + e.i
 }

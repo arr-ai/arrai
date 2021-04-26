@@ -261,12 +261,26 @@ func (s GenericSet) Any() Value {
 	panic("Any(): empty set")
 }
 
-func (s GenericSet) ArrayEnumerator() (OffsetValueEnumerator, bool) {
-	return &arrayEnumerator{
-		i: s.set.OrderedRange(func(a, b interface{}) bool {
-			return a.(Tuple).MustGet("@").(Number) < b.(Tuple).MustGet("@").(Number)
-		}),
-	}, true
+type genericSetValueEnumerator struct {
+	*genericSetEnumerator
+}
+
+func (g *genericSetValueEnumerator) Current() Value {
+	// TODO: this is just a placeholder to replicate old functionality
+	// this should return anything that's not @
+	return g.i.Value().(Tuple).MustGet(ArrayItemAttr)
+}
+
+func (s GenericSet) ArrayEnumerator() ValueEnumerator {
+	return &genericSetValueEnumerator{
+		&genericSetEnumerator{
+			s.set.OrderedRange(
+				func(a, b interface{}) bool {
+					return a.(Tuple).MustGet("@").(Number) < b.(Tuple).MustGet("@").(Number)
+				},
+			),
+		},
+	}
 }
 
 // genericSetEnumerator represents an enumerator over a genericSet.

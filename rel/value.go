@@ -104,13 +104,6 @@ type ValueEnumerator interface {
 	Current() Value
 }
 
-// OffsetValueEnumerator defines an enumerator that can report the offset of
-// each element it enumerates.
-type OffsetValueEnumerator interface {
-	ValueEnumerator
-	Offset() int
-}
-
 // Less defines a comparator that returns true iff a < b.
 type Less func(a, b Value) bool
 
@@ -122,6 +115,7 @@ type Set interface {
 	Count() int
 	Has(Value) bool
 	Enumerator() ValueEnumerator
+	ArrayEnumerator() ValueEnumerator // iterates in ascending order.
 
 	// Transform
 	With(Value) Set
@@ -129,8 +123,6 @@ type Set interface {
 	Map(func(Value) (Value, error)) (Set, error)
 	Where(func(Value) (bool, error)) (Set, error)
 	CallAll(context.Context, Value, SetBuilder) error
-
-	ArrayEnumerator() (OffsetValueEnumerator, bool)
 }
 
 // NoReturnError is an error signififying that there was no return value.
