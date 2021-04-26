@@ -40,6 +40,7 @@ func TestSetCall(t *testing.T) {
 	AssertEqualValues(t, result, NewNumber(24))
 }
 
+//nolint:structcheck
 func TestReflectNewValue(t *testing.T) {
 	// Structs are serialized to tuples.
 	type Foo struct {
