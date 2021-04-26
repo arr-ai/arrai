@@ -40,24 +40,54 @@ func TestSetCall(t *testing.T) {
 	AssertEqualValues(t, result, NewNumber(24))
 }
 
-type Foo struct {
-	a int
-	b int
-}
+func TestReflectNewValue(t *testing.T) {
+	// Structs are serialized to tuples.
+	type Foo struct {
+		num int
+		str string
+		// Slices without the ordered tag are serialized to sets.
+		set []int
+		// Slices with the ordered tag are serialized to arrays.
+		arr  []int `ordered:"true"`
+		none *Foo
+		// All struct field names are serialized to start lowercase.
+		CASE     int
+		children []*Foo
+	}
 
-func TestNewValue(t *testing.T) {
-	x := []interface{}{map[string]interface{}{"a": 1, "b": 2}}
+	input := []*Foo{{
+		num:      1,
+		str:      "a",
+		set:      []int{2, 1},
+		arr:      []int{2, 1},
+		// Nil values are serialized to empty sets (None).
+		none:     nil,
+		CASE:     0,
+		// Unset fields of structs are serialized with default empty values.
+		children: []*Foo{{num: 2}},
+	}}
 
-	actual, err := NewValue(x)
+	actual, err := NewValue(input)
 	require.NoError(t, err)
 
-	expected, err := NewSet(NewTuple(NewIntAttr("a", 1), NewIntAttr("b", 2)))
+	expected, err := NewSet(NewTuple(
+		NewIntAttr("num", 1),
+		NewStringAttr("str", []rune("a")),
+		NewAttr("set", MustNewSet(NewNumber(1), NewNumber(2))),
+		NewAttr("arr", NewArray(NewNumber(2), NewNumber(1))),
+		NewAttr("none", None),
+		NewAttr("cASE", NewNumber(0)),
+		NewAttr("children", MustNewSet(NewTuple(
+			NewAttr("num", NewNumber(2)),
+			NewAttr("str", None),
+			NewAttr("set", None),
+			NewAttr("arr", None),
+			NewAttr("none", None),
+			NewAttr("cASE", NewNumber(0)),
+			NewAttr("children", None),
+		))),
+	))
 	require.NoError(t, err)
 
-	y := []*Foo{{1, 2}}
-	actual, err = NewValue(y)
-	require.NoError(t, err)
 	AssertEqualValues(t, expected, actual)
-
-	//AssertEqualValues(t, expected, actual)
 }

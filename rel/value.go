@@ -7,6 +7,7 @@ import (
 	"github.com/arr-ai/wbnf/parser"
 	"github.com/go-errors/errors"
 	"reflect"
+	"strings"
 	"unsafe"
 )
 
@@ -221,12 +222,38 @@ func NewValue(v interface{}) (Value, error) {
 	}
 }
 
+func toArray(x interface{}) (Value, error) {
+	t := reflect.TypeOf(x)
+	switch t.Kind() {
+	case reflect.Array, reflect.Slice:
+		s := reflect.ValueOf(x)
+		vs := make([]Value, 0, s.Len())
+		for i := 0; i < s.Len(); i++ {
+			v, err := NewValue(s.Index(i).Interface())
+			if err != nil {
+				return nil, err
+			}
+			vs = append(vs, v)
+		}
+		return NewArray(vs...), nil
+	default:
+		return nil, errors.Errorf("%v (%[1]T) not convertible to Array", x)
+	}
+}
+
 // reflectNewValue uses reflection to inspect the type of x and unpack its values.
 func reflectNewValue(x interface{}) (Value, error) {
+	if x == nil {
+		return None, nil
+	}
 	t := reflect.TypeOf(x)
 	switch t.Kind() {
 	case reflect.Ptr:
-		return NewValue(reflect.ValueOf(x).Elem().Interface())
+		v := reflect.ValueOf(x)
+		if v.IsNil() {
+			return None, nil
+		}
+		return NewValue(v.Elem().Interface())
 	case reflect.Array, reflect.Slice:
 		s := reflect.ValueOf(x)
 		vs := make([]Value, 0, s.Len())
@@ -251,11 +278,18 @@ func reflectNewValue(x interface{}) (Value, error) {
 			f := xv.Field(i)
 			f = reflect.NewAt(f.Type(), unsafe.Pointer(f.UnsafeAddr())).Elem()
 
-			v, err := NewValue(f.Interface())
+			var v Value
+			var err error
+			if t.Field(i).Tag.Get("ordered") == "true" {
+				v, err = toArray(f.Interface())
+			} else {
+				v, err = NewValue(f.Interface())
+			}
 			if err != nil {
 				return nil, err
 			}
-			s[t.Field(i).Name] = v
+			name := t.Field(i).Name
+			s[strings.ToLower(name[:1])+name[1:]] = v
 		}
 		return NewTupleFromMap(s)
 	default:
