@@ -3,12 +3,13 @@ package rel
 import (
 	"context"
 	"fmt"
-	"github.com/arr-ai/frozen"
-	"github.com/arr-ai/wbnf/parser"
-	"github.com/go-errors/errors"
 	"reflect"
 	"strings"
 	"unsafe"
+
+	"github.com/arr-ai/frozen"
+	"github.com/arr-ai/wbnf/parser"
+	"github.com/go-errors/errors"
 )
 
 // Expr represents an arr.ai expression.

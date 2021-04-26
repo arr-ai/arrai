@@ -56,13 +56,13 @@ func TestReflectNewValue(t *testing.T) {
 	}
 
 	input := []*Foo{{
-		num:      1,
-		str:      "a",
-		set:      []int{2, 1},
-		arr:      []int{2, 1},
+		num: 1,
+		str: "a",
+		set: []int{2, 1},
+		arr: []int{2, 1},
 		// Nil values are serialized to empty sets (None).
-		none:     nil,
-		CASE:     0,
+		none: nil,
+		CASE: 0,
 		// Unset fields of structs are serialized with default empty values.
 		children: []*Foo{{num: 2}},
 	}}
