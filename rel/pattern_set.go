@@ -59,7 +59,7 @@ func (p SetPattern) Bind(ctx context.Context, local Scope, value Value) (context
 				if !set.Has(v) {
 					return ctx, EmptyScope, fmt.Errorf("item %s is not included in set %s", v, value)
 				}
-				set = set.Without(v).(GenericSet)
+				set = set.Without(v)
 				continue
 			}
 
@@ -78,7 +78,7 @@ func (p SetPattern) Bind(ctx context.Context, local Scope, value Value) (context
 				if !set.Has(v.(Value)) {
 					return ctx, EmptyScope, fmt.Errorf("item %s is not included in set %s", v, value)
 				}
-				set = set.Without(v.(Value)).(GenericSet)
+				set = set.Without(v.(Value))
 			}
 		default:
 			if len(p.patterns) == 1 {

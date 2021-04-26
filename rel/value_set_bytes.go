@@ -170,7 +170,10 @@ func (b Bytes) Without(value Value) Set {
 	if pos, byt, ok := isBytesTuple(value); ok {
 		if i := b.index(pos); i >= 0 && i < len(b.b) && byt == b.b[i] {
 			if pos == b.offset+i {
-				return Bytes{b: b.b[:i], offset: b.offset}
+				if bytes := b.b[:i]; len(bytes) > 0 {
+					return Bytes{b: bytes, offset: b.offset}
+				}
+				return None
 			}
 			return newGenericSetFromSet(b).Without(value)
 		}
@@ -180,31 +183,31 @@ func (b Bytes) Without(value Value) Set {
 
 // Map maps values per f.
 func (b Bytes) Map(f func(v Value) (Value, error)) (Set, error) {
-	result := None
+	sb := NewSetBuilder()
 	for e := b.Enumerator().(*BytesEnumerator); e.MoveNext(); {
 		v, err := f(e.Current())
 		if err != nil {
 			return nil, err
 		}
-		result = result.With(v)
+		sb.Add(v)
 	}
-	return result, nil
+	return sb.Finish()
 }
 
 // Where returns a new Bytes with all the Values satisfying predicate p.
 func (b Bytes) Where(p func(v Value) (bool, error)) (Set, error) {
-	result := Set(b)
+	builder := NewSetBuilder()
 	for e := b.Enumerator().(*BytesEnumerator); e.MoveNext(); {
 		value := e.Current()
 		match, err := p(value)
 		if err != nil {
 			return nil, err
 		}
-		if !match {
-			result = result.Without(value)
+		if match {
+			builder.Add(value)
 		}
 	}
-	return result, nil
+	return builder.Finish()
 }
 
 func (b Bytes) CallAll(_ context.Context, arg Value, sb SetBuilder) error {

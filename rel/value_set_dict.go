@@ -253,7 +253,11 @@ func (d Dict) Without(v Value) Set {
 	if key, value, matched := DictTupleMatcher()(v); matched {
 		if v, has := d.m.Get(key); has {
 			if value.Equal(v) {
-				return Dict{m: d.m.Without(frozen.NewSet(key))}
+				m := d.m.Without(frozen.NewSet(key))
+				if m.IsEmpty() {
+					return None
+				}
+				return Dict{m: m}
 			}
 		}
 	}
@@ -261,7 +265,7 @@ func (d Dict) Without(v Value) Set {
 }
 
 func (d Dict) Map(f func(v Value) (Value, error)) (Set, error) {
-	var sb frozen.SetBuilder
+	sb := NewSetBuilder()
 	for e := d.Enumerator(); e.MoveNext(); {
 		v, err := f(e.Current())
 		if err != nil {
@@ -269,7 +273,7 @@ func (d Dict) Map(f func(v Value) (Value, error)) (Set, error) {
 		}
 		sb.Add(v)
 	}
-	return GenericSet{set: sb.Finish()}, nil
+	return sb.Finish()
 }
 
 func (d Dict) Where(p func(v Value) (bool, error)) (Set, error) {

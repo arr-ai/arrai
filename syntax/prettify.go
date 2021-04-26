@@ -161,7 +161,7 @@ func prettifyItem(index int, item interface{}, simple bool, indent int) (string,
 // isSimple returns true if the value should be pretty printed on a single line.
 func isSimple(val rel.Value) bool {
 	switch t := val.(type) {
-	case rel.Number, rel.String, nil:
+	case rel.Number, rel.String, rel.EmptySet, nil:
 		return true
 	case rel.Array:
 		return isSimpleValues(t.Values())

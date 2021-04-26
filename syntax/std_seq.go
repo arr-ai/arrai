@@ -68,6 +68,9 @@ func stdSeqConcat(_ context.Context, seq rel.Value) (rel.Value, error) {
 
 func stdSeqContains(_ context.Context, sub, subject rel.Value) (rel.Value, error) { //nolint:dupl
 	switch subject := subject.(type) {
+	case rel.EmptySet:
+		_, is := sub.(rel.EmptySet)
+		return rel.NewBool(is), nil
 	case rel.String:
 		if subStr, is := tools.ValueAsString(sub); is {
 			return rel.NewBool(strings.Contains(subject.String(), subStr)), nil
@@ -90,6 +93,8 @@ func stdSeqContains(_ context.Context, sub, subject rel.Value) (rel.Value, error
 
 func stdSeqJoin(_ context.Context, joiner, subject rel.Value) (rel.Value, error) {
 	switch subject := subject.(type) {
+	case rel.EmptySet:
+		return rel.None, nil
 	case rel.Array:
 		switch subject.Values()[0].(type) {
 		case rel.String:
@@ -105,7 +110,7 @@ func stdSeqJoin(_ context.Context, joiner, subject rel.Value) (rel.Value, error)
 		if _, isSet := joiner.(rel.GenericSet); isSet {
 			return subject, nil
 		}
-		return bytesJoin(joiner.(rel.Bytes), subject), nil
+		return bytesJoin(joiner, subject), nil
 	case rel.GenericSet:
 		switch joiner.(type) {
 		case rel.String:
@@ -121,6 +126,9 @@ func stdSeqJoin(_ context.Context, joiner, subject rel.Value) (rel.Value, error)
 
 func stdSeqHasPrefix(_ context.Context, prefix, subject rel.Value) (rel.Value, error) { //nolint:dupl
 	switch subject := subject.(type) {
+	case rel.EmptySet:
+		_, is := prefix.(rel.EmptySet)
+		return rel.NewBool(is), nil
 	case rel.String:
 		if prefixStr, is := tools.ValueAsString(prefix); is {
 			return rel.NewBool(strings.HasPrefix(subject.String(), prefixStr)), nil
@@ -143,6 +151,9 @@ func stdSeqHasPrefix(_ context.Context, prefix, subject rel.Value) (rel.Value, e
 
 func stdSeqHasSuffix(_ context.Context, suffix, subject rel.Value) (rel.Value, error) { //nolint:dupl
 	switch subject := subject.(type) {
+	case rel.EmptySet:
+		_, is := suffix.(rel.EmptySet)
+		return rel.NewBool(is), nil
 	case rel.String:
 		if suffixStr, is := tools.ValueAsString(suffix); is {
 			return rel.NewBool(strings.HasSuffix(subject.String(), suffixStr)), nil
@@ -187,6 +198,11 @@ func stdSeqRepeat(_ context.Context, arg rel.Value) (rel.Value, error) {
 
 func stdSeqSub(_ context.Context, old, new, subject rel.Value) (rel.Value, error) {
 	switch subject := subject.(type) {
+	case rel.EmptySet:
+		if _, is := old.(rel.EmptySet); is {
+			return new, nil
+		}
+		return rel.None, nil
 	case rel.String:
 		subjectStr := subject.String()
 		oldStr, is := tools.ValueAsString(old)
@@ -250,13 +266,13 @@ func stdSeqSplit(_ context.Context, delimiter, subject rel.Value) (rel.Value, er
 		return arraySplit(delimiter, subject)
 	case rel.Bytes:
 		return bytesSplit(delimiter, subject)
-	case rel.GenericSet:
+	case rel.GenericSet, rel.EmptySet:
 		switch delimiter.(type) {
 		case rel.String:
 			return rel.NewArray(subject), nil
 		case rel.Array, rel.Bytes:
 			return rel.NewArray(rel.NewArray()), nil
-		case rel.GenericSet:
+		case rel.GenericSet, rel.EmptySet:
 			return subject, nil
 		}
 	}

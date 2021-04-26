@@ -53,10 +53,9 @@ func Test(ctx context.Context, w io.Writer, path string) (Results, error) {
 // isRecursivelyTrue returns true if every leaf value of val is true (not just truthy).
 func isRecursivelyTrue(val rel.Value) bool {
 	switch v := val.(type) {
+	case rel.EmptySet:
+		return false
 	case rel.GenericSet:
-		if !v.IsTrue() {
-			return false
-		}
 		if v.Count() == 1 && v.Has(rel.NewTuple()) {
 			return true
 		}

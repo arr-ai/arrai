@@ -21,7 +21,7 @@ func ValueTypeAsString(v Value) string {
 		return "dict"
 	case String, *String:
 		return "string"
-	case GenericSet, *GenericSet:
+	case GenericSet, EmptySet:
 		return "set"
 	case ArrayItemTuple, *ArrayItemTuple:
 		return "array-item-tuple"

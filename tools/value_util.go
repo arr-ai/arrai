@@ -10,8 +10,8 @@ func ValueAsString(v rel.Value) (string, bool) {
 	switch v := v.(type) {
 	case rel.String:
 		return v.String(), true
-	case rel.GenericSet:
-		return "", !v.IsTrue()
+	case rel.EmptySet:
+		return "", true
 	}
 	return "", false
 }
@@ -22,8 +22,8 @@ func ValueAsBytes(v rel.Value) ([]byte, bool) {
 	switch v := v.(type) {
 	case rel.Bytes:
 		return v.Bytes(), true
-	case rel.GenericSet:
-		return nil, !v.IsTrue()
+	case rel.EmptySet:
+		return nil, true
 	}
 	return nil, false
 }

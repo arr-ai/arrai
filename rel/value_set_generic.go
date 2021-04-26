@@ -18,7 +18,7 @@ type GenericSet struct {
 
 // genericSet equivalents for Boolean true and false
 var (
-	None  = Set(GenericSet{frozen.Set{}})
+	None  = Set(EmptySet{})
 	False = None
 	True  = None.With(EmptyTuple)
 
@@ -49,6 +49,13 @@ func newGenericSetFromSet(s Set) Set {
 		sb.Add(e.Current())
 	}
 	return GenericSet{sb.Finish()}
+}
+
+func newSetFromFrozenSet(s frozen.Set) Set {
+	if s.Count() == 0 {
+		return None
+	}
+	return GenericSet{s}
 }
 
 // NewBool constructs a bool as a relation.
@@ -191,29 +198,25 @@ func (s GenericSet) With(value Value) Set {
 // Without returns the original genericSet without the given value. Iff the value was
 // already absent, the original genericSet is returned.
 func (s GenericSet) Without(value Value) Set {
-	set := s.set.Without(value)
-	if set == s.set {
-		return s
-	}
-	return GenericSet{set}
+	return newSetFromFrozenSet(s.set.Without(value))
 }
 
 // Map maps values per f.
 func (s GenericSet) Map(f func(v Value) (Value, error)) (Set, error) {
-	result := None
+	sb := NewSetBuilder()
 	for e := s.Enumerator(); e.MoveNext(); {
 		v, err := f(e.Current())
 		if err != nil {
 			return nil, err
 		}
-		result = result.With(v)
+		sb.Add(v)
 	}
-	return result, nil
+	return sb.Finish()
 }
 
 // Where returns a new genericSet with all the Values satisfying predicate p.
 func (s GenericSet) Where(p func(v Value) (bool, error)) (_ Set, err error) {
-	s.set = s.set.Where(func(elem interface{}) bool {
+	set := s.set.Where(func(elem interface{}) bool {
 		if err != nil {
 			return false
 		}
@@ -227,7 +230,10 @@ func (s GenericSet) Where(p func(v Value) (bool, error)) (_ Set, err error) {
 		}
 		return match
 	})
-	return s, err
+	if err != nil {
+		return nil, err
+	}
+	return newSetFromFrozenSet(set), nil
 }
 
 func (s GenericSet) CallAll(_ context.Context, arg Value, b SetBuilder) error {

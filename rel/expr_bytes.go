@@ -46,10 +46,7 @@ func (b BytesExpr) Eval(ctx context.Context, local Scope) (Value, error) {
 				return nil, WrapContextErr(err, b, local)
 			}
 			bytes = append(bytes, []byte(string(v.s))...)
-		case GenericSet:
-			if !v.set.IsEmpty() {
-				return nil, WrapContextErr(errors.Errorf("BytesExpr.Eval: Set %v is not supported", expr), b, local)
-			}
+		case EmptySet:
 		default:
 			return nil, WrapContextErr(errors.Errorf("BytesExpr.Eval: %s is not supported", ValueTypeAsString(v)), b, local)
 		}

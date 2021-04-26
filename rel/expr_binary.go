@@ -163,7 +163,10 @@ func NewWithoutExpr(scanner parser.Scanner, a, b Expr) Expr {
 	return newBinExpr(scanner, a, b, "without", "(%s without %s)",
 		func(_ context.Context, a, b Value, _ Scope) (Value, error) {
 			if x, ok := a.(Set); ok {
-				return x.Without(b), nil
+				if s := x.Without(b); s.IsTrue() {
+					return s, nil
+				}
+				return None, nil
 			}
 			return nil, errors.Errorf("'without' lhs must be a set, not %s", ValueTypeAsString(a))
 		})
@@ -176,13 +179,20 @@ func NewWhereExpr(scanner parser.Scanner, a, pred Expr) Expr {
 		func(ctx context.Context, a, pred Value, local Scope) (Value, error) {
 			if x, ok := a.(Set); ok {
 				if p, ok := pred.(Closure); ok {
-					return x.Where(func(v Value) (bool, error) {
+					s, err := x.Where(func(v Value) (bool, error) {
 						r, err := SetCall(ctx, p, v)
 						if err != nil {
 							return false, err
 						}
 						return r.IsTrue(), nil
 					})
+					if err != nil {
+						return nil, err
+					}
+					if !s.IsTrue() {
+						return None, nil
+					}
+					return s, nil
 				}
 				return nil, errors.Errorf("'where' rhs must be a function, not %s", ValueTypeAsString(a))
 			}

@@ -62,8 +62,8 @@ func AsArray(v Value) (Array, bool) {
 	switch v := v.(type) {
 	case Array:
 		return v, true
-	case Set:
-		return Array{}, !v.IsTrue()
+	case EmptySet:
+		return Array{}, true
 	}
 	return Array{}, false
 }
@@ -315,6 +315,9 @@ func (a Array) Without(value Value) Set {
 				result := a.clone()
 				result.values[i] = nil
 				result.count--
+				if !result.IsTrue() {
+					return None
+				}
 				return result
 			}
 		}

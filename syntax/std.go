@@ -58,7 +58,7 @@ func StdScope() rel.Scope {
 						// keyVal won't be a rel.String if it's empty.
 						if _, ok := keyVal.(rel.String); ok {
 							key = keyVal.String()
-						} else if _, ok := keyVal.(rel.GenericSet); ok && !keyVal.IsTrue() {
+						} else if _, ok := keyVal.(rel.EmptySet); ok {
 							key = ""
 						} else {
 							return nil, fmt.Errorf(

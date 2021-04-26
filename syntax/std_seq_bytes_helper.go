@@ -1,6 +1,7 @@
 package syntax
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -10,11 +11,20 @@ import (
 )
 
 // Joins byte array joiner to subject.
-func bytesJoin(joiner, subject rel.Bytes) rel.Value {
+func bytesJoin(joiner rel.Value, subject rel.Bytes) rel.Value {
+	var j []byte
+	switch v := joiner.(type) {
+	case rel.Bytes:
+		j = v.Bytes()
+	case rel.EmptySet:
+		j = []byte{}
+	default:
+		panic(fmt.Errorf("bytesJoin: unsupported joiner type %T", joiner))
+	}
 	result := make([]byte, 0, subject.Count())
 	for index, e := range subject.Bytes() {
 		if index > 0 && index < subject.Count() {
-			result = append(result, joiner.Bytes()...)
+			result = append(result, j...)
 		}
 		result = append(result, e)
 	}
@@ -29,7 +39,7 @@ func bytesSplit(delimiter rel.Value, subject rel.Bytes) (rel.Value, error) {
 	switch delimiter := delimiter.(type) {
 	case rel.Bytes:
 		splitted = strings.Split(subject.String(), delimiter.String())
-	case rel.GenericSet:
+	case rel.GenericSet, rel.EmptySet:
 		delimStr, is := tools.ValueAsString(delimiter)
 		if !is {
 			return nil, errors.Errorf("//seq.split: delim not a string: %v", delimiter)
