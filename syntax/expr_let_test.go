@@ -110,9 +110,13 @@ func TestExprLetTuplePattern(t *testing.T) { //nolint:dupl
 	AssertCodesEvalToSameValue(t, `2`, `let a = 1; let (:a, b: (a)) = (a: 2, b: 1); a`)
 	AssertCodesEvalToSameValue(t, `2`, `let (?:a:1) = (a: 2); a`)
 	AssertCodesEvalToSameValue(t, `2`, `let (a?: x:1) = (a: 2); x`)
+	AssertCodesEvalToSameValue(t, `1`, `let (?:a:1, ?:b:2) = (b: 2); a`)
 	AssertCodesEvalToSameValue(t, `(b: 2, c: 3)`, `let (a: 1, ...tail) = (a: 1, b: 2, c: 3); tail`)
 	AssertCodesEvalToSameValue(t, `(b: 2)`, `let (a: 1, ...tail, c: 3) = (a: 1, b: 2, c: 3); tail`)
+	AssertCodesEvalToSameValue(t, `(b: 2, d: 4, e: 5)`, `let (a: 1, ...tail, c: 3) = (a: 1, b: 2, c: 3, d: 4, e: 5); tail`)
+	AssertCodesEvalToSameValue(t, `(b: 2, d: 4)`, `let (a: 1, ...tail, c: 3, e: 5) = (a: 1, b: 2, c: 3, d: 4, e: 5); tail`)
 	AssertCodesEvalToSameValue(t, `()`, `let (a: 1, b: 2, c: 3, ...tail) = (a: 1, b: 2, c: 3); tail`)
+	AssertCodesEvalToSameValue(t, `(b: 2)`, `let (...tail, a:1, c: 3) = (a: 1, b: 2, c: 3); tail`)
 	AssertCodesEvalToSameValue(t, `1`, `let (?:a:1, b: 2) = (b: 2); a`)
 	AssertCodesEvalToSameValue(t, `[1, 2, 3]`, `let (?:a:1, ?:b:2, ?:c:3, d: 4) = (d: 4); [a, b, c]`)
 	AssertCodesEvalToSameValue(t, `[1, 2, 3]`, `let (?:a:1, ?:b:2, ?:c:3) = (); [a, b, c]`)
@@ -147,7 +151,8 @@ func TestExprLetTuplePattern(t *testing.T) { //nolint:dupl
 	)
 	AssertCodeParseErrors(t,
 		"duplicate fields found in pattern (a: x, a: x)",
-		`let (a: x, a: x) = (a: 4); x`)
+		`let (a: x, a: x) = (a: 4); x`,
+	)
 	AssertCodeErrors(t,
 		"non-deterministic pattern is not supported",
 		`let (a: 1, ..., c: 3, ..., e: 5) = (a: 1, b: 2, c: 3, d: 4, e: 5); a`,
