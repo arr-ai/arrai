@@ -14,12 +14,13 @@ import (
 
 // Expr represents an arr.ai expression.
 type Expr interface {
-	// Require a String() method.
+	// All exprs can be serialized to strings with the String() method.
 	fmt.Stringer
 
 	// Eval evaluates the expr in a given scope.
 	Eval(ctx context.Context, local Scope) (Value, error)
 
+	// Source returns the Scanner that locates the expression in a source file.
 	Source() parser.Scanner
 }
 
