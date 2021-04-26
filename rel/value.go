@@ -3,10 +3,11 @@ package rel
 import (
 	"context"
 	"fmt"
-
 	"github.com/arr-ai/frozen"
 	"github.com/arr-ai/wbnf/parser"
 	"github.com/go-errors/errors"
+	"reflect"
+	"unsafe"
 )
 
 // Expr represents an arr.ai expression.
@@ -210,10 +211,55 @@ func NewValue(v interface{}) (Value, error) {
 		return NewBytes(x), nil
 	case map[string]interface{}:
 		return NewTupleFromMap(x)
+	case []Value:
+		return NewSet(x...)
 	case []interface{}:
 		return NewSetFrom(x...)
 	default:
-		return nil, errors.Errorf("%v (%[1]T) not convertible to Value", v)
+		// Fall back on reflection for custom types.
+		return reflectNewValue(x)
+	}
+}
+
+// reflectNewValue uses reflection to inspect the type of x and unpack its values.
+func reflectNewValue(x interface{}) (Value, error) {
+	t := reflect.TypeOf(x)
+	switch t.Kind() {
+	case reflect.Ptr:
+		return NewValue(reflect.ValueOf(x).Elem().Interface())
+	case reflect.Array, reflect.Slice:
+		s := reflect.ValueOf(x)
+		vs := make([]Value, 0, s.Len())
+		for i := 0; i < s.Len(); i++ {
+			v, err := NewValue(s.Index(i).Interface())
+			if err != nil {
+				return nil, err
+			}
+			vs = append(vs, v)
+		}
+		return NewSet(vs...)
+	case reflect.Struct:
+		s := map[string]interface{}{}
+
+		// Ensure x is accessible.
+		rv := reflect.ValueOf(x)
+		xv := reflect.New(rv.Type()).Elem()
+		xv.Set(rv)
+
+		for i := 0; i < t.NumField(); i++ {
+			// Ensure each field of x is accessible.
+			f := xv.Field(i)
+			f = reflect.NewAt(f.Type(), unsafe.Pointer(f.UnsafeAddr())).Elem()
+
+			v, err := NewValue(f.Interface())
+			if err != nil {
+				return nil, err
+			}
+			s[t.Field(i).Name] = v
+		}
+		return NewTupleFromMap(s)
+	default:
+		return nil, errors.Errorf("%v (%[1]T) not convertible to Value", x)
 	}
 }
 

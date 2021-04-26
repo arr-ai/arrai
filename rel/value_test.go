@@ -33,8 +33,31 @@ func TestSetCall(t *testing.T) {
 
 	result, err = SetCall(ctx, set, NewNumber(1))
 	require.NoError(t, err)
-	assert.True(t, result.Equal(NewNumber(42)))
+	AssertEqualValues(t, result, NewNumber(42))
+
 	result, err = SetCall(ctx, set, NewNumber(2))
 	require.NoError(t, err)
-	assert.True(t, result.Equal(NewNumber(24)))
+	AssertEqualValues(t, result, NewNumber(24))
+}
+
+type Foo struct {
+	a int
+	b int
+}
+
+func TestNewValue(t *testing.T) {
+	x := []interface{}{map[string]interface{}{"a": 1, "b": 2}}
+
+	actual, err := NewValue(x)
+	require.NoError(t, err)
+
+	expected, err := NewSet(NewTuple(NewIntAttr("a", 1), NewIntAttr("b", 2)))
+	require.NoError(t, err)
+
+	y := []*Foo{{1, 2}}
+	actual, err = NewValue(y)
+	require.NoError(t, err)
+	AssertEqualValues(t, expected, actual)
+
+	//AssertEqualValues(t, expected, actual)
 }
