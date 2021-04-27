@@ -10,14 +10,16 @@ let multipleHtml =
     <tr><td>b</td><td>[1, 2, 3]</td></tr>
 </table>';
 
+let norm = \s //seq.sub('\r\n', '\n', s);
+
 (
     markdown: (
-        empty: markdown({}) = '|Key|Value|\n',
-        single: markdown(single) = '|Key|Value|\n|a|1|',
-        multiple: markdown(multiple) = '|Key|Value|\n|a|1|\n|b|[1, 2, 3]|',
+        empty: norm(markdown({})) = '|Key|Value|\n',
+        single: norm(markdown(single)) = '|Key|Value|\n|a|1|',
+        multiple: norm(markdown(multiple)) = '|Key|Value|\n|a|1|\n|b|[1, 2, 3]|',
     ),
     html: (
-        empty: html({}) = '<table>\n    <tr><th>Key</th><th>Value</th></tr>\n</table>',
-        multiple: html(multiple) = multipleHtml,
+        empty: norm(html({})) = '<table>\n    <tr><th>Key</th><th>Value</th></tr>\n</table>',
+        multiple: norm(html(multiple)) = multipleHtml,
     ),
 )
