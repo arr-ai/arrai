@@ -214,6 +214,6 @@ func TestRunFile_TestInSet(t *testing.T) {
 	require.NotZero(t, file.wallTime)
 	require.ElementsMatch(t, file.results, []testResult{
 		{name: "test1", outcome: Passed},
-		{name: "category1", outcome: Invalid, message: "Sets are not allowed as test containers." +
+		{name: "category1", outcome: Invalid, message: "Sets are not allowed as test containers. " +
 			"Please use tuples, dictionaries or arrays."}})
 }
