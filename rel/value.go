@@ -3,9 +3,10 @@ package rel
 import (
 	"context"
 	"fmt"
-	"github.com/iancoleman/strcase"
 	"reflect"
 	"unsafe"
+
+	"github.com/iancoleman/strcase"
 
 	"github.com/arr-ai/frozen"
 	"github.com/arr-ai/wbnf/parser"
