@@ -156,10 +156,18 @@ func TestRunFile_InvalidArrai(t *testing.T) {
 	require.Error(t, err)
 }
 
+func TestRunFile_AssertFails(t *testing.T) {
+	t.Parallel()
+
+	file := testFile{source: "//test.assert.equal(1, 2)"}
+	err := runFile(context.Background(), &file)
+	require.Error(t, err)
+}
+
 func TestRunFile_TwoPass(t *testing.T) {
 	t.Parallel()
 
-	file := testFile{source: "(test1: 1 = 1, test2: 5 < 7)"}
+	file := testFile{source: "(test1: 1 = 1, test2: //test.assert.equal(2, 2))"}
 	err := runFile(context.Background(), &file)
 	require.NoError(t, err)
 	require.NotZero(t, file.wallTime)
