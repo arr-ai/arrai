@@ -2,12 +2,13 @@ package test
 
 import (
 	"fmt"
-	"golang.org/x/text/language"
-	"golang.org/x/text/message"
 	"io"
 	"sort"
 	"strings"
 	"unicode/utf8"
+
+	"golang.org/x/text/language"
+	"golang.org/x/text/message"
 )
 
 func Report(w io.Writer, testFiles []testFile) error {
@@ -41,7 +42,8 @@ func reportFile(w io.Writer, testFile testFile, maxName int) {
 		return left.outcome > right.outcome
 	})
 
-	message.NewPrinter(language.English).Fprintf(w, "\n=======  %s (%dms)\n", testFile.path, testFile.wallTime.Milliseconds())
+	message.NewPrinter(language.English).
+		Fprintf(w, "\n=======  %s (%dms)\n", testFile.path, testFile.wallTime.Milliseconds())
 	for _, result := range results {
 		reportTest(w, result, maxName)
 	}
@@ -66,7 +68,6 @@ func reportTest(w io.Writer, test testResult, maxName int) {
 	if test.message != "" {
 		fmt.Fprintf(w, "      %s\n", strings.ReplaceAll(test.message, "\n", "\n      "))
 	}
-
 }
 
 func reportStats(w io.Writer, stats testStats) {

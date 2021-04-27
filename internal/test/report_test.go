@@ -2,11 +2,12 @@ package test
 
 import (
 	"bytes"
-	"github.com/stretchr/testify/require"
 	"strconv"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/require"
 )
 
 // ===== report
@@ -53,7 +54,8 @@ func TestReportFile_SortsCorrectly(t *testing.T) {
 		{name: "passedA", outcome: Passed},
 		{name: "passedA", outcome: Passed, message: "Duplicate"},
 	}
-	file.reportShouldContain(t, "passedA", "Duplicate", "ignoredA", "ignoredB", "invalidA", "invalidB", "failedA", "failedB")
+	file.reportShouldContain(t, "passedA", "Duplicate", "ignoredA", "ignoredB", "invalidA", "invalidB",
+		"failedA", "failedB")
 }
 
 // ===== reportTest

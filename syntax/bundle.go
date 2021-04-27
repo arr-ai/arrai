@@ -6,13 +6,14 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/spf13/afero"
 	"io"
 	"path"
 	"path/filepath"
 	"regexp"
 	"runtime"
 	"strings"
+
+	"github.com/spf13/afero"
 
 	"github.com/anz-bank/pkg/mod"
 	"github.com/arr-ai/arrai/pkg/ctxfs"

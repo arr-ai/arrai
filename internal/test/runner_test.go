@@ -3,11 +3,12 @@ package test
 import (
 	"bytes"
 	"context"
+	"os"
+	"testing"
+
 	"github.com/arr-ai/arrai/pkg/ctxfs"
 	"github.com/arr-ai/arrai/pkg/ctxrootcache"
 	"github.com/stretchr/testify/require"
-	"os"
-	"testing"
 )
 
 func TestRunTests_Pass(t *testing.T) {
@@ -196,7 +197,8 @@ func TestRunFile_OneInvalidOnePass(t *testing.T) {
 	require.NoError(t, err)
 	require.NotZero(t, file.wallTime)
 	require.ElementsMatch(t, file.results, []testResult{
-		{name: "test1", outcome: Invalid, message: "Could not determine test outcome due to non-boolean result of type 'rel.Number': 1"},
+		{name: "test1", outcome: Invalid,
+			message: "Could not determine test outcome due to non-boolean result of type 'rel.Number': 1"},
 		{name: "test2", outcome: Passed}})
 }
 
@@ -212,5 +214,6 @@ func TestRunFile_TestInSet(t *testing.T) {
 	require.NotZero(t, file.wallTime)
 	require.ElementsMatch(t, file.results, []testResult{
 		{name: "test1", outcome: Passed},
-		{name: "category1", outcome: Invalid, message: "Sets are not allowed as test containers. Please use tuples, dictionaries or arrays."}})
+		{name: "category1", outcome: Invalid, message: "Sets are not allowed as test containers." +
+			"Please use tuples, dictionaries or arrays."}})
 }

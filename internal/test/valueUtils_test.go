@@ -2,14 +2,15 @@ package test
 
 import (
 	"context"
+	"testing"
+
 	"github.com/arr-ai/arrai/pkg/arraictx"
 	"github.com/arr-ai/arrai/rel"
 	"github.com/arr-ai/arrai/syntax"
 	"github.com/stretchr/testify/require"
-	"testing"
 )
 
-func TestIsLiteralTrue(t *testing.T) {
+func TestIsLiteralTrue(t *testing.T) { //nolint:dupl
 	t.Parallel()
 
 	require.True(t, isLiteralTrue(eval("true")))
@@ -27,7 +28,7 @@ func TestIsLiteralTrue(t *testing.T) {
 	require.False(t, isLiteralTrue(eval("(val: true)")))
 }
 
-func TestIsLiteralFalse(t *testing.T) {
+func TestIsLiteralFalse(t *testing.T) { //nolint:dupl
 	t.Parallel()
 
 	require.True(t, isLiteralFalse(eval("false")))
@@ -118,7 +119,7 @@ func forInput(source string) leavesShouldBe {
 }
 
 func eval(source string) rel.Value {
-	value, _ := evalErr(source)
+	value, _ := evalErr(source) //nolint:errcheck
 	return value
 }
 

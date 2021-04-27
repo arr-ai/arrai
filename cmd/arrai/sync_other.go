@@ -21,6 +21,7 @@ import (
 	"github.com/go-errors/errors"
 	"github.com/rjeczalik/notify"
 	log "github.com/sirupsen/logrus"
+	"github.com/spf13/afero"
 	"github.com/urfave/cli/v2"
 	"google.golang.org/grpc"
 )

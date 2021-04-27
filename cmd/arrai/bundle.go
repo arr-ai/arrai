@@ -2,10 +2,11 @@ package main
 
 import (
 	"context"
-	"github.com/spf13/afero"
 	"io"
 	"os"
 	"path/filepath"
+
+	"github.com/spf13/afero"
 
 	"github.com/arr-ai/arrai/pkg/arraictx"
 	"github.com/arr-ai/arrai/pkg/ctxfs"

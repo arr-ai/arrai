@@ -3,12 +3,13 @@ package test
 import (
 	"context"
 	"fmt"
-	"github.com/spf13/afero"
 	"io"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
+
+	"github.com/spf13/afero"
 
 	"github.com/arr-ai/arrai/pkg/ctxfs"
 	"github.com/arr-ai/arrai/rel"
@@ -60,7 +61,7 @@ func getTestFiles(ctx context.Context, path string) ([]testFile, error) {
 			return nil
 		}
 
-		if strings.HasSuffix(path, "_test.arrai") == false {
+		if strings.HasSuffix(path, "_test.arrai") == false { //nolint:gosimple
 			return nil
 		}
 
@@ -102,13 +103,15 @@ func runFile(ctx context.Context, file *testFile) error {
 			result.outcome = Passed
 		} else if isLiteralFalse(val) {
 			result.outcome = Failed
-			result.message = fmt.Sprint("Expected: true. Actual: false.")
+			result.message = "Expected: true. Actual: false."
 		} else {
 			result.outcome = Invalid
-			result.message = fmt.Sprintf("Could not determine test outcome due to non-boolean result of type '%T': %s", val, val.String())
+			result.message = fmt.Sprintf("Could not determine test outcome due to non-boolean result of type '%T': %s",
+				val, val.String())
 
 			if _, ok := val.(rel.GenericSet); ok {
-				result.message = fmt.Sprintf("Sets are not allowed as test containers. Please use tuples, dictionaries or arrays.")
+				result.message = fmt.Sprintf("Sets are not allowed as test containers. Please use tuples, " +
+					"dictionaries or arrays.")
 			}
 		}
 

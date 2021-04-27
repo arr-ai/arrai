@@ -5,11 +5,12 @@ package syntax
 import (
 	"context"
 	"fmt"
-	"github.com/spf13/afero"
 	"os"
 	"path/filepath"
 	"runtime"
 	"strings"
+
+	"github.com/spf13/afero"
 
 	"github.com/arr-ai/arrai/pkg/arraictx"
 

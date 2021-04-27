@@ -2,10 +2,11 @@ package main
 
 import (
 	"context"
+	"os"
+
 	"github.com/arr-ai/arrai/internal/test"
 	"github.com/arr-ai/arrai/pkg/arraictx"
 	"github.com/urfave/cli/v2"
-	"os"
 )
 
 var testCommand = &cli.Command{

@@ -2,8 +2,9 @@ package test
 
 import (
 	"fmt"
-	"github.com/arr-ai/arrai/rel"
 	"strings"
+
+	"github.com/arr-ai/arrai/rel"
 )
 
 // ForeachLeaf visits all leaves in an test tree, invoking the leafAction callback for each leaf encountered.
