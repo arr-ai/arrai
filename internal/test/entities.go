@@ -2,23 +2,23 @@ package test
 
 import "time"
 
-type TestFile struct {
+type testFile struct {
 	path     string
 	source   string
 	wallTime time.Duration
-	results  []TestResult
+	results  []testResult
 }
 
-type TestResult struct {
+type testResult struct {
 	name    string
-	outcome TestOutcome
+	outcome testOutcome
 	message string
 }
 
-type TestOutcome int
+type testOutcome int
 
 const (
-	Failed TestOutcome = iota
+	Failed testOutcome = iota
 	Invalid
 	Ignored
 	Passed

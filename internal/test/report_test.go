@@ -25,7 +25,7 @@ func TestReport_TwoFilesFail(t *testing.T) {
 	t.Parallel()
 
 	files := generateFiles()
-	files[1].results[0] = TestResult{name: "testB", outcome: Failed, message: "Uh oh"}
+	files[1].results[0] = testResult{name: "testB", outcome: Failed, message: "Uh oh"}
 	err := reportShouldContain(t, files,
 		"/path/to/file1.arrai", "1,234ms", "PASS", "testA",
 		"/path/to/file2.arrai", "4,321ms", "FAIL", "testB",
@@ -43,7 +43,7 @@ func TestReportFile_WithTest(t *testing.T) {
 func TestReportFile_SortsCorrectly(t *testing.T) {
 	t.Parallel()
 	file := generateFiles()[0]
-	file.results = []TestResult{
+	file.results = []testResult{
 		{name: "failedB", outcome: Failed},
 		{name: "failedA", outcome: Failed},
 		{name: "ignoredB", outcome: Ignored},
@@ -60,25 +60,25 @@ func TestReportFile_SortsCorrectly(t *testing.T) {
 
 func TestReportTest_Passed(t *testing.T) {
 	t.Parallel()
-	TestResult{name: "test1", outcome: Passed}.
+	testResult{name: "test1", outcome: Passed}.
 		reportShouldContain(t, "PASS", "test1")
 }
 
 func TestReportTest_Failed(t *testing.T) {
 	t.Parallel()
-	TestResult{name: "test2", outcome: Failed, message: "Failed!"}.
+	testResult{name: "test2", outcome: Failed, message: "Failed!"}.
 		reportShouldContain(t, "FAIL", "test2", "Failed!")
 }
 
 func TestReportTest_Invalid(t *testing.T) {
 	t.Parallel()
-	TestResult{name: "test3", outcome: Invalid, message: "Invalid!"}.
+	testResult{name: "test3", outcome: Invalid, message: "Invalid!"}.
 		reportShouldContain(t, "??", "test3", "Invalid!")
 }
 
 func TestReportTest_Ignored(t *testing.T) {
 	t.Parallel()
-	TestResult{name: "test4", outcome: Ignored}.
+	testResult{name: "test4", outcome: Ignored}.
 		reportShouldContain(t, "SKIP", "test4")
 }
 
@@ -98,20 +98,20 @@ func TestReportStats_Failed(t *testing.T) {
 
 // ===== Helpers
 
-func reportShouldContain(t *testing.T, files []TestFile, keyPhrases ...string) error {
+func reportShouldContain(t *testing.T, files []testFile, keyPhrases ...string) error {
 	buf := bytes.Buffer{}
 	err := Report(&buf, files)
 	shouldContain(t, buf.String(), keyPhrases...)
 	return err
 }
 
-func (file TestFile) reportShouldContain(t *testing.T, keyPhrases ...string) {
+func (file testFile) reportShouldContain(t *testing.T, keyPhrases ...string) {
 	buf := bytes.Buffer{}
 	reportFile(&buf, file, 10)
 	shouldContain(t, buf.String(), keyPhrases...)
 }
 
-func (test TestResult) reportShouldContain(t *testing.T, keyPhrases ...string) {
+func (test testResult) reportShouldContain(t *testing.T, keyPhrases ...string) {
 	buf := bytes.Buffer{}
 	reportTest(&buf, test, 10)
 	shouldContain(t, buf.String(), keyPhrases...)
@@ -135,15 +135,15 @@ func shouldContain(t *testing.T, str string, keyPhrases ...string) {
 	}
 }
 
-func generateFiles() []TestFile {
-	return []TestFile{
+func generateFiles() []testFile {
+	return []testFile{
 		{
 			path: "/path/to/file1.arrai", wallTime: 1234 * time.Millisecond,
-			results: []TestResult{{name: "testA", outcome: Passed}},
+			results: []testResult{{name: "testA", outcome: Passed}},
 		},
 		{
 			path: "/path/to/file2.arrai", wallTime: 4321 * time.Millisecond,
-			results: []TestResult{{name: "testB", outcome: Passed}},
+			results: []testResult{{name: "testB", outcome: Passed}},
 		},
 	}
 }

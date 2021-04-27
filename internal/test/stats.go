@@ -5,7 +5,7 @@ import (
 	"unicode/utf8"
 )
 
-func calcStats(testFiles []TestFile) testStats {
+func calcStats(testFiles []testFile) testStats {
 	var stats testStats
 
 	for _, testFile := range testFiles {

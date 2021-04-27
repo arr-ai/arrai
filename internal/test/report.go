@@ -10,7 +10,7 @@ import (
 	"unicode/utf8"
 )
 
-func Report(w io.Writer, testFiles []TestFile) error {
+func Report(w io.Writer, testFiles []testFile) error {
 	stats := calcStats(testFiles)
 
 	for _, testFile := range testFiles {
@@ -26,7 +26,7 @@ func Report(w io.Writer, testFiles []TestFile) error {
 	return nil
 }
 
-func reportFile(w io.Writer, testFile TestFile, maxName int) {
+func reportFile(w io.Writer, testFile testFile, maxName int) {
 	results := testFile.results
 
 	// Sort test results by outcome then by test name
@@ -47,7 +47,7 @@ func reportFile(w io.Writer, testFile TestFile, maxName int) {
 	}
 }
 
-func reportTest(w io.Writer, test TestResult, maxName int) {
+func reportTest(w io.Writer, test testResult, maxName int) {
 	const color = "\033[38;5;255;%d;1m%s\033[0m"
 
 	switch test.outcome {

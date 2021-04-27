@@ -18,7 +18,7 @@ func TestNewTest(t *testing.T) {
 	t.Parallel()
 
 	var s strings.Builder
-	err := test.RunTestsInPath(arraictx.InitRunCtx(context.Background()), &s, "./../../examples/test_new")
+	err := test.RunTests(arraictx.InitRunCtx(context.Background()), &s, "./../../examples/test_new")
 	require.NotNil(t, err)
 
 	fmt.Println("\n\n*****\n" + s.String() + "*****\n\n")

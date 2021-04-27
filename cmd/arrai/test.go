@@ -19,5 +19,5 @@ func doTest(c *cli.Context) error {
 	path := c.Args().Get(0)
 	ctx := arraictx.InitCliCtx(context.Background(), c)
 
-	return test.RunTestsInPath(ctx, os.Stdout, path)
+	return test.RunTests(ctx, os.Stdout, path)
 }
