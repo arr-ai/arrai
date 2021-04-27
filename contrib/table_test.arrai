@@ -15,11 +15,15 @@ let norm = \s //seq.sub('\r\n', '\n', s);
 (
     markdown: (
         empty: norm(markdown({})) = '|Key|Value|\n',
+        empty_actual: markdown({}),
+        empty_actual_norm: norm(markdown({})),
         single: norm(markdown(single)) = '|Key|Value|\n|a|1|',
         multiple: norm(markdown(multiple)) = '|Key|Value|\n|a|1|\n|b|[1, 2, 3]|',
     ),
     html: (
         empty: norm(html({})) = '<table>\n    <tr><th>Key</th><th>Value</th></tr>\n</table>',
         multiple: norm(html(multiple)) = multipleHtml,
+        multiple_actual: html(multiple),
+        multiple_actual_norm: norm(html(multiple)),
     ),
 )
