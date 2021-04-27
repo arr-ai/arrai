@@ -1,9 +1,31 @@
-# 5 test cases
+let str = "Hello, arrai!";
 (
-    # Added expression let to clarify the actual result can be a complex expression
-    testCase1: //test.assert.equal("Hello, arrai!", let words = ["Hello", "arrai!"];//seq.join(", ", words)),
-    testCase2: //test.assert.unequal("Hello, arrai!", //seq.join(", ", ["Nihao", "arrai!"])),
-    testCase3: //test.assert.size(2, {"Hello", "arrai!"}),
-    testCase4: //test.assert.true({"Hello", "arrai!"}),
-    testCase5: //test.assert.false({}),
+    tuple:
+    (
+        testCase1: str = let words = ["Hello", "arrai!"];//seq.join(", ", words),
+        testCase2: str != //seq.join(", ", ["Nihao", "arrai!"]),
+        notATest1: 5,
+        notATest2: { 1 = 1, 2 = 1 },
+        _ignoredTest: 1 = 2,
+    ),
+    _ignoredContainer:
+    (
+        testCase1: 1 = 2,
+        _testCase2: 1 = 2,
+    ),
+    testCase3: 2 = {"Hello", "arrai!"} count,
+    dict:
+    {
+        "testCase4": 4 = 7,
+        "testCase5": (a: 5 = 5, b: 6 = 6),
+    },
+    array:
+    [
+        7 = 7,
+        [8 = 8, (a: 9 = 9, b: 10 = 10)],
+        let value = {str}; cond {value: true} = true,
+        let value = {}; cond {value: true} = false,
+        true = false,
+    ],
+    deep: (deeper: (deepest: 9 = 9)),
 )

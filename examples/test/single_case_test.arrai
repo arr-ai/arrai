@@ -1,1 +1,1 @@
-//test.assert.equal("Hello", //str.title("hello"))
+"Hello" = //str.title("hello")

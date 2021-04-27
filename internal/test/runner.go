@@ -16,8 +16,12 @@ import (
 )
 
 func RunTests(ctx context.Context, w io.Writer, path string) error {
-	if path == "" {
-		path = "."
+	if path == "" || path == "." {
+		var err error
+		path, err = os.Getwd()
+		if err != nil {
+			return err
+		}
 	}
 
 	files, err := getTestFiles(ctx, path)
