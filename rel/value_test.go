@@ -54,6 +54,8 @@ func TestReflectNewValue(t *testing.T) {
 		// All struct field names are serialized to start lowercase.
 		CASE     int
 		children []*Foo
+		// Non-string maps are serialized to dictionaries.
+		mixedMap map[interface{}]interface{}
 	}
 
 	input := []*Foo{{
@@ -66,6 +68,7 @@ func TestReflectNewValue(t *testing.T) {
 		CASE: 0,
 		// Unset fields of structs are serialized with default empty values.
 		children: []*Foo{{num: 2}},
+		mixedMap: map[interface{}]interface{}{1: 2, "k": nil},
 	}}
 
 	actual, err := NewValue(input)
@@ -78,6 +81,10 @@ func TestReflectNewValue(t *testing.T) {
 		NewAttr("arr", NewArray(NewNumber(2), NewNumber(1))),
 		NewAttr("none", None),
 		NewAttr("cASE", NewNumber(0)),
+		NewAttr("mixedMap", MustNewDict(false,
+			NewDictEntryTuple(NewNumber(1), NewNumber(2)),
+			NewDictEntryTuple(NewString([]rune("k")), None),
+		)),
 		NewAttr("children", MustNewSet(NewTuple(
 			NewAttr("num", NewNumber(2)),
 			NewAttr("str", None),
@@ -85,6 +92,7 @@ func TestReflectNewValue(t *testing.T) {
 			NewAttr("arr", None),
 			NewAttr("none", None),
 			NewAttr("cASE", NewNumber(0)),
+			NewAttr("mixedMap", None),
 			NewAttr("children", None),
 		))),
 	))
