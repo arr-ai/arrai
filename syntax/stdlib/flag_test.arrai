@@ -140,14 +140,14 @@ let alias = flag.parser({'alias': (type: 'string', alias: 'a')});
             'bool': (type: 'bool', alias: 'b'),
             'default': (type: 'string', default: 'abc')
         });
-        {
+        [
             'Options:',
             '--bool, -b',
             '--default string (default: abc)',
             '--num, -n number',
             'takes a number',
             '--str string',
-        } => //test.assert.true(
+        ] >> //test.assert.true(
             //seq.contains(., help)
         )
     # TODO: test overlapping alias when errors can be tested
