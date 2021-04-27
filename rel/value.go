@@ -306,13 +306,8 @@ func reflectToValues(x interface{}, ordered bool) (Value, error) {
 	}
 	if ordered {
 		return NewArray(vs...), nil
-	} else {
-		return NewSet(vs...)
 	}
-}
-
-func reflectToArray(x interface{}) (Value, error) {
-	return reflectToValues(x, true)
+	return NewSet(vs...)
 }
 
 func reflectToSet(x interface{}) (Value, error) {
