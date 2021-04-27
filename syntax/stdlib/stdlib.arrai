@@ -1,6 +1,14 @@
 # This script provides a way for some functions in the standard library to be written in arr.ai. It takes the standard
 # library written in golang as a tuple and returns another tuple with additional functions written in arr.ai.
 \stdlib
-    stdlib +> (
-        flag: //{./flag}(stdlib)
-    )
+    let (@internal: internal, ...) = stdlib;
+    stdlib.~|@internal| +> (
+        flag: //{./flag}(stdlib),
+        encoding+>: (
+            xml: (
+                decoder: \config (decode: \byte internal.xml.decode(config, byte)),
+                decode: \byte internal.xml.decode((), byte),
+                encode: \input internal.xml.encode(input)
+            )
+        )
+   )

@@ -1,6 +1,46 @@
 The `encoding` library provides functions to convert data into built-in arr.ai values.
 The following functions are available by accessing the `//encoding` attribute.
 
+## `//encoding.xml.decode(xml <: string|bytes) <: array`
+
+`decode` takes either a `string` or `bytes` that represents a XML object and transforms it into an two-dimensional string array.
+
+For details of how Arr.ai encodes XML, see [Encoding](#Encoding) below.
+
+Usage:
+
+| example | equals |
+|:-|:-|
+| `//encoding.xml.decode('<?xml version="1.0"?><root></root>')` | `[(xmldecl: 'version="1.0"'), (elem: 'root')]` |
+
+## `//encoding.xml.decoder(config <: (:trimSurroundingWhitespace <: bool)).decode(xml <: string|bytes) <: array`
+
+`decoder` takes a tuple used to configure decoding and returns the decoding function:
+| config | description |
+|:-|:-|
+| `trimSurroundingWhitespace` | Strips newline strings `'\n'` used only for xml file formatting |
+
+Usage:
+
+| example | equals |
+|:-|:-|
+| `//encoding.xml.decoder((trimSurroundingWhitespace: true)).decode('<?xml version="1.0"?>\n')` | `[(xmldecl: 'version="1.0"')]` |
+| `//encoding.xml.decoder((trimSurroundingWhitespace: false)).decode('<?xml version="1.0"?>\n')` | `[(xmldecl: 'version="1.0"'), '\n']` |
+
+## `//encoding.xml.encode(xml <: array) <: bytes`
+
+`encode` takes an array of tuples and converts it into a XML object.
+
+For details of how Arr.ai encodes XML, see [Encoding](#Encoding) below.
+
+For details of the limitations of XML encoding, see [Limitations](#Limitations) below.
+
+Usage:
+
+| example | equals |
+|:-|:-|
+| `//encoding.xml.encode([(xmldecl: 'version="1.0"')])` | `<?xml version="1.0"?>` |
+
 ## `//encoding.csv.decode(csv <: string|bytes) <: array`
 
 `decode` takes either a `string` or `bytes` that represents a CSV object and transforms it into an two-dimensional string array.
@@ -11,7 +51,7 @@ Usage:
 |:-|:-|
 | `//encoding.csv.decode('a,b,c\n1,2,3')` | `[['a', 'b', 'c'], ['1', '2', '3']]` |
 
-## `//encoding.csv.decoder(config <: (comma <: int, comment <: int)) <: (\(csv <: string|bytes) <: array)`
+## `//encoding.csv.decoder(config <: (comma <: int, comment <: int)) <: ((csv <: string|bytes) <: array)`
 
 `decoder` takes a tuple used to configure decoding and returns the decoding function.
 | config | description |
@@ -54,17 +94,6 @@ Usage:
 | `//encoding.csv.encoder((comma: %:))([['a', 'b', 'c'], ['1', '2', '3']])` | `<<'a:b:c\n1:2:3'>>` |
 | `//encoding.csv.encoder((crlf: true))([['a', 'b', 'c'], ['1', '2', '3']])` | `<<'a,b,c\r\n1,2,3'>>` |
 
-## `//encoding.json.encode(jsonDefinition <: set) <: string|bytes`
-
-`encode` is the reverse of `decode`. It takes a built-in arr.ai value to `bytes` that represents a JSON object.
-
-Usage:
-
-| example | equals |
-|:-|:-|
-| `//encoding.json.encode({'hello': 123, 'hi': (s: 'abc'), 'yo': (a: [1,2,3])})` | `'{"hello":123,"hi":"abc","yo":[1,2,3]}'` |
-
-
 ## `//encoding.json.decode(json <: string|bytes) <: set`
 
 `decode` takes either a `string` or `bytes` that represents a JSON object. `json`
@@ -105,7 +134,7 @@ Usage:
 ## `//encoding.yaml.decode(json <: string|bytes) <: set`
 
 Exactly the same as `//encoding.json.decode`, but takes either a `string` or `bytes` that represents a YAML object.
-ss
+
 ## `//encoding.proto.descriptor(protobufDefinition <: bytes) <: tuple`
 
 This method accepts [protobuf](https://github.com/protocolbuffers/protobuf) binary files and returns a tuple representation of a [`FileDescriptorSet`](https://pkg.go.dev/google.golang.org/protobuf@v1.25.0/types/descriptorpb?tab=doc#FileDescriptorSet), which describes message types in the binary file. This tuple can be passed as the first parameter to `decode`.
@@ -150,14 +179,34 @@ The output is `shop`, a tuple representing a `Module`. It contains a field `apps
 
 [More sample code and data details](https://github.com/arr-ai/arrai/blob/master/syntax/pb_test.go)
 
-
 ## `//encoding.xlsx.decodeToRelation((sheet <: int, headRow <: int) <: tuple, xlsx <: bytes) <: relation`
 
 `decodeToRelation` transforms one sheet of an Excel workbook (XLSX format, loaded as bytes) to an arr.ai relation: a set of tuples (rows) with attributes names corresponding to the column headers and values to the cells.
 
 `decodeToRelation` can only decode relatively simple tabular spreadsheets with a single header given by `headRow`. The decoding:
- - ignores columns without heading values;
- - ignores rows with no cell values;
- - converts heading/column names to `snake_case`, replacing various special characters with `_`.
+
+- ignores columns without heading values;
+- ignores rows with no cell values;
+- converts heading/column names to `snake_case`, replacing various special characters with `_`.
 
 Note that unlike standard `decode` functions, this is not reversible; its output cannot be passed to an `encode` function to produce the original XLSX. Expect this function to be superseded by more canonical decoding functions in the future.
+
+## XML
+
+### Encoding
+
+| Description | XML Encoding | Arr.ai Encoding |
+|:-|:-|:-|
+| Declaration | `<?xml version="1.0"?>` | `[(xmldecl: 'version="1.0"')]` |
+| Directive |`<!DOCTYPE foo <!ELEMENT foo (#PCDATA)>>` | `(directive: 'DOCTYPE foo <!ELEMENT foo (#PCDATA)>')` |
+| Text | `Hello world` | `'Hello world'` |
+| Comment | `<!-- hello world -->` | `(comment: " helloworld ")` |
+| Element | `<root><child/></root>` | `[(elem: root, children: [(elem: child)])]` |
+| Element with namespace | `<root xmlns="foo"><child/></root>` | `[(elem: 'root', attrs: {(name: 'xmlns', value: 'foo')}, children: [(elem: 'child', ns: 'foo')], name: 'root', ns: 'foo')]` |
+| Attribute | `<root key="value"/>` | `[(elem: 'root', attrs: {(name: 'key', value: 'value')})]` |
+| Attribute with namespace | `<root xmlns:foo="foo.com" foo:key="value"/>` | `[(elem: 'root', attrs: {(name: 'foo', ns: 'xmlns', value: 'foo.com'), (name: 'key', ns: 'foo.com', value: 'value')})]` |
+
+### Limitations
+
+XML encoding does not currently support documents that have items with explicit namespaces (e.g. `<namespace:element />` or `namespace:attribute="value"`).
+This is due to [a limitation of the underlying XML parser](https://github.com/golang/go/issues/9519). Attempting to encode an XML document that includes explicit namespaces may result in an invalid document.

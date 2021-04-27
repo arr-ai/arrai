@@ -118,11 +118,10 @@ func (ExprClosure) Where(p func(v Value) (bool, error)) (Set, error) {
 	panic("unimplemented")
 }
 
-func (c ExprClosure) CallAll(_ context.Context, arg Value) (Set, error) {
-	//TODO: CallAll
+func (c ExprClosure) CallAll(_ context.Context, arg Value, b SetBuilder) error {
 	panic("unimplemented")
 }
 
-func (ExprClosure) ArrayEnumerator() (OffsetValueEnumerator, bool) {
+func (ExprClosure) ArrayEnumerator() ValueEnumerator {
 	panic("unimplemented")
 }

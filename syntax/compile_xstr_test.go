@@ -10,12 +10,7 @@ import (
 func TestCleanEmptyValTransformsArrayOfThreeEmptySetsIntoEmptyArray(t *testing.T) {
 	t.Parallel()
 
-	a, err := rel.NewSet()
-	require.NoError(t, err)
-	b, err := rel.NewSet()
-	require.NoError(t, err)
-	c, err := rel.NewSet()
-	require.NoError(t, err)
+	a, b, c := rel.None, rel.None, rel.None
 	values := rel.NewArray(a, b, c)
 	array, ok := rel.AsArray(values)
 	require.True(t, ok)

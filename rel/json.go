@@ -116,15 +116,16 @@ func jsonEscape(value Expr) interface{} {
 			result[name] = jsonEscape(value)
 		}
 		return result
-	case GenericSet:
-		if x.Equal(False) {
+	case GenericSet, EmptySet:
+		v := x.(Set)
+		if v.Equal(False) {
 			return false
 		}
-		if x.Equal(True) {
+		if v.Equal(True) {
 			return true
 		}
-		array := make([]interface{}, 0, x.Count())
-		for e := x.Enumerator(); e.MoveNext(); {
+		array := make([]interface{}, 0, v.Count())
+		for e := v.Enumerator(); e.MoveNext(); {
 			array = append(array, jsonEscape(e.Current()))
 		}
 		return map[string]interface{}{"{||}": array}

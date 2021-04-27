@@ -283,12 +283,8 @@ func applyFilesFields(t rel.Tuple, path string, fs afero.Fs, dryRun bool) error 
 
 func getDirField(v rel.Value) (rel.Set, error) {
 	switch k := v.(type) {
-	case rel.Dict:
-		return k, nil
-	case rel.GenericSet:
-		if !k.IsTrue() {
-			return k, nil
-		}
+	case rel.Dict, rel.EmptySet:
+		return k.(rel.Set), nil
 	}
 	return nil, errors.Errorf("%s must be of type Dictionary, not %T", dirField, v)
 }

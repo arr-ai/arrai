@@ -1,8 +1,8 @@
 package rel
 
 import (
+	"bytes"
 	"context"
-	"fmt"
 	"reflect"
 
 	"github.com/arr-ai/hash"
@@ -35,22 +35,13 @@ func NewOffsetBytes(b []byte, offset int) Set {
 }
 
 // TODO: support byte arrays with holes.
-func AsBytes(s Set) (Bytes, bool) { //nolint:dupl
-	if b, ok := s.(Bytes); ok {
-		return b, true
-	}
-	n := s.Count()
-	if n == 0 {
-		return Bytes{}, true
-	}
-	tuples := make(bytesByteTupleArray, 0, n)
+func asBytes(values ...Value) (Bytes, bool) { //nolint:dupl
+	n := len(values)
+	tuples := make([]BytesByteTuple, 0, n)
 	minAt := int(^uint(0) >> 1)
 	maxAt := -minAt - 1
-	for i := s.Enumerator(); i.MoveNext(); {
-		t, is := i.Current().(BytesByteTuple)
-		if !is {
-			return Bytes{}, false
-		}
+	for _, v := range values {
+		t := v.(BytesByteTuple)
 		if minAt > t.at {
 			minAt = t.at
 		}
@@ -66,20 +57,6 @@ func AsBytes(s Set) (Bytes, bool) { //nolint:dupl
 	return Bytes{b: bytes, offset: minAt}, true
 }
 
-type bytesByteTupleArray []BytesByteTuple
-
-func (a bytesByteTupleArray) Len() int {
-	return len(a)
-}
-
-func (a bytesByteTupleArray) Less(i, j int) bool {
-	return a[i].at < a[j].at
-}
-
-func (a bytesByteTupleArray) Swap(i, j int) {
-	a[i], a[j] = a[j], a[i]
-}
-
 // Bytes returns the bytes of b. The caller must not modify the contents.
 func (b Bytes) Bytes() []byte {
 	return b.b
@@ -91,23 +68,14 @@ func (b Bytes) Hash(seed uintptr) uintptr {
 	return hash.String(string(b.b), seed)
 }
 
-// Equal tests two Sets for equality. Any other type returns false.
+// Equal tests two Byteses for equality. Any other type returns false.
 func (b Bytes) Equal(v interface{}) bool {
-	switch x := v.(type) {
-	case Bytes:
-		if len(b.b) != len(x.b) || b.offset != x.offset {
-			return false
-		}
-		for i, c := range b.b {
-			if c != x.b[i] {
-				return false
-			}
-		}
-		return true
-	case Set:
-		return newSetFromSet(b).Equal(x)
-	}
-	return false
+	c, is := v.(Bytes)
+	return is && b.EqualBytes(c)
+}
+
+func (b Bytes) EqualBytes(c Bytes) bool {
+	return b.offset == c.offset && bytes.Equal(b.b, c.b)
 }
 
 // String returns a string representation of a Bytes.
@@ -184,7 +152,7 @@ func (b Bytes) with(index int, byt byte) Set {
 			offset: b.offset - 1,
 		}
 	}
-	return newSetFromSet(b).With(newBytesTuple(index, byt))
+	return newGenericSetFromSet(b).With(NewBytesByteTuple(index, byt))
 }
 
 // With returns the original Bytes with given value added. Iff the value was
@@ -193,7 +161,7 @@ func (b Bytes) With(value Value) Set {
 	if index, byt, ok := isBytesTuple(value); ok {
 		return b.with(index, byt)
 	}
-	return newSetFromSet(b).With(value)
+	return newGenericSetFromSet(b).With(value)
 }
 
 // Without returns the original Bytes without the given value. Iff the value
@@ -202,9 +170,12 @@ func (b Bytes) Without(value Value) Set {
 	if pos, byt, ok := isBytesTuple(value); ok {
 		if i := b.index(pos); i >= 0 && i < len(b.b) && byt == b.b[i] {
 			if pos == b.offset+i {
-				return Bytes{b: b.b[:i], offset: b.offset}
+				if bytes := b.b[:i]; len(bytes) > 0 {
+					return Bytes{b: bytes, offset: b.offset}
+				}
+				return None
 			}
-			return newSetFromSet(b).Without(value)
+			return newGenericSetFromSet(b).Without(value)
 		}
 	}
 	return b
@@ -212,43 +183,43 @@ func (b Bytes) Without(value Value) Set {
 
 // Map maps values per f.
 func (b Bytes) Map(f func(v Value) (Value, error)) (Set, error) {
-	result := None
+	sb := NewSetBuilder()
 	for e := b.Enumerator().(*BytesEnumerator); e.MoveNext(); {
-		v, err := f(e.CurrentBytesByteTuple())
+		v, err := f(e.Current())
 		if err != nil {
 			return nil, err
 		}
-		result = result.With(v)
+		sb.Add(v)
 	}
-	return result, nil
+	return sb.Finish()
 }
 
 // Where returns a new Bytes with all the Values satisfying predicate p.
 func (b Bytes) Where(p func(v Value) (bool, error)) (Set, error) {
-	result := Set(b)
+	builder := NewSetBuilder()
 	for e := b.Enumerator().(*BytesEnumerator); e.MoveNext(); {
-		value := e.CurrentBytesByteTuple()
+		value := e.Current()
 		match, err := p(value)
 		if err != nil {
 			return nil, err
 		}
-		if !match {
-			result = result.Without(value)
+		if match {
+			builder.Add(value)
 		}
 	}
-	return result, nil
+	return builder.Finish()
 }
 
-func (b Bytes) CallAll(_ context.Context, arg Value) (Set, error) {
-	n, ok := arg.(Number)
-	if !ok {
-		return nil, fmt.Errorf("arg to CallAll must be a number, not %s", ValueTypeAsString(arg))
+func (b Bytes) CallAll(_ context.Context, arg Value, sb SetBuilder) error {
+	if n, ok := arg.(Number); ok {
+		if i, is := n.Int(); is {
+			i -= b.offset
+			if 0 <= i && i < len(b.b) {
+				sb.Add(NewNumber(float64(b.b[i])))
+			}
+		}
 	}
-	i := int(n.Float64()) - b.offset
-	if i < 0 || i >= len(b.Bytes()) {
-		return None, nil
-	}
-	return NewSet(NewNumber(float64(string(b.b)[i])))
+	return nil
 }
 
 func (b Bytes) index(pos int) int {
@@ -267,17 +238,15 @@ type BytesEnumerator struct {
 
 // MoveNext moves the enumerator to the next Value.
 func (e *BytesEnumerator) MoveNext() bool {
+	if e.i >= len(e.b)-1 {
+		return false
+	}
 	e.i++
-	return e.i < len(e.b)
+	return true
 }
 
 // Current returns the enumerator'b current Value.
 func (e *BytesEnumerator) Current() Value {
-	return newBytesTuple(e.i, e.b[e.i])
-}
-
-// CurrentBytesByteTuple returns the enumerator'b current Value.
-func (e *BytesEnumerator) CurrentBytesByteTuple() BytesByteTuple {
 	return NewBytesByteTuple(e.i, e.b[e.i])
 }
 
@@ -286,15 +255,16 @@ func (b Bytes) Enumerator() ValueEnumerator {
 	return &BytesEnumerator{b.b, -1}
 }
 
-func (b Bytes) ArrayEnumerator() (OffsetValueEnumerator, bool) {
-	return &bytesEnumerator{b: b.b, offset: b.offset, i: -1}, true
+type bytesValueEnumerator struct {
+	*BytesEnumerator
 }
 
-func newBytesTuple(index int, b byte) Tuple {
-	return NewTuple(
-		NewIntAttr("@", index),
-		NewIntAttr(BytesByteAttr, int(b)),
-	)
+func (e *bytesValueEnumerator) Current() Value {
+	return NewNumber(float64(e.b[e.i]))
+}
+
+func (b Bytes) ArrayEnumerator() ValueEnumerator {
+	return &bytesValueEnumerator{b.Enumerator().(*BytesEnumerator)}
 }
 
 func isBytesTuple(v Value) (index int, b byte, is bool) {
@@ -319,28 +289,6 @@ func bytesTupleMatcher(match func(index int, b byte)) TupleMatcher {
 		},
 		Lit(EmptyTuple),
 	)
-}
-
-type bytesEnumerator struct {
-	b      []byte
-	offset int
-	i      int
-}
-
-func (e *bytesEnumerator) MoveNext() bool {
-	if e.i >= len(e.b)-1 {
-		return false
-	}
-	e.i++
-	return true
-}
-
-func (e *bytesEnumerator) Current() Value {
-	return NewNumber(float64(e.b[e.i]))
-}
-
-func (e *bytesEnumerator) Offset() int {
-	return e.offset + e.i
 }
 
 // func stringSet(b Set) Set {

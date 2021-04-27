@@ -15,13 +15,13 @@ func NewArrayPattern(elements ...FallbackPattern) ArrayPattern {
 }
 
 func (p ArrayPattern) Bind(ctx context.Context, local Scope, value Value) (context.Context, Scope, error) {
-	if s, is := value.(GenericSet); is {
-		if s.set.IsEmpty() {
-			if len(p.items) == 0 {
-				return ctx, EmptyScope, nil
-			}
-			return ctx, EmptyScope, fmt.Errorf("value [] is empty but pattern %s is not", p)
+	switch value.(type) {
+	case EmptySet:
+		if len(p.items) == 0 {
+			return ctx, EmptyScope, nil
 		}
+		return ctx, EmptyScope, fmt.Errorf("value [] is empty but pattern %s is not", p)
+	case GenericSet:
 		return ctx, EmptyScope, fmt.Errorf("value %s is not an array", value)
 	}
 

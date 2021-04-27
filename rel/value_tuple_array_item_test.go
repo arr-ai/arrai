@@ -166,13 +166,14 @@ func TestArrayItemTuple_Less(t *testing.T) {
 func TestArrayItemTuple_Negate(t *testing.T) {
 	t.Parallel()
 	assert.Equal(t, NewArrayItemTuple(0, NewNumber(0)), NewArrayItemTuple(0, NewNumber(0)).Negate())
-	assert.Equal(t, NewArrayItemTuple(-1, None.Negate()), NewArrayItemTuple(1, None).Negate())
+	assert.True(t, NewArrayItemTuple(-1, None.Negate()).Equal(NewArrayItemTuple(1, None).Negate()))
+	// assert.Equal(t, NewArrayItemTuple(-1, None.Negate()), NewArrayItemTuple(1, None).Negate())
 }
 
 func TestArrayItemTuple_Export(t *testing.T) {
 	t.Parallel()
 	assert.Equal(t,
-		map[string]interface{}{"@": 1, "@item": []interface{}{}},
+		map[string]interface{}{"@": 1, "@item": nil},
 		NewArrayItemTuple(1, None).Export(arraictx.InitRunCtx(context.Background())),
 	)
 }

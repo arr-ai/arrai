@@ -32,6 +32,17 @@ func stdEncodingProto() rel.Attr {
 	)
 }
 
+func bytesOrStringAsUTF8(v rel.Value) ([]byte, bool) {
+	switch v := v.(type) {
+	case rel.String:
+		return []byte(v.String()), true
+	case rel.Bytes:
+		return v.Bytes(), true
+	default:
+		return nil, false
+	}
+}
+
 func toDecoderTuple(ctx context.Context, e rel.Expr) (rel.Tuple, error) {
 	v, err := e.Eval(ctx, rel.EmptyScope)
 	if err != nil {

@@ -7,7 +7,6 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/arr-ai/frozen"
 	"github.com/arr-ai/wbnf/parser"
 )
 
@@ -63,26 +62,17 @@ func AsArray(v Value) (Array, bool) {
 	switch v := v.(type) {
 	case Array:
 		return v, true
-	case Set:
-		return Array{}, !v.IsTrue()
+	case EmptySet:
+		return Array{}, true
 	}
 	return Array{}, false
 }
 
-func asArray(s Set) (Array, bool) {
-	if s.Count() == 0 {
-		return Array{}, true
-	}
-
+func asArray(values ...Value) Array {
 	minIndex := math.MaxInt32
 	maxIndex := math.MinInt32
-	i := s.Enumerator()
-	for i.MoveNext() {
-		t, is := i.Current().(ArrayItemTuple)
-		if !is {
-			return Array{}, false
-		}
-
+	for _, v := range values {
+		t := v.(ArrayItemTuple)
 		if t.at < minIndex {
 			minIndex = t.at
 		}
@@ -92,16 +82,19 @@ func asArray(s Set) (Array, bool) {
 	}
 	items := make([]Value, maxIndex-minIndex+1)
 
-	i = s.Enumerator()
-	for i.MoveNext() {
-		t := i.Current().(ArrayItemTuple)
+	n := 0
+	for _, v := range values {
+		t := v.(ArrayItemTuple)
+		if items[t.at-minIndex] == nil {
+			n++
+		}
 		items[t.at-minIndex] = t.item
 	}
 	return Array{
 		values: items,
 		offset: minIndex,
-		count:  s.Count(),
-	}, true
+		count:  n,
+	}
 }
 
 func (a Array) clone() Array {
@@ -291,7 +284,7 @@ func (a Array) With(value Value) Set {
 	if t, ok := value.(ArrayItemTuple); ok {
 		return a.withItem(t.at, t.item)
 	}
-	return newSetFromSet(a).With(value)
+	return newGenericSetFromSet(a).With(value)
 }
 
 // Without returns the original Array without the given value. Iff the value
@@ -322,6 +315,9 @@ func (a Array) Without(value Value) Set {
 				result := a.clone()
 				result.values[i] = nil
 				result.count--
+				if !result.IsTrue() {
+					return None
+				}
 				return result
 			}
 		}
@@ -331,15 +327,15 @@ func (a Array) Without(value Value) Set {
 
 // Map maps values per f.
 func (a Array) Map(f func(v Value) (Value, error)) (Set, error) {
-	var values []Value
+	b := NewSetBuilder()
 	for e := a.Enumerator(); e.MoveNext(); {
 		v, err := f(e.Current())
 		if err != nil {
 			return nil, err
 		}
-		values = append(values, v)
+		b.Add(v)
 	}
-	return NewSet(values...)
+	return b.Finish()
 }
 
 // Where returns a new Array with all the Values satisfying predicate p.
@@ -382,19 +378,18 @@ func (a Array) Where(p func(v Value) (bool, error)) (Set, error) {
 	return result, nil
 }
 
-func (a Array) CallAll(_ context.Context, arg Value) (Set, error) {
-	n, ok := arg.(Number)
-	if !ok {
-		return nil, fmt.Errorf("arg to CallAll must be a number, not %s", ValueTypeAsString(arg))
+func (a Array) CallAll(_ context.Context, arg Value, b SetBuilder) error {
+	if n, ok := arg.(Number); ok {
+		if i, is := n.Int(); is {
+			i -= a.offset
+			if 0 <= i && i < len(a.values) {
+				if v := a.values[i]; v != nil {
+					b.Add(v)
+				}
+			}
+		}
 	}
-	i := int(n.Float64()) - a.offset
-	if i < 0 || i >= len(a.values) {
-		return None, nil
-	}
-	if v := a.values[i]; v != nil {
-		return NewSet(v)
-	}
-	return None, nil
+	return nil
 }
 
 // Enumerator returns an enumerator over the Values in the Array.
@@ -402,8 +397,8 @@ func (a Array) Enumerator() ValueEnumerator {
 	return &arrayValueEnumerator{a: a, i: -1}
 }
 
-func (a Array) ArrayEnumerator() (OffsetValueEnumerator, bool) {
-	return &arrayOffsetValueEnumerator{arrayValueEnumerator{a: a, i: -1}}, true
+func (a Array) ArrayEnumerator() ValueEnumerator {
+	return &arrayItemEnumerator{a.Enumerator().(*arrayValueEnumerator)}
 }
 
 // arrayValueEnumerator represents an enumerator over a Array.
@@ -431,38 +426,12 @@ func (e *arrayValueEnumerator) Current() Value {
 	return NewArrayItemTuple(e.a.offset+e.i, e.a.values[e.i])
 }
 
-// arrayOffsetValueEnumerator represents an enumerator over a Array.
-type arrayOffsetValueEnumerator struct {
-	arrayValueEnumerator
+// arrayItemEnumerator represents an enumerator over a Array.
+type arrayItemEnumerator struct {
+	*arrayValueEnumerator
 }
 
 // Current returns the enumerator's current Value.
-func (e *arrayOffsetValueEnumerator) Current() Value {
+func (e *arrayItemEnumerator) Current() Value {
 	return e.a.values[e.i]
-}
-
-// Current returns the offset of the enumerator's current Value.
-func (e *arrayOffsetValueEnumerator) Offset() int {
-	return e.a.offset + e.i
-}
-
-type arrayEnumerator struct {
-	i frozen.Iterator
-	t Tuple
-}
-
-func (e *arrayEnumerator) MoveNext() bool {
-	if e.i.Next() {
-		e.t = e.i.Value().(Tuple)
-		return true
-	}
-	return false
-}
-
-func (e *arrayEnumerator) Current() Value {
-	return e.t.MustGet(ArrayItemAttr)
-}
-
-func (e *arrayEnumerator) Offset() int {
-	return int(e.t.MustGet("@").(Number).Float64())
 }

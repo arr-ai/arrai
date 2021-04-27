@@ -11,8 +11,33 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+type sourceContextCache struct {
+	sync.RWMutex
+	m map[string]struct{}
+}
+
+func (d *sourceContextCache) encountered(scanner parser.Scanner) bool {
+	s := scanner.String()
+	d.RLock()
+	if _, has := d.m[s]; has {
+		defer d.RUnlock()
+		return true
+	}
+	d.RUnlock()
+
+	d.Lock()
+	defer d.Unlock()
+	d.m[s] = struct{}{}
+	return false
+}
+
+func newDeprecatorMap() *sourceContextCache {
+	return &sourceContextCache{m: make(map[string]struct{})}
+}
+
 // Deprecator contains information required to do deprecation checks and deprecation event trigger
 type Deprecator struct {
+	cache                             *sourceContextCache
 	featureDesc                       string
 	weakWarning, strongWarning, crash time.Time
 }
@@ -77,12 +102,17 @@ func NewDeprecator(featureDesc, weakWarningDate, strongWarningDate, crashDate st
 		weakWarning:   weak,
 		strongWarning: strong,
 		crash:         crash,
+		cache:         newDeprecatorMap(),
 	}, nil
 }
 
 // Deprecate does extracts build information from context once and does deprecation checks and trigger deprecation
 // events.
 func (d *Deprecator) Deprecate(ctx context.Context, scanner parser.Scanner) error {
+	if d.cache.encountered(scanner) {
+		return nil
+	}
+
 	buildDate, err := buildinfo.BuildDateFrom(ctx)
 	if err != nil {
 		return err

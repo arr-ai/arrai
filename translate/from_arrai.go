@@ -29,17 +29,22 @@ func FromArrai(v rel.Value) (interface{}, error) {
 		}
 		if str, ok := v.Get("s"); ok {
 			switch str := str.(type) {
-			case rel.GenericSet:
+			case rel.EmptySet:
 				return "", nil
 			case rel.String:
 				return str.String(), nil
 			}
 		}
 		if b, ok := v.Get("b"); ok {
-			return b.(rel.GenericSet).IsTrue(), nil
+			switch b.(type) {
+			case rel.EmptySet:
+				return false, nil
+			default:
+				return b.(rel.GenericSet).IsTrue(), nil
+			}
 		}
 		return nil, fmt.Errorf("cannot convert tuple %s to an object", v)
-	case rel.GenericSet:
+	case rel.GenericSet, rel.EmptySet:
 		return map[string]interface{}{}, nil
 	case rel.Dict:
 		return objFromArrai(v)
@@ -70,7 +75,7 @@ func objFromArrai(v rel.Value) (map[string]interface{}, error) {
 // arrFromArrai converts an arrai array to an array.
 func arrFromArrai(v rel.Value) ([]interface{}, error) {
 	switch s := v.(type) {
-	case rel.GenericSet:
+	case rel.GenericSet, rel.EmptySet:
 		return []interface{}{}, nil
 	case rel.Array:
 		elts := make([]interface{}, 0, s.Count())

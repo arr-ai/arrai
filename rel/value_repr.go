@@ -105,7 +105,7 @@ func reprDict(d Dict, w io.Writer) {
 
 func reprSet(s GenericSet, w io.Writer) {
 	if s.Equal(True) {
-		fmt.Fprintf(w, "true")
+		fmt.Fprint(w, sTrue)
 		return
 	}
 	fmt.Fprint(w, "{")
@@ -160,6 +160,8 @@ func reprNativeFunction(v Value, w io.Writer) {
 
 func reprValue(v Value, w io.Writer) {
 	switch v := v.(type) {
+	case EmptySet:
+		fmt.Fprint(w, v.String())
 	case String:
 		reprString(v, w)
 	case Bytes:
@@ -172,6 +174,8 @@ func reprValue(v Value, w io.Writer) {
 		reprSet(v, w)
 	case Closure:
 		reprClosure(v, w)
+	case BytesByteTuple:
+		fmt.Fprint(w, v.String())
 	case StringCharTuple:
 		reprStringCharTuple(v, w)
 	case ArrayItemTuple:

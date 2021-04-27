@@ -253,7 +253,11 @@ func (d Dict) Without(v Value) Set {
 	if key, value, matched := DictTupleMatcher()(v); matched {
 		if v, has := d.m.Get(key); has {
 			if value.Equal(v) {
-				return Dict{m: d.m.Without(frozen.NewSet(key))}
+				m := d.m.Without(frozen.NewSet(key))
+				if m.IsEmpty() {
+					return None
+				}
+				return Dict{m: m}
 			}
 		}
 	}
@@ -261,7 +265,7 @@ func (d Dict) Without(v Value) Set {
 }
 
 func (d Dict) Map(f func(v Value) (Value, error)) (Set, error) {
-	var sb frozen.SetBuilder
+	sb := NewSetBuilder()
 	for e := d.Enumerator(); e.MoveNext(); {
 		v, err := f(e.Current())
 		if err != nil {
@@ -269,7 +273,7 @@ func (d Dict) Map(f func(v Value) (Value, error)) (Set, error) {
 		}
 		sb.Add(v)
 	}
-	return GenericSet{set: sb.Finish()}, nil
+	return sb.Finish()
 }
 
 func (d Dict) Where(p func(v Value) (bool, error)) (Set, error) {
@@ -291,25 +295,32 @@ func (d Dict) Where(p func(v Value) (bool, error)) (Set, error) {
 	return Dict{m: m}, nil
 }
 
-func (d Dict) CallAll(_ context.Context, arg Value) (Set, error) {
-	val, exists := d.m.Get(arg)
-	if exists {
+func (d Dict) CallAll(_ context.Context, arg Value, b SetBuilder) error {
+	if val, has := d.m.Get(arg); has {
 		switch v := val.(type) {
 		case Value:
-			return NewSet(v)
+			b.Add(v)
 		case multipleValues:
-			values := make([]Value, 0, frozen.Set(v).Count())
 			for e := frozen.Set(v).Range(); e.Next(); {
-				values = append(values, e.Value().(Value))
+				b.Add(e.Value().(Value))
 			}
-			return NewSet(values...)
 		}
 	}
-	return None, nil
+	return nil
 }
 
-func (d Dict) ArrayEnumerator() (OffsetValueEnumerator, bool) {
-	return nil, false
+type emptyEnumerator struct{}
+
+func (emptyEnumerator) Current() Value {
+	panic("wtf")
+}
+
+func (emptyEnumerator) MoveNext() bool {
+	return false
+}
+
+func (d Dict) ArrayEnumerator() ValueEnumerator {
+	return &emptyEnumerator{}
 }
 
 func (d Dict) DictEnumerator() *DictEnumerator {

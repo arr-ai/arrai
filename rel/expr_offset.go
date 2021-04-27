@@ -41,6 +41,8 @@ func (o *OffsetExpr) Eval(ctx context.Context, local Scope) (_ Value, err error)
 		return NewOffsetBytes(a.Bytes(), a.offset+int(offset.(Number))), nil
 	case String:
 		return NewOffsetString(a.s, a.offset+int(offset.(Number))), nil
+	case EmptySet:
+		return None, nil
 	}
 	return nil, WrapContextErr(errors.Errorf("offset not applicable to %s", ValueTypeAsString(array)), o, local)
 }

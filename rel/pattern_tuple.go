@@ -19,6 +19,9 @@ func NewTuplePatternAttr(name string, pattern FallbackPattern) TuplePatternAttr 
 }
 
 func (a TuplePatternAttr) String() string {
+	if a.name == "" {
+		return a.pattern.String()
+	}
 	if a.pattern.fallback == nil {
 		return fmt.Sprintf("%s: %s", a.name, a.pattern)
 	}
@@ -33,14 +36,30 @@ type TuplePattern struct {
 	attrs []TuplePatternAttr
 }
 
-func NewTuplePattern(attrs ...TuplePatternAttr) TuplePattern {
-	names := make(map[string]bool)
-	for _, attr := range attrs {
-		if names[attr.name] {
-			panic(fmt.Sprintf("name %s is duplicated in tuple", attr.name))
+func NewTuplePattern(attrs ...TuplePatternAttr) (TuplePattern, error) {
+	p := TuplePattern{attrs}
+	if err := validTuplePattern(p); err != nil {
+		return TuplePattern{}, err
+	}
+	return p, nil
+}
+
+func validTuplePattern(p TuplePattern) error {
+	names := make(map[string]struct{})
+	for _, attr := range p.attrs {
+		if _, has := names[attr.name]; has {
+			if _, is := attr.pattern.pattern.(ExtraElementPattern); is && attr.name == "" {
+				// Attr name is '' when its pattern is '...' which will crash with other attr whose name is '',
+				// e.g. `let ('':value, ...) = ('':2); value`. So skip it in this validation.
+				continue
+			}
+			return fmt.Errorf("duplicate fields found in pattern %s ", p)
+		}
+		if _, is := attr.pattern.pattern.(ExtraElementPattern); !is {
+			names[attr.name] = struct{}{}
 		}
 	}
-	return TuplePattern{attrs}
+	return nil
 }
 
 func (p TuplePattern) Bind(ctx context.Context, local Scope, value Value) (context.Context, Scope, error) {

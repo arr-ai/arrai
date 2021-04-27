@@ -104,13 +104,6 @@ type ValueEnumerator interface {
 	Current() Value
 }
 
-// OffsetValueEnumerator defines an enumerator that can report the offset of
-// each element it enumerates.
-type OffsetValueEnumerator interface {
-	ValueEnumerator
-	Offset() int
-}
-
 // Less defines a comparator that returns true iff a < b.
 type Less func(a, b Value) bool
 
@@ -122,15 +115,14 @@ type Set interface {
 	Count() int
 	Has(Value) bool
 	Enumerator() ValueEnumerator
+	ArrayEnumerator() ValueEnumerator // iterates in ascending order.
 
 	// Transform
 	With(Value) Set
 	Without(Value) Set
 	Map(func(Value) (Value, error)) (Set, error)
 	Where(func(Value) (bool, error)) (Set, error)
-	CallAll(context.Context, Value) (Set, error)
-
-	ArrayEnumerator() (OffsetValueEnumerator, bool)
+	CallAll(context.Context, Value, SetBuilder) error
 }
 
 // NoReturnError is an error signififying that there was no return value.
@@ -146,7 +138,12 @@ func (n NoReturnError) Error() string {
 // SetCall is a convenience wrapper to call a set and return the result or an
 // error if there isn't exactly one result.
 func SetCall(ctx context.Context, s Set, arg Value) (Value, error) {
-	all, err := s.CallAll(ctx, arg)
+	b := NewSetBuilder()
+	err := s.CallAll(ctx, arg, b)
+	if err != nil {
+		return nil, err
+	}
+	all, err := b.Finish()
 	if err != nil {
 		return nil, err
 	}
@@ -162,7 +159,12 @@ func SetCall(ctx context.Context, s Set, arg Value) (Value, error) {
 }
 
 func mustCallAll(ctx context.Context, s Set, v Value) Value {
-	result, err := s.CallAll(ctx, v)
+	b := NewSetBuilder()
+	err := s.CallAll(ctx, v, b)
+	if err != nil {
+		panic(err)
+	}
+	result, err := b.Finish()
 	if err != nil {
 		panic(err)
 	}

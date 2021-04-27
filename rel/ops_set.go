@@ -8,9 +8,15 @@ import (
 
 // Intersect returns every Value from a that is also in b.
 func Intersect(a, b Set) Set {
+	if _, is := a.(EmptySet); is {
+		return a
+	}
+	if _, is := b.(EmptySet); is {
+		return b
+	}
 	if ga, ok := a.(GenericSet); ok {
 		if gb, ok := b.(GenericSet); ok {
-			return GenericSet{set: ga.set.Intersection(gb.set)}
+			return newSetFromFrozenSet(ga.set.Intersection(gb.set))
 		}
 	}
 	result, err := a.Where(func(v Value) (bool, error) { return b.Has(v), nil })
@@ -30,9 +36,15 @@ func NIntersect(a Set, bs ...Set) Set {
 
 // Union returns every value that is in either input Set (or both).
 func Union(a, b Set) Set {
+	if _, is := a.(EmptySet); is {
+		return b
+	}
+	if _, is := b.(EmptySet); is {
+		return a
+	}
 	if ga, ok := a.(GenericSet); ok {
 		if gb, ok := b.(GenericSet); ok {
-			return CanonicalSet(GenericSet{set: ga.set.Union(gb.set)})
+			return CanonicalSet(newSetFromFrozenSet(ga.set.Union(gb.set)))
 		}
 	}
 	for e := b.Enumerator(); e.MoveNext(); {
@@ -51,9 +63,15 @@ func NUnion(sets ...Set) Set {
 
 // Difference returns every Value from the first Set that is not in the second.
 func Difference(a, b Set) Set {
+	if _, is := a.(EmptySet); is {
+		return a
+	}
+	if _, is := b.(EmptySet); is {
+		return a
+	}
 	if ga, ok := a.(GenericSet); ok {
 		if gb, ok := b.(GenericSet); ok {
-			return GenericSet{set: ga.set.Difference(gb.set)}
+			return newSetFromFrozenSet(ga.set.Difference(gb.set))
 		}
 	}
 	result, err := a.Where(func(v Value) (bool, error) { return !b.Has(v), nil })
@@ -65,9 +83,15 @@ func Difference(a, b Set) Set {
 
 // SymmetricDifference returns Values in either Set, but not in both.
 func SymmetricDifference(a, b Set) Set {
+	if _, is := a.(EmptySet); is {
+		return b
+	}
+	if _, is := b.(EmptySet); is {
+		return a
+	}
 	if ga, ok := a.(GenericSet); ok {
 		if gb, ok := b.(GenericSet); ok {
-			return GenericSet{set: ga.set.SymmetricDifference(gb.set)}
+			return newSetFromFrozenSet(ga.set.SymmetricDifference(gb.set))
 		}
 	}
 	return Union(Difference(a, b), Difference(b, a))
@@ -147,12 +171,15 @@ func (o *orderer) Swap(i, j int) {
 
 // PowerSet computes the power set of a set.
 func PowerSet(s Set) (Set, error) {
+	if _, is := s.(EmptySet); is {
+		return NewSet(None)
+	}
 	if gs, ok := s.(GenericSet); ok {
 		var sb frozen.SetBuilder
 		for i := gs.set.Powerset().Range(); i.Next(); {
-			sb.Add(GenericSet{set: i.Value().(frozen.Set)})
+			sb.Add(newSetFromFrozenSet(i.Value().(frozen.Set)))
 		}
-		return GenericSet{set: sb.Finish()}, nil
+		return newSetFromFrozenSet(sb.Finish()), nil
 	}
 	result, err := NewSet(None)
 	if err != nil {

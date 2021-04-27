@@ -157,17 +157,21 @@ func Joiner(combine func(common Names, a, b Tuple) Tuple) func(a, b Set) (Set, e
 				return value.(Tuple).Project(common)
 			},
 			func(key Value, a, b Set) Set {
-				values := []Value{}
+				sb := NewSetBuilder()
 				for i := a.Enumerator(); i.MoveNext(); {
 					for j := b.Enumerator(); j.MoveNext(); {
-						values = append(values, combine(
+						sb.Add(combine(
 							common,
 							i.Current().(Tuple),
 							j.Current().(Tuple),
 						))
 					}
 				}
-				return MustNewSet(values...)
+				result, err := sb.Finish()
+				if err != nil {
+					panic(err)
+				}
+				return result
 			},
 		), nil
 	}
@@ -266,9 +270,9 @@ func GenericJoin(
 // E.g., [1, 2] + [3] = [1, 2, 3]; "hell" + "o" = "hello"
 func Concatenate(a, b Set) (Set, error) {
 	offset := a.Count()
-	values := make([]Value, 0, a.Count()+b.Count())
+	sb := NewSetBuilder()
 	for e := a.Enumerator(); e.MoveNext(); {
-		values = append(values, e.Current())
+		sb.Add(e.Current())
 	}
 	for e := b.Enumerator(); e.MoveNext(); {
 		elt := e.Current()
@@ -276,14 +280,14 @@ func Concatenate(a, b Set) (Set, error) {
 			if pos, found := t.Get("@"); found {
 				if n, ok := pos.(Number); ok {
 					t = t.With("@", NewNumber(float64(offset)+n.Float64()))
-					values = append(values, t)
+					sb.Add(t)
 					continue
 				}
 			}
 		}
 		return nil, errors.Errorf("Mismatched elt in set + set: %v", elt)
 	}
-	return NewSet(values...)
+	return sb.Finish()
 }
 
 // NConcatenate applies concatenate to one or more sets.

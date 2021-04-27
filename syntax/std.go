@@ -10,6 +10,7 @@ import (
 	"sync"
 
 	"github.com/arr-ai/arrai/rel"
+	"github.com/arr-ai/arrai/translate"
 	"github.com/arr-ai/wbnf/ast"
 	"github.com/arr-ai/wbnf/parser"
 	"github.com/arr-ai/wbnf/wbnf"
@@ -57,7 +58,7 @@ func StdScope() rel.Scope {
 						// keyVal won't be a rel.String if it's empty.
 						if _, ok := keyVal.(rel.String); ok {
 							key = keyVal.String()
-						} else if _, ok := keyVal.(rel.GenericSet); ok && !keyVal.IsTrue() {
+						} else if _, ok := keyVal.(rel.EmptySet); ok {
 							key = ""
 						} else {
 							return nil, fmt.Errorf(
@@ -98,7 +99,7 @@ func StdScope() rel.Scope {
 				createFunc2Attr("printf", func(ctx context.Context, a, b rel.Value) (rel.Value, error) {
 					format := a.(rel.String).String()
 					strs := make([]interface{}, 0, b.(rel.Set).Count())
-					for i, ok := b.(rel.Set).ArrayEnumerator(); ok && i.MoveNext(); {
+					for i := b.(rel.Set).ArrayEnumerator(); i.MoveNext(); {
 						strs = append(strs, i.Current())
 					}
 					log.Printf(format, strs...)
@@ -109,6 +110,19 @@ func StdScope() rel.Scope {
 				// FIXME: this is a temporary error handling
 				return nil, errors.New(value.String())
 			}),
+			rel.NewTupleAttr(
+				"@internal", rel.NewTupleAttr(
+					"xml", createFunc2Attr(
+						"decode", func(_ context.Context, xmlConfig, value rel.Value) (rel.Value, error) {
+							config, err := parseXMLConfig(xmlConfig)
+							if err != nil {
+								return nil, err
+							}
+							return decodeXML(value, *config)
+						}),
+					rel.NewNativeFunctionAttr("encode", func(_ context.Context, value rel.Value) (rel.Value, error) {
+						return translate.BytesXMLFromArrai(value)
+					}))),
 			stdArchive(),
 			stdEncoding(),
 			stdEval(),

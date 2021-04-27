@@ -136,6 +136,15 @@ func TestOffsetExprString(t *testing.T) {
 	)
 }
 
+func TestOffsetExprEmptySet(t *testing.T) {
+	t.Parallel()
+
+	AssertExprsEvalToSameValue(t,
+		None,
+		NewOffsetExpr(*parser.NewScanner(""), NewNumber(float64(-10)), None),
+	)
+}
+
 func TestOffsetExprEvalFail(t *testing.T) {
 	t.Parallel()
 

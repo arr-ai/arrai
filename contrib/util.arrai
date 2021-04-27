@@ -41,9 +41,7 @@ let rec filterTree = \pred \ast
 # Returns the final accumulated value.
 let rec reduce = \arr \fn \val
     cond arr {
-        [head, ...]:
-            let tail = -1\(arr without (@:0, @item:head));
-            reduce(tail, fn, fn(val, head)),
+        [head, ...tail]: reduce(tail, fn, fn(val, head)),
         _: val,
     }
 ;

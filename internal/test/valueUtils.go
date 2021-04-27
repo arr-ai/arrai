@@ -47,6 +47,9 @@ func isLiteralTrue(val rel.Value) bool {
 }
 
 func isLiteralFalse(val rel.Value) bool {
+	if _, ok := val.(rel.EmptySet); ok {
+		return true
+	}
 	v, ok := val.(rel.GenericSet)
 	return ok && v.Count() == 0
 }
