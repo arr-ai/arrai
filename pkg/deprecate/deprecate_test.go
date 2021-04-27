@@ -22,7 +22,6 @@ func TestNewDeprecator(t *testing.T) {
 func TestDeprecate(t *testing.T) {
 	// FIXME: use hook attached to a local logger instead of the global one
 	hook := test.NewGlobal()
-	deprecator := MustNewDeprecator("feature", "2000-01-02", "2000-01-04", "2000-01-06")
 	scanner := parser.NewScanner("expression")
 	scannerStr := scanner.Context(parser.DefaultLimit)
 
@@ -30,30 +29,36 @@ func TestDeprecate(t *testing.T) {
 		return fmt.Sprintf("%s\n%s", msg, scannerStr)
 	}
 
+	deprecator := MustNewDeprecator("feature", "2000-01-02", "2000-01-04", "2000-01-06")
 	assert.NoError(t, deprecator.Deprecate(context.Background(), *scanner))
 	assert.Equal(t, errMsg("feature is being deprecated"), hook.LastEntry().Message)
 	hook.Reset()
 
+	deprecator = MustNewDeprecator("feature", "2000-01-02", "2000-01-04", "2000-01-06")
 	ctx := buildinfo.WithBuildData(context.Background(), buildinfo.BuildData{Date: "unspecified"})
 	assert.NoError(t, deprecator.Deprecate(ctx, *scanner))
 	assert.Equal(t, errMsg("feature is being deprecated"), hook.LastEntry().Message)
 	hook.Reset()
 
+	deprecator = MustNewDeprecator("feature", "2000-01-02", "2000-01-04", "2000-01-06")
 	ctx = buildinfo.WithBuildData(context.Background(), buildinfo.BuildData{Date: ""})
 	assert.NoError(t, deprecator.Deprecate(ctx, *scanner))
 	assert.Equal(t, errMsg("feature is being deprecated"), hook.LastEntry().Message)
 	hook.Reset()
 
+	deprecator = MustNewDeprecator("feature", "2000-01-02", "2000-01-04", "2000-01-06")
 	ctx = buildinfo.WithBuildData(context.Background(), buildinfo.BuildData{Date: "2000-01-01T00:00:00Z"})
 	assert.NoError(t, deprecator.Deprecate(ctx, *scanner))
 	assert.Equal(t, 0, len(hook.Entries))
 	hook.Reset()
 
+	deprecator = MustNewDeprecator("feature", "2000-01-02", "2000-01-04", "2000-01-06")
 	ctx = buildinfo.WithBuildData(context.Background(), buildinfo.BuildData{Date: "2000-01-03T00:00:00Z"})
 	assert.NoError(t, deprecator.Deprecate(ctx, *scanner))
 	assert.Equal(t, errMsg("feature is being deprecated"), hook.LastEntry().Message)
 	hook.Reset()
 
+	deprecator = MustNewDeprecator("feature", "2000-01-02", "2000-01-04", "2000-01-06")
 	ctx = buildinfo.WithBuildData(context.Background(), buildinfo.BuildData{Date: "2000-01-05T00:00:00Z"})
 	assert.NoError(t, deprecator.Deprecate(ctx, *scanner))
 	assert.Equal(t,
@@ -62,8 +67,19 @@ func TestDeprecate(t *testing.T) {
 	)
 	hook.Reset()
 
+	deprecator = MustNewDeprecator("feature", "2000-01-02", "2000-01-04", "2000-01-06")
 	ctx = buildinfo.WithBuildData(context.Background(), buildinfo.BuildData{Date: "2000-01-07T00:00:00Z"})
 	assert.EqualError(t, deprecator.Deprecate(ctx, *scanner), "feature is deprecated")
+	assert.Equal(t, 0, len(hook.Entries))
+	hook.Reset()
+
+	// test scanner storing
+	deprecator = MustNewDeprecator("feature", "2000-01-02", "2000-01-04", "2000-01-06")
+	assert.NoError(t, deprecator.Deprecate(context.Background(), *scanner))
+	assert.Equal(t, errMsg("feature is being deprecated"), hook.LastEntry().Message)
+	assert.True(t, deprecator.cache.encountered(*scanner))
+	hook.Reset()
+	assert.NoError(t, deprecator.Deprecate(context.Background(), *scanner))
 	assert.Equal(t, 0, len(hook.Entries))
 	hook.Reset()
 }
