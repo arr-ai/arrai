@@ -269,7 +269,7 @@ func reflectNewValue(x reflect.Value) (Value, error) {
 			var err error
 			switch f.Type().Kind() {
 			case reflect.Array, reflect.Slice:
-				v, err = reflectToValues(f, tf.Tag.Get("ordered") == "true")
+				v, err = reflectToValues(f, tf.Tag.Get("unordered") == "true")
 			default:
 				v, err = NewValue(f.Interface())
 			}
@@ -290,7 +290,7 @@ func reflectNewValue(x reflect.Value) (Value, error) {
 //
 // If ordered is true, the result will be an Array. If false, it will be a Set.
 // If x is not a slice or array, reflectToValues will panic.
-func reflectToValues(x reflect.Value, ordered bool) (Value, error) {
+func reflectToValues(x reflect.Value, unordered bool) (Value, error) {
 	vs := make([]Value, 0, x.Len())
 	for i := 0; i < x.Len(); i++ {
 		v, err := NewValue(x.Index(i).Interface())
@@ -299,14 +299,14 @@ func reflectToValues(x reflect.Value, ordered bool) (Value, error) {
 		}
 		vs = append(vs, v)
 	}
-	if ordered {
-		return NewArray(vs...), nil
+	if unordered {
+		return NewSet(vs...)
 	}
-	return NewSet(vs...)
+	return NewArray(vs...), nil
 }
 
 func reflectToSet(x reflect.Value) (Value, error) {
-	return reflectToValues(x, false)
+	return reflectToValues(x, true)
 }
 
 // AttrEnumeratorToSlice transcribes its Attrs in a slice.

@@ -46,10 +46,10 @@ func TestReflectNewValue(t *testing.T) {
 	type Foo struct {
 		num int
 		str string
-		// Slices without the ordered tag are serialized to sets.
-		set []int
-		// Slices with the ordered tag are serialized to arrays.
-		arr  []int `ordered:"true"`
+		// Slices without the ordered tag are serialized to arrays.
+		arr []int
+		// Slices with the unordered tag are serialized to sets.
+		set  []int `unordered:"true"`
 		none *Foo
 		// All struct field names are serialized to start lowercase.
 		CASE     int
@@ -61,8 +61,8 @@ func TestReflectNewValue(t *testing.T) {
 	input := []*Foo{{
 		num: 1,
 		str: "a",
-		set: []int{2, 1},
 		arr: []int{2, 1},
+		set: []int{2, 1},
 		// Nil values are serialized to empty sets (None).
 		none: nil,
 		CASE: 0,
@@ -77,19 +77,19 @@ func TestReflectNewValue(t *testing.T) {
 	expected, err := NewSet(NewTuple(
 		NewIntAttr("num", 1),
 		NewStringAttr("str", []rune("a")),
-		NewAttr("set", MustNewSet(NewNumber(1), NewNumber(2))),
 		NewAttr("arr", NewArray(NewNumber(2), NewNumber(1))),
+		NewAttr("set", MustNewSet(NewNumber(1), NewNumber(2))),
 		NewAttr("none", None),
 		NewAttr("cASE", NewNumber(0)),
 		NewAttr("mixedMap", MustNewDict(false,
 			NewDictEntryTuple(NewNumber(1), NewNumber(2)),
 			NewDictEntryTuple(NewString([]rune("k")), None),
 		)),
-		NewAttr("children", MustNewSet(NewTuple(
+		NewAttr("children", NewArray(NewTuple(
 			NewAttr("num", NewNumber(2)),
 			NewAttr("str", None),
-			NewAttr("set", None),
 			NewAttr("arr", None),
+			NewAttr("set", None),
 			NewAttr("none", None),
 			NewAttr("cASE", NewNumber(0)),
 			NewAttr("mixedMap", None),
