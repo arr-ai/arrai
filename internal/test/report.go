@@ -60,11 +60,12 @@ func reportFile(w io.Writer, testFile testFile, maxName int) {
 func relPath(absPath string) string {
 	cwd, wdErr := os.Getwd()
 	relPath, relErr := filepath.Rel(cwd, absPath)
-	if wdErr == nil || relErr == nil {
-		return relPath
-	} else {
+
+	if wdErr != nil || relErr != nil {
 		return absPath
 	}
+
+	return relPath
 }
 
 // reportTest writes a formatted output of a single test result (PASS/FAIL/SKIP/??) with the optional included message.
