@@ -72,7 +72,6 @@ func relPath(absPath string) string {
 
 // reportTest writes a formatted output of a single test result (PASS/FAIL/SKIP/??) with the optional included message.
 func reportTest(w io.Writer, test testResult, maxName int) {
-
 	switch test.outcome {
 	case Failed:
 		fmt.Fprintf(w, color, 41, "FAIL")
