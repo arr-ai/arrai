@@ -219,30 +219,28 @@ func NewValue(v interface{}) (Value, error) {
 		return NewSetFrom(x...)
 	default:
 		// Fall back on reflection for custom types.
-		return reflectNewValue(x)
+		return reflectNewValue(reflect.ValueOf(x))
 	}
 }
 
 // reflectNewValue uses reflection to inspect the type of x and unpack its values.
-func reflectNewValue(x interface{}) (Value, error) {
-	if x == nil {
+func reflectNewValue(x reflect.Value) (Value, error) {
+	if !x.IsValid() {
 		return None, nil
 	}
-	t := reflect.TypeOf(x)
+	t := x.Type()
 	switch t.Kind() {
 	case reflect.Ptr:
-		v := reflect.ValueOf(x)
-		if v.IsNil() {
+		if x.IsNil() {
 			return None, nil
 		}
-		return NewValue(v.Elem().Interface())
+		return NewValue(x.Elem().Interface())
 	case reflect.Array, reflect.Slice:
 		return reflectToSet(x)
 	case reflect.Map:
-		rv := reflect.ValueOf(x)
-		entries := make([]DictEntryTuple, 0, rv.Len())
-		for _, k := range rv.MapKeys() {
-			v := rv.MapIndex(k)
+		entries := make([]DictEntryTuple, 0, x.Len())
+		for _, k := range x.MapKeys() {
+			v := x.MapIndex(k)
 			kv, err := NewValue(k.Interface())
 			if err != nil {
 				return nil, err
@@ -258,22 +256,20 @@ func reflectNewValue(x interface{}) (Value, error) {
 		s := map[string]interface{}{}
 
 		// Ensure x is accessible.
-		rv := reflect.ValueOf(x)
-		xv := reflect.New(rv.Type()).Elem()
-		xv.Set(rv)
+		xv := reflect.New(t).Elem()
+		xv.Set(x)
 
 		for i := 0; i < t.NumField(); i++ {
 			tf := t.Field(i)
 			// Ensure each field of x is accessible.
 			f := xv.Field(i)
 			f = reflect.NewAt(f.Type(), unsafe.Pointer(f.UnsafeAddr())).Elem()
-			fv := f.Interface()
 
 			var v Value
 			var err error
-			switch reflect.TypeOf(fv).Kind() {
+			switch f.Type().Kind() {
 			case reflect.Array, reflect.Slice:
-				v, err = reflectToValues(f.Interface(), tf.Tag.Get("ordered") == "true")
+				v, err = reflectToValues(f, tf.Tag.Get("ordered") == "true")
 			default:
 				v, err = NewValue(f.Interface())
 			}
@@ -294,11 +290,10 @@ func reflectNewValue(x interface{}) (Value, error) {
 //
 // If ordered is true, the result will be an Array. If false, it will be a Set.
 // If x is not a slice or array, reflectToValues will panic.
-func reflectToValues(x interface{}, ordered bool) (Value, error) {
-	s := reflect.ValueOf(x)
-	vs := make([]Value, 0, s.Len())
-	for i := 0; i < s.Len(); i++ {
-		v, err := NewValue(s.Index(i).Interface())
+func reflectToValues(x reflect.Value, ordered bool) (Value, error) {
+	vs := make([]Value, 0, x.Len())
+	for i := 0; i < x.Len(); i++ {
+		v, err := NewValue(x.Index(i).Interface())
 		if err != nil {
 			return nil, err
 		}
@@ -310,7 +305,7 @@ func reflectToValues(x interface{}, ordered bool) (Value, error) {
 	return NewSet(vs...)
 }
 
-func reflectToSet(x interface{}) (Value, error) {
+func reflectToSet(x reflect.Value) (Value, error) {
 	return reflectToValues(x, false)
 }
 
