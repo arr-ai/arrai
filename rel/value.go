@@ -215,8 +215,6 @@ func NewValue(v interface{}) (Value, error) {
 		return NewBytes(x), nil
 	case map[string]interface{}:
 		return NewTupleFromMap(x)
-	case []interface{}:
-		return NewSetFrom(x...)
 	default:
 		// Fall back on reflection for custom types.
 		return reflectNewValue(reflect.ValueOf(x))
