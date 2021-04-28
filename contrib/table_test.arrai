@@ -12,7 +12,8 @@ let multipleHtml =
 
 let norm1 = \s //seq.sub('\r\n', '\n', s);
 let norm2 = \s //seq.trim_prefix('\n', norm1(s));
-let norm = norm2;
+let norm3 = \s //seq.trim_prefix('\t', norm2(s));
+let norm = norm3;
 
 (
     markdown: (
