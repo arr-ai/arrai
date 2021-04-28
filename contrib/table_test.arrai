@@ -10,11 +10,13 @@ let multipleHtml =
     <tr><td>b</td><td>[1, 2, 3]</td></tr>
 </table>';
 
-let norm = \s //seq.sub('\r\n', '\n', s);
+let norm1 = \s //seq.sub('\r\n', '\n', s);
+let norm2 = \s //seq.trim_prefix('\n', s);
+let norm = norm2;
 
 (
     markdown: (
-        empty: //log.printf("Actual:  *****%s*****", [markdown({})]) = //log.printf("Expected:*****%s*****", ['|Key|Value|\n']),
+        empty: //log.printf("Actual:  *****%s*****", [norm(markdown({}))]) = //log.printf("Expected:*****%s*****", ['|Key|Value|\n']),
         single: norm(markdown(single)) = '|Key|Value|\n|a|1|',
         multiple: norm(markdown(multiple)) = '|Key|Value|\n|a|1|\n|b|[1, 2, 3]|',
     ),
