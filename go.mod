@@ -15,7 +15,7 @@ require (
 	github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e
 	github.com/go-errors/errors v1.1.1
 	github.com/gorilla/websocket v1.4.2
-	github.com/iancoleman/strcase v0.1.1
+	github.com/iancoleman/strcase v0.1.3
 	github.com/mattn/go-isatty v0.0.12
 	github.com/pkg/errors v0.9.1
 	github.com/rjeczalik/notify v0.9.2

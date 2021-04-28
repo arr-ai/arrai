@@ -58,5 +58,11 @@ module.exports = {
             'std/str',
             'std/test',
         ],
+        "Developing": [
+            'dev/overview',
+            'dev/grammar',
+            'dev/values',
+            'dev/exprs',
+        ]
     },
 };

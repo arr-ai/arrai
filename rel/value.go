@@ -3,6 +3,10 @@ package rel
 import (
 	"context"
 	"fmt"
+	"reflect"
+	"unsafe"
+
+	"github.com/iancoleman/strcase"
 
 	"github.com/arr-ai/frozen"
 	"github.com/arr-ai/wbnf/parser"
@@ -11,12 +15,13 @@ import (
 
 // Expr represents an arr.ai expression.
 type Expr interface {
-	// Require a String() method.
+	// All exprs can be serialized to strings with the String() method.
 	fmt.Stringer
 
 	// Eval evaluates the expr in a given scope.
 	Eval(ctx context.Context, local Scope) (Value, error)
 
+	// Source returns the Scanner that locates the expression in a source file.
 	Source() parser.Scanner
 }
 
@@ -210,11 +215,96 @@ func NewValue(v interface{}) (Value, error) {
 		return NewBytes(x), nil
 	case map[string]interface{}:
 		return NewTupleFromMap(x)
-	case []interface{}:
-		return NewSetFrom(x...)
 	default:
-		return nil, errors.Errorf("%v (%[1]T) not convertible to Value", v)
+		// Fall back on reflection for custom types.
+		return reflectNewValue(reflect.ValueOf(x))
 	}
+}
+
+// reflectNewValue uses reflection to inspect the type of x and unpack its values.
+func reflectNewValue(x reflect.Value) (Value, error) {
+	if !x.IsValid() {
+		return None, nil
+	}
+	t := x.Type()
+	switch t.Kind() {
+	case reflect.Ptr:
+		if x.IsNil() {
+			return None, nil
+		}
+		return NewValue(x.Elem().Interface())
+	case reflect.Array, reflect.Slice:
+		return reflectToSet(x)
+	case reflect.Map:
+		entries := make([]DictEntryTuple, 0, x.Len())
+		for _, k := range x.MapKeys() {
+			v := x.MapIndex(k)
+			kv, err := NewValue(k.Interface())
+			if err != nil {
+				return nil, err
+			}
+			vv, err := NewValue(v.Interface())
+			if err != nil {
+				return nil, err
+			}
+			entries = append(entries, NewDictEntryTuple(kv, vv))
+		}
+		return NewDict(false, entries...)
+	case reflect.Struct:
+		s := map[string]interface{}{}
+
+		// Ensure x is accessible.
+		xv := reflect.New(t).Elem()
+		xv.Set(x)
+
+		for i := 0; i < t.NumField(); i++ {
+			tf := t.Field(i)
+			// Ensure each field of x is accessible.
+			f := xv.Field(i)
+			f = reflect.NewAt(f.Type(), unsafe.Pointer(f.UnsafeAddr())).Elem()
+
+			var v Value
+			var err error
+			switch f.Type().Kind() {
+			case reflect.Array, reflect.Slice:
+				v, err = reflectToValues(f, tf.Tag.Get("unordered") == "true")
+			default:
+				v, err = NewValue(f.Interface())
+			}
+			if err != nil {
+				return nil, err
+			}
+			// Lowercase the first character in case it's uppercase only for Go exporting.
+			// TODO: Handle a name tag to override behaviour.
+			s[strcase.ToLowerCamel(tf.Name)] = v
+		}
+		return NewTupleFromMap(s)
+	default:
+		return nil, errors.Errorf("%v (%[1]T) not convertible to Value", x)
+	}
+}
+
+// reflectToValues assumed x is a slice or array, and returns x serialized to a collection of Values.
+//
+// If ordered is true, the result will be an Array. If false, it will be a Set.
+// If x is not a slice or array, reflectToValues will panic.
+func reflectToValues(x reflect.Value, unordered bool) (Value, error) {
+	vs := make([]Value, 0, x.Len())
+	for i := 0; i < x.Len(); i++ {
+		v, err := NewValue(x.Index(i).Interface())
+		if err != nil {
+			return nil, err
+		}
+		vs = append(vs, v)
+	}
+	if unordered {
+		return NewSet(vs...)
+	}
+	return NewArray(vs...), nil
+}
+
+func reflectToSet(x reflect.Value) (Value, error) {
+	return reflectToValues(x, true)
 }
 
 // AttrEnumeratorToSlice transcribes its Attrs in a slice.
