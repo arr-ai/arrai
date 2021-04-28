@@ -25,11 +25,13 @@ func Report(w io.Writer, testFiles []testFile) error {
 	reportStats(w, stats)
 
 	if stats.runFailed {
-		return fmt.Errorf("test run \u001B[38;5;255;41;1mFAILED\u001B[0m")
+		return fmt.Errorf("test run "+color, 41, "FAILED")
 	}
 
 	return nil
 }
+
+const color = "\033[38;5;255;%d;1m%s\033[0m"
 
 // reportFile writes a formatted output of a file and all its test results, ordered by outcome. The maxName parameter
 // is used to aligned the results, and should contain the length of the longest testResult.name inside testFile.results.
@@ -70,7 +72,6 @@ func relPath(absPath string) string {
 
 // reportTest writes a formatted output of a single test result (PASS/FAIL/SKIP/??) with the optional included message.
 func reportTest(w io.Writer, test testResult, maxName int) {
-	const color = "\033[38;5;255;%d;1m%s\033[0m"
 
 	switch test.outcome {
 	case Failed:
