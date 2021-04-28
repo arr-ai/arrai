@@ -10,19 +10,16 @@ let multipleHtml =
     <tr><td>b</td><td>[1, 2, 3]</td></tr>
 </table>';
 
-let norm1 = \s //seq.sub('\r\n', '\n', s);
-let norm2 = \s //seq.trim_prefix('\n', norm1(s));
-let norm3 = \s //seq.trim_prefix('\t', norm2(s));
-let norm = norm3;
+let remWhitespace = \s //re.compile('\\s').sub('', s);
 
 (
     markdown: (
-        empty: //log.printf("Actual:  *****%s*****", [norm(markdown({}))]) = //log.printf("Expected:*****%s*****", ['|Key|Value|\n']),
-        single: norm(markdown(single)) = '|Key|Value|\n|a|1|',
-        multiple: norm(markdown(multiple)) = '|Key|Value|\n|a|1|\n|b|[1, 2, 3]|',
+        empty: //log.printf("Actual:  *****%s*****", [remWhitespace(markdown({}))]) = //log.printf("Expected:*****%s*****", ['|Key|Value|']),
+        single: remWhitespace(markdown(single)) = '|Key|Value||a|1|',
+        multiple: remWhitespace(markdown(multiple)) = '|Key|Value||a|1||b|[1,2,3]|',
     ),
     html: (
-        empty: norm(html({})) = '<table>\n    <tr><th>Key</th><th>Value</th></tr>\n</table>',
-        multiple: norm(html(multiple)) = multipleHtml,
+        empty: remWhitespace(html({})) = '<table><tr><th>Key</th><th>Value</th></tr></table>',
+        multiple: remWhitespace(html(multiple)) = remWhitespace(multipleHtml),
     ),
 )
