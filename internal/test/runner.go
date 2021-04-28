@@ -16,6 +16,8 @@ import (
 	"github.com/arr-ai/arrai/syntax"
 )
 
+// RunTests runs all arr.ai tests in a given path. It returns an error if the path is invalid, contains no test files or
+// has invalid arr.ai code in any of them.
 func RunTests(ctx context.Context, w io.Writer, path string) error {
 	if path == "" || path == "." {
 		var err error
@@ -41,7 +43,9 @@ func RunTests(ctx context.Context, w io.Writer, path string) error {
 	return err
 }
 
-// Finds all *_test.arrai files in given path (recursively), reads them and returns a testFile array with them.
+// getTestFiles finds all *_test.arrai files in given path (recursively), reads them and returns a testFile array with
+// them. It skips over hidden directories. It returns an error if any filesystem operation failed, or if no files were
+// found.
 func getTestFiles(ctx context.Context, path string) ([]testFile, error) {
 	var files []testFile
 	fs := ctxfs.SourceFsFrom(ctx)
@@ -83,7 +87,8 @@ func getTestFiles(ctx context.Context, path string) ([]testFile, error) {
 	return files, nil
 }
 
-// runFile runs all tests in testFile.source and fills testFile.results and testFile.wallTime.
+// runFile runs all tests in testFile.source and fills testFile.results and testFile.wallTime. It returns an error if
+// the arr.ai code failed to evaluate.
 func runFile(ctx context.Context, file *testFile) error {
 	start := time.Now()
 	result, err := syntax.EvaluateExpr(ctx, file.path, file.source)
@@ -106,8 +111,8 @@ func runFile(ctx context.Context, file *testFile) error {
 			result.message = "Expected: true. Actual: false."
 		} else {
 			result.outcome = Invalid
-			result.message = fmt.Sprintf("Could not determine test outcome due to non-boolean result of type '%T': %s",
-				val, val.String())
+			result.message = fmt.Sprintf("Could not determine test outcome due to non-boolean result of type %s: %s",
+				rel.ValueTypeAsString(val), val.String())
 
 			if _, ok := val.(rel.GenericSet); ok {
 				result.message = fmt.Sprintf("Sets are not allowed as test containers. Please use tuples, " +

@@ -3,6 +3,8 @@ package test
 import (
 	"fmt"
 	"io"
+	"os"
+	"path/filepath"
 	"sort"
 	"strings"
 	"unicode/utf8"
@@ -11,6 +13,8 @@ import (
 	"golang.org/x/text/message"
 )
 
+// Report writes a formatted output of all the test files and their test results, and returns and error if the test run
+// failed.
 func Report(w io.Writer, testFiles []testFile) error {
 	stats := calcStats(testFiles)
 
@@ -27,6 +31,8 @@ func Report(w io.Writer, testFiles []testFile) error {
 	return nil
 }
 
+// reportFile writes a formatted output of a file and all its test results, ordered by outcome. The maxName parameter
+// is used to aligned the results, and should contain the length of the longest testResult.name inside testFile.results.
 func reportFile(w io.Writer, testFile testFile, maxName int) {
 	results := testFile.results
 
@@ -43,12 +49,25 @@ func reportFile(w io.Writer, testFile testFile, maxName int) {
 	})
 
 	message.NewPrinter(language.English).
-		Fprintf(w, "\n=======  %s (%dms)\n", testFile.path, testFile.wallTime.Milliseconds())
+		Fprintf(w, "\n=======  %s (%dms)\n", relPath(testFile.path), testFile.wallTime.Milliseconds())
 	for _, result := range results {
 		reportTest(w, result, maxName)
 	}
 }
 
+// relPath makes a best-effort attempt to compute the relative path of the given absolute path. If it fails, it returns
+// the absolute path untouched.
+func relPath(absPath string) string {
+	cwd, wdErr := os.Getwd()
+	relPath, relErr := filepath.Rel(cwd, absPath)
+	if wdErr == nil || relErr == nil {
+		return relPath
+	} else {
+		return absPath
+	}
+}
+
+// reportTest writes a formatted output of a single test result (PASS/FAIL/SKIP/??) with the optional included message.
 func reportTest(w io.Writer, test testResult, maxName int) {
 	const color = "\033[38;5;255;%d;1m%s\033[0m"
 
@@ -70,6 +89,7 @@ func reportTest(w io.Writer, test testResult, maxName int) {
 	}
 }
 
+// reportStats writes a formatted single line representation of the aggregated test statistics.
 func reportStats(w io.Writer, stats testStats) {
 	p := message.NewPrinter(language.English)
 	p.Fprintf(w, "\n=======  Summary\n")

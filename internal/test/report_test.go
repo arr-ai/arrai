@@ -16,8 +16,8 @@ func TestReport_TwoFilesPass(t *testing.T) {
 	t.Parallel()
 
 	err := reportShouldContain(t, generateFiles(),
-		"/path/to/file1.arrai", "1,234ms", "PASS", "testA",
-		"/path/to/file2.arrai", "4,321ms", "PASS", "testB",
+		"path/to/file1.arrai", "1,234ms", "PASS", "testA",
+		"path/to/file2.arrai", "4,321ms", "PASS", "testB",
 		"2 passed", "2 total", "5,555ms")
 	require.NoError(t, err)
 }
@@ -28,8 +28,8 @@ func TestReport_TwoFilesFail(t *testing.T) {
 	files := generateFiles()
 	files[1].results[0] = testResult{name: "testB", outcome: Failed, message: "Uh oh"}
 	err := reportShouldContain(t, files,
-		"/path/to/file1.arrai", "1,234ms", "PASS", "testA",
-		"/path/to/file2.arrai", "4,321ms", "FAIL", "testB",
+		"path/to/file1.arrai", "1,234ms", "PASS", "testA",
+		"path/to/file2.arrai", "4,321ms", "FAIL", "testB",
 		"1 failed", "1 passed", "2 total", "5,555ms")
 	require.Error(t, err)
 }
@@ -38,7 +38,7 @@ func TestReport_TwoFilesFail(t *testing.T) {
 
 func TestReportFile_WithTest(t *testing.T) {
 	t.Parallel()
-	generateFiles()[0].reportShouldContain(t, "/path/to/file1.arrai", "1,234ms", "PASS", "testA")
+	generateFiles()[0].reportShouldContain(t, "path/to/file1.arrai", "1,234ms", "PASS", "testA")
 }
 
 func TestReportFile_SortsCorrectly(t *testing.T) {

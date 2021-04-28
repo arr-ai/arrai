@@ -200,7 +200,7 @@ func TestRunFile_OneInvalidOnePass(t *testing.T) {
 	require.NotZero(t, file.wallTime)
 	require.ElementsMatch(t, file.results, []testResult{
 		{name: "test1", outcome: Invalid,
-			message: "Could not determine test outcome due to non-boolean result of type 'rel.Number': 1"},
+			message: "Could not determine test outcome due to non-boolean result of type number: 1"},
 		{name: "test2", outcome: Passed}})
 }
 

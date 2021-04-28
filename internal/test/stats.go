@@ -5,6 +5,9 @@ import (
 	"unicode/utf8"
 )
 
+// calcStats calculates aggregate statistics for all test results in the provided test files. Most importantly, it
+// determines if the test run has succeeded or failed. A test run fails if there are any testResults with a 'failed' or
+// 'invalid' outcome.
 func calcStats(testFiles []testFile) testStats {
 	var stats testStats
 

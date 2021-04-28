@@ -14,7 +14,7 @@ let remWhitespace = \s //re.compile('\\s').sub('', s);
 
 (
     markdown: (
-        empty: //log.printf("Actual:  *****%s*****", [remWhitespace(markdown({}))]) = //log.printf("Expected:*****%s*****", ['|Key|Value|']),
+        empty: remWhitespace(markdown({})) = '|Key|Value|',
         single: remWhitespace(markdown(single)) = '|Key|Value||a|1|',
         multiple: remWhitespace(markdown(multiple)) = '|Key|Value||a|1||b|[1,2,3]|',
     ),

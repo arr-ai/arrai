@@ -40,13 +40,13 @@ func ForeachLeaf(val rel.Value, path string, leafAction func(val rel.Value, path
 	}
 }
 
-var emptyTuple = rel.NewTuple()
-
+// isLiteralTrue returns true if and only if the provided value is a literal true, i.e. "true" or "{()}"
 func isLiteralTrue(val rel.Value) bool {
 	v, ok := val.(rel.GenericSet)
-	return ok && v.Count() == 1 && v.Has(emptyTuple)
+	return ok && v.Count() == 1 && v.Has(rel.EmptyTuple)
 }
 
+// isLiteralFalse returns true if and only if the provided value is a literal false, i.e. "false" or "{}"
 func isLiteralFalse(val rel.Value) bool {
 	if _, ok := val.(rel.EmptySet); ok {
 		return true
