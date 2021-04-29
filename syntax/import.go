@@ -12,6 +12,8 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/spf13/afero"
+
 	"github.com/anz-bank/pkg/mod"
 	"github.com/arr-ai/arrai/pkg/ctxfs"
 	"github.com/arr-ai/arrai/pkg/ctxrootcache"
@@ -259,7 +261,7 @@ func fileValue(ctx context.Context, decoder rel.Tuple, filename string) (rel.Exp
 		filename += ".arrai"
 	}
 
-	bytes, err := ctxfs.ReadFile(ctxfs.SourceFsFrom(ctx), filename)
+	bytes, err := afero.ReadFile(ctxfs.SourceFsFrom(ctx), filename)
 	if err != nil {
 		return nil, err
 	}

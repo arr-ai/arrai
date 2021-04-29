@@ -21,6 +21,7 @@ import (
 	"github.com/go-errors/errors"
 	"github.com/rjeczalik/notify"
 	log "github.com/sirupsen/logrus"
+	"github.com/spf13/afero"
 	"github.com/urfave/cli/v2"
 	"google.golang.org/grpc"
 )
@@ -123,7 +124,7 @@ func buildTree(ctx context.Context, root string) (map[string]interface{}, error)
 			if err != nil {
 				log.Printf("ERROR WALKING TO %s: %s", path, err)
 			} else if !info.IsDir() {
-				data, err := ctxfs.ReadFile(ctxfs.SourceFsFrom(ctx), path)
+				data, err := afero.ReadFile(ctxfs.SourceFsFrom(ctx), path)
 				if err != nil {
 					return errors.WrapPrefix(err, "reading "+path, 0)
 				}

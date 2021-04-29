@@ -10,14 +10,16 @@ let multipleHtml =
     <tr><td>b</td><td>[1, 2, 3]</td></tr>
 </table>';
 
+let remWhitespace = \s //re.compile('\\s').sub('', s);
+
 (
     markdown: (
-        empty: markdown({}) = '|Key|Value|\n',
-        single: markdown(single) = '|Key|Value|\n|a|1|',
-        multiple: markdown(multiple) = '|Key|Value|\n|a|1|\n|b|[1, 2, 3]|',
+        empty: remWhitespace(markdown({})) = '|Key|Value|',
+        single: remWhitespace(markdown(single)) = '|Key|Value||a|1|',
+        multiple: remWhitespace(markdown(multiple)) = '|Key|Value||a|1||b|[1,2,3]|',
     ),
     html: (
-        empty: html({}) = '<table>\n    <tr><th>Key</th><th>Value</th></tr>\n</table>',
-        multiple: html(multiple) = multipleHtml,
+        empty: remWhitespace(html({})) = '<table><tr><th>Key</th><th>Value</th></tr></table>',
+        multiple: remWhitespace(html(multiple)) = remWhitespace(multipleHtml),
     ),
 )

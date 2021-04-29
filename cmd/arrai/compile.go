@@ -151,7 +151,7 @@ func buildBinary(ctx context.Context, bundledScripts []byte, out afero.File) err
 		}
 	}
 
-	file, err := ctxfs.ReadFile(fs, filepath.Join(buildDir, "main"))
+	file, err := afero.ReadFile(fs, filepath.Join(buildDir, "main"))
 	if err != nil {
 		return err
 	}

@@ -463,7 +463,7 @@ func testAssertFiles(t *testing.T, dir, script string, files map[string]string, 
 			content, exists := files[relPath]
 			assert.True(t, exists, fmt.Sprintf("unexpected file exists: path=%s, relPath=%s", path, relPath))
 
-			f, err := ctxfs.ReadFile(fs, path)
+			f, err := afero.ReadFile(fs, path)
 			assert.NoError(t, err)
 
 			assert.Equal(t, content, string(f))
