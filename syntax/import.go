@@ -162,9 +162,12 @@ func importModuleFile(ctx context.Context, decoder rel.Tuple, importPath string)
 	if err != nil {
 		return nil, err
 	}
-	if err := mod.Config(mod.GoModulesMode,
-		mod.GoModulesOptions{ModName: filepath.Base(wd)}, mod.GitHubOptions{}); err != nil {
-		return nil, err
+	_, err = findRootFromModule(ctx, wd)
+	if err != nil {
+		if err := mod.Config(mod.GoModulesMode,
+			mod.GoModulesOptions{ModName: filepath.Base(wd)}, mod.GitHubOptions{}); err != nil {
+			return nil, err
+		}
 	}
 
 	path, ver := mod.ExtractVersion(importPath)
