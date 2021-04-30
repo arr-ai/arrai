@@ -3,6 +3,8 @@ id: testing
 title: Writing tests
 ---
 
+import useBaseUrl from '@docusaurus/useBaseUrl';
+
 Arr.ai is a functional language designed for the representation and transformation of data. As such, testing arr.ai code is different from testing more stateful, imperative code.
 
 Arr.ai's approach to testing is for test files to produce a data structure within which all leaves are the literal `true` or `false` to indicate if a test has passed or failed. Any other value is considered an invalid test, and will fail the test run.
