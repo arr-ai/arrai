@@ -71,7 +71,20 @@ If evaluating the test files causes an error, be it a parsing error or runtime e
 
 ### Generative tests
 
-If you have repetitive tests that differ only in data, you may generate a collection of results
+If you have repetitive tests that differ only in data, you may generate a collection of results. For example:
+
+```arrai
+let isEven = \i i % 2 = 0;
+(
+    even: [-2, 0, 2, 10, 100] >> isEven(.),
+    odd: [-1, 1, 3, 11, 101] >> !isEven(.)
+)
+```
+
+Which will produce the output:
+
+<img alt="Test run output" src={useBaseUrl('img/test_output3.png')} />
+
 
 ### Roadmap
 
