@@ -235,6 +235,14 @@ func (a Array) Export(ctx context.Context) interface{} {
 	return result
 }
 
+func (Array) getSetBuilder() setBuilder {
+	return newGenericTypeSetBuilder()
+}
+
+func (Array) getBucket() fmt.Stringer {
+	return genericType
+}
+
 // Count returns the number of elements in the Array.
 func (a Array) Count() int {
 	return a.count
@@ -260,11 +268,13 @@ func (a Array) withItem(index int, item Value) Set {
 		copy(b.values[-index:], a.values)
 		b.offset += index
 		index = 0
-	case index < len(a.values):
-		b.values = make([]Value, len(a.values))
-		copy(b.values, a.values)
-	default:
+	case index >= len(a.values):
 		b.values = make([]Value, index+1)
+		copy(b.values, a.values)
+	case item.Equal(a.values[index]):
+		return a
+	default:
+		b.values = make([]Value, len(a.values))
 		copy(b.values, a.values)
 	}
 	if b.values[index] != nil {
@@ -284,7 +294,7 @@ func (a Array) With(value Value) Set {
 	if t, ok := value.(ArrayItemTuple); ok {
 		return a.withItem(t.at, t.item)
 	}
-	return newGenericSetFromSet(a).With(value)
+	return toUnionSetWithItem(a, value)
 }
 
 // Without returns the original Array without the given value. Iff the value
@@ -390,6 +400,10 @@ func (a Array) CallAll(_ context.Context, arg Value, b SetBuilder) error {
 		}
 	}
 	return nil
+}
+
+func (Array) unionSetSubsetBucket() string {
+	return ArrayItemTuple{}.getBucket().String()
 }
 
 // Enumerator returns an enumerator over the Values in the Array.

@@ -217,6 +217,14 @@ func (d Dict) Export(_ context.Context) interface{} {
 	return mb.Finish()
 }
 
+func (Dict) getSetBuilder() setBuilder {
+	return newGenericTypeSetBuilder()
+}
+
+func (Dict) getBucket() fmt.Stringer {
+	return genericType
+}
+
 func (d Dict) Count() int {
 	return d.m.Count()
 }
@@ -246,7 +254,7 @@ func (d Dict) With(v Value) Set {
 		}
 		return Dict{m: d.m.With(t.at, t.value)}
 	}
-	return d
+	return toUnionSetWithItem(d, v)
 }
 
 func (d Dict) Without(v Value) Set {
@@ -307,6 +315,10 @@ func (d Dict) CallAll(_ context.Context, arg Value, b SetBuilder) error {
 		}
 	}
 	return nil
+}
+
+func (Dict) unionSetSubsetBucket() string {
+	return DictEntryTuple{}.getBucket().String()
 }
 
 type emptyEnumerator struct{}

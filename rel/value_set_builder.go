@@ -1,11 +1,60 @@
 package rel
 
 import (
+	"fmt"
 	"reflect"
 
 	"github.com/arr-ai/frozen"
-	"github.com/go-errors/errors"
 )
+
+// TODO: Replace genericSetBuilder with custom setBuilders.
+var (
+	genericSetFinish = func(values ...Value) (Set, error) {
+		sb := frozen.SetBuilder{}
+		for _, v := range values {
+			sb.Add(v)
+		}
+		return GenericSet{sb.Finish()}, nil
+	}
+
+	stringFinish = func(values ...Value) (Set, error) {
+		return asString(values...), nil
+	}
+
+	bytesFinish = func(values ...Value) (Set, error) {
+		return asBytes(values...), nil
+	}
+
+	arrayFinish = func(values ...Value) (Set, error) {
+		return asArray(values...), nil
+	}
+
+	dictFinish = func(values ...Value) (Set, error) {
+		v := make([]DictEntryTuple, 0, len(values))
+		for _, value := range values {
+			v = append(v, value.(DictEntryTuple))
+		}
+		return NewDict(true, v...)
+	}
+)
+
+type setBuilder interface {
+	Add(v Value)
+	Finish() (Set, error)
+}
+
+type genericSetBuilder struct {
+	values []Value
+	finish func(values ...Value) (Set, error)
+}
+
+func (b *genericSetBuilder) Add(v Value) {
+	b.values = append(b.values, v)
+}
+
+func (b *genericSetBuilder) Finish() (Set, error) {
+	return b.finish(b.values...)
+}
 
 // MustNewSet constructs a genericSet from a set of Values, or panics if construction fails.
 func MustNewSet(values ...Value) Set {
@@ -39,16 +88,28 @@ func NewSetFrom(intfs ...interface{}) (Set, error) {
 }
 
 type SetBuilder struct {
-	buckets map[interface{}][]Value
+	buckets map[fmt.Stringer]setBuilder
 }
 
 func NewSetBuilder() SetBuilder {
-	return SetBuilder{buckets: map[interface{}][]Value{}}
+	return SetBuilder{buckets: map[fmt.Stringer]setBuilder{}}
+}
+
+type generic struct{}
+
+var genericType = reflect.TypeOf(generic{})
+
+func newGenericTypeSetBuilder() setBuilder {
+	return &genericSetBuilder{values: []Value{}, finish: genericSetFinish}
 }
 
 func (b *SetBuilder) Add(v Value) {
-	t := reflect.TypeOf(v)
-	b.buckets[t] = append(b.buckets[t], v)
+	builder, has := b.buckets[v.getBucket()]
+	if !has {
+		builder = v.getSetBuilder()
+		b.buckets[v.getBucket()] = builder
+	}
+	builder.Add(v)
 }
 
 func (b *SetBuilder) Finish() (Set, error) {
@@ -56,31 +117,18 @@ func (b *SetBuilder) Finish() (Set, error) {
 	case 0:
 		return None, nil
 	case 1:
-		for typ, values := range b.buckets {
-			switch typ {
-			case stringCharTupleType:
-				return asString(values...), nil
-			case bytesByteTupleType:
-				if b, is := asBytes(values...); is {
-					return b, nil
-				}
-				return nil, errors.Errorf("unsupported byte array expr")
-			case arrayItemTupleType:
-				return asArray(values...), nil
-			case dictEntryTupleType:
-				tuples := make([]DictEntryTuple, 0, len(values))
-				for _, value := range values {
-					tuples = append(tuples, value.(DictEntryTuple))
-				}
-				return NewDict(true, tuples...)
-			}
+		for _, values := range b.buckets {
+			return values.Finish()
 		}
 	}
-	sb := frozen.SetBuilder{}
-	for _, values := range b.buckets {
-		for _, value := range values {
-			sb.Add(value)
+
+	var mb frozen.StringMapBuilder
+	for k, v := range b.buckets {
+		set, err := v.Finish()
+		if err != nil {
+			return nil, err
 		}
+		mb.Put(k.String(), set)
 	}
-	return GenericSet{sb.Finish()}, nil
+	return UnionSet{mb.Finish()}, nil
 }

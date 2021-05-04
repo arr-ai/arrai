@@ -2,6 +2,7 @@ package rel
 
 import (
 	"context"
+	"fmt"
 	"reflect"
 
 	"github.com/arr-ai/hash"
@@ -149,6 +150,14 @@ func (s String) Export(_ context.Context) interface{} {
 	return string(s.s)
 }
 
+func (String) getSetBuilder() setBuilder {
+	return newGenericTypeSetBuilder()
+}
+
+func (String) getBucket() fmt.Stringer {
+	return genericType
+}
+
 // Count returns the number of elements in the String.
 func (s String) Count() int {
 	return len(s.s) - s.holes
@@ -165,8 +174,11 @@ func (s String) Has(value Value) bool {
 }
 
 func (s String) with(at int, char rune) Set {
+	i := s.index(at)
 	switch {
-	case s.index(at) == len(s.s):
+	case 0 <= i && i < len(s.s) && s.s[i] == char:
+		return s
+	case i == len(s.s):
 		return String{s: append(s.s, char), offset: s.offset, holes: s.holes}
 	case at == s.offset-1:
 		return String{
@@ -186,7 +198,7 @@ func (s String) With(value Value) Set {
 	if t, ok := value.(StringCharTuple); ok {
 		return s.with(t.at, t.char)
 	}
-	return newGenericSetFromSet(s).With(value)
+	return toUnionSetWithItem(s, value)
 }
 
 // Without returns the original String without the given value. Iff the value
@@ -253,6 +265,10 @@ func (s String) CallAll(_ context.Context, arg Value, b SetBuilder) error {
 		}
 	}
 	return nil
+}
+
+func (String) unionSetSubsetBucket() string {
+	return StringCharTuple{}.getBucket().String()
 }
 
 func (s String) index(pos int) int {

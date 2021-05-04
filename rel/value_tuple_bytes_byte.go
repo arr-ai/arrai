@@ -119,6 +119,14 @@ func (t BytesByteTuple) Export(_ context.Context) interface{} {
 	}
 }
 
+func (BytesByteTuple) getSetBuilder() setBuilder {
+	return &genericSetBuilder{values: []Value{}, finish: bytesFinish}
+}
+
+func (BytesByteTuple) getBucket() fmt.Stringer {
+	return bytesByteTupleType
+}
+
 // Count returns how many attributes are in the Tuple.
 func (t BytesByteTuple) Count() int {
 	return 2

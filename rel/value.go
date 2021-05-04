@@ -49,6 +49,10 @@ type Value interface {
 
 	// Export converts the Value to a natural Go value.
 	Export(context.Context) interface{}
+
+	// functions for building sets
+	getSetBuilder() setBuilder
+	getBucket() fmt.Stringer
 }
 
 // intfValueLess supports
@@ -128,6 +132,8 @@ type Set interface {
 	Map(func(Value) (Value, error)) (Set, error)
 	Where(func(Value) (bool, error)) (Set, error)
 	CallAll(context.Context, Value, SetBuilder) error
+
+	unionSetSubsetBucket() string
 }
 
 // NoReturnError is an error signififying that there was no return value.

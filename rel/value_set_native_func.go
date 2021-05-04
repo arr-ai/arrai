@@ -2,6 +2,7 @@ package rel
 
 import (
 	"context"
+	"fmt"
 	"reflect"
 	"unsafe"
 
@@ -96,6 +97,14 @@ func (f *NativeFunction) Export(_ context.Context) interface{} {
 	return f.fn
 }
 
+func (*NativeFunction) getSetBuilder() setBuilder {
+	return newGenericTypeSetBuilder()
+}
+
+func (*NativeFunction) getBucket() fmt.Stringer {
+	return genericType
+}
+
 func (*NativeFunction) Count() int {
 	return 1
 }
@@ -132,6 +141,11 @@ func (f *NativeFunction) CallAll(ctx context.Context, arg Value, b SetBuilder) e
 	}
 	b.Add(v)
 	return nil
+}
+
+func (*NativeFunction) unionSetSubsetBucket() string {
+	// TODO: create its own subset bucket in unionset
+	return genericType.String()
 }
 
 func (*NativeFunction) ArrayEnumerator() ValueEnumerator {

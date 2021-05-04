@@ -116,6 +116,14 @@ func (t StringCharTuple) Export(_ context.Context) interface{} {
 	}
 }
 
+func (t StringCharTuple) getSetBuilder() setBuilder {
+	return &genericSetBuilder{values: []Value{}, finish: stringFinish}
+}
+
+func (t StringCharTuple) getBucket() fmt.Stringer {
+	return stringCharTupleType
+}
+
 // Count returns how many attributes are in the Tuple.
 func (t StringCharTuple) Count() int {
 	return 2

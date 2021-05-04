@@ -2,6 +2,7 @@ package rel
 
 import (
 	"context"
+	"fmt"
 	"reflect"
 
 	"github.com/arr-ai/wbnf/parser"
@@ -38,6 +39,14 @@ func (e EmptySet) Negate() Value {
 
 func (e EmptySet) Export(context.Context) interface{} {
 	return nil
+}
+
+func (EmptySet) getSetBuilder() setBuilder {
+	return newGenericTypeSetBuilder()
+}
+
+func (EmptySet) getBucket() fmt.Stringer {
+	return genericType
 }
 
 func (e EmptySet) Equal(i interface{}) bool {
@@ -100,4 +109,8 @@ func (e EmptySet) Where(func(Value) (bool, error)) (Set, error) {
 
 func (e EmptySet) CallAll(context.Context, Value, SetBuilder) error {
 	return nil
+}
+
+func (EmptySet) unionSetSubsetBucket() string {
+	return genericType.String()
 }

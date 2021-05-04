@@ -118,6 +118,14 @@ func (t ArrayItemTuple) Export(ctx context.Context) interface{} {
 	}
 }
 
+func (ArrayItemTuple) getSetBuilder() setBuilder {
+	return &genericSetBuilder{values: []Value{}, finish: arrayFinish}
+}
+
+func (ArrayItemTuple) getBucket() fmt.Stringer {
+	return arrayItemTupleType
+}
+
 // Count returns how many attributes are in the Tuple.
 func (t ArrayItemTuple) Count() int {
 	return 2

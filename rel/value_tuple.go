@@ -294,6 +294,16 @@ func (t *GenericTuple) Export(ctx context.Context) interface{} {
 	return result
 }
 
+func (*GenericTuple) getSetBuilder() setBuilder {
+	// TODO: create specific set builder for each tuple
+	return newGenericTypeSetBuilder()
+}
+
+func (*GenericTuple) getBucket() fmt.Stringer {
+	// TODO: create specific bucket for each tuple
+	return genericType
+}
+
 // Count returns how many attributes are in the Tuple.
 func (t *GenericTuple) Count() int {
 	return t.tuple.Count()

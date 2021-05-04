@@ -3,6 +3,7 @@ package rel
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"reflect"
 
 	"github.com/arr-ai/hash"
@@ -35,7 +36,7 @@ func NewOffsetBytes(b []byte, offset int) Set {
 }
 
 // TODO: support byte arrays with holes.
-func asBytes(values ...Value) (Bytes, bool) { //nolint:dupl
+func asBytes(values ...Value) Bytes { //nolint:dupl
 	n := len(values)
 	tuples := make([]BytesByteTuple, 0, n)
 	minAt := int(^uint(0) >> 1)
@@ -54,7 +55,7 @@ func asBytes(values ...Value) (Bytes, bool) { //nolint:dupl
 	for _, t := range tuples {
 		bytes[t.at-minAt] = t.byteval
 	}
-	return Bytes{b: bytes, offset: minAt}, true
+	return Bytes{b: bytes, offset: minAt}
 }
 
 // Bytes returns the bytes of b. The caller must not modify the contents.
@@ -128,6 +129,14 @@ func (b Bytes) Export(_ context.Context) interface{} {
 	return string(b.b)
 }
 
+func (Bytes) getSetBuilder() setBuilder {
+	return newGenericTypeSetBuilder()
+}
+
+func (Bytes) getBucket() fmt.Stringer {
+	return genericType
+}
+
 // Count returns the number of elements in the Bytes.
 func (b Bytes) Count() int {
 	return len(b.b)
@@ -144,9 +153,13 @@ func (b Bytes) Has(value Value) bool {
 }
 
 func (b Bytes) with(index int, byt byte) Set {
-	if b.index(index) == len(b.b) {
+	i := b.index(index)
+	switch {
+	case 0 <= i && i < len(b.b) && b.b[i] == byt:
+		return b
+	case i == len(b.b):
 		return Bytes{b: append(b.b, byt), offset: b.offset}
-	} else if index == b.offset-1 {
+	case index == b.offset-1:
 		return Bytes{
 			b:      append(append(make([]byte, 0, 1+len(b.b)), byt), b.b...),
 			offset: b.offset - 1,
@@ -161,7 +174,7 @@ func (b Bytes) With(value Value) Set {
 	if index, byt, ok := isBytesTuple(value); ok {
 		return b.with(index, byt)
 	}
-	return newGenericSetFromSet(b).With(value)
+	return toUnionSetWithItem(b, value)
 }
 
 // Without returns the original Bytes without the given value. Iff the value
@@ -222,6 +235,10 @@ func (b Bytes) CallAll(_ context.Context, arg Value, sb SetBuilder) error {
 	return nil
 }
 
+func (Bytes) unionSetSubsetBucket() string {
+	return BytesByteTuple{}.getBucket().String()
+}
+
 func (b Bytes) index(pos int) int {
 	pos -= b.offset
 	if 0 <= pos && pos <= len(b.b) {
@@ -232,8 +249,8 @@ func (b Bytes) index(pos int) int {
 
 // BytesEnumerator represents an enumerator over a Bytes.
 type BytesEnumerator struct {
-	b []byte
-	i int
+	b         []byte
+	offset, i int
 }
 
 // MoveNext moves the enumerator to the next Value.
@@ -247,12 +264,12 @@ func (e *BytesEnumerator) MoveNext() bool {
 
 // Current returns the enumerator'b current Value.
 func (e *BytesEnumerator) Current() Value {
-	return NewBytesByteTuple(e.i, e.b[e.i])
+	return NewBytesByteTuple(e.offset+e.i, e.b[e.i])
 }
 
 // Enumerator returns an enumerator over the Values in the Bytes.
 func (b Bytes) Enumerator() ValueEnumerator {
-	return &BytesEnumerator{b.b, -1}
+	return &BytesEnumerator{b.b, b.offset, -1}
 }
 
 type bytesValueEnumerator struct {

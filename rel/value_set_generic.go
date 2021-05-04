@@ -26,6 +26,8 @@ var (
 	bytesByteTupleType  = reflect.TypeOf(BytesByteTuple{})
 	arrayItemTupleType  = reflect.TypeOf(ArrayItemTuple{})
 	dictEntryTupleType  = reflect.TypeOf(DictEntryTuple{})
+	// TODO: uncomment when relation is implemented
+	// genericTupleType    = reflect.TypeOf(&GenericTuple{})
 )
 
 func CanonicalSet(s Set) Set {
@@ -179,6 +181,14 @@ func (s GenericSet) Export(ctx context.Context) interface{} {
 	return result
 }
 
+func (GenericSet) getSetBuilder() setBuilder {
+	return newGenericTypeSetBuilder()
+}
+
+func (GenericSet) getBucket() fmt.Stringer {
+	return genericType
+}
+
 // Count returns the number of elements in the genericSet.
 func (s GenericSet) Count() int {
 	return s.set.Count()
@@ -191,8 +201,11 @@ func (s GenericSet) Has(value Value) bool {
 
 // With returns the original genericSet with given value added. Iff the value was
 // already present, the original genericSet is returned.
-func (s GenericSet) With(value Value) Set {
-	return GenericSet{s.set.With(value)}
+func (s GenericSet) With(v Value) Set {
+	if v.getBucket() == genericType {
+		return GenericSet{s.set.With(v)}
+	}
+	return toUnionSetWithItem(s, v)
 }
 
 // Without returns the original genericSet without the given value. Iff the value was
@@ -252,6 +265,10 @@ func (s GenericSet) CallAll(_ context.Context, arg Value, b SetBuilder) error {
 		}
 	}
 	return nil
+}
+
+func (GenericSet) unionSetSubsetBucket() string {
+	return genericType.String()
 }
 
 // Enumerator returns an enumerator over the Values in the genericSet.

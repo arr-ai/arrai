@@ -116,21 +116,19 @@ func jsonEscape(value Expr) interface{} {
 			result[name] = jsonEscape(value)
 		}
 		return result
-	case GenericSet, EmptySet:
-		v := x.(Set)
-		if v.Equal(False) {
-			return false
-		}
-		if v.Equal(True) {
+	case String:
+		return string(x.s)
+	case EmptySet:
+		return false
+	case Set:
+		if x.Equal(True) {
 			return true
 		}
-		array := make([]interface{}, 0, v.Count())
-		for e := v.Enumerator(); e.MoveNext(); {
+		array := make([]interface{}, 0)
+		for e := x.Enumerator(); e.MoveNext(); {
 			array = append(array, jsonEscape(e.Current()))
 		}
 		return map[string]interface{}{"{||}": array}
-	case String:
-		return string(x.s)
 	case Expr:
 		panic(fmt.Sprintf("Bare expressions cannot be JSON escaped: %#v", x))
 	default:

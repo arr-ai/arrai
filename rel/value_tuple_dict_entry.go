@@ -116,6 +116,14 @@ func (t DictEntryTuple) Export(ctx context.Context) interface{} {
 	}
 }
 
+func (DictEntryTuple) getSetBuilder() setBuilder {
+	return &genericSetBuilder{values: []Value{}, finish: dictFinish}
+}
+
+func (DictEntryTuple) getBucket() fmt.Stringer {
+	return dictEntryTupleType
+}
+
 // Count returns how many attributes are in the Tuple.
 func (t DictEntryTuple) Count() int {
 	return 2

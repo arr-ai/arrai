@@ -2,6 +2,7 @@ package rel
 
 import (
 	"context"
+	"fmt"
 	"reflect"
 	"strconv"
 	"unsafe"
@@ -109,4 +110,11 @@ func (n Number) Negate() Value {
 // Export exports a Number.
 func (n Number) Export(_ context.Context) interface{} {
 	return n.Float64()
+}
+
+func (Number) getSetBuilder() setBuilder {
+	return newGenericTypeSetBuilder()
+}
+func (Number) getBucket() fmt.Stringer {
+	return genericType
 }

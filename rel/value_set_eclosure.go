@@ -2,6 +2,7 @@ package rel
 
 import (
 	"context"
+	"fmt"
 	"reflect"
 
 	"github.com/arr-ai/wbnf/parser"
@@ -90,6 +91,14 @@ func (c ExprClosure) Export(ctx context.Context) interface{} {
 	}
 }
 
+func (ExprClosure) getSetBuilder() setBuilder {
+	return newGenericTypeSetBuilder()
+}
+
+func (ExprClosure) getBucket() fmt.Stringer {
+	return genericType
+}
+
 func (ExprClosure) Count() int {
 	return 1
 }
@@ -120,6 +129,11 @@ func (ExprClosure) Where(p func(v Value) (bool, error)) (Set, error) {
 
 func (c ExprClosure) CallAll(_ context.Context, arg Value, b SetBuilder) error {
 	panic("unimplemented")
+}
+
+func (ExprClosure) unionSetSubsetBucket() string {
+	// TODO: create its own subset bucket in union set
+	return genericType.String()
 }
 
 func (ExprClosure) ArrayEnumerator() ValueEnumerator {
