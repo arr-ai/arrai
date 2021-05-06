@@ -4,8 +4,9 @@
 
 # Invokes a macro on a string as if it were source code at parsing time.
 let invokeMacro = \macro \s
-    macro -> (//dict(.@transform) >>> \rule \fn
-        fn(//grammar.parse(.@grammar, rule, s))).@value
+    let (@grammar: g, @transform: tx, ...) = macro;
+    let out = //dict(tx) >>> \rule \fn fn(//grammar.parse(g, rule, s));
+    (out single).@value
 ;
 
 # Transforms an AST into a simple tuple of its values.
