@@ -21,7 +21,9 @@ func ValueTypeAsString(v Value) string {
 		return "dict"
 	case String, *String:
 		return "string"
-	case GenericSet, EmptySet:
+	case *NativeFunction:
+		return "native-function"
+	case Set:
 		return "set"
 	case ArrayItemTuple, *ArrayItemTuple:
 		return "array-item-tuple"
@@ -33,8 +35,6 @@ func ValueTypeAsString(v Value) string {
 		return "string-char-tuple"
 	case Tuple, *GenericTuple:
 		return "tuple"
-	case *NativeFunction:
-		return "native-function"
 	}
 	return fmt.Sprintf("%T", v)
 }

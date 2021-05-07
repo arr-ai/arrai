@@ -20,7 +20,7 @@ type GenericSet struct {
 var (
 	None  = Set(EmptySet{})
 	False = None
-	True  = None.With(EmptyTuple)
+	True  = Set(TrueSet{})
 
 	stringCharTupleType = reflect.TypeOf(StringCharTuple{})
 	bytesByteTupleType  = reflect.TypeOf(BytesByteTuple{})
@@ -50,12 +50,17 @@ func newGenericSetFromSet(s Set) Set {
 	for e := s.Enumerator(); e.MoveNext(); {
 		sb.Add(e.Current())
 	}
-	return GenericSet{sb.Finish()}
+	return newSetFromFrozenSet(sb.Finish())
 }
 
 func newSetFromFrozenSet(s frozen.Set) Set {
-	if s.Count() == 0 {
+	switch s.Count() {
+	case 0:
 		return None
+	case 1:
+		if s.Has(EmptyTuple) {
+			return True
+		}
 	}
 	return GenericSet{s}
 }

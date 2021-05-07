@@ -39,6 +39,8 @@ func FromArrai(v rel.Value) (interface{}, error) {
 			switch b.(type) {
 			case rel.EmptySet:
 				return false, nil
+			case rel.TrueSet:
+				return true, nil
 			default:
 				return b.(rel.GenericSet).IsTrue(), nil
 			}

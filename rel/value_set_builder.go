@@ -14,7 +14,7 @@ var (
 		for _, v := range values {
 			sb.Add(v)
 		}
-		return GenericSet{sb.Finish()}, nil
+		return newSetFromFrozenSet(sb.Finish()), nil
 	}
 
 	stringFinish = func(values ...Value) (Set, error) {

@@ -12,7 +12,7 @@ type EmptySet struct{}
 
 var _ Set = EmptySet{}
 
-var emptySetKind = registerKind(199, reflect.TypeOf(EmptySet{}))
+var emptySetKind = registerKind(198, reflect.TypeOf(EmptySet{}))
 
 func (e EmptySet) Kind() int {
 	return emptySetKind
@@ -86,12 +86,14 @@ func (e EmptySet) Enumerator() ValueEnumerator {
 	return emptyEnumerator{}
 }
 
-// func (e EmptySet) ArrayEnumerator() ValueEnumerator {
 func (e EmptySet) ArrayEnumerator() ValueEnumerator {
 	return emptyEnumerator{}
 }
 
 func (e EmptySet) With(v Value) Set {
+	if v.Equal(EmptyTuple) {
+		return True
+	}
 	return MustNewSet(v)
 }
 

@@ -166,7 +166,7 @@ func reprNativeFunction(v Value, w io.Writer) {
 
 func reprValue(v Value, w io.Writer) {
 	switch v := v.(type) {
-	case EmptySet:
+	case EmptySet, TrueSet:
 		fmt.Fprint(w, v.String())
 	case String:
 		reprString(v, w)
