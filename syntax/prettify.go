@@ -49,7 +49,11 @@ func PrettifyString(val interface{}, indentsNum int) (string, error) {
 		if err != nil {
 			return "", err
 		}
-		return fmt.Sprintf("%v: %v", t.Name, prettyVal), nil
+		name := t.Name
+		if name == "" {
+			name = "''"
+		}
+		return fmt.Sprintf("%v: %v", name, prettyVal), nil
 	case rel.Tuple: // (a: 1)
 		return prettifyTuple(t, indentsNum+1)
 	case rel.Array: // [1, 2]

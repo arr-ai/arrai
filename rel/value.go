@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"reflect"
+	"strings"
 	"unsafe"
 
 	"github.com/iancoleman/strcase"
@@ -11,6 +12,13 @@ import (
 	"github.com/arr-ai/frozen"
 	"github.com/arr-ai/wbnf/parser"
 	"github.com/go-errors/errors"
+)
+
+const (
+	arraiTag  = "arrai"
+	unordered = "unordered"
+	omitempty = "omitempty"
+	zeroempty = "zeroempty"
 )
 
 // Expr represents an arr.ai expression.
@@ -240,7 +248,7 @@ func reflectNewValue(x reflect.Value) (Value, error) {
 		}
 		return NewValue(x.Elem().Interface())
 	case reflect.Array, reflect.Slice:
-		return reflectToSet(x)
+		return reflectToArray(x)
 	case reflect.Map:
 		entries := make([]DictEntryTuple, 0, x.Len())
 		for _, k := range x.MapKeys() {
@@ -271,23 +279,98 @@ func reflectNewValue(x reflect.Value) (Value, error) {
 
 			var v Value
 			var err error
-			switch f.Type().Kind() {
-			case reflect.Array, reflect.Slice:
-				v, err = reflectToValues(f, tf.Tag.Get("unordered") == "true")
-			default:
-				v, err = NewValue(f.Interface())
+			tags := arraiTagMap(tf)
+			if _, ok := tags[omitempty]; ok && isEmpty(f) {
+				continue
+			} else if tags[zeroempty] && isEmpty(f) {
+				v = zeroValue(f.Type())
+			} else {
+				switch f.Type().Kind() {
+				case reflect.Array, reflect.Slice:
+					v, err = reflectToValues(f, tags[unordered])
+				default:
+					v, err = NewValue(f.Interface())
+				}
 			}
 			if err != nil {
 				return nil, err
 			}
 			// Lowercase the first character in case it's uppercase only for Go exporting.
 			// TODO: Handle a name tag to override behaviour.
-			s[strcase.ToLowerCamel(tf.Name)] = v
+			s[fieldName(tf)] = v
 		}
 		return NewTupleFromMap(s)
 	default:
 		return nil, errors.Errorf("%v (%[1]T) not convertible to Value", x)
 	}
+}
+
+// zeroValue returns the arr.ai value that best represents an empty value of a Go value's type.
+func zeroValue(v reflect.Type) Value {
+	switch v.Kind() {
+	case reflect.Ptr:
+		return zeroValue(v.Elem())
+	case reflect.Struct, reflect.Map:
+		return NewTuple()
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
+		reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr,
+		reflect.Float32, reflect.Float64,
+		reflect.Complex64, reflect.Complex128:
+		return NewNumber(0)
+	}
+	return None
+}
+
+// isEmpty returns true if a value is considered empty for serialization purposes (i.e. should be
+// omitted if the omitempty tag is specified).
+//
+// This is true for zero values, empty collections, structs with only empty fields, and pointers to
+// any of those.
+func isEmpty(v reflect.Value) bool {
+	switch v.Kind() {
+	case reflect.Ptr:
+		return v.IsNil() || isEmpty(v.Elem())
+	case reflect.Slice, reflect.Map:
+		return v.Len() == 0
+	case reflect.Struct:
+		for i := 0; i < v.NumField(); i++ {
+			if !isEmpty(v.Field(i)) {
+				return false
+			}
+		}
+		return true
+	default:
+		return v.IsZero()
+	}
+}
+
+// fieldName returns the name that should be used for a given field.
+//
+// It will return the name if specified in a tag (e.g. `arrai:"name"`), or else default to the name
+// of the field in the struct in lowerCamelCase.
+func fieldName(sf reflect.StructField) string {
+	if name := arraiTags(sf)[0]; name != "" {
+		return name
+	}
+	return strcase.ToLowerCamel(sf.Name)
+}
+
+// arraiTags returns the values associated with the `arrai:` tag, separated on commas and trimmed.
+func arraiTags(sf reflect.StructField) []string {
+	tags := strings.Split(sf.Tag.Get(arraiTag), ",")
+	for i, t := range tags {
+		tags[i] = strings.TrimSpace(t)
+	}
+	return tags
+}
+
+// arraiTags returns a map with a key for each values associated with the `arrai:` tag.
+func arraiTagMap(sf reflect.StructField) map[string]bool {
+	tags := map[string]bool{}
+	for _, t := range arraiTags(sf) {
+		tags[t] = true
+	}
+	return tags
 }
 
 // reflectToValues assumed x is a slice or array, and returns x serialized to a collection of Values.
@@ -309,8 +392,8 @@ func reflectToValues(x reflect.Value, unordered bool) (Value, error) {
 	return NewArray(vs...), nil
 }
 
-func reflectToSet(x reflect.Value) (Value, error) {
-	return reflectToValues(x, true)
+func reflectToArray(x reflect.Value) (Value, error) {
+	return reflectToValues(x, false)
 }
 
 // AttrEnumeratorToSlice transcribes its Attrs in a slice.

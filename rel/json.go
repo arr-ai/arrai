@@ -120,11 +120,17 @@ func jsonEscape(value Expr) interface{} {
 		return string(x.s)
 	case EmptySet:
 		return false
+	case Array:
+		array := make([]interface{}, 0, x.Count())
+		for e := x.ArrayEnumerator(); e.MoveNext(); {
+			array = append(array, jsonEscape(e.Current()))
+		}
+		return map[string]interface{}{"{||}": array}
 	case Set:
 		if x.Equal(True) {
 			return true
 		}
-		array := make([]interface{}, 0)
+		array := make([]interface{}, 0, x.Count())
 		for e := x.Enumerator(); e.MoveNext(); {
 			array = append(array, jsonEscape(e.Current()))
 		}
@@ -162,15 +168,15 @@ func jsonUnescape(i interface{}) (Value, error) {
 			for name, value := range x {
 				if name == "{||}" {
 					if array, ok := value.([]interface{}); ok {
-						result := None
+						items := make([]Value, 0, len(array))
 						for _, v := range array {
 							value, err := jsonUnescape(v)
 							if err != nil {
 								return nil, err
 							}
-							result = result.With(value)
+							items = append(items, value)
 						}
-						return result, nil
+						return NewArray(items...), nil
 					}
 					return nil, errors.Errorf(
 						`x must be array in {"{||}": x}, not %T`, value)
