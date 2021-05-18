@@ -52,7 +52,7 @@ var StdProtobufDecoder = rel.NewNativeFunction("decode", func(_ context.Context,
 				return nil, err
 			}
 
-			tuple, err := convertProtoValToSyslVal(protoreflect.ValueOf(message.ProtoReflect()))
+			tuple, err := FromProtoValue(protoreflect.ValueOf(message.ProtoReflect()))
 			if err != nil {
 				return nil, err
 			}
