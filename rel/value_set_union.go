@@ -237,11 +237,11 @@ func (u UnionSet) Export(ctx context.Context) interface{} {
 }
 
 func (UnionSet) getSetBuilder() setBuilder {
-	panic("UnionSet.getSetBuilder should not be called")
+	return newGenericTypeSetBuilder()
 }
 
 func (UnionSet) getBucket() fmt.Stringer {
-	panic("UnionSet.getBucket should not be called")
+	return genericType
 }
 
 func (u UnionSet) Eval(ctx context.Context, local Scope) (Value, error) {

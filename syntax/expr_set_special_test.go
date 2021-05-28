@@ -93,6 +93,7 @@ func TestSetBuilder(t *testing.T) {
 	AssertCodeEvalsToType(t, rel.GenericSet{}, `{1}`)
 	AssertCodeEvalsToType(t, rel.GenericSet{}, `{1, 2, 3}`)
 	AssertCodeEvalsToType(t, rel.GenericSet{}, `{"test", "another test", 123}`)
+	AssertCodeEvalsToType(t, rel.GenericSet{}, `{{(a: 1), (b: 1)}, {(c: 1), 1}}`)
 	AssertCodeEvalsToType(t, rel.True, `{()}`)
 	AssertCodeEvalsToType(t, rel.None, `{}`)
 
