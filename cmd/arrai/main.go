@@ -104,8 +104,8 @@ VERSION:
 	if err != nil {
 		logrus.Info(err)
 		if tools.IsTerminal() {
-			if _, isContextErr := err.(rel.ContextErr); isContextErr && debug {
-				if err = createDebuggerShell(err); err != nil {
+			if ctxErr, isContextErr := err.(rel.ContextErr); isContextErr && debug {
+				if err = createDebuggerShell(ctxErr); err != nil {
 					logrus.Info(err)
 				}
 			}

@@ -3,9 +3,9 @@ package main
 import (
 	"context"
 
-	"github.com/arr-ai/arrai/internal/shell"
 	"github.com/arr-ai/arrai/pkg/arraictx"
 	"github.com/arr-ai/arrai/pkg/buildinfo"
+	"github.com/arr-ai/arrai/pkg/shell"
 	"github.com/arr-ai/arrai/rel"
 	"github.com/urfave/cli/v2"
 )
@@ -24,12 +24,7 @@ func iShell(_ *cli.Context) error {
 	return shell.Shell(arraictx.InitRunCtx(context.Background()), []rel.ContextErr{})
 }
 
-func createDebuggerShell(err error) error {
-	if err != nil {
-		if ctxErr, isContextError := err.(rel.ContextErr); isContextError {
-			return shell.Shell(arraictx.InitRunCtx(context.Background()), ctxErr.GetImportantFrames())
-		}
-		return err
-	}
-	return nil
+// createDebuggerShell creates an interactive shell to explore the context at which err occurred.
+func createDebuggerShell(err rel.ContextErr) error {
+	return shell.Shell(arraictx.InitRunCtx(context.Background()), err.GetImportantFrames())
 }
