@@ -29,6 +29,6 @@ func TestInverseNest(t *testing.T) {
 		`{|x, y, z| (1, 1, 2), (1, 1, 3), (1, 2, 4), (1, 3, 5)} nest ~|b|a`,
 	)
 	AssertCodeErrors(t,
-		"not a relation; inconsistent attribute names between tuples",
+		"not a relation",
 		`{(x: 1, y: 1), (x: 1, y: 2, z: 3)} nest ~|x|a`)
 }

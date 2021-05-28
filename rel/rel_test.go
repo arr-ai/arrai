@@ -94,6 +94,39 @@ func TestNewValueFromMap(t *testing.T) {
 	}
 }
 
+// FIXME: uncomment when hashing works
+// func TestRelationHash(t *testing.T) {
+// 	t.Parallel()
+
+// 	pr1 := projectedRelation{
+// 		p: []int{0, 1},
+// 		r: positionalRelation{
+// 			frozen.NewSet(
+// 				Values{NewNumber(1), NewNumber(2)},
+// 				Values{NewNumber(3), NewNumber(4)},
+// 			),
+// 		},
+// 	}
+// 	pr2 := projectedRelation{
+// 		p: []int{1, 0},
+// 		r: positionalRelation{
+// 			frozen.NewSet(
+// 				Values{NewNumber(2), NewNumber(1)},
+// 				Values{NewNumber(4), NewNumber(3)},
+// 			),
+// 		},
+// 	}
+
+// 	name1, name2 := []string{"x", "y"}, []string{"y", "x"}
+// 	rel1 := Relation{attrs: name1, rows: pr1}
+// 	rel2 := Relation{attrs: name1, rows: pr2}
+// 	rel3 := Relation{attrs: name2, rows: pr1}
+// 	rel4 := Relation{attrs: name2, rows: pr2}
+
+// 	assert.Equal(t, rel1.Hash(0), rel2.Hash(0))
+// 	assert.Equal(t, rel3.Hash(0), rel4.Hash(0))
+// }
+
 // func TestNewValueFromSlice(t *testing.T) {
 // 	t.Parallel()
 // 	m := []interface{}{

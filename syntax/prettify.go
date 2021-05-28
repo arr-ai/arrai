@@ -62,6 +62,8 @@ func PrettifyString(val interface{}, indentsNum int) (string, error) {
 		return prettifyDict(t, indentsNum+1)
 	case rel.GenericSet: // {1, 2}
 		return prettifySet(t, indentsNum+1)
+	case rel.Relation:
+		return prettifyRelation(t, indentsNum+1)
 	case rel.String:
 		return prettifyString(t)
 	case nil:
@@ -71,6 +73,30 @@ func PrettifyString(val interface{}, indentsNum int) (string, error) {
 	default:
 		return "", fmt.Errorf("unknown type: %T", t)
 	}
+}
+
+func prettifyRelation(r rel.Relation, indentsNum int) (string, error) {
+	sb := strings.Builder{}
+	indent := func() {
+		sb.WriteString("\n")
+		sb.WriteString(getIndents(indentsNum))
+	}
+	sb.WriteString("{")
+	indent()
+	sb.WriteString(fmt.Sprintf("|%s|", r.AttrsName().String()))
+	indent()
+	contents := make([]string, 0, r.Count())
+	for i := r.OrderedValuesEnumerator(); i.Next(); {
+		content, err := prettifyItems(i.Values(), indentsNum)
+		if err != nil {
+			return "", err
+		}
+		contents = append(contents, fmt.Sprintf("(%s)", content))
+	}
+	sb.WriteString(strings.Join(contents, ",\n"+getIndents(indentsNum)))
+	sb.WriteString(",\n" + getIndents(indentsNum-1))
+	sb.WriteString("}")
+	return sb.String(), nil
 }
 
 func prettifySet(arr rel.GenericSet, indentsNum int) (string, error) {

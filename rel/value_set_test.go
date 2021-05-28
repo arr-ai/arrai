@@ -30,9 +30,10 @@ func TestAsString(t *testing.T) {
 	// assert.True(t, stringified.Equal(NewString([]rune(""))))
 }
 
-func TestGenericSetCallAll(t *testing.T) {
+func TestUnionSetCallAll(t *testing.T) {
 	t.Parallel()
 
+	// unionset of relational sets
 	set := MustNewSet(
 		NewTuple(
 			NewAttr("@", NewNumber(1)),
@@ -45,10 +46,6 @@ func TestGenericSetCallAll(t *testing.T) {
 		NewTuple(
 			NewAttr("@", NewNumber(2)),
 			NewAttr("@foo", NewNumber(3)),
-			NewAttr("@bar", NewNumber(4)),
-		),
-		NewTuple(
-			NewAttr("@", NewNumber(3)),
 		),
 		NewTuple(
 			NewAttr("@", NewNumber(4)),
@@ -57,8 +54,8 @@ func TestGenericSetCallAll(t *testing.T) {
 	)
 	ctx := arraictx.InitRunCtx(context.Background())
 	AssertEqualValues(t, MustNewSet(NewNumber(42), NewNumber(24)), mustCallAll(ctx, set, NewNumber(1)))
-	assert.Panics(t, func() { mustCallAll(ctx, set, NewNumber(2)) })
-	assert.Panics(t, func() { mustCallAll(ctx, set, NewNumber(3)) })
+	assert.Panics(t, func() { mustCallAll(ctx, set.With(NewTuple(NewAttr("@", NewNumber(1)))), NewNumber(2)) })
+	assert.Panics(t, func() { mustCallAll(ctx, set.With(NewTuple(NewAttr("hi", NewNumber(1)))), NewNumber(3)) })
 	AssertEqualValues(t, MustNewSet(NewNumber(5)), mustCallAll(ctx, set, NewNumber(4)))
 	AssertEqualValues(t, None, mustCallAll(ctx, set, NewNumber(5)))
 }

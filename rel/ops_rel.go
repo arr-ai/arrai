@@ -10,28 +10,45 @@ import (
 // RelationAttrs returns the set of names for a relation type, or an error if
 // the set isn't a regular relation.
 func RelationAttrs(a Set) (Names, error) {
-	e := a.Enumerator()
-	if !e.MoveNext() {
+	switch a := a.(type) {
+	case Relation:
+		return NewNames(a.attrs...), nil
+	case EmptySet, TrueSet:
 		return Names{}, nil
-	}
-	t, is := e.Current().(Tuple)
-	if !is {
-		return Names{}, fmt.Errorf("not a relation; has non-tuple element(s) (e.g.: %s)", ValueTypeAsString(t))
-	}
-	names := t.Names()
-	for e.MoveNext() {
+	case Dict:
+		return NewNames("@", DictValueAttr), nil
+	case Array:
+		return NewNames("@", ArrayItemAttr), nil
+	case Bytes:
+		return NewNames("@", BytesByteAttr), nil
+	case String:
+		return NewNames("@", StringCharAttr), nil
+	case GenericSet:
+		// this is only for benchmark, in real case, GenericSet would never have tuples.
+		e := a.Enumerator()
+		if !e.MoveNext() {
+			return Names{}, nil
+		}
 		t, is := e.Current().(Tuple)
 		if !is {
 			return Names{}, fmt.Errorf("not a relation; has non-tuple element(s) (e.g.: %s)", ValueTypeAsString(t))
 		}
-		if !names.Equal(t.Names()) {
-			return Names{}, fmt.Errorf(
-				"not a relation; inconsistent attribute names between tuples (e.g.: %v vs %v)",
-				names, t.Names(),
-			)
+		names := t.Names()
+		for e.MoveNext() {
+			t, is := e.Current().(Tuple)
+			if !is {
+				return Names{}, fmt.Errorf("not a relation; has non-tuple element(s) (e.g.: %s)", ValueTypeAsString(t))
+			}
+			if !names.Equal(t.Names()) {
+				return Names{}, fmt.Errorf(
+					"not a relation; inconsistent attribute names between tuples (e.g.: %v vs %v)",
+					names, t.Names(),
+				)
+			}
 		}
+		return names, nil
 	}
-	return names, nil
+	return Names{}, fmt.Errorf("not a relation")
 }
 
 func nestWithFunc(a Set, relAttrs, attrs Names, attr string, fn func(Set, Tuple) Set) Set {
@@ -140,8 +157,21 @@ func Reduce(
 //         for mutually disjoint x…, y…, z…
 //
 // The combine function determines how to combine matching tuples from a and b.
-func Joiner(combine func(common Names, a, b Tuple) Tuple) func(a, b Set) (Set, error) {
+// The partitionName function determines the columns that are to be included in
+// the output based from left and right Relations. The function is only called
+// when both Sets are Relations.
+func Joiner(
+	combine func(common Names, a, b Tuple) Tuple,
+	partitionNames func(left, right, common NamesSlice) (leftOut, rightOut NamesSlice),
+) func(a, b Set) (Set, error) {
 	return func(a, b Set) (Set, error) {
+		if r1, is := a.(Relation); is {
+			if r2, is := b.(Relation); is {
+				common := r1.attrs.intersect(r2.attrs)
+				left, right := partitionNames(r1.attrs, r2.attrs, common)
+				return r1.Join(r2, common, left, right), nil
+			}
+		}
 		aNames, err := RelationAttrs(a)
 		if err != nil {
 			return nil, err
@@ -177,9 +207,15 @@ func Joiner(combine func(common Names, a, b Tuple) Tuple) func(a, b Set) (Set, e
 	}
 }
 
-var join = Joiner(func(_ Names, a, b Tuple) Tuple {
-	return Merge(a, b)
-})
+var join = Joiner(
+	func(_ Names, a, b Tuple) Tuple {
+		return Merge(a, b)
+	},
+	func(left, right, _ NamesSlice) (leftOut, rightOut NamesSlice) {
+		// left includes key
+		return left, right.minus(left)
+	},
+)
 
 // func Join(a, b Set) Set {
 // 	aNames, ok := RelationAttrs(a)

@@ -294,14 +294,129 @@ func (t *GenericTuple) Export(ctx context.Context) interface{} {
 	return result
 }
 
-func (*GenericTuple) getSetBuilder() setBuilder {
-	// TODO: create specific set builder for each tuple
-	return newGenericTypeSetBuilder()
+func (t *GenericTuple) getSetBuilder() setBuilder {
+	// TODO: increase capacity
+	if !t.IsTrue() {
+		return newGenericTypeSetBuilder()
+	}
+	return newRelationBuilder(t.Names().Names(), 0)
 }
 
-func (*GenericTuple) getBucket() fmt.Stringer {
-	// TODO: create specific bucket for each tuple
-	return genericType
+func (t *GenericTuple) getBucket() fmt.Stringer {
+	if !t.IsTrue() {
+		return genericType
+	}
+	return newHashableNamesSlice(t.Names().OrderedNames())
+}
+
+type NamesSlice []string
+
+func (n NamesSlice) hasIntersect(n2 NamesSlice) bool {
+	if len(n) > len(n2) {
+		n, n2 = n2, n
+	}
+	m := n.intoSet()
+	for _, name := range n2 {
+		if _, has := m[name]; has {
+			return true
+		}
+	}
+	return false
+}
+
+func (n NamesSlice) intersect(n2 NamesSlice) NamesSlice {
+	if len(n) > len(n2) {
+		n, n2 = n2, n
+	}
+	m := n.intoSet()
+	intersects := make(NamesSlice, 0, len(n))
+	for _, name := range n2 {
+		if _, has := m[name]; has {
+			intersects = append(intersects, name)
+		}
+	}
+	return intersects
+}
+
+func (n NamesSlice) minus(n2 NamesSlice) NamesSlice {
+	names := make(NamesSlice, 0, len(n))
+	m := n2.intoSet()
+	for _, name := range n {
+		if _, has := m[name]; !has {
+			names = append(names, name)
+		}
+	}
+	return names
+}
+
+func (n NamesSlice) intoSet() map[string]struct{} {
+	m := make(map[string]struct{})
+	for _, name := range n {
+		m[name] = struct{}{}
+	}
+	return m
+}
+
+func (n NamesSlice) String() string {
+	return strings.Join(n, ", ")
+}
+
+func (n NamesSlice) EqualNamesSlice(n2 NamesSlice) bool {
+	if len(n) != len(n2) {
+		return false
+	}
+	left, right := n.getSorted(), n2.getSorted()
+	for i, name := range left {
+		if name != right[i] {
+			return false
+		}
+	}
+	return true
+}
+
+func (n NamesSlice) EqualTupleAttrs(t Tuple) bool {
+	for _, name := range n {
+		if t.HasName(name) {
+			t = t.Without(name)
+			continue
+		}
+		return false
+	}
+	return !t.IsTrue()
+}
+
+func (n NamesSlice) LessNamesSlice(n2 NamesSlice) bool {
+	if len(n) != len(n2) {
+		return len(n) < len(n2)
+	}
+	left, right := n.getSorted(), n2.getSorted()
+	for i, attr := range left {
+		if attr < right[i] {
+			return true
+		}
+		if attr > right[i] {
+			return false
+		}
+	}
+	return false
+}
+
+func (n NamesSlice) getSorted() NamesSlice {
+	sorted := make(NamesSlice, len(n))
+	copy(sorted, n)
+	sort.Strings(sorted)
+	return sorted
+}
+
+// a helper type so that getBucket can return a hashable fmt.Stringer type from a namesSlice.
+type hashableNamesSlice string
+
+func newHashableNamesSlice(n NamesSlice) hashableNamesSlice {
+	return hashableNamesSlice(n.String())
+}
+
+func (s hashableNamesSlice) String() string {
+	return string(s)
 }
 
 // Count returns how many attributes are in the Tuple.

@@ -168,8 +168,8 @@ func (u UnionSet) Where(f func(Value) (bool, error)) (Set, error) {
 }
 
 func (u UnionSet) CallAll(ctx context.Context, arg Value, sb SetBuilder) error {
-	for i := u.bucketRange(); i.next(); {
-		if err := i.subset().CallAll(ctx, arg, sb); err != nil {
+	for i := u.m.Range(); i.Next(); {
+		if err := i.Value().(Set).CallAll(ctx, arg, sb); err != nil {
 			return err
 		}
 	}

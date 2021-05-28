@@ -86,7 +86,7 @@ func Union(a, b Set) Set {
 			a, b = b, a
 		}
 		return a.(UnionSet).unionWithSubset(b)
-	case a.Kind() != b.Kind():
+	case a.unionSetSubsetBucket() != b.unionSetSubsetBucket():
 		m := frozen.StringMapBuilder{}
 		m.Put(a.unionSetSubsetBucket(), a)
 		m.Put(b.unionSetSubsetBucket(), b)

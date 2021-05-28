@@ -254,22 +254,11 @@ func (s GenericSet) Where(p func(v Value) (bool, error)) (_ Set, err error) {
 	return newSetFromFrozenSet(set), nil
 }
 
+var errElementsNotMatchingAt = fmt.Errorf("cannot call sets with elements not matching (@: _, _: _)")
+
 func (s GenericSet) CallAll(_ context.Context, arg Value, b SetBuilder) error {
-	var t Tuple
-	var at Value
-	tm := NewTupleMatcher(map[string]Matcher{"@": Bind(&at)}, Bind(&t))
-	for e := s.Enumerator(); e.MoveNext(); {
-		if tm.Match(e.Current()) && at.Equal(arg) {
-			if t.Count() != 1 {
-				return fmt.Errorf("cannot call sets with elements not matching (@: _, _: _)")
-			}
-			for attr := t.Enumerator(); attr.MoveNext(); {
-				_, value := attr.Current()
-				b.Add(value)
-			}
-		}
-	}
-	return nil
+	// generic set does not hold tuples
+	return errElementsNotMatchingAt
 }
 
 func (GenericSet) unionSetSubsetBucket() string {

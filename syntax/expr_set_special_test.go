@@ -95,8 +95,6 @@ func TestSetBuilder(t *testing.T) {
 	AssertCodeEvalsToType(t, rel.GenericSet{}, `{"test", "another test", 123}`)
 	AssertCodeEvalsToType(t, rel.True, `{()}`)
 	AssertCodeEvalsToType(t, rel.None, `{}`)
-	// TODO: change this when UnionSet creates a bucket for each tuple shape
-	AssertCodeEvalsToType(t, rel.GenericSet{}, `{(a: 1), (b: 1), (a: 1, b: 1)}`)
 
 	AssertCodeEvalsToType(t, rel.String{}, `"abc"`)
 	AssertCodeEvalsToType(t, rel.String{}, `{(@: 0, @char: 97), (@: 1, @char: 98), (@: 2, @char: 99)}`)
@@ -116,4 +114,8 @@ func TestSetBuilder(t *testing.T) {
 
 	AssertCodeEvalsToType(t, rel.UnionSet{},
 		`{(@: 0, @value: 97), (@: 1, @item: 98), (@: 2, @byte: 99), (@: 3, @char: 99), 1}`)
+	AssertCodeEvalsToType(t, rel.UnionSet{}, `{(a: 1), (b: 1), (a: 1, b: 1)}`)
+
+	AssertCodeEvalsToType(t, rel.Relation{}, `{|a, b| (0, 0), (1, 1), (2, 2)}`)
+	AssertCodeEvalsToType(t, rel.Relation{}, `{(a: 1)}`)
 }

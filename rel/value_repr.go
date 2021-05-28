@@ -176,6 +176,8 @@ func reprValue(v Value, w io.Writer) {
 		reprArray(v, w)
 	case Dict:
 		reprDict(v, w)
+	case Relation:
+		fmt.Fprint(w, v.String())
 	case orderableSet:
 		reprOrderableSet(v, w)
 	case Closure:
