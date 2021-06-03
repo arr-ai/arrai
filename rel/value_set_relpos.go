@@ -3,56 +3,93 @@ package rel
 import (
 	"fmt"
 	"strings"
+	"sync"
 
 	"github.com/arr-ai/frozen"
 )
 
 var (
-	truePosRel  = positionalRelation{frozen.NewSet(Values{})}
-	falsePosRel = positionalRelation{frozen.NewSet()}
+	truePosRel  = &positionalRelation{set: frozen.NewSet(Values{})}
+	falsePosRel = &positionalRelation{set: frozen.NewSet()}
 )
 
 // positionalRelation is a Set that only contains Tuples, all of which map the same keys.
 type positionalRelation struct {
-	set frozen.Set // TODO: experiment with column table
+	once sync.Once
+	set  frozen.Set // TODO: experiment with column table
+	meta *positionalRelationMetadata
 }
 
-func (r positionalRelation) groupBy(p valueProjector) frozen.Map {
-	if len(p) == 0 {
-		return frozen.NewMap(frozen.KV(Values{}, r.set))
+type positionalRelationMetadata struct {
+	sync.Mutex
+	indices frozen.Map
+}
+
+func (prm *positionalRelationMetadata) computeIndex(key interface{}, fn func() interface{}) interface{} {
+	prm.Lock()
+	defer prm.Unlock()
+	if index, has := prm.indices.Get(key); has {
+		return index
 	}
-	return r.set.GroupBy(p.mapper())
+	index := fn()
+	prm.indices = prm.indices.With(key, index)
+	return index
 }
 
-func (r positionalRelation) Count() int {
+func (r *positionalRelation) groupBy(p valueProjector) frozen.Map {
+	return r.getMeta().computeIndex(
+		p,
+		func() interface{} {
+			if len(p) == 0 {
+				return frozen.NewMap(frozen.KV(Values{}, r.set))
+			}
+			return r.set.GroupBy(p.mapper())
+		},
+	).(frozen.Map)
+}
+
+func (r *positionalRelation) getMeta() *positionalRelationMetadata {
+	r.once.Do(func() {
+		r.meta = &positionalRelationMetadata{}
+	})
+	return r.meta
+}
+
+func (r *positionalRelation) Count() int {
 	return r.set.Count()
 }
 
-func (r positionalRelation) Width() int {
+func (r *positionalRelation) Width() int {
 	return len(r.set.Any().(Values))
 }
 
-func (r positionalRelation) Has(v Values) bool {
+func (r *positionalRelation) Has(v Values) bool {
 	return r.set.Has(v)
 }
 
-func (r positionalRelation) IsEmpty() bool {
+func (r *positionalRelation) Hash(seed uintptr) uintptr {
+	return r.set.Hash(seed)
+}
+
+func (r *positionalRelation) IsEmpty() bool {
 	return r.set.IsEmpty()
 }
 
-func (r positionalRelation) Project(p valueProjector) positionalRelation {
-	return positionalRelation{r.set.Map(p.mapper())}
+func (r *positionalRelation) Project(p valueProjector) positionalRelation {
+	return positionalRelation{set: r.set.Map(p.mapper())}
 }
 
-func (r positionalRelation) With(v Values) positionalRelation {
-	return positionalRelation{r.set.With(v)}
+func (r *positionalRelation) With(v Values) *positionalRelation {
+	// TODO: lazy cache
+	return &positionalRelation{set: r.set.With(v)}
 }
 
-func (r positionalRelation) Without(v Values) positionalRelation {
-	return positionalRelation{r.set.Without(v)}
+func (r *positionalRelation) Without(v Values) *positionalRelation {
+	// TODO: lazy cache
+	return &positionalRelation{set: r.set.Without(v)}
 }
 
-func (r positionalRelation) Map(f func(Values) (Value, error)) (Set, error) {
+func (r *positionalRelation) Map(f func(Values) (Value, error)) (Set, error) {
 	sb := NewSetBuilder()
 	for i := r.set.Range(); i.Next(); {
 		val, err := f(i.Value().(Values))
@@ -64,7 +101,7 @@ func (r positionalRelation) Map(f func(Values) (Value, error)) (Set, error) {
 	return sb.Finish()
 }
 
-func (r positionalRelation) Where(p func(Values) (bool, error)) (_ positionalRelation, err error) {
+func (r *positionalRelation) Where(p func(Values) (bool, error)) (_ *positionalRelation, err error) {
 	set := r.set.Where(func(elem interface{}) bool {
 		if err != nil {
 			return false
@@ -80,12 +117,12 @@ func (r positionalRelation) Where(p func(Values) (bool, error)) (_ positionalRel
 		return match
 	})
 	if err != nil {
-		return positionalRelation{}, err
+		return &positionalRelation{}, err
 	}
-	return positionalRelation{set}, nil
+	return &positionalRelation{set: set}, nil
 }
 
-func (r positionalRelation) CallAll(atIndex, retIndex int, v Value, sb SetBuilder) error {
+func (r *positionalRelation) CallAll(atIndex, retIndex int, v Value, sb SetBuilder) error {
 	for i := r.set.Range(); i.Next(); {
 		vals := i.Value().(Values)
 		if vals[atIndex].Equal(v) {
@@ -95,26 +132,26 @@ func (r positionalRelation) CallAll(atIndex, retIndex int, v Value, sb SetBuilde
 	return nil
 }
 
-func (r positionalRelation) IsTrue() bool {
+func (r *positionalRelation) IsTrue() bool {
 	return !r.set.IsEmpty()
 }
 
-func (r positionalRelation) IsLiteralTrue() bool {
+func (r *positionalRelation) IsLiteralTrue() bool {
 	return r.set.Count() == 1 && r.set.Has(Values{})
 }
 
-func (r positionalRelation) Equal(i interface{}) bool {
-	if r2, is := i.(positionalRelation); is {
+func (r *positionalRelation) Equal(i interface{}) bool {
+	if r2, is := i.(*positionalRelation); is {
 		return r.EqualPositionalRelation(r2)
 	}
 	return false
 }
 
-func (r positionalRelation) EqualPositionalRelation(r2 positionalRelation) bool {
+func (r *positionalRelation) EqualPositionalRelation(r2 *positionalRelation) bool {
 	return r.set.EqualSet(r2.set)
 }
 
-func (r positionalRelation) String() string {
+func (r *positionalRelation) String() string {
 	if r.set.IsEmpty() {
 		return "{}"
 	}
@@ -139,11 +176,11 @@ func (r positionalRelation) String() string {
 	return sb.String()
 }
 
-func (r positionalRelation) Range() *positionalRelationValuesEnumerator {
+func (r *positionalRelation) Range() *positionalRelationValuesEnumerator {
 	return &positionalRelationValuesEnumerator{r.set.Range()}
 }
 
-func (r positionalRelation) OrderedRange(p valueProjector) *positionalRelationValuesEnumerator {
+func (r *positionalRelation) OrderedRange(p valueProjector) *positionalRelationValuesEnumerator {
 	return &positionalRelationValuesEnumerator{
 		r.set.OrderedRange(
 			func(a, b interface{}) bool {
@@ -175,21 +212,21 @@ func createMode(leftKey, rightKey, leftOutput, rightOutput valueProjector) Combi
 	return mode
 }
 
-func (r positionalRelation) Join(
-	r2 positionalRelation,
+func (r *positionalRelation) Join(
+	r2 *positionalRelation,
 	leftKey, rightKey, leftOutput, rightOutput valueProjector,
-) positionalRelation {
+) *positionalRelation {
 	mode := createMode(leftKey, rightKey, leftOutput, rightOutput)
-	var f func(r2 positionalRelation, leftKey, rightKey, leftOutput, rightOutput valueProjector) positionalRelation
+	var f func(r2 *positionalRelation, leftKey, rightKey, leftOutput, rightOutput valueProjector) *positionalRelation
 	switch mode {
 	case AllPairs, OnlyOnLHS | OnlyOnRHS: // <&>, <->
 		f = r.JoinKeepEverything
 	case OnlyOnLHS, OnlyOnLHS | InBoth: // <--, <&-
-		f = func(r2 positionalRelation, leftKey, rightKey, leftOutput, _ valueProjector) positionalRelation {
+		f = func(r2 *positionalRelation, leftKey, rightKey, leftOutput, _ valueProjector) *positionalRelation {
 			return joinOneSide(r, r2.groupBy(rightKey), leftKey, leftOutput)
 		}
 	case OnlyOnRHS, OnlyOnRHS | InBoth: // -->, -&>
-		f = func(r2 positionalRelation, leftKey, rightKey, _, rightOutput valueProjector) positionalRelation {
+		f = func(r2 *positionalRelation, leftKey, rightKey, _, rightOutput valueProjector) *positionalRelation {
 			return joinOneSide(r2, r.groupBy(leftKey), rightKey, rightOutput)
 		}
 	case InBoth: // -&-
@@ -203,10 +240,10 @@ func (r positionalRelation) Join(
 }
 
 // Joins two positionalRelation, keeps left intact with common keys and keeps right with common keys removed. <&>
-func (r positionalRelation) JoinKeepEverything(
-	r2 positionalRelation,
+func (r *positionalRelation) JoinKeepEverything(
+	r2 *positionalRelation,
 	leftKey, rightKey, leftOutput, rightOutput valueProjector,
-) positionalRelation {
+) *positionalRelation {
 	leftGroup, rightGroup := r.groupBy(leftKey), r2.groupBy(rightKey)
 	sb := frozen.NewSetBuilder(0)
 	for i := leftGroup.Range(); i.Next(); {
@@ -226,15 +263,15 @@ func (r positionalRelation) JoinKeepEverything(
 			}
 		}
 	}
-	return positionalRelation{sb.Finish()}
+	return &positionalRelation{set: sb.Finish()}
 }
 
 // JoinIfCommonExist joins left and right and return set with empty tuple if there's common values and return empty set
 // otherwise. ---
-func (r positionalRelation) JoinIfCommonExist(
-	r2 positionalRelation,
+func (r *positionalRelation) JoinIfCommonExist(
+	r2 *positionalRelation,
 	leftKey, rightKey, leftOutput, rightOutput valueProjector,
-) positionalRelation {
+) *positionalRelation {
 	if r.Count() > r2.Count() {
 		r, r2 = r2, r
 		leftKey, rightKey = rightKey, leftKey
@@ -249,12 +286,12 @@ func (r positionalRelation) JoinIfCommonExist(
 	return falsePosRel
 }
 
-func (r positionalRelation) JoinCommonOnly(
-	r2 positionalRelation,
+func (r *positionalRelation) JoinCommonOnly(
+	r2 *positionalRelation,
 	leftKey, rightKey, leftOutput, rightOutput valueProjector,
-) positionalRelation {
-	return positionalRelation{
-		r.groupBy(leftKey).Keys().Intersection(r2.groupBy(rightKey).Keys()).Map(
+) *positionalRelation {
+	return &positionalRelation{
+		set: r.groupBy(leftKey).Keys().Intersection(r2.groupBy(rightKey).Keys()).Map(
 			func(elem interface{}) interface{} {
 				switch e := elem.(type) {
 				case Values:
@@ -269,7 +306,7 @@ func (r positionalRelation) JoinCommonOnly(
 	}
 }
 
-func joinOneSide(base positionalRelation, intersector frozen.Map, key, output valueProjector) positionalRelation {
+func joinOneSide(base *positionalRelation, intersector frozen.Map, key, output valueProjector) *positionalRelation {
 	if output.isIdentity(base.Width()) {
 		result, err := base.Where(func(v Values) (bool, error) {
 			return intersector.Has(v.project(key).values()), nil
@@ -286,7 +323,7 @@ func joinOneSide(base positionalRelation, intersector frozen.Map, key, output va
 			sb.Add(values.project(output).values())
 		}
 	}
-	return positionalRelation{sb.Finish()}
+	return &positionalRelation{set: sb.Finish()}
 }
 
 type positionalRelationBuilder struct {
@@ -297,8 +334,8 @@ func (r *positionalRelationBuilder) Add(v Values) {
 	r.sb.Add(v)
 }
 
-func (r *positionalRelationBuilder) Finish() positionalRelation {
-	return positionalRelation{set: r.sb.Finish()}
+func (r *positionalRelationBuilder) Finish() *positionalRelation {
+	return &positionalRelation{set: r.sb.Finish()}
 }
 
 func valuesLess(indices ...int) func(a, b interface{}) bool {

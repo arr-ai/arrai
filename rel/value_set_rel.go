@@ -3,7 +3,6 @@ package rel
 import (
 	"context"
 	"fmt"
-	"log"
 	"reflect"
 	"sort"
 	"strings"
@@ -16,10 +15,10 @@ import (
 type Relation struct {
 	attrs NamesSlice
 	p     valueProjector
-	rows  positionalRelation // TODO: experiment with column table
+	rows  *positionalRelation // TODO: experiment with column table
 }
 
-func newRelation(attrs NamesSlice, p valueProjector, rows positionalRelation) Relation {
+func newRelation(attrs NamesSlice, p valueProjector, rows *positionalRelation) Relation {
 	return Relation{attrs, p, rows}
 }
 
@@ -34,7 +33,7 @@ func mapIndices(n NamesSlice, indices valueProjector) map[string]int {
 	return m
 }
 
-func (r Relation) newBody(rows positionalRelation) Set {
+func (r Relation) newBody(rows *positionalRelation) Set {
 	if !rows.IsTrue() {
 		return None
 	}
@@ -72,7 +71,6 @@ func (r Relation) tupleToValues(t Tuple) Values {
 		panic("tupleToValues: names and values don't have the same number")
 	}
 	values := make(Values, len(r.attrs))
-	log.Printf("r{attrs: %v, p: %v} t{names: %v}", r.attrs, r.p, t.Names().Names())
 	for i, name := range r.attrs {
 		values[r.p[i]] = t.MustGet(name)
 	}
@@ -359,7 +357,7 @@ func (r Relation) Equal(i interface{}) bool {
 	return false
 }
 
-func (r Relation) canonicalRelation() positionalRelation {
+func (r Relation) canonicalRelation() *positionalRelation {
 	names := make(NamesSlice, len(r.attrs))
 	copy(names, r.attrs)
 	sort.Strings(names)
@@ -369,8 +367,8 @@ func (r Relation) canonicalRelation() positionalRelation {
 		projection = append(projection, m[name])
 	}
 	isContiguous := projection.isContiguous()
-	return positionalRelation{
-		r.rows.set.Map(func(elem interface{}) interface{} {
+	return &positionalRelation{
+		set: r.rows.set.Map(func(elem interface{}) interface{} {
 			if isContiguous {
 				return elem.(Values)[projection[0] : projection[len(projection)-1]+1]
 			}

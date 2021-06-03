@@ -141,6 +141,33 @@ func (p valueProjector) isContiguous() bool {
 	return true
 }
 
+func (p valueProjector) Hash(seed uintptr) uintptr {
+	h := seed
+	for _, i := range p {
+		h = hash.Int(i, h)
+	}
+	return h
+}
+
+func (p valueProjector) Equal(i interface{}) bool {
+	if p2, is := i.(valueProjector); is {
+		return p.EqualValueProjector(p2)
+	}
+	return false
+}
+
+func (p valueProjector) EqualValueProjector(p2 valueProjector) bool {
+	if len(p) != len(p2) {
+		return false
+	}
+	for i := 0; i < len(p); i++ {
+		if p[i] != p2[i] {
+			return false
+		}
+	}
+	return true
+}
+
 type projectedValues struct {
 	p valueProjector
 	v Values

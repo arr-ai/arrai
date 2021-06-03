@@ -38,8 +38,8 @@ func genericSetTuples(n int) (GenericSet, GenericSet) {
 
 func generateRelations(n int) (Relation, Relation) {
 	t1, t2 := generateTuples(n)
-	f := func(t []Tuple) Relation {
-		sb := newRelationBuilder([]string{"a", "b"}, 3*n)
+	f := func(t []Tuple, names []string) Relation {
+		sb := newRelationBuilder(names, 3*n)
 		for _, tu := range t {
 			sb.Add(tu)
 		}
@@ -49,7 +49,7 @@ func generateRelations(n int) (Relation, Relation) {
 		}
 		return s.(Relation)
 	}
-	return f(t1), f(t2)
+	return f(t1, []string{"a", "b"}), f(t2, []string{"b", "c"})
 }
 
 func BenchmarkGenericSetJoin100(b *testing.B) {
@@ -103,8 +103,10 @@ func benchmarkRelationSetJoin(b *testing.B, n int) {
 }
 
 func benchmarkSetJoin(b *testing.B, s1, s2 Set) {
-	b.ResetTimer()
 	expr := NewJoinExpr(*parser.NewScanner(""), s1, s2)
+	_, err := expr.Eval(context.Background(), EmptyScope)
+	require.NoError(b, err)
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		_, err := expr.Eval(context.Background(), EmptyScope)
 		require.NoError(b, err)
