@@ -349,6 +349,16 @@ func (n NamesSlice) minus(n2 NamesSlice) NamesSlice {
 	return names
 }
 
+func (n NamesSlice) isSubset(n2 NamesSlice) bool {
+	m := n2.intoSet()
+	for _, name := range n {
+		if _, has := m[name]; !has {
+			return false
+		}
+	}
+	return true
+}
+
 func (n NamesSlice) intoSet() map[string]struct{} {
 	m := make(map[string]struct{})
 	for _, name := range n {

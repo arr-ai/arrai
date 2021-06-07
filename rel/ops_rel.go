@@ -212,7 +212,12 @@ var join = Joiner(
 		return Merge(a, b)
 	},
 	func(left, right, _ NamesSlice) (leftOut, rightOut NamesSlice) {
-		// left includes key
+		if left.isSubset(right) {
+			return NamesSlice{}, right
+		}
+		if right.isSubset(left) {
+			return left, NamesSlice{}
+		}
 		return left, right.minus(left)
 	},
 )
