@@ -18,6 +18,7 @@ check-clean: generate
 	git --no-pager diff HEAD && test -z "$$(git status --porcelain)"
 
 syntax/bindata.go: syntax/implicit_import.arrai syntax/stdlib.arraiz
+	go-bindata -version
 	go-bindata -mode 0644 -modtime 1 -pkg syntax -o syntax/bindata.go $^
 	# remove all arraiz files after embedded file is generated.
 	rm syntax/stdlib.arraiz
