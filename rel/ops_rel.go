@@ -165,6 +165,14 @@ func Joiner(
 	partitionNames func(left, right, common NamesSlice) (leftOut, rightOut NamesSlice),
 ) func(a, b Set) (Set, error) {
 	return func(a, b Set) (Set, error) {
+		if _, is := a.(EmptySet); is {
+			return None, nil
+		}
+
+		if _, is := b.(EmptySet); is {
+			return None, nil
+		}
+
 		if r1, is := a.(Relation); is {
 			if r2, is := b.(Relation); is {
 				common := r1.attrs.intersect(r2.attrs)
