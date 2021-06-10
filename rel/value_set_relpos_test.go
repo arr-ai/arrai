@@ -54,15 +54,16 @@ func TestCreateMode(t *testing.T) {
 	})
 }
 
+func row(numbers ...int) Values {
+	v := make(Values, 0, len(numbers))
+	for _, n := range numbers {
+		v = append(v, NewNumber(float64(n)))
+	}
+	return v
+}
+
 func TestGroupBy(t *testing.T) {
 	t.Parallel()
-	row := func(numbers ...int) Values {
-		v := make(Values, 0, len(numbers))
-		for _, n := range numbers {
-			v = append(v, NewNumber(float64(n)))
-		}
-		return v
-	}
 
 	row1 := row(1, 1, 2)
 	row2 := row(1, 1, 3)

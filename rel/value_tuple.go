@@ -375,7 +375,7 @@ func (n NamesSlice) EqualNamesSlice(n2 NamesSlice) bool {
 	if len(n) != len(n2) {
 		return false
 	}
-	left, right := n.getSorted(), n2.getSorted()
+	left, right := n.GetSorted(), n2.GetSorted()
 	for i, name := range left {
 		if name != right[i] {
 			return false
@@ -399,7 +399,7 @@ func (n NamesSlice) LessNamesSlice(n2 NamesSlice) bool {
 	if len(n) != len(n2) {
 		return len(n) < len(n2)
 	}
-	left, right := n.getSorted(), n2.getSorted()
+	left, right := n.GetSorted(), n2.GetSorted()
 	for i, attr := range left {
 		if attr < right[i] {
 			return true
@@ -411,7 +411,7 @@ func (n NamesSlice) LessNamesSlice(n2 NamesSlice) bool {
 	return false
 }
 
-func (n NamesSlice) getSorted() NamesSlice {
+func (n NamesSlice) GetSorted() NamesSlice {
 	sorted := make(NamesSlice, len(n))
 	copy(sorted, n)
 	sort.Strings(sorted)

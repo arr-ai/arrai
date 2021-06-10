@@ -336,18 +336,34 @@ func (r Relation) Source() parser.Scanner {
 func (r Relation) String() string {
 	s := strings.Builder{}
 	s.WriteString("{")
-	s.WriteString(fmt.Sprintf("|%s| ", strings.Join(r.attrs, ", ")))
+
+	attrs := r.attrs.GetSorted()
+	s.WriteString(fmt.Sprintf("|%s| ", strings.Join(attrs, ", ")))
+	projection := r.projectionBasedOnNames(attrs)
 	notFirst := false
-	for i := r.rows.OrderedRange(identityProjector(r.rows.Width())); i.Next(); {
+	for i := r.rows.OrderedRange(projection); i.Next(); {
 		if notFirst {
 			s.WriteString(", ")
 		} else {
 			notFirst = true
 		}
-		s.WriteString(i.Values().String())
+		s.WriteString(i.Values().project(projection).String())
 	}
 	s.WriteString("}")
 	return s.String()
+}
+
+func (r Relation) projectionBasedOnNames(names NamesSlice) valueProjector {
+	projection := make(valueProjector, 0, len(names))
+	indices := mapIndices(r.attrs, r.p)
+	for _, n := range names {
+		if i, has := indices[n]; has {
+			projection = append(projection, i)
+			continue
+		}
+		panic(fmt.Errorf("attribute %q does not exist in Relation %s", n, r))
+	}
+	return projection
 }
 
 func (r Relation) Equal(i interface{}) bool {
@@ -395,6 +411,7 @@ func (r Relation) Hash(seed uintptr) uintptr {
 // RelationValuesEnumerator enumerates the values as Values.
 type RelationValuesEnumerator struct {
 	i *positionalRelationValuesEnumerator
+	p valueProjector
 }
 
 func (e *RelationValuesEnumerator) Next() bool {
@@ -402,11 +419,14 @@ func (e *RelationValuesEnumerator) Next() bool {
 }
 
 func (e *RelationValuesEnumerator) Values() Values {
-	return e.i.Values()
+	return e.i.Values().project(e.p).values()
 }
 
-func (r Relation) OrderedValuesEnumerator() *RelationValuesEnumerator {
-	return &RelationValuesEnumerator{r.rows.OrderedRange(identityProjector(r.rows.Width()))}
+func (r Relation) OrderedValuesEnumerator(names NamesSlice) *RelationValuesEnumerator {
+	return &RelationValuesEnumerator{
+		i: r.rows.OrderedRange(identityProjector(r.rows.Width())),
+		p: r.projectionBasedOnNames(names),
+	}
 }
 
 type relationEnumerator struct {
