@@ -60,8 +60,8 @@ func PrettifyString(val interface{}, indentsNum int) (string, error) {
 		return prettifyArray(t, indentsNum+1)
 	case rel.Dict: // {'a': 1}
 		return prettifyDict(t, indentsNum+1)
-	case rel.GenericSet: // {1, 2}
-		return prettifySet(t, indentsNum+1)
+	case rel.OrderableSet: // {1, 2}
+		return prettifyOrderableSet(t, indentsNum+1)
 	case rel.Relation:
 		return prettifyRelation(t, indentsNum+1)
 	case rel.String:
@@ -107,7 +107,7 @@ func prettifyRelation(r rel.Relation, indentsNum int) (string, error) {
 	return sb.String(), nil
 }
 
-func prettifySet(arr rel.GenericSet, indentsNum int) (string, error) {
+func prettifyOrderableSet(arr rel.OrderableSet, indentsNum int) (string, error) {
 	content, err := prettifyItems(arr.OrderedValues(), indentsNum)
 	if err != nil {
 		return "", err

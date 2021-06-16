@@ -86,6 +86,67 @@ func TestFmtPrettySet(t *testing.T) {
 	AssertCodesEvalToSameValue(t, `"{1, 2, {3, 4, 5}}"`, `//fmt.pretty({1,2,{3,4,5}})`)
 }
 
+func TestFmtPrettyUnionSet(t *testing.T) {
+	t.Parallel()
+	AssertCodesEvalToSameValue(t,
+		`"{
+  (
+    a: 'abc',
+  ),
+  (
+    b: 2,
+  ),
+}"`,
+		`//fmt.pretty({(a: 'abc'), (b: 2)})`,
+	)
+	AssertCodesEvalToSameValue(t,
+		`"{
+  1,
+  2,
+  3,
+  'a',
+  [1, 2, 3],
+  (
+    a: 1,
+  ),
+}"`,
+		`//fmt.pretty({(a: 1), 1, 2, 3, "a", [1, 2, 3]})`,
+	)
+	AssertCodesEvalToSameValue(t,
+		`"{
+  (
+    a: (
+      b: (
+        c: [
+          (
+            d: 1,
+          ),
+        ],
+      ),
+    ),
+  ),
+  (
+    e: {
+      (
+        a: {
+          (
+            a: 1,
+          ),
+          (
+            b: 1,
+          ),
+        },
+      ),
+      (
+        b: 2,
+      ),
+    },
+  ),
+}"`,
+		`//fmt.pretty({(a: (b: (c: [(d: 1)]))), (e: {(a: {(a: 1), (b: 1)}), (b: 2)})})`,
+	)
+}
+
 func TestFmtPrettyString(t *testing.T) {
 	t.Parallel()
 	AssertCodesEvalToSameValue(t, `"{}"`, `//fmt.pretty('')`)
