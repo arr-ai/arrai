@@ -35,7 +35,30 @@ func (b *TupleBuilder) Put(name string, value Value) {
 }
 
 func (b *TupleBuilder) Finish() Tuple {
-	return &GenericTuple{tuple: (*frozen.MapBuilder)(b).Finish()}
+	m := (*frozen.MapBuilder)(b).Finish()
+	if index, has := m.Get("@"); has && m.Count() == 2 {
+		i := index.(Value)
+		switch {
+		case m.Has(StringCharAttr):
+			return NewStringCharTuple(
+				int(i.(Number).Float64()),
+				rune(m.MustGet(StringCharAttr).(Number).Float64()),
+			)
+		case m.Has(BytesByteAttr):
+			return NewBytesByteTuple(
+				int(i.(Number).Float64()),
+				byte(m.MustGet(BytesByteAttr).(Number).Float64()),
+			)
+		case m.Has(ArrayItemAttr):
+			return NewArrayItemTuple(
+				int(i.(Number).Float64()),
+				m.MustGet(ArrayItemAttr).(Value),
+			)
+		case m.Has(DictValueAttr):
+			return NewDictEntryTuple(i, m.MustGet(DictValueAttr).(Value))
+		}
+	}
+	return &GenericTuple{tuple: m}
 }
 
 // NewAttr returns an Attr with the given name and value.
@@ -128,6 +151,18 @@ func NewXML(tag []rune, attrs []Attr, children ...Value) Tuple {
 		b.Put("children", NewArray(children...))
 	}
 	return EmptyTuple.With("@xml", b.Finish())
+}
+
+// newGenericTuple always returns a generic tuple no matter the attributes.
+func newGenericTuple(attrs ...Attr) Tuple {
+	if len(attrs) == 0 {
+		return EmptyTuple
+	}
+	m := &frozen.MapBuilder{}
+	for _, attr := range attrs {
+		m.Put(attr.Name, attr.Value)
+	}
+	return &GenericTuple{tuple: m.Finish()}
 }
 
 func (t *GenericTuple) Canonical() Tuple {

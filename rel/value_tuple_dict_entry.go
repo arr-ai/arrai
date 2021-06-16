@@ -45,7 +45,7 @@ func maybeNewDictEntryTupleFromTuple(t Tuple) Tuple {
 }
 
 func (t DictEntryTuple) asGenericTuple() Tuple {
-	return newTuple(
+	return newGenericTuple(
 		NewAttr("@", t.at),
 		NewAttr(DictValueAttr, t.value),
 	)

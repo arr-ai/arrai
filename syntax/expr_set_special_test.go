@@ -87,6 +87,71 @@ func TestDictEqual(t *testing.T) {
 	AssertCodesEvalToSameValue(t, `false`, `{'a': 1} = (a: 1)                                  `)
 }
 
+func TestRelationMap(t *testing.T) {
+	t.Parallel()
+
+	AssertCodesEvalToSameValue(t, `{0: 0} `, `{|@, @value, z| (0, 0, 0) } => .~|z|`)
+	AssertCodesEvalToSameValue(t, `'a'    `, `{|@, @char,  z| (0, 97, 0)} => .~|z|`)
+	AssertCodesEvalToSameValue(t, `[0]    `, `{|@, @item,  z| (0, 0, 0) } => .~|z|`)
+	AssertCodesEvalToSameValue(t, `<<'a'>>`, `{|@, @byte,  z| (0, 97, 0)} => .~|z|`)
+
+	AssertCodesEvalToSameValue(t,
+		`{|a, b, c| (2, 3, -1), (3, 4, -1), (4, 5, -1)}`,
+		`{|a, b| (1, 2), (2, 3), (3, 4)} => (a: .a+1, b: .b+1, c: .a - .b)`,
+	)
+}
+
+func TestRelationNest(t *testing.T) {
+	t.Parallel()
+
+	AssertCodesEvalToSameValue(t,
+		`{|z, dict| (0, {0: 0})}`,
+		`{|@, @value, z| (0, 0, 0) } nest ~|z|dict`,
+	)
+	AssertCodesEvalToSameValue(t,
+		`{|z, dict| (0, {0: 0})}`,
+		`{|@, @value, z| (0, 0, 0) } nest |@, @value|dict`,
+	)
+	AssertCodesEvalToSameValue(t,
+		`{|z, str| (0, 'a')}`,
+		`{|@, @char, z| (0, 97, 0) } nest ~|z|str`,
+	)
+	AssertCodesEvalToSameValue(t,
+		`{|z, str| (0, 'a')}`,
+		`{|@, @char, z| (0, 97, 0) } nest |@, @char|str`,
+	)
+	AssertCodesEvalToSameValue(t,
+		`{|z, array| (0, [0])}`,
+		`{|@, @item, z| (0, 0, 0) } nest ~|z|array`,
+	)
+	AssertCodesEvalToSameValue(t,
+		`{|z, array| (0, [0])}`,
+		`{|@, @item, z| (0, 0, 0) } nest |@, @item|array`,
+	)
+	AssertCodesEvalToSameValue(t,
+		`{|z, byte| (0, <<'a'>>)}`,
+		`{|@, @byte, z| (0, 97, 0) } nest ~|z|byte`,
+	)
+	AssertCodesEvalToSameValue(t,
+		`{|z, byte| (0, <<'a'>>)}`,
+		`{|@, @byte, z| (0, 97, 0) } nest |@, @byte|byte`,
+	)
+
+	AssertCodesEvalToSameValue(t,
+		`{|a, nested| (1, {|b, c| (1, 2), (2, 3)}), (2, {|b, c| (2, 2)})}`,
+		`{|a, b, c| (1, 1, 2), (1, 2, 3), (2, 2, 2)} nest |b, c|nested`,
+	)
+}
+
+func TestRelationWhere(t *testing.T) {
+	t.Parallel()
+
+	AssertCodesEvalToSameValue(t,
+		`{|a, b, c| (0, 1, 2), (2, 3, 4), (4, 5, 6)}`,
+		`{|a, b, c| (0, 1, 2), (1, 2, 3), (2, 3, 4), (3, 4, 5), (4, 5, 6)} where .a % 2 = 0`,
+	)
+}
+
 func TestSetBuilder(t *testing.T) {
 	t.Parallel()
 

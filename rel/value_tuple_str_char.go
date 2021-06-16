@@ -44,7 +44,7 @@ func maybeNewCharTupleFromTuple(t Tuple) Tuple {
 }
 
 func (t StringCharTuple) asGenericTuple() Tuple {
-	return newTuple(
+	return newGenericTuple(
 		NewIntAttr("@", t.at),
 		NewIntAttr(StringCharAttr, int(t.char)),
 	)

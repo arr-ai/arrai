@@ -122,24 +122,17 @@ func (r Relation) Without(v Value) Set {
 	return r
 }
 
-// assumes that the values are already projected
-func projectedValuesToTuple(v Values, attrs []string) Tuple {
-	t := TupleBuilder{}
-	for i, val := range v {
-		t.Put(attrs[i], val)
-	}
-	return t.Finish()
-}
-
 func (r Relation) Map(f func(Value) (Value, error)) (Set, error) {
+	m := mapIndices(r.attrs, r.p)
 	return r.rows.Map(func(v Values) (Value, error) {
-		return f(projectedValuesToTuple(v, r.attrs))
+		return f(valuesToTuple(v, m))
 	})
 }
 
 func (r Relation) Where(p func(Value) (bool, error)) (_ Set, err error) {
+	m := mapIndices(r.attrs, r.p)
 	s, err := r.rows.Where(func(v Values) (bool, error) {
-		return p(projectedValuesToTuple(v, r.attrs))
+		return p(valuesToTuple(v, m))
 	})
 	if err != nil {
 		return nil, err

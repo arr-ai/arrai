@@ -46,7 +46,7 @@ func maybeNewArrayItemTupleFromTuple(t Tuple) Tuple {
 }
 
 func (t ArrayItemTuple) asGenericTuple() Tuple {
-	return newTuple(
+	return newGenericTuple(
 		NewIntAttr("@", t.at),
 		NewAttr(ArrayItemAttr, t.item),
 	)
