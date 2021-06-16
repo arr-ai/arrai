@@ -86,16 +86,23 @@ func prettifyRelation(r rel.Relation, indentsNum int) (string, error) {
 	sorted := r.AttrsName().GetSorted()
 	sb.WriteString(fmt.Sprintf("|%s|", sorted))
 	indent()
-	contents := make([]string, 0, r.Count())
+	count := r.Count()
 	for i := r.OrderedValuesEnumerator(sorted); i.Next(); {
-		content, err := prettifyItems(i.Values(), indentsNum)
+		vals := i.Values()
+		content, err := prettifyItems(vals, indentsNum+1)
 		if err != nil {
 			return "", err
 		}
-		contents = append(contents, fmt.Sprintf("(%s)", content))
+		count--
+		sb.WriteString("(")
+		sb.WriteString(content)
+
+		if count == 0 {
+			sb.WriteString("),\n" + getIndents(indentsNum-1))
+		} else {
+			sb.WriteString("),\n" + getIndents(indentsNum))
+		}
 	}
-	sb.WriteString(strings.Join(contents, ",\n"+getIndents(indentsNum)))
-	sb.WriteString(",\n" + getIndents(indentsNum-1))
 	sb.WriteString("}")
 	return sb.String(), nil
 }

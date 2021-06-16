@@ -423,9 +423,10 @@ func (e *RelationValuesEnumerator) Values() Values {
 }
 
 func (r Relation) OrderedValuesEnumerator(names NamesSlice) *RelationValuesEnumerator {
+	p := r.projectionBasedOnNames(names)
 	return &RelationValuesEnumerator{
-		i: r.rows.OrderedRange(identityProjector(r.rows.Width())),
-		p: r.projectionBasedOnNames(names),
+		i: r.rows.OrderedRange(p),
+		p: p,
 	}
 }
 

@@ -80,14 +80,6 @@ func (p valueProjector) compose(p2 valueProjector) valueProjector {
 	return projected
 }
 
-func identityProjector(max int) valueProjector {
-	arr := make(valueProjector, 0, max)
-	for i := 0; i < max; i++ {
-		arr = append(arr, i)
-	}
-	return arr
-}
-
 func createSetMap(numbers []int) map[int]struct{} {
 	m := make(map[int]struct{})
 	for _, i := range numbers {
