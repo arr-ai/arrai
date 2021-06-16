@@ -295,11 +295,10 @@ func (t *GenericTuple) Export(ctx context.Context) interface{} {
 }
 
 func (t *GenericTuple) getSetBuilder() setBuilder {
-	// TODO: increase capacity
 	if !t.IsTrue() {
 		return newGenericTypeSetBuilder()
 	}
-	return newRelationBuilder(t.Names().Names(), 0)
+	return newRelationBuilder(t.Names().OrderedNames(), 0)
 }
 
 func (t *GenericTuple) getBucket() fmt.Stringer {
@@ -385,14 +384,7 @@ func (n NamesSlice) EqualNamesSlice(n2 NamesSlice) bool {
 }
 
 func (n NamesSlice) EqualTupleAttrs(t Tuple) bool {
-	for _, name := range n {
-		if t.HasName(name) {
-			t = t.Without(name)
-			continue
-		}
-		return false
-	}
-	return !t.IsTrue()
+	return NewNames(n...).Equal(t.Names())
 }
 
 func (n NamesSlice) LessNamesSlice(n2 NamesSlice) bool {

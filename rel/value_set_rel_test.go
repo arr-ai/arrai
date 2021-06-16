@@ -56,3 +56,41 @@ func TestRelationString(t *testing.T) {
 	}
 	assert.Equal(t, "{|a, b, c| (1, 1, 2), (1, 2, 2), (2, 1, 3)}", r.String())
 }
+
+func TestRelationHas(t *testing.T) {
+	t.Parallel()
+
+	r := Relation{
+		attrs: NamesSlice{"c", "b", "a"},
+		p:     valueProjector{0, 1, 2},
+		rows: &positionalRelation{
+			set: frozen.NewSet(row(1, 3, 2)),
+		},
+	}
+	assert.True(t,
+		r.Has(
+			NewTuple(
+				NewAttr("a", NewNumber(2)),
+				NewAttr("b", NewNumber(3)),
+				NewAttr("c", NewNumber(1)),
+			),
+		),
+	)
+	assert.False(t,
+		r.Has(
+			NewTuple(
+				NewAttr("a", NewNumber(0)),
+				NewAttr("b", NewNumber(0)),
+				NewAttr("c", NewNumber(0)),
+			),
+		),
+	)
+	assert.False(t,
+		r.Has(
+			NewTuple(
+				NewAttr("a", NewNumber(0)),
+				NewAttr("b", NewNumber(0)),
+			),
+		),
+	)
+}
