@@ -20,3 +20,11 @@ func TestEvalValue(t *testing.T) {
 		`//eval.value(<<"(str: 'stuff', num:123, array: [1,2,3])">>)`)
 	AssertCodeErrors(t, "", `//eval.value(123)`)
 }
+func TestEvalEval(t *testing.T) {
+	t.Parallel()
+	AssertCodesEvalToSameValue(t, `123`, `//eval.eval("123")`)
+	AssertCodesEvalToSameValue(t, `"cat"`, `//eval.eval("//str.lower('CAT')")`)
+	AssertCodesEvalToSameValue(t,
+		`"cat"`,
+		`//eval.evaluator((stdlib: (str: (lower: //str.lower)))).eval("//str.lower('CAT')")`)
+}

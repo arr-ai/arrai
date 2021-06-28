@@ -10,5 +10,9 @@
                 decode: \byte internal.xml.decode((), byte),
                 encode: \input internal.xml.encode(input)
             )
-        )
+        ),
+        eval+>: (
+            evaluator: \config (eval: \expr internal.eval.eval(config, expr)),
+            eval: \expr internal.eval.eval((), expr)
+        ),
    )
