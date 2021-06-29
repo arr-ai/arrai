@@ -85,6 +85,7 @@ func TestJoinCommon(t *testing.T) {
 
 	AssertCodesEvalToSameValue(t, `{}`, `{|a,b|(1,4),(1,5)} -&- {|b,c|(6,7)}`)
 	AssertCodesEvalToSameValue(t, `{|b|(5)}`, `{|a,b|(1,4),(2,5)} -&- {|b,c|(5,7),(6,7)}`)
+	AssertCodesEvalToSameValue(t, `{|a, c| (0, 1)}`, `{|a, b, c| (0, 0, 1)} -&> ({(c: 1)} <&> {(a: 0)})`)
 }
 
 func TestRightMatchJoin(t *testing.T) {
