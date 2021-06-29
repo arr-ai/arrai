@@ -140,6 +140,24 @@ func NewTupleFromMap(m map[string]interface{}) (Tuple, error) {
 	return b.Finish(), nil
 }
 
+func MergeTuples(tuple Tuple, tuple2 Tuple) Tuple {
+	tempTuple := tuple
+	for e := tuple2.Enumerator(); e.MoveNext(); {
+		name, value := e.Current()
+		v, found := tempTuple.Get(name)
+		if found {
+			switch v.(type) {
+			case Tuple:
+				tempTuple = tempTuple.With(name, MergeTuples(v.(Tuple), value.(Tuple)))
+			}
+
+		} else {
+			tempTuple = tempTuple.With(name, value)
+		}
+	}
+	return tempTuple
+}
+
 // NewXML constructs an XML Tuple from the given data
 func NewXML(tag []rune, attrs []Attr, children ...Value) Tuple {
 	var b TupleBuilder

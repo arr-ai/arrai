@@ -35,15 +35,25 @@ func evalExpr(ctx context.Context, v rel.Value) (rel.Value, error) {
 	return nil, fmt.Errorf("//eval.value: not a byte array or string: %v", v)
 }
 
-func evalEval(ctx context.Context, config EvalConfig, v rel.Value) (rel.Value, error) {
-	if config == (EvalConfig{}) {
-		config.stdlib = SafeStdScope()
+func evalEval(config EvalConfig, v rel.Value) (rel.Value, error) {
+	var scopes = rel.EmptyScope
+	if config.stdlib != nil {
+		scopes = scopes.With("//", config.stdlib)
+	} else {
+		scopes = SafeStdScope()
+	}
+	if config.scopes == nil {
+		config.scopes = rel.EmptyTuple
+	}
+	for e := config.scopes.Enumerator(); e.MoveNext(); {
+		name, value := e.Current()
+		scopes = scopes.With(name, value)
 	}
 	switch val := v.(type) {
 	case rel.String, rel.Bytes:
-		evaluated, err := EvaluateExpr(ctx, ".", val.String())
+		evaluated, err := EvalWithScope(context.Background(), "", val.String(), scopes)
 		if err != nil {
-			panic(err)
+			return nil, err
 		}
 		return evaluated, nil
 	}
@@ -57,13 +67,13 @@ func parseEvalConfig(configArg rel.Value) (*EvalConfig, error) {
 		return nil, errors.Errorf("first arg (config) must be tuple, not %s", rel.ValueTypeAsString(configArg))
 	}
 	parsedConfig := EvalConfig{}
-	scopes := config.Without("stdlib")
-	if scopes.IsTrue() {
-		parsedConfig.scopes = scopes
+	scopes, found := config.Get("scope")
+	if found {
+		parsedConfig.scopes = scopes.(rel.Tuple)
 	}
-	stdlib := config.Without("scopes")
-	if stdlib.IsTrue() {
-		parsedConfig.stdlib = stdlib
+	stdlib, found := config.Get("stdlib")
+	if found {
+		parsedConfig.stdlib = stdlib.(rel.Tuple)
 	}
 	return &parsedConfig, nil
 }

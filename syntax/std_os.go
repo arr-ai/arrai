@@ -9,17 +9,14 @@ import (
 	"github.com/arr-ai/arrai/rel"
 )
 
-func stdOs() rel.Attr {
-	a := stdOsSafeAttrs()
-	a = append(a, stdOsUnsafeAttrs()...)
-	return rel.NewTupleAttr("os",
-		a...,
-	)
-}
-
 func stdOsSafe() rel.Attr {
 	return rel.NewTupleAttr("os",
 		stdOsSafeAttrs()...,
+	)
+}
+func stdOsUnsafe() rel.Attr {
+	return rel.NewTupleAttr("os",
+		stdOsUnsafeAttrs()...,
 	)
 }
 
