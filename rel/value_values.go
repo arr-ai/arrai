@@ -160,6 +160,10 @@ func (p valueProjector) EqualValueProjector(p2 valueProjector) bool {
 	return true
 }
 
+type projectable interface {
+	project(valueProjector) projectedValues
+}
+
 type projectedValues struct {
 	p valueProjector
 	v Values
@@ -169,7 +173,20 @@ func (pv projectedValues) get(i int) Value {
 	return pv.v[pv.p[i]]
 }
 
+func (pv projectedValues) project(p valueProjector) projectedValues {
+	return projectedValues{
+		p: pv.p.compose(p),
+		v: pv.v,
+	}
+}
+
 func (pv projectedValues) values() Values {
+	if len(pv.p) == 0 || len(pv.v) == 0 {
+		return Values{}
+	}
+	if pv.p.isContiguous() {
+		return pv.v[pv.p[0] : pv.p[len(pv.p)-1]+1]
+	}
 	v := make(Values, 0, len(pv.p))
 	for _, index := range pv.p {
 		v = append(v, pv.v[index])
