@@ -11,7 +11,7 @@ require (
 	github.com/arr-ai/frozen v0.19.0
 	github.com/arr-ai/hash v0.8.0
 	github.com/arr-ai/proto v0.0.0-20180422074755-2ffbedebee50
-	github.com/arr-ai/wbnf v0.32.0
+	github.com/arr-ai/wbnf v0.34.0
 	github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e
 	github.com/go-errors/errors v1.1.1
 	github.com/gorilla/websocket v1.4.2
@@ -29,7 +29,7 @@ require (
 	golang.org/x/crypto v0.0.0-20200820211705-5c72a883971a // indirect
 	golang.org/x/net v0.0.0-20210525063256-abc453219eb5 // indirect
 	golang.org/x/oauth2 v0.0.0-20200902213428-5d25da1a8d43 // indirect
-	golang.org/x/sys v0.0.0-20210608053332-aa57babbf139 // indirect
+	golang.org/x/sys v0.0.0-20210630005230-0f9fa26af87c // indirect
 	golang.org/x/text v0.3.6
 	google.golang.org/genproto v0.0.0-20210608205507-b6d2f5bf0d7d // indirect
 	google.golang.org/grpc v1.38.0
