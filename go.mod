@@ -11,7 +11,7 @@ require (
 	github.com/arr-ai/frozen v0.19.0
 	github.com/arr-ai/hash v0.8.0
 	github.com/arr-ai/proto v0.0.0-20180422074755-2ffbedebee50
-	github.com/arr-ai/wbnf v0.33.0
+	github.com/arr-ai/wbnf v0.34.0
 	github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e
 	github.com/go-errors/errors v1.1.1
 	github.com/gorilla/websocket v1.4.2
