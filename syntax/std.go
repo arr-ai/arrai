@@ -17,9 +17,9 @@ import (
 )
 
 var (
-	stdScopeOnce, fixOnce sync.Once
-	stdScopeVar           rel.Scope
-	fix, fixt             rel.Value
+	stdSafeScopeOnce, stdUnsafeScopeOnce, fixOnce sync.Once
+	stdSafeScopeVar, stdUnsafeScopeVar            rel.Scope
+	fix, fixt                                     rel.Value
 )
 
 func FixFuncs() (rel.Value, rel.Value) {
@@ -31,7 +31,7 @@ func FixFuncs() (rel.Value, rel.Value) {
 }
 
 func StdScope() rel.Scope {
-	stdScopeOnce.Do(func() {
+	stdUnsafeScopeOnce.Do(func() {
 		goStdlib := rel.MergeTuples(SafeStdScopeTuple(), rel.NewTuple(
 			stdOsUnsafe(),
 			stdNet(),
@@ -46,14 +46,16 @@ func StdScope() rel.Scope {
 		if !isTuple {
 			panic("standard library does not evaluate to a tuple")
 		}
-		stdScopeVar = rel.EmptyScope.With("//", t)
+		stdUnsafeScopeVar = rel.EmptyScope.With("//", t)
 	})
-	return stdScopeVar
+	return stdUnsafeScopeVar
 }
 func SafeStdScope() rel.Scope {
-	safeStdlib := SafeStdScopeTuple()
-	stdScopeVar = rel.EmptyScope.With("//", safeStdlib)
-	return stdScopeVar
+	stdSafeScopeOnce.Do(func() {
+		safeStdlib := SafeStdScopeTuple()
+		stdSafeScopeVar = rel.EmptyScope.With("//", safeStdlib)
+	})
+	return stdSafeScopeVar
 }
 
 func SafeStdScopeTuple() rel.Tuple {
@@ -149,12 +151,12 @@ func SafeStdScopeTuple() rel.Tuple {
 					return translate.BytesXMLFromArrai(value)
 				})), rel.NewTupleAttr(
 				"eval", createFunc2Attr(
-					"eval", func(_ context.Context, evalConfig, value rel.Value) (rel.Value, error) {
+					"eval", func(ctx context.Context, evalConfig, value rel.Value) (rel.Value, error) {
 						config, err := parseEvalConfig(evalConfig)
 						if err != nil {
 							return nil, err
 						}
-						return evalEval(*config, value)
+						return contextualEval(ctx, *config, value)
 					}))),
 		stdArchive(),
 		stdEncoding(),

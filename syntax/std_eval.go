@@ -35,23 +35,25 @@ func evalExpr(ctx context.Context, v rel.Value) (rel.Value, error) {
 	return nil, fmt.Errorf("//eval.value: not a byte array or string: %v", v)
 }
 
-func evalEval(config EvalConfig, v rel.Value) (rel.Value, error) {
-	var scopes = rel.EmptyScope
+// contextualEval evaluates an expression using only the provided scope and stdlib
+func contextualEval(ctx context.Context, config EvalConfig, v rel.Value) (rel.Value, error) {
+	var scope = rel.EmptyScope
 	if config.stdlib != nil {
-		scopes = scopes.With("//", config.stdlib)
+		localLib, err := config.stdlib.Eval(ctx, scope)
+		if err != nil {
+			return nil, err
+		}
+		scope = scope.With("//", localLib)
 	} else {
-		scopes = SafeStdScope()
-	}
-	if config.scopes == nil {
-		config.scopes = rel.EmptyTuple
+		scope = scope.With("//", SafeStdScopeTuple())
 	}
 	for e := config.scopes.Enumerator(); e.MoveNext(); {
 		name, value := e.Current()
-		scopes = scopes.With(name, value)
+		scope = scope.With(name, value)
 	}
 	switch val := v.(type) {
 	case rel.String, rel.Bytes:
-		evaluated, err := EvalWithScope(context.Background(), "", val.String(), scopes)
+		evaluated, err := EvalWithScope(ctx, "", val.String(), scope)
 		if err != nil {
 			return nil, err
 		}
@@ -70,6 +72,8 @@ func parseEvalConfig(configArg rel.Value) (*EvalConfig, error) {
 	scopes, found := config.Get("scope")
 	if found {
 		parsedConfig.scopes = scopes.(rel.Tuple)
+	} else {
+		parsedConfig.scopes = rel.EmptyTuple
 	}
 	stdlib, found := config.Get("stdlib")
 	if found {
