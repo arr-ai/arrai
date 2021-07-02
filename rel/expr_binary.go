@@ -362,19 +362,7 @@ func mergeDicts(lhs Dict, rhs Dict) Dict {
 	tempMap := lhs.m
 	for e := rhs.DictEnumerator(); e.MoveNext(); {
 		key, value := e.Current()
-		v, found := tempMap.Get(key)
-		if found {
-			switch v.(type) {
-			case Tuple:
-				tempMap = tempMap.With(key, MergeTuples(v.(Tuple), value.(Tuple)))
-			case Dict:
-				tempMap = tempMap.With(key, mergeDicts(v.(Dict), value.(Dict)))
-			default:
-				tempMap = tempMap.With(key, value)
-			}
-		} else {
-			tempMap = tempMap.With(key, value)
-		}
+		tempMap = tempMap.With(key, value)
 	}
 	return Dict{m: tempMap}
 }

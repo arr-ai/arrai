@@ -149,7 +149,7 @@ func MergeTuples(tuple Tuple, tuple2 Tuple) Tuple {
 	for e := tuple2.Enumerator(); e.MoveNext(); {
 		name, value := e.Current()
 		v, found := tempTuple.Get(name)
-		if found {
+		if found && v.Kind() == value.Kind() {
 			switch v.(type) {
 			case Tuple:
 				tempTuple = tempTuple.With(name, MergeTuples(v.(Tuple), value.(Tuple)))
