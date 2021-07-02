@@ -17,9 +17,9 @@ Usage:
 
 ## `//eval.evaluator(config <: (:scope <: tuple, :stdlib <: tuple)).eval(expr <: string|bytes) <: any`
 
-`evaluator` takes in a `config` tuple containing optional configurable values of scope and stdlib. 
-The scope config property is a tuple whose keys are bound to corresponding values within the evaluated expression.
-The stdlib config property is a tuple containing the hierarchical representation of standard library functions to be made available to the evaluated expression.
+`evaluator` takes in a `config` tuple containing optional configurable values of `scope` and `stdlib`. 
+The `scope` config property is a tuple whose keys are bound to corresponding values within the evaluated expression.
+The `stdlib` config property is a tuple containing the hierarchical representation of standard library functions to be made available to the evaluated expression.
 By default `stdlib` is equal to `//std.safe`.
 In instances where consumers of evaluator want to provide access to unsafe standard library functions then they must be manually provided in the config.
 

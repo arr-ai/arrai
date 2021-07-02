@@ -140,7 +140,10 @@ func NewTupleFromMap(m map[string]interface{}) (Tuple, error) {
 	return b.Finish(), nil
 }
 
-//TODO: Complete this
+//TODO: Expand to handle all types and rely less on default replace.
+// Potentially, each type could have a `Merge` func that can be called and the switch statement wouldn't be necessary
+
+// MergeTuples takes two tuples and performs a deep merge
 func MergeTuples(tuple Tuple, tuple2 Tuple) Tuple {
 	tempTuple := tuple
 	for e := tuple2.Enumerator(); e.MoveNext(); {
