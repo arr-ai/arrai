@@ -31,6 +31,9 @@ func TestEvalEval(t *testing.T) {
 	AssertCodesEvalToSameValue(t,
 		`"cat"`,
 		`//eval.evaluator((stdlib: (str: (lower: //str.lower)))).eval("//str.lower('CAT')")`)
+	AssertCodesEvalToSameValue(t,
+		`"cat"`,
+		`//eval.evaluator(()).eval("//str.lower('CAT')")`)
 	AssertCodesEvalToSameValue(t, `123`, `//eval.eval("123")`)
 	AssertCodesEvalToSameValue(t, `"cat"`, `//eval.eval("//str.lower('CAT')")`)
 	AssertCodesEvalToSameValue(t, `3`, `let x = 1; let y = 2; //eval.evaluator((scope: (:x, :y))).eval("x + y") `)
