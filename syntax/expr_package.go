@@ -30,6 +30,11 @@ func (e PackageExpr) String() string {
 }
 
 // Eval returns the subject
-func (e PackageExpr) Eval(ctx context.Context, _ rel.Scope) (rel.Value, error) {
-	return e.a.Eval(ctx, StdScope())
+func (e PackageExpr) Eval(ctx context.Context, scope rel.Scope) (rel.Value, error) {
+	_, found := scope.Get("//")
+	if !found {
+		stdScope, _ := StdScope().Get("//")
+		scope = scope.With("//", stdScope)
+	}
+	return e.a.Eval(ctx, scope)
 }
