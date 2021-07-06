@@ -36,7 +36,7 @@ func StdScope() rel.Scope {
 			stdOsUnsafe(),
 			stdNet(),
 		))
-		arraiUnsafeStdlib := mustParseBundle(MustAsset("syntax/stdlib.arraiz"))
+		arraiUnsafeStdlib := mustParseBundle(MustAsset("syntax/stdlib-unsafe.arraiz"))
 		stdlibVal, err := rel.NewCallExprCurry(*parser.NewScanner("stdlib"), arraiUnsafeStdlib, goStdlib).
 			Eval(context.Background(), rel.EmptyScope)
 		if err != nil {

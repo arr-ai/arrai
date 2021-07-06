@@ -17,19 +17,19 @@ generate: parser bindata
 check-clean: generate
 	git --no-pager diff HEAD && test -z "$$(git status --porcelain)"
 
-syntax/bindata.go: syntax/implicit_import.arrai syntax/stdlib-safe.arraiz syntax/stdlib.arraiz
+syntax/bindata.go: syntax/implicit_import.arrai syntax/stdlib-safe.arraiz syntax/stdlib-unsafe.arraiz
 	go-bindata -version
 	go-bindata -mode 0644 -modtime 1 -pkg syntax -o syntax/bindata.go $^
 	# remove all arraiz files after embedded file is generated.
 	rm syntax/stdlib-safe.arraiz
-	rm syntax/stdlib.arraiz
+	rm syntax/stdlib-unsafe.arraiz
 	gofmt -s -w $@
 
 syntax/stdlib-safe.arraiz: $(shell find syntax/stdlib -type f)
 	go run ./cmd/arrai bundle -o syntax/stdlib-safe.arraiz syntax/stdlib/stdlib-safe.arrai
 
-syntax/stdlib.arraiz: $(shell find syntax/stdlib -type f)
-	go run ./cmd/arrai bundle -o syntax/stdlib.arraiz syntax/stdlib/stdlib.arrai
+syntax/stdlib-unsafe.arraiz: $(shell find syntax/stdlib -type f)
+	go run ./cmd/arrai bundle -o syntax/stdlib-unsafe.arraiz syntax/stdlib/stdlib-unsafe.arrai
 
 build: generate
 	go build -ldflags=$(LDFLAGS) ./cmd/arrai
