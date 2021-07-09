@@ -10,6 +10,7 @@ import (
 
 	"github.com/arr-ai/arrai/pkg/arraictx"
 	"github.com/arr-ai/arrai/pkg/ctxfs"
+	"github.com/arr-ai/arrai/pkg/importcache"
 	"github.com/arr-ai/arrai/syntax"
 	"github.com/urfave/cli/v2"
 )
@@ -64,7 +65,7 @@ func bundleFilesTo(ctx context.Context, path string, w io.Writer, out string) (e
 		return err
 	}
 
-	if _, err = syntax.Compile(ctx, path, string(buf)); err != nil {
+	if _, err = syntax.Compile(importcache.WithNewImportCache(ctx), path, string(buf)); err != nil {
 		return err
 	}
 

@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"sync"
 
+	"github.com/arr-ai/arrai/pkg/importcache"
 	"github.com/arr-ai/arrai/rel"
 	"github.com/arr-ai/arrai/translate"
 	"github.com/arr-ai/wbnf/ast"
@@ -270,7 +271,7 @@ func mustParseLit(s string) rel.Value {
 }
 
 func mustParseBundle(b []byte) rel.Value {
-	ctx := context.TODO()
+	ctx := importcache.WithNewImportCache(context.TODO())
 	ctx, err := WithBundleRun(ctx, b)
 	if err != nil {
 		panic(err)

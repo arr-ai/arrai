@@ -17,6 +17,7 @@ import (
 	"github.com/anz-bank/pkg/mod"
 	"github.com/arr-ai/arrai/pkg/ctxfs"
 	"github.com/arr-ai/arrai/pkg/ctxrootcache"
+	"github.com/arr-ai/arrai/pkg/importcache"
 	"github.com/arr-ai/arrai/rel"
 	"github.com/arr-ai/arrai/tools"
 	"github.com/arr-ai/wbnf/parser"
@@ -29,7 +30,6 @@ var (
 	implicitDecoderSyncOnce sync.Once
 	implicitDecode          rel.Expr
 
-	cache             = newCache()
 	errModuleNotExist = errors.New("module root not found")
 )
 
@@ -253,7 +253,7 @@ func importURL(ctx context.Context, decoder rel.Tuple, url string) (rel.Expr, er
 		if err = bundleRemoteFile(ctx, url, data); err != nil {
 			return nil, err
 		}
-		val, err := cache.getOrAdd(url, func() (rel.Expr, error) { return bytesValue(ctx, NoPath, data) })
+		val, err := importcache.GetOrAddFromCache(ctx, url, func() (rel.Expr, error) { return bytesValue(ctx, NoPath, data) })
 		return val, err
 	}
 	return nil, fmt.Errorf("request %s failed: %s", url, resp.Status)
@@ -291,7 +291,7 @@ func bytesValue(ctx context.Context, filename string, data []byte) (rel.Expr, er
 		return Compile(ctx, filename, string(data))
 	}
 	if filename != NoPath {
-		return cache.getOrAdd(filename, compile)
+		return importcache.GetOrAddFromCache(ctx, filename, compile)
 	}
 	return compile()
 }
