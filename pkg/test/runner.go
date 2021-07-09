@@ -43,11 +43,11 @@ func RunTests(ctx context.Context, w io.Writer, path string) error {
 	return err
 }
 
-// getTestFiles finds all *_test.arrai files in given path (recursively), reads them and returns a testFile array with
+// getTestFiles finds all *_test.arrai files in given path (recursively), reads them and returns a TestFile array with
 // them. It skips over hidden directories. It returns an error if any filesystem operation failed, or if no files were
 // found.
-func getTestFiles(ctx context.Context, path string) ([]testFile, error) {
-	var files []testFile
+func getTestFiles(ctx context.Context, path string) ([]TestFile, error) {
+	var files []TestFile
 	fs := ctxfs.SourceFsFrom(ctx)
 
 	err := afero.Walk(fs, path, func(path string, info os.FileInfo, walkErr error) error {
@@ -74,7 +74,7 @@ func getTestFiles(ctx context.Context, path string) ([]testFile, error) {
 			return fmt.Errorf("failed reading test file '%s': %v", path, readErr)
 		}
 
-		files = append(files, testFile{path: path, source: string(bytes)})
+		files = append(files, TestFile{Path: path, Source: string(bytes)})
 		return nil
 	})
 
@@ -82,46 +82,63 @@ func getTestFiles(ctx context.Context, path string) ([]testFile, error) {
 		return nil, err
 	}
 	if len(files) == 0 {
-		return nil, fmt.Errorf("no test files (ending in '_test.arrai') were found in path: %v", path)
+		return nil, fmt.Errorf("no test files (ending in '_test.arrai') were found in Path: %v", path)
 	}
 	return files, nil
 }
 
-// runFile runs all tests in testFile.source and fills testFile.results and testFile.wallTime. It returns an error if
+// runFile runs all tests in TestFile.Source and fills TestFile.Results and TestFile.WallTime. It returns an error if
 // the arr.ai code failed to evaluate.
-func runFile(ctx context.Context, file *testFile) error {
-	start := time.Now()
-	result, err := syntax.EvaluateExpr(ctx, file.path, file.source)
-	file.wallTime = time.Since(start)
-
+func runFile(ctx context.Context, file *TestFile) error {
+	expr, err := syntax.Compile(ctx, file.Path, file.Source)
 	if err != nil {
-		return fmt.Errorf("failed evaluating tests file '%s': %v", file.path, err)
+		return fmt.Errorf("failed compiling tests file '%s': %v", file.Path, err)
 	}
 
-	file.results = make([]testResult, 0)
+	start := time.Now()
+	results, err := RunExpr(ctx, expr)
+	file.WallTime = time.Since(start)
+	file.Results = results
+
+	if err != nil {
+		return fmt.Errorf("failed evaluating tests file '%s': %v", file.Path, err)
+	}
+
+	return nil
+}
+
+// RunExpr runs all tests in the provided rel.Expr and returns a slice of TestResult. It returns an error if
+// the arr.ai code failed to evaluate.
+func RunExpr(ctx context.Context, expr rel.Expr) ([]TestResult, error) {
+	result, err := expr.Eval(ctx, rel.Scope{})
+	if err != nil {
+		return nil, err
+	}
+
+	results := make([]TestResult, 0)
 	ForeachLeaf(result, "", func(val rel.Value, path string) {
-		result := testResult{
-			name: path,
+		result := TestResult{
+			Name: path,
 		}
 
 		if isLiteralTrue(val) {
-			result.outcome = Passed
+			result.Outcome = Passed
 		} else if isLiteralFalse(val) {
-			result.outcome = Failed
-			result.message = "Expected: true. Actual: false."
+			result.Outcome = Failed
+			result.Message = "Expected: true. Actual: false."
 		} else {
-			result.outcome = Invalid
-			result.message = fmt.Sprintf("Could not determine test outcome due to non-boolean result of type %s: %s",
+			result.Outcome = Invalid
+			result.Message = fmt.Sprintf("Could not determine test Outcome due to non-boolean result of type %s: %s",
 				rel.ValueTypeAsString(val), val.String())
 
 			if _, ok := val.(rel.GenericSet); ok {
-				result.message = fmt.Sprintf("Sets are not allowed as test containers. Please use tuples, " +
+				result.Message = fmt.Sprintf("Sets are not allowed as test containers. Please use tuples, " +
 					"dictionaries or arrays.")
 			}
 		}
 
-		file.results = append(file.results, result)
+		results = append(results, result)
 	})
 
-	return nil
+	return results, nil
 }
