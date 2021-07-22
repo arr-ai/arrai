@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/arr-ai/arrai/pkg/arraictx"
+	"github.com/arr-ai/arrai/pkg/importcache"
 	"github.com/arr-ai/arrai/rel"
 	"github.com/arr-ai/wbnf/ast"
 	"github.com/arr-ai/wbnf/parser"
@@ -19,6 +20,7 @@ import (
 // expected.
 func AssertCodesEvalToSameValue(t *testing.T, expected, code string) bool {
 	ctx := arraictx.InitRunCtx(context.Background())
+	ctx = importcache.WithNewImportCache(ctx)
 	return AssertCodesEvalToSameValueCtx(ctx, t, expected, code)
 }
 

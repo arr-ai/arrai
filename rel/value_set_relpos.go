@@ -290,19 +290,54 @@ func (r *positionalRelation) JoinCommonOnly(
 	r2 *positionalRelation,
 	leftKey, rightKey, leftOutput, rightOutput valueProjector,
 ) *positionalRelation {
+	mapper := func(elem interface{}) interface{} {
+		switch e := elem.(type) {
+		case Values:
+			return e
+		case projectedValues:
+			return e.values()
+		default:
+			panic(fmt.Errorf("unhandled element type: %T", e))
+		}
+	}
+
+	// This handles the case where the key and output values do not have the same ordering.
+	key, value := leftKey, leftOutput
+	if len(value) == 0 {
+		key, value = rightKey, rightOutput
+	}
+	if !key.Equal(value) {
+		mapping := make(map[int]int)
+		for i, index := range key {
+			mapping[index] = i
+		}
+
+		output := make(valueProjector, 0, len(value))
+		for _, index := range value {
+			if i, has := mapping[index]; has {
+				output = append(output, i)
+				continue
+			}
+			panic(
+				fmt.Errorf(
+					"invalid output value, leftKey: %v, rightKey: %v, leftOutput: %v, rightOutput:%v",
+					leftKey, rightKey, leftOutput, rightOutput,
+				),
+			)
+		}
+		// remaps the values into output.
+		mapper = func(elem interface{}) interface{} {
+			switch e := elem.(type) {
+			case projectable:
+				return e.project(output).values()
+			default:
+				panic(fmt.Errorf("unhandled element type: %T", e))
+			}
+		}
+	}
+
 	return &positionalRelation{
-		set: r.groupBy(leftKey).Keys().Intersection(r2.groupBy(rightKey).Keys()).Map(
-			func(elem interface{}) interface{} {
-				switch e := elem.(type) {
-				case Values:
-					return e
-				case projectedValues:
-					return e.values()
-				default:
-					panic(fmt.Errorf("unhandled element type: %T", e))
-				}
-			},
-		),
+		set: r.groupBy(leftKey).Keys().Intersection(r2.groupBy(rightKey).Keys()).Map(mapper),
 	}
 }
 

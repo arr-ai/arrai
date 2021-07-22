@@ -60,8 +60,8 @@ func PrettifyString(val interface{}, indentsNum int) (string, error) {
 		return prettifyArray(t, indentsNum+1)
 	case rel.Dict: // {'a': 1}
 		return prettifyDict(t, indentsNum+1)
-	case rel.GenericSet: // {1, 2}
-		return prettifySet(t, indentsNum+1)
+	case rel.OrderableSet: // {1, 2}
+		return prettifyOrderableSet(t, indentsNum+1)
 	case rel.Relation:
 		return prettifyRelation(t, indentsNum+1)
 	case rel.String:
@@ -83,23 +83,31 @@ func prettifyRelation(r rel.Relation, indentsNum int) (string, error) {
 	}
 	sb.WriteString("{")
 	indent()
-	sb.WriteString(fmt.Sprintf("|%s|", r.AttrsName().String()))
+	sorted := r.AttrsName().GetSorted()
+	sb.WriteString(fmt.Sprintf("|%s|", sorted))
 	indent()
-	contents := make([]string, 0, r.Count())
-	for i := r.OrderedValuesEnumerator(); i.Next(); {
-		content, err := prettifyItems(i.Values(), indentsNum)
+	count := r.Count()
+	for i := r.OrderedValuesEnumerator(sorted); i.Next(); {
+		vals := i.Values()
+		content, err := prettifyItems(vals, indentsNum+1)
 		if err != nil {
 			return "", err
 		}
-		contents = append(contents, fmt.Sprintf("(%s)", content))
+		count--
+		sb.WriteString("(")
+		sb.WriteString(content)
+
+		if count == 0 {
+			sb.WriteString("),\n" + getIndents(indentsNum-1))
+		} else {
+			sb.WriteString("),\n" + getIndents(indentsNum))
+		}
 	}
-	sb.WriteString(strings.Join(contents, ",\n"+getIndents(indentsNum)))
-	sb.WriteString(",\n" + getIndents(indentsNum-1))
 	sb.WriteString("}")
 	return sb.String(), nil
 }
 
-func prettifySet(arr rel.GenericSet, indentsNum int) (string, error) {
+func prettifyOrderableSet(arr rel.OrderableSet, indentsNum int) (string, error) {
 	content, err := prettifyItems(arr.OrderedValues(), indentsNum)
 	if err != nil {
 		return "", err

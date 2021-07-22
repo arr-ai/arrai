@@ -9,19 +9,34 @@ import (
 	"github.com/arr-ai/arrai/rel"
 )
 
-func stdOs() rel.Attr {
+func stdOsSafe() rel.Attr {
 	return rel.NewTupleAttr("os",
-		rel.NewAttr("path_separator", stdOsPathSeparator()),
-		rel.NewAttr("path_list_separator", stdOsPathListSeparator()),
-		rel.NewAttr("cwd", stdOsCwd()),
-		rel.NewNativeFunctionAttr("exists", stdOsExists),
-		rel.NewNativeFunctionAttr("file", stdOsFile),
-		rel.NewNativeFunctionAttr("tree", stdOsTree),
-		rel.NewNativeFunctionAttr("get_env", stdOsGetEnv),
-		rel.NewNativeFunctionAttr("&args", stdOsGetArgs),
-		rel.NewNativeFunctionAttr("&stdin", stdOsStdinVar.read),
-		rel.NewNativeFunctionAttr("isatty", stdOsIsATty),
+		stdOsSafeAttrs()...,
 	)
+}
+func stdOsUnsafe() rel.Attr {
+	return rel.NewTupleAttr("os",
+		stdOsUnsafeAttrs()...,
+	)
+}
+
+func stdOsSafeAttrs() []rel.Attr {
+	a := make([]rel.Attr, 0)
+	a = append(a, rel.NewAttr("path_separator", stdOsPathSeparator()))
+	a = append(a, rel.NewAttr("path_list_separator", stdOsPathListSeparator()))
+	a = append(a, rel.NewAttr("cwd", stdOsCwd()))
+	a = append(a, rel.NewNativeFunctionAttr("exists", stdOsExists))
+	a = append(a, rel.NewNativeFunctionAttr("tree", stdOsTree))
+	a = append(a, rel.NewNativeFunctionAttr("get_env", stdOsGetEnv))
+	a = append(a, rel.NewNativeFunctionAttr("&args", stdOsGetArgs))
+	a = append(a, rel.NewNativeFunctionAttr("&stdin", stdOsStdinVar.read))
+	a = append(a, rel.NewNativeFunctionAttr("isatty", stdOsIsATty))
+	return a
+}
+func stdOsUnsafeAttrs() []rel.Attr {
+	a := make([]rel.Attr, 0)
+	a = append(a, rel.NewNativeFunctionAttr("file", stdOsFile))
+	return a
 }
 
 type stdOsStdin struct {

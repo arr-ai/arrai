@@ -16,11 +16,11 @@ var EmptyNames = Names(frozen.Set{})
 
 // NewNames returns a new set of names with the given names.
 func NewNames(names ...string) Names {
-	s := frozen.Set{}
+	sb := &frozen.SetBuilder{}
 	for _, name := range names {
-		s = s.With(name)
+		sb.Add(name)
 	}
-	return Names(s)
+	return Names(sb.Finish())
 }
 
 // Names returns a slice of the names in the set.

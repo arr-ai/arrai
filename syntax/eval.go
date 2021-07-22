@@ -4,11 +4,16 @@ import (
 	"context"
 
 	"github.com/arr-ai/arrai/pkg/arraictx"
+	"github.com/arr-ai/arrai/pkg/importcache"
 
 	"github.com/arr-ai/arrai/rel"
 )
 
 func EvalWithScope(ctx context.Context, path, source string, scope rel.Scope) (rel.Value, error) {
+	if !importcache.HasImportCacheFrom(ctx) {
+		ctx = importcache.WithNewImportCache(ctx)
+	}
+
 	expr, err := Compile(ctx, path, source)
 	if err != nil {
 		return nil, err

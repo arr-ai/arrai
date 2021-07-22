@@ -122,24 +122,17 @@ func (r Relation) Without(v Value) Set {
 	return r
 }
 
-// assumes that the values are already projected
-func projectedValuesToTuple(v Values, attrs []string) Tuple {
-	t := TupleBuilder{}
-	for i, val := range v {
-		t.Put(attrs[i], val)
-	}
-	return t.Finish()
-}
-
 func (r Relation) Map(f func(Value) (Value, error)) (Set, error) {
+	m := mapIndices(r.attrs, r.p)
 	return r.rows.Map(func(v Values) (Value, error) {
-		return f(projectedValuesToTuple(v, r.attrs))
+		return f(valuesToTuple(v, m))
 	})
 }
 
 func (r Relation) Where(p func(Value) (bool, error)) (_ Set, err error) {
+	m := mapIndices(r.attrs, r.p)
 	s, err := r.rows.Where(func(v Values) (bool, error) {
-		return p(projectedValuesToTuple(v, r.attrs))
+		return p(valuesToTuple(v, m))
 	})
 	if err != nil {
 		return nil, err
@@ -336,18 +329,34 @@ func (r Relation) Source() parser.Scanner {
 func (r Relation) String() string {
 	s := strings.Builder{}
 	s.WriteString("{")
-	s.WriteString(fmt.Sprintf("|%s| ", strings.Join(r.attrs, ", ")))
+
+	attrs := r.attrs.GetSorted()
+	s.WriteString(fmt.Sprintf("|%s| ", strings.Join(attrs, ", ")))
+	projection := r.projectionBasedOnNames(attrs)
 	notFirst := false
-	for i := r.rows.OrderedRange(identityProjector(r.rows.Width())); i.Next(); {
+	for i := r.rows.OrderedRange(projection); i.Next(); {
 		if notFirst {
 			s.WriteString(", ")
 		} else {
 			notFirst = true
 		}
-		s.WriteString(i.Values().String())
+		s.WriteString(i.Values().project(projection).String())
 	}
 	s.WriteString("}")
 	return s.String()
+}
+
+func (r Relation) projectionBasedOnNames(names NamesSlice) valueProjector {
+	projection := make(valueProjector, 0, len(names))
+	indices := mapIndices(r.attrs, r.p)
+	for _, n := range names {
+		if i, has := indices[n]; has {
+			projection = append(projection, i)
+			continue
+		}
+		panic(fmt.Errorf("attribute %q does not exist in Relation %s", n, r))
+	}
+	return projection
 }
 
 func (r Relation) Equal(i interface{}) bool {
@@ -395,6 +404,7 @@ func (r Relation) Hash(seed uintptr) uintptr {
 // RelationValuesEnumerator enumerates the values as Values.
 type RelationValuesEnumerator struct {
 	i *positionalRelationValuesEnumerator
+	p valueProjector
 }
 
 func (e *RelationValuesEnumerator) Next() bool {
@@ -402,11 +412,15 @@ func (e *RelationValuesEnumerator) Next() bool {
 }
 
 func (e *RelationValuesEnumerator) Values() Values {
-	return e.i.Values()
+	return e.i.Values().project(e.p).values()
 }
 
-func (r Relation) OrderedValuesEnumerator() *RelationValuesEnumerator {
-	return &RelationValuesEnumerator{r.rows.OrderedRange(identityProjector(r.rows.Width()))}
+func (r Relation) OrderedValuesEnumerator(names NamesSlice) *RelationValuesEnumerator {
+	p := r.projectionBasedOnNames(names)
+	return &RelationValuesEnumerator{
+		i: r.rows.OrderedRange(p),
+		p: p,
+	}
 }
 
 type relationEnumerator struct {

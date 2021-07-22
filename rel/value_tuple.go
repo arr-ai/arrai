@@ -35,7 +35,30 @@ func (b *TupleBuilder) Put(name string, value Value) {
 }
 
 func (b *TupleBuilder) Finish() Tuple {
-	return &GenericTuple{tuple: (*frozen.MapBuilder)(b).Finish()}
+	m := (*frozen.MapBuilder)(b).Finish()
+	if index, has := m.Get("@"); has && m.Count() == 2 {
+		i := index.(Value)
+		switch {
+		case m.Has(StringCharAttr):
+			return NewStringCharTuple(
+				int(i.(Number).Float64()),
+				rune(m.MustGet(StringCharAttr).(Number).Float64()),
+			)
+		case m.Has(BytesByteAttr):
+			return NewBytesByteTuple(
+				int(i.(Number).Float64()),
+				byte(m.MustGet(BytesByteAttr).(Number).Float64()),
+			)
+		case m.Has(ArrayItemAttr):
+			return NewArrayItemTuple(
+				int(i.(Number).Float64()),
+				m.MustGet(ArrayItemAttr).(Value),
+			)
+		case m.Has(DictValueAttr):
+			return NewDictEntryTuple(i, m.MustGet(DictValueAttr).(Value))
+		}
+	}
+	return &GenericTuple{tuple: m}
 }
 
 // NewAttr returns an Attr with the given name and value.
@@ -117,6 +140,31 @@ func NewTupleFromMap(m map[string]interface{}) (Tuple, error) {
 	return b.Finish(), nil
 }
 
+//TODO: Expand to handle all types and rely less on default replace.
+// Potentially, each type could have a `Merge` func that can be called and the switch statement wouldn't be necessary
+
+// MergeTuples takes two tuples and performs a deep merge
+func MergeTuples(tuple Tuple, tuple2 Tuple) Tuple {
+	tempTuple := tuple
+	for e := tuple2.Enumerator(); e.MoveNext(); {
+		name, value := e.Current()
+		v, found := tempTuple.Get(name)
+		if found && v.Kind() == value.Kind() {
+			switch v.(type) {
+			case Tuple:
+				tempTuple = tempTuple.With(name, MergeTuples(v.(Tuple), value.(Tuple)))
+			case Dict:
+				tempTuple = tempTuple.With(name, mergeDicts(v.(Dict), value.(Dict)))
+			default:
+				tempTuple = tempTuple.With(name, value)
+			}
+		} else {
+			tempTuple = tempTuple.With(name, value)
+		}
+	}
+	return tempTuple
+}
+
 // NewXML constructs an XML Tuple from the given data
 func NewXML(tag []rune, attrs []Attr, children ...Value) Tuple {
 	var b TupleBuilder
@@ -128,6 +176,18 @@ func NewXML(tag []rune, attrs []Attr, children ...Value) Tuple {
 		b.Put("children", NewArray(children...))
 	}
 	return EmptyTuple.With("@xml", b.Finish())
+}
+
+// newGenericTuple always returns a generic tuple no matter the attributes.
+func newGenericTuple(attrs ...Attr) Tuple {
+	if len(attrs) == 0 {
+		return EmptyTuple
+	}
+	m := &frozen.MapBuilder{}
+	for _, attr := range attrs {
+		m.Put(attr.Name, attr.Value)
+	}
+	return &GenericTuple{tuple: m.Finish()}
 }
 
 func (t *GenericTuple) Canonical() Tuple {
@@ -295,11 +355,10 @@ func (t *GenericTuple) Export(ctx context.Context) interface{} {
 }
 
 func (t *GenericTuple) getSetBuilder() setBuilder {
-	// TODO: increase capacity
 	if !t.IsTrue() {
 		return newGenericTypeSetBuilder()
 	}
-	return newRelationBuilder(t.Names().Names(), 0)
+	return newRelationBuilder(t.Names().OrderedNames(), 0)
 }
 
 func (t *GenericTuple) getBucket() fmt.Stringer {
@@ -349,6 +408,16 @@ func (n NamesSlice) minus(n2 NamesSlice) NamesSlice {
 	return names
 }
 
+func (n NamesSlice) isSubset(n2 NamesSlice) bool {
+	m := n2.intoSet()
+	for _, name := range n {
+		if _, has := m[name]; !has {
+			return false
+		}
+	}
+	return true
+}
+
 func (n NamesSlice) intoSet() map[string]struct{} {
 	m := make(map[string]struct{})
 	for _, name := range n {
@@ -365,7 +434,7 @@ func (n NamesSlice) EqualNamesSlice(n2 NamesSlice) bool {
 	if len(n) != len(n2) {
 		return false
 	}
-	left, right := n.getSorted(), n2.getSorted()
+	left, right := n.GetSorted(), n2.GetSorted()
 	for i, name := range left {
 		if name != right[i] {
 			return false
@@ -375,21 +444,14 @@ func (n NamesSlice) EqualNamesSlice(n2 NamesSlice) bool {
 }
 
 func (n NamesSlice) EqualTupleAttrs(t Tuple) bool {
-	for _, name := range n {
-		if t.HasName(name) {
-			t = t.Without(name)
-			continue
-		}
-		return false
-	}
-	return !t.IsTrue()
+	return NewNames(n...).Equal(t.Names())
 }
 
 func (n NamesSlice) LessNamesSlice(n2 NamesSlice) bool {
 	if len(n) != len(n2) {
 		return len(n) < len(n2)
 	}
-	left, right := n.getSorted(), n2.getSorted()
+	left, right := n.GetSorted(), n2.GetSorted()
 	for i, attr := range left {
 		if attr < right[i] {
 			return true
@@ -401,7 +463,7 @@ func (n NamesSlice) LessNamesSlice(n2 NamesSlice) bool {
 	return false
 }
 
-func (n NamesSlice) getSorted() NamesSlice {
+func (n NamesSlice) GetSorted() NamesSlice {
 	sorted := make(NamesSlice, len(n))
 	copy(sorted, n)
 	sort.Strings(sorted)

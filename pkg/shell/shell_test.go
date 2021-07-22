@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/arr-ai/arrai/pkg/arraictx"
+	"github.com/arr-ai/arrai/pkg/importcache"
 	"github.com/arr-ai/arrai/rel"
 	"github.com/arr-ai/arrai/syntax"
 	"github.com/stretchr/testify/assert"
@@ -324,7 +325,8 @@ func assertTabCompletion(t *testing.T,
 ) {
 	scope := syntax.StdScope()
 	for name, expr := range scopeValues {
-		val, err := syntax.EvaluateExpr(arraictx.InitRunCtx(context.Background()), "", expr)
+		ctx := importcache.WithNewImportCache(arraictx.InitRunCtx(context.Background()))
+		val, err := syntax.EvaluateExpr(ctx, "", expr)
 		require.NoError(t, err)
 		scope = scope.With(name, val)
 	}

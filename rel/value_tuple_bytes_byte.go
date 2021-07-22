@@ -44,7 +44,7 @@ func maybeNewBytesByteTupleFromTuple(t Tuple) Tuple {
 }
 
 func (t BytesByteTuple) asGenericTuple() Tuple {
-	return newTuple(
+	return newGenericTuple(
 		NewIntAttr("@", t.at),
 		NewIntAttr(BytesByteAttr, int(t.byteval)),
 	)

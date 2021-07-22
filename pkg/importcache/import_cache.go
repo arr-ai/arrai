@@ -1,10 +1,15 @@
-package syntax
+package importcache
 
 import (
+	"context"
 	"sync"
 
 	"github.com/arr-ai/arrai/rel"
 )
+
+type importCacheKeyType int
+
+const importCacheKey importCacheKeyType = iota
 
 // it is a simple cache component used by import behavior, and it can make cache code simple
 type importCache struct {
@@ -13,13 +18,42 @@ type importCache struct {
 	cache map[string]rel.Expr
 }
 
-func newCache() *importCache {
+// WithNewImportCache adds an empty cache to the context.
+func WithNewImportCache(ctx context.Context) context.Context {
+	return context.WithValue(ctx, importCacheKey, newImportCache())
+}
+
+// HasImportCacheFrom returns true if there is an import cache in the context.
+func HasImportCacheFrom(ctx context.Context) bool {
+	return fromCache(ctx) != nil
+}
+
+// GetOrAddFromCache gets the cached expression based on the given filepath from the cache in context.
+// If the file is not in the cache it will simply store the filepath and the expression in the cache.
+// The function panics when cache is not in context.
+func GetOrAddFromCache(ctx context.Context, key string, add func() (rel.Expr, error)) (rel.Expr, error) {
+	if service := fromCache(ctx); service != nil {
+		return service.getOrAdd(key, add)
+	}
+	panic("GetOrAddFromCache: cache not in context")
+}
+
+func newImportCache() *importCache {
 	c := &importCache{cache: map[string]rel.Expr{}}
 	c.cond = sync.NewCond(&c.mutex)
 	return c
 }
 
-// getOrAdd tries to get the value for key. If not present, and another
+func fromCache(ctx context.Context) *importCache {
+	if c := ctx.Value(importCacheKey); c != nil {
+		if cache, is := c.(*importCache); is {
+			return cache
+		}
+	}
+	return nil
+}
+
+// gerOrAdd tries to get the value for key. If not present, and another
 // goroutine is currently computing a value for key, this goroutine will wait
 // till it's ready.
 func (service *importCache) getOrAdd(key string, add func() (rel.Expr, error)) (rel.Expr, error) {

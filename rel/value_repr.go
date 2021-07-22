@@ -103,13 +103,13 @@ func reprDict(d Dict, w io.Writer) {
 	fmt.Fprint(w, "}")
 }
 
-// orderableSet is a type used to repr GenericSet and UnionSet to avoid duplications.
-type orderableSet interface {
+// OrderableSet is a type used to repr GenericSet and UnionSet to avoid duplications.
+type OrderableSet interface {
 	Set
 	OrderedValues() []Value
 }
 
-func reprOrderableSet(s orderableSet, w io.Writer) {
+func reprOrderableSet(s OrderableSet, w io.Writer) {
 	if s.Equal(True) {
 		fmt.Fprint(w, sTrue)
 		return
@@ -178,7 +178,7 @@ func reprValue(v Value, w io.Writer) {
 		reprDict(v, w)
 	case Relation:
 		fmt.Fprint(w, v.String())
-	case orderableSet:
+	case OrderableSet:
 		reprOrderableSet(v, w)
 	case Closure:
 		reprClosure(v, w)

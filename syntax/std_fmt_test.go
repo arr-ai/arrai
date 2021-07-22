@@ -5,6 +5,7 @@ import (
 
 	"github.com/arr-ai/arrai/rel"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestFmtPrettyDict(t *testing.T) {
@@ -85,11 +86,146 @@ func TestFmtPrettySet(t *testing.T) {
 	AssertCodesEvalToSameValue(t, `"{1, 2, {3, 4, 5}}"`, `//fmt.pretty({1,2,{3,4,5}})`)
 }
 
+func TestFmtPrettyUnionSet(t *testing.T) {
+	t.Parallel()
+	AssertCodesEvalToSameValue(t,
+		`"{
+  (
+    a: 'abc',
+  ),
+  (
+    b: 2,
+  ),
+}"`,
+		`//fmt.pretty({(a: 'abc'), (b: 2)})`,
+	)
+	AssertCodesEvalToSameValue(t,
+		`"{
+  1,
+  2,
+  3,
+  'a',
+  [1, 2, 3],
+  (
+    a: 1,
+  ),
+}"`,
+		`//fmt.pretty({(a: 1), 1, 2, 3, "a", [1, 2, 3]})`,
+	)
+	AssertCodesEvalToSameValue(t,
+		`"{
+  (
+    a: (
+      b: (
+        c: [
+          (
+            d: 1,
+          ),
+        ],
+      ),
+    ),
+  ),
+  (
+    e: {
+      (
+        a: {
+          (
+            a: 1,
+          ),
+          (
+            b: 1,
+          ),
+        },
+      ),
+      (
+        b: 2,
+      ),
+    },
+  ),
+}"`,
+		`//fmt.pretty({(a: (b: (c: [(d: 1)]))), (e: {(a: {(a: 1), (b: 1)}), (b: 2)})})`,
+	)
+}
+
 func TestFmtPrettyString(t *testing.T) {
 	t.Parallel()
 	AssertCodesEvalToSameValue(t, `"{}"`, `//fmt.pretty('')`)
 	AssertCodesEvalToSameValue(t, `"'abc'"`, `//fmt.pretty('abc')`)
 	AssertCodesEvalToSameValue(t, `"42\\'abc'"`, `//fmt.pretty(42\'abc')`)
+}
+
+func TestFmtPrettyRelation(t *testing.T) {
+	t.Parallel()
+
+	AssertCodesEvalToSameValue(t,
+		`"{
+  |a, b, c|
+  (1, 1, 1),
+}"`,
+		`//fmt.pretty({(a: 1, b: 1, c: 1)})`,
+	)
+
+	AssertCodesEvalToSameValue(t,
+		`"{
+  |a, b, c|
+  (1, 1, 1),
+}"`,
+		`//fmt.pretty({|a, b, c| (1, 1, 1)})`,
+	)
+
+	AssertCodesEvalToSameValue(t,
+		`"{
+  |a, b, c|
+  (1, 1, 1),
+  (2, 2, 2),
+  (3, 3, 3),
+}"`,
+		`//fmt.pretty({|a, b, c| (1, 1, 1), (2, 2, 2), (3, 3, 3)})`,
+	)
+
+	AssertCodesEvalToSameValue(t,
+		`"{
+  |a, b, c|
+  (
+    1,
+    1,
+    {
+      |a|
+      (1),
+    },
+  ),
+  (
+    1,
+    1,
+    {
+      |a|
+      (
+        (
+          b: 1,
+        ),
+      ),
+    },
+  ),
+  (
+    1,
+    [
+      (
+        a: 1,
+      ),
+    ],
+    1,
+  ),
+  (
+    (
+      b: 1,
+      c: 1,
+    ),
+    1,
+    1,
+  ),
+}"`,
+		`//fmt.pretty({|a, b, c| ((b: 1, c: 1), 1, 1), (1, [(a: 1)], 1), (1, 1, {(a: 1)}), (1, 1, {(a: (b:1))})})`,
+	)
 }
 
 func TestIsSimple(t *testing.T) {
@@ -102,5 +238,13 @@ func TestIsSimple(t *testing.T) {
 
 	d := rel.MustNewDict(false, rel.NewDictEntryTuple(rel.NewString([]rune("a")), rel.NewNumber(1)))
 	assert.False(t, isSimple(d))
-	assert.False(t, isSimple(rel.NewTuple(rel.NewAttr("a", rel.NewNumber(1)))))
+	tp := rel.NewTuple(rel.NewAttr("a", rel.NewNumber(1)))
+	assert.False(t, isSimple(tp))
+
+	sb := rel.NewSetBuilder()
+	sb.Add(tp)
+	r, err := sb.Finish()
+	require.NoError(t, err)
+	require.IsType(t, rel.Relation{}, r)
+	assert.False(t, isSimple(r))
 }

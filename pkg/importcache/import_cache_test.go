@@ -1,6 +1,6 @@
 // +build timingsensitive
 
-package syntax
+package importcache
 
 import (
 	"context"
@@ -27,7 +27,7 @@ func TestImportCache(t *testing.T) {
 		msgs = append(msgs, fmt.Sprintf(format, args...))
 	}
 
-	cache := newCache()
+	cache := newImportCache()
 	var wg sync.WaitGroup
 	add := func(ctx context.Context, whenMs int, key string, value rel.Value, sleepMs int, descr string) {
 		wg.Add(1)
@@ -45,7 +45,7 @@ func TestImportCache(t *testing.T) {
 				assert.Equal(t, nil, actual)
 				return
 			}
-			actualValue, err := actual.Eval(ctx, StdScope())
+			actualValue, err := actual.Eval(ctx, rel.EmptyScope)
 			require.NoError(t, err)
 			rel.AssertEqualValues(t, actualValue, value)
 		}()

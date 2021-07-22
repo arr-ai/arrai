@@ -12,6 +12,7 @@ import (
 
 	"github.com/anz-bank/pkg/log"
 	"github.com/arr-ai/arrai/pkg/arraictx"
+	"github.com/arr-ai/arrai/pkg/importcache"
 	"github.com/arr-ai/arrai/rel"
 	"github.com/arr-ai/arrai/syntax"
 	"github.com/chzyer/readline"
@@ -73,6 +74,8 @@ func Shell(ctx context.Context, frames []rel.ContextErr) error {
 			panic(err)
 		}
 
+		// resets import cache every time a line is run.
+		ctx = importcache.WithNewImportCache(ctx)
 		if err = sh.parseCmd(ctx, line, l); err != nil {
 			switch err {
 			case exitError{}:
