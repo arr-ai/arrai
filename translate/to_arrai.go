@@ -14,7 +14,7 @@ import (
 //     array  -> array
 //     null   -> none
 //     other  -> value (bools, numerics, strings)
-func ToArrai(data interface{}) (rel.Value, error) {
+func (t Translator) ToArrai(data interface{}) (rel.Value, error) {
 	switch v := data.(type) {
 	case map[interface{}]interface{}:
 		{
@@ -24,38 +24,49 @@ func ToArrai(data interface{}) (rel.Value, error) {
 				strKey := fmt.Sprintf("%v", key)
 				mapString[strKey] = value
 			}
-			return objToArrai(mapString)
+			return t.objToArrai(mapString)
 		}
 	case map[string]interface{}:
-		return objToArrai(v)
+		return t.objToArrai(v)
 	case []interface{}:
-		return arrToArrai(v)
+		return t.arrToArrai(v)
 	case string:
-		return rel.NewTuple(rel.NewAttr("s", rel.NewString([]rune(v)))), nil
+		value := rel.NewString([]rune(v))
+		if t.strict {
+			return rel.NewTuple(rel.NewAttr("s", value)), nil
+		}
+		return value, nil
 	case float64:
 		return rel.NewNumber(v), nil
 	case int:
 		return rel.NewNumber(float64(v)), nil
 	case bool:
-		return rel.NewTuple(rel.NewAttr("b", rel.NewBool(v))), nil
+		value := rel.NewBool(v)
+		if t.strict {
+			return rel.NewTuple(rel.NewAttr("b", value)), nil
+		}
+		return value, nil
 	case nil:
 		return rel.NewTuple(), nil
 	default:
-		t, err := rel.NewValue(v)
+		value, err := rel.NewValue(v)
 		if err != nil {
 			return nil, err
 		}
-		return rel.NewTuple(rel.NewAttr("v", t)), nil
+		if t.strict {
+			return rel.NewTuple(rel.NewAttr("v", value)), nil
+		}
+		return value, nil
 	}
 }
 
 // objToArrai converts an object to a binary relation {|@,@item|, |key,val|, ...}.
-func objToArrai(data map[string]interface{}) (rel.Value, error) {
+func (t Translator) objToArrai(data map[string]interface{}) (rel.Value, error) {
 	b := rel.NewSetBuilder()
 	i := 0
 	for key, val := range data {
 		// Recursively apply ToArrai to all values
-		item, err := ToArrai(val)
+		item, err := t.ToArrai(val)
 		if err != nil {
 			return nil, err
 		}
@@ -65,16 +76,20 @@ func objToArrai(data map[string]interface{}) (rel.Value, error) {
 	return b.Finish()
 }
 
-// arrToArrai converts an array to an arrai array.
-func arrToArrai(data []interface{}) (rel.Value, error) {
+// arrToArrai converts an array to an arr.ai array.
+func (t Translator) arrToArrai(data []interface{}) (rel.Value, error) {
 	elts := make([]rel.Value, len(data))
 	for i, val := range data {
 		// Recursively apply ToArrai to all elements
-		elt, err := ToArrai(val)
+		elt, err := t.ToArrai(val)
 		if err != nil {
 			return nil, err
 		}
 		elts[i] = elt
 	}
-	return rel.NewTuple(rel.NewAttr("a", rel.NewArray(elts...))), nil
+	value := rel.NewArray(elts...)
+	if t.strict {
+		return rel.NewTuple(rel.NewAttr("a", value)), nil
+	}
+	return value, nil
 }

@@ -117,6 +117,21 @@ Usage:
 |:-|:-|
 | `//encoding.json.decode('{"hi": "abc", "hello": 123}')` | `{'hello': 123, 'hi': (s: 'abc')}` |
 
+## `//encoding.json.decoder(config <: (strict <: bool)) <: ((json <: string|bytes) <: array)`
+
+`decoder` takes a tuple used to configure decoding and returns the decoding function:
+
+| config | description |
+|:-|:-|
+| `strict` | For types that are indistinguishable when empty (strings, bools, and arrays), wrap values in tuples with a discriminating key (defaults to `true`). |
+
+Usage:
+
+| example | equals |
+|:-|:-|
+| `//encoding.json.decoder(())('{"arr": [1], "null": null, "str": "2"}')` | `<<'{'arr': (a: [1]), 'null': (), 'str': (s: '2')}'>>` |
+| `//encoding.json.decoder((strict: false))('{"arr": [1], "null": null, "str": "2"}')` | `<<'{"arr": [1], "null": (), "str": "2"}'>>` |
+
 ## `//encoding.json.encode(jsonDefinition <: set) <: string|bytes`
 
 `encode` is the reverse of `decode`. It takes a built-in arr.ai value to `bytes` that represents a JSON object.
@@ -130,6 +145,36 @@ Usage:
 ## `//encoding.json.encode_indent(jsonDefinition <: set) <: string|bytes`
 
 `encode_indent` is like `encode` but applies indentations to format the output.
+
+## `//encoding.json.encoder(config <: (strict <: bool, prefix <: string, indent: string, escapeHTML <: bool)) <: ((json <: string|bytes) <: array)`
+
+`encoder` takes a tuple used to configure encoding and returns the encoding function:
+
+| config | description |
+|:-|:-|
+| prefix | The string to prepend to each line of encoded output (default `""`). |
+| indent | The string to use for each indent on each line of encoded output  (default `""`).<br/>If empty, the output will be encoded on a single line. |
+| escapeHTML | Whether [problematic HTML characters](https://pkg.go.dev/encoding/json#Encoder.SetEscapeHTML) should be escaped inside JSON quoted strings (default `false`). |
+| `strict` | For types that are indistinguishable when empty (strings, bools, and arrays), require values to be wrapped in tuples with a discriminating key (defaults to `true`).<br/>If `false`, all empty sets will be encoded as `null`. |
+
+Example:
+
+```arrai
+//encoding.json.encoder((prefix: '↘️', indent: '➡️', escapeHTML: true, strict: false))(
+    (a: {"b": "c", "d": true}, bool: false, number: 0, set: {}, array: [], html: "<script/>"))
+
+{
+↘️➡️"a": {
+↘️➡️➡️"b": "c",
+↘️➡️➡️"d": true
+↘️➡️},
+↘️➡️"array": null,
+↘️➡️"bool": null,
+↘️➡️"html": "\\u003cscript/\\u003e",
+↘️➡️"number": 0,
+↘️➡️"set": null
+↘️}
+```
 
 ## `//encoding.yaml.decode(json <: string|bytes) <: set`
 
