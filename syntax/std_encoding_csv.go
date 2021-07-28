@@ -36,7 +36,7 @@ func stdEncodingCSV() rel.Attr {
 	return rel.NewTupleAttr(
 		"csv",
 		rel.NewNativeFunctionAttr(decodeAttr, func(_ context.Context, value rel.Value) (rel.Value, error) {
-			return csvDefaultDecode(value)
+			return csvDecodeFnBody("csv.decode", value, newDecodeConfig())
 		}),
 
 		rel.NewNativeFunctionAttr(decoderAttr, func(_ context.Context, configValue rel.Value) (rel.Value, error) {
@@ -60,7 +60,7 @@ func stdEncodingCSV() rel.Attr {
 			}
 			config.comment = rune(comment)
 
-			config.trimLeadingSpace = getConfigBool(configTuple, "trimLeadingSpace")
+			config.trimLeadingSpace, _ = getConfigBool(configTuple, "trimLeadingSpace")
 
 			fieldsPerRecord, err := getConfigInt(configTuple, fn, "fieldsPerRecord", config.fieldsPerRecord)
 			if err != nil {
@@ -68,7 +68,7 @@ func stdEncodingCSV() rel.Attr {
 			}
 			config.fieldsPerRecord = fieldsPerRecord
 
-			config.lazyQuotes = getConfigBool(configTuple, "lazyQuotes")
+			config.lazyQuotes, _ = getConfigBool(configTuple, "lazyQuotes")
 
 			return rel.NewNativeFunction("decode", func(_ context.Context, value rel.Value) (rel.Value, error) {
 				return csvDecodeFnBody("csv.decoder payload", value, config)
@@ -94,17 +94,13 @@ func stdEncodingCSV() rel.Attr {
 			}
 			config.comma = rune(comma)
 
-			config.crlf = getConfigBool(configTuple, "crlf")
+			config.crlf, _ = getConfigBool(configTuple, "crlf")
 
 			return rel.NewNativeFunction("encode", func(_ context.Context, value rel.Value) (rel.Value, error) {
 				return csvEncodeFnBody("csv.encoder payload", value, config)
 			}), nil
 		}),
 	)
-}
-
-func csvDefaultDecode(v rel.Value) (rel.Value, error) {
-	return csvDecodeFnBody("csv.decode", v, newDecodeConfig())
 }
 
 func csvDecodeFnBody(fn string, value rel.Value, config decodeConfig) (rel.Value, error) {

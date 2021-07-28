@@ -29,7 +29,7 @@ func fromJSON(cli *cli.Context) error {
 	if err := json.Unmarshal(raw, &data); err != nil {
 		return err
 	}
-	val, err := translate.ToArrai(data)
+	val, err := translate.StrictTranslator().ToArrai(data)
 	if err != nil {
 		logrus.Fatal(err)
 	}

@@ -14,78 +14,128 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// AssertExpectedTranslation asserts that the translated value is the same as the expected string
-func AssertExpectedTranslation(t *testing.T, expected string, value rel.Value) bool {
-	var pc syntax.ParseContext
-	ctx := arraictx.InitRunCtx(context.Background())
-	ast, err := pc.Parse(ctx, parser.NewScanner(expected))
-	if !assert.NoError(t, err, "parsing expected: %s", expected) {
-		return false
-	}
-	expectedExpr, err := pc.CompileExpr(ctx, ast)
-	require.NoError(t, err)
-	if !rel.AssertExprsEvalToSameValue(t, expectedExpr, value) {
-		return assert.Fail(
-			t, "Input should translate to same value", "%s == %s", expected, value)
-	}
-	return true
-}
+func TestJSONTranslator_NonStrict(t *testing.T) {
+	t.Parallel()
 
-func AssertExpectedJSONTranslation(t *testing.T, expected, rawJSON string) {
-	var data interface{}
-	require.NoError(t, json.Unmarshal([]byte(rawJSON), &data))
-	trans, err := translate.ToArrai(data)
-	require.NoError(t, err)
-	AssertExpectedTranslation(t, expected, trans)
+	approx := translate.NewTranslator(false)
+	AssertArraiValueToJSONTranslationWith(t, approx, `null`, rel.None)
+	AssertArraiValueToJSONTranslationWith(t, approx, `null`, rel.MustNewSet())
+	AssertArraiValueToJSONTranslationWith(t, approx, `null`, rel.NewArray())
+	AssertArraiValueToJSONTranslationWith(t, approx, `null`, rel.MustNewDict(false))
+	AssertArraiValueToJSONTranslationWith(t, approx, `null`, rel.NewString([]rune("")))
+	AssertArraiValueToJSONTranslationWith(t, approx, `null`, rel.NewBool(false))
+
+	AssertArraiToJSONTranslationWith(t, approx, `42`, `42`)
+	AssertArraiToJSONTranslationWith(t, approx, `true`, `true`)
+	AssertArraiToJSONTranslationWith(t, approx, `"foo"`, `"foo"`)
+	AssertArraiToJSONTranslationWith(t, approx, `["foo","bar"]`, `["foo", "bar"]`)
+	AssertArraiToJSONTranslationWith(t, approx, `["bar","foo"]`, `{"foo", "bar"}`)
+	AssertArraiToJSONTranslationWith(t, approx, `{"foo":"bar"}`, `{"foo": "bar"}`)
 }
 
 func TestJSONObjectToArrai(t *testing.T) {
 	t.Parallel()
 
 	// Empty
-	AssertExpectedJSONTranslation(t, `{}`, `{}`)
+	AssertJSONToArraiTranslation(t, `{}`, `{}`)
 
 	// different value types
-	AssertExpectedJSONTranslation(t, `{"key": 123}           `, `{"key":123}          `)
-	AssertExpectedJSONTranslation(t, `{"key": ()}    `, `{"key":null}         `)
-	AssertExpectedJSONTranslation(t, `{"key": (s: "val")}    `, `{"key":"val"}        `)
-	AssertExpectedJSONTranslation(t, `{"key": (a: [1, 2, 3])}`, `{"key":[1, 2, 3]}    `)
-	AssertExpectedJSONTranslation(t, `{"key": {"foo": (s: "bar")}}`, `{"key":{"foo":"bar"}}`)
+	AssertJSONToArraiTranslation(t, `{"key": 123}                `, `{"key":123}          `)
+	AssertJSONToArraiTranslation(t, `{"key": ()}                 `, `{"key":null}         `)
+	AssertJSONToArraiTranslation(t, `{"key": (s: "val")}         `, `{"key":"val"}        `)
+	AssertJSONToArraiTranslation(t, `{"key": (a: [1, 2, 3])}     `, `{"key":[1, 2, 3]}    `)
+	AssertJSONToArraiTranslation(t, `{"key": {"foo": (s: "bar")}}`, `{"key":{"foo":"bar"}}`)
 
 	// Multiple key-val pairs
-	AssertExpectedJSONTranslation(t, `{"key": (s: "val"), "foo": 123}`, `{"key":"val", "foo":123}`)
+	AssertJSONToArraiTranslation(t, `{"key": (s: "val"), "foo": 123}`, `{"key":"val", "foo":123}`)
 }
 
 func TestJSONArrayToArrai(t *testing.T) {
 	t.Parallel()
 
 	// Empty
-	AssertExpectedJSONTranslation(t, `(a: [])`, `[]`)
+	AssertJSONToArraiTranslation(t, `(a: [])`, `[]`)
 
 	// Different value types
-	AssertExpectedJSONTranslation(t, `(a: [1])                  `, `[1]            `)
-	AssertExpectedJSONTranslation(t, `(a: [()])         `, `[null]         `)
-	AssertExpectedJSONTranslation(t, `(a: [(s: "hello")])       `, `["hello"]      `)
-	AssertExpectedJSONTranslation(t, `(a: [(a: [1, 2, 3])])     `, `[[1, 2, 3]]    `)
-	AssertExpectedJSONTranslation(t, `(a: [{"foo": (s: "bar")}])`, `[{"foo":"bar"}]`)
+	AssertJSONToArraiTranslation(t, `(a: [1])                  `, `[1]            `)
+	AssertJSONToArraiTranslation(t, `(a: [()])                 `, `[null]         `)
+	AssertJSONToArraiTranslation(t, `(a: [(s: "hello")])       `, `["hello"]      `)
+	AssertJSONToArraiTranslation(t, `(a: [(a: [1, 2, 3])])     `, `[[1, 2, 3]]    `)
+	AssertJSONToArraiTranslation(t, `(a: [{"foo": (s: "bar")}])`, `[{"foo":"bar"}]`)
 
 	// Multiple values with different types
-	AssertExpectedJSONTranslation(t, `(a: [1, (s: "Hello"), ()])`, `[1, "Hello", null]`)
+	AssertJSONToArraiTranslation(t, `(a: [1, (s: "Hello"), ()])`, `[1, "Hello", null]`)
 }
 
 func TestJSONNullToNone(t *testing.T) {
 	t.Parallel()
-	AssertExpectedJSONTranslation(t, `()`, `null`)
+	AssertJSONToArraiTranslation(t, `()`, `null`)
 }
 
 func TestJSONStringToArrai(t *testing.T) {
 	t.Parallel()
-	AssertExpectedJSONTranslation(t, `(s: {})           `, `""           `)
-	AssertExpectedJSONTranslation(t, `(s: "Hello World")`, `"Hello World"`)
+	AssertJSONToArraiTranslation(t, `(s: {})           `, `""           `)
+	AssertJSONToArraiTranslation(t, `(s: "Hello World")`, `"Hello World"`)
 }
 
 func TestJSONNumericToArrai(t *testing.T) {
 	t.Parallel()
-	AssertExpectedJSONTranslation(t, `123 `, `123 `)
-	AssertExpectedJSONTranslation(t, `1.23`, `1.23`)
+	AssertJSONToArraiTranslation(t, `123 `, `123 `)
+	AssertJSONToArraiTranslation(t, `1.23`, `1.23`)
+}
+
+// AssertExpectedTranslation asserts that the translated value is the same as the expected string
+func AssertExpectedTranslation(t *testing.T, expected string, value rel.Value) bool {
+	if !rel.AssertExprsEvalToSameValue(t, compileExpr(t, expected), value) {
+		return assert.Fail(
+			t, "Input should translate to same value", "%s == %s", expected, value)
+	}
+	return true
+}
+
+func AssertJSONToArraiTranslation(t *testing.T, expected, rawJSON string) {
+	AssertJSONToArraiTranslationWith(t, translate.StrictTranslator(), expected, rawJSON)
+}
+
+func AssertArraiToJSONTranslationWith(t *testing.T, translator translate.Translator, expectedJSON, arrai string) {
+	AssertArraiValueToJSONTranslationWith(t, translator, expectedJSON, eval(t, arrai))
+}
+
+func AssertJSONToArraiTranslationWith(t *testing.T, translator translate.Translator, expected, rawJSON string) {
+	var data interface{}
+	require.NoError(t, json.Unmarshal([]byte(rawJSON), &data))
+	trans, err := translator.ToArrai(data)
+	require.NoError(t, err)
+	AssertExpectedTranslation(t, expected, trans)
+}
+
+func AssertArraiValueToJSONTranslationWith(
+	t *testing.T,
+	translator translate.Translator,
+	expectedJSON string,
+	value rel.Value,
+) {
+	v, err := translator.FromArrai(value)
+	require.NoError(t, err)
+	jb, err := json.Marshal(v)
+	require.NoError(t, err)
+	assert.Equal(t, expectedJSON, string(jb))
+}
+
+func compileExpr(t *testing.T, src string) rel.Expr {
+	var pc syntax.ParseContext
+	ctx := arraictx.InitRunCtx(context.Background())
+	ast, err := pc.Parse(ctx, parser.NewScanner(src))
+	require.NoError(t, err)
+	expr, err := pc.CompileExpr(ctx, ast)
+	require.NoError(t, err)
+	return expr
+}
+
+func eval(t *testing.T, src string) rel.Value {
+	ctx := arraictx.InitRunCtx(context.Background())
+	expr := compileExpr(t, src)
+	value, err := expr.Eval(ctx, rel.EmptyScope)
+	require.NoError(t, err)
+	return value
 }
