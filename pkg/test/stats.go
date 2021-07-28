@@ -8,7 +8,7 @@ import (
 // calcStats calculates aggregate statistics for all test Results in the provided test files. Most importantly, it
 // determines if the test run has succeeded or failed. A test run fails if there are any testResults with a 'failed' or
 // 'invalid' Outcome.
-func calcStats(testFiles []TestFile) testStats {
+func calcStats(testFiles []File) testStats {
 	var stats testStats
 
 	for _, testFile := range testFiles {

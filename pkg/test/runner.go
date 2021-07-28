@@ -43,11 +43,11 @@ func RunTests(ctx context.Context, w io.Writer, path string) error {
 	return err
 }
 
-// getTestFiles finds all *_test.arrai files in given path (recursively), reads them and returns a TestFile array with
+// getTestFiles finds all *_test.arrai files in given path (recursively), reads them and returns a File array with
 // them. It skips over hidden directories. It returns an error if any filesystem operation failed, or if no files were
 // found.
-func getTestFiles(ctx context.Context, path string) ([]TestFile, error) {
-	var files []TestFile
+func getTestFiles(ctx context.Context, path string) ([]File, error) {
+	var files []File
 	fs := ctxfs.SourceFsFrom(ctx)
 
 	err := afero.Walk(fs, path, func(path string, info os.FileInfo, walkErr error) error {
@@ -74,7 +74,7 @@ func getTestFiles(ctx context.Context, path string) ([]TestFile, error) {
 			return fmt.Errorf("failed reading test file '%s': %v", path, readErr)
 		}
 
-		files = append(files, TestFile{Path: path, Source: string(bytes)})
+		files = append(files, File{Path: path, Source: string(bytes)})
 		return nil
 	})
 
@@ -87,9 +87,9 @@ func getTestFiles(ctx context.Context, path string) ([]TestFile, error) {
 	return files, nil
 }
 
-// runFile runs all tests in TestFile.Source and fills TestFile.Results and TestFile.WallTime. It returns an error if
+// runFile runs all tests in File.Source and fills File.Results and File.WallTime. It returns an error if
 // the arr.ai code failed to evaluate.
-func runFile(ctx context.Context, file *TestFile) error {
+func runFile(ctx context.Context, file *File) error {
 	expr, err := syntax.Compile(ctx, file.Path, file.Source)
 	if err != nil {
 		return fmt.Errorf("failed compiling tests file '%s': %v", file.Path, err)
@@ -107,17 +107,17 @@ func runFile(ctx context.Context, file *TestFile) error {
 	return nil
 }
 
-// RunExpr runs all tests in the provided rel.Expr and returns a slice of TestResult. It returns an error if
+// RunExpr runs all tests in the provided rel.Expr and returns a slice of Result. It returns an error if
 // the arr.ai code failed to evaluate.
-func RunExpr(ctx context.Context, expr rel.Expr) ([]TestResult, error) {
+func RunExpr(ctx context.Context, expr rel.Expr) ([]Result, error) {
 	result, err := expr.Eval(ctx, rel.Scope{})
 	if err != nil {
 		return nil, err
 	}
 
-	results := make([]TestResult, 0)
+	results := make([]Result, 0)
 	ForeachLeaf(result, "", func(val rel.Value, path string) {
-		result := TestResult{
+		result := Result{
 			Name: path,
 		}
 

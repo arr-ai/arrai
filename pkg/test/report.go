@@ -15,7 +15,7 @@ import (
 
 // Report writes a formatted output of all the test files and their test results, and returns and error if the test run
 // failed.
-func Report(w io.Writer, testFiles []TestFile) error {
+func Report(w io.Writer, testFiles []File) error {
 	stats := calcStats(testFiles)
 
 	for _, testFile := range testFiles {
@@ -34,8 +34,8 @@ func Report(w io.Writer, testFiles []TestFile) error {
 const color = "\033[38;5;255;%d;1m%s\033[0m"
 
 // reportFile writes a formatted output of a file and all its test results, ordered by outcome. The maxName parameter
-// is used to aligned the results, and should contain the length of the longest TestResult.Name inside TestFile.Results.
-func reportFile(w io.Writer, testFile TestFile, maxName int) {
+// is used to aligned the results, and should contain the length of the longest Result.Name inside File.Results.
+func reportFile(w io.Writer, testFile File, maxName int) {
 	results := testFile.Results
 
 	// Sort test results by outcome then by test name
@@ -71,7 +71,7 @@ func relPath(absPath string) string {
 }
 
 // reportTest writes a formatted output of a single test result (PASS/FAIL/SKIP/??) with the optional included Message.
-func reportTest(w io.Writer, test TestResult, maxName int) {
+func reportTest(w io.Writer, test Result, maxName int) {
 	switch test.Outcome {
 	case Failed:
 		fmt.Fprintf(w, color, 41, "FAIL")

@@ -99,7 +99,7 @@ func TestGetTestFiles_OneFile(t *testing.T) {
 	fsContent := map[string]string{"/test/1_test.arrai": "source1"}
 	files, err := getTestFiles(withFs(t, fsContent), "/test")
 	require.NoError(t, err)
-	require.Equal(t, []TestFile{{Path: "/test/1_test.arrai", Source: "source1"}}, files)
+	require.Equal(t, []File{{Path: "/test/1_test.arrai", Source: "source1"}}, files)
 }
 
 func TestGetTestFiles_PathIsFile(t *testing.T) {
@@ -111,7 +111,7 @@ func TestGetTestFiles_PathIsFile(t *testing.T) {
 	}
 	files, err := getTestFiles(withFs(t, fsContent), "/test/1_test.arrai")
 	require.NoError(t, err)
-	require.Equal(t, []TestFile{{Path: "/test/1_test.arrai", Source: "source1"}}, files)
+	require.Equal(t, []File{{Path: "/test/1_test.arrai", Source: "source1"}}, files)
 }
 
 func TestGetTestFiles_NestedDir(t *testing.T) {
@@ -123,7 +123,7 @@ func TestGetTestFiles_NestedDir(t *testing.T) {
 	}
 	files, err := getTestFiles(withFs(t, fsContent), "/test")
 	require.NoError(t, err)
-	require.Equal(t, []TestFile{
+	require.Equal(t, []File{
 		{Path: "/test/1_test.arrai", Source: "source1"},
 		{Path: "/test/must/go/deeper/2_test.arrai", Source: "source2"},
 	}, files)
@@ -140,7 +140,7 @@ func TestGetTestFiles_SkipHiddenDir(t *testing.T) {
 	}
 	files, err := getTestFiles(withFs(t, fsContent), "/test")
 	require.NoError(t, err)
-	require.Equal(t, []TestFile{{Path: "/test/1_test.arrai", Source: "source1"}}, files)
+	require.Equal(t, []File{{Path: "/test/1_test.arrai", Source: "source1"}}, files)
 }
 
 func withFs(t *testing.T, files map[string]string) context.Context {
@@ -154,7 +154,7 @@ func withFs(t *testing.T, files map[string]string) context.Context {
 func TestRunFile_InvalidArrai(t *testing.T) {
 	t.Parallel()
 
-	file := TestFile{Source: "invalid arr.ai code"}
+	file := File{Source: "invalid arr.ai code"}
 	err := runFile(context.Background(), &file)
 	require.Error(t, err)
 }
@@ -162,7 +162,7 @@ func TestRunFile_InvalidArrai(t *testing.T) {
 func TestRunFile_AssertFails(t *testing.T) {
 	t.Parallel()
 
-	file := TestFile{Source: "//test.assert.equal(1, 2)"}
+	file := File{Source: "//test.assert.equal(1, 2)"}
 	err := runFile(context.Background(), &file)
 	require.Error(t, err)
 }
@@ -170,11 +170,11 @@ func TestRunFile_AssertFails(t *testing.T) {
 func TestRunFile_TwoPass(t *testing.T) {
 	t.Parallel()
 
-	file := TestFile{Source: "(test1: 1 = 1, test2: //test.assert.equal(2, 2))"}
+	file := File{Source: "(test1: 1 = 1, test2: //test.assert.equal(2, 2))"}
 	err := runFile(context.Background(), &file)
 	require.NoError(t, err)
 	require.NotZero(t, file.WallTime)
-	require.ElementsMatch(t, file.Results, []TestResult{
+	require.ElementsMatch(t, file.Results, []Result{
 		{Name: "test1", Outcome: Passed},
 		{Name: "test2", Outcome: Passed}})
 }
@@ -182,11 +182,11 @@ func TestRunFile_TwoPass(t *testing.T) {
 func TestRunFile_OneFailOnePass(t *testing.T) {
 	t.Parallel()
 
-	file := TestFile{Source: "(test1: 1 < 1, test2: 5 < 7)"}
+	file := File{Source: "(test1: 1 < 1, test2: 5 < 7)"}
 	err := runFile(context.Background(), &file)
 	require.NoError(t, err)
 	require.NotZero(t, file.WallTime)
-	require.ElementsMatch(t, file.Results, []TestResult{
+	require.ElementsMatch(t, file.Results, []Result{
 		{Name: "test1", Outcome: Failed, Message: "Expected: true. Actual: false."},
 		{Name: "test2", Outcome: Passed}})
 }
@@ -194,11 +194,11 @@ func TestRunFile_OneFailOnePass(t *testing.T) {
 func TestRunFile_OneInvalidOnePass(t *testing.T) {
 	t.Parallel()
 
-	file := TestFile{Source: "(test1: 1, test2: 5 < 7)"}
+	file := File{Source: "(test1: 1, test2: 5 < 7)"}
 	err := runFile(context.Background(), &file)
 	require.NoError(t, err)
 	require.NotZero(t, file.WallTime)
-	require.ElementsMatch(t, file.Results, []TestResult{
+	require.ElementsMatch(t, file.Results, []Result{
 		{Name: "test1", Outcome: Invalid,
 			Message: "Could not determine test Outcome due to non-boolean result of type number: 1"},
 		{Name: "test2", Outcome: Passed}})
@@ -207,14 +207,14 @@ func TestRunFile_OneInvalidOnePass(t *testing.T) {
 func TestRunFile_TestInSet(t *testing.T) {
 	t.Parallel()
 
-	file := TestFile{
+	file := File{
 		Path:   "some_test.arrai",
 		Source: "(test1: 1 = 1, category1: { 5 < 7 })",
 	}
 	err := runFile(context.Background(), &file)
 	require.NoError(t, err)
 	require.NotZero(t, file.WallTime)
-	require.ElementsMatch(t, file.Results, []TestResult{
+	require.ElementsMatch(t, file.Results, []Result{
 		{Name: "test1", Outcome: Passed},
 		{Name: "category1", Outcome: Invalid, Message: "Sets are not allowed as test containers. " +
 			"Please use tuples, dictionaries or arrays."}})
