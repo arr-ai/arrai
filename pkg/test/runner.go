@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/arr-ai/arrai/pkg/importcache"
 	"github.com/spf13/afero"
 
 	"github.com/arr-ai/arrai/pkg/ctxfs"
@@ -90,6 +91,7 @@ func getTestFiles(ctx context.Context, path string) ([]File, error) {
 // runFile runs all tests in File.Source and fills File.Results and File.WallTime. It returns an error if
 // the arr.ai code failed to evaluate.
 func runFile(ctx context.Context, file *File) error {
+	ctx = importcache.WithNewImportCache(ctx)
 	expr, err := syntax.Compile(ctx, file.Path, file.Source)
 	if err != nil {
 		return fmt.Errorf("failed compiling tests file '%s': %v", file.Path, err)
