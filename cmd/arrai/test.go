@@ -4,8 +4,8 @@ import (
 	"context"
 	"os"
 
-	"github.com/arr-ai/arrai/internal/test"
 	"github.com/arr-ai/arrai/pkg/arraictx"
+	"github.com/arr-ai/arrai/pkg/test"
 	"github.com/urfave/cli/v2"
 )
 

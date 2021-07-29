@@ -15,7 +15,7 @@ import (
 
 // Report writes a formatted output of all the test files and their test results, and returns and error if the test run
 // failed.
-func Report(w io.Writer, testFiles []testFile) error {
+func Report(w io.Writer, testFiles []File) error {
 	stats := calcStats(testFiles)
 
 	for _, testFile := range testFiles {
@@ -34,24 +34,24 @@ func Report(w io.Writer, testFiles []testFile) error {
 const color = "\033[38;5;255;%d;1m%s\033[0m"
 
 // reportFile writes a formatted output of a file and all its test results, ordered by outcome. The maxName parameter
-// is used to aligned the results, and should contain the length of the longest testResult.name inside testFile.results.
-func reportFile(w io.Writer, testFile testFile, maxName int) {
-	results := testFile.results
+// is used to aligned the results, and should contain the length of the longest Result.Name inside File.Results.
+func reportFile(w io.Writer, testFile File, maxName int) {
+	results := testFile.Results
 
 	// Sort test results by outcome then by test name
 	sort.Slice(results, func(i, j int) bool {
 		left, right := results[i], results[j]
-		if left.outcome == right.outcome {
-			if left.name == right.name {
+		if left.Outcome == right.Outcome {
+			if left.Name == right.Name {
 				return true
 			}
-			return left.name < right.name
+			return left.Name < right.Name
 		}
-		return left.outcome > right.outcome
+		return left.Outcome > right.Outcome
 	})
 
 	message.NewPrinter(language.English).
-		Fprintf(w, "\n=======  %s (%dms)\n", relPath(testFile.path), testFile.wallTime.Milliseconds())
+		Fprintf(w, "\n=======  %s (%dms)\n", relPath(testFile.Path), testFile.WallTime.Milliseconds())
 	for _, result := range results {
 		reportTest(w, result, maxName)
 	}
@@ -70,9 +70,9 @@ func relPath(absPath string) string {
 	return relPath
 }
 
-// reportTest writes a formatted output of a single test result (PASS/FAIL/SKIP/??) with the optional included message.
-func reportTest(w io.Writer, test testResult, maxName int) {
-	switch test.outcome {
+// reportTest writes a formatted output of a single test result (PASS/FAIL/SKIP/??) with the optional included Message.
+func reportTest(w io.Writer, test Result, maxName int) {
+	switch test.Outcome {
 	case Failed:
 		fmt.Fprintf(w, color, 41, "FAIL")
 	case Invalid:
@@ -83,10 +83,10 @@ func reportTest(w io.Writer, test testResult, maxName int) {
 		fmt.Fprintf(w, color, 32, "PASS")
 	}
 
-	fmt.Fprintf(w, "  %s\n", test.name+strings.Repeat(" ", maxName-utf8.RuneCountInString(test.name)))
+	fmt.Fprintf(w, "  %s\n", test.Name+strings.Repeat(" ", maxName-utf8.RuneCountInString(test.Name)))
 
-	if test.message != "" {
-		fmt.Fprintf(w, "      %s\n", strings.ReplaceAll(test.message, "\n", "\n      "))
+	if test.Message != "" {
+		fmt.Fprintf(w, "      %s\n", strings.ReplaceAll(test.Message, "\n", "\n      "))
 	}
 }
 
