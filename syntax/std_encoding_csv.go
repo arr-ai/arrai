@@ -7,8 +7,9 @@ import (
 
 	"encoding/csv"
 
-	"github.com/arr-ai/arrai/rel"
 	"github.com/go-errors/errors"
+
+	"github.com/arr-ai/arrai/rel"
 )
 
 func newDecodeConfig() decodeConfig {

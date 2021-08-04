@@ -8,11 +8,12 @@ import (
 	"runtime"
 	"testing"
 
-	"github.com/arr-ai/arrai/pkg/arraictx"
-	"github.com/arr-ai/arrai/pkg/ctxfs"
 	"github.com/spf13/afero"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/arr-ai/arrai/pkg/arraictx"
+	"github.com/arr-ai/arrai/pkg/ctxfs"
 )
 
 func TestCompileFile(t *testing.T) {

@@ -8,10 +8,11 @@ import (
 	"path"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+
 	"github.com/arr-ai/arrai/pkg/ctxfs"
 	"github.com/arr-ai/arrai/pkg/ctxrootcache"
 	"github.com/arr-ai/arrai/syntax"
-	"github.com/stretchr/testify/assert"
 )
 
 type bundleTestCase struct {

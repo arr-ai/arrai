@@ -6,9 +6,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/arr-ai/arrai/pkg/buildinfo"
 	"github.com/arr-ai/wbnf/parser"
 	"github.com/sirupsen/logrus"
+
+	"github.com/arr-ai/arrai/pkg/buildinfo"
 )
 
 type sourceContextCache struct {

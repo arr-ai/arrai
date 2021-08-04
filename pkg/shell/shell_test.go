@@ -7,12 +7,13 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/arr-ai/arrai/pkg/arraictx"
 	"github.com/arr-ai/arrai/pkg/importcache"
 	"github.com/arr-ai/arrai/rel"
 	"github.com/arr-ai/arrai/syntax"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestLineCollectorAppendLine(t *testing.T) {

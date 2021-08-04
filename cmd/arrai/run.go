@@ -10,12 +10,13 @@ import (
 
 	"github.com/spf13/afero"
 
+	"github.com/urfave/cli/v2"
+
 	"github.com/arr-ai/arrai/pkg/arrai"
 	"github.com/arr-ai/arrai/pkg/arraictx"
 	"github.com/arr-ai/arrai/pkg/ctxfs"
 	"github.com/arr-ai/arrai/syntax"
 	"github.com/arr-ai/arrai/tools"
-	"github.com/urfave/cli/v2"
 )
 
 var runCommand = &cli.Command{

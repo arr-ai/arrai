@@ -5,9 +5,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/arr-ai/arrai/pkg/arraictx"
 	"github.com/arr-ai/wbnf/parser"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/arr-ai/arrai/pkg/arraictx"
 )
 
 func TestDictEntryTupleExprString(t *testing.T) {

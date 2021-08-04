@@ -3,11 +3,12 @@ package main
 import (
 	"context"
 
-	"github.com/arr-ai/arrai/pkg/arraictx"
 	pb "github.com/arr-ai/proto"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
 	"google.golang.org/grpc"
+
+	"github.com/arr-ai/arrai/pkg/arraictx"
 )
 
 var updateCommand = &cli.Command{

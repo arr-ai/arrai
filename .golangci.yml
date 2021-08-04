@@ -13,8 +13,6 @@ linters-settings:
     threshold: 100
   lll:
     line-length: 120
-  goimports:
-    local-prefixes: github.com/golangci/golangci-lint
   gocritic:
     enabled-tags:
     - diagnostic
@@ -34,6 +32,7 @@ linters:
   - dogsled
   - dupl
   - errcheck
+  - exportloopref
   # - funlen
   # - gochecknoglobals
   - gochecknoinits
@@ -44,21 +43,16 @@ linters:
   # - gocyclo
   - gofmt
   - goimports
-  - golint
   - gosec
   - gosimple
   # - govet
   - ineffassign
-
   # - interfacer
   - lll
-
-  - maligned
   - misspell
   - nakedret
   - prealloc
-  - scopelint
-
+  - revive
   - staticcheck
   - structcheck
   - stylecheck

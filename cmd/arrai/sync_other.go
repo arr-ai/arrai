@@ -15,8 +15,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/arr-ai/arrai/pkg/arraictx"
-	"github.com/arr-ai/arrai/pkg/ctxfs"
 	pb "github.com/arr-ai/proto"
 	"github.com/go-errors/errors"
 	"github.com/rjeczalik/notify"
@@ -24,6 +22,9 @@ import (
 	"github.com/spf13/afero"
 	"github.com/urfave/cli/v2"
 	"google.golang.org/grpc"
+
+	"github.com/arr-ai/arrai/pkg/arraictx"
+	"github.com/arr-ai/arrai/pkg/ctxfs"
 )
 
 func sync(c *cli.Context) error {
@@ -137,9 +138,7 @@ func buildTree(ctx context.Context, root string) (map[string]interface{}, error)
 					return nil
 				}
 				log.Println(path)
-				if strings.HasSuffix(attr, ".arrai") {
-					attr = attr[:len(attr)-6]
-				}
+				attr = strings.TrimSuffix(attr, ".arrai")
 				for ext, handler := range handlers {
 					if strings.HasSuffix(attr, ext) {
 						data, err = handler(data)

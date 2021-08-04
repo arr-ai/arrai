@@ -5,10 +5,11 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/arr-ai/arrai/pkg/buildinfo"
 	"github.com/arr-ai/wbnf/parser"
 	"github.com/sirupsen/logrus/hooks/test"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/arr-ai/arrai/pkg/buildinfo"
 )
 
 func TestNewDeprecator(t *testing.T) {

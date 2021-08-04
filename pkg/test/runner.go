@@ -9,10 +9,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/arr-ai/arrai/pkg/importcache"
 	"github.com/spf13/afero"
 
 	"github.com/arr-ai/arrai/pkg/ctxfs"
+	"github.com/arr-ai/arrai/pkg/importcache"
 	"github.com/arr-ai/arrai/rel"
 	"github.com/arr-ai/arrai/syntax"
 )

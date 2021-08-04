@@ -5,10 +5,11 @@ import (
 
 	"github.com/urfave/cli/v2"
 
+	"github.com/spf13/afero"
+
 	"github.com/arr-ai/arrai/pkg/buildinfo"
 	"github.com/arr-ai/arrai/pkg/ctxfs"
 	"github.com/arr-ai/arrai/pkg/ctxrootcache"
-	"github.com/spf13/afero"
 )
 
 type ctxKey int

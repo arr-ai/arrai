@@ -6,9 +6,10 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/arr-ai/arrai/pkg/arraictx"
 	"github.com/go-errors/errors"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/arr-ai/arrai/pkg/arraictx"
 )
 
 // intSet returns a new set from the given elements.

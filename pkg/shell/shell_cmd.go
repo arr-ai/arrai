@@ -10,9 +10,10 @@ import (
 	"strings"
 
 	"github.com/anz-bank/pkg/log"
-	"github.com/arr-ai/arrai/syntax"
 	"github.com/arr-ai/wbnf/parser"
 	"github.com/go-errors/errors"
+
+	"github.com/arr-ai/arrai/syntax"
 )
 
 var cmdRe = regexp.MustCompile(`^/[a-zA-Z_]\w*[ \t]*`)

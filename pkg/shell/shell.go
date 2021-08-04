@@ -11,11 +11,12 @@ import (
 	"strings"
 
 	"github.com/anz-bank/pkg/log"
+	"github.com/chzyer/readline"
+
 	"github.com/arr-ai/arrai/pkg/arraictx"
 	"github.com/arr-ai/arrai/pkg/importcache"
 	"github.com/arr-ai/arrai/rel"
 	"github.com/arr-ai/arrai/syntax"
-	"github.com/chzyer/readline"
 )
 
 const (

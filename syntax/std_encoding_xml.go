@@ -1,9 +1,10 @@
 package syntax
 
 import (
+	"github.com/go-errors/errors"
+
 	"github.com/arr-ai/arrai/rel"
 	"github.com/arr-ai/arrai/translate"
-	"github.com/go-errors/errors"
 )
 
 func decodeXML(v rel.Value, config translate.XMLDecodeConfig) (rel.Value, error) {

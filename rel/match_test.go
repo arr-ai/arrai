@@ -20,12 +20,11 @@ func TestBindMatchString(t *testing.T) {
 	t.Parallel()
 
 	val := NewString([]rune("foo"))
-	target := val.(Set)
 
 	m := Bind(&val)
 
 	assert.Equal(t, true, m.Match(NewString([]rune("foo"))))
-	assert.Equal(t, &target, m.target)
+	assert.Equal(t, &val, m.target)
 }
 
 func TestIntSetMatcherAllInts(t *testing.T) {

@@ -13,11 +13,11 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/spf13/afero"
-
-	"github.com/anz-bank/pkg/mod"
 	"github.com/arr-ai/arrai/pkg/ctxfs"
 	"github.com/arr-ai/arrai/rel"
+
+	"github.com/anz-bank/pkg/mod"
+	"github.com/spf13/afero"
 	"github.com/spf13/afero/zipfs"
 )
 

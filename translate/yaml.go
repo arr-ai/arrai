@@ -1,8 +1,9 @@
 package translate
 
 import (
-	"github.com/arr-ai/arrai/rel"
 	"gopkg.in/yaml.v2"
+
+	"github.com/arr-ai/arrai/rel"
 )
 
 func (t Translator) BytesYamlToArrai(bytes []byte) (rel.Value, error) {

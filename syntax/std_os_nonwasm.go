@@ -14,10 +14,11 @@ import (
 
 	"github.com/arr-ai/arrai/pkg/arraictx"
 
-	"github.com/arr-ai/arrai/pkg/ctxfs"
-	"github.com/arr-ai/arrai/rel"
 	"github.com/mattn/go-isatty"
 	"github.com/pkg/errors"
+
+	"github.com/arr-ai/arrai/pkg/ctxfs"
+	"github.com/arr-ai/arrai/rel"
 )
 
 // stdOsGetArgs returns a rel.Array of the program arguments in the context.

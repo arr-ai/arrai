@@ -3,11 +3,12 @@ package main
 import (
 	"context"
 
+	"github.com/urfave/cli/v2"
+
 	"github.com/arr-ai/arrai/pkg/arraictx"
 	"github.com/arr-ai/arrai/pkg/buildinfo"
 	"github.com/arr-ai/arrai/pkg/shell"
 	"github.com/arr-ai/arrai/rel"
-	"github.com/urfave/cli/v2"
 )
 
 var shellCommand = &cli.Command{

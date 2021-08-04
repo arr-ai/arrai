@@ -4,14 +4,15 @@ import (
 	"context"
 	"io"
 
-	"github.com/arr-ai/arrai/engine"
-	"github.com/arr-ai/arrai/pkg/arraictx"
-	"github.com/arr-ai/arrai/rel"
-	"github.com/arr-ai/arrai/syntax"
 	pb "github.com/arr-ai/proto"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
+
+	"github.com/arr-ai/arrai/engine"
+	"github.com/arr-ai/arrai/pkg/arraictx"
+	"github.com/arr-ai/arrai/rel"
+	"github.com/arr-ai/arrai/syntax"
 )
 
 func newGrpcServer(cert, key string, e *engine.Engine) *grpc.Server {

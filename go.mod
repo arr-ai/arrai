@@ -14,6 +14,7 @@ require (
 	github.com/arr-ai/wbnf v0.34.0
 	github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e
 	github.com/go-errors/errors v1.1.1
+	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/gorilla/websocket v1.4.2
 	github.com/iancoleman/strcase v0.1.3
 	github.com/mattn/go-isatty v0.0.12

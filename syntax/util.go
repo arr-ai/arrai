@@ -1,8 +1,9 @@
 package syntax
 
 import (
-	"github.com/arr-ai/arrai/rel"
 	"github.com/arr-ai/wbnf/ast"
+
+	"github.com/arr-ai/arrai/rel"
 )
 
 func strArrToRelArr(s []string) rel.Value {

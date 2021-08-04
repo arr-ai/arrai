@@ -4,12 +4,13 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/gorilla/websocket"
+	log "github.com/sirupsen/logrus"
+
 	"github.com/arr-ai/arrai/engine"
 	"github.com/arr-ai/arrai/pkg/arraictx"
 	"github.com/arr-ai/arrai/rel"
 	"github.com/arr-ai/arrai/syntax"
-	"github.com/gorilla/websocket"
-	log "github.com/sirupsen/logrus"
 )
 
 type websocketFrontend struct {

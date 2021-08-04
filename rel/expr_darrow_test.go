@@ -4,8 +4,9 @@ import (
 	"context"
 	"testing"
 
-	"github.com/arr-ai/arrai/pkg/arraictx"
 	"github.com/arr-ai/wbnf/parser"
+
+	"github.com/arr-ai/arrai/pkg/arraictx"
 )
 
 func TestDArrowExprErrorOnInvalidType(t *testing.T) {

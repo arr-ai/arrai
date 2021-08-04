@@ -13,10 +13,10 @@ import (
 
 	"github.com/anz-bank/pkg/log"
 	"github.com/arr-ai/wbnf/ast"
+	"github.com/arr-ai/wbnf/parser"
 
 	"github.com/arr-ai/arrai/pkg/arraictx"
 	"github.com/arr-ai/arrai/rel"
-	"github.com/arr-ai/wbnf/parser"
 )
 
 // type noParseType struct{}

@@ -6,10 +6,11 @@ import (
 	"io/ioutil"
 	"os"
 
-	"github.com/arr-ai/arrai/rel"
-	"github.com/arr-ai/arrai/translate"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
+
+	"github.com/arr-ai/arrai/rel"
+	"github.com/arr-ai/arrai/translate"
 )
 
 var jsonCommand = &cli.Command{

@@ -4,12 +4,13 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/arr-ai/arrai/pkg/arraictx"
-	"github.com/arr-ai/arrai/rel"
 	pb "github.com/arr-ai/proto"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
 	"google.golang.org/grpc"
+
+	"github.com/arr-ai/arrai/pkg/arraictx"
+	"github.com/arr-ai/arrai/rel"
 )
 
 var observeCommand = &cli.Command{

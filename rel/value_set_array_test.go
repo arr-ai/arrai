@@ -6,8 +6,9 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/arr-ai/arrai/pkg/arraictx"
 	"github.com/stretchr/testify/require"
+
+	"github.com/arr-ai/arrai/pkg/arraictx"
 )
 
 func TestAsArray(t *testing.T) {

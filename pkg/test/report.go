@@ -50,8 +50,11 @@ func reportFile(w io.Writer, testFile File, maxName int) {
 		return left.Outcome > right.Outcome
 	})
 
-	message.NewPrinter(language.English).
+	_, err := message.NewPrinter(language.English).
 		Fprintf(w, "\n=======  %s (%dms)\n", relPath(testFile.Path), testFile.WallTime.Milliseconds())
+	if err != nil {
+		panic(err)
+	}
 	for _, result := range results {
 		reportTest(w, result, maxName)
 	}

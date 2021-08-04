@@ -4,10 +4,11 @@ import (
 	"context"
 	"os/exec"
 
-	"github.com/arr-ai/arrai/pkg/arraictx"
-	"github.com/arr-ai/arrai/rel"
 	"github.com/go-errors/errors"
 	"github.com/sirupsen/logrus"
+
+	"github.com/arr-ai/arrai/pkg/arraictx"
+	"github.com/arr-ai/arrai/rel"
 )
 
 func stdDeprecated() rel.Attr {

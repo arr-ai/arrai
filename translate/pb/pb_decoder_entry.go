@@ -4,11 +4,12 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/arr-ai/arrai/rel"
-	"github.com/arr-ai/arrai/tools"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/types/dynamicpb"
+
+	"github.com/arr-ai/arrai/rel"
+	"github.com/arr-ai/arrai/tools"
 )
 
 const fileDescriptorSet = "FileDescriptorSet"

@@ -8,10 +8,11 @@ import (
 	"path"
 	"strings"
 
-	"github.com/arr-ai/arrai/pkg/ctxfs"
-	"github.com/arr-ai/arrai/rel"
 	"github.com/go-errors/errors"
 	"github.com/spf13/afero"
+
+	"github.com/arr-ai/arrai/pkg/ctxfs"
+	"github.com/arr-ai/arrai/rel"
 )
 
 const (

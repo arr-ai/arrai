@@ -5,13 +5,14 @@ import (
 	"encoding/json"
 	"testing"
 
+	"github.com/arr-ai/wbnf/parser"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/arr-ai/arrai/pkg/arraictx"
 	"github.com/arr-ai/arrai/rel"
 	"github.com/arr-ai/arrai/syntax"
 	"github.com/arr-ai/arrai/translate"
-	"github.com/arr-ai/wbnf/parser"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestJSONTranslator_NonStrict(t *testing.T) {

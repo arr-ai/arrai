@@ -30,7 +30,7 @@ jobs:
 
       - name: Install golangci-lint
         run: |
-          go get github.com/golangci/golangci-lint/cmd/golangci-lint@v1.24.0
+          go get github.com/golangci/golangci-lint/cmd/golangci-lint@v1.41.1
           git restore go.mod go.sum
 
       - name: Build

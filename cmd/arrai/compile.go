@@ -10,11 +10,12 @@ import (
 	"strings"
 	"text/template"
 
+	"github.com/spf13/afero"
+	"github.com/urfave/cli/v2"
+
 	"github.com/arr-ai/arrai/pkg/arraictx"
 	"github.com/arr-ai/arrai/pkg/ctxfs"
 	"github.com/arr-ai/arrai/syntax"
-	"github.com/spf13/afero"
-	"github.com/urfave/cli/v2"
 )
 
 const mainTemplate = `
@@ -80,10 +81,7 @@ func compileFile(ctx context.Context, path, out string) error {
 	}
 	defer f.Close()
 
-	if err := buildBinary(ctx, bundledScripts.Bytes(), f); err != nil {
-		return err
-	}
-	return nil
+	return buildBinary(ctx, bundledScripts.Bytes(), f)
 }
 
 func createGoFile(bundledScripts []byte) ([]byte, error) {

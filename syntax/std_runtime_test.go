@@ -3,9 +3,10 @@ package syntax
 import (
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+
 	"github.com/arr-ai/arrai/pkg/buildinfo"
 	"github.com/arr-ai/arrai/rel"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestGetBuildInfo(t *testing.T) {

@@ -5,9 +5,10 @@ import (
 	"fmt"
 	"math"
 
-	"github.com/arr-ai/arrai/pkg/deprecate"
 	"github.com/arr-ai/wbnf/parser"
 	"github.com/go-errors/errors"
+
+	"github.com/arr-ai/arrai/pkg/deprecate"
 )
 
 var (

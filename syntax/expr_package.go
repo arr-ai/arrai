@@ -4,8 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/arr-ai/arrai/rel"
 	"github.com/arr-ai/wbnf/parser"
+
+	"github.com/arr-ai/arrai/rel"
 )
 
 // PackageExpr represents a range of operators.

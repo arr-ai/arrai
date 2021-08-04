@@ -4,9 +4,10 @@ import (
 	"net"
 	"net/http"
 
-	"github.com/arr-ai/arrai/engine"
 	log "github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
+
+	"github.com/arr-ai/arrai/engine"
 )
 
 var serveCommand = &cli.Command{

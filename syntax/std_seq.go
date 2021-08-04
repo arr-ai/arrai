@@ -14,7 +14,7 @@ func strJoin(joiner, subject rel.Value) (rel.Value, error) {
 	strs := subject.(rel.Set)
 	toJoin := make([]string, 0, strs.Count())
 	index := 0
-	for i := strs.(rel.Set).ArrayEnumerator(); i.MoveNext(); index++ {
+	for i := strs.ArrayEnumerator(); i.MoveNext(); index++ {
 		s, is := tools.ValueAsString(i.Current())
 		if !is {
 			return nil, fmt.Errorf("//str.join: array item %d not a string: %v", index, i.Current())

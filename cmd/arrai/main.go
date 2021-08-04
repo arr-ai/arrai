@@ -9,11 +9,12 @@ import (
 	"runtime/pprof"
 	"strings"
 
+	"github.com/sirupsen/logrus"
+	"github.com/urfave/cli/v2"
+
 	"github.com/arr-ai/arrai/pkg/buildinfo"
 	"github.com/arr-ai/arrai/rel"
 	"github.com/arr-ai/arrai/tools"
-	"github.com/sirupsen/logrus"
-	"github.com/urfave/cli/v2"
 )
 
 var cmds = []*cli.Command{

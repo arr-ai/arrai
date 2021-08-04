@@ -160,7 +160,7 @@ func (w *watcher) update(ctx context.Context, global rel.Scope) {
 		return
 	}
 
-	if err = w.onupdate(value.(rel.Value)); err != nil {
+	if err = w.onupdate(value); err != nil {
 		w.cancel()
 	}
 }

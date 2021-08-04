@@ -5,8 +5,9 @@ import (
 
 	"gopkg.in/yaml.v2"
 
-	"github.com/arr-ai/arrai/translate"
 	"github.com/stretchr/testify/require"
+
+	"github.com/arr-ai/arrai/translate"
 )
 
 func AssertExpectedYAMLTranslation(t *testing.T, expected, rawYAML string) {

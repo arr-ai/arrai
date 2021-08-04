@@ -3,8 +3,9 @@ package syntax
 import (
 	"testing"
 
-	"github.com/arr-ai/arrai/rel"
 	"github.com/stretchr/testify/require"
+
+	"github.com/arr-ai/arrai/rel"
 )
 
 func TestCleanEmptyValTransformsArrayOfThreeEmptySetsIntoEmptyArray(t *testing.T) {

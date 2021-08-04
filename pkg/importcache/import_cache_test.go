@@ -9,10 +9,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/arr-ai/arrai/pkg/arraictx"
-	"github.com/arr-ai/arrai/rel"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/arr-ai/arrai/pkg/arraictx"
+	"github.com/arr-ai/arrai/rel"
 )
 
 func TestImportCache(t *testing.T) {

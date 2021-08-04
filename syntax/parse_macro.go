@@ -4,9 +4,10 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/arr-ai/arrai/rel"
 	"github.com/arr-ai/wbnf/ast"
 	"github.com/arr-ai/wbnf/parser"
+
+	"github.com/arr-ai/arrai/rel"
 )
 
 // Macro represents the metadata of a macro invocation: the grammar and rule to parse with, and the

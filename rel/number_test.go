@@ -4,8 +4,9 @@ import (
 	"context"
 	"testing"
 
-	"github.com/arr-ai/arrai/pkg/arraictx"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/arr-ai/arrai/pkg/arraictx"
 )
 
 func TestNewNumber(t *testing.T) {
@@ -40,7 +41,7 @@ func TestNumberBool(t *testing.T) {
 	t.Parallel()
 	assert.False(t, NewNumber(0).IsTrue())
 	assert.False(t, NewNumber(0.0).IsTrue())
-	assert.False(t, NewNumber(-0.0).IsTrue())
+	assert.False(t, NewNumber(-1.0*0.0).IsTrue())
 	assert.True(t, NewNumber(-1).IsTrue())
 	assert.True(t, NewNumber(0.5).IsTrue())
 	assert.True(t, NewNumber(-0.05).IsTrue())

@@ -4,10 +4,11 @@ import (
 	"context"
 	"testing"
 
-	"github.com/arr-ai/arrai/pkg/arraictx"
 	"github.com/arr-ai/wbnf/parser"
 	"github.com/go-errors/errors"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/arr-ai/arrai/pkg/arraictx"
 )
 
 func TestOffsetExprArray(t *testing.T) {

@@ -5,10 +5,11 @@ import (
 	"io"
 	"os"
 
+	"github.com/urfave/cli/v2"
+
 	"github.com/arr-ai/arrai/pkg/arrai"
 	"github.com/arr-ai/arrai/pkg/arraictx"
 	"github.com/arr-ai/arrai/syntax"
-	"github.com/urfave/cli/v2"
 )
 
 var outFlag = &cli.StringFlag{

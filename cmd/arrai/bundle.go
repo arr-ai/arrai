@@ -8,11 +8,12 @@ import (
 
 	"github.com/spf13/afero"
 
+	"github.com/urfave/cli/v2"
+
 	"github.com/arr-ai/arrai/pkg/arraictx"
 	"github.com/arr-ai/arrai/pkg/ctxfs"
 	"github.com/arr-ai/arrai/pkg/importcache"
 	"github.com/arr-ai/arrai/syntax"
-	"github.com/urfave/cli/v2"
 )
 
 const bundledType = ".arraiz"

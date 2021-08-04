@@ -3,9 +3,10 @@ package syntax
 import (
 	"context"
 
+	"github.com/go-errors/errors"
+
 	"github.com/arr-ai/arrai/rel"
 	"github.com/arr-ai/arrai/translate"
-	"github.com/go-errors/errors"
 )
 
 func newYAMLDecodeConfig() yamlDecodeConfig {

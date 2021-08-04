@@ -8,11 +8,12 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/arr-ai/arrai/pkg/ctxfs"
-	"github.com/arr-ai/arrai/syntax"
 	"github.com/spf13/afero"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/arr-ai/arrai/pkg/ctxfs"
+	"github.com/arr-ai/arrai/syntax"
 )
 
 func TestCreateFile(t *testing.T) {

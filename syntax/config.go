@@ -1,8 +1,9 @@
 package syntax
 
 import (
-	"github.com/arr-ai/arrai/rel"
 	"github.com/go-errors/errors"
+
+	"github.com/arr-ai/arrai/rel"
 )
 
 // getConfigBool returns the boolean value from a 'config tuple' with the given key, and an "ok"

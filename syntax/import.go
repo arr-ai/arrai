@@ -15,12 +15,13 @@ import (
 	"github.com/spf13/afero"
 
 	"github.com/anz-bank/pkg/mod"
+	"github.com/arr-ai/wbnf/parser"
+
 	"github.com/arr-ai/arrai/pkg/ctxfs"
 	"github.com/arr-ai/arrai/pkg/ctxrootcache"
 	"github.com/arr-ai/arrai/pkg/importcache"
 	"github.com/arr-ai/arrai/rel"
 	"github.com/arr-ai/arrai/tools"
-	"github.com/arr-ai/wbnf/parser"
 )
 
 // ModuleRootSentinel is a file which marks the module root of a project.
