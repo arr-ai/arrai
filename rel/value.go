@@ -300,7 +300,26 @@ func reflectNewValue(x reflect.Value) (Value, error) {
 			s[fieldName(tf)] = v
 		}
 		return NewTupleFromMap(s)
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		return NewValue(x.Int())
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
+		return NewValue(x.Uint())
+	case reflect.Float32, reflect.Float64:
+		return NewValue(x.Float())
+	case reflect.Complex64, reflect.Complex128:
+		c := x.Complex()
+		if imag(c) != 0 {
+			return nil, errors.Errorf("NewValue: non-zero imaginary component not supported yet")
+		}
+		return NewValue(real(c))
+	case reflect.Bool:
+		return NewValue(x.Bool())
+	case reflect.String:
+		return NewValue(x.String())
+	case reflect.Invalid:
+		panic(errors.Errorf("zero reflect.Value"))
 	default:
+		// Chan, Func, Interface, UnsafePointer
 		return nil, errors.Errorf("%v (%[1]T) not convertible to Value", x)
 	}
 }

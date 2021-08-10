@@ -44,6 +44,13 @@ func TestSetCall(t *testing.T) {
 
 //nolint:structcheck,unused,maligned
 func TestNewValue(t *testing.T) {
+	type myInt int
+	type myUint int
+	type myFloat float64
+	type myComplex complex64
+	type myBool bool
+	type myString string
+
 	// Structs are serialized to tuples.
 	type Foo struct {
 		bool bool
@@ -69,6 +76,14 @@ func TestNewValue(t *testing.T) {
 		// Non-string maps are serialized to dictionaries.
 		mixedMap  map[interface{}]interface{}
 		stringMap map[string]interface{}
+
+		// Indirect types
+		myInt     myInt
+		myUint    myUint
+		myFloat   myFloat
+		myComplex myComplex
+		myBool    myBool
+		myString  myString
 	}
 
 	input := []*Foo{{
@@ -98,6 +113,12 @@ func TestNewValue(t *testing.T) {
 		children:  []*Foo{{num: 2}},
 		mixedMap:  map[interface{}]interface{}{1: 2, "k": nil},
 		stringMap: map[string]interface{}{"a": 1},
+		myInt:     myInt(42),
+		myUint:    myUint(43),
+		myFloat:   myFloat(44),
+		myComplex: myComplex(45),
+		myBool:    myBool(true),
+		myString:  myString("hello"),
 	}}
 
 	actual, err := NewValue(input)
@@ -134,7 +155,19 @@ func TestNewValue(t *testing.T) {
 			NewAttr("mixedMap", None),
 			NewAttr("stringMap", NewTuple()),
 			NewAttr("children", None),
+			NewIntAttr("myInt", 0),
+			NewUintAttr("myUint", 0),
+			NewFloatAttr("myFloat", 0),
+			NewFloatAttr("myComplex", 0),
+			NewBoolAttr("myBool", false),
+			NewStringAttr("myString", []rune("")),
 		))),
+		NewIntAttr("myInt", 42),
+		NewUintAttr("myUint", 43),
+		NewFloatAttr("myFloat", 44),
+		NewFloatAttr("myComplex", 45),
+		NewBoolAttr("myBool", true),
+		NewStringAttr("myString", []rune("hello")),
 	))
 	require.NoError(t, err)
 

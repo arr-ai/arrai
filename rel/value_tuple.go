@@ -81,6 +81,11 @@ func NewIntAttr(name string, value int) Attr {
 	return NewFloatAttr(name, float64(value))
 }
 
+// NewIuntAttr return an attr for a uint64 value.
+func NewUintAttr(name string, value uint64) Attr {
+	return NewFloatAttr(name, float64(value))
+}
+
 // NewStringAttr return an attr with a string value.
 func NewStringAttr(name string, value []rune) Attr {
 	return NewAttr(name, NewString(value))
