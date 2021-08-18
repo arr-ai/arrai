@@ -14,6 +14,8 @@ import (
 	"github.com/urfave/cli/v2"
 
 	"github.com/arr-ai/arrai/pkg/arraictx"
+	"github.com/arr-ai/arrai/pkg/bundle"
+	"github.com/arr-ai/arrai/pkg/cliutil"
 	"github.com/arr-ai/arrai/pkg/ctxfs"
 	"github.com/arr-ai/arrai/syntax"
 )
@@ -62,12 +64,12 @@ func compile(c *cli.Context) error {
 }
 
 func compileFile(ctx context.Context, path, out string) error {
-	if err := fileExists(ctx, path); err != nil {
+	if err := cliutil.FileExists(ctx, path); err != nil {
 		return err
 	}
 
 	bundledScripts := bytes.Buffer{}
-	if err := bundleFiles(ctx, path, &bundledScripts); err != nil {
+	if err := bundle.BundledScripts(ctx, path, &bundledScripts); err != nil {
 		return err
 	}
 

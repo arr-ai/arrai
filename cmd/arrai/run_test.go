@@ -1,3 +1,4 @@
+//nolint:lll,dupl
 package main
 
 import (
@@ -14,6 +15,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/arr-ai/arrai/pkg/arraictx"
+	"github.com/arr-ai/arrai/pkg/bundle"
 	"github.com/arr-ai/arrai/pkg/ctxfs"
 	"github.com/arr-ai/arrai/pkg/ctxrootcache"
 	"github.com/arr-ai/arrai/syntax"
@@ -87,7 +89,7 @@ func TestRunBundle(t *testing.T) {
 			ctx := ctxfs.SourceFsOnto(context.Background(), getImportFs(t))
 			ctx = ctxrootcache.WithRootCache(ctx)
 			zipped := &bytes.Buffer{}
-			require.NoError(t, bundleFiles(ctx, syntax.MustAbs(t, c.filePath), zipped))
+			require.NoError(t, bundle.BundledScripts(ctx, syntax.MustAbs(t, c.filePath), zipped))
 			out := &bytes.Buffer{}
 			assert.NoError(t, runBundled(ctx, zipped.Bytes(), out, ""))
 			assert.Equal(t, c.result+"\n", out.String())
@@ -99,9 +101,9 @@ func TestRunBundleOsArgs(t *testing.T) {
 	t.Parallel()
 
 	files := map[string]string{
-		sentinelFile("github.com/args"):          "module github.com/args\n",
-		moduleFile("github.com/args/args.arrai"): "//os.args",
-		syntax.BundleConfig:                      config("github.com/args", moduleFile("github.com/args/args.arrai")),
+		bundle.SentinelFile("github.com/args"):          "module github.com/args\n",
+		bundle.ModuleFile("github.com/args/args.arrai"): "//os.args",
+		syntax.BundleConfig:                             bundle.ConfigFile("github.com/args", bundle.ModuleFile("github.com/args/args.arrai")),
 	}
 
 	buf := createBundle(t, files)
@@ -113,17 +115,16 @@ func TestRunBundleOsArgs(t *testing.T) {
 	assert.Equal(t, "['1', '2', '3']\n", actual.String())
 }
 
-//nolint: lll
 func TestRunBundleWithHttp(t *testing.T) {
 	t.Parallel()
 
 	files := map[string]string{
-		sentinelFile("github.com/test1"):          "module github.com/test1\n",
-		moduleFile("github.com/test1/test.arrai"): "//{https://raw.githubusercontent.com/arr-ai/arrai/v0.160.0/examples/import/bar.arrai}",
-		moduleFile(
+		bundle.SentinelFile("github.com/test1"):          "module github.com/test1\n",
+		bundle.ModuleFile("github.com/test1/test.arrai"): "//{https://raw.githubusercontent.com/arr-ai/arrai/v0.160.0/examples/import/bar.arrai}",
+		bundle.ModuleFile(
 			"raw.githubusercontent.com/arr-ai/arrai/v0.160.0/examples/import/bar.arrai",
 		): "1",
-		syntax.BundleConfig: config("github.com/test1", moduleFile("github.com/test1/test.arrai")),
+		syntax.BundleConfig: bundle.ConfigFile("github.com/test1", bundle.ModuleFile("github.com/test1/test.arrai")),
 	}
 
 	buf := createBundle(t, files)
@@ -138,10 +139,10 @@ func TestRunBundleWithGithubImport(t *testing.T) {
 	t.Parallel()
 
 	files := map[string]string{
-		sentinelFile("github.com/test1"):          "module github.com/test1\n",
-		moduleFile("github.com/test1/test.arrai"): "//{github.com/test2/test.arrai}",
-		moduleFile("github.com/test2/test.arrai"): "1",
-		syntax.BundleConfig:                       config("github.com/test1", moduleFile("github.com/test1/test.arrai")),
+		bundle.SentinelFile("github.com/test1"):          "module github.com/test1\n",
+		bundle.ModuleFile("github.com/test1/test.arrai"): "//{github.com/test2/test.arrai}",
+		bundle.ModuleFile("github.com/test2/test.arrai"): "1",
+		syntax.BundleConfig:                              bundle.ConfigFile("github.com/test1", bundle.ModuleFile("github.com/test1/test.arrai")),
 	}
 
 	buf := createBundle(t, files)
@@ -179,7 +180,7 @@ func TestRunBundleWithoutRoot(t *testing.T) {
 	ctx := ctxfs.SourceFsOnto(context.Background(), fs)
 	ctx = ctxrootcache.WithRootCache(ctx)
 	zipped := &bytes.Buffer{}
-	require.NoError(t, bundleFiles(ctx, path, zipped))
+	require.NoError(t, bundle.BundledScripts(ctx, path, zipped))
 	out := &bytes.Buffer{}
 	assert.NoError(t, runBundled(ctx, zipped.Bytes(), out, ""))
 	assert.Equal(t, expectedOut, out.String())

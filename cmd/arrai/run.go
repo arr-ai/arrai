@@ -2,11 +2,9 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"io"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"github.com/spf13/afero"
 
@@ -14,9 +12,9 @@ import (
 
 	"github.com/arr-ai/arrai/pkg/arrai"
 	"github.com/arr-ai/arrai/pkg/arraictx"
+	"github.com/arr-ai/arrai/pkg/cliutil"
 	"github.com/arr-ai/arrai/pkg/ctxfs"
 	"github.com/arr-ai/arrai/syntax"
-	"github.com/arr-ai/arrai/tools"
 )
 
 var runCommand = &cli.Command{
@@ -37,7 +35,7 @@ func run(c *cli.Context) error {
 }
 
 func evalFile(ctx context.Context, path string, w io.Writer, out string) error {
-	if err := fileExists(ctx, path); err != nil {
+	if err := cliutil.FileExists(ctx, path); err != nil {
 		return err
 	}
 	buf, err := afero.ReadFile(ctxfs.SourceFsFrom(ctx), path)
@@ -51,18 +49,6 @@ func evalFile(ctx context.Context, path string, w io.Writer, out string) error {
 	}
 
 	return evalExpr(ctx, path, string(buf), w, out)
-}
-
-func fileExists(ctx context.Context, path string) error {
-	if exists, err := tools.FileExists(ctx, path); err != nil {
-		return err
-	} else if !exists {
-		if !strings.Contains(path, string([]rune{os.PathSeparator})) {
-			return fmt.Errorf(`"%s": not a command and not found as a file in the current directory`, path)
-		}
-		return fmt.Errorf(`"%s": file not found`, path)
-	}
-	return nil
 }
 
 func runBundled(ctx context.Context, buf []byte, w io.Writer, out string) error {

@@ -1,17 +1,10 @@
 //nolint: lll
-package main
+package bundle
 
 import (
-	"bytes"
-	"context"
-	"fmt"
-	"path"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-
 	"github.com/arr-ai/arrai/pkg/ctxfs"
-	"github.com/arr-ai/arrai/pkg/ctxrootcache"
 	"github.com/arr-ai/arrai/syntax"
 )
 
@@ -26,54 +19,54 @@ func TestBundleFiles(t *testing.T) {
 		{
 			"local dependencies", "/github.com/test/test/test.arrai",
 			map[string]string{
-				sentinelPath("/github.com/test/test"): "module github.com/test/test\n",
+				SentinelPath("/github.com/test/test"): "module github.com/test/test\n",
 				"/github.com/test/test/test.arrai":    "1",
 			},
 			map[string]string{
-				syntax.BundleConfig: config(
+				syntax.BundleConfig: ConfigFile(
 					"github.com/test/test",
-					moduleFile("/github.com/test/test/test.arrai"),
+					ModuleFile("/github.com/test/test/test.arrai"),
 				),
-				sentinelFile("/github.com/test/test"):          "module github.com/test/test\n",
-				moduleFile("/github.com/test/test/test.arrai"): "1",
+				SentinelFile("/github.com/test/test"):          "module github.com/test/test\n",
+				ModuleFile("/github.com/test/test/test.arrai"): "1",
 			},
 		},
 		{
 			"local dependencies with nested root", "/github.com/test/test/test.arrai",
 			map[string]string{
-				sentinelPath("/github.com/test/test"):               "module github.com/test/test\n",
+				SentinelPath("/github.com/test/test"):               "module github.com/test/test\n",
 				"/github.com/test/test/test.arrai":                  "//{./module/module2/module.arrai}",
-				sentinelPath("/github.com/test/test/module/"):       "module github.com/test/test/module\n",
+				SentinelPath("/github.com/test/test/module/"):       "module github.com/test/test/module\n",
 				"/github.com/test/test/module/1.arrai":              "1",
 				"/github.com/test/test/module/module2/module.arrai": "//{/1.arrai}",
 			},
 			map[string]string{
-				syntax.BundleConfig: config(
+				syntax.BundleConfig: ConfigFile(
 					"github.com/test/test",
-					moduleFile("/github.com/test/test/test.arrai"),
+					ModuleFile("/github.com/test/test/test.arrai"),
 				),
-				sentinelFile("/github.com/test/test"):                           "module github.com/test/test\n",
-				sentinelFile("/github.com/test/test/module/"):                   "module github.com/test/test/module\n",
-				moduleFile("/github.com/test/test/test.arrai"):                  "//{./module/module2/module.arrai}",
-				moduleFile("/github.com/test/test/module/module2/module.arrai"): "//{/1.arrai}",
-				moduleFile("/github.com/test/test/module/1.arrai"):              "1",
+				SentinelFile("/github.com/test/test"):                           "module github.com/test/test\n",
+				SentinelFile("/github.com/test/test/module/"):                   "module github.com/test/test/module\n",
+				ModuleFile("/github.com/test/test/test.arrai"):                  "//{./module/module2/module.arrai}",
+				ModuleFile("/github.com/test/test/module/module2/module.arrai"): "//{/1.arrai}",
+				ModuleFile("/github.com/test/test/module/1.arrai"):              "1",
 			},
 		},
 		{
 			"remote import", "/github.com/test/test/test.arrai",
 			map[string]string{
-				sentinelPath("/github.com/test/test"): "module github.com/test/test\n",
+				SentinelPath("/github.com/test/test"): "module github.com/test/test\n",
 				"/github.com/test/test/test.arrai":    "//{https://raw.githubusercontent.com/arr-ai/arrai/v0.160.0/examples/import/bar.arrai}",
 			},
 			map[string]string{
-				syntax.BundleConfig: config(
+				syntax.BundleConfig: ConfigFile(
 					"github.com/test/test",
-					moduleFile("/github.com/test/test/test.arrai"),
+					ModuleFile("/github.com/test/test/test.arrai"),
 				),
-				moduleFile(
+				ModuleFile(
 					"/github.com/test/test/test.arrai",
 				): "//{https://raw.githubusercontent.com/arr-ai/arrai/v0.160.0/examples/import/bar.arrai}",
-				moduleFile(
+				ModuleFile(
 					"raw.githubusercontent.com/arr-ai/arrai/v0.160.0/examples/import/bar.arrai",
 				): "1\n",
 			},
@@ -84,7 +77,7 @@ func TestBundleFiles(t *testing.T) {
 				"/github.com/test/test/test.arrai": "1",
 			},
 			map[string]string{
-				noModuleFile("/test.arrai"): "1",
+				NoModuleFile("/test.arrai"): "1",
 			},
 		},
 	}
@@ -94,12 +87,8 @@ func TestBundleFiles(t *testing.T) {
 		t.Run(c.name, func(t *testing.T) {
 			t.Parallel()
 
-			fs := ctxfs.CreateTestMemMapFs(t, c.files)
-			ctx := ctxfs.SourceFsOnto(context.Background(), fs)
-			ctx = ctxrootcache.WithRootCache(ctx)
-			buf := &bytes.Buffer{}
-			assert.NoError(t, bundleFiles(ctx, syntax.MustAbs(t, c.path), buf))
-			ctxfs.ZipEqualToFiles(t, buf.Bytes(), c.expectedFiles)
+			result := MustCreateTestBundleFromMap(t, c.files, syntax.MustAbs(t, c.path))
+			ctxfs.ZipEqualToFiles(t, result, c.expectedFiles)
 		})
 	}
 }
@@ -137,23 +126,3 @@ func TestBundleFiles(t *testing.T) {
 // 		): "//{/examples/import/bar}\n",
 // 	})
 // }
-
-func config(mainRoot, mainFile string) string {
-	return fmt.Sprintf("(main_root: %q, main_file: %q)", mainRoot, mainFile)
-}
-
-func moduleFile(file string) string {
-	return path.Join(syntax.ModuleDir, file)
-}
-
-func noModuleFile(file string) string {
-	return path.Join(syntax.NoModuleDir, file)
-}
-
-func sentinelFile(file string) string {
-	return moduleFile(sentinelPath(file))
-}
-
-func sentinelPath(file string) string {
-	return path.Join(file, syntax.ModuleRootSentinel)
-}
