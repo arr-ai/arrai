@@ -36,17 +36,28 @@
                     ,
                     _: {},
                 };
-                let flagConfigs = cond head {
-                    (@: name, @value: (:default, :type, ...)): {name: (:type, :default, hasDefault: true)},
-                    (@: name, @value: (:type, ...)):           {name: (:type, hasDefault: false)},
-                    (@: name, @value: type): cond {
-                        (type <: types): {name: (:type, hasDefault: false)},
-                        _: error($`type must be one of ${types orderby .}, not ${type}`),
-                    },
-                    _: error($`flag config invalid: ${head}`),
+
+                # handle types config
+                let flagConfigs = cond head.@value {
+                    (:default, :type, ...): (:type, :default, hasDefault: true),
+                    (:type, ...):           (:type, hasDefault: false),
+                    type:                   (:type, hasDefault: false),
+                    _:                      error($`flag config invalid: ${head}`),
                 };
 
-                (alias: val.alias +> alias, flagConfigs: val.flagConfigs +> flagConfigs)
+                let _ = cond {
+                    flagConfigs.type !<: types: error($`type must be one of ${types orderby .}, not ${type}`)
+                };
+
+                # handle repeated config
+                let flagConfigs = flagConfigs +> cond head.@value {
+                    (:repeated, ...): (:repeated),
+                    _: (),
+                };
+
+                let name = head.@;
+
+                (alias: val.alias +> alias, flagConfigs: val.flagConfigs +> {name: flagConfigs})
             ;
             let config = //{./util}.reduce(
                 fn, (alias: {}, flagConfigs: {}), config orderby .,
@@ -59,17 +70,22 @@
                         dashes.match(flagName):
                             let trimmed = trimDashes(flagName);
                             let name = config.alias(trimmed)?:trimmed;
-                            (flagName: name, type: config.flagConfigs(name)?.type:'')
+                            let config = config.flagConfigs(name)?:();
+                            (flagName: name, type: config.type?:'', repeated: config.repeated?:false),
                         ,
-                        _: (flagName: '', type: ''),
+                        _: (flagName: '', type: '', repeated: false),
                     }
                 ;
 
                 let rec parseFlag = \args \val
                     cond args {
                         [flag, ...tail]:
-                            let (:flagName, :type) = flagConfig(flag);
-                            let withFlagValue = \value val +> (flags: val.flags +> {flagName: value});
+                            let (:flagName, :type, :repeated) = flagConfig(flag);
+                            # adds flag value to the accumulated flags so far
+                            let withFlagValue = \value
+                                let value = cond {repeated: val.flags(flagName)?:[] ++ [value], _: value};
+                                val +> (flags: val.flags +> {flagName: value})
+                            ;
                             cond type {
                                 'bool': parseFlag(tail, withFlagValue(true)),
                                 'string':

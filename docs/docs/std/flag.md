@@ -13,6 +13,7 @@ The `flag` library contains functions that are used to parse command line flag a
         default: any value, # Optional. Can be any value. If the arguments do not contain 'flagName', it will still be included in the parsed flags with the value provided in the default attribute.
         alias: 'any_string_value', # Optional. Can be used to alias the 'flagName'.
         usage: 'description here', # Optional. Used to describe usages.
+        repeated: true | false,    # Optional. Used to allow repeated flags. Flag value will become an array of values. Defaults to false.
     )
 }
 ```

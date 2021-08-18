@@ -150,5 +150,29 @@ let alias = flag.parser({'alias': (type: 'string', alias: 'a')});
         ] >> //test.assert.true(
             //seq.contains(., help)
         )
+    ,
+    repeated: (
+        simple:
+            let parser = flag.parser({'str': (type: 'string', repeated: true)});
+            parser.parse(['--str', 'hi', '--str', 'hello', '--str', 'hello again']) = (
+                args: [], flags: {'str': ['hi', 'hello', 'hello again']}
+            )
+        ,
+        mixed:
+            let parser = flag.parser({'str': (type: 'string', repeated: true), 'num': 'number'});
+            parser.parse(['--str', 'hi', '--str', 'hello', '--num', '1', '--str', 'hello again']) = (
+                args: [], flags: {'str': ['hi', 'hello', 'hello again'], 'num': 1}
+            )
+        ,
+        'single':
+            let parser = flag.parser({'str': (type: 'string', repeated: true)});
+            parser.parse(['--str', 'hi']) = (args: [], flags: {'str': ['hi']})
+        ,
+        empty:
+            let parser = flag.parser({'str': (type: 'string', repeated: true)});
+            parser.parse([]) = (args: [], flags: {})
+        ,
+    ),
+
     # TODO: test overlapping alias when errors can be tested
 )
