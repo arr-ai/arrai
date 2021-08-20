@@ -99,6 +99,14 @@ func (r Relation) Enumerator() ValueEnumerator {
 	}
 }
 
+func (r Relation) OrderedValues() []Value {
+	v := make([]Value, 0, r.Count())
+	for e := r.ArrayEnumerator(); e.MoveNext(); {
+		v = append(v, e.Current())
+	}
+	return v
+}
+
 func (r Relation) ArrayEnumerator() ValueEnumerator {
 	return &relationEnumerator{
 		attrs: mapIndices(r.attrs, r.p),

@@ -75,6 +75,22 @@ func TestJSONEncodeIndent(t *testing.T) {
 	AssertCodesEvalToSameValue(t, expected, `//encoding.json.encode_indent(`+encoding+`)`)
 }
 
+func TestJSONEncodeSetOrder(t *testing.T) {
+	t.Parallel()
+
+	// Ensures that json encoder has deterministic output.
+
+	AssertCodesEvalToSameValue(t,
+		`<<'[{"a":1,"b":2},{"a":2,"b":1},{"a":2,"b":2}]\n'>>`,
+		`//encoding.json.encoder((strict: false))({|a, b| (1, 2), (2, 1), (2, 2)})`,
+	)
+
+	AssertCodesEvalToSameValue(t,
+		`<<'[1,2,3]\n'>>`,
+		`//encoding.json.encoder((strict: false))({1, 2, 3})`,
+	)
+}
+
 func TestJSONEncode_Config(t *testing.T) {
 	t.Parallel()
 

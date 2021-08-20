@@ -60,10 +60,10 @@ func PrettifyString(val interface{}, indentsNum int) (string, error) {
 		return prettifyArray(t, indentsNum+1)
 	case rel.Dict: // {'a': 1}
 		return prettifyDict(t, indentsNum+1)
-	case rel.OrderableSet: // {1, 2}
-		return prettifyOrderableSet(t, indentsNum+1)
 	case rel.Relation:
 		return prettifyRelation(t, indentsNum+1)
+	case rel.OrderableSet: // {1, 2}
+		return prettifyOrderableSet(t, indentsNum+1)
 	case rel.String:
 		return prettifyString(t)
 	case nil:

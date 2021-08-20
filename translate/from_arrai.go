@@ -134,18 +134,6 @@ func (t Translator) arrFromArrai(v rel.Value) ([]interface{}, error) {
 			elts = append(elts, data)
 		}
 		return elts, nil
-	case rel.Set:
-		elts := make([]interface{}, 0, s.Count())
-		for e := s.Enumerator(); e.MoveNext(); {
-			item := e.Current()
-			data, err := t.FromArrai(item)
-			if err != nil {
-				return nil, err
-			}
-			elts = append(elts, data)
-		}
-		return elts, nil
-
 	default:
 		return nil, fmt.Errorf("unexpected array type %s", rel.ValueTypeAsString(s))
 	}
