@@ -1,11 +1,10 @@
 module github.com/arr-ai/arrai
 
-go 1.13
+go 1.15
 
 replace github.com/spf13/afero v1.3.5 => github.com/anz-bank/afero v1.2.4
 
 require (
-	github.com/360EntSecGroup-Skylar/excelize/v2 v2.3.0
 	github.com/alecthomas/repr v0.0.0-20200325044227-4184120f674c // indirect
 	github.com/anz-bank/pkg v0.0.22
 	github.com/arr-ai/frozen v0.19.0
@@ -26,11 +25,10 @@ require (
 	github.com/stretchr/objx v0.3.0 // indirect
 	github.com/stretchr/testify v1.7.0
 	github.com/urfave/cli/v2 v2.2.0
-	golang.org/x/crypto v0.0.0-20200820211705-5c72a883971a // indirect
-	golang.org/x/net v0.0.0-20210525063256-abc453219eb5 // indirect
+	github.com/xuri/excelize/v2 v2.4.1
 	golang.org/x/oauth2 v0.0.0-20200902213428-5d25da1a8d43 // indirect
 	golang.org/x/sys v0.0.0-20210630005230-0f9fa26af87c // indirect
-	golang.org/x/text v0.3.6
+	golang.org/x/text v0.3.7
 	google.golang.org/genproto v0.0.0-20210608205507-b6d2f5bf0d7d // indirect
 	google.golang.org/grpc v1.38.0
 	google.golang.org/protobuf v1.26.0

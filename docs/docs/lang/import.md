@@ -71,7 +71,7 @@ Example:
 `go.mod`
 
 ```go
-go 1.14
+go 1.15
 
 require some/dependency/path v1.2.3
 

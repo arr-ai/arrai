@@ -12,7 +12,7 @@ import (
 func TestGetBuildInfo(t *testing.T) {
 	assert.Equal(t, `(date: '2020-07-23T10:40:08Z', `+
 		`git: (commit: 'd399e13f3670c6698ba35148e6f545322e20e1fb', tags: {'v0.99.0'}), `+
-		`go: (arch: 'amd64', compiler: (arch: 'amd64', os: 'darwin', version: 'go1.14 darwin/amd64'), os: 'darwin'), `+
+		`go: (arch: 'amd64', compiler: (arch: 'amd64', os: 'darwin', version: 'go1.15 darwin/amd64'), os: 'darwin'), `+
 		`version: 'DIRTY-v0.99.0')`,
 		rel.Repr(
 			GetBuildInfo(
@@ -23,7 +23,7 @@ func TestGetBuildInfo(t *testing.T) {
 					Tags:       "v0.99.0",
 					Os:         "darwin",
 					Arch:       "amd64",
-					GoVersion:  "go1.14 darwin/amd64",
+					GoVersion:  "go1.15 darwin/amd64",
 				},
 			),
 		),

@@ -1,6 +1,6 @@
 module github.com/arr-ai/arrai/examples/bundle
 
-go 1.14
+go 1.15
 
 require (
 	github.com/arr-ai/arrai v0.179.0

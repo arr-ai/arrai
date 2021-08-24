@@ -6,7 +6,7 @@ The ultimate data engine.
 
 ## Install
 
-On a Unix-like OS, [install Go](https://golang.org/doc/install) (1.14 or above),
+On a Unix-like OS, [install Go](https://golang.org/doc/install) (1.15 or above),
 then:
 
 ```bash
