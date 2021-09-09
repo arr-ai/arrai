@@ -76,7 +76,7 @@ func Union(a, b Set) Set {
 		return newSetFromBuckets(
 			au.m.Merge(
 				bu.m,
-				func(_, left, right interface{}) interface{} {
+				func(_ string, left, right interface{}) interface{} {
 					return Union(left.(Set), right.(Set))
 				},
 			),

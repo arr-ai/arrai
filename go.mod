@@ -8,12 +8,12 @@ require (
 	github.com/360EntSecGroup-Skylar/excelize/v2 v2.3.0
 	github.com/alecthomas/repr v0.0.0-20200325044227-4184120f674c // indirect
 	github.com/anz-bank/pkg v0.0.22
-	github.com/arr-ai/frozen v0.19.0
+	github.com/arr-ai/frozen v0.20.0
 	github.com/arr-ai/hash v0.8.0
 	github.com/arr-ai/proto v0.0.0-20180422074755-2ffbedebee50
 	github.com/arr-ai/wbnf v0.34.0
 	github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e
-	github.com/go-errors/errors v1.1.1
+	github.com/go-errors/errors v1.4.0
 	github.com/gorilla/websocket v1.4.2
 	github.com/iancoleman/strcase v0.1.3
 	github.com/mattn/go-isatty v0.0.12
