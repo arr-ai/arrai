@@ -36,7 +36,7 @@ var (
 
 func implicitDecoder() rel.Expr {
 	implicitDecoderSyncOnce.Do(func() {
-		implicitDecode = mustParseExpr(string(MustAsset("syntax/implicit_import.arrai")))
+		implicitDecode = mustParseExpr(string(implicitImportArrai()))
 	})
 	return implicitDecode
 }

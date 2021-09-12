@@ -9,27 +9,21 @@ parser: syntax/parser.go
 syntax/parser.go: tools/parser/generate_parser.go syntax/arrai.wbnf
 	go run $^ $@
 
-.PHONY: bindata
-bindata: syntax/bindata.go
-
-.PHONY: generate check-clean
+.PHONY: generate
 generate: parser bindata
+
+.PHONY: check-clean
 check-clean: generate
 	git --no-pager diff HEAD && test -z "$$(git status --porcelain)"
 
-syntax/bindata.go: syntax/implicit_import.arrai syntax/stdlib-safe.arraiz syntax/stdlib-unsafe.arraiz
-	go-bindata -version
-	go-bindata -mode 0644 -modtime 1 -pkg syntax -o syntax/bindata.go $^
-	# remove all arraiz files after embedded file is generated.
-	rm syntax/stdlib-safe.arraiz
-	rm syntax/stdlib-unsafe.arraiz
-	gofmt -s -w $@
+.PHONY: bindata
+bindata: syntax/embed/implicit_import.arrai syntax/embed/stdlib-safe.arraiz syntax/embed/stdlib-unsafe.arraiz
 
-syntax/stdlib-safe.arraiz: $(shell find syntax/stdlib -type f)
-	go run ./cmd/arrai bundle -o syntax/stdlib-safe.arraiz syntax/stdlib/stdlib-safe.arrai
+syntax/embed/stdlib-safe.arraiz: $(shell find syntax/stdlib -type f)
+	go run ./cmd/arrai bundle -o $@ syntax/stdlib/stdlib-safe.arrai
 
-syntax/stdlib-unsafe.arraiz: $(shell find syntax/stdlib -type f)
-	go run ./cmd/arrai bundle -o syntax/stdlib-unsafe.arraiz syntax/stdlib/stdlib-unsafe.arrai
+syntax/embed/stdlib-unsafe.arraiz: $(shell find syntax/stdlib -type f)
+	go run ./cmd/arrai bundle -o $@ syntax/stdlib/stdlib-unsafe.arrai
 
 build: generate
 	go build -ldflags=$(LDFLAGS) ./cmd/arrai

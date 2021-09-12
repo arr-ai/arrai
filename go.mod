@@ -1,6 +1,6 @@
 module github.com/arr-ai/arrai
 
-go 1.15
+go 1.16
 
 replace github.com/spf13/afero v1.3.5 => github.com/anz-bank/afero v1.2.4
 

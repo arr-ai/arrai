@@ -38,7 +38,7 @@ func StdScope() rel.Scope {
 			stdOsUnsafe(),
 			stdNet(),
 		))
-		arraiUnsafeStdlib := mustParseBundle(MustAsset("syntax/stdlib-unsafe.arraiz"))
+		arraiUnsafeStdlib := mustParseBundle(stdlibUnsafeArraiz())
 		stdlibVal, err := rel.NewCallExprCurry(*parser.NewScanner("stdlib"), arraiUnsafeStdlib, goStdlib).
 			Eval(context.Background(), rel.EmptyScope)
 		if err != nil {
@@ -175,7 +175,7 @@ func SafeStdScopeTuple() rel.Tuple {
 		stdRuntime(),
 		stdDeprecated(),
 	)
-	arraiSafeStdlib := mustParseBundle(MustAsset("syntax/stdlib-safe.arraiz"))
+	arraiSafeStdlib := mustParseBundle(stdlibSafeArraiz())
 	stdlibVal, err := rel.NewCallExprCurry(*parser.NewScanner("stdlib"), arraiSafeStdlib, goStdlib).
 		Eval(context.Background(), rel.EmptyScope)
 	if err != nil {
