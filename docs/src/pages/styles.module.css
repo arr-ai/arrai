@@ -31,6 +31,10 @@
   width: 100%;
 }
 
+.featuresRow {
+  justify-content: space-evenly;
+}
+
 .featureImage {
   height: 200px;
   width: 200px;

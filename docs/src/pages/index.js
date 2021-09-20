@@ -35,16 +35,6 @@ const features = [
             </>
         ),
     },
-    {
-        title: 'Hermetic runtime',
-        imageUrl: 'img/favicon.svg',
-        description: (
-            <>
-                Extend or customize your website layout by reusing React. Docusaurus can
-                be extended while reusing the same header and footer.
-            </>
-        ),
-    },
 ];
 
 function Feature({imageUrl, title, description}) {
@@ -89,7 +79,7 @@ function Home() {
                 {features && features.length > 0 && (
                     <section className={styles.features}>
                         <div className="container">
-                            <div className="row">
+                            <div className={`row ${styles.featuresRow}`}>
                                 {features.map((props, idx) => (
                                     <Feature key={idx} {...props} />
                                 ))}
