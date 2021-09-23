@@ -237,12 +237,12 @@ func TestPackageExternalImportModule(t *testing.T) {
 			})
 		}
 
-		repo := "github.com/ChloePlanet/arrai-examples"
+		repo := "github.com/arr-ai/arrai-import-tests"
 		run("Module", func(t *testing.T) { AssertCodesEvalToSameValue(t, `3`, `//{`+repo+`/add}`) })
 		run("ModuleExt", func(t *testing.T) { AssertCodesEvalToSameValue(t, `3`, `//{`+repo+`/add.arrai}`) })
 		run("ModuleJson", func(t *testing.T) { AssertCodesEvalToSameValue(t, `{}`, `//{`+repo+`/empty.json}`) })
 
-		raw := "raw.githubusercontent.com/ChloePlanet/arrai-examples/master"
+		raw := "raw.githubusercontent.com/arr-ai/arrai-import-tests/master"
 		run("URLArraiHttps", func(t *testing.T) { AssertCodesEvalToSameValue(t, `3`, `//{https://`+raw+`/add.arrai}`) })
 		run("URLArraiNoHttps", func(t *testing.T) { AssertCodesEvalToSameValue(t, `3`, `//{`+raw+`/add.arrai}`) })
 		run("URLJsonHttps", func(t *testing.T) { AssertCodesEvalToSameValue(t, `{}`, `//{https://`+raw+`/empty.json}`) })
