@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"math"
+	"os"
 	"strconv"
 	"sync"
 
@@ -24,6 +25,8 @@ var (
 	stdSafeScopeVar, stdUnsafeScopeVar            rel.Scope
 	fix, fixt                                     rel.Value
 )
+
+var logger = log.New(os.Stderr, "", log.Ldate|log.Lmicroseconds)
 
 func FixFuncs() (rel.Value, rel.Value) {
 	fixOnce.Do(func() {
@@ -123,7 +126,7 @@ func SafeStdScopeTuple() rel.Tuple {
 		),
 		rel.NewTupleAttr("log",
 			rel.NewNativeFunctionAttr("print", func(_ context.Context, value rel.Value) (rel.Value, error) {
-				log.Print(fu.Repr(value))
+				logger.Print(fu.Repr(value))
 				return value, nil
 			}),
 			createFunc2Attr("printf", func(ctx context.Context, a, b rel.Value) (rel.Value, error) {
@@ -132,7 +135,7 @@ func SafeStdScopeTuple() rel.Tuple {
 				for i := b.(rel.Set).ArrayEnumerator(); i.MoveNext(); {
 					strs = append(strs, i.Current())
 				}
-				log.Printf(format, strs...)
+				logger.Printf(format, strs...)
 				return b, nil
 			}),
 		),
