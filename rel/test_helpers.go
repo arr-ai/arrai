@@ -27,6 +27,8 @@ func EqualValues(expected, actual Value) bool {
 
 // AssertEqualValues asserts that the two values are Equal.
 func AssertEqualValues(t *testing.T, expected, actual Value) bool {
+	t.Helper()
+
 	if !EqualValues(expected, actual) {
 		return assert.Fail(t, "values not equal", "expected: %s\nactual:   %s", expected, actual)
 	}
@@ -35,6 +37,8 @@ func AssertEqualValues(t *testing.T, expected, actual Value) bool {
 
 // RequireEqualValues requires that the two values are Equal.
 func RequireEqualValues(t *testing.T, expected, actual Value) {
+	t.Helper()
+
 	if !AssertEqualValues(t, expected, actual) {
 		t.FailNow()
 	}
@@ -42,6 +46,8 @@ func RequireEqualValues(t *testing.T, expected, actual Value) {
 
 // AssertExprsEvalToSameValue asserts that the exprs evaluate to the same value.
 func AssertExprsEvalToSameValue(t *testing.T, expected, expr Expr) bool {
+	t.Helper()
+
 	ctx := arraictx.InitRunCtx(context.Background())
 	expectedValue, err := expected.Eval(ctx, EmptyScope)
 	if !assert.NoError(t, err, "evaluating expected: %s", expected) {
@@ -54,12 +60,14 @@ func AssertExprsEvalToSameValue(t *testing.T, expected, expr Expr) bool {
 	return EqualValues(expectedValue, value) ||
 		assert.Failf(t, "values not equal",
 			"\nexpected: %v\nactual:   %v\nexpr:     %v",
-			Repr(expectedValue), Repr(value), expr)
+			expectedValue, value, expr)
 }
 
 // RequireExprsEvalToSameValue requires that the exprs evaluate to the same
 // value.
 func RequireExprsEvalToSameValue(t *testing.T, expected, expr Expr) {
+	t.Helper()
+
 	if !AssertExprsEvalToSameValue(t, expected, expr) {
 		t.FailNow()
 	}
@@ -67,12 +75,14 @@ func RequireExprsEvalToSameValue(t *testing.T, expected, expr Expr) {
 
 // AssertExprEvalsToType asserts that the exprs evaluate to the same value.
 func AssertExprEvalsToType(t *testing.T, expected interface{}, expr Expr) bool {
+	t.Helper()
+
 	value, err := expr.Eval(arraictx.InitRunCtx(context.Background()), EmptyScope)
 	if !assert.NoError(t, err, "evaluating expr: %s", expr) {
 		return false
 	}
 	if reflect.TypeOf(expected) != reflect.TypeOf(value) {
-		t.Logf("\nexpected: %T\nvalue:    %v\nexpr:     %v", expected, Repr(value), expr)
+		t.Logf("\nexpected: %T\nvalue:    %v\nexpr:     %v", expected, value, expr)
 		return false
 	}
 	return true
@@ -80,12 +90,16 @@ func AssertExprEvalsToType(t *testing.T, expected interface{}, expr Expr) bool {
 
 // AssertExprErrors asserts that the expr returns an error when evaluated.
 func AssertExprErrors(t *testing.T, expr Expr) bool {
+	t.Helper()
+
 	_, err := expr.Eval(arraictx.InitRunCtx(context.Background()), EmptyScope)
 	return assert.Error(t, err)
 }
 
 // AssertExprErrorEquals asserts that the expr returns an error with the given message when evaluated.
 func AssertExprErrorEquals(t *testing.T, expr Expr, msg string) bool {
+	t.Helper()
+
 	_, err := expr.Eval(arraictx.InitRunCtx(context.Background()), EmptyScope)
 
 	return assert.EqualError(t, err, WrapContextErr(errors.Errorf(msg), expr, EmptyScope).Error())
@@ -93,5 +107,7 @@ func AssertExprErrorEquals(t *testing.T, expr Expr, msg string) bool {
 
 // AssertExprPanics asserts that the expr panics when evaluated.
 func AssertExprPanics(t *testing.T, expr Expr) bool {
+	t.Helper()
+
 	return assert.Panics(t, func() { expr.Eval(arraictx.InitRunCtx(context.Background()), EmptyScope) }) //nolint:errcheck
 }

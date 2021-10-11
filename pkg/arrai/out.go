@@ -12,6 +12,7 @@ import (
 	"github.com/spf13/afero"
 
 	"github.com/arr-ai/arrai/pkg/ctxfs"
+	"github.com/arr-ai/arrai/pkg/fu"
 	"github.com/arr-ai/arrai/rel"
 )
 
@@ -45,10 +46,10 @@ func OutputValue(ctx context.Context, value rel.Value, w io.Writer, out string) 
 		if !v.IsTrue() {
 			s = ""
 		} else {
-			s = rel.Repr(v)
+			s = fu.Repr(v)
 		}
 	default:
-		s = rel.Repr(v)
+		s = fu.Repr(v)
 	}
 	fmt.Fprintf(w, "%s", s)
 	if s != "" && !strings.HasSuffix(s, "\n") {

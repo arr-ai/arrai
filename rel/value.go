@@ -35,6 +35,8 @@ type Expr interface {
 
 // Value represents any arr.ai value.
 type Value interface {
+	fmt.Formatter
+
 	frozen.Key
 
 	// Values are Exprs.

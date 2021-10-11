@@ -9,6 +9,8 @@ import (
 
 	"github.com/arr-ai/hash"
 	"github.com/arr-ai/wbnf/parser"
+
+	"github.com/arr-ai/arrai/pkg/fu"
 )
 
 // Number is a number.
@@ -46,27 +48,50 @@ func (n Number) Equal(v interface{}) bool {
 	return false
 }
 
-func (n Number) format() string {
-	return strconv.FormatFloat(float64(n), 'G', -1, 64)
-}
-
-// String returns a string representation of a Number.
-func (n Number) String() string {
+func formatFloat64(n float64, verb rune, prec int) string {
 	// TODO: Validate ulp heuristic parameters.
-	s := n.format()
+	s := strconv.FormatFloat(n, byte(verb), prec, 64)
 	if len(s) < 15 {
 		return s
 	}
 	u := *(*uint64)(unsafe.Pointer(&n))
-	u++
-	if s := (*Number)(unsafe.Pointer(&u)).format(); len(s) < 10 {
-		return s
+	// Try 1 ulp above u.
+	v := u + 1
+	if u^v < 1<<52 { // Only mantissa bits are allowed to change.
+		if s := strconv.FormatFloat(*(*float64)(unsafe.Pointer(&v)), byte(verb), prec, 64); len(s) < 10 {
+			return s
+		}
 	}
-	u -= 2
-	if s := (*Number)(unsafe.Pointer(&u)).format(); len(s) < 10 {
-		return s
+	// Try 1 ulp below u.
+	v -= 2
+	if u^v < 1<<52 { // Only mantissa bits are allowed to change.
+		if s := strconv.FormatFloat(*(*float64)(unsafe.Pointer(&v)), byte(verb), prec, 64); len(s) < 10 {
+			return s
+		}
 	}
 	return s
+}
+
+// String returns a string representation of a Number.
+func (n Number) String() string {
+	return formatFloat64(float64(n), 'G', -1)
+}
+
+// String returns a string representation of a Number.
+func (n Number) Format(f fmt.State, verb rune) {
+	prec, hasPrec := f.Precision()
+	if !hasPrec {
+		prec = -1
+	}
+
+	switch verb {
+	case 'b', 'e', 'E', 'f', 'g', 'G', 'x', 'X':
+		fu.WriteString(f, formatFloat64(float64(n), verb, prec))
+	case 'v':
+		fu.WriteString(f, n.String())
+	default:
+		fu.Fprintf(f, "%%!%c(number=%s)", verb, n.String())
+	}
 }
 
 // Eval returns the number.

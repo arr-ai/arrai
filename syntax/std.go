@@ -13,6 +13,7 @@ import (
 	"github.com/arr-ai/wbnf/parser"
 	"github.com/arr-ai/wbnf/wbnf"
 
+	"github.com/arr-ai/arrai/pkg/fu"
 	"github.com/arr-ai/arrai/pkg/importcache"
 	"github.com/arr-ai/arrai/rel"
 	"github.com/arr-ai/arrai/translate"
@@ -122,7 +123,7 @@ func SafeStdScopeTuple() rel.Tuple {
 		),
 		rel.NewTupleAttr("log",
 			rel.NewNativeFunctionAttr("print", func(_ context.Context, value rel.Value) (rel.Value, error) {
-				log.Print(rel.Repr(value))
+				log.Print(fu.Repr(value))
 				return value, nil
 			}),
 			createFunc2Attr("printf", func(ctx context.Context, a, b rel.Value) (rel.Value, error) {

@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"reflect"
 
+	"github.com/arr-ai/arrai/pkg/fu"
+
 	"github.com/arr-ai/hash"
 	"github.com/arr-ai/wbnf/parser"
 )
@@ -64,9 +66,14 @@ func (t BytesByteTuple) Equal(v interface{}) bool {
 	return false
 }
 
-// String returns a string representation of a Tuple.
+// String returns a string representation of a BytesByteTuple.
 func (t BytesByteTuple) String() string {
-	return fmt.Sprintf("(@: %d, %s: %d)", t.at, BytesByteAttr, t.byteval)
+	return fu.String(t)
+}
+
+// Format formats a BytesByteTuple.
+func (t BytesByteTuple) Format(f fmt.State, verb rune) {
+	fu.Fprintf(f, "(@: %d, %s: %d)", t.at, BytesByteAttr, t.byteval)
 }
 
 // Eval returns the tuple.

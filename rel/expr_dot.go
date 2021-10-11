@@ -114,7 +114,7 @@ func (x *DotExpr) Eval(ctx context.Context, local Scope) (_ Value, err error) {
 		}
 		return nil, WrapContextErr(errors.Errorf("Cannot get attr %q from non-tuple set elt", x.attr), x, local)
 	default:
-		return nil, WrapContextErr(errors.Errorf("(%s).%s: lhs must be a tuple, not %s",
+		return nil, WrapContextErr(errors.Errorf("(%v).%s: lhs must be a tuple, not %s",
 			x.lhs, x.attr, ValueTypeAsString(a)), x, local)
 	}
 }

@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 	"reflect"
-	"sort"
-	"strings"
+
+	"github.com/arr-ai/arrai/pkg/fu"
 
 	"github.com/arr-ai/frozen"
 	"github.com/arr-ai/wbnf/parser"
@@ -253,16 +253,16 @@ func (u UnionSet) Source() parser.Scanner {
 }
 
 func (u UnionSet) String() string {
-	var sb strings.Builder
-	sb.WriteString("{")
-	for i, v := range u.OrderedValues() {
-		if i != 0 {
-			sb.WriteString(", ")
-		}
-		sb.WriteString(v.String())
+	return fu.String(u)
+}
+
+func (u UnionSet) Format(f fmt.State, verb rune) {
+	fu.WriteString(f, "{")
+	for i, o := u.OrderedValues(), 0; i.MoveNext(); o++ {
+		writeSep(f, o, ", ")
+		fu.FRepr(f, i.Current())
 	}
-	sb.WriteString("}")
-	return sb.String()
+	fu.WriteString(f, "}")
 }
 
 func (u UnionSet) Equal(s interface{}) bool {
@@ -280,22 +280,8 @@ func (u UnionSet) Hash(seed uintptr) uintptr {
 	return h
 }
 
-func (u UnionSet) OrderedValues() []Value {
-	sets := make([]Set, 0, u.m.Count())
-	count := 0
-	for i := u.bucketRange(); i.next(); {
-		s := i.subset()
-		count += s.Count()
-		sets = append(sets, s)
-	}
-	values := make([]Value, 0, count)
-	for _, set := range sets {
-		for i := set.Enumerator(); i.MoveNext(); {
-			values = append(values, i.Current())
-		}
-	}
-	sort.Sort(ValueList(values))
-	return values
+func (u UnionSet) OrderedValues() ValueEnumerator {
+	return OrderedValueEnumerator(u.Enumerator(), ValueLess)
 }
 
 type unionSetBucketRange struct {

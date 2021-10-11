@@ -32,11 +32,7 @@ func ForeachLeaf(val rel.Value, path string, leafAction func(val rel.Value, path
 			ForeachLeaf(attr, fmt.Sprintf("%s.%s", path, name), leafAction)
 		}
 	default:
-		if path == "" {
-			leafAction(val, "<root>")
-		} else {
-			leafAction(val, path)
-		}
+		leafAction(val, path)
 	}
 }
 

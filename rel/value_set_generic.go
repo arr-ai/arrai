@@ -1,14 +1,14 @@
 package rel
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"reflect"
-	"sort"
 
 	"github.com/arr-ai/frozen"
 	"github.com/arr-ai/wbnf/parser"
+
+	"github.com/arr-ai/arrai/pkg/fu"
 )
 
 // GenericSet is a set of Values.
@@ -92,9 +92,17 @@ func (s GenericSet) Equal(v interface{}) bool {
 
 // String returns a string representation of a genericSet.
 func (s GenericSet) String() string {
+	return fu.String(s)
+}
+
+// Format formats a genericSet.
+func (s GenericSet) Format(f fmt.State, verb rune) {
 	// {} == none
 	if !s.IsTrue() {
-		return "{}"
+		if verb == 'v' {
+			fu.WriteString(f, sEmptySet)
+		}
+		return
 	}
 
 	// {()} == true
@@ -102,20 +110,12 @@ func (s GenericSet) String() string {
 		e := s.Enumerator()
 		e.MoveNext()
 		if tuple, ok := e.Current().(Tuple); ok && !tuple.IsTrue() {
-			return sTrue
+			fu.WriteString(f, sTrue)
+			return
 		}
 	}
 
-	var buf bytes.Buffer
-	buf.WriteString("{")
-	for i, value := range s.OrderedValues() {
-		if i != 0 {
-			buf.WriteString(", ")
-		}
-		buf.WriteString(value.String())
-	}
-	buf.WriteString("}")
-	return buf.String()
+	reprOrderableSet(f, s)
 }
 
 // Eval returns the set.
@@ -149,21 +149,23 @@ func (s GenericSet) Less(v Value) bool {
 	}
 
 	x := v.(GenericSet)
-	a := s.OrderedValues()
-	b := x.OrderedValues()
-	n := len(a)
-	if n > len(b) {
-		n = len(b)
-	}
-	for i := 0; i < n; i++ {
-		if a[i].Less(b[i]) {
+	a, b := s.OrderedValues(), x.OrderedValues()
+	for {
+		if !a.MoveNext() {
+			return b.MoveNext()
+		}
+		if !b.MoveNext() {
+			return false
+		}
+		ai := a.Current()
+		bi := b.Current()
+		if ai.Less(bi) {
 			return true
 		}
-		if b[i].Less(a[i]) {
+		if bi.Less(ai) {
 			return false
 		}
 	}
-	return len(a) < len(b)
 }
 
 // Negate returns {(negateTag): s}.
@@ -331,13 +333,6 @@ func (vl ValueList) Swap(i, j int) {
 }
 
 // OrderedValues returns Values in a canonical ordering.
-func (s GenericSet) OrderedValues() []Value {
-	a := make([]Value, s.Count())
-	i := 0
-	for e := s.Enumerator(); e.MoveNext(); {
-		a[i] = e.Current()
-		i++
-	}
-	sort.Sort(ValueList(a))
-	return a
+func (s GenericSet) OrderedValues() ValueEnumerator {
+	return OrderedValueEnumerator(s.Enumerator(), ValueLess)
 }

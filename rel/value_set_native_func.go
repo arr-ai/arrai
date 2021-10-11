@@ -6,6 +6,8 @@ import (
 	"reflect"
 	"unsafe"
 
+	"github.com/arr-ai/arrai/pkg/fu"
+
 	"github.com/arr-ai/hash"
 	"github.com/arr-ai/wbnf/parser"
 )
@@ -53,7 +55,12 @@ func (f *NativeFunction) Equal(i interface{}) bool {
 
 // String returns a string representation of the expression.
 func (f *NativeFunction) String() string {
-	return f.name
+	return fu.String(f)
+}
+
+// Format formats the expression.
+func (f *NativeFunction) Format(s fmt.State, verb rune) {
+	fu.WriteString(s, f.name)
 }
 
 // Eval returns the Value

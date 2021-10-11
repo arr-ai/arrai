@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/arr-ai/arrai/pkg/arraictx"
+	"github.com/arr-ai/arrai/pkg/fu"
 	"github.com/arr-ai/arrai/rel"
 )
 
@@ -150,7 +151,7 @@ func predictFromValue(val rel.Value) (predictions []string) {
 	case rel.Dict:
 		predictions = make([]string, 0, v.Count())
 		for _, e := range v.OrderedEntries() {
-			predictions = append(predictions, fmt.Sprintf(`(%s)`, rel.Repr(e.MustGet("@"))))
+			predictions = append(predictions, fmt.Sprintf(`(%s)`, fu.Repr(e.MustGet("@"))))
 		}
 	}
 	return

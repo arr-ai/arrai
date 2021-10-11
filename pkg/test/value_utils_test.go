@@ -14,57 +14,49 @@ import (
 func TestIsLiteralTrue(t *testing.T) { //nolint:dupl
 	t.Parallel()
 
-	require.True(t, isLiteralTrue(eval("true")))
-	require.True(t, isLiteralTrue(eval("{()}")))
+	require.True(t, isLiteralTrue(mustEval("true")))
+	require.True(t, isLiteralTrue(mustEval("{()}")))
 
-	require.False(t, isLiteralTrue(eval("false")))
-	require.False(t, isLiteralTrue(eval("1")))
-	require.False(t, isLiteralTrue(eval("0")))
-	require.False(t, isLiteralTrue(eval("()")))
-	require.False(t, isLiteralTrue(eval("{true}")))
-	require.False(t, isLiteralTrue(eval("{false}")))
-	require.False(t, isLiteralTrue(eval("{(1)}")))
-	require.False(t, isLiteralTrue(eval("{(),1}")))
-	require.False(t, isLiteralTrue(eval("[true]")))
-	require.False(t, isLiteralTrue(eval("(val: true)")))
+	require.False(t, isLiteralTrue(mustEval("false")))
+	require.False(t, isLiteralTrue(mustEval("1")))
+	require.False(t, isLiteralTrue(mustEval("0")))
+	require.False(t, isLiteralTrue(mustEval("()")))
+	require.False(t, isLiteralTrue(mustEval("{true}")))
+	require.False(t, isLiteralTrue(mustEval("{false}")))
+	require.False(t, isLiteralTrue(mustEval("{(1)}")))
+	require.False(t, isLiteralTrue(mustEval("{(),1}")))
+	require.False(t, isLiteralTrue(mustEval("[true]")))
+	require.False(t, isLiteralTrue(mustEval("(val: true)")))
 }
 
 func TestIsLiteralFalse(t *testing.T) { //nolint:dupl
 	t.Parallel()
 
-	require.True(t, isLiteralFalse(eval("false")))
-	require.True(t, isLiteralFalse(eval("{}")))
+	require.True(t, isLiteralFalse(mustEval("false")))
+	require.True(t, isLiteralFalse(mustEval("{}")))
 
-	require.False(t, isLiteralFalse(eval("true")))
-	require.False(t, isLiteralFalse(eval("1")))
-	require.False(t, isLiteralFalse(eval("0")))
-	require.False(t, isLiteralFalse(eval("()")))
-	require.False(t, isLiteralFalse(eval("{true}")))
-	require.False(t, isLiteralFalse(eval("{false}")))
-	require.False(t, isLiteralFalse(eval("{(1)}")))
-	require.False(t, isLiteralFalse(eval("{(),1}")))
-	require.False(t, isLiteralFalse(eval("[true]")))
-	require.False(t, isLiteralFalse(eval("(val: true)")))
+	require.False(t, isLiteralFalse(mustEval("true")))
+	require.False(t, isLiteralFalse(mustEval("1")))
+	require.False(t, isLiteralFalse(mustEval("0")))
+	require.False(t, isLiteralFalse(mustEval("()")))
+	require.False(t, isLiteralFalse(mustEval("{true}")))
+	require.False(t, isLiteralFalse(mustEval("{false}")))
+	require.False(t, isLiteralFalse(mustEval("{(1)}")))
+	require.False(t, isLiteralFalse(mustEval("{(),1}")))
+	require.False(t, isLiteralFalse(mustEval("[true]")))
+	require.False(t, isLiteralFalse(mustEval("(val: true)")))
 }
 
 func TestForeachLeaf(t *testing.T) {
 	t.Parallel()
 
 	// No root
-	require.Equal(t,
-		leavesShouldBe{"<root>": "true"},
-		forInput("true"))
-	require.Equal(t,
-		leavesShouldBe{"<root>": "false"},
-		forInput("false"))
-	require.Equal(t,
-		leavesShouldBe{"<root>": "42"},
-		forInput("42"))
+	require.Equal(t, leavesShouldBe{"": "true"}, forInput("true"))
+	require.Equal(t, leavesShouldBe{"": "false"}, forInput("false"))
+	require.Equal(t, leavesShouldBe{"": "42"}, forInput("42"))
 
 	// Tuple root
-	require.Equal(t,
-		leavesShouldBe{},
-		forInput("()"))
+	require.Equal(t, leavesShouldBe{}, forInput("()"))
 	require.Equal(t,
 		leavesShouldBe{"a": "true", "b": "false"},
 		forInput("(a: true, b: false)"))
@@ -83,7 +75,7 @@ func TestForeachLeaf(t *testing.T) {
 
 	// Array root
 	require.Equal(t,
-		leavesShouldBe{"<root>": "false"}, // An unfortunate side effect of everything being a set
+		leavesShouldBe{"": "false"}, // An unfortunate side effect of everything being a set
 		forInput("[]"))
 	require.Equal(t,
 		leavesShouldBe{"(0)": "true", "(1)": "false", "(2).a": "1", "(2).b": "'2'", "(2).c('three')": "3", "(2).c(4)": "'4'"},
@@ -108,7 +100,7 @@ func forInput(source string) leavesShouldBe {
 
 	ForeachLeaf(tree, "", func(val rel.Value, path string) {
 		valStr := val.String()
-		if valStr == "{}" {
+		if valStr == "" {
 			valStr = "false"
 		} else if _, ok := val.(rel.String); ok {
 			valStr = "'" + valStr + "'"
@@ -119,8 +111,11 @@ func forInput(source string) leavesShouldBe {
 	return leaves
 }
 
-func eval(source string) rel.Value {
-	value, _ := evalErr(source) //nolint:errcheck
+func mustEval(source string) rel.Value {
+	value, err := evalErr(source) //nolint:errcheck
+	if err != nil {
+		panic(err)
+	}
 	return value
 }
 

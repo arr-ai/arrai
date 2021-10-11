@@ -9,6 +9,8 @@ import (
 
 	"github.com/arr-ai/frozen"
 	"github.com/arr-ai/wbnf/parser"
+
+	"github.com/arr-ai/arrai/pkg/fu"
 )
 
 // Relation is a Set that only contains Tuples, all of which map the same keys.
@@ -99,12 +101,8 @@ func (r Relation) Enumerator() ValueEnumerator {
 	}
 }
 
-func (r Relation) OrderedValues() []Value {
-	v := make([]Value, 0, r.Count())
-	for e := r.ArrayEnumerator(); e.MoveNext(); {
-		v = append(v, e.Current())
-	}
-	return v
+func (r Relation) OrderedValues() ValueEnumerator {
+	return OrderedValueEnumerator(r.Enumerator(), ValueLess)
 }
 
 func (r Relation) ArrayEnumerator() ValueEnumerator {
@@ -335,23 +333,26 @@ func (r Relation) Source() parser.Scanner {
 }
 
 func (r Relation) String() string {
-	s := strings.Builder{}
-	s.WriteString("{")
+	return fu.String(r)
+}
+
+func (r Relation) Format(f fmt.State, verb rune) {
+	fu.WriteString(f, "{")
 
 	attrs := r.attrs.GetSorted()
-	s.WriteString(fmt.Sprintf("|%s| ", strings.Join(attrs, ", ")))
+	fu.Fprintf(f, "|%s| ", strings.Join(attrs, ", "))
 	projection := r.projectionBasedOnNames(attrs)
 	notFirst := false
 	for i := r.rows.OrderedRange(projection); i.Next(); {
 		if notFirst {
-			s.WriteString(", ")
+			fu.WriteString(f, ", ")
 		} else {
 			notFirst = true
 		}
-		s.WriteString(i.Values().project(projection).String())
+		fu.Format(i.Values().project(projection), f, verb)
 	}
-	s.WriteString("}")
-	return s.String()
+
+	fu.WriteString(f, "}")
 }
 
 func (r Relation) projectionBasedOnNames(names NamesSlice) valueProjector {

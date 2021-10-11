@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/arr-ai/arrai/pkg/fu"
 	"github.com/arr-ai/arrai/rel"
 )
 
@@ -32,6 +33,8 @@ type Enumerable interface {
 //}
 func PrettifyString(val interface{}, indentsNum int) (string, error) {
 	switch t := val.(type) {
+	case rel.EmptySet:
+		return "{}", nil
 	case rel.DictEntryTuple:
 		key := t.MustGet("@")
 		prettyKey, err := PrettifyString(key, indentsNum)
@@ -75,6 +78,14 @@ func PrettifyString(val interface{}, indentsNum int) (string, error) {
 	}
 }
 
+func prettifyOrderableSet(arr rel.OrderableSet, indentsNum int) (string, error) {
+	content, err := prettifyItems(rel.ValueEnumeratorToSlice(arr.OrderedValues()), indentsNum)
+	if err != nil {
+		return "", err
+	}
+	return fmt.Sprintf("{%v}", content), nil
+}
+
 func prettifyRelation(r rel.Relation, indentsNum int) (string, error) {
 	sb := strings.Builder{}
 	indent := func() {
@@ -105,14 +116,6 @@ func prettifyRelation(r rel.Relation, indentsNum int) (string, error) {
 	}
 	sb.WriteString("}")
 	return sb.String(), nil
-}
-
-func prettifyOrderableSet(arr rel.OrderableSet, indentsNum int) (string, error) {
-	content, err := prettifyItems(arr.OrderedValues(), indentsNum)
-	if err != nil {
-		return "", err
-	}
-	return fmt.Sprintf("{%v}", content), nil
 }
 
 func prettifyArray(arr rel.Array, indentsNum int) (string, error) {
@@ -151,7 +154,7 @@ func prettifyTuple(tuple rel.Tuple, indentsNum int) (string, error) {
 }
 
 func prettifyString(str rel.String) (string, error) {
-	return rel.Repr(str), nil
+	return fu.Repr(str), nil
 }
 
 // prettifyItems returns a pretty string representation of the contents of a set or array.
@@ -204,7 +207,7 @@ func isSimple(val rel.Value) bool {
 	case rel.Array:
 		return isSimpleValues(t.Values())
 	case rel.GenericSet:
-		return isSimpleValues(t.OrderedValues())
+		return isSimpleValues(rel.ValueEnumeratorToSlice(t.OrderedValues()))
 	case rel.Dict:
 		return t.Count() == 0
 	}

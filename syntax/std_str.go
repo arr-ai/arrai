@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/arr-ai/arrai/pkg/fu"
 	"github.com/arr-ai/arrai/rel"
 	"github.com/arr-ai/arrai/tools"
 )
@@ -12,25 +13,25 @@ import (
 // TODO: Make this more robust.
 func formatValue(ctx context.Context, format string, value rel.Value) string {
 	var v interface{}
-	switch set := value.(type) {
-	case rel.Set:
-		if s, is := tools.ValueAsString(set); is {
-			v = s
-		} else if s, is := tools.ValueAsBytes(set); is {
-			v = string(s)
-		} else {
-			v = rel.Repr(set)
-		}
+	switch value := value.(type) {
 	case nil:
 		panic(fmt.Errorf("unable to format nil value"))
+	case rel.EmptySet:
+		v = ""
+	case rel.String:
+		v = value.String()
+	case rel.Bytes:
+		v = string(value.Bytes())
 	default:
-		v = value.Export(ctx)
+		v = fu.Repr(value)
 	}
 	switch format[len(format)-1] {
 	case 't':
 		v = value.IsTrue()
 	case 'c', 'd', 'o', 'O', 'x', 'X', 'U':
 		v = int(value.Export(ctx).(float64))
+	case 'f', 'F', 'g', 'G':
+		v = value.Export(ctx).(float64)
 	case 'q':
 		if f, ok := v.(float64); ok {
 			v = int(f)
@@ -85,7 +86,7 @@ var (
 	})
 
 	stdStrRepr = rel.NewNativeFunction("repr", func(_ context.Context, value rel.Value) (rel.Value, error) {
-		return rel.NewString([]rune(rel.Repr(value))), nil
+		return rel.NewString([]rune(fu.Repr(value))), nil
 	})
 )
 

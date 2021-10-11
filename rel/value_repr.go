@@ -1,208 +1,102 @@
 package rel
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 	"strings"
+
+	"github.com/arr-ai/arrai/pkg/fu"
 )
 
-var reprEscapes = escapesWithDelim()
-
-func escapesWithDelim() []byte {
-	escapes := make([]byte, 32)
-	escapes['\a'] = 'a'
-	escapes['\b'] = 'b'
-	escapes['\x1b'] = 'e'
-	escapes['\f'] = 'f'
-	escapes['\n'] = 'n'
-	escapes['\r'] = 'r'
-	escapes['\t'] = 't'
-	escapes['\v'] = 'v'
+var reprEscapes = func() [][]byte {
+	escapes := make([][]byte, 32)
+	escapes['\a'] = []byte(`\a`)
+	escapes['\b'] = []byte(`\b`)
+	escapes['\x1b'] = []byte(`\e`)
+	escapes['\f'] = []byte(`\f`)
+	escapes['\n'] = []byte(`\n`)
+	escapes['\r'] = []byte(`\r`)
+	escapes['\t'] = []byte(`\t`)
+	escapes['\v'] = []byte(`\v`)
 	return escapes
-}
+}()
 
-type reprCommaSep bool
+// Build a slice of byte reprs: [][]byte{[]byte('0'), ..., []byte('255')}.
+var byteReprs = func() [][]byte {
+	buf := bytes.NewBuffer(make([]byte, 0, 3*256))
+	offsets := append(make([]int, 0, 257), 0)
+	for i := 0; i < 256; i++ {
+		fu.Fprint(buf, i)
+		offsets = append(offsets, buf.Len())
+	}
+	data := buf.Bytes()
+	ret := make([][]byte, 0, 256)
+	for i, end := range offsets[1:] {
+		begin := offsets[i]
+		ret = append(ret, data[begin:end])
+	}
+	return ret
+}()
 
-func (s *reprCommaSep) Sep(w io.Writer) {
-	if !*s {
-		*s = true
-	} else {
-		fmt.Fprint(w, ", ")
+func writeSep(w io.Writer, i int, sep string) { //nolint:unparam
+	if i > 0 {
+		fu.WriteString(w, sep)
 	}
 }
 
 func reprOffset(offset int, w io.Writer) {
 	if offset != 0 {
-		fmt.Fprintf(w, `%d\`, offset)
+		fu.Fprintf(w, `%d\`, offset)
 	}
 }
 
 func reprEscape(s string, delim byte, w io.Writer) {
-	fmt.Fprintf(w, "%c", delim)
+	fu.Fprintf(w, "%c", delim)
 	// TODO: optimise by handling non-special characters in groups.
 	for _, c := range s {
 		if c == '\\' || c == rune(delim) {
-			fmt.Fprintf(w, `\%c`, c)
+			fu.Fprintf(w, `\%c`, c)
 		} else if c >= 32 {
-			fmt.Fprintf(w, "%c", c)
-		} else if escape := reprEscapes[c]; escape != 0 {
-			fmt.Fprintf(w, `\%c`, escape)
+			fu.Fprintf(w, "%c", c)
+		} else if escape := reprEscapes[c]; escape != nil {
+			fu.Write(w, escape)
 		} else {
-			fmt.Fprintf(w, `\x%02x`, c)
+			fu.Fprintf(w, `\x%02x`, c)
 		}
 	}
-	fmt.Fprintf(w, "%c", delim)
+	fu.Fprintf(w, "%c", delim)
 }
 
 func reprString(str String, w io.Writer) {
 	reprOffset(str.offset, w)
-	s := string(str.s)
+	reprStr(string(str.s), w)
+}
+
+func reprStr(s string, w io.Writer) {
 	switch {
 	case !strings.Contains(s, "'"):
 		reprEscape(s, '\'', w)
 	default:
 		reprEscape(s, '"', w)
 	}
-}
-
-func reprBytes(b Bytes, w io.Writer) {
-	reprOffset(b.offset, w)
-	fmt.Fprint(w, "<<")
-	s := string(b.b)
-	switch {
-	case !strings.Contains(s, "'"):
-		reprEscape(s, '\'', w)
-	default:
-		reprEscape(s, '"', w)
-	}
-	fmt.Fprint(w, ">>")
-}
-
-func reprArray(a Array, w io.Writer) {
-	reprOffset(a.offset, w)
-	fmt.Fprint(w, "[")
-	var sep reprCommaSep
-	for _, v := range a.values {
-		sep.Sep(w)
-		if v != nil {
-			reprValue(v, w)
-		}
-	}
-	fmt.Fprint(w, "]")
-}
-
-func reprDict(d Dict, w io.Writer) {
-	fmt.Fprint(w, "{")
-	var sep reprCommaSep
-	for _, e := range d.OrderedEntries() {
-		sep.Sep(w)
-		reprValue(e.at, w)
-		fmt.Fprint(w, ": ")
-		reprValue(e.value, w)
-	}
-	fmt.Fprint(w, "}")
 }
 
 // OrderableSet is a type used to repr GenericSet and UnionSet to avoid duplications.
 type OrderableSet interface {
 	Set
-	OrderedValues() []Value
+	OrderedValues() ValueEnumerator
 }
 
-func reprOrderableSet(s OrderableSet, w io.Writer) {
+func reprOrderableSet(w io.Writer, s OrderableSet) {
 	if s.Equal(True) {
 		fmt.Fprint(w, sTrue)
 		return
 	}
 	fmt.Fprint(w, "{")
-	var sep reprCommaSep
-	for _, v := range s.OrderedValues() {
-		sep.Sep(w)
-		reprValue(v, w)
+	for i, o := s.OrderedValues(), 0; i.MoveNext(); o++ {
+		writeSep(w, o, ", ")
+		fu.FRepr(w, i.Current())
 	}
 	fmt.Fprint(w, "}")
-}
-
-func reprClosure(c Closure, w io.Writer) {
-	fmt.Fprintf(w, "%s", c.String())
-}
-
-func reprStringCharTuple(t StringCharTuple, w io.Writer) {
-	fmt.Fprintf(w, "(@: %d, %s: %d)", t.at, StringCharAttr, t.char)
-}
-
-func reprArrayItemTuple(t ArrayItemTuple, w io.Writer) {
-	fmt.Fprintf(w, "(@: %d, %s: ", t.at, ArrayItemAttr)
-	reprValue(t.item, w)
-	fmt.Fprint(w, ")")
-}
-
-func reprDictEntryTuple(t DictEntryTuple, w io.Writer) {
-	fmt.Fprint(w, "(@: ")
-	reprValue(t.at, w)
-	fmt.Fprintf(w, ", %s: ", DictValueAttr)
-	reprValue(t.value, w)
-	fmt.Fprint(w, ")")
-}
-
-func reprTuple(t *GenericTuple, w io.Writer) {
-	fmt.Fprint(w, "(")
-	var sep reprCommaSep
-	for _, name := range TupleOrderedNames(t) {
-		sep.Sep(w)
-		fmt.Fprintf(w, "%s: ", TupleNameRepr(name))
-		reprValue(t.MustGet(name), w)
-	}
-	fmt.Fprint(w, ")")
-}
-
-func reprNumber(n Number, w io.Writer) {
-	fmt.Fprint(w, n.String())
-}
-
-func reprNativeFunction(v Value, w io.Writer) {
-	fmt.Fprintf(w, "native function %s", v.String())
-}
-
-func reprValue(v Value, w io.Writer) {
-	switch v := v.(type) {
-	case EmptySet, TrueSet:
-		fmt.Fprint(w, v.String())
-	case String:
-		reprString(v, w)
-	case Bytes:
-		reprBytes(v, w)
-	case Array:
-		reprArray(v, w)
-	case Dict:
-		reprDict(v, w)
-	case Relation:
-		fmt.Fprint(w, v.String())
-	case OrderableSet:
-		reprOrderableSet(v, w)
-	case Closure:
-		reprClosure(v, w)
-	case BytesByteTuple:
-		fmt.Fprint(w, v.String())
-	case StringCharTuple:
-		reprStringCharTuple(v, w)
-	case ArrayItemTuple:
-		reprArrayItemTuple(v, w)
-	case DictEntryTuple:
-		reprDictEntryTuple(v, w)
-	case *GenericTuple:
-		reprTuple(v, w)
-	case Number:
-		reprNumber(v, w)
-	case *NativeFunction:
-		reprNativeFunction(v, w)
-	default:
-		panic(fmt.Errorf("Repr(): unexpected Value type %s: %[1]v", ValueTypeAsString(v))) //nolint:golint
-	}
-}
-
-func Repr(v Value) string {
-	var sb strings.Builder
-	reprValue(v, &sb)
-	return sb.String()
 }

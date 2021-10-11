@@ -5,12 +5,13 @@ import (
 	"fmt"
 	"reflect"
 	"sort"
-	"strings"
 
 	"github.com/go-errors/errors"
 
 	"github.com/arr-ai/frozen"
 	"github.com/arr-ai/wbnf/parser"
+
+	"github.com/arr-ai/arrai/pkg/fu"
 )
 
 type multipleValues frozen.Set
@@ -104,18 +105,16 @@ func (d Dict) Equal(v interface{}) bool {
 }
 
 func (d Dict) String() string {
-	var sb strings.Builder
-	sb.WriteString("{")
-	for n, i := 0, d.Enumerator(); i.MoveNext(); n++ {
-		format := ", %v: %v"
-		if n == 0 {
-			format = format[2:]
-		}
-		t := i.Current().(DictEntryTuple)
-		fmt.Fprintf(&sb, format, t.at, t.value)
+	return fu.String(d)
+}
+
+func (d Dict) Format(f fmt.State, verb rune) {
+	fu.WriteString(f, "{")
+	for i, t := range d.OrderedEntries() {
+		writeSep(f, i, ", ")
+		fu.Fprintf(f, "%v: %v", t.at, t.value)
 	}
-	sb.WriteString("}")
-	return sb.String()
+	fu.WriteString(f, "}")
 }
 
 func (d Dict) OrderedEntries() []DictEntryTuple {

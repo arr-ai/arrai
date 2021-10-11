@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"reflect"
 
+	"github.com/arr-ai/arrai/pkg/fu"
+
 	"github.com/arr-ai/wbnf/parser"
 	"github.com/go-errors/errors"
 )
@@ -42,6 +44,11 @@ func (c Closure) EqualClosure(d Closure) bool {
 // String returns a string representation of the expression.
 func (c Closure) String() string {
 	return c.f.String()
+}
+
+// Format formats the expression.
+func (c Closure) Format(f fmt.State, verb rune) {
+	fu.FRepr(f, c.f)
 }
 
 // Eval returns the Value

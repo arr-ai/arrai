@@ -20,6 +20,8 @@ import (
 // AssertCodesEvalToSameValue asserts that code evaluate to the same value as
 // expected.
 func AssertCodesEvalToSameValue(t *testing.T, expected, code string) bool {
+	t.Helper()
+
 	ctx := arraictx.InitRunCtx(context.Background())
 	ctx = importcache.WithNewImportCache(ctx)
 	return AssertCodesEvalToSameValueCtx(ctx, t, expected, code)
@@ -28,6 +30,8 @@ func AssertCodesEvalToSameValue(t *testing.T, expected, code string) bool {
 // AssertCodesEvalToSameValueCtx asserts that code evaluate to the same value as
 // expected under the given context.
 func AssertCodesEvalToSameValueCtx(ctx context.Context, t *testing.T, expected, code string) bool {
+	t.Helper()
+
 	pc := ParseContext{SourceDir: ".."}
 
 	ast, err := pc.Parse(ctx, parser.NewScanner(expected))
@@ -57,6 +61,8 @@ func AssertCodesEvalToSameValueCtx(ctx context.Context, t *testing.T, expected, 
 // RequireCodesEvalToSameValue requires that code evaluates to the same value as
 // expected.
 func RequireCodesEvalToSameValue(t *testing.T, expected string, code string) {
+	t.Helper()
+
 	pc := ParseContext{SourceDir: ".."}
 	ctx := arraictx.InitRunCtx(context.Background())
 	ast, err := pc.Parse(ctx, parser.NewScanner(expected))
@@ -72,6 +78,8 @@ func RequireCodesEvalToSameValue(t *testing.T, expected string, code string) {
 
 // AssertCodeEvalsToType asserts that code evaluates to the same type as expected.
 func AssertCodeEvalsToType(t *testing.T, expected interface{}, code string) bool {
+	t.Helper()
+
 	pc := ParseContext{SourceDir: ".."}
 	ctx := arraictx.InitRunCtx(context.Background())
 	ast, err := pc.Parse(ctx, parser.NewScanner(code))
@@ -89,6 +97,8 @@ func AssertCodeEvalsToType(t *testing.T, expected interface{}, code string) bool
 
 // AssertCodeEvalsToGrammar asserts that code evaluates to a grammar equal to expected.
 func AssertCodeEvalsToGrammar(t *testing.T, expected parser.Grammar, code string) {
+	t.Helper()
+
 	pc := ParseContext{SourceDir: ".."}
 	ctx := arraictx.InitRunCtx(context.Background())
 	astElt := pc.MustParseString(ctx, code)
@@ -105,6 +115,8 @@ func AssertCodeEvalsToGrammar(t *testing.T, expected parser.Grammar, code string
 // AssertCodePanics asserts that code panics when executed.
 // TODO: Remove this. Should only intentionally panic for implementation bugs.
 func AssertCodePanics(t *testing.T, code string) bool {
+	t.Helper()
+
 	return assert.Panics(t, func() {
 		pc := ParseContext{SourceDir: ".."}
 		ctx := arraictx.InitRunCtx(context.Background())
@@ -120,6 +132,8 @@ func AssertCodePanics(t *testing.T, code string) bool {
 // AssertCodeParseErrors asserts that code fails with a certain
 // message when parsed.
 func AssertCodeParseErrors(t *testing.T, errString, code string) bool {
+	t.Helper()
+
 	pc := ParseContext{SourceDir: ".."}
 	ctx := arraictx.InitRunCtx(context.Background())
 	_, err := pc.Parse(ctx, parser.NewScanner(code))
@@ -130,6 +144,8 @@ func AssertCodeParseErrors(t *testing.T, errString, code string) bool {
 // AssertCodeErrors asserts that code fails with a certain
 // message when executed.
 func AssertCodeErrors(t *testing.T, errString, code string) bool {
+	t.Helper()
+
 	pc := ParseContext{SourceDir: ".."}
 	ctx := arraictx.InitRunCtx(context.Background())
 	ast, err := pc.Parse(ctx, parser.NewScanner(code))
@@ -147,6 +163,8 @@ func AssertCodeErrors(t *testing.T, errString, code string) bool {
 
 // AssertScan asserts that a lexer's next produced token is as expected.
 func AssertScan(t *testing.T, l *Lexer, tok Token, intf interface{}, lexeme string) bool {
+	t.Helper()
+
 	if !assert.True(t, l.Scan()) {
 		return false
 	}
@@ -176,6 +194,8 @@ func AssertScan(t *testing.T, l *Lexer, tok Token, intf interface{}, lexeme stri
 
 // AssertEvalExprString asserts Expr string.
 func AssertEvalExprString(t *testing.T, expected, source string) bool {
+	t.Helper()
+
 	expr, err := Compile(arraictx.InitRunCtx(context.Background()), ".", source)
 	return assert.NoError(t, err) &&
 		assert.NotNil(t, expr) &&
@@ -183,6 +203,8 @@ func AssertEvalExprString(t *testing.T, expected, source string) bool {
 }
 
 func MustAbs(t *testing.T, filePath string) string {
+	t.Helper()
+
 	abs, err := filepath.Abs(filePath)
 	require.NoError(t, err)
 	return abs

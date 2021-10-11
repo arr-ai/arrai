@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"unsafe"
 
+	"github.com/arr-ai/arrai/pkg/fu"
+
 	"github.com/arr-ai/hash"
 	"github.com/arr-ai/wbnf/parser"
 )
@@ -64,10 +66,16 @@ func (f *Function) EqualFunction(g *Function) bool {
 
 // String returns a string representation of the expression.
 func (f *Function) String() string {
+	return fu.String(f)
+}
+
+// Format formats the expression.
+func (f *Function) Format(s fmt.State, verb rune) {
 	if f.arg.String() == "-" {
-		return fmt.Sprintf("(&%s)", f.body)
+		fu.Fprintf(s, "(&%s)", f.body)
+	} else {
+		fu.Fprintf(s, "(\\%s %s)", f.arg, f.body)
 	}
-	return fmt.Sprintf("(\\%s %s)", f.arg, f.body)
 }
 
 // Eval returns the Value

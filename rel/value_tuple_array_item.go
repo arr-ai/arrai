@@ -7,6 +7,8 @@ import (
 
 	"github.com/arr-ai/hash"
 	"github.com/arr-ai/wbnf/parser"
+
+	"github.com/arr-ai/arrai/pkg/fu"
 )
 
 const ArrayItemAttr = "@item"
@@ -68,7 +70,11 @@ func (t ArrayItemTuple) Equal(v interface{}) bool {
 
 // String returns a string representation of a Tuple.
 func (t ArrayItemTuple) String() string {
-	return fmt.Sprintf("(@: %d, %s: %v)", t.at, ArrayItemAttr, t.item)
+	return fu.String(t)
+}
+
+func (t ArrayItemTuple) Format(f fmt.State, verb rune) {
+	fmt.Fprintf(f, "(@: %d, "+ArrayItemAttr+": %v)", t.at, t.item)
 }
 
 // Eval returns the tuple.

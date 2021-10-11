@@ -189,7 +189,12 @@ func OrderedValueEnumerator(e ValueEnumerator, less Less) ValueEnumerator {
 	for e.MoveNext() {
 		values = append(values, e.Current())
 	}
+	sort.Slice(values, func(i, j int) bool { return less(values[i], values[j]) })
 	return &valueSliceEnumerator{values: values, i: -1}
+}
+
+func ValueLess(a, b Value) bool {
+	return a.Less(b)
 }
 
 type valueSliceEnumerator struct {

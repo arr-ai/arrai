@@ -39,11 +39,11 @@ func (p SetPattern) Bind(ctx context.Context, local Scope, value Value) (context
 	}
 
 	if len(p.patterns) > set.Count()+len(extraElements) {
-		return ctx, EmptyScope, fmt.Errorf("length of set %s shorter than set pattern %s", set, p)
+		return ctx, EmptyScope, fmt.Errorf("length of set %v shorter than set pattern %s", set, p)
 	}
 
 	if len(extraElements) == 0 && len(p.patterns) < set.Count() {
-		return ctx, EmptyScope, fmt.Errorf("length of set %s longer than set pattern %s", set, p)
+		return ctx, EmptyScope, fmt.Errorf("length of set %v longer than set pattern %s", set, p)
 	}
 
 	result := EmptyScope
@@ -97,7 +97,7 @@ func (p SetPattern) Bind(ctx context.Context, local Scope, value Value) (context
 			ctx, scope, err = p.patterns[i].Bind(ctx, local, set)
 		} else {
 			if set.Count() != 1 {
-				return ctx, EmptyScope, fmt.Errorf("the length of set %s is wrong", set)
+				return ctx, EmptyScope, fmt.Errorf("the length of set %v is wrong", set)
 			}
 
 			e := set.Enumerator()

@@ -6,6 +6,8 @@ import (
 	"reflect"
 
 	"github.com/arr-ai/wbnf/parser"
+
+	"github.com/arr-ai/arrai/pkg/fu"
 )
 
 type EmptySet struct{}
@@ -67,7 +69,18 @@ func (e EmptySet) Source() parser.Scanner {
 }
 
 func (e EmptySet) String() string {
-	return "{}"
+	return ""
+}
+
+func (e EmptySet) Format(f fmt.State, verb rune) {
+	switch verb {
+	case 'v':
+		fu.WriteFormattedValue(f, sEmptySet)
+	case 't':
+		fu.WriteFormattedValue(f, sFalse)
+	default:
+		fu.WriteFormattedValue(f, "")
+	}
 }
 
 func (e EmptySet) Count() int {

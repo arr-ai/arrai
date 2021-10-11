@@ -4,6 +4,8 @@ import (
 	"fmt"
 
 	"github.com/arr-ai/arrai/rel"
+
+	"github.com/pkg/errors"
 )
 
 // FromArrai translates an arrai value to an object suitable for marshalling into json/yaml.
@@ -26,7 +28,10 @@ func (t Translator) FromArrai(v rel.Value) (interface{}, error) {
 			return t.objFromArraiTuple(v)
 		}
 		if array, ok := v.Get("a"); ok && v.Count() == 1 {
-			return t.arrFromArrai(array)
+			if s, is := array.(rel.Set); is {
+				return t.arrFromArrai(s)
+			}
+			return nil, errors.Errorf("FromArrai: value in (a: <value>) must be a set")
 		}
 		if str, ok := v.Get("s"); ok && v.Count() == 1 {
 			switch str := str.(type) {
@@ -56,7 +61,7 @@ func (t Translator) FromArrai(v rel.Value) (interface{}, error) {
 			return nil, nil
 		}
 		return map[string]interface{}{}, nil
-	case rel.Set, rel.GenericSet:
+	case rel.Set:
 		if t.strict {
 			return map[string]interface{}{}, nil
 		}
@@ -105,36 +110,35 @@ func (t Translator) objFromArraiTuple(v rel.Tuple) (map[string]interface{}, erro
 }
 
 // arrFromArrai converts an arrai array to an array.
-func (t Translator) arrFromArrai(v rel.Value) ([]interface{}, error) {
-	switch s := v.(type) {
+func (t Translator) arrFromArrai(s rel.Set) ([]interface{}, error) {
+	elts := make([]interface{}, 0, s.Count())
+	switch s := s.(type) {
 	case rel.EmptySet:
-		return []interface{}{}, nil
+		return elts, nil
 	case rel.Array:
-		elts := make([]interface{}, 0, s.Count())
-		for e := s.Enumerator(); e.MoveNext(); {
-			item := e.Current().(rel.ArrayItemTuple)
-			attr, ok := item.Get(rel.ArrayItemAttr)
-			if !ok {
-				return nil, fmt.Errorf("get ArrayItemAttr from array item %s error", item)
-			}
-			data, err := t.FromArrai(attr)
+		for i := s.ArrayEnumerator(); i.MoveNext(); {
+			data, err := t.FromArrai(i.Current())
 			if err != nil {
 				return nil, err
 			}
 			elts = append(elts, data)
 		}
-		return elts, nil
 	case rel.OrderableSet:
-		elts := make([]interface{}, 0, s.Count())
-		for _, item := range s.OrderedValues() {
-			data, err := t.FromArrai(item)
+		for i := s.OrderedValues(); i.MoveNext(); {
+			e, err := t.FromArrai(i.Current())
 			if err != nil {
 				return nil, err
 			}
-			elts = append(elts, data)
+			elts = append(elts, e)
 		}
-		return elts, nil
 	default:
-		return nil, fmt.Errorf("unexpected array type %s", rel.ValueTypeAsString(s))
+		for i := rel.OrderedValueEnumerator(s.Enumerator(), rel.ValueLess); i.MoveNext(); {
+			e, err := t.FromArrai(i.Current())
+			if err != nil {
+				return nil, err
+			}
+			elts = append(elts, e)
+		}
 	}
+	return elts, nil
 }

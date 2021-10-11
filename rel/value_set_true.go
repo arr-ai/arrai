@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"reflect"
 
+	"github.com/arr-ai/arrai/pkg/fu"
+
 	"github.com/arr-ai/frozen"
 	"github.com/arr-ai/hash"
 	"github.com/arr-ai/wbnf/parser"
@@ -68,6 +70,10 @@ func (TrueSet) Source() parser.Scanner {
 
 func (TrueSet) String() string {
 	return sTrue
+}
+
+func (TrueSet) Format(f fmt.State, verb rune) {
+	fu.WriteFormattedValue(f, sTrue)
 }
 
 func (TrueSet) Count() int {

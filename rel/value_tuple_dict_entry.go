@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"reflect"
 
+	"github.com/arr-ai/arrai/pkg/fu"
+
 	"github.com/arr-ai/wbnf/parser"
 )
 
@@ -64,9 +66,14 @@ func (t DictEntryTuple) Equal(v interface{}) bool {
 	return false
 }
 
-// String returns a string representation of a Tuple.
+// String returns a string representation of a DictEntryTuple.
 func (t DictEntryTuple) String() string {
-	return fmt.Sprintf("(@: %v, %s: %v)", t.at, DictValueAttr, t.value)
+	return fu.String(t)
+}
+
+// Format formats a DictEntryTuple.
+func (t DictEntryTuple) Format(f fmt.State, verb rune) {
+	fu.Fprintf(f, "(@: %v, %s: %v)", t.at, DictValueAttr, t.value)
 }
 
 // Eval returns the tuple.

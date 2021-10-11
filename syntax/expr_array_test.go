@@ -4,7 +4,7 @@ import "testing"
 
 func TestArrayExprStringEmpty(t *testing.T) {
 	t.Parallel()
-	AssertEvalExprString(t, `{}`, `[]`)
+	AssertEvalExprString(t, ``, `[]`)
 }
 
 func TestArrayExprStringHoles(t *testing.T) {

@@ -55,8 +55,9 @@ func testCompileScript(t *testing.T, script, mod, expected string, args ...strin
 	if runtime.GOOS == "windows" {
 		outFile += ".exe"
 	}
-	assert.NoError(t, compileFile(ctx, filename, outFile))
-	testExec(t, outFile, expected+"\n", args...)
+	if assert.NoError(t, compileFile(ctx, filename, outFile)) {
+		testExec(t, outFile, expected+"\n", args...)
+	}
 }
 
 func testExec(t *testing.T, path, expected string, args ...string) {

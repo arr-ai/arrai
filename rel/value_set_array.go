@@ -5,9 +5,10 @@ import (
 	"fmt"
 	"math"
 	"reflect"
-	"strings"
 
 	"github.com/arr-ai/wbnf/parser"
+
+	"github.com/arr-ai/arrai/pkg/fu"
 )
 
 // Array is an ordered collection of Values.
@@ -140,21 +141,22 @@ func (a Array) Equal(v interface{}) bool {
 
 // String returns a string representation of an Array.
 func (a Array) String() string {
-	var sb strings.Builder
+	return fu.String(a)
+}
+
+// String returns a string representation of an Array.
+func (a Array) Format(f fmt.State, verb rune) {
 	if a.offset != 0 {
-		fmt.Fprintf(&sb, `%d\`, a.offset)
+		fu.Fprintf(f, `%d\`, a.offset)
 	}
-	sb.WriteRune('[')
+	fu.WriteString(f, "[")
 	for i, v := range a.values {
-		if i > 0 {
-			sb.WriteString(", ")
-		}
+		writeSep(f, i, ", ")
 		if v != nil {
-			sb.WriteString(v.String())
+			fu.Format(v, f, 'v')
 		}
 	}
-	sb.WriteRune(']')
-	return sb.String()
+	fu.WriteString(f, "]")
 }
 
 // Shift increments the Array's offset

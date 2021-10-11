@@ -14,6 +14,7 @@ import (
 	"github.com/chzyer/readline"
 
 	"github.com/arr-ai/arrai/pkg/arraictx"
+	"github.com/arr-ai/arrai/pkg/fu"
 	"github.com/arr-ai/arrai/pkg/importcache"
 	"github.com/arr-ai/arrai/rel"
 	"github.com/arr-ai/arrai/syntax"
@@ -141,7 +142,7 @@ func shellEval(ctx context.Context, lines string, scope rel.Scope) (_ rel.Value,
 	if err != nil {
 		return nil, err
 	}
-	fmt.Fprintf(os.Stdout, "%s\n", rel.Repr(value))
+	fmt.Fprintf(os.Stdout, "%s\n", fu.Repr(value))
 	return value, nil
 }
 

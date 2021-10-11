@@ -1,7 +1,6 @@
 package rel
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"reflect"
@@ -12,6 +11,8 @@ import (
 
 	"github.com/arr-ai/frozen"
 	"github.com/arr-ai/wbnf/parser"
+
+	"github.com/arr-ai/arrai/pkg/fu"
 )
 
 // GenericTuple is the default implementation of Tuple.
@@ -255,16 +256,19 @@ func TupleNameRepr(name string) string {
 
 // String returns a string representation of a Tuple.
 func (t *GenericTuple) String() string {
-	var buf bytes.Buffer
-	buf.WriteRune('(')
+	return fu.String(t)
+}
+
+// Format formats a GenericTuple.
+func (t *GenericTuple) Format(f fmt.State, verb rune) {
+	fu.WriteString(f, "(")
 	for i, name := range TupleOrderedNames(t) {
-		if i != 0 {
-			buf.WriteString(", ")
-		}
-		fmt.Fprintf(&buf, "%s: %s", TupleNameRepr(name), t.MustGet(name).String())
+		writeSep(f, i, ", ")
+		fu.WriteString(f, TupleNameRepr(name))
+		fu.WriteString(f, ": ")
+		fu.Fprintf(f, "%v", t.MustGet(name))
 	}
-	buf.WriteRune(')')
-	return buf.String()
+	fu.WriteString(f, ")")
 }
 
 // Eval returns the tuple.

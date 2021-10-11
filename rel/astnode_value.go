@@ -104,8 +104,8 @@ func ASTBranchFromValue(b Tuple) ast.Branch {
 				children = ast.One{Node: ASTLeafFromValue(value)}
 			case GenericSet:
 				c := make(ast.Many, 0, value.Count())
-				for _, v := range value.OrderedValues() {
-					c = append(c, ASTNodeFromValue(v.(Tuple).MustGet(ArrayItemAttr)))
+				for i := value.OrderedValues(); i.MoveNext(); {
+					c = append(c, ASTNodeFromValue(i.Current().(Tuple).MustGet(ArrayItemAttr)))
 				}
 				children = c
 			case Array:

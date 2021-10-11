@@ -131,7 +131,7 @@ func stdOsIsATty(ctx context.Context, value rel.Value) (rel.Value, error) {
 	}
 	fd, ok := n.Int()
 	if !ok {
-		return nil, fmt.Errorf("isatty arg must be an integer, not %s", value)
+		return nil, fmt.Errorf("isatty arg must be an integer, not %v", value)
 	}
 
 	switch fd {

@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/arr-ai/arrai/pkg/buildinfo"
-	"github.com/arr-ai/arrai/rel"
+	"github.com/arr-ai/arrai/pkg/fu"
 )
 
 func TestGetBuildInfo(t *testing.T) {
@@ -14,7 +14,7 @@ func TestGetBuildInfo(t *testing.T) {
 		`git: (commit: 'd399e13f3670c6698ba35148e6f545322e20e1fb', tags: {'v0.99.0'}), `+
 		`go: (arch: 'amd64', compiler: (arch: 'amd64', os: 'darwin', version: 'go1.15 darwin/amd64'), os: 'darwin'), `+
 		`version: 'DIRTY-v0.99.0')`,
-		rel.Repr(
+		fu.Repr(
 			GetBuildInfo(
 				buildinfo.BuildData{
 					Version:    "DIRTY-v0.99.0",

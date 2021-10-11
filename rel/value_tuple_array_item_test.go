@@ -122,11 +122,11 @@ func TestArrayItemTuple_String(t *testing.T) {
 		want  string
 	}{
 		{name: "0@0", want: "(@: 0, @item: 0)", tuple: NewArrayItemTuple(0, NewNumber(0))},
-		{name: "a@0", want: "(@: 0, @item: {})", tuple: NewArrayItemTuple(0, None)},
+		{name: "{}@0", want: "(@: 0, @item: {})", tuple: NewArrayItemTuple(0, None)},
 		{name: "0@42", want: "(@: 42, @item: 0)", tuple: NewArrayItemTuple(42, NewNumber(0))},
-		{name: "a@42", want: "(@: 42, @item: {})", tuple: NewArrayItemTuple(42, None)},
-		{name: "b@42", want: "(@: 42, @item: 1)", tuple: NewArrayItemTuple(42, NewNumber(1))},
-		{name: "b@43", want: "(@: 43, @item: 1)", tuple: NewArrayItemTuple(43, NewNumber(1))},
+		{name: "{}@42", want: "(@: 42, @item: {})", tuple: NewArrayItemTuple(42, None)},
+		{name: "1@42", want: "(@: 42, @item: 1)", tuple: NewArrayItemTuple(42, NewNumber(1))},
+		{name: "1@43", want: "(@: 43, @item: 1)", tuple: NewArrayItemTuple(43, NewNumber(1))},
 	}
 	for _, test := range tests {
 		test := test

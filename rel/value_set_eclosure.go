@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"reflect"
 
+	"github.com/arr-ai/arrai/pkg/fu"
+
 	"github.com/arr-ai/wbnf/parser"
 )
 
@@ -42,7 +44,14 @@ func (c ExprClosure) EqualExprClosure(d ExprClosure) bool {
 
 // String returns a string representation of the expression.
 func (c ExprClosure) String() string {
-	return "◖" + c.e.String() + "◗"
+	return fu.String(c)
+}
+
+// Format formats the expression.
+func (c ExprClosure) Format(f fmt.State, verb rune) {
+	fu.WriteString(f, "◖")
+	fu.FRepr(f, c.e)
+	fu.WriteString(f, "◗")
 }
 
 // Eval returns the Value

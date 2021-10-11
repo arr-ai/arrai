@@ -1,25 +1,27 @@
 package rel
 
 import (
-	"strings"
+	"fmt"
 
 	"github.com/arr-ai/hash"
+
+	"github.com/arr-ai/arrai/pkg/fu"
 )
 
 // Values is used as a high performance tuple in the Relation struct.
 type Values []Value
 
 func (v Values) String() string {
-	s := strings.Builder{}
-	s.WriteString("(")
+	return fu.String(v)
+}
+
+func (v Values) Format(f fmt.State, verb rune) {
+	fu.WriteString(f, "(")
 	for i, val := range v {
-		if i > 0 {
-			s.WriteString(", ")
-		}
-		s.WriteString(val.String())
+		writeSep(f, i, ", ")
+		fu.Format(val, f, 'v')
 	}
-	s.WriteString(")")
-	return s.String()
+	fu.WriteString(f, ")")
 }
 
 func (v Values) project(p valueProjector) projectedValues {
@@ -195,7 +197,11 @@ func (pv projectedValues) values() Values {
 }
 
 func (pv projectedValues) String() string {
-	return pv.values().String()
+	return fu.String(pv.values())
+}
+
+func (pv projectedValues) Format(f fmt.State, verb rune) {
+	fu.Format(pv.values(), f, verb)
 }
 
 func (pv projectedValues) Hash(seed uintptr) uintptr {

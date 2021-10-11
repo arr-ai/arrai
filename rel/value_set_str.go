@@ -7,6 +7,8 @@ import (
 
 	"github.com/arr-ai/hash"
 	"github.com/arr-ai/wbnf/parser"
+
+	"github.com/arr-ai/arrai/pkg/fu"
 )
 
 // StringCharAttr is the standard name for the value-attr of a character tuple.
@@ -103,6 +105,14 @@ func (s String) EqualString(t String) bool {
 // String returns a string representation of a String.
 func (s String) String() string {
 	return string(s.s)
+}
+
+func (s String) Format(f fmt.State, verb rune) {
+	if verb == 's' {
+		fu.WriteString(f, string(s.s))
+	} else {
+		reprString(s, f)
+	}
 }
 
 // Eval returns the string.

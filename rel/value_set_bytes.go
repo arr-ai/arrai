@@ -5,9 +5,12 @@ import (
 	"context"
 	"fmt"
 	"reflect"
+	"regexp"
 
 	"github.com/arr-ai/hash"
 	"github.com/arr-ai/wbnf/parser"
+
+	"github.com/arr-ai/arrai/pkg/fu"
 )
 
 // BytesByteAttr is the standard name for the value-attr of a character tuple.
@@ -82,6 +85,27 @@ func (b Bytes) EqualBytes(c Bytes) bool {
 // String returns a string representation of a Bytes.
 func (b Bytes) String() string {
 	return string(b.b)
+}
+
+var renderableBytesRE = regexp.MustCompile(`^[\a\x08\x1b\f\n\r\t\v -~]+$`)
+
+// Format formats a Bytes.
+func (b Bytes) Format(f fmt.State, verb rune) {
+	switch verb {
+	case 'v':
+		fu.WriteString(f, "<<")
+		if renderableBytesRE.Match(b.b) {
+			reprStr(string(b.b), f)
+		} else {
+			for i, byt := range b.b {
+				writeSep(f, i, ", ")
+				fu.Write(f, byteReprs[byt])
+			}
+		}
+		fu.WriteString(f, ">>")
+	default:
+		fu.Write(f, b.b)
+	}
 }
 
 // Eval returns the string.

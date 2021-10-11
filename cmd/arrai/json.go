@@ -9,7 +9,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
 
-	"github.com/arr-ai/arrai/rel"
+	"github.com/arr-ai/arrai/pkg/fu"
 	"github.com/arr-ai/arrai/translate"
 )
 
@@ -34,6 +34,6 @@ func fromJSON(cli *cli.Context) error {
 	if err != nil {
 		logrus.Fatal(err)
 	}
-	fmt.Println(rel.Repr(val))
+	fmt.Println(fu.Repr(val))
 	return nil
 }

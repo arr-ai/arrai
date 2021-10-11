@@ -26,7 +26,7 @@ func TestBytesExpr(t *testing.T) {
 		"BytesExpr.Eval: Number does not represent a byte: -2",
 		`<<(-2)>>`)
 	AssertCodeErrors(t,
-		"BytesExpr.Eval: offset string is not supported: offset",
+		"BytesExpr.Eval: offset string is not supported: 2\\'offset",
 		`<<(2\"offset")>>`)
 	AssertCodeErrors(t,
 		"BytesExpr.Eval: set is not supported",
