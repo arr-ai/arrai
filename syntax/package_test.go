@@ -39,11 +39,11 @@ func TestPackageImport(t *testing.T) {
 	AssertCodesEvalToSameValue(t, `{1, 4, 9, 16}`, `//{./examples/simple/simple}        `)
 	AssertCodesEvalToSameValue(t, `1            `, `//{/examples/import/relative_import}`)
 	AssertCodesEvalToSameValue(t, `2            `, `//{/examples/import/comb_import}   `)
-	AssertCodesEvalToSameValue(t, `2            `, `//{    /examples/import/comb_import    }   `)
-	AssertCodesEvalToSameValue(t, `2            `, `//{	/examples/import/comb_import	}   `)
+	AssertCodesEvalToSameValue(t, `2            `, `//{    /examples/import/comb_import    }`)
+	AssertCodesEvalToSameValue(t, `2            `, `//{	/examples/import/comb_import	}`)
 	AssertCodesEvalToSameValue(t, `2            `, `//{
 		/examples/import/comb_import
-		}   `)
+		}`)
 }
 
 func TestPackageImportFromRoot(t *testing.T) {
