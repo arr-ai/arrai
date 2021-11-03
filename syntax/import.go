@@ -68,6 +68,8 @@ func importLocalFile(
 	importPath, sourceDir string,
 ) (rel.Expr, error) {
 	importPath = strings.ReplaceAll(importPath, " ", "")
+	importPath = strings.ReplaceAll(importPath, "\t", "")
+	importPath = strings.ReplaceAll(importPath, "\n", "")
 	if fromRoot {
 		rootPath, err := findRootFromModule(ctx, sourceDir)
 		if err != nil {
