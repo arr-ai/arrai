@@ -41,8 +41,9 @@ func TestPackageImport(t *testing.T) {
 	AssertCodesEvalToSameValue(t, `2            `, `//{/examples/import/comb_import}    `)
 	AssertCodesEvalToSameValue(t, `2            `, `//{    /examples/import/comb_import    }`)
 	AssertCodesEvalToSameValue(t, `2            `, `//{	/examples/import/comb_import	}`)
-	AssertCodesEvalToSameValue(t, `2            `, `//{
-		/examples/import/comb_import
+	AssertCodesEvalToSameValue(t, `2            `,
+		`//{
+			/examples/import/comb_import
 		}`)
 }
 
