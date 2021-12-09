@@ -1,4 +1,5 @@
-//+build !wasm
+//go:build !wasm
+// +build !wasm
 
 package shell
 

@@ -32,6 +32,5 @@ require (
 	google.golang.org/genproto v0.0.0-20210608205507-b6d2f5bf0d7d // indirect
 	google.golang.org/grpc v1.38.0
 	google.golang.org/protobuf v1.26.0
-	gopkg.in/yaml.v2 v2.3.0
-	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
+	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
 )

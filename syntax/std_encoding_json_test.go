@@ -28,7 +28,6 @@ func TestJSONDecode_NonStrict(t *testing.T) {
 	AssertCodesEvalToSameValue(t, "{}", `//encoding.json.decoder((strict: false))('[]')`)
 	AssertCodeErrors(t, "", `//encoding.json.decoder((strict: false))(123)`)
 	AssertCodesEvalToSameValue(t, "123", `//encoding.json.decoder((strict: false))('123')`)
-	AssertCodesEvalToSameValue(t, "123", `//encoding.json.decoder((strict: false))('123')`)
 
 	json := testJSONString()
 	expected := testArraiStringLoose()

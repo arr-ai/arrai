@@ -10,20 +10,21 @@ For details of how Arr.ai encodes XML, see [Encoding](#Encoding) below.
 Usage:
 
 | example | equals |
-|:-|:-|
+|:---|:---|
 | `//encoding.xml.decode('<?xml version="1.0"?><root></root>')` | `[(xmldecl: 'version="1.0"'), (elem: 'root')]` |
 
 ## `//encoding.xml.decoder(config <: (:trimSurroundingWhitespace <: bool)).decode(xml <: string|bytes) <: array`
 
 `decoder` takes a tuple used to configure decoding and returns the decoding function:
+
 | config | description |
-|:-|:-|
+|:---|:---|
 | `trimSurroundingWhitespace` | Strips newline strings `'\n'` used only for xml file formatting |
 
 Usage:
 
 | example | equals |
-|:-|:-|
+|:---|:---|
 | `//encoding.xml.decoder((trimSurroundingWhitespace: true)).decode('<?xml version="1.0"?>\n')` | `[(xmldecl: 'version="1.0"')]` |
 | `//encoding.xml.decoder((trimSurroundingWhitespace: false)).decode('<?xml version="1.0"?>\n')` | `[(xmldecl: 'version="1.0"'), '\n']` |
 
@@ -38,7 +39,7 @@ For details of the limitations of XML encoding, see [Limitations](#Limitations) 
 Usage:
 
 | example | equals |
-|:-|:-|
+|:---|:---|
 | `//encoding.xml.encode([(xmldecl: 'version="1.0"')])` | `<?xml version="1.0"?>` |
 
 ## `//encoding.csv.decode(csv <: string|bytes) <: array`
@@ -48,14 +49,15 @@ Usage:
 Usage:
 
 | example | equals |
-|:-|:-|
+|:---|:---|
 | `//encoding.csv.decode('a,b,c\n1,2,3')` | `[['a', 'b', 'c'], ['1', '2', '3']]` |
 
 ## `//encoding.csv.decoder(config <: (comma <: int, comment <: int)) <: ((csv <: string|bytes) <: array)`
 
 `decoder` takes a tuple used to configure decoding and returns the decoding function.
+
 | config | description |
-|:-|:-|
+|:---|:---|
 | `comma` | Configures the separator used (defaults to `%,`). |
 | `comment` | Ignores lines from the input that start with the given character (defaults to regarding all lines as value input). |
 | `trimLeadingSpace` | Leading white space in a field is ignored. This is ignored even if the field delimiter, comma, is white space. |
@@ -65,7 +67,7 @@ Usage:
 Usage:
 
 | example | equals |
-|:-|:-|
+|:---|:---|
 | `//encoding.csv.decoder((comma: %:))('a:b:c\n1:2:3')` | `[['a', 'b', 'c'], ['1', '2', '3']]` |
 | `//encoding.csv.decoder((comment: %#))('a,b,c\n#1,2,3')` | `[['a', 'b', 'c']]` |
 
@@ -76,21 +78,22 @@ Usage:
 Usage:
 
 | example | equals |
-|:-|:-|
+|:---|:---|
 | `//encoding.csv.encode([['a', 'b', 'c'], ['1', '2', '3']])` | `<<'a,b,c\n1,2,3'>>` |
 
 ## `//encoding.csv.encoder(config <: (comma <: int, crlf <: bool)) <: (\(csv <: array) <: bytes)`
 
 `encoder` takes a tuple used to configure encoding and returns the encoding function:
+
 | config | description |
-|:-|:-|
+|:---|:---|
 | `comma` | Configures the separator used (defaults to `%,`). |
 | `crlf` | Encodes new lines as either `'\r\n'` when `true` or `'\n'` when `false` (defaults to `false`). |
 
 Usage:
 
 | example | equals |
-|:-|:-|
+|:---|:---|
 | `//encoding.csv.encoder((comma: %:))([['a', 'b', 'c'], ['1', '2', '3']])` | `<<'a:b:c\n1:2:3'>>` |
 | `//encoding.csv.encoder((crlf: true))([['a', 'b', 'c'], ['1', '2', '3']])` | `<<'a,b,c\r\n1,2,3'>>` |
 
@@ -103,7 +106,7 @@ Because empty sets are indistinguishable to `""`, `false`, and `[]`, `decode`
 maps incoming JSON values as follows:
 
 | JSON encoding | maps to&hellip; | notes |
-|:-|:-|:-|
+|:---|:---|:---|
 | `"abc"` | `(s: "abc")` |
 | `[1, 2, 3]` | `(a: [1, 2, 3])` |
 | `false`/`true` | `(b: false)`/`(b: true)` |
@@ -114,7 +117,7 @@ maps incoming JSON values as follows:
 Usage:
 
 | example | equals |
-|:-|:-|
+|:---|:---|
 | `//encoding.json.decode('{"hi": "abc", "hello": 123}')` | `{'hello': 123, 'hi': (s: 'abc')}` |
 
 ## `//encoding.json.decoder(config <: (strict <: bool)) <: ((json <: string|bytes) <: array)`
@@ -122,39 +125,39 @@ Usage:
 `decoder` takes a tuple used to configure decoding and returns the decoding function:
 
 | config | description |
-|:-|:-|
+|:---|:---|
 | `strict` | For types that are indistinguishable when empty (strings, bools, and arrays), wrap values in tuples with a discriminating key (defaults to `true`). |
 
 Usage:
 
 | example | equals |
-|:-|:-|
+|:---|:---|
 | `//encoding.json.decoder(())('{"arr": [1], "null": null, "str": "2"}')` | `<<'{'arr': (a: [1]), 'null': (), 'str': (s: '2')}'>>` |
 | `//encoding.json.decoder((strict: false))('{"arr": [1], "null": null, "str": "2"}')` | `<<'{"arr": [1], "null": (), "str": "2"}'>>` |
 
-## `//encoding.json.encode(jsonDefinition <: set) <: string|bytes`
+## `//encoding.json.encode(jsonDefinition <: set) <: bytes`
 
 `encode` is the reverse of `decode`. It takes a built-in arr.ai value to `bytes` that represents a JSON object.
 
 Usage:
 
 | example | equals |
-|:-|:-|
+|:---|:---|
 | `//encoding.json.encode({'hello': 123, 'hi': (s: 'abc'), 'yo': (a: [1,2,3])})` | `'{"hello":123,"hi":"abc","yo":[1,2,3]}'` |
 
-## `//encoding.json.encode_indent(jsonDefinition <: set) <: string|bytes`
+## `//encoding.json.encode_indent(jsonDefinition <: set) <: bytes`
 
 `encode_indent` is like `encode` but applies indentations to format the output.
 
-## `//encoding.json.encoder(config <: (strict <: bool, prefix <: string, indent: string, escapeHTML <: bool)) <: ((json <: string|bytes) <: array)`
+## `//encoding.json.encoder(config <: (strict <: bool, prefix <: string, indent: string, escapeHTML <: bool)) <: ((jsonDefinition <: set) <: bytes)`
 
 `encoder` takes a tuple used to configure encoding and returns the encoding function:
 
 | config | description |
-|:-|:-|
-| prefix | The string to prepend to each line of encoded output (default `""`). |
-| indent | The string to use for each indent on each line of encoded output  (default `""`).<br/>If empty, the output will be encoded on a single line. |
-| escapeHTML | Whether [problematic HTML characters](https://pkg.go.dev/encoding/json#Encoder.SetEscapeHTML) should be escaped inside JSON quoted strings (default `false`). |
+|:---|:---|
+| `prefix` | The string to prepend to each line of encoded output (default `""`). |
+| `indent` | The string to use for each indent on each line of encoded output  (default `""`).<br/>If empty, the output will be encoded on a single line. |
+| `escapeHTML` | Whether [problematic HTML characters](https://pkg.go.dev/encoding/json#Encoder.SetEscapeHTML) should be escaped inside JSON quoted strings (default `false`). |
 | `strict` | For types that are indistinguishable when empty (strings, bools, and arrays), require values to be wrapped in tuples with a discriminating key (defaults to `true`).<br/>If `false`, all empty sets will be encoded as `null`. |
 
 Example:
@@ -178,7 +181,20 @@ Example:
 
 ## `//encoding.yaml.decode(json <: string|bytes) <: set`
 
-Exactly the same as `//encoding.json.decode`, but takes either a `string` or `bytes` that represents a YAML object.
+Exactly the same as `//encoding.json.decode` but takes either a `string` or `bytes` that represents a YAML object.
+
+## `//encoding.yaml.encode(yamlDefinition <: set) <: bytes`
+
+Exactly the same as `//encoding.json.encode` but returns `bytes` that represents a YAML object.
+
+## `//encoding.yaml.encoder(config <: (strict <: bool, indent: int)) <: ((yamlDefinition <: set) <: bytes)`
+
+`encoder` takes a tuple used to configure encoding and returns the encoding function:
+
+| config | description |
+|:---|:---|
+| `indent` | The number of spaces to indent sections with (default `4`). |
+| `strict` | For types that are indistinguishable when empty (strings, bools, and arrays), require values to be wrapped in tuples with a discriminating key (defaults to `true`).<br/>If `false`, all empty sets will be encoded as `null`. |
 
 ## `//encoding.proto.descriptor(protobufDefinition <: bytes) <: tuple`
 
@@ -241,7 +257,7 @@ Note that unlike standard `decode` functions, this is not reversible; its output
 ### Encoding
 
 | Description | XML Encoding | Arr.ai Encoding |
-|:-|:-|:-|
+|:---|:---|:---|
 | Declaration | `<?xml version="1.0"?>` | `[(xmldecl: 'version="1.0"')]` |
 | Directive |`<!DOCTYPE foo <!ELEMENT foo (#PCDATA)>>` | `(directive: 'DOCTYPE foo <!ELEMENT foo (#PCDATA)>')` |
 | Text | `Hello world` | `'Hello world'` |

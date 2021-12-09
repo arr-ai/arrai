@@ -37,6 +37,7 @@ func stdEncodingJSON() rel.Attr {
 			return jsonDecodeFnBody("json.decode", value, newJSONDecodeConfig())
 		}),
 
+		//nolint:dupl // Not a duplicate of JSON encoder
 		rel.NewNativeFunctionAttr(decoderAttr, func(_ context.Context, configValue rel.Value) (rel.Value, error) {
 			fn := "json.decoder"
 			config := newJSONDecodeConfig()

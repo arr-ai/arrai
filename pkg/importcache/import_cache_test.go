@@ -1,3 +1,4 @@
+//go:build timingsensitive
 // +build timingsensitive
 
 package importcache
