@@ -33,4 +33,10 @@ let _concat = \z \k \v $`${z}+${k}${v}`;
         let inline = {:time:2020-06-09:};
         util.invokeMacro(time, '2020-06-09') = inline = (day: 9, month: 6, year: 2020)
     ,
+
+    naturalOrder:
+        let input = {'a2','a10', 'a10a', 'a10b', 'a2a', 'a', '1', '12a', '12', '21', '21a1', '2', '', 'ab', 'a20b1c'};
+        let ordered = ['', '1', '2', '12', '12a', '21', '21a1', 'a', 'a2', 'a2a', 'a10', 'a10a', 'a10b', 'a20b1c', 'ab'];
+        (input orderby util.naturalOrder(.)) = ordered
+    ,
 )

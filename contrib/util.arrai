@@ -67,6 +67,7 @@ let reduceFlat = \arr \fn \val reduce(arr, \z \i reduce(i, fn, z), val);
 
 # Returns a sequence with any offset and holes removed.
 let noOffset = \s s rank (:.@);
+
 # Explore constructs a dependency graph by starting at source and calling step
 # to find adjacent nodes. Deps is the graph constructed so far.
 # Self-edges are ignored.
@@ -95,6 +96,18 @@ let rec _topsort = \graph \sorted \sources
     };
 let topsort = \graph _topsort(graph, [], unimported(graph));
 
+# NaturalOrder can be used to do a natural ordering of a set of strings
+let naturalOrder = 
+    let segment = //re.compile(`\d+|\D+`).match;
+    let digit = //re.compile(`\d`).match;
+    \v
+        let segments = segment(v) >> (.(0) rank (:.@));
+        let modCheck = cond {
+            segments && digit(segments(0)): 0,
+            _: 1,
+        };
+        segments >>> \i \w cond { (i % 2 = modCheck): //eval.value(w), _: w };
+
 (
     :explore,
     :filterTree,
@@ -106,4 +119,5 @@ let topsort = \graph _topsort(graph, [], unimported(graph));
     :reduceObj,
     :topsort,
     :unimported,
+    :naturalOrder,
 )
