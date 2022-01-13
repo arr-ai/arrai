@@ -16,8 +16,14 @@ let alias = flag.parser({'alias': (type: 'string', alias: 'a')});
         regular: justTypeConf.parse(['--str', 'hi', '--num', '123', '--bool']) = (
             args: [], flags: {'bool': true, 'num': 123, 'str': 'hi'}
         ),
+        regularWithEqual: justTypeConf.parse(['--str=hi', '--num=123']) = (
+            args: [], flags: {'num': 123, 'str': 'hi'}
+        ),
         regularOneDash: justTypeConf.parse(['-str', 'hi', '-num', '123', '-bool']) = (
             args: [], flags: {'bool': true, 'num': 123, 'str': 'hi'}
+        ),
+        regularOneDashWithEqual: justTypeConf.parse(['-str=hi', '-num=123']) = (
+            args: [], flags: {'num': 123, 'str': 'hi'}
         ),
         missing: justTypeConf.parse(['--str', 'hi', '--bool']) = (
             args: [], flags: {'bool': true, 'str': 'hi'}

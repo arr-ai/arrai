@@ -68,10 +68,15 @@
                 let flagConfig = \flagName
                     cond {
                         dashes.match(flagName):
-                            let trimmed = trimDashes(flagName);
-                            let name = config.alias(trimmed)?:trimmed;
-                            let config = config.flagConfigs(name)?:();
-                            (flagName: name, type: config.type?:'', repeated: config.repeated?:false),
+                            let name =
+                                let trimmed = trimDashes(flagName);
+                                let name = cond //seq.split('=', trimmed) {[name, _]: name, _: trimmed};
+                                config.alias(name)?:name
+                            ;
+
+                            let (?:type:'', ?:repeated:false, ...) = config.flagConfigs(name)?:();
+
+                            (flagName: name, :type, :repeated),
                         ,
                         _: (flagName: '', type: '', repeated: false),
                     }
@@ -86,6 +91,10 @@
                                 let value = cond {repeated: val.flags(flagName)?:[] ++ [value], _: value};
                                 val +> (flags: val.flags +> {flagName: value})
                             ;
+
+                            # if flag is of format --flag=value, add value to tail
+                            let tail = cond //seq.split('=', flag) {[_, value]: [value] ++ tail, _: tail};
+
                             cond type {
                                 'bool': parseFlag(tail, withFlagValue(true)),
                                 'string':
