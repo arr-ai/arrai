@@ -32,3 +32,32 @@ func TestInverseNest(t *testing.T) {
 		"not a relation",
 		`{(x: 1, y: 1), (x: 1, y: 2, z: 3)} nest ~|x|a`)
 }
+
+func TestDeterministicComplementNest(t *testing.T) {
+	t.Parallel()
+
+	AssertCodesEvalToSameValue(t,
+		`{{(a: 1, z: {(b: 5, c: 10)})}, {(a: 2, z: {(b: 7, c: 11)})}}`,
+		`{{(a: 1, b: 5, c: 10)}, {(a: 2, b: 7, c: 11)}} => ((.) nest ~|a|z)`,
+	)
+	AssertCodesEvalToSameValue(t,
+		`
+			{
+				|a , nona|
+				(11, {(b: 12, nonb: {(c: 13)})}),
+				(21, {(b: 22, nonb: {(c: 23)})}),
+				(31, {(b: 22, nonb: {(c: 33)})}),
+				(41, {(b: 22, nonb: {(c: 43)})}),
+			}
+		`,
+		`
+			let db = {
+				(a: 11, b: 12, c: 13),
+				(a: 21, b: 22, c: 23),
+				(a: 31, b: 22, c: 33),
+				(a: 41, b: 22, c: 43),
+			};
+			db nest ~|a|nona => . +> (nona: .nona nest ~|b|nonb)
+		`,
+	)
+}
