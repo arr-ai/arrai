@@ -217,17 +217,15 @@ func (s String) Without(value Value) Set {
 	if t, ok := value.(StringCharTuple); ok {
 		i := s.index(t.at)
 		switch {
-		case i == 0:
-			s = String{s: s.s[:i], offset: s.offset, holes: s.holes}
-		case i == len(s.s)-1:
-			s = String{s: s.s[i : len(s.s)-1], offset: s.offset, holes: s.holes}
-		case 0 < i && i < len(s.s)-1:
-			if t.char == s.s[i] {
-				newS := make([]rune, len(s.s))
-				copy(newS, s.s)
-				newS[i] = -1
-				s = String{s: newS, offset: s.offset, holes: s.holes + 1}
-			}
+		case i == 0 && t.char == s.s[0]:
+			s = String{s: s.s[1:], offset: s.offset + 1, holes: s.holes}
+		case i == len(s.s)-1 && t.char == s.s[len(s.s)-1]:
+			s = String{s: s.s[:len(s.s)-1], offset: s.offset, holes: s.holes}
+		case 0 < i && i < len(s.s)-1 && t.char == s.s[i]:
+			newS := make([]rune, len(s.s))
+			copy(newS, s.s)
+			newS[i] = -1
+			s = String{s: newS, offset: s.offset, holes: s.holes + 1}
 		}
 	}
 	if s.Count() == 0 {
