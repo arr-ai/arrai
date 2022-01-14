@@ -16,6 +16,18 @@ func TestXStringSimple(t *testing.T) {
 	AssertCodesEvalToSameValue(t, `"a42k3.142z"     `, `$"a${6*7}k${//math.pi:.3f}z"`)
 }
 
+func TestXStringRetainInitialSpaces(t *testing.T) {
+	t.Parallel()
+
+	AssertCodesEvalToSameValue(t, `"    "     `, `$"    "         `)
+	AssertCodesEvalToSameValue(t, `"    x"    `, `$"    x"        `)
+	AssertCodesEvalToSameValue(t, `"     abc" `, `$"     ${'abc'}"`)
+	AssertCodesEvalToSameValue(t, `"      abc"`, `$"     ${$' abc'}"`)
+
+	// suppress empty line
+	AssertCodesEvalToSameValue(t, `""`, `$"     ${''}"`)
+}
+
 func TestXStringBackquote(t *testing.T) {
 	t.Parallel()
 	AssertCodesEvalToSameValue(t, `""      `, "$``")

@@ -17,6 +17,7 @@ var (
 	indentRE      = regexp.MustCompile(`(\n[\t ]*)\z`)
 	firstIndentRE = regexp.MustCompile(`\A((\n[\t ]+)(?:\n)|(\n))`)
 	lastSpacesRE  = regexp.MustCompile(`\n([ \t]*)\z`)
+	spaces        = regexp.MustCompile(`\A[\t ]+`)
 )
 
 func (pc ParseContext) compileExpandableString(ctx context.Context, b ast.Branch, c ast.Children) (rel.Expr, error) {
@@ -25,6 +26,13 @@ func (pc ParseContext) compileExpandableString(ctx context.Context, b ast.Branch
 	parts := []interface{}{}
 
 	ws := quote[2:]
+
+	// retain initial spaces
+	if spaces.MatchString(ws) {
+		parts = append(parts, ws)
+		ws = ""
+	}
+
 	trim := ""
 	trimIndent := func(s string) {
 		s = ws + s
