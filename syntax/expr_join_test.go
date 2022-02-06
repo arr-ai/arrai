@@ -45,6 +45,20 @@ func TestCompose(t *testing.T) {
 
 	AssertCodesEvalToSameValue(t, `{}`, `{|a,b|(1,4),(1,5)} <-> {|b,c|(6,7)}`)
 	AssertCodesEvalToSameValue(t, `{|a,c|(2,7)}`, `{|a,b|(1,4),(2,5)} <-> {|b,c|(5,7),(6,7)}`)
+
+	// this tests the immutability of sets after joining.
+	AssertCodesEvalToSameValue(t,
+		`true`,
+		`
+			let x = {|x, y| (1, 'A'), (1, 'B'), (2, 'C')};
+			let y = {|y, z| ('A', 3), ('B', 2), ('B', 3)};
+			let composed1 = x <-> y;
+
+			x = {|x, y| (1, 'A'), (1, 'B'), (2, 'C')} &&
+			y = {|y, z| ('A', 3), ('B', 2), ('B', 3)} &&
+			composed1 = x <-> y
+		`,
+	)
 }
 
 func TestJoinExists(t *testing.T) {

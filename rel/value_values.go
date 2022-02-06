@@ -64,7 +64,9 @@ func (p valueProjector) mapper() func(interface{}) interface{} {
 	if p.isContiguous() {
 		a, b := p[0], p[len(p)-1]+1
 		return func(el interface{}) interface{} {
-			return el.(Values)[a:b]
+			v := make(Values, b-a)
+			copy(v, el.(Values)[a:b])
+			return v
 		}
 	}
 	return func(el interface{}) interface{} {
@@ -187,7 +189,9 @@ func (pv projectedValues) values() Values {
 		return Values{}
 	}
 	if pv.p.isContiguous() {
-		return pv.v[pv.p[0] : pv.p[len(pv.p)-1]+1]
+		v := make(Values, pv.p[len(pv.p)-1]-pv.p[0]+1)
+		copy(v, pv.v[pv.p[0]:pv.p[len(pv.p)-1]+1])
+		return v
 	}
 	v := make(Values, 0, len(pv.p))
 	for _, index := range pv.p {
