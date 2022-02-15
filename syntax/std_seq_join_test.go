@@ -45,6 +45,8 @@ func TestArrayJoin(t *testing.T) {
 
 	// Test cases the delimiter is []
 	AssertCodesEvalToSameValue(t, `[1,2]`, `//seq.join([],[[1],[2]])`)
+	AssertCodesEvalToSameValue(t, `[1,2]`, `//seq.join([],[[1],[],[2]])`)
+	AssertCodesEvalToSameValue(t, `[1,3,3,2]`, `//seq.join([3],[[1],[],[2]])`)
 	AssertCodesEvalToSameValue(t, `[]`, `//seq.join([],[])`)
 	AssertCodesEvalToSameValue(t, `[]`, `//seq.join([1],[])`)
 

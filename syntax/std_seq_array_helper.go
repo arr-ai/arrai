@@ -93,12 +93,11 @@ func arrayJoin(joiner rel.Value, subject rel.Array) (rel.Value, error) {
 		if i > 0 {
 			result = append(result, joinerArray.Values()...)
 		}
-		switch vArray := value.(type) {
-		case rel.Array:
-			result = append(result, vArray.Values()...)
-		case rel.Value:
+		arr, isArray := rel.AsArray(value)
+		if !isArray {
 			return nil, fmt.Errorf("//seq.join: the type of subject element must be rel.Array")
 		}
+		result = append(result, arr.Values()...)
 	}
 
 	return rel.NewArray(result...), nil
