@@ -45,7 +45,7 @@ func contextualEval(ctx context.Context, config EvalConfig, v rel.Value) (rel.Va
 		}
 		scope = scope.With("//", localLib)
 	} else {
-		scope = scope.With("//", SafeStdScopeTuple())
+		scope = scope.Update(SafeStdScope())
 	}
 	for e := config.scopes.Enumerator(); e.MoveNext(); {
 		name, value := e.Current()
