@@ -13,8 +13,7 @@ import (
 	"github.com/urfave/cli/v2"
 
 	"github.com/arr-ai/arrai/pkg/buildinfo"
-	"github.com/arr-ai/arrai/rel"
-	"github.com/arr-ai/arrai/tools"
+	"github.com/arr-ai/arrai/pkg/shell"
 )
 
 var cmds = []*cli.Command{
@@ -104,14 +103,8 @@ VERSION:
 	err := app.Run(args)
 	if err != nil {
 		logrus.Info(err)
-		if tools.IsTerminal() {
-			if ctxErr, isContextErr := err.(rel.ContextErr); isContextErr && debug {
-				if err = createDebuggerShell(ctxErr); err != nil {
-					logrus.Info(err)
-				}
-			}
-		} else {
-			logrus.Info("unable to start debug shell: standard input is not a terminal")
+		if debug {
+			shell.CreateDebugSession(err)
 		}
 		os.Exit(1)
 	}

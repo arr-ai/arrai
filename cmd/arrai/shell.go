@@ -24,8 +24,3 @@ func iShell(_ *cli.Context) error {
 	buildinfo.SetBuildInfo(Version, BuildDate, GitFullCommit, GitTags, BuildOS, BuildArch, GoVersion)
 	return shell.Shell(arraictx.InitRunCtx(context.Background()), []rel.ContextErr{})
 }
-
-// createDebuggerShell creates an interactive shell to explore the context at which err occurred.
-func createDebuggerShell(err rel.ContextErr) error {
-	return shell.Shell(arraictx.InitRunCtx(context.Background()), err.GetImportantFrames())
-}

@@ -13,12 +13,14 @@ import (
 
 	"github.com/anz-bank/pkg/log"
 	"github.com/chzyer/readline"
+	"github.com/sirupsen/logrus"
 
 	"github.com/arr-ai/arrai/pkg/arraictx"
 	"github.com/arr-ai/arrai/pkg/fu"
 	"github.com/arr-ai/arrai/pkg/importcache"
 	"github.com/arr-ai/arrai/rel"
 	"github.com/arr-ai/arrai/syntax"
+	"github.com/arr-ai/arrai/tools"
 )
 
 const (
@@ -46,6 +48,19 @@ func shellFilterInputRune(r rune) (rune, bool) {
 		return 0, false
 	}
 	return r, true
+}
+
+// CreateDebugSession starts an interactive shell based on the provided error.
+func CreateDebugSession(err error) {
+	if tools.IsTerminal() {
+		if ctxErr, isContextErr := err.(rel.ContextErr); isContextErr {
+			if err = Shell(arraictx.InitRunCtx(context.Background()), ctxErr.GetImportantFrames()); err != nil {
+				logrus.Info(err)
+			}
+		}
+	} else {
+		logrus.Info("unable to start debug shell: standard input is not a terminal")
+	}
 }
 
 func Shell(ctx context.Context, frames []rel.ContextErr) error {

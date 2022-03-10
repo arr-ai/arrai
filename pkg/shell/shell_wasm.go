@@ -12,3 +12,7 @@ import (
 func Shell(_ context.Context, _ []rel.ContextErr) error {
 	panic("not implemented")
 }
+
+func CreateDebugSession(_ error) {
+	panic("not implemented")
+}
