@@ -74,7 +74,7 @@ func outputValue(ctx context.Context, value rel.Value, out string) error {
 	case "file", "f", "":
 		return outputFile(value, arg, fs, false)
 	case "dir", "d":
-		if t, is := value.(rel.Dict); is {
+		if t, is := rel.AsDict(value); is {
 			if err := outputTupleDir(t, arg, fs, true); err != nil {
 				return err
 			}

@@ -38,6 +38,17 @@ type Dict struct {
 	m frozen.Map
 }
 
+// AsDict checks whether a Value is a valid dictionary.
+func AsDict(v Value) (Dict, bool) {
+	switch v := v.(type) {
+	case Dict:
+		return v, true
+	case EmptySet:
+		return Dict{}, true
+	}
+	return Dict{}, false
+}
+
 // MustNewDict constructs a dict as a relation {|@, @value|...}, or panics if construction fails.
 func MustNewDict(allowDupKeys bool, entries ...DictEntryTuple) Set {
 	d, err := NewDict(allowDupKeys, entries...)
