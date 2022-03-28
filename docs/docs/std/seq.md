@@ -6,6 +6,7 @@ The `seq` library contains functions that are used for manipulating sequenced da
 the concatenation of the sequences in the array.
 
 Usage:
+
 | example | equals |
 |:-|:-|
 | `//seq.concat(["ba", "na", "na"])` | `"banana"` |
@@ -16,6 +17,7 @@ Usage:
 `contains` checks whether sequence `sub` is contained in sequence `subject` and returns true if it is, or false otherwise.
 
 Usage:
+
 | example | equals |
 |:-|:-|
 | `//seq.contains("substring", "the full string which has substring")` | `true` |
@@ -28,6 +30,7 @@ Usage:
 `has_prefix` checks whether the sequence `subject` is prefixed by sequence `prefix` and returns true if it is, or false otherwise.
 
 Usage:
+
 | example | equals |
 |:-|:-|
 | `//seq.has_prefix("I'm", "I'm running out of stuff to write")` | `true` |
@@ -43,6 +46,7 @@ Usage:
 `has_suffix` checks whether the sequence `subject` is suffixed by sequence `suffix` and returns true if it is, or false otherwise.
 
 Usage:
+
 | example | equals |
 |:-|:-|
 | `//seq.has_suffix("I'm", "I'm running out of stuff to write")` | `false` |
@@ -56,6 +60,7 @@ Usage:
 `join` returns a concatenated sequence with each member of sequence `subject` delimited by sequence `joiner`
 
 Usage:
+
 | example | equals |
 |:-|:-|
 | `//seq.join(", ", ["pew", "another pew", "and more pews"])` | `"pew, another pew, and more pews"` |
@@ -70,6 +75,7 @@ Usage:
 `split` splits sequence `subject` based on the provided sequence `delimiter`. It returns an array of sequence which are split from the sequence `subject`.
 
 Usage:
+
 | example | equals |
 |:-|:-|
 | `//seq.split(" ", "deliberately adding spaces to demonstrate the split function")` | `["deliberately", "adding", "spaces", "to", "demonstrate", "the", "split", "function"]` |
@@ -84,6 +90,7 @@ Usage:
 `sub` replaces occurrences of sequence `old` in sequence `subject` with sequence `new`. It returns the modified sequence.
 
 Usage:
+
 | example | equals |
 |:-|:-|
 | `//seq.sub("old string", "new sentence", "this is the old string")` | `"this is the new sentence"` |
@@ -96,6 +103,7 @@ Usage:
 `repeat` returns a sequence that contains `seq` repeated `n` times.
 
 Usage:
+
 | example | equals |
 |:-|:-|
 | `//seq.repeat(2, "hots")` | `"hotshots"` |
@@ -105,6 +113,7 @@ Usage:
 `trim_prefix` checks whether the sequence `subject` is prefixed by sequence `prefix` and returns `subject` with `prefix` removed, otherwise it returns `subject` unmodified. It will only remove one copy of `prefix`.
 
 Usage:
+
 | example | equals |
 |:-|:-|
 | `//seq.trim_prefix("I'm", "I'm running out of stuff to write")` | `" running out of stuff to write"` |
@@ -120,6 +129,7 @@ Usage:
 `trim_suffix` checks whether the sequence `subject` is suffixed by sequence `suffix` and returns `subject` with `suffix` removed, otherwise it returns `subject` unmodified. It will only remove one copy of `suffix`.
 
 Usage:
+
 | example | equals |
 |:-|:-|
 | `//seq.trim_suffix("I'm", "I'm running out of stuff to write")` | `"I'm running out of stuff to write"` |
