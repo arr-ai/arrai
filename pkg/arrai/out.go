@@ -155,8 +155,12 @@ func outputFile(content rel.Value, path string, fs afero.Fs, dryRun bool) error 
 	if err != nil {
 		return err
 	}
-	_, err = f.Write(bytes)
-	return err
+	defer f.Close()
+
+	if _, err = f.Write(bytes); err != nil {
+		return err
+	}
+	return f.Sync()
 }
 
 func configureOutput(t rel.Tuple, dir string, fs afero.Fs, dryRun bool) error {
