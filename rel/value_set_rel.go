@@ -175,7 +175,8 @@ func (r Relation) CallAll(_ context.Context, v Value, sb SetBuilder) error {
 }
 
 func (r Relation) unionSetSubsetBucket() string {
-	return r.attrs.String()
+	// sort to ensure that identity of Relations are the same no matter the order of names.
+	return r.attrs.GetSorted().String()
 }
 
 var relationKind = registerKind(211, reflect.TypeOf(Relation{}))

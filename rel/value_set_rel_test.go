@@ -57,6 +57,39 @@ func TestRelationString(t *testing.T) {
 	assert.Equal(t, "{|a, b, c| (1, 1, 2), (1, 2, 2), (2, 1, 3)}", r.String())
 }
 
+func TestRelationUnion(t *testing.T) {
+	t.Parallel()
+
+	r1 := Relation{
+		attrs: NamesSlice{"a", "b"},
+		p:     valueProjector{0, 1},
+		rows: &positionalRelation{
+			set: frozen.NewSet(row(1, 3)),
+		},
+	}
+
+	r2 := Relation{
+		attrs: NamesSlice{"b", "a"},
+		p:     valueProjector{0, 1},
+		rows: &positionalRelation{
+			set: frozen.NewSet(row(1, 3)),
+		},
+	}
+
+	// this ensures that even if NamesSlice is in different order, as long both Relations have the same names, the union
+	// of the Relations should be the same type of Relation.
+	AssertEqualValues(t,
+		Relation{
+			attrs: NamesSlice{"a", "b"},
+			p:     valueProjector{0, 1},
+			rows: &positionalRelation{
+				set: frozen.NewSet(row(1, 3), row(3, 1)),
+			},
+		},
+		Union(r1, r2),
+	)
+}
+
 func TestRelationHas(t *testing.T) {
 	t.Parallel()
 
