@@ -3,7 +3,7 @@ package ctxfs
 import (
 	"bytes"
 	"context"
-	"io/ioutil"
+	"io"
 	"testing"
 
 	"github.com/spf13/afero"
@@ -63,7 +63,7 @@ func assertFileEqual(t *testing.T, fs afero.Fs, filePath string, content []byte)
 	_, err = f.Stat()
 	assert.NoError(t, err)
 
-	buf, err := ioutil.ReadAll(f)
+	buf, err := io.ReadAll(f)
 	assert.NoError(t, err)
 	assert.Equal(t, content, buf)
 }

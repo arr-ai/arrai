@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"os"
 	"path"
@@ -248,7 +248,7 @@ func importURL(ctx context.Context, decoder rel.Tuple, url string) (rel.Expr, er
 	defer resp.Body.Close()
 
 	if resp.StatusCode == http.StatusOK {
-		data, err := ioutil.ReadAll(resp.Body)
+		data, err := io.ReadAll(resp.Body)
 		if err != nil {
 			return nil, err
 		}

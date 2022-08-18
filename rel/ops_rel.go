@@ -154,7 +154,7 @@ func Reduce(
 // Joiner returns a function that computes the relational join of a and b.
 //
 // Defn: Join(a{x…,y…}, b{y…,z…}) = ∀{x…,y…,z…}: {x…,y…} ∈ a ∧ {y…,z…} ∈ b
-//         for mutually disjoint x…, y…, z…
+// for mutually disjoint x…, y…, z…
 //
 // The combine function determines how to combine matching tuples from a and b.
 // The partitionName function determines the columns that are to be included in

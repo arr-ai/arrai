@@ -13,12 +13,8 @@ tidy:
 	goimports -w .
 
 # Builds the main binary, including the generated bindata.go.
-main: internal/arrai/bindata.go
+main: internal/arrai/echo.arraiz
 	go build -o main main.go && chmod +x main
-
-# Generates bindata.go, containing a []byte constant for internal/arrai/echo.arraiz.
-internal/arrai/bindata.go: internal/arrai/echo.arraiz
-	go-bindata -pkg arrai -o $@ $^
 
 # Generates .arraiz files by calling arrai bundle on .arrai files.
 %.arraiz: %.arrai

@@ -8,6 +8,9 @@ import (
 	"github.com/arr-ai/arrai/pkg/fu"
 	"github.com/arr-ai/arrai/rel"
 	"github.com/arr-ai/arrai/tools"
+
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 )
 
 // TODO: Make this more robust.
@@ -102,7 +105,7 @@ func stdStr() rel.Attr {
 		rel.NewAttr("repr", stdStrRepr),
 		createNestedFuncAttr("title", 1, func(_ context.Context, args ...rel.Value) (rel.Value, error) {
 			if s, is := tools.ValueAsString(args[0]); is {
-				return rel.NewString([]rune(strings.Title(s))), nil
+				return rel.NewString([]rune(cases.Title(language.English, cases.NoLower).String(s))), nil
 			}
 			return nil, fmt.Errorf("//str.title: arg not a string: %v", args[0])
 		}),

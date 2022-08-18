@@ -54,6 +54,7 @@ func serve(c *cli.Context) error {
 		}
 
 		wsFrontend := newWebsocketFrontend(eng)
+		//nolint:gosec
 		srv := &http.Server{
 			Addr:    listen,
 			Handler: http.HandlerFunc(wsFrontend.ServeHTTP),

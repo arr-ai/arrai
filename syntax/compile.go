@@ -652,10 +652,11 @@ func transformNestedRHS(scanner parser.Scanner, parent, fallback, transformedRHS
 // this transformation assumes that fallback and parent are available
 // transforms into
 // let pattern = fallback;
-// cond parent {
-//	 pattern: parent `op` rhs,
-//   _: fallback,
-// }
+//
+//	cond parent {
+//	  pattern: parent `op` rhs,
+//	  _: fallback,
+//	}
 func desugarNestedRHS(
 	arr []keyOpNode,
 	scanner parser.Scanner,

@@ -194,7 +194,7 @@ func NewLexerWithPrefix(prefix *bytes.Buffer, reader io.Reader) *Lexer {
 // 	newL.buffer = bytes.NewBuffer(l.buffer.Bytes())
 
 // 	// We need to duplicate the reader since reading from it is destructive
-// 	remBuf, err := ioutil.ReadAll(l.reader)
+// 	remBuf, err := io.ReadAll(l.reader)
 // 	if err != nil {
 // 		panic(err)
 // 	}
@@ -456,9 +456,10 @@ func (l *Lexer) ScanOperatorOrSymbol(
 
 // tokRE enriches a token regex, anchoring it to the start of its input and
 // capturing any leading whitespace.
-//   match[0]: full match
-//   match[1]: leading whitespace
-//   match[2]: lexeme
+//
+//	match[0]: full match
+//	match[1]: leading whitespace
+//	match[2]: lexeme
 func tokRE(re string) *regexp.Regexp {
 	return regexp.MustCompile(`\A(\s*)(` + re + `)`)
 }

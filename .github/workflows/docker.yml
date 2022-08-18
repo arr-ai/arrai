@@ -17,34 +17,55 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out code
-        uses: actions/checkout@master
+        uses: actions/checkout@v3
+
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: |
+            docker.io/anzbank/arrai
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=sha
+          labels: |
+            org.opencontainers.image.url=https://arr.ai
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
 
       - name: Build docker container image
-        uses: docker/build-push-action@v1
+        uses: docker/build-push-action@v3
         with:
-          repository: docker.io/anzbank/arrai
+          context: .
+          load: true
           push: false
-          tag_with_ref: true
-          add_git_labels: true
-          tags: latest
-          labels: org.opencontainers.image.revision=${{ github.sha }},org.opencontainers.image.url=https://arr.ai
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
 
       - name: Test container image
         uses: plexsystems/container-structure-test-action@v0.1.0
         with:
-          # this is intended to resolve to the local docker image we just built above
-          image: anzbank/arrai:latest
+          image: ${{ fromJSON(steps.meta.outputs.json).tags[0] }}
           config: container-structure-tests.yaml
 
-      - name: Build and push docker container image
-        uses: docker/build-push-action@v1
+      - name: Login to DockerHub
+        # only attempt to push if we are in the open source repo that has credentials, and there's been a push, not merely a pull request.
+        if: github.repository == 'arr-ai/arrai' && github.event_name == 'push'
+        uses: docker/login-action@v2
         with:
           username: ${{ secrets.DOCKER_USER }}
           password: ${{ secrets.DOCKER_PASS }}
-          repository: docker.io/anzbank/arrai
-          # only attempt to push if we are in the open source repo that has credentials, and there's been a push, not merely a pull request.
-          push: ${{ github.repository == 'arr-ai/arrai' && github.event_name == 'push'}}
-          tag_with_ref: true
-          add_git_labels: true
-          tags: latest
-          labels: org.opencontainers.image.revision=${{ github.sha }},org.opencontainers.image.url=https://arr.ai
+
+      - name: Build and push docker container image
+        # only attempt to push if we are in the open source repo that has credentials, and there's been a push, not merely a pull request.
+        if: github.repository == 'arr-ai/arrai' && github.event_name == 'push'
+        uses: docker/build-push-action@v3
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          platforms: linux/amd64,linux/arm64

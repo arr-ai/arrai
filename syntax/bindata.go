@@ -2,7 +2,7 @@ package syntax
 
 import (
 	"embed"
-	"io/ioutil"
+	"io"
 	"sync"
 )
 
@@ -38,7 +38,7 @@ func mustReadEmbeddedFile(path string) []byte {
 			panic(err)
 		}
 
-		data, err = ioutil.ReadAll(f)
+		data, err = io.ReadAll(f)
 		if err != nil {
 			panic(err)
 		}

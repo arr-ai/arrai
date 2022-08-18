@@ -26,7 +26,7 @@ const childrenKey = "children"
 
 // NOTE: Currently the XML transform does not support documents with explicit namespaces.
 // NOTE: A full cycle from XML -> Arr.ai -> XML reproduces semantically similar documents
-//       with possibly different content.
+// with possibly different content.
 type XMLDecodeConfig struct {
 	TrimSurroundingWhitespace bool
 }

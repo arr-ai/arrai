@@ -123,7 +123,7 @@ func (n Names) Minus(o Names) Names {
 	return Names((frozen.Set(n)).Difference(frozen.Set(o)))
 }
 
-// IsSubsetOf returns true if `n`` is a subset of `o`.
+// IsSubsetOf returns true if `n` is a subset of `o`.
 func (n Names) IsSubsetOf(o Names) bool {
 	return (frozen.Set(n)).IsSubsetOf(frozen.Set(o))
 }

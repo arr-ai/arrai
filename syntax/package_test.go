@@ -3,7 +3,6 @@ package syntax
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"runtime"
@@ -222,7 +221,7 @@ func TestJsonPackageImportNotExists(t *testing.T) {
 func TestPackageExternalImportModule(t *testing.T) {
 	// DO NOT t.Parallel()
 
-	tempdir, err := ioutil.TempDir("", "arrai-TestPackageExternalImportModule-")
+	tempdir, err := os.MkdirTemp("", "arrai-TestPackageExternalImportModule-")
 	require.NoError(t, err)
 	t.Logf("tempdir: %s", tempdir)
 	defer func() { require.NoError(t, os.RemoveAll(tempdir)) }()

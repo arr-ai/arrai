@@ -2,7 +2,7 @@ package main
 
 import (
 	"context"
-	"io/ioutil"
+	"io"
 	"strings"
 	"testing"
 
@@ -31,7 +31,7 @@ func assertEvalCreates(t *testing.T, expected map[string]string, source, out str
 	for path, content := range expected {
 		fs, err := memFs.Open(path)
 		if assert.NoError(t, err) {
-			data, err := ioutil.ReadAll(fs)
+			data, err := io.ReadAll(fs)
 			if assert.NoError(t, err) && assert.Equal(t, content, string(data), "path=%s", path) {
 				continue
 			}

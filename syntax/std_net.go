@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"strings"
 
@@ -169,7 +168,7 @@ func parseBody(bodyArg rel.Value) (io.Reader, error) {
 
 // parseResponse parses an HTTP response into an arr.ai value.
 func parseResponse(resp *http.Response) (rel.Value, error) {
-	buf, err := ioutil.ReadAll(resp.Body)
+	buf, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
 	}

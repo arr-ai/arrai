@@ -11,7 +11,7 @@ val, err := syntax.EvaluateExpr(arraictx.InitRunCtx(context.Background()), "", "
 
 The `arr.ai source` can be a string constant or loaded from a file. However loading sources dynamically can be complicated, since imports must still be resolved.
 
-An alternative method is to use `arrai bundle` to produce an `arraiz` ZIP archive containing all necessary sources, compile that archive into a Go program (with e.g. [`go-bindata`](https://github.com/go-bindata/go-bindata)), and then run it with:
+An alternative method is to use `arrai bundle` to produce an `arraiz` ZIP archive containing all necessary sources, compile that archive into a Go program (with e.g. [`embed`](https://pkg.go.dev/embed)), and then run it with:
 
 ```go
 val, err := syntax.EvaluateBundle(arraictx.InitRunCtx(context.Background()), bundle, "", "arg", "...")

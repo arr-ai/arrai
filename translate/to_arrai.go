@@ -10,10 +10,10 @@ import (
 //
 // translation follows the rules
 //
-//     object -> {|@,@item|, |key,val|, ...}
-//     array  -> array
-//     null   -> none
-//     other  -> value (bools, numerics, strings)
+//	object -> {|@,@item|, |key,val|, ...}
+//	array  -> array
+//	null   -> none
+//	other  -> value (bools, numerics, strings)
 func (t Translator) ToArrai(data interface{}) (rel.Value, error) {
 	switch v := data.(type) {
 	case map[interface{}]interface{}:

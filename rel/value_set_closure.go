@@ -140,7 +140,7 @@ func (c Closure) Where(p func(v Value) (bool, error)) (Set, error) {
 	panic("unimplemented")
 }
 
-//FIXME: context not used properly
+// FIXME: context not used properly
 func (c Closure) CallAll(ctx context.Context, arg Value, b SetBuilder) error {
 	niladic := c.f.Arg() == "-"
 	noArg := arg == nil

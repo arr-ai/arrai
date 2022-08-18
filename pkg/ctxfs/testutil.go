@@ -3,7 +3,7 @@ package ctxfs
 import (
 	"archive/zip"
 	"bytes"
-	"io/ioutil"
+	"io"
 	"path/filepath"
 	"testing"
 
@@ -25,7 +25,7 @@ func ZipEqualToFiles(t *testing.T, buf []byte, files map[string]string) {
 	for name, content := range files {
 		f, err := fs.Open(name)
 		assert.NoError(t, err)
-		buf, err := ioutil.ReadAll(f)
+		buf, err := io.ReadAll(f)
 		assert.NoError(t, err)
 		assert.Equal(t, content, string(buf))
 		delete(copy, name)

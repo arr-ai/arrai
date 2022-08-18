@@ -11,12 +11,7 @@ import (
 )
 
 func eval(args ...string) (rel.Value, error) {
-	bundle, err := arrai.Asset("internal/arrai/echo.arraiz")
-	if err != nil {
-		return nil, err
-	}
-
-	return syntax.EvaluateBundle(bundle, args...)
+	return syntax.EvaluateBundle(arrai.EchoArraiz, args...)
 }
 
 func main() {

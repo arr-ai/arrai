@@ -2,7 +2,6 @@ package syntax
 
 import (
 	"context"
-	"io/ioutil"
 	"os"
 	"testing"
 
@@ -17,7 +16,7 @@ import (
 func TestEvaluateBundle(t *testing.T) {
 	t.Parallel()
 
-	bundle, err := ioutil.ReadFile("../examples/os/echo.arraiz")
+	bundle, err := os.ReadFile("../examples/os/echo.arraiz")
 	require.NoError(t, err)
 
 	out, err := EvaluateBundle(bundle, "", "hello", "world")
@@ -28,7 +27,7 @@ func TestEvaluateBundle(t *testing.T) {
 func TestEvaluateBundle_NoArgs(t *testing.T) {
 	t.Parallel()
 
-	bundle, err := ioutil.ReadFile("../examples/os/echo.arraiz")
+	bundle, err := os.ReadFile("../examples/os/echo.arraiz")
 	require.NoError(t, err)
 
 	out, err := EvaluateBundle(bundle, "")

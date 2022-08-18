@@ -3,7 +3,6 @@ package syntax
 import (
 	"context"
 	"io"
-	"io/ioutil"
 	"sync"
 
 	"github.com/arr-ai/arrai/rel"
@@ -62,7 +61,7 @@ func (d *stdOsStdin) read(context.Context, rel.Value) (rel.Value, error) {
 	if d.bytes != nil {
 		return d.bytes, nil
 	}
-	f, err := ioutil.ReadAll(stdOsStdinVar.reader)
+	f, err := io.ReadAll(stdOsStdinVar.reader)
 	if err != nil {
 		return nil, err
 	}

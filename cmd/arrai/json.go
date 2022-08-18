@@ -3,7 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
 
 	"github.com/sirupsen/logrus"
@@ -22,7 +22,7 @@ var jsonCommand = &cli.Command{
 }
 
 func fromJSON(cli *cli.Context) error {
-	raw, err := ioutil.ReadAll(os.Stdin)
+	raw, err := io.ReadAll(os.Stdin)
 	if err != nil {
 		return err
 	}

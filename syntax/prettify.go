@@ -16,21 +16,22 @@ type Enumerable interface {
 
 // PrettifyString returns a string which represents `rel.Value` with more reabable format.
 // For example, `{b: 2, a: 1, c: (a: 2, b: {aa: {bb: (a: 22, d: {3, 1, 2})}})}` is formatted to:
-//{
-//	b: 2,
-//	a: 1,
-//	c: (
-//		a: 2,
-//		b: {
-//			aa: {
-//				bb: (
-//					a: 22,
-//					d: {3, 1, 2}
-//				)
+//
+//	{
+//		b: 2,
+//		a: 1,
+//		c: (
+//			a: 2,
+//			b: {
+//				aa: {
+//					bb: (
+//						a: 22,
+//						d: {3, 1, 2}
+//					)
+//				}
 //			}
-//		}
-//	)
-//}
+//		)
+//	}
 func PrettifyString(val interface{}, indentsNum int) (string, error) {
 	switch t := val.(type) {
 	case rel.EmptySet:

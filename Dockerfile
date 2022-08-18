@@ -1,12 +1,14 @@
-FROM golang:alpine3.12 AS stage
+ARG go_ver=1.19
+ARG alpine_ver=3.16
+
+FROM golang:${go_ver}-alpine${alpine_ver} AS stage
 RUN apk add --no-cache make git
-RUN go get github.com/anz-bank/go-bindata/...
 
 WORKDIR /usr/arrai
 COPY . .
 RUN make build
 
-FROM golang:alpine3.12
+FROM golang:${go_ver}-alpine${alpine_ver}
 COPY --from=stage /usr/arrai/arrai /bin/arrai
 
 ENTRYPOINT ["/bin/arrai"]

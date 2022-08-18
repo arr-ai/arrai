@@ -156,8 +156,9 @@ func TestXMLDecode_directive(t *testing.T) {
 	AssertCodesEvalToSameValue(t, expected, `//encoding.xml.decode(`+data+`)`)
 }
 
-//nolint:lll
 // children node inherits parent's implicit namespace
+//
+//nolint:lll
 func TestXMLDecode_implicitNamespace(t *testing.T) {
 	t.Parallel()
 
@@ -166,8 +167,9 @@ func TestXMLDecode_implicitNamespace(t *testing.T) {
 	AssertCodesEvalToSameValue(t, expected, `//encoding.xml.decode(`+data+`)`)
 }
 
-//nolint:lll
 // parent node uses explicit namespace
+//
+//nolint:lll
 func TestXMLDecode_explicitNamespace(t *testing.T) {
 	t.Parallel()
 
@@ -176,9 +178,10 @@ func TestXMLDecode_explicitNamespace(t *testing.T) {
 	AssertCodesEvalToSameValue(t, expected, `//encoding.xml.decode(`+data+`)`)
 }
 
-//nolint:lll
 // children node inherits parent's implicit namespace
 // parent node uses explicit namespace
+//
+//nolint:lll
 func TestXMLDecode_dualNamespace(t *testing.T) {
 	t.Parallel()
 

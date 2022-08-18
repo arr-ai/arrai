@@ -11,14 +11,14 @@ jobs:
     name: Build and Test Wasm
     runs-on: ubuntu-latest
     steps:
-    - name: Set up Go 1.16
-      uses: actions/setup-go@v1
+    - name: Set up Go 1.19
+      uses: actions/setup-go@v3
       with:
-        go-version: 1.16
+        go-version: 1.19
       id: go
 
     - name: Check out code into the Go module directory
-      uses: actions/checkout@v1
+      uses: actions/checkout@v3
 
     - name: Get dependencies
       run: go get -v -t -d ./...
@@ -27,7 +27,7 @@ jobs:
       run: GOOS=js GOARCH=wasm go build -o arrai.wasm ./cmd/arrai
 
     - name: Set up Node
-      uses: actions/setup-node@v1
+      uses: actions/setup-node@v3
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -40,7 +40,7 @@ jobs:
         echo '**** env'
         env
         echo '**** node'
-        node $(go env GOROOT)/misc/wasm/wasm_exec.js arrai.wasm eval '1 + 5'
+        node $(go env GOROOT)/misc/wasm/wasm_exec_node.js arrai.wasm eval '1 + 5'
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         NPM_AUTH_TOKEN: "SOME-RANDOM-KEY"

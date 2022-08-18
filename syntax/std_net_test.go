@@ -3,7 +3,7 @@ package syntax
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"testing"
 	"time"
@@ -102,7 +102,7 @@ type testHTTPHandler struct {
 func (h testHTTPHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.Header()["Date"] = nil // Remove non-deterministic Date header.
 
-	bs, err := ioutil.ReadAll(r.Body)
+	bs, err := io.ReadAll(r.Body)
 	require.NoError(h.t, err)
 
 	w.Header()["Method"] = []string{r.Method}
@@ -121,6 +121,7 @@ func (h testHTTPHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 // startHTTPServer creates, starts and returns a test server at addr.
 func startHTTPServer(t *testing.T, addr string) *http.Server {
+	//nolint:gosec
 	srv := &http.Server{Addr: addr, Handler: testHTTPHandler{t}}
 	go func() {
 		if err := srv.ListenAndServe(); err != http.ErrServerClosed {

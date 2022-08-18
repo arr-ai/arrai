@@ -2,12 +2,12 @@ module github.com/arr-ai/arrai
 
 go 1.16
 
-replace github.com/spf13/afero v1.3.5 => github.com/anz-bank/afero v1.2.4
+replace github.com/spf13/afero => github.com/anz-bank/afero v1.2.4
 
 require (
 	github.com/alecthomas/repr v0.0.0-20200325044227-4184120f674c // indirect
 	github.com/anz-bank/pkg v0.0.22
-	github.com/arr-ai/frozen v0.20.0
+	github.com/arr-ai/frozen v0.20.1
 	github.com/arr-ai/hash v0.8.0
 	github.com/arr-ai/proto v0.0.0-20180422074755-2ffbedebee50
 	github.com/arr-ai/wbnf v0.34.0
