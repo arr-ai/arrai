@@ -28,8 +28,8 @@ jobs:
           tags: |
             type=ref,event=branch
             type=ref,event=pr
-            type=semver,pattern={{version}}
-            type=sha
+            type=semver,pattern={{raw}}
+            type=sha,prefix=,format=long
           labels: |
             org.opencontainers.image.url=https://arr.ai
 
@@ -40,6 +40,7 @@ jobs:
         uses: docker/build-push-action@v3
         with:
           context: .
+          pull: true
           load: true
           push: false
           tags: ${{ steps.meta.outputs.tags }}
@@ -65,6 +66,7 @@ jobs:
         uses: docker/build-push-action@v3
         with:
           context: .
+          pull: true
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
