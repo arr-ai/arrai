@@ -27,7 +27,7 @@ jobs:
 
       - name: Install golangci-lint
         run: |
-          go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.48.0
+          go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.49.0
           git restore go.mod go.sum
 
       - name: Build

@@ -1,14 +1,13 @@
+run:
+  timeout: 5m
+
 linters-settings:
   errcheck:
     check-blank: true
   govet:
-    check-shadowing: true
-  golint:
+    check-shadowing: false
+  revive:
     min-confidence: 0
-  goimports:
-    local-prefixes: github.com/arr-ai/arrai
-  maligned:
-    suggest-new: true
   dupl:
     threshold: 100
   lll:
@@ -27,8 +26,7 @@ linters:
   disable-all: true
   enable:
   - bodyclose
-  - deadcode
-  # - depguard
+  - depguard
   - dogsled
   - dupl
   - errcheck
@@ -40,26 +38,23 @@ linters:
   - goconst
   # - godox
   # - gocritic
-  # - gocyclo
+  - gocyclo
   - gofmt
   - goimports
   - gosec
   - gosimple
-  # - govet
+  - govet
   - ineffassign
-  # - interfacer
   - lll
   - misspell
   - nakedret
   - prealloc
   - revive
   - staticcheck
-  - structcheck
   - stylecheck
   - typecheck
   - unconvert
   - unparam
   - unused
-  - varcheck
   - whitespace
   # - wsl

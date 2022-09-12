@@ -23,6 +23,7 @@ import (
 	"github.com/spf13/afero"
 	"github.com/urfave/cli/v2"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 
 	"github.com/arr-ai/arrai/pkg/arraictx"
 	"github.com/arr-ai/arrai/pkg/ctxfs"
@@ -41,7 +42,7 @@ func sync(c *cli.Context) error {
 	log.Infof("xServer: %s", server)
 	log.Infof("Directory: %s", dir)
 
-	conn, err := grpc.Dial(server, grpc.WithInsecure())
+	conn, err := grpc.Dial(server, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		return err
 	}

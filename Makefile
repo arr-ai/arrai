@@ -19,10 +19,10 @@ check-clean: generate
 .PHONY: bindata
 bindata: syntax/embed/implicit_import.arrai syntax/embed/stdlib-safe.arraiz syntax/embed/stdlib-unsafe.arraiz
 
-syntax/embed/stdlib-safe.arraiz: $(shell find syntax/stdlib -type f)
+syntax/embed/stdlib-safe.arraiz: go.mod $(shell find syntax/stdlib -type f)
 	go run ./cmd/arrai bundle -o $@ syntax/stdlib/stdlib-safe.arrai
 
-syntax/embed/stdlib-unsafe.arraiz: $(shell find syntax/stdlib -type f)
+syntax/embed/stdlib-unsafe.arraiz: go.mod $(shell find syntax/stdlib -type f)
 	go run ./cmd/arrai bundle -o $@ syntax/stdlib/stdlib-unsafe.arrai
 
 build: generate

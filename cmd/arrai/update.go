@@ -7,6 +7,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 
 	"github.com/arr-ai/arrai/pkg/arraictx"
 )
@@ -25,7 +26,7 @@ func update(c *cli.Context) error {
 	logrus.Infof("Server: %s", server)
 	logrus.Infof("Source: %s", source)
 
-	conn, err := grpc.Dial(server, grpc.WithInsecure())
+	conn, err := grpc.Dial(server, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		return err
 	}
