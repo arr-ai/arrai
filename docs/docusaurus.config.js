@@ -29,12 +29,9 @@ module.exports = {
             ],
         },
         algolia: {
-          apiKey: '5031cdb2b03a3286d0430a3cded5d3f0',
+          apiKey: '1143b195064f3b727aef07ec0078478b',
+          appId: 'RGL98J3FEO',
           indexName: 'arr_ai',
-        },
-        gtag: {
-            trackingID: "G-HKGSHFG2D0", // GA account owner: sysl.usr@gmail.com
-            anonymizeIP: true,
         },
     },
     presets: [
@@ -44,6 +41,10 @@ module.exports = {
                 docs: {
                     sidebarPath: require.resolve('./sidebars.js'),
                     editUrl: 'https://github.com/arr-ai/arrai/edit/master/docs/',
+                },
+                gtag: {
+                    trackingID: "G-HKGSHFG2D0", // GA account owner: sysl.usr@gmail.com
+                    anonymizeIP: true,
                 },
                 theme: {
                     customCss: require.resolve('./src/css/custom.css'),
