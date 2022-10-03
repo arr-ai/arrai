@@ -25,6 +25,7 @@ build:
     - windows
   goarch:
     - amd64
+    - arm64
     - 386
   goarm:
     - 7
