@@ -18,7 +18,7 @@ let (:simplify, :tuplify, :decodeSimple, :toJson, :toJsonString, ...) = //{./jso
             'true': true,
             'false': false,
             'zero': 0,
-            'date': {'ext': 123, 'loc': {}, 'wall': 0},
+            'date': (ext: 123, loc: {}, wall: 0),
         },
     ),
 
