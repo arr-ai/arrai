@@ -10,7 +10,16 @@ let (:simplify, :tuplify, :decodeSimple, :toJson, :toJsonString, ...) = //{./jso
             's': (s: 'hi'),
             'true': (b: true),
             'false': (b: false),
-        }) = {'a': [1, 2], 's': 'hi', 'true': true, 'false': false},
+            'zero': 0,
+            'date': (v: (ext: 123, loc: {}, wall: 0)),
+        }) = {
+            'a': [1, 2],
+            's': 'hi',
+            'true': true,
+            'false': false,
+            'zero': 0,
+            'date': {'ext': 123, 'loc': {}, 'wall': 0},
+        },
     ),
 
     tuplify: (

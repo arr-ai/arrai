@@ -8,6 +8,8 @@ let rec simplify = \j
         (:a): simplify(a),
         (:b): b,
         (:s): s,
+        # May be used in some cases to encode arbitrarily-typed values.
+        (:v): simplify(v),
         (): {},
         _: cond {
             # Base case: j is a number.
