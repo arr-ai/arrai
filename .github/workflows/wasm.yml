@@ -1,21 +1,19 @@
 name: Go wasm
 on:
-  push:
-    branches:
-      - '*'
   pull_request:
-    branches:
-      - '*'
+
+env:
+  GOPROXY: ${{ vars.GOPROXY }}
+
 jobs:
   build:
     name: Build and Test Wasm
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.RUNNER_UBUNTU && fromJSON(vars.RUNNER_UBUNTU) || 'ubuntu-latest' }}
     steps:
-    - name: Set up Go 1.19
-      uses: actions/setup-go@v3
+    - name: Set up Go
+      uses: actions/setup-go@v4
       with:
         go-version: 1.19
-      id: go
 
     - name: Check out code into the Go module directory
       uses: actions/checkout@v3
@@ -28,8 +26,8 @@ jobs:
 
     - name: Set up Node
       uses: actions/setup-node@v3
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        node-version: 18.x
 
     - name: Run tests
       run: |

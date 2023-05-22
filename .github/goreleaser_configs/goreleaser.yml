@@ -6,8 +6,8 @@ before:
   hooks:
     - go mod tidy
 
-build:
-  binary: arrai
+builds:
+- binary: arrai
   id: arrai
   main: ./cmd/arrai
   ldflags:
@@ -44,6 +44,7 @@ archives:
   files:
     - README.md
     - LICENSE
+  rlcp: true
 
 checksum:
   name_template: '{{.ProjectName}}_v{{.Version}}_checksums.txt'

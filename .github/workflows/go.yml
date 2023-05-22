@@ -2,20 +2,23 @@ name: Go
 
 on: pull_request
 
+env:
+  GOPROXY: ${{ vars.GOPROXY }}
+
 jobs:
   lint:
     name: Lint
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.RUNNER_UBUNTU && fromJSON(vars.RUNNER_UBUNTU) || 'ubuntu-latest' }}
     steps:
-      - name: Set up Go 1.19
-        uses: actions/setup-go@v3
+      - name: Set up Go
+        uses: actions/setup-go@v4
         with:
           go-version: 1.19
 
       - name: Check out code into the Go module directory
         uses: actions/checkout@v3
 
-      - uses: Logerfo/newline-action@0.0.2
+      - uses: Logerfo/newline-action@0.0.4
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
@@ -27,11 +30,19 @@ jobs:
       - name: Check clean
         run: make check-clean
 
+      - name: Validate goreleaser config
+        run: |
+          go run github.com/goreleaser/goreleaser@latest check -f .github/goreleaser_configs/goreleaser.yml
+
   build:
     name: Build
-    runs-on: ubuntu-latest
-    container: golang:1.19
+    runs-on: ${{ vars.RUNNER_UBUNTU && fromJSON(vars.RUNNER_UBUNTU) || 'ubuntu-latest' }}
     steps:
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: 1.19
+
     - name: Check out code into the Go module directory
       uses: actions/checkout@v3
 
@@ -45,11 +56,11 @@ jobs:
     name: Test
     strategy:
       matrix:
-        platform: [ubuntu-latest, macos-latest, windows-latest]
+        platform: ${{ vars.BUILD_AND_TEST_OS_MATRIX && fromJSON(vars.BUILD_AND_TEST_OS_MATRIX) || fromJSON('[ "ubuntu-latest", "macOS-latest", "windows-latest" ]') }}
     runs-on: ${{ matrix.platform }}
     steps:
-    - name: Set up Go 1.19
-      uses: actions/setup-go@v3
+    - name: Set up Go
+      uses: actions/setup-go@v4
       with:
         go-version: 1.19
 
@@ -61,8 +72,7 @@ jobs:
 
   coverage:
     name: Coverage
-    runs-on: ubuntu-latest
-    container: golang:1.19
+    runs-on: ${{ vars.RUNNER_UBUNTU && fromJSON(vars.RUNNER_UBUNTU) || 'ubuntu-latest' }}
     steps:
     - name: Check out code into the Go module directory
       uses: actions/checkout@v3
@@ -71,13 +81,14 @@ jobs:
       run: go test -v -covermode=atomic -coverprofile=coverage.out -race ./...
 
     - name: Convert coverage to lcov
-      uses: jandelgado/gcov2lcov-action@v1.0.2
+      uses: jandelgado/gcov2lcov-action@v1.0.9
       with:
           infile: coverage.out
           outfile: coverage.lcov
 
     - name: Coveralls
-      uses: coverallsapp/github-action@v1.1.2
+      uses: coverallsapp/github-action@v2.1.2
+      if: ${{ github.repository_owner == 'anz-bank' }}
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
-        path-to-lcov: coverage.lcov
+        file: coverage.lcov

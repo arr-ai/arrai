@@ -5,16 +5,15 @@ on:
     tags:
       - 'v*.*.*'
   pull_request:
-    branches:
-      - "*"
 
 env:
-  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  GITHUB_TOKEN:      ${{ secrets.GITHUB_TOKEN }}
+  DOCKER_BUILD_ARGS: ${{ vars.DOCKER_BUILD_ARGS }}
 
 jobs:
   release:
     name: Release
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.RUNNER_UBUNTU && fromJSON(vars.RUNNER_UBUNTU) || 'ubuntu-latest' }}
     steps:
       - name: Check out code
         uses: actions/checkout@v3
@@ -45,12 +44,20 @@ jobs:
           push: false
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          build-args: ${{ env.DOCKER_BUILD_ARGS }}
+
+      - name: Download container-structure-test
+        env:
+          CONTAINER_STRUCTURE_TEST: ${{ vars.CONTAINER_STRUCTURE_TEST || 'https://storage.googleapis.com/container-structure-test/v1.15.0/container-structure-test-linux-amd64' }}
+        run: |
+          curl -LO ${CONTAINER_STRUCTURE_TEST} && chmod +x container-structure-test-linux-amd64 && sudo mv container-structure-test-linux-amd64 /usr/local/bin/container-structure-test
 
       - name: Test container image
-        uses: plexsystems/container-structure-test-action@v0.1.0
-        with:
+        env:
           image: ${{ fromJSON(steps.meta.outputs.json).tags[0] }}
           config: container-structure-tests.yaml
+        run: |
+          container-structure-test test --image $image --config $config --no-color
 
       - name: Login to DockerHub
         # only attempt to push if we are in the open source repo that has credentials, and there's been a push, not merely a pull request.

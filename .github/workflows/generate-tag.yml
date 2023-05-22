@@ -8,16 +8,24 @@ on:
 jobs:
   generate-tag:
     name: Generate tag
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.RUNNER_UBUNTU && fromJSON(vars.RUNNER_UBUNTU) || 'ubuntu-latest' }}
     steps:
       - name: Check out code
         uses: actions/checkout@v3
         with:
           fetch-depth: '0'
 
+      - name: Checkout github-tag-action
+        uses: actions/checkout@v3
+        with:
+          repository: ${{ vars.GENERATE_TAG_REPO || 'anothrNick/github-tag-action' }}
+          ref: ${{ vars.GENERATE_TAG_REF || '1.62.0' }}
+          path: ./.github/action${{ vars.GENERATE_TAG_PATH || '/github-tag-action/' }}
+          token: ${{ vars.GENERATE_TAG_SECRET && secrets[vars.GENERATE_TAG_SECRET] || secrets.GITHUB_TOKEN }}
+
       - name: Bump version and push tag
         id: generate_tag
-        uses: anz-bank/github-tag-action@1.40.0
+        uses: ./.github/action/github-tag-action
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           WITH_V: true
