@@ -18,6 +18,14 @@ type multipleValues frozen.Set
 
 var _ frozen.Key = multipleValues(frozen.Set{})
 
+func newMultipleValues(values ...interface{}) interface{} {
+	s := frozen.NewSet(values...)
+	if s.Count() == 1 {
+		return s.Any()
+	}
+	return multipleValues(s)
+}
+
 func (m multipleValues) Equal(n interface{}) bool {
 	if n, is := n.(multipleValues); is {
 		return frozen.Set(m).EqualSet(frozen.Set(n))
@@ -73,7 +81,7 @@ func NewDict(allowDupKeys bool, entries ...DictEntryTuple) (Set, error) {
 			case multipleValues:
 				mb.Put(entry.at, multipleValues(frozen.Set(v).With(entry.value)))
 			default:
-				mb.Put(entry.at, multipleValues(frozen.NewSet(v, entry.value)))
+				mb.Put(entry.at, newMultipleValues(v, entry.value))
 			}
 		} else {
 			mb.Put(entry.at, entry.value)
@@ -259,7 +267,7 @@ func (d Dict) With(v Value) Set {
 			case multipleValues:
 				return Dict{m: d.m.With(t.at, multipleValues(frozen.Set(u).With(t.value)))}
 			default:
-				return Dict{m: d.m.With(t.at, multipleValues(frozen.NewSet(u, t.value)))}
+				return Dict{m: d.m.With(t.at, newMultipleValues(u, t.value))}
 			}
 		}
 		return Dict{m: d.m.With(t.at, t.value)}
@@ -410,7 +418,7 @@ func (a *DictEnumerator) Current() (key, value Value) {
 	}
 	v, ok := a.i.Value().(Value)
 	if !ok {
-		panic(fmt.Errorf("dict value for key %s is not a Value: %[1]T", k, a.i.Value()))
+		panic(fmt.Errorf("dict value for key %s is not a Value (type: %T): %[2]v", k, a.i.Value()))
 	}
 	return k, v
 }

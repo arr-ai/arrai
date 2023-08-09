@@ -80,3 +80,29 @@ func TestDictCallAll(t *testing.T) {
 	AssertEqualValues(t, MustNewSet(NewNumber(30)), mustCallAll(ctx, dict, NewNumber(3)))
 	AssertEqualValues(t, None, mustCallAll(ctx, dict, NewNumber(4)))
 }
+
+func TestDictWithMultipleEntriesOfSameValue(t *testing.T) {
+	t.Parallel()
+
+	d1 := MustNewDict(true,
+		NewDictEntryTuple(NewString([]rune("a")), NewNumber(1)),
+		NewDictEntryTuple(NewString([]rune("a")), NewNumber(1)),
+	)
+	assert.Equal(t, 1, d1.Count())
+	for e := d1.(Dict).DictEnumerator(); e.MoveNext(); {
+		k, v := e.Current()
+		AssertEqualValues(t, NewString([]rune("a")), k)
+		AssertEqualValues(t, NewNumber(1), v)
+	}
+
+	d2 := MustNewDict(true,
+		NewDictEntryTuple(NewString([]rune("a")), NewNumber(1)),
+	)
+	d2 = d2.With(NewDictEntryTuple(NewString([]rune("a")), NewNumber(1)))
+	assert.Equal(t, 1, d2.Count())
+	for e := d2.(Dict).DictEnumerator(); e.MoveNext(); {
+		k, v := e.Current()
+		AssertEqualValues(t, NewString([]rune("a")), k)
+		AssertEqualValues(t, NewNumber(1), v)
+	}
+}

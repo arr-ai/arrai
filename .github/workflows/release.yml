@@ -36,7 +36,7 @@ jobs:
       - name: Validate goreleaser config
         uses: goreleaser/goreleaser-action@v4
         with:
-          version: latest
+          version: v1.18.2
           args: check -f .github/goreleaser_configs/goreleaser.yml
 
       - name: Set GOVERSION env var
