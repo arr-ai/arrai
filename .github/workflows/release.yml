@@ -7,7 +7,7 @@ on:
       - 'v*.*.*'
 
 env:
-  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   GOPROXY: ${{ vars.GOPROXY }}
 
 jobs:
