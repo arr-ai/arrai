@@ -21,16 +21,16 @@ func ZipEqualToFiles(t *testing.T, buf []byte, files map[string]string) {
 	require.NoError(t, err)
 	//FIXME: need to check for unexpected files in zip, afero.Walk for some reason does not work
 	fs := zipfs.New(zipR)
-	copy := files
+	cpy := files
 	for name, content := range files {
 		f, err := fs.Open(name)
 		assert.NoError(t, err)
 		buf, err := io.ReadAll(f)
 		assert.NoError(t, err)
 		assert.Equal(t, content, string(buf))
-		delete(copy, name)
+		delete(cpy, name)
 	}
-	assert.Zero(t, len(copy))
+	assert.Zero(t, len(cpy))
 }
 
 // CreateTestMemMapFs creates a memory fs from provided files

@@ -53,7 +53,7 @@ func (s *shellInstance) Do(line []rune, pos int) (newLine [][]rune, length int) 
 
 		// no need to check partial expr if not attached to token
 		if notAttachedToExpr {
-			return
+			return newLine, length
 		}
 		partialExprPreds, residueLen := s.partialExprPredictions(string(line[:pos]))
 		if len(newLine) == 0 || residueLen < length {
@@ -114,7 +114,6 @@ func (s *shellInstance) partialExprPredictions(currentLine string) (newLine [][]
 // }
 
 func (s *shellInstance) trimExpr(expr string) (realExpr, residue string) {
-	realExpr = expr
 	getRe := regexp.MustCompile(`\.(\w*|\"(\\.|[^\\"])*|\'(\\.|[^\\'])*|\x60(\x60\x60|[^\x60])*)$`)
 	callRe := regexp.MustCompile(`\((\"([^\\"])*|\'(\\.|[^\\'])*|\x60(\x60\x60|[^\x60])*|[^)]*)$`)
 

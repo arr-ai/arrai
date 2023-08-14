@@ -26,12 +26,12 @@ builds:
   goarch:
     - amd64
     - arm64
-    - 386
+    - "386"
   goarm:
-    - 7
+    - "7"
   ignore:
     - goos: darwin
-      goarch: 386
+      goarch: "386"
 
 archives:
 - id: "arrai"
@@ -44,7 +44,6 @@ archives:
   files:
     - README.md
     - LICENSE
-  rlcp: true
 
 checksum:
   name_template: '{{.ProjectName}}_v{{.Version}}_checksums.txt'

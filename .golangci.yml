@@ -20,13 +20,17 @@ linters-settings:
     - performance
     - style
 
+issues:
+  exclude:
+    - "unused-parameter: parameter '\\w+' seems to be unused, consider removing or renaming it as _"
+
 linters:
   # please, do not use `enable-all`: it's deprecated and will be removed soon.
   # inverted configuration with `enable-all` and `disable` is not scalable during updates of golangci-lint
   disable-all: true
   enable:
   - bodyclose
-  - depguard
+  # - depguard
   - dogsled
   - dupl
   - errcheck

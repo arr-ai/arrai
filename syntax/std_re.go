@@ -40,7 +40,7 @@ var (
 				return rel.NewArray(matches...), nil
 			}),
 			createFunc2Attr("sub", func(_ context.Context, a, b rel.Value) (rel.Value, error) {
-				new, is := tools.ValueAsString(a)
+				nw, is := tools.ValueAsString(a)
 				if !is {
 					return nil, fmt.Errorf("//re.compile(re).sub: new not a string: %v", b)
 				}
@@ -48,7 +48,7 @@ var (
 				if !is {
 					return nil, fmt.Errorf("//re.compile(re).sub: s not a string: %v", a)
 				}
-				return rel.NewString([]rune(regex.ReplaceAllString(s, new))), nil
+				return rel.NewString([]rune(regex.ReplaceAllString(s, nw))), nil
 			}),
 			createFunc2Attr("subf", func(ctx context.Context, a, b rel.Value) (rel.Value, error) {
 				s, is := tools.ValueAsString(b)

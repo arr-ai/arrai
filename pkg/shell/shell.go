@@ -248,13 +248,12 @@ func (l *lineCollector) appendLine(line string) {
 				possibleOpener = append(possibleOpener, line[i:i+j+1])
 			}
 			for _, p := range possibleOpener {
-				if close, isOpener := openers[p]; isOpener {
-					l.push(close)
+				if clse, isOpener := openers[p]; isOpener {
+					l.push(clse)
 					increment = len(p)
 					break
-				} else {
-					increment = 1
 				}
+				increment = 1
 			}
 		}
 	}

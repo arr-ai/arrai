@@ -100,23 +100,23 @@ func (p TuplePattern) Bind(ctx context.Context, local Scope, value Value) (conte
 			}
 			extraPattern = &p.attrs[i]
 			continue
-		} else {
-			if attr.pattern.fallback == nil && !names.IsTrue() {
-				return ctx, EmptyScope, fmt.Errorf("length of tuple %s shorter than tuple pattern %s", tuple, p)
+		}
+		if attr.pattern.fallback == nil && !names.IsTrue() {
+			return ctx, EmptyScope, fmt.Errorf("length of tuple %s shorter than tuple pattern %s", tuple, p)
+		}
+		var found bool
+		tupleValue, found = tuple.Get(attr.name)
+		if !found {
+			if attr.pattern.fallback == nil {
+				return ctx, EmptyScope, fmt.Errorf("couldn't find %s in tuple %s", attr.name, tuple)
 			}
-			var found bool
-			tupleValue, found = tuple.Get(attr.name)
-			if !found {
-				if attr.pattern.fallback == nil {
-					return ctx, EmptyScope, fmt.Errorf("couldn't find %s in tuple %s", attr.name, tuple)
-				}
-				var err error
-				tupleValue, err = attr.pattern.fallback.Eval(ctx, local)
-				if err != nil {
-					return ctx, EmptyScope, err
-				}
+			var err error
+			tupleValue, err = attr.pattern.fallback.Eval(ctx, local)
+			if err != nil {
+				return ctx, EmptyScope, err
 			}
 		}
+
 		var err error
 		ctx, result, err = bind(ctx, attr, result, tupleValue)
 		if err != nil {
