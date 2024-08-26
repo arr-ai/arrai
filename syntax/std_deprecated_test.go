@@ -1,17 +1,11 @@
 package syntax
 
 import (
-	"runtime"
 	"testing"
 )
 
 func TestDeprecatedExec(t *testing.T) {
 	t.Parallel()
-
-	lineSep := "\n"
-	if runtime.GOOS == windows {
-		lineSep = "\r\n"
-	}
 
 	AssertCodesEvalToSameValue(t, `(
 		args: ['ls', 'std_deprecated_test.go'],
@@ -22,7 +16,7 @@ func TestDeprecatedExec(t *testing.T) {
 	AssertCodesEvalToSameValue(t, `(
 		args: ['echo'],
 		exitCode: 0,
-		stdout: <<'`+lineSep+`'>>,
+		stdout: <<'\n'>>,
 		stderr: {},
 	)`, `//deprecated.exec(['echo'])`)
 }
