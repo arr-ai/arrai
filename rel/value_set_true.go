@@ -57,7 +57,7 @@ func (TrueSet) Equal(i interface{}) bool {
 }
 
 func (TrueSet) Hash(seed uintptr) uintptr {
-	return seed ^ hash.Interface(EmptyTuple, 0)
+	return seed ^ hash.Any(EmptyTuple, 0)
 }
 
 func (t TrueSet) Eval(ctx context.Context, local Scope) (Value, error) {
