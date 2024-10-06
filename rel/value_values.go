@@ -55,7 +55,7 @@ func (v Values) equalValues(v2 Values) bool {
 func (v Values) Hash(seed uintptr) uintptr {
 	h := seed
 	for _, val := range v {
-		h = hash.Interface(val, h)
+		h = hash.Any(val, h)
 	}
 	return h
 }
@@ -211,7 +211,7 @@ func (pv projectedValues) Format(f fmt.State, verb rune) {
 func (pv projectedValues) Hash(seed uintptr) uintptr {
 	h := seed
 	for _, i := range pv.p {
-		h = hash.Interface(pv.v[i], h)
+		h = hash.Any(pv.v[i], h)
 	}
 	return h
 }
