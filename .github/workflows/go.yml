@@ -31,8 +31,10 @@ jobs:
         run: make check-clean
 
       - name: Validate goreleaser config
-        run: |
-          go run github.com/goreleaser/goreleaser@latest check -f .github/goreleaser_configs/goreleaser.yml
+        uses: goreleaser/goreleaser-action@v6
+        with:
+          version: latest
+          args: check -f .github/goreleaser_configs/goreleaser.yml
 
   build:
     name: Build
