@@ -7,6 +7,9 @@ module.exports = {
     favicon: 'img/favicon.svg',
     organizationName: 'arr-ai',
     projectName: 'arrai',
+    markdown: {
+        format: 'detect',
+    },
     themeConfig: {
         navbar: {
             title: 'Arr.ai',
