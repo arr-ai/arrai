@@ -51,7 +51,7 @@ func (TrueSet) getBucket() fmt.Stringer {
 	return genericType
 }
 
-func (TrueSet) Equal(i interface{}) bool {
+func (TrueSet) Equal(i Value) bool {
 	_, is := i.(TrueSet)
 	return is
 }
@@ -85,7 +85,7 @@ func (TrueSet) Has(v Value) bool {
 }
 
 func (TrueSet) Enumerator() ValueEnumerator {
-	return &genericSetEnumerator{frozen.NewSet(EmptyTuple).Range()}
+	return &genericSetEnumerator{frozen.NewSet[Value](EmptyTuple).Range()}
 }
 
 func (t TrueSet) ArrayEnumerator() ValueEnumerator {

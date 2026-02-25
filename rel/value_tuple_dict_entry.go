@@ -59,7 +59,7 @@ func (t DictEntryTuple) Hash(seed uintptr) uintptr {
 }
 
 // Equal tests two Tuples for equality. Any other type returns false.
-func (t DictEntryTuple) Equal(v interface{}) bool {
+func (t DictEntryTuple) Equal(v Value) bool {
 	if u, ok := v.(DictEntryTuple); ok {
 		return t.at.Equal(u.at) && t.value.Equal(u.value)
 	}

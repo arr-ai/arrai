@@ -14,12 +14,10 @@ import (
 	"github.com/arr-ai/arrai/pkg/fu"
 )
 
-type multipleValues frozen.Set
+type multipleValues frozen.Set[Value]
 
-var _ frozen.Key = multipleValues(frozen.Set{})
-
-func newMultipleValues(values ...interface{}) interface{} {
-	s := frozen.NewSet(values...)
+func newMultipleValues(values ...Value) any {
+	s := frozen.NewSet[Value](values...)
 	if s.Count() == 1 {
 		return s.Any()
 	}
@@ -28,22 +26,22 @@ func newMultipleValues(values ...interface{}) interface{} {
 
 func (m multipleValues) Equal(n interface{}) bool {
 	if n, is := n.(multipleValues); is {
-		return frozen.Set(m).EqualSet(frozen.Set(n))
+		return frozen.Set[Value](m).Equal(frozen.Set[Value](n))
 	}
-	return frozen.Set(m).Equal(n)
+	return false
 }
 
 func (m multipleValues) Hash(seed uintptr) uintptr {
-	return frozen.Set(m).Hash(seed)
+	return frozen.Set[Value](m).Hash(seed)
 }
 
 func (m multipleValues) String() string {
-	return frozen.Set(m).String()
+	return frozen.Set[Value](m).String()
 }
 
 // Dict is a map from keys to values.
 type Dict struct {
-	m frozen.Map
+	m frozen.Map[Value, any]
 }
 
 // AsDict checks whether a Value is a valid dictionary.
@@ -71,7 +69,7 @@ func NewDict(allowDupKeys bool, entries ...DictEntryTuple) (Set, error) {
 	if len(entries) == 0 {
 		return None, nil
 	}
-	var mb frozen.MapBuilder
+	var mb frozen.MapBuilder[Value, any]
 	for _, entry := range entries {
 		if v, has := mb.Get(entry.at); has {
 			if !allowDupKeys {
@@ -79,9 +77,9 @@ func NewDict(allowDupKeys bool, entries ...DictEntryTuple) (Set, error) {
 			}
 			switch v := v.(type) {
 			case multipleValues:
-				mb.Put(entry.at, multipleValues(frozen.Set(v).With(entry.value)))
+				mb.Put(entry.at, multipleValues(frozen.Set[Value](v).With(entry.value)))
 			default:
-				mb.Put(entry.at, newMultipleValues(v, entry.value))
+				mb.Put(entry.at, newMultipleValues(v.(Value), entry.value))
 			}
 		} else {
 			mb.Put(entry.at, entry.value)
@@ -99,10 +97,10 @@ func (d Dict) Hash(seed uintptr) uintptr {
 	return h
 }
 
-func (d Dict) Equal(v interface{}) bool {
+func (d Dict) Equal(v Value) bool {
 	switch v := v.(type) {
 	case Dict:
-		return d.m.Equal(v.m)
+		return d.equalDict(v)
 	case Set:
 		if d.IsTrue() != v.IsTrue() || d.Count() != v.Count() {
 			return false
@@ -110,7 +108,11 @@ func (d Dict) Equal(v interface{}) bool {
 		match := DictTupleMatcher()
 		for e := v.Enumerator(); e.MoveNext(); {
 			if key, value, matches := match(e.Current()); matches {
-				if dvalue, has := d.m.Get(key); !(has && value.Equal(dvalue)) {
+				if dvalue, has := d.m.Get(key); has {
+					if dv, ok := dvalue.(Value); !ok || !value.Equal(dv) {
+						return false
+					}
+				} else {
 					return false
 				}
 			} else {
@@ -121,6 +123,36 @@ func (d Dict) Equal(v interface{}) bool {
 		return true
 	}
 	return false
+}
+
+func equalDictValue(a, b any) bool {
+	switch a := a.(type) {
+	case multipleValues:
+		if b, ok := b.(multipleValues); ok {
+			return frozen.Set[Value](a).Equal(frozen.Set[Value](b))
+		}
+		return false
+	case Value:
+		if b, ok := b.(Value); ok {
+			return a.Equal(b)
+		}
+		return false
+	}
+	return a == b
+}
+
+func (d Dict) equalDict(d2 Dict) bool {
+	if d.m.Count() != d2.m.Count() {
+		return false
+	}
+	for i := d.m.Range(); i.Next(); {
+		k, dv := i.Entry()
+		d2v, has := d2.m.Get(k)
+		if !has || !equalDictValue(dv, d2v) {
+			return false
+		}
+	}
+	return true
 }
 
 func (d Dict) String() string {
@@ -169,37 +201,36 @@ func (d Dict) Less(v Value) bool {
 	if d.Kind() != v.Kind() {
 		return d.Kind() < v.Kind()
 	}
-	dKeys := d.m.Keys().OrderedElements(intfValueLess)
+	dKeys := d.m.Keys().OrderedElements(ValueLess)
 	vDict := v.(Dict)
-	vKeys := vDict.m.Keys().OrderedElements(intfValueLess)
+	vKeys := vDict.m.Keys().OrderedElements(ValueLess)
 	n := len(dKeys)
 	if n > len(vKeys) {
 		n = len(vKeys)
 	}
-	for i, k := range dKeys[:n] {
-		dKey := k.(Value)
-		vKey := vKeys[i].(Value)
+	for i, dKey := range dKeys[:n] {
+		vKey := vKeys[i]
 		if !dKey.Equal(vKey) {
 			return dKey.Less(vKey)
 		}
 
 		// TODO: Implement Less directly in frozen.
-		var dValues []interface{}
+		var dValues []Value
 		switch dValue := d.m.MustGet(dKey).(type) {
 		case multipleValues:
-			dValues = frozen.Set(dValue).OrderedElements(intfValueLess)
+			dValues = frozen.Set[Value](dValue).OrderedElements(ValueLess)
 		case Value:
-			dValues = []interface{}{dValue}
+			dValues = []Value{dValue}
 		default:
 			panic("wtf?")
 		}
 
-		var vValues []interface{}
+		var vValues []Value
 		switch dValue := vDict.m.MustGet(vKey).(type) {
 		case multipleValues:
-			vValues = frozen.Set(dValue).OrderedElements(intfValueLess)
+			vValues = frozen.Set[Value](dValue).OrderedElements(ValueLess)
 		case Value:
-			vValues = []interface{}{dValue}
+			vValues = []Value{dValue}
 		default:
 			panic("wtf?")
 		}
@@ -208,9 +239,8 @@ func (d Dict) Less(v Value) bool {
 		if n > len(vValues) {
 			n = len(vValues)
 		}
-		for i, dItem := range dValues[:n] {
-			dValue := dItem.(Value)
-			vValue := vValues[i].(Value)
+		for i, dValue := range dValues[:n] {
+			vValue := vValues[i]
 			if !dValue.Equal(vValue) {
 				return dValue.Less(vValue)
 			}
@@ -227,7 +257,7 @@ func (d Dict) Negate() Value {
 }
 
 func (d Dict) Export(_ context.Context) interface{} {
-	var mb frozen.MapBuilder
+	var mb frozen.MapBuilder[Value, any]
 	for i := d.m.Range(); i.Next(); {
 		k, v := i.Entry()
 		mb.Put(k, v)
@@ -250,14 +280,16 @@ func (d Dict) Count() int {
 func (d Dict) Has(v Value) bool {
 	if key, value, matched := DictTupleMatcher()(v); matched {
 		if v, has := d.m.Get(key); has {
-			return value.Equal(v)
+			if dv, ok := v.(Value); ok {
+				return value.Equal(dv)
+			}
 		}
 	}
 	return false
 }
 
 func (d Dict) Enumerator() ValueEnumerator {
-	return &dictEnumerator{i: d.m.Range(), j: frozen.Set{}.Range()}
+	return &dictEnumerator{i: d.m.Range(), j: frozen.Set[Value]{}.Range()}
 }
 
 func (d Dict) With(v Value) Set {
@@ -265,9 +297,9 @@ func (d Dict) With(v Value) Set {
 		if u, has := d.m.Get(t.at); has {
 			switch u := u.(type) {
 			case multipleValues:
-				return Dict{m: d.m.With(t.at, multipleValues(frozen.Set(u).With(t.value)))}
+				return Dict{m: d.m.With(t.at, multipleValues(frozen.Set[Value](u).With(t.value)))}
 			default:
-				return Dict{m: d.m.With(t.at, newMultipleValues(u, t.value))}
+				return Dict{m: d.m.With(t.at, newMultipleValues(u.(Value), t.value))}
 			}
 		}
 		return Dict{m: d.m.With(t.at, t.value)}
@@ -278,8 +310,8 @@ func (d Dict) With(v Value) Set {
 func (d Dict) Without(v Value) Set {
 	if key, value, matched := DictTupleMatcher()(v); matched {
 		if v, has := d.m.Get(key); has {
-			if value.Equal(v) {
-				m := d.m.Without(frozen.NewSet(key))
+			if dv, ok := v.(Value); ok && value.Equal(dv) {
+				m := d.m.Without(key)
 				if m.IsEmpty() {
 					return None
 				}
@@ -303,7 +335,7 @@ func (d Dict) Map(f func(v Value) (Value, error)) (Set, error) {
 }
 
 func (d Dict) Where(p func(v Value) (bool, error)) (Set, error) {
-	var mb frozen.MapBuilder
+	var mb frozen.MapBuilder[Value, any]
 	for e := d.Enumerator(); e.MoveNext(); {
 		t := e.Current().(DictEntryTuple)
 		match, err := p(t)
@@ -327,8 +359,8 @@ func (d Dict) CallAll(_ context.Context, arg Value, b SetBuilder) error {
 		case Value:
 			b.Add(v)
 		case multipleValues:
-			for e := frozen.Set(v).Range(); e.Next(); {
-				b.Add(e.Value().(Value))
+			for e := frozen.Set[Value](v).Range(); e.Next(); {
+				b.Add(e.Value())
 			}
 		}
 	}
@@ -373,8 +405,8 @@ func DictTupleMatcher() func(v Value) (key, value Value, matches bool) {
 }
 
 type dictEnumerator struct {
-	i *frozen.MapIterator
-	j frozen.Iterator
+	i frozen.MapIterator[Value, any]
+	j frozen.Iterator[Value]
 	v Value
 }
 
@@ -385,17 +417,17 @@ func (a *dictEnumerator) MoveNext() bool {
 		}
 		switch entry := a.i.Value().(type) {
 		case multipleValues:
-			a.j = frozen.Set(entry).Range()
+			a.j = frozen.Set[Value](entry).Range()
 			if !a.j.Next() {
 				return false
 			}
 		default:
-			a.j = frozen.Set{}.Range()
-			a.v = NewDictEntryTuple(a.i.Key().(Value), entry.(Value))
+			a.j = frozen.Set[Value]{}.Range()
+			a.v = NewDictEntryTuple(a.i.Key(), entry.(Value))
 			return true
 		}
 	}
-	a.v = NewDictEntryTuple(a.i.Key().(Value), a.j.Value().(Value))
+	a.v = NewDictEntryTuple(a.i.Key(), a.j.Value())
 	return true
 }
 
@@ -404,7 +436,7 @@ func (a *dictEnumerator) Current() Value {
 }
 
 type DictEnumerator struct {
-	i *frozen.MapIterator
+	i frozen.MapIterator[Value, any]
 }
 
 func (a *DictEnumerator) MoveNext() bool {
@@ -412,15 +444,7 @@ func (a *DictEnumerator) MoveNext() bool {
 }
 
 func (a *DictEnumerator) Current() (key, value Value) {
-	k, ok := a.i.Key().(Value)
-	if !ok {
-		panic(fmt.Errorf("key is not a Value: %s %[1]s", a.i.Key()))
-	}
-	v, ok := a.i.Value().(Value)
-	if !ok {
-		panic(fmt.Errorf("dict value for key %s is not a Value (type: %T): %[2]v", k, a.i.Value()))
-	}
-	return k, v
+	return a.i.Key(), a.i.Value().(Value)
 }
 
 type dictEntryTupleSort []DictEntryTuple

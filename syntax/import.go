@@ -14,7 +14,6 @@ import (
 
 	"github.com/spf13/afero"
 
-	"github.com/anz-bank/pkg/mod"
 	"github.com/arr-ai/wbnf/parser"
 
 	"github.com/arr-ai/arrai/pkg/ctxfs"
@@ -160,24 +159,12 @@ func importModuleFile(ctx context.Context, decoder rel.Tuple, importPath string)
 		return fileValue(ctx, decoder, path.Join(ModuleDir, importPath))
 	}
 
-	wd, err := os.Getwd()
-	if err != nil {
-		return nil, err
-	}
-	_, err = findRootFromModule(ctx, wd)
-	if err != nil {
-		if err := mod.Config(mod.GoModulesMode,
-			mod.GoModulesOptions{ModName: filepath.Base(wd)}, mod.GitHubOptions{}); err != nil {
-			return nil, err
-		}
-	}
-
-	path, ver := mod.ExtractVersion(importPath)
+	modPath, ver := extractVersion(importPath)
 	if ver != "" {
 		return nil, errors.New("per-importing versioning is not allowed")
 	}
 
-	m, err := mod.Retrieve(path, ver)
+	m, err := retrieveModule(modPath, ver)
 	if err != nil {
 		return nil, err
 	}

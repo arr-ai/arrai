@@ -102,7 +102,7 @@ func AssertExprErrorEquals(t *testing.T, expr Expr, msg string) bool {
 
 	_, err := expr.Eval(arraictx.InitRunCtx(context.Background()), EmptyScope)
 
-	return assert.EqualError(t, err, WrapContextErr(errors.Errorf(msg), expr, EmptyScope).Error())
+	return assert.EqualError(t, err, WrapContextErr(errors.Errorf("%s", msg), expr, EmptyScope).Error())
 }
 
 // AssertExprPanics asserts that the expr panics when evaluated.

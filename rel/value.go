@@ -37,7 +37,7 @@ type Expr interface {
 type Value interface {
 	fmt.Formatter
 
-	frozen.Key
+	frozen.Key[Value]
 
 	// Values are Exprs.
 	Expr

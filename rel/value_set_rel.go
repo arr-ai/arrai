@@ -294,7 +294,7 @@ func newRelationBuilder(names []string, cap int) *relationBuilder {
 		m[n] = i
 	}
 	return &relationBuilder{
-		prb:     &positionalRelationBuilder{sb: frozen.NewSetBuilder(cap)},
+		prb:     &positionalRelationBuilder{sb: frozen.NewSetBuilder[any](cap)},
 		mapping: m,
 		names:   names,
 	}
@@ -369,7 +369,7 @@ func (r Relation) projectionBasedOnNames(names NamesSlice) valueProjector {
 	return projection
 }
 
-func (r Relation) Equal(i interface{}) bool {
+func (r Relation) Equal(i Value) bool {
 	if r2, is := i.(Relation); is {
 		return r.EqualRelation(r2)
 	}
@@ -387,7 +387,7 @@ func (r Relation) canonicalRelation() *positionalRelation {
 	}
 	isContiguous := projection.isContiguous()
 	return &positionalRelation{
-		set: r.rows.set.Map(func(elem interface{}) interface{} {
+		set: frozen.SetMap(r.rows.set, func(elem any) any {
 			if isContiguous {
 				return elem.(Values)[projection[0] : projection[len(projection)-1]+1]
 			}
@@ -400,7 +400,7 @@ func (r Relation) EqualRelation(r2 Relation) bool {
 	if !r.attrs.EqualNamesSlice(r2.attrs) {
 		return false
 	}
-	return r.canonicalRelation().set.EqualSet(r2.canonicalRelation().set)
+	return r.canonicalRelation().set.Equal(r2.canonicalRelation().set)
 }
 
 func (r Relation) Hash(seed uintptr) uintptr {

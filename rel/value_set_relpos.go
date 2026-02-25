@@ -9,23 +9,23 @@ import (
 )
 
 var (
-	truePosRel  = &positionalRelation{set: frozen.NewSet(Values{})}
-	falsePosRel = &positionalRelation{set: frozen.NewSet()}
+	truePosRel  = &positionalRelation{set: frozen.NewSet[any](Values{})}
+	falsePosRel = &positionalRelation{set: frozen.NewSet[any]()}
 )
 
 // positionalRelation is a Set that only contains Tuples, all of which map the same keys.
 type positionalRelation struct {
 	once sync.Once
-	set  frozen.Set // TODO: experiment with column table
+	set  frozen.Set[any] // TODO: experiment with column table
 	meta *positionalRelationMetadata
 }
 
 type positionalRelationMetadata struct {
 	sync.Mutex
-	indices frozen.Map
+	indices frozen.Map[any, any]
 }
 
-func (prm *positionalRelationMetadata) computeIndex(key interface{}, fn func() interface{}) interface{} {
+func (prm *positionalRelationMetadata) computeIndex(key any, fn func() any) any {
 	prm.Lock()
 	defer prm.Unlock()
 	if index, has := prm.indices.Get(key); has {
@@ -36,16 +36,16 @@ func (prm *positionalRelationMetadata) computeIndex(key interface{}, fn func() i
 	return index
 }
 
-func (r *positionalRelation) groupBy(p valueProjector) frozen.Map {
+func (r *positionalRelation) groupBy(p valueProjector) frozen.Map[any, frozen.Set[any]] {
 	return r.getMeta().computeIndex(
 		p,
-		func() interface{} {
+		func() any {
 			if len(p) == 0 {
-				return frozen.NewMap(frozen.KV(Values{}, r.set))
+				return frozen.NewMap[any, frozen.Set[any]](frozen.KV[any, frozen.Set[any]](Values{}, r.set))
 			}
-			return r.set.GroupBy(p.mapper())
+			return frozen.SetGroupBy(r.set, p.mapper())
 		},
-	).(frozen.Map)
+	).(frozen.Map[any, frozen.Set[any]])
 }
 
 func (r *positionalRelation) getMeta() *positionalRelationMetadata {
@@ -76,7 +76,7 @@ func (r *positionalRelation) IsEmpty() bool {
 }
 
 func (r *positionalRelation) Project(p valueProjector) positionalRelation {
-	return positionalRelation{set: r.set.Map(p.mapper())}
+	return positionalRelation{set: frozen.SetMap(r.set, p.mapper())}
 }
 
 func (r *positionalRelation) With(v Values) *positionalRelation {
@@ -102,7 +102,7 @@ func (r *positionalRelation) Map(f func(Values) (Value, error)) (Set, error) {
 }
 
 func (r *positionalRelation) Where(p func(Values) (bool, error)) (_ *positionalRelation, err error) {
-	set := r.set.Where(func(elem interface{}) bool {
+	set := r.set.Where(func(elem any) bool {
 		if err != nil {
 			return false
 		}
@@ -148,7 +148,7 @@ func (r *positionalRelation) Equal(i interface{}) bool {
 }
 
 func (r *positionalRelation) EqualPositionalRelation(r2 *positionalRelation) bool {
-	return r.set.EqualSet(r2.set)
+	return r.set.Equal(r2.set)
 }
 
 func (r *positionalRelation) String() string {
@@ -245,14 +245,13 @@ func (r *positionalRelation) JoinKeepEverything(
 	leftKey, rightKey, leftOutput, rightOutput valueProjector,
 ) *positionalRelation {
 	leftGroup, rightGroup := r.groupBy(leftKey), r2.groupBy(rightKey)
-	sb := frozen.NewSetBuilder(0)
+	sb := frozen.NewSetBuilder[any](0)
 	for i := leftGroup.Range(); i.Next(); {
-		key, leftGrouped := i.Entry()
-		rightGrouped, has := rightGroup.Get(key)
+		key, leftSubset := i.Entry()
+		rightSubset, has := rightGroup.Get(key)
 		if !has {
 			continue
 		}
-		leftSubset, rightSubset := leftGrouped.(frozen.Set), rightGrouped.(frozen.Set)
 		for j := leftSubset.Range(); j.Next(); {
 			leftVal := j.Value().(Values)
 			for k := rightSubset.Range(); k.Next(); {
@@ -306,7 +305,7 @@ func (r *positionalRelation) JoinCommonOnly(
 	if len(value) == 0 {
 		key, value = rightKey, rightOutput
 	}
-	if !key.Equal(value) {
+	if !key.EqualValueProjector(value) {
 		mapping := make(map[int]int)
 		for i, index := range key {
 			mapping[index] = i
@@ -336,12 +335,13 @@ func (r *positionalRelation) JoinCommonOnly(
 		}
 	}
 
+	keys := r.groupBy(leftKey).Keys().Intersection(r2.groupBy(rightKey).Keys())
 	return &positionalRelation{
-		set: r.groupBy(leftKey).Keys().Intersection(r2.groupBy(rightKey).Keys()).Map(mapper),
+		set: frozen.SetMap(keys, mapper),
 	}
 }
 
-func joinOneSide(base *positionalRelation, intersector frozen.Map, key, output valueProjector) *positionalRelation {
+func joinOneSide(base *positionalRelation, intersector frozen.Map[any, frozen.Set[any]], key, output valueProjector) *positionalRelation {
 	if output.isIdentity(base.Width()) {
 		result, err := base.Where(func(v Values) (bool, error) {
 			return intersector.Has(v.project(key).values()), nil
@@ -351,7 +351,7 @@ func joinOneSide(base *positionalRelation, intersector frozen.Map, key, output v
 		}
 		return result
 	}
-	sb := frozen.SetBuilder{}
+	sb := frozen.SetBuilder[any]{}
 	for i := base.set.Range(); i.Next(); {
 		values := i.Value().(Values)
 		if intersector.Has(values.project(key).values()) {
@@ -362,7 +362,7 @@ func joinOneSide(base *positionalRelation, intersector frozen.Map, key, output v
 }
 
 type positionalRelationBuilder struct {
-	sb *frozen.SetBuilder
+	sb *frozen.SetBuilder[any]
 }
 
 func (r *positionalRelationBuilder) Add(v Values) {
@@ -389,7 +389,7 @@ func valuesLess(indices ...int) func(a, b interface{}) bool {
 }
 
 type positionalRelationValuesEnumerator struct {
-	i frozen.Iterator
+	i frozen.Iterator[any]
 }
 
 func (e *positionalRelationValuesEnumerator) Next() bool {

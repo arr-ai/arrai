@@ -123,7 +123,7 @@ func (a Array) Hash(seed uintptr) uintptr {
 }
 
 // Equal tests two Sets for equality. Any other type returns false.
-func (a Array) Equal(v interface{}) bool {
+func (a Array) Equal(v Value) bool {
 	switch x := v.(type) {
 	case Array:
 		if len(a.values) != len(x.values) || a.offset != x.offset || a.count != x.count {

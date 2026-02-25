@@ -59,7 +59,7 @@ func (t BytesByteTuple) Hash(seed uintptr) uintptr {
 }
 
 // Equal tests two Tuples for equality. Any other type returns false.
-func (t BytesByteTuple) Equal(v interface{}) bool {
+func (t BytesByteTuple) Equal(v Value) bool {
 	if u, ok := v.(BytesByteTuple); ok {
 		return t == u
 	}

@@ -29,9 +29,9 @@ func (c Closure) Hash(seed uintptr) uintptr {
 }
 
 // Equal tests two Values for equality. Any other type returns false.
-func (c Closure) Equal(i interface{}) bool {
+func (c Closure) Equal(i Value) bool {
 	if d, ok := i.(Closure); ok {
-		return c.f.Equal(d.f)
+		return c.f.EqualFunction(d.f)
 	}
 	return false
 }

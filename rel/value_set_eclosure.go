@@ -29,7 +29,7 @@ func (c ExprClosure) Hash(seed uintptr) uintptr {
 }
 
 // Equal tests two Values for equality. Any other type returns false.
-func (c ExprClosure) Equal(i interface{}) bool {
+func (c ExprClosure) Equal(i Value) bool {
 	if d, ok := i.(ExprClosure); ok {
 		return c.EqualExprClosure(d)
 	}

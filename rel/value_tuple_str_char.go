@@ -59,7 +59,7 @@ func (t StringCharTuple) Hash(seed uintptr) uintptr {
 }
 
 // Equal tests two Tuples for equality. Any other type returns false.
-func (t StringCharTuple) Equal(v interface{}) bool {
+func (t StringCharTuple) Equal(v Value) bool {
 	if u, ok := v.(StringCharTuple); ok {
 		return t == u
 	}

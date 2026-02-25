@@ -51,7 +51,7 @@ func (EmptySet) getBucket() fmt.Stringer {
 	return genericType
 }
 
-func (e EmptySet) Equal(i interface{}) bool {
+func (e EmptySet) Equal(i Value) bool {
 	_, is := i.(EmptySet)
 	return is
 }

@@ -60,7 +60,7 @@ func serve(c *cli.Context) error {
 			Handler: http.HandlerFunc(wsFrontend.ServeHTTP),
 		}
 
-		log.Printf("Websocket server listening on " + wsListen)
+		log.Printf("Websocket server listening on %s", wsListen)
 		errors <- srv.Serve(lis)
 	}()
 
@@ -72,7 +72,7 @@ func serve(c *cli.Context) error {
 
 		grpcServer := newGrpcServer(cert, key, eng)
 
-		log.Printf("gRPC server listening on " + listen)
+		log.Printf("gRPC server listening on %s", listen)
 		errors <- grpcServer.Serve(lis)
 	}()
 

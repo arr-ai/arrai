@@ -11,7 +11,8 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/anz-bank/pkg/log"
+	"log/slog"
+
 	"github.com/arr-ai/wbnf/ast"
 	"github.com/arr-ai/wbnf/parser"
 
@@ -736,9 +737,9 @@ func (pc ParseContext) compileRbinop(ctx context.Context, b ast.Branch, c ast.Ch
 
 func (pc ParseContext) compileIf(ctx context.Context, b ast.Branch, c ast.Children) (rel.Expr, error) {
 	loggingOnce.Do(func() {
-		log.Error(ctx,
-			errors.New("operator if is deprecated and will be removed soon, please use operator cond instead. "+
-				"Operator cond sample: let a = cond {2 > 1: 1, 2 > 3: 2, _: 3}"))
+		slog.ErrorContext(ctx,
+			"operator if is deprecated and will be removed soon, please use operator cond instead. "+
+				"Operator cond sample: let a = cond {2 > 1: 1, 2 > 3: 2, _: 3}")
 	})
 
 	result, err := pc.CompileExpr(ctx, b.One(exprTag).(ast.Branch))

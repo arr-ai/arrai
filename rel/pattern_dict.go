@@ -5,7 +5,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/arr-ai/frozen"
 )
 
 type DictPatternEntry struct {
@@ -89,7 +88,7 @@ func (p DictPattern) Bind(ctx context.Context, local Scope, value Value) (contex
 				key = lit.Literal()
 			}
 
-			dictExpr, found := m.Get(key)
+			dictExpr, found := m.Get(key.(Value))
 			if !found {
 				if entry.pattern.fallback == nil {
 					return ctx, EmptyScope, fmt.Errorf("couldn't find %s in dict %s", key, m)
@@ -101,7 +100,7 @@ func (p DictPattern) Bind(ctx context.Context, local Scope, value Value) (contex
 				}
 			} else {
 				dictValue = dictExpr.(Value)
-				m = m.Without(frozen.NewSet(key))
+				m = m.Without(key.(Value))
 			}
 		}
 

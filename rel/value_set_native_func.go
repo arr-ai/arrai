@@ -46,7 +46,7 @@ func (f *NativeFunction) Hash(seed uintptr) uintptr {
 }
 
 // Equal tests two Values for equality. Any other type returns false.
-func (f *NativeFunction) Equal(i interface{}) bool {
+func (f *NativeFunction) Equal(i Value) bool {
 	if g, ok := i.(*NativeFunction); ok {
 		return f == g
 	}

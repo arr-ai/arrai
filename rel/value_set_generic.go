@@ -13,7 +13,7 @@ import (
 
 // GenericSet is a set of Values.
 type GenericSet struct {
-	set frozen.Set
+	set frozen.Set[Value]
 }
 
 // genericSet equivalents for Boolean true and false
@@ -46,14 +46,14 @@ func CanonicalSet(s Set) Set {
 }
 
 func newGenericSetFromSet(s Set) Set {
-	sb := frozen.SetBuilder{}
+	sb := frozen.SetBuilder[Value]{}
 	for e := s.Enumerator(); e.MoveNext(); {
 		sb.Add(e.Current())
 	}
 	return newSetFromFrozenSet(sb.Finish())
 }
 
-func newSetFromFrozenSet(s frozen.Set) Set {
+func newSetFromFrozenSet(s frozen.Set[Value]) Set {
 	switch s.Count() {
 	case 0:
 		return None
@@ -83,7 +83,7 @@ func (s GenericSet) Hash(seed uintptr) uintptr {
 }
 
 // Equal tests two Sets for equality. Any other type returns false.
-func (s GenericSet) Equal(v interface{}) bool {
+func (s GenericSet) Equal(v Value) bool {
 	if t, ok := v.(GenericSet); ok {
 		return s.set.Equal(t.set)
 	}
@@ -236,14 +236,11 @@ func (s GenericSet) Map(f func(v Value) (Value, error)) (Set, error) {
 
 // Where returns a new genericSet with all the Values satisfying predicate p.
 func (s GenericSet) Where(p func(v Value) (bool, error)) (_ Set, err error) {
-	set := s.set.Where(func(elem interface{}) bool {
+	set := s.set.Where(func(elem Value) bool {
 		if err != nil {
 			return false
 		}
-		if elem == nil {
-			return false
-		}
-		match, err2 := p(elem.(Value))
+		match, err2 := p(elem)
 		if err2 != nil {
 			err = err2
 			return false
@@ -294,7 +291,7 @@ func (s GenericSet) ArrayEnumerator() ValueEnumerator {
 	return &genericSetValueEnumerator{
 		&genericSetEnumerator{
 			s.set.OrderedRange(
-				func(a, b interface{}) bool {
+				func(a, b Value) bool {
 					return a.(Tuple).MustGet("@").(Number) < b.(Tuple).MustGet("@").(Number)
 				},
 			),
@@ -304,7 +301,7 @@ func (s GenericSet) ArrayEnumerator() ValueEnumerator {
 
 // genericSetEnumerator represents an enumerator over a genericSet.
 type genericSetEnumerator struct {
-	i frozen.Iterator
+	i frozen.Iterator[Value]
 }
 
 // MoveNext moves the enumerator to the next Value.
@@ -314,7 +311,7 @@ func (e *genericSetEnumerator) MoveNext() bool {
 
 // Current returns the enumerator's current Value.
 func (e *genericSetEnumerator) Current() Value {
-	return e.i.Value().(Value)
+	return e.i.Value()
 }
 
 // ValueList represents a []Value for use in sort.Sort().

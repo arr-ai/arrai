@@ -25,9 +25,9 @@ func Intersect(a, b Set) Set {
 	switch {
 	case aUnion && bUnion:
 		keys := au.m.Keys().Intersection(bu.m.Keys())
-		m := frozen.StringMapBuilder{}
+		m := frozen.MapBuilder[string, any]{}
 		for i := keys.Range(); i.Next(); {
-			key := i.Value().(string)
+			key := i.Value()
 			if subset := Intersect(au.getSubset(key), bu.getSubset(key)); subset.IsTrue() {
 				m.Put(key, subset)
 			}
@@ -76,7 +76,7 @@ func Union(a, b Set) Set {
 		return newSetFromBuckets(
 			au.m.Merge(
 				bu.m,
-				func(_ string, left, right interface{}) interface{} {
+				func(_ string, left, right any) any {
 					return Union(left.(Set), right.(Set))
 				},
 			),
@@ -87,7 +87,7 @@ func Union(a, b Set) Set {
 		}
 		return a.(UnionSet).unionWithSubset(b)
 	case a.unionSetSubsetBucket() != b.unionSetSubsetBucket():
-		m := frozen.StringMapBuilder{}
+		m := frozen.MapBuilder[string, any]{}
 		m.Put(a.unionSetSubsetBucket(), a)
 		m.Put(b.unionSetSubsetBucket(), b)
 		return newSetFromBuckets(m.Finish())
@@ -124,7 +124,7 @@ func Difference(a, b Set) Set {
 	bu, bUnion := b.(UnionSet)
 	switch {
 	case aUnion && bUnion:
-		m := frozen.StringMapBuilder{}
+		m := frozen.MapBuilder[string, any]{}
 		for i := au.m.Range(); i.Next(); {
 			bucket, subset := i.Entry()
 			if d := Difference(subset.(Set), bu.getSubset(bucket)); d.IsTrue() {
@@ -137,7 +137,7 @@ func Difference(a, b Set) Set {
 		if diff := Difference(au.getSubset(key), b); diff.IsTrue() {
 			return newSetFromBuckets(au.m.With(key, diff))
 		}
-		return newSetFromBuckets(au.m.Without(frozen.NewSet(key)))
+		return newSetFromBuckets(au.m.Without(key))
 	case bUnion:
 		return Difference(a, bu.getSubset(a.unionSetSubsetBucket()))
 	default:
@@ -248,9 +248,9 @@ func PowerSet(s Set) (Set, error) {
 		return NewSet(None)
 	}
 	if gs, ok := s.(GenericSet); ok {
-		var sb frozen.SetBuilder
-		for i := gs.set.Powerset().Range(); i.Next(); {
-			sb.Add(newSetFromFrozenSet(i.Value().(frozen.Set)))
+		var sb frozen.SetBuilder[Value]
+		for i := frozen.Powerset(gs.set).Range(); i.Next(); {
+			sb.Add(newSetFromFrozenSet(i.Value()))
 		}
 		return newSetFromFrozenSet(sb.Finish()), nil
 	}

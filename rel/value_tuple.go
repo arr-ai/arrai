@@ -17,7 +17,7 @@ import (
 
 // GenericTuple is the default implementation of Tuple.
 type GenericTuple struct {
-	tuple          frozen.Map
+	tuple          frozen.Map[string, Value]
 	names          []string
 	orderNamesOnce sync.Once
 }
@@ -29,16 +29,16 @@ var (
 	negateTag = "@neg"
 )
 
-type TupleBuilder frozen.MapBuilder
+type TupleBuilder frozen.MapBuilder[string, Value]
 
 func (b *TupleBuilder) Put(name string, value Value) {
-	(*frozen.MapBuilder)(b).Put(name, value)
+	(*frozen.MapBuilder[string, Value])(b).Put(name, value)
 }
 
 func (b *TupleBuilder) Finish() Tuple {
-	m := (*frozen.MapBuilder)(b).Finish()
+	m := (*frozen.MapBuilder[string, Value])(b).Finish()
 	if index, has := m.Get("@"); has && m.Count() == 2 {
-		i := index.(Value)
+		i := index
 		switch {
 		case m.Has(StringCharAttr):
 			return NewStringCharTuple(
@@ -53,10 +53,10 @@ func (b *TupleBuilder) Finish() Tuple {
 		case m.Has(ArrayItemAttr):
 			return NewArrayItemTuple(
 				int(i.(Number).Float64()),
-				m.MustGet(ArrayItemAttr).(Value),
+				m.MustGet(ArrayItemAttr),
 			)
 		case m.Has(DictValueAttr):
-			return NewDictEntryTuple(i, m.MustGet(DictValueAttr).(Value))
+			return NewDictEntryTuple(i, m.MustGet(DictValueAttr))
 		}
 	}
 	return &GenericTuple{tuple: m}
@@ -189,7 +189,7 @@ func newGenericTuple(attrs ...Attr) Tuple {
 	if len(attrs) == 0 {
 		return EmptyTuple
 	}
-	m := &frozen.MapBuilder{}
+	m := &frozen.MapBuilder[string, Value]{}
 	for _, attr := range attrs {
 		m.Put(attr.Name, attr.Value)
 	}
@@ -211,7 +211,7 @@ func (t *GenericTuple) Hash(seed uintptr) uintptr {
 }
 
 // Equal tests two Tuples for equality. Any other type returns false.
-func (t *GenericTuple) Equal(v interface{}) bool {
+func (t *GenericTuple) Equal(v Value) bool {
 	if b, ok := v.(Tuple); ok {
 		for e := t.Enumerator(); e.MoveNext(); {
 			aName, aValue := e.Current()
@@ -497,10 +497,7 @@ func (t *GenericTuple) Count() int {
 
 // Get returns the Value associated with a name, and true iff it was found.
 func (t *GenericTuple) Get(name string) (Value, bool) {
-	if v, found := t.tuple.Get(name); found {
-		return v.(Value), true
-	}
-	return nil, false
+	return t.tuple.Get(name)
 }
 
 // MustGet returns e.Get(name) or panics if an error occurs.
@@ -526,11 +523,11 @@ func (t *GenericTuple) With(name string, value Value) Tuple {
 // Without returns a Tuple with all name/Value pairs in t exception the one of
 // the given name.
 func (t *GenericTuple) Without(name string) Tuple {
-	return &GenericTuple{tuple: t.tuple.Without(frozen.NewSet(name))}
+	return &GenericTuple{tuple: t.tuple.Without(name)}
 }
 
 func (t *GenericTuple) Map(f func(Value) (Value, error)) (Tuple, error) {
-	var b frozen.MapBuilder
+	var b frozen.MapBuilder[string, Value]
 	for e := t.Enumerator(); e.MoveNext(); {
 		key, value := e.Current()
 		v, err := f(value)
@@ -550,7 +547,7 @@ func (t *GenericTuple) HasName(name string) bool {
 
 // Names returns the attribute names.
 func (t *GenericTuple) Names() Names {
-	var b frozen.SetBuilder
+	var b frozen.SetBuilder[string]
 	for e := t.Enumerator(); e.MoveNext(); {
 		name, _ := e.Current()
 		b.Add(name)
@@ -575,7 +572,7 @@ func (t *GenericTuple) Project(names Names) Tuple {
 
 // GenericTupleEnumerator represents an enumerator over a GenericTuple.
 type GenericTupleEnumerator struct {
-	i *frozen.MapIterator
+	i frozen.MapIterator[string, Value]
 }
 
 // MoveNext moves the enumerator to the next Value.
@@ -585,13 +582,13 @@ func (e *GenericTupleEnumerator) MoveNext() bool {
 
 // Current returns the enumerator's current Value.
 func (e *GenericTupleEnumerator) Current() (string, Value) {
-	k, v := e.i.Entry()
-	return k.(string), v.(Value)
+	return e.i.Key(), e.i.Value()
 }
 
 // Enumerator returns an enumerator over the Values in the GenericTuple.
 func (t *GenericTuple) Enumerator() AttrEnumerator {
-	return &GenericTupleEnumerator{i: t.tuple.Range()}
+	i := t.tuple.Range()
+	return &GenericTupleEnumerator{i: i}
 }
 
 // TupleOrderedNames returns the names of this tuple in sorted order.

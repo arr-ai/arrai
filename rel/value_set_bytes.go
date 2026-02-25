@@ -73,7 +73,7 @@ func (b Bytes) Hash(seed uintptr) uintptr {
 }
 
 // Equal tests two Byteses for equality. Any other type returns false.
-func (b Bytes) Equal(v interface{}) bool {
+func (b Bytes) Equal(v Value) bool {
 	c, is := v.(Bytes)
 	return is && b.EqualBytes(c)
 }

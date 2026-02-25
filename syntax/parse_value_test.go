@@ -16,7 +16,7 @@ func assertParse(t *testing.T, expected rel.Value, input string) bool { //nolint
 		expr = lit.Literal()
 	}
 	return assert.NoError(t, err) &&
-		assert.True(t, expected.Equal(expr), "%s == \n%s", expected, expr)
+		assert.True(t, expected.Equal(expr.(rel.Value)), "%s == \n%s", expected, expr)
 }
 
 // func assertParseError(t *testing.T, input string) bool {

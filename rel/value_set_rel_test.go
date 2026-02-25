@@ -34,7 +34,7 @@ func TestRelationString(t *testing.T) {
 		attrs: NamesSlice{"c", "b", "a"},
 		p:     valueProjector{0, 1, 2},
 		rows: &positionalRelation{
-			set: frozen.NewSet(
+			set: frozen.NewSet[any](
 				row(1, 1, 2),
 				row(1, 2, 3),
 				row(2, 1, 2),
@@ -47,7 +47,7 @@ func TestRelationString(t *testing.T) {
 		attrs: NamesSlice{"c", "b", "a"},
 		p:     valueProjector{2, 0, 1},
 		rows: &positionalRelation{
-			set: frozen.NewSet(
+			set: frozen.NewSet[any](
 				row(1, 1, 2),
 				row(1, 2, 3),
 				row(2, 1, 2),
@@ -64,7 +64,7 @@ func TestRelationUnion(t *testing.T) {
 		attrs: NamesSlice{"a", "b"},
 		p:     valueProjector{0, 1},
 		rows: &positionalRelation{
-			set: frozen.NewSet(row(1, 3)),
+			set: frozen.NewSet[any](row(1, 3)),
 		},
 	}
 
@@ -72,7 +72,7 @@ func TestRelationUnion(t *testing.T) {
 		attrs: NamesSlice{"b", "a"},
 		p:     valueProjector{0, 1},
 		rows: &positionalRelation{
-			set: frozen.NewSet(row(1, 3)),
+			set: frozen.NewSet[any](row(1, 3)),
 		},
 	}
 
@@ -83,7 +83,7 @@ func TestRelationUnion(t *testing.T) {
 			attrs: NamesSlice{"a", "b"},
 			p:     valueProjector{0, 1},
 			rows: &positionalRelation{
-				set: frozen.NewSet(row(1, 3), row(3, 1)),
+				set: frozen.NewSet[any](row(1, 3), row(3, 1)),
 			},
 		},
 		Union(r1, r2),
@@ -97,7 +97,7 @@ func TestRelationHas(t *testing.T) {
 		attrs: NamesSlice{"c", "b", "a"},
 		p:     valueProjector{0, 1, 2},
 		rows: &positionalRelation{
-			set: frozen.NewSet(row(1, 3, 2)),
+			set: frozen.NewSet[any](row(1, 3, 2)),
 		},
 	}
 	assert.True(t,

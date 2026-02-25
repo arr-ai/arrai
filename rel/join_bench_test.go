@@ -27,7 +27,7 @@ func generateTuples(n int) ([]Tuple, []Tuple) {
 func genericSetTuples(n int) (GenericSet, GenericSet) {
 	t1, t2 := generateTuples(n)
 	f := func(t []Tuple) GenericSet {
-		sb := frozen.NewSetBuilder(3 * n)
+		sb := frozen.NewSetBuilder[Value](3 * n)
 		for _, tu := range t {
 			sb.Add(tu)
 		}

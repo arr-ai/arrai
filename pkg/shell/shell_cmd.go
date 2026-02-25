@@ -10,7 +10,8 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/anz-bank/pkg/log"
+	"log/slog"
+
 	"github.com/arr-ai/wbnf/parser"
 	"github.com/go-errors/errors"
 
@@ -120,7 +121,7 @@ func changeFrame(ctx context.Context, i int, sh *shellInstance) error {
 		return fmt.Errorf("frame index out of range, frame length: %d", len(sh.frames))
 	}
 	sh.currentFrameIndex = i
-	log.Infof(ctx, "Stack: %d\n%s\n", i, sh.frames[i].GetSource().Context(parser.DefaultLimit))
+	slog.InfoContext(ctx, fmt.Sprintf("Stack: %d\n%s\n", i, sh.frames[i].GetSource().Context(parser.DefaultLimit)))
 	sh.scope = syntax.StdScope().Update(sh.frames[i].GetScope())
 	return nil
 }

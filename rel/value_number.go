@@ -41,7 +41,7 @@ func (n Number) Hash(seed uintptr) uintptr {
 }
 
 // Equal tests two Values for equality. Any other type returns false.
-func (n Number) Equal(v interface{}) bool {
+func (n Number) Equal(v Value) bool {
 	if b, ok := v.(Number); ok {
 		return n == b
 	}

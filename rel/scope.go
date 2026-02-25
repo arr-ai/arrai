@@ -15,7 +15,7 @@ var EmptyScope Scope
 
 // Scope represents an expression scope.
 type Scope struct {
-	m frozen.Map
+	m frozen.Map[string, Expr]
 }
 
 func (s Scope) String() string {
@@ -63,10 +63,7 @@ func (s Scope) Count() int {
 // Get returns the Expr for the given name or nil.
 func (s Scope) Get(name string) (Expr, bool) {
 	if expr, found := s.m.Get(name); found {
-		if expr != nil {
-			return expr.(Expr), true
-		}
-		return nil, true
+		return expr, true
 	}
 	return nil, false
 }
@@ -107,7 +104,11 @@ func (s Scope) MatchedWith(name string, expr Expr) (Scope, error) {
 // Without returns a new scope with with all the old bindings except the ones
 // that correspond to the provided names.
 func (s Scope) Without(name ...string) Scope {
-	return Scope{s.m.Without(frozen.NewSetFromStrings(name...))}
+	m := s.m
+	for _, n := range name {
+		m = m.Without(n)
+	}
+	return Scope{m}
 }
 
 // s.Update(t) merges s and t, choosing t's binding in the event of a name clash.
@@ -172,16 +173,15 @@ func (s Scope) OrderedNames() []string {
 
 // ScopeEnumerator represents an enumerator over a Scope.
 type ScopeEnumerator struct {
-	i *frozen.MapIterator
+	i frozen.MapIterator[string, Expr]
 }
 
 // MoveNext moves the enumerator to the next Value.
-func (e ScopeEnumerator) MoveNext() bool {
+func (e *ScopeEnumerator) MoveNext() bool {
 	return e.i.Next()
 }
 
 // Current returns the enumerator's current Value.
-func (e ScopeEnumerator) Current() (string, Expr) {
-	name, expr := e.i.Entry()
-	return name.(string), expr.(Expr)
+func (e *ScopeEnumerator) Current() (string, Expr) {
+	return e.i.Key(), e.i.Value()
 }

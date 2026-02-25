@@ -334,7 +334,7 @@ func (l *Lexer) Fail(err error) Token {
 // Failf produces a formatted error with a line marker.
 func (l *Lexer) Failf(fmtStr string, args ...interface{}) Token {
 	return l.Fail(
-		errors.Errorf(fmt.Sprintf(fmtStr, args...) + "\n" + l.String()))
+		errors.Errorf("%s\n%s", fmt.Sprintf(fmtStr, args...), l.String()))
 }
 
 // String produces a formatted string representation of the lexer with a line

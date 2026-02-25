@@ -10,7 +10,7 @@ import (
 // TODO: Replace genericSetBuilder with custom setBuilders.
 var (
 	genericSetFinish = func(values ...Value) (Set, error) {
-		sb := frozen.SetBuilder{}
+		sb := frozen.SetBuilder[Value]{}
 		for _, v := range values {
 			sb.Add(v)
 		}
@@ -122,7 +122,7 @@ func (b *SetBuilder) Finish() (Set, error) {
 		}
 	}
 
-	var mb frozen.StringMapBuilder
+	var mb frozen.MapBuilder[string, any]
 	for k, v := range b.buckets {
 		set, err := v.Finish()
 		if err != nil {

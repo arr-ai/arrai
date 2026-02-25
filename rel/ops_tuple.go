@@ -42,7 +42,7 @@ func Combine(a, b Tuple, op CombineOp) map[string]Pair {
 
 // CombineNames returns names from a and b according to the given mask.
 func CombineNames(a, b Tuple, op CombineOp) Names {
-	var sb frozen.SetBuilder
+	var sb frozen.SetBuilder[string]
 	for name := range Combine(a, b, op) {
 		sb.Add(name)
 	}

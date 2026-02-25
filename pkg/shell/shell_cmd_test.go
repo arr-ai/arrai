@@ -167,7 +167,7 @@ func assertEqualScope(t *testing.T, expected, actual rel.Scope) {
 		name, v1 := e.Current()
 		v2, exists := actual.Get(name)
 		assert.True(t, exists)
-		assert.True(t, v1.(rel.Value).Equal(v2))
+		assert.True(t, v1.(rel.Value).Equal(v2.(rel.Value)))
 	}
 }
 

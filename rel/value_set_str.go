@@ -85,7 +85,7 @@ func (s String) Hash(seed uintptr) uintptr {
 }
 
 // Equal tests two Sets for equality. Any other type returns false.
-func (s String) Equal(v interface{}) bool {
+func (s String) Equal(v Value) bool {
 	t, is := v.(String)
 	return is && s.EqualString(t)
 }

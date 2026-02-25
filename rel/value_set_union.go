@@ -12,10 +12,10 @@ import (
 )
 
 type UnionSet struct {
-	m frozen.StringMap
+	m frozen.Map[string, any]
 }
 
-func newSetFromBuckets(m frozen.StringMap) Set {
+func newSetFromBuckets(m frozen.Map[string, any]) Set {
 	switch m.Count() {
 	case 0:
 		return None
@@ -33,7 +33,7 @@ func toUnionSetWithItem(s Set, v Value) Set {
 	if valueBucket == subsetBucket {
 		panic(fmt.Errorf("toUnionSetWithItem expects that the set bucket and value bucket are different"))
 	}
-	mb := frozen.StringMapBuilder{}
+	var mb frozen.MapBuilder[string, any]
 	mb.Put(subsetBucket, s)
 	mb.Put(valueBucket, MustNewSet(v))
 	return newSetFromBuckets(mb.Finish())
@@ -80,7 +80,7 @@ func (u UnionSet) Enumerator() ValueEnumerator {
 }
 
 type unionSetOrderedEnumerator struct {
-	set     frozen.Iterator
+	set     frozen.Iterator[any]
 	current ValueEnumerator
 }
 
@@ -134,7 +134,7 @@ func (u UnionSet) Without(v Value) Set {
 	bucket := v.getBucket().String()
 	newSet := u.getSubset(bucket).Without(v)
 	if !newSet.IsTrue() {
-		return newSetFromBuckets(u.m.Without(frozen.NewSetFromStrings(bucket)))
+		return newSetFromBuckets(u.m.Without(bucket))
 	}
 	return newSetFromBuckets(u.m.With(bucket, newSet))
 }
@@ -154,7 +154,7 @@ func (u UnionSet) Map(f func(Value) (Value, error)) (Set, error) {
 }
 
 func (u UnionSet) Where(f func(Value) (bool, error)) (Set, error) {
-	var mb frozen.StringMapBuilder
+	var mb frozen.MapBuilder[string, any]
 	for i := u.bucketRange(); i.next(); {
 		v, err := i.subset().Where(f)
 		if err != nil {
@@ -265,9 +265,23 @@ func (u UnionSet) Format(f fmt.State, verb rune) {
 	fu.WriteString(f, "}")
 }
 
-func (u UnionSet) Equal(s interface{}) bool {
+func (u UnionSet) Equal(s Value) bool {
 	if t, ok := s.(UnionSet); ok {
-		return u.m.Equal(t.m)
+		if u.m.Count() != t.m.Count() {
+			return false
+		}
+		for i := u.m.Range(); i.Next(); {
+			k, uv := i.Entry()
+			tv, has := t.m.Get(k)
+			if !has {
+				return false
+			}
+			uSet, tSet := uv.(Set), tv.(Set)
+			if !uSet.Equal(tSet) {
+				return false
+			}
+		}
+		return true
 	}
 	return false
 }
@@ -285,7 +299,7 @@ func (u UnionSet) OrderedValues() ValueEnumerator {
 }
 
 type unionSetBucketRange struct {
-	i *frozen.StringMapIterator
+	i frozen.MapIterator[string, any]
 }
 
 func (u UnionSet) bucketRange() *unionSetBucketRange {

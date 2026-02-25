@@ -130,7 +130,7 @@ func Reduce(
 	getKey func(value Value) Value,
 	reduce func(key Value, tuples Set) Set,
 ) Set {
-	var buckets frozen.Map
+	var buckets frozen.Map[Value, any]
 	for e := a.Enumerator(); e.MoveNext(); {
 		value := e.Current()
 		key := getKey(value)
@@ -146,7 +146,7 @@ func Reduce(
 
 	result := None
 	for i := buckets.Range(); i.Next(); {
-		result = Union(result, reduce(i.Key().(Value), i.Value().(Set)))
+		result = Union(result, reduce(i.Key(), i.Value().(Set)))
 	}
 	return result
 }
@@ -276,7 +276,7 @@ func GenericJoin(
 	getKey func(value Value) Value,
 	join func(key Value, a, b Set) Set,
 ) Set {
-	var mb frozen.MapBuilder
+	var mb frozen.MapBuilder[Value, any]
 	accumulate := func(s Set, slotKey int) {
 		for e := s.Enumerator(); e.MoveNext(); {
 			value := e.Current()
@@ -302,8 +302,7 @@ func GenericJoin(
 
 	result := None
 	for i := mb.Finish().Range(); i.Next(); {
-		k, v := i.Entry()
-		key := k.(Value)
+		key, v := i.Entry()
 		slots := v.([2]Set)
 		aSet := slots[aSlot]
 		bSet := slots[bSlot]

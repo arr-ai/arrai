@@ -16,7 +16,6 @@ import (
 	"github.com/arr-ai/arrai/pkg/ctxfs"
 	"github.com/arr-ai/arrai/rel"
 
-	"github.com/anz-bank/pkg/mod"
 	"github.com/spf13/afero"
 	"github.com/spf13/afero/zipfs"
 )
@@ -320,7 +319,7 @@ func bundleLocalFile(ctx context.Context, filePath string) (err error) {
 	return ctxfs.ZipCreate(ctx, bundleFsKey, path.Join(dir, filePath), source)
 }
 
-func bundleModule(ctx context.Context, relImportPath string, m *mod.Module) (context.Context, error) {
+func bundleModule(ctx context.Context, relImportPath string, m *goModule) (context.Context, error) {
 	if !isBundling(ctx) {
 		return ctx, nil
 	}

@@ -11,7 +11,8 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/anz-bank/pkg/log"
+	"log/slog"
+
 	"github.com/chzyer/readline"
 	"github.com/sirupsen/logrus"
 
@@ -64,7 +65,7 @@ func CreateDebugSession(err error) {
 }
 
 func Shell(ctx context.Context, frames []rel.ContextErr) error {
-	ctx = log.WithConfigs(log.SetVerboseMode(true)).Onto(ctx)
+	_ = slog.Default() // was: log.WithConfigs(log.SetVerboseMode(true)).Onto(ctx)
 	ctx = arraictx.InitRunCtx(ctx)
 	sh := newShellInstance(newLineCollector(), frames)
 	l, err := readline.NewEx(&readline.Config{
@@ -99,7 +100,7 @@ func Shell(ctx context.Context, frames []rel.ContextErr) error {
 			case exitError{}:
 				return nil
 			default:
-				log.Error(ctx, err)
+				slog.ErrorContext(ctx, "shell error", "err", err)
 			}
 		}
 	}
