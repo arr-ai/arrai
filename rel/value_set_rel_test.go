@@ -10,14 +10,14 @@ import (
 func TestProjectionBasedOnNames(t *testing.T) {
 	t.Parallel()
 
-	r := Relation{attrs: NamesSlice{"a", "b", "c"}, p: valueProjector{0, 1, 2}}
+	r := newRelation(NamesSlice{"a", "b", "c"}, valueProjector{0, 1, 2}, nil)
 	assert.Equal(t, valueProjector{2, 1, 0}, r.projectionBasedOnNames(NamesSlice{"c", "b", "a"}))
 	assert.Equal(t, valueProjector{0, 1, 2}, r.projectionBasedOnNames(NamesSlice{"a", "b", "c"}))
 	assert.Equal(t, valueProjector{0, 1}, r.projectionBasedOnNames(NamesSlice{"a", "b"}))
 	assert.Equal(t, valueProjector{}, r.projectionBasedOnNames(NamesSlice{}))
 	assert.Equal(t, valueProjector{0, 0, 2}, r.projectionBasedOnNames(NamesSlice{"a", "a", "c"}))
 
-	r = Relation{attrs: NamesSlice{"a", "b", "c"}, p: valueProjector{2, 0, 1}}
+	r = newRelation(NamesSlice{"a", "b", "c"}, valueProjector{2, 0, 1}, nil)
 	assert.Equal(t, valueProjector{1, 0, 2}, r.projectionBasedOnNames(NamesSlice{"c", "b", "a"}))
 	assert.Equal(t, valueProjector{2, 0, 1}, r.projectionBasedOnNames(NamesSlice{"a", "b", "c"}))
 	assert.Equal(t, valueProjector{2, 0}, r.projectionBasedOnNames(NamesSlice{"a", "b"}))
@@ -30,62 +30,62 @@ func TestProjectionBasedOnNames(t *testing.T) {
 func TestRelationString(t *testing.T) {
 	t.Parallel()
 
-	r := Relation{
-		attrs: NamesSlice{"c", "b", "a"},
-		p:     valueProjector{0, 1, 2},
-		rows: &positionalRelation{
+	r := newRelation(
+		NamesSlice{"c", "b", "a"},
+		valueProjector{0, 1, 2},
+		&positionalRelation{
 			set: frozen.NewSet[any](
 				row(1, 1, 2),
 				row(1, 2, 3),
 				row(2, 1, 2),
 			),
 		},
-	}
+	)
 	assert.Equal(t, "{|a, b, c| (2, 1, 1), (2, 1, 2), (3, 2, 1)}", r.String())
 
-	r = Relation{
-		attrs: NamesSlice{"c", "b", "a"},
-		p:     valueProjector{2, 0, 1},
-		rows: &positionalRelation{
+	r = newRelation(
+		NamesSlice{"c", "b", "a"},
+		valueProjector{2, 0, 1},
+		&positionalRelation{
 			set: frozen.NewSet[any](
 				row(1, 1, 2),
 				row(1, 2, 3),
 				row(2, 1, 2),
 			),
 		},
-	}
+	)
 	assert.Equal(t, "{|a, b, c| (1, 1, 2), (1, 2, 2), (2, 1, 3)}", r.String())
 }
 
 func TestRelationUnion(t *testing.T) {
 	t.Parallel()
 
-	r1 := Relation{
-		attrs: NamesSlice{"a", "b"},
-		p:     valueProjector{0, 1},
-		rows: &positionalRelation{
+	r1 := newRelation(
+		NamesSlice{"a", "b"},
+		valueProjector{0, 1},
+		&positionalRelation{
 			set: frozen.NewSet[any](row(1, 3)),
 		},
-	}
+	)
 
-	r2 := Relation{
-		attrs: NamesSlice{"b", "a"},
-		p:     valueProjector{0, 1},
-		rows: &positionalRelation{
+	r2 := newRelation(
+		NamesSlice{"b", "a"},
+		valueProjector{0, 1},
+		&positionalRelation{
 			set: frozen.NewSet[any](row(1, 3)),
 		},
-	}
+	)
 
 	// this ensures that even if NamesSlice is in different order, as long both Relations have the same names, the union
 	// of the Relations should be the same type of Relation.
 	AssertEqualValues(t,
-		Relation{
-			attrs: NamesSlice{"a", "b"},
-			p:     valueProjector{0, 1},
-			rows: &positionalRelation{
+		newRelation(
+			NamesSlice{"a", "b"},
+			valueProjector{0, 1},
+			&positionalRelation{
 				set: frozen.NewSet[any](row(1, 3), row(3, 1)),
 			},
-		},
+		),
 		Union(r1, r2),
 	)
 }
@@ -93,13 +93,13 @@ func TestRelationUnion(t *testing.T) {
 func TestRelationHas(t *testing.T) {
 	t.Parallel()
 
-	r := Relation{
-		attrs: NamesSlice{"c", "b", "a"},
-		p:     valueProjector{0, 1, 2},
-		rows: &positionalRelation{
+	r := newRelation(
+		NamesSlice{"c", "b", "a"},
+		valueProjector{0, 1, 2},
+		&positionalRelation{
 			set: frozen.NewSet[any](row(1, 3, 2)),
 		},
-	}
+	)
 	assert.True(t,
 		r.Has(
 			NewTuple(

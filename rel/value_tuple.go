@@ -17,9 +17,13 @@ import (
 
 // GenericTuple is the default implementation of Tuple.
 type GenericTuple struct {
-	tuple          frozen.Map[string, Value]
-	names          []string
-	orderNamesOnce sync.Once
+	tuple            frozen.Map[string, Value]
+	names            []string
+	orderNamesOnce   sync.Once
+	cachedNames      Names
+	cachedNamesOnce  sync.Once
+	cachedBucket     fmt.Stringer
+	cachedBucketOnce sync.Once
 }
 
 var (
@@ -367,14 +371,17 @@ func (t *GenericTuple) getSetBuilder() setBuilder {
 	if !t.IsTrue() {
 		return newGenericTypeSetBuilder()
 	}
-	return newRelationBuilder(t.Names().OrderedNames(), 0)
+	return newRelationBuilder(TupleOrderedNames(t), 0)
 }
 
 func (t *GenericTuple) getBucket() fmt.Stringer {
 	if !t.IsTrue() {
 		return genericType
 	}
-	return newHashableNamesSlice(t.Names().OrderedNames())
+	t.cachedBucketOnce.Do(func() {
+		t.cachedBucket = newHashableNamesSlice(t.Names().OrderedNames())
+	})
+	return t.cachedBucket
 }
 
 type NamesSlice []string
@@ -547,12 +554,15 @@ func (t *GenericTuple) HasName(name string) bool {
 
 // Names returns the attribute names.
 func (t *GenericTuple) Names() Names {
-	var b frozen.SetBuilder[string]
-	for e := t.Enumerator(); e.MoveNext(); {
-		name, _ := e.Current()
-		b.Add(name)
-	}
-	return Names(b.Finish())
+	t.cachedNamesOnce.Do(func() {
+		var b frozen.SetBuilder[string]
+		for e := t.Enumerator(); e.MoveNext(); {
+			name, _ := e.Current()
+			b.Add(name)
+		}
+		t.cachedNames = Names(b.Finish())
+	})
+	return t.cachedNames
 }
 
 // Project returns a tuple with the given names from this tuple, or nil if any

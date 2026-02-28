@@ -15,13 +15,14 @@ import (
 
 // Relation is a Set that only contains Tuples, all of which map the same keys.
 type Relation struct {
-	attrs NamesSlice
-	p     valueProjector
-	rows  *positionalRelation // TODO: experiment with column table
+	attrs   NamesSlice
+	p       valueProjector
+	rows    *positionalRelation // TODO: experiment with column table
+	attrMap map[string]int      // cached mapIndices(attrs, p)
 }
 
 func newRelation(attrs NamesSlice, p valueProjector, rows *positionalRelation) Relation {
-	return Relation{attrs, p, rows}
+	return Relation{attrs: attrs, p: p, rows: rows, attrMap: mapIndices(attrs, p)}
 }
 
 func mapIndices(n NamesSlice, indices valueProjector) map[string]int {
@@ -34,6 +35,7 @@ func mapIndices(n NamesSlice, indices valueProjector) map[string]int {
 	}
 	return m
 }
+
 
 func (r Relation) newBody(rows *positionalRelation) Set {
 	if !rows.IsTrue() {
@@ -87,16 +89,16 @@ func (r Relation) Has(v Value) bool {
 }
 
 func valuesToTuple(val Values, names map[string]int) Tuple {
-	m := make([]Attr, 0, len(val))
+	var b frozen.MapBuilder[string, Value]
 	for name, index := range names {
-		m = append(m, NewAttr(name, val[index]))
+		b.Put(name, val[index])
 	}
-	return NewTuple(m...)
+	return &GenericTuple{tuple: b.Finish()}
 }
 
 func (r Relation) Enumerator() ValueEnumerator {
 	return &relationEnumerator{
-		attrs: mapIndices(r.attrs, r.p),
+		attrs: r.attrMap,
 		i:     r.rows.Range(),
 	}
 }
@@ -107,7 +109,7 @@ func (r Relation) OrderedValues() ValueEnumerator {
 
 func (r Relation) ArrayEnumerator() ValueEnumerator {
 	return &relationEnumerator{
-		attrs: mapIndices(r.attrs, r.p),
+		attrs: r.attrMap,
 		i:     r.rows.OrderedRange(r.p),
 	}
 }
@@ -129,16 +131,14 @@ func (r Relation) Without(v Value) Set {
 }
 
 func (r Relation) Map(f func(Value) (Value, error)) (Set, error) {
-	m := mapIndices(r.attrs, r.p)
 	return r.rows.Map(func(v Values) (Value, error) {
-		return f(valuesToTuple(v, m))
+		return f(valuesToTuple(v, r.attrMap))
 	})
 }
 
 func (r Relation) Where(p func(Value) (bool, error)) (_ Set, err error) {
-	m := mapIndices(r.attrs, r.p)
 	s, err := r.rows.Where(func(v Values) (bool, error) {
-		return p(valuesToTuple(v, m))
+		return p(valuesToTuple(v, r.attrMap))
 	})
 	if err != nil {
 		return nil, err
@@ -358,9 +358,8 @@ func (r Relation) Format(f fmt.State, verb rune) {
 
 func (r Relation) projectionBasedOnNames(names NamesSlice) valueProjector {
 	projection := make(valueProjector, 0, len(names))
-	indices := mapIndices(r.attrs, r.p)
 	for _, n := range names {
-		if i, has := indices[n]; has {
+		if i, has := r.attrMap[n]; has {
 			projection = append(projection, i)
 			continue
 		}
@@ -380,10 +379,9 @@ func (r Relation) canonicalRelation() *positionalRelation {
 	names := make(NamesSlice, len(r.attrs))
 	copy(names, r.attrs)
 	sort.Strings(names)
-	m := mapIndices(r.attrs, r.p)
 	projection := make(valueProjector, 0, len(r.attrs))
 	for _, name := range names {
-		projection = append(projection, m[name])
+		projection = append(projection, r.attrMap[name])
 	}
 	isContiguous := projection.isContiguous()
 	return &positionalRelation{

@@ -104,10 +104,11 @@ func newGenericTypeSetBuilder() setBuilder {
 }
 
 func (b *SetBuilder) Add(v Value) {
-	builder, has := b.buckets[v.getBucket()]
+	bucket := v.getBucket()
+	builder, has := b.buckets[bucket]
 	if !has {
 		builder = v.getSetBuilder()
-		b.buckets[v.getBucket()] = builder
+		b.buckets[bucket] = builder
 	}
 	builder.Add(v)
 }
