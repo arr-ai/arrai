@@ -34,7 +34,7 @@ linters:
   - dogsled
   - dupl
   - errcheck
-  - exportloopref
+  # - exportloopref  # deprecated: Go 1.22 fixed loop variable capture
   # - funlen
   # - gochecknoglobals
   - gochecknoinits

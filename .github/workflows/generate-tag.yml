@@ -27,5 +27,5 @@ jobs:
         id: generate_tag
         uses: ./.github/action/github-tag-action
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.RELEASE_PAT }}
           WITH_V: true
