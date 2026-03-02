@@ -36,11 +36,11 @@ builds:
 
 archives:
 - id: "arrai"
-  builds: ['arrai']
-  format: tar.gz
+  ids: ['arrai']
+  formats: ['tar.gz']
   format_overrides:
     - goos: windows
-      format: zip
+      formats: ['zip']
   name_template: "{{.ProjectName}}_v{{.Version}}_{{.Os}}-{{.Arch}}"
   files:
     - README.md
