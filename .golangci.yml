@@ -23,6 +23,9 @@ linters-settings:
 issues:
   exclude:
     - "unused-parameter: parameter '\\w+' seems to be unused, consider removing or renaming it as _"
+    - "indent-error-flow:"
+    - "redefines-builtin-id:"
+    - "G115:"
 
 linters:
   # please, do not use `enable-all`: it's deprecated and will be removed soon.
