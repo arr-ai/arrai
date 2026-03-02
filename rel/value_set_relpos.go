@@ -341,7 +341,10 @@ func (r *positionalRelation) JoinCommonOnly(
 	}
 }
 
-func joinOneSide(base *positionalRelation, intersector frozen.Map[any, frozen.Set[any]], key, output valueProjector) *positionalRelation {
+func joinOneSide(
+	base *positionalRelation, intersector frozen.Map[any, frozen.Set[any]],
+	key, output valueProjector,
+) *positionalRelation {
 	if output.isIdentity(base.Width()) {
 		result, err := base.Where(func(v Values) (bool, error) {
 			return intersector.Has(v.project(key).values()), nil

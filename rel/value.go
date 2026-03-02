@@ -65,10 +65,6 @@ type Value interface {
 	getBucket() fmt.Stringer
 }
 
-// intfValueLess supports
-func intfValueLess(a, b interface{}) bool {
-	return a.(Value).Less(b.(Value))
-}
 
 func exprIsValue(expr Expr) (Value, bool) {
 	switch expr := expr.(type) {

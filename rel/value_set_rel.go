@@ -36,7 +36,6 @@ func mapIndices(n NamesSlice, indices valueProjector) map[string]int {
 	return m
 }
 
-
 func (r Relation) newBody(rows *positionalRelation) Set {
 	if !rows.IsTrue() {
 		return None

@@ -1,5 +1,5 @@
-ARG go_ver=1.21
-ARG alpine_ver=3.18
+ARG go_ver=1.24
+ARG alpine_ver=3.21
 
 ARG DOCKER_BASE=golang:${go_ver}-alpine${alpine_ver}
 FROM ${DOCKER_BASE} AS stage
