@@ -65,7 +65,6 @@ type Value interface {
 	getBucket() fmt.Stringer
 }
 
-
 func exprIsValue(expr Expr) (Value, bool) {
 	switch expr := expr.(type) {
 	case Value:
