@@ -5,10 +5,10 @@ go 1.24.0
 replace github.com/spf13/afero => github.com/anz-bank/afero v1.2.4
 
 require (
-	github.com/arr-ai/frozen v0.20.3
+	github.com/arr-ai/frozen v1.9.0
 	github.com/arr-ai/hash v1.1.0
 	github.com/arr-ai/proto v0.0.0-20180422074755-2ffbedebee50
-	github.com/arr-ai/wbnf v0.35.3
+	github.com/arr-ai/wbnf v0.38.0
 	github.com/chzyer/readline v1.5.1
 	github.com/go-errors/errors v1.5.1
 	github.com/gorilla/websocket v1.5.3

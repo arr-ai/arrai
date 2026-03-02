@@ -57,10 +57,10 @@ func TestSetHash(t *testing.T) {
 	}
 
 	distinctSets := []Set{a, b, d, e}
-	for _, x := range distinctSets {
-		for _, y := range distinctSets {
+	for xi, x := range distinctSets {
+		for yi, y := range distinctSets {
 			for i := uintptr(0); i < 10; i++ {
-				if x == y {
+				if xi == yi {
 					assert.Equal(t, x.Hash(i), y.Hash(i),
 						"%s.Hash(%d) != %s.Hash(%[2]d)", x, i, y)
 					assert.NotEqual(t, x.Hash(i), y.Hash(i+1),
@@ -89,9 +89,9 @@ func TestSetEqual(t *testing.T) {
 	assert.True(t, f.Equal(e))
 
 	distinctSets := []Set{a, b, d, e}
-	for _, x := range distinctSets {
-		for _, y := range distinctSets {
-			if x == y {
+	for i, x := range distinctSets {
+		for j, y := range distinctSets {
+			if i == j {
 				assert.True(t, x.Equal(y))
 				assert.True(t, x.Equal(y))
 			} else {
