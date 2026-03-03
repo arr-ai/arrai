@@ -1,0 +1,76 @@
+This file lists third-party dependencies used by github.com/arr-ai/arrai and
+their licenses. Only the license type is listed here; the full license text for
+each dependency can be found in the Go module cache or at the project's
+upstream repository.
+
+================================================================================
+
+## Apache-2.0
+
+- github.com/arr-ai/frozen
+- github.com/arr-ai/hash
+- github.com/arr-ai/wbnf
+- github.com/anz-bank/afero (replacing github.com/spf13/afero)
+- github.com/richardlehane/mscfb
+- github.com/richardlehane/msoleps
+- github.com/sethvargo/go-retry
+- google.golang.org/grpc
+- google.golang.org/genproto/googleapis/rpc
+
+================================================================================
+
+## BSD-2-Clause
+
+- github.com/gorilla/websocket
+- github.com/pkg/errors
+- github.com/russross/blackfriday/v2
+
+================================================================================
+
+## BSD-3-Clause
+
+- github.com/golang/protobuf
+- github.com/pmezard/go-difflib
+- github.com/xuri/efp
+- github.com/xuri/excelize/v2
+- github.com/xuri/nfp
+- golang.org/x/crypto
+- golang.org/x/net
+- golang.org/x/sys
+- golang.org/x/text
+- google.golang.org/protobuf
+
+================================================================================
+
+## ISC
+
+- github.com/davecgh/go-spew
+
+================================================================================
+
+## MIT
+
+- github.com/chzyer/readline
+- github.com/go-errors/errors
+- github.com/iancoleman/strcase
+- github.com/mattn/go-isatty
+- github.com/mohae/deepcopy
+- github.com/rjeczalik/notify
+- github.com/sirupsen/logrus
+- github.com/stretchr/testify
+- github.com/urfave/cli/v2
+- github.com/cpuguy83/go-md2man/v2
+
+================================================================================
+
+## MIT and Apache-2.0
+
+- gopkg.in/yaml.v3
+  (MIT for files ported from libyaml; Apache-2.0 for the remainder)
+
+================================================================================
+
+## No license file found
+
+- github.com/arr-ai/proto
+  (internal arr-ai protobuf definitions; no LICENSE file present in module)

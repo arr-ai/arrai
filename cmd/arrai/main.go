@@ -1,6 +1,7 @@
 package main
 
 import (
+	_ "embed"
 	"fmt"
 	"log"
 	"os"
@@ -15,6 +16,9 @@ import (
 	"github.com/arr-ai/arrai/pkg/buildinfo"
 	"github.com/arr-ai/arrai/pkg/shell"
 )
+
+//go:embed agents-guide.md
+var agentsGuide string
 
 var cmds = []*cli.Command{
 	shellCommand,
@@ -39,6 +43,7 @@ func main() {
 	// logrus.SetLevel(logrus.InfoLevel)
 
 	var debug bool
+	var helpAgent bool
 
 	app.EnableBashCompletion = true
 	args := os.Args
@@ -63,6 +68,18 @@ func main() {
 				Destination: &debug,
 				EnvVars:     []string{"ARRAI_DEBUG"},
 			},
+			&cli.BoolFlag{
+				Name:        "help-agent",
+				Usage:       "Print help text and agent guide for AI coding assistants",
+				Destination: &helpAgent,
+			},
+		}
+		app.Before = func(c *cli.Context) error {
+			if helpAgent {
+				fmt.Print(agentsGuide)
+				os.Exit(0)
+			}
+			return nil
 		}
 		if len(os.Args) > 1 {
 			if execCmd := fetchCommand(args[1:]); execCmd != "" && !isExecCommand(execCmd, app.Commands) {
