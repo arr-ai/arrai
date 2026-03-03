@@ -19,7 +19,8 @@
     "react-dom": "^18.3.1"
   },
   "overrides": {
-    "minimatch": "^10.2.1"
+    "minimatch": "^10.2.1",
+    "serialize-javascript": "^7.0.4"
   },
   "browserslist": {
     "production": [
