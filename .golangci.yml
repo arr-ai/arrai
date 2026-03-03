@@ -4,10 +4,6 @@ run:
 linters-settings:
   errcheck:
     check-blank: true
-  govet:
-    check-shadowing: false
-  revive:
-    min-confidence: 0
   dupl:
     threshold: 100
   lll:
