@@ -38,7 +38,7 @@ jobs:
         echo '**** env'
         env
         echo '**** node'
-        node $(go env GOROOT)/misc/wasm/wasm_exec_node.js arrai.wasm eval '1 + 5'
+        node $(go env GOROOT)/lib/wasm/wasm_exec_node.js arrai.wasm eval '1 + 5'
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         NPM_AUTH_TOKEN: "SOME-RANDOM-KEY"
