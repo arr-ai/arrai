@@ -18,6 +18,11 @@ make install
 On Windows, download the relevant ZIP file from the
 [Releases page](https://github.com/arr-ai/arrai/releases).
 
+## Agent guide
+
+If you use an agentic coding tool, see
+[`agents-guide.md`](agents-guide.md) or run `arrai --help-agent`.
+
 ## Learn
 
 Follow the [Arr.ai tutorial](docs/tutorial/README.md) for a step by step guide

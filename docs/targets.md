@@ -15,6 +15,16 @@ the actual regression. No concrete workload shows write-path as a bottleneck.
 
 ## Achieved
 
+### 🎯T4 Agent guide is discoverable from the repo root  [medium, weight: 5]
+
+Achieved 2026-03-08. Root symlink `agents-guide.md` → `cmd/arrai/agents-guide.md`,
+README updated with agent guide section.
+
+### 🎯T3 arrai v0.333.0 released  [high, weight: 8]
+
+Achieved 2026-03-08. Release created automatically by generate-tag workflow.
+Tag `v0.333.0` on master, GitHub release with binaries for all platforms.
+
 ### 🎯T1 Frozen read-path allocations are zero  [high, weight: 9]
 
 Achieved 2026-03-07. Merged to frozen master as PR #88 (5b2842e).
