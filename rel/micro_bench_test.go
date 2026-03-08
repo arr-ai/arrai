@@ -10,6 +10,9 @@ import (
 	"github.com/arr-ai/frozen"
 )
 
+// benchSink prevents the compiler from optimising away benchmark results.
+var benchSink Set //nolint:gochecknoglobals
+
 // --- Tuple creation benchmarks ---
 
 func BenchmarkNewTuple2Attrs(b *testing.B) {
@@ -314,7 +317,7 @@ func BenchmarkSetBuilderAdd100(b *testing.B) {
 		for _, t := range tuples {
 			sb.Add(t)
 		}
-		sb.Finish()
+		benchSink, _ = sb.Finish() //nolint:errcheck
 	}
 }
 
@@ -332,7 +335,7 @@ func BenchmarkSetBuilderAdd1000(b *testing.B) {
 		for _, t := range tuples {
 			sb.Add(t)
 		}
-		sb.Finish()
+		benchSink, _ = sb.Finish() //nolint:errcheck
 	}
 }
 
@@ -352,7 +355,7 @@ func BenchmarkRelationBuilderAdd100(b *testing.B) {
 		for _, t := range tuples {
 			rb.Add(t)
 		}
-		rb.Finish()
+		benchSink, _ = rb.Finish() //nolint:errcheck
 	}
 }
 
@@ -370,7 +373,7 @@ func BenchmarkRelationBuilderAdd1000(b *testing.B) {
 		for _, t := range tuples {
 			rb.Add(t)
 		}
-		rb.Finish()
+		benchSink, _ = rb.Finish() //nolint:errcheck
 	}
 }
 

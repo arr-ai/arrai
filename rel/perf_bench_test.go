@@ -278,7 +278,7 @@ func BenchmarkPerfSetBuilderAddTuples(b *testing.B) {
 				for _, t := range tuples {
 					sb.Add(t)
 				}
-				_, _ = sb.Finish()
+				benchSink, _ = sb.Finish() //nolint:errcheck
 			}
 		})
 	}
@@ -429,7 +429,7 @@ func BenchmarkPerfRelationAttrsGenericSet(b *testing.B) {
 			b.ReportAllocs()
 			s := perfMakeGenericSet(n, 3)
 			for i := 0; i < b.N; i++ {
-				_, _ = RelationAttrs(s)
+				_, _ = RelationAttrs(s) //nolint:errcheck
 			}
 		})
 	}
@@ -442,7 +442,7 @@ func BenchmarkPerfRelationAttrsRelation(b *testing.B) {
 			b.ReportAllocs()
 			_, r := generateRelations(n / 3)
 			for i := 0; i < b.N; i++ {
-				_, _ = RelationAttrs(r)
+				_, _ = RelationAttrs(r) //nolint:errcheck
 			}
 		})
 	}
