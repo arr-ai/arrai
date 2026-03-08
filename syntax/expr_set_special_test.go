@@ -67,6 +67,27 @@ func TestDictUnion(t *testing.T) {
 		`{"a": "a"} | {"b": "a",    "a": "b"}`)
 }
 
+// TestDictUnionTupleKeys is a regression test for a panic where multipleValues
+// (backed by frozen.Set[any]) used Go == on uncomparable Value types like tuples.
+// The fix was changing multipleValues to frozen.Set[Value].
+func TestDictUnionTupleKeys(t *testing.T) {
+	t.Parallel()
+	// Distinct tuple keys: union produces a combined dict.
+	AssertCodesEvalToSameValue(t,
+		`{(a: 1): "x", (b: 2): "y"}`,
+		`{(a: 1): "x"} | {(b: 2): "y"}`)
+	// Overlapping tuple keys: set union keeps both entries (multipleValues).
+	// This exercises the multipleValues code path with uncomparable keys.
+	// Union order shouldn't matter.
+	AssertCodesEvalToSameValue(t,
+		`{(a: 1): "a"} | {(a: 1): "b"}`,
+		`{(a: 1): "b"} | {(a: 1): "a"}`)
+	// Set keys: also uncomparable, would have panicked with Set[any].
+	AssertCodesEvalToSameValue(t,
+		`{{1, 2}: "x", {3}: "y"}`,
+		`{{1, 2}: "x"} | {{3}: "y"}`)
+}
+
 func TestDictExpand(t *testing.T) {
 	t.Parallel()
 	AssertCodesEvalToSameValue(t,
