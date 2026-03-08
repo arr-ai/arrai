@@ -1,8 +1,8 @@
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
 github.com/anz-bank/afero v1.2.4 h1:+tqmZVCbuisKNlQoNKrlDHiafM4cZNor4bOrhebqrD0=
 github.com/anz-bank/afero v1.2.4/go.mod h1:Ai8FlHk4v/PARR026UzYexafAt9roJ7LcLMAmO6Z93I=
-github.com/arr-ai/frozen v1.9.0 h1:dLeH9ypfbFaf4P0qn3aZ8DaQVUr8dyJvq9Jmy1f7cV0=
-github.com/arr-ai/frozen v1.9.0/go.mod h1:c9sY9uOXu5QQ2Ag+dl3UVoxRCXnofk7hnr9VMmkKbSI=
+github.com/arr-ai/frozen v1.11.0 h1:QGcFWpMLCCsaUuErhJFCfn2BohWlssB0a4YU1Q6xcVU=
+github.com/arr-ai/frozen v1.11.0/go.mod h1:Cih+8KiWwdjPikisT49wUvPzIU2G/Ru6xopYY5uaHwU=
 github.com/arr-ai/hash v1.1.0 h1:z3fOwpCRUq0uBX81OD8tpLEyOxhf+DeQMdmLvUhZcNI=
 github.com/arr-ai/hash v1.1.0/go.mod h1:t+NkgqdI8scxkER48AXU/QE4NVojIBZKOB/US7mYVxQ=
 github.com/arr-ai/proto v0.0.0-20180422074755-2ffbedebee50 h1:IKdl2NU9J9dt4qtet3WarYf5X9jqmO7x9hCqvoKi1kI=
