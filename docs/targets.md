@@ -32,6 +32,28 @@ Relevant files: `docs/package.json`, `docs/package-lock.json`.
 - **Status**: Identified
 - **Discovered**: 2026-04-11
 
+### 🎯T6 Netlify docs deploy preview builds cleanly
+- **Value**: 2
+- **Cost**: 2
+- **Acceptance**:
+  - Netlify deploy preview succeeds on docs PRs (deploy/netlify, Header rules, Pages changed, Redirect rules all pass)
+  - No manual dashboard config drift — build config lives in repo (netlify.toml or equivalent)
+- **Context**: Netlify runs its own build pipeline (separate from GitHub Actions) on every docs/** change in a PR. Since v0.336.0 (2026-04-11), Netlify has been failing with the same webpackbar/webpack ProgressPlugin schema mismatch that broke the GitHub Actions docs.yml workflow — likely because Netlify is still running `yarn build`, auto-generating a fresh yarn.lock that ignores the npm `overrides` in `docs/package.json` and pulls newer webpack transitives.
+
+The GitHub Actions fix (PR #708/#709) switched `.github/workflows/docs.yml` from `yarn install && yarn build` to `npm ci && npm run build`, which honours the committed `package-lock.json` and the `overrides` field. The same fix needs to reach Netlify.
+
+How to approach:
+- Add a `netlify.toml` at repo root (or `docs/netlify.toml`) that sets `[build] command = "npm ci && npm run build"`, `base = "docs/"`, `publish = "docs/build/"`. This overrides whatever is configured in the Netlify dashboard.
+- Alternatively, update the Netlify dashboard directly (requires site admin access).
+
+Not a merge blocker — arr-ai/arrai's master branch protection has empty `required_status_checks.contexts` and `checks`, so Netlify failures are informational only. But a broken deploy preview makes docs PRs harder to review and adds red-cross noise.
+
+Relevant files: `.github/workflows/docs.yml` (has the working npm-based command), `docs/package.json` (has the overrides), `docs/package-lock.json` (committed lock).
+- **Tags**: docs, ci, netlify
+- **Origin**: Surfaced 2026-04-11 while releasing v0.336.0 via /release. GitHub Actions docs workflow was broken identically and got fixed; Netlify pipeline is separate and still broken.
+- **Status**: Identified
+- **Discovered**: 2026-04-11
+
 ## Achieved
 
 ### 🎯T1 Frozen read-path allocations are zero  [high, weight: 9]
@@ -75,4 +97,5 @@ Relevant files: `docs/package.json`, `docs/package-lock.json`.
 ```mermaid
 graph TD
     T5["docs/ npm audit is clean"]
+    T6["Netlify docs deploy preview b…"]
 ```
