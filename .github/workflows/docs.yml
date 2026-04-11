@@ -18,17 +18,13 @@ jobs:
         with:
           node-version: 20.x
 
-      - name: Install yarn
-        run: npm install -g yarn
-
-      - name: yarn build docs
+      - name: npm build docs
         working-directory: docs
         run: |
-          # switch registry in lock file
+          # Switch registry in package-lock.json if override provided
           if [ -n "${{ env.NPM_CONFIG_REGISTRY }}" ]; then
-            sed -i'.bak' 's#https://registry.npmjs.org#${{ env.NPM_CONFIG_REGISTRY }}#' yarn.lock
-            sed -i'.bak' 's#https://registry.yarnpkg.com#${{ env.NPM_CONFIG_REGISTRY }}#' yarn.lock
-            rm yarn.lock.bak
+            sed -i'.bak' 's#https://registry.npmjs.org#${{ env.NPM_CONFIG_REGISTRY }}#' package-lock.json
+            rm package-lock.json.bak
           fi
 
-          yarn install && yarn build
+          npm ci && npm run build
