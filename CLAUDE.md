@@ -71,3 +71,21 @@ Supports local files, `//` standard library modules (`//str`, `//math`, `//seq`,
 - Linting: golangci-lint with ~20 linters enabled (see `.golangci.yml`)
 - Testing: `testify/assert` and `testify/require` for assertions
 - CI runs on Ubuntu, macOS, and Windows
+
+## Release mechanics
+
+- Releases are cut by **goreleaser** triggered on `push: tags: 'v*.*.*'` — not by `gh release create`. Just push the tag from master and goreleaser creates the GitHub release and uploads binaries automatically. Config lives at `.github/goreleaser_configs/goreleaser.yml`.
+- arrai is **not** in `marcelocantos/homebrew-tap` — don't try to install via `brew install marcelocantos/tap/arrai`. Users get binaries from the GitHub release page.
+- Version is injected at build time via `-ldflags -X main.Version=v{{.Version}}`; no in-source version constant to bump.
+
+## docs/ build uses npm, not yarn
+
+- `docs/` uses **npm** with a committed `package-lock.json`. There is **no `yarn.lock`** — do not add one.
+- Transitive dep pins live in the `overrides` field of `docs/package.json` (e.g., `minimatch`, `serialize-javascript`, `lodash`). Yarn v1 **ignores** the `overrides` field, so any CI step that runs `yarn install` will re-resolve from scratch and silently drop the pins, pulling newer transitives that currently break the build (webpackbar/webpack ProgressPlugin schema mismatch). Always use `npm ci && npm run build` in CI and locally.
+- When fixing a transitive CVE, add a line to `overrides` and run `npm install` in `docs/` — do **not** run `npm update`, which pushes webpack forward past webpackbar compatibility.
+
+## CI / deploy previews
+
+- **GitHub Actions** (`.github/workflows/`): `go.yml`, `docs.yml`, `release.yml`, `docker.yml`, `wasm.yml`, `generate-tag.yml`. `docs.yml` runs only on `pull_request`.
+- **Netlify** is connected as a GitHub App and posts deploy-preview checks (`deploy/netlify`, `Header rules`, `Pages changed`, `Redirect rules`) on every docs PR. Netlify runs its **own** build pipeline separate from GitHub Actions — fixing `docs.yml` does not fix Netlify. There is no `netlify.toml` in the repo; config is in the Netlify dashboard, which I usually don't have direct access to.
+- `arr-ai/arrai`'s master branch protection has **empty** `required_status_checks.contexts` and `checks` — so Netlify failures are informational only and don't block merge. Don't get stuck waiting for them, and don't let `gh pr checks --watch --fail-fast` bail out early because of them — either drop `--fail-fast` or filter to the GitHub Actions checks only.
