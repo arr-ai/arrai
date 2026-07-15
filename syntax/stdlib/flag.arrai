@@ -88,7 +88,7 @@
                             let (:flagName, :type, :repeated) = flagConfig(flag);
                             # adds flag value to the accumulated flags so far
                             let withFlagValue = \value
-                                let value = cond {repeated: val.flags(flagName)?:[] ++ [value], _: value};
+                                let value = cond {repeated: (val.flags(flagName)?:[]) ++ [value], _: value};
                                 val +> (flags: val.flags +> {flagName: value})
                             ;
 

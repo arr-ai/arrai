@@ -1,4 +1,4 @@
-ARG go_ver=1.24
+ARG go_ver=1.25
 ARG alpine_ver=3.21
 
 ARG DOCKER_BASE=golang:${go_ver}-alpine${alpine_ver}
