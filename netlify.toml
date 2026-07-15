@@ -1,0 +1,12 @@
+# Netlify must use npm (not yarn) so package-lock.json and the "overrides"
+# field in docs/package.json are honoured. Yarn v1 ignores overrides and can
+# pull webpack forward past webpackbar, breaking the docs build.
+#
+# When base is set, publish is relative to base.
+[build]
+  base = "docs"
+  command = "npm ci && npm run build"
+  publish = "build"
+
+[build.environment]
+  NODE_VERSION = "20"
