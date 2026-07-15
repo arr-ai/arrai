@@ -42,7 +42,7 @@ func sync(c *cli.Context) error {
 	log.Infof("xServer: %s", server)
 	log.Infof("Directory: %s", dir)
 
-	conn, err := grpc.Dial(server, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.NewClient(server, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		return err
 	}

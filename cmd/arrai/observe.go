@@ -28,7 +28,7 @@ func observe(c *cli.Context) error {
 	logrus.Infof("Server: %s", server)
 	logrus.Infof("Source: %s", source)
 
-	conn, err := grpc.Dial(server, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.NewClient(server, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		return err
 	}
