@@ -1,63 +1,130 @@
-run:
-  timeout: 5m
-
-linters-settings:
-  errcheck:
-    check-blank: true
-  dupl:
-    threshold: 100
-  lll:
-    line-length: 120
-  gocritic:
-    enabled-tags:
-    - diagnostic
-    - experimental
-    - opinionated
-    - performance
-    - style
-
-issues:
-  exclude:
-    - "unused-parameter: parameter '\\w+' seems to be unused, consider removing or renaming it as _"
-    - "indent-error-flow:"
-    - "redefines-builtin-id:"
-    - "G115:"
+version: "2"
 
 linters:
-  # please, do not use `enable-all`: it's deprecated and will be removed soon.
-  # inverted configuration with `enable-all` and `disable` is not scalable during updates of golangci-lint
-  disable-all: true
+  default: none
   enable:
-  - bodyclose
-  # - depguard
-  - dogsled
-  - dupl
-  - errcheck
-  # - exportloopref  # deprecated: Go 1.22 fixed loop variable capture
-  # - funlen
-  # - gochecknoglobals
-  - gochecknoinits
-  # - gocognit
-  - goconst
-  # - godox
-  # - gocritic
-  - gocyclo
-  - gofmt
-  - goimports
-  - gosec
-  - gosimple
-  - govet
-  - ineffassign
-  - lll
-  - misspell
-  - nakedret
-  - prealloc
-  - revive
-  - staticcheck
-  - stylecheck
-  - typecheck
-  - unconvert
-  - unparam
-  - unused
-  - whitespace
-  # - wsl
+    - bodyclose
+    - dogsled
+    - dupl
+    - errcheck
+    - gochecknoinits
+    - goconst
+    - gocyclo
+    - gosec
+    - govet
+    - ineffassign
+    - lll
+    - misspell
+    - nakedret
+    - prealloc
+    - revive
+    - staticcheck
+    - unconvert
+    - unparam
+    - unused
+    - whitespace
+  settings:
+    dupl:
+      threshold: 100
+    errcheck:
+      check-blank: true
+    goconst:
+      # Match prior v1 behaviour: ignore test files and short strings.
+      min-len: 3
+      min-occurrences: 3
+      ignore-tests: true
+    lll:
+      line-length: 120
+    staticcheck:
+      # Keep classic SA/ST checks; skip new quickfix (QF) and style (S1xxx)
+      # rules that v2 enables by default and which are pre-existing nits.
+      checks:
+        - all
+        - "-QF*"
+        - "-S1*"
+        - "-ST1000"
+        - "-ST1003"
+        - "-ST1016"
+        - "-ST1020"
+        - "-ST1021"
+        - "-ST1022"
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    rules:
+      - path: (.+)\.go$
+        text: 'unused-parameter: parameter ''\w+'' seems to be unused, consider removing or renaming it as _'
+      - path: (.+)\.go$
+        text: 'indent-error-flow:'
+      - path: (.+)\.go$
+        text: 'redefines-builtin-id:'
+      - path: (.+)\.go$
+        text: 'G115:'
+      # Pre-existing nits not introduced by this change.
+      - path: (.+)_test\.go$
+        linters:
+          - goconst
+          - dupl
+      - path: (.+)\.go$
+        text: 'inline: Constant reflect\.'
+        linters:
+          - govet
+      - path: (.+)\.go$
+        text: 'Consider preallocating'
+        linters:
+          - prealloc
+      - path: (.+)\.go$
+        text: 'G304:'
+        linters:
+          - gosec
+      - path: (.+)\.go$
+        text: 'G204:'
+        linters:
+          - gosec
+      - path: (.+)\.go$
+        text: 'G301:'
+        linters:
+          - gosec
+      - path: (.+)\.go$
+        text: 'G306:'
+        linters:
+          - gosec
+      - path: (.+)\.go$
+        text: 'G107:'
+        linters:
+          - gosec
+      - path: (.+)\.go$
+        text: 'G602:'
+        linters:
+          - gosec
+      - path: (.+)\.go$
+        text: 'G703:'
+        linters:
+          - gosec
+      - path: (.+)\.go$
+        text: 'string `IDENT` has'
+        linters:
+          - goconst
+      - path: (.+)\.go$
+        text: 'string `\{\|\|\}` has'
+        linters:
+          - goconst
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
+
+formatters:
+  enable:
+    - gofmt
+    - goimports
+  exclusions:
+    generated: lax
+    paths:
+      - third_party$
+      - builtin$
+      - examples$

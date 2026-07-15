@@ -1,6 +1,6 @@
 module github.com/arr-ai/arrai/examples/bundle
 
-go 1.24.0
+go 1.25.0
 
 require (
 	github.com/arr-ai/arrai v0.179.0
@@ -8,7 +8,7 @@ require (
 )
 
 require (
-	github.com/arr-ai/frozen v1.9.0 // indirect
+	github.com/arr-ai/frozen v1.11.0 // indirect
 	github.com/arr-ai/hash v1.1.0 // indirect
 	github.com/arr-ai/wbnf v0.38.0 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.4 // indirect
@@ -30,10 +30,10 @@ require (
 	github.com/xuri/efp v0.0.0-20240408161823-9ad904a10d6d // indirect
 	github.com/xuri/excelize/v2 v2.8.1 // indirect
 	github.com/xuri/nfp v0.0.0-20240318013403-ab9948c2c4a7 // indirect
-	golang.org/x/crypto v0.48.0 // indirect
-	golang.org/x/net v0.50.0 // indirect
-	golang.org/x/sys v0.41.0 // indirect
-	golang.org/x/text v0.34.0 // indirect
+	golang.org/x/crypto v0.54.0 // indirect
+	golang.org/x/net v0.56.0 // indirect
+	golang.org/x/sys v0.47.0 // indirect
+	golang.org/x/text v0.40.0 // indirect
 	google.golang.org/protobuf v1.34.2 // indirect
 	gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect

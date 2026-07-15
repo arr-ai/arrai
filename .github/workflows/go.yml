@@ -13,7 +13,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: "1.24"
+          go-version: "1.25"
 
       - name: Check out code into the Go module directory
         uses: actions/checkout@v4
@@ -23,9 +23,9 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Run golangci-lint
-        uses: golangci/golangci-lint-action@v6
+        uses: golangci/golangci-lint-action@v8
         with:
-          version: v1.64.8
+          version: v2.12.2
 
       - name: Check clean
         run: make check-clean
@@ -43,7 +43,7 @@ jobs:
     - name: Set up Go
       uses: actions/setup-go@v5
       with:
-        go-version: "1.24"
+        go-version: "1.25"
 
     - name: Check out code into the Go module directory
       uses: actions/checkout@v4
@@ -61,7 +61,7 @@ jobs:
     - name: Set up Go
       uses: actions/setup-go@v5
       with:
-        go-version: "1.24"
+        go-version: "1.25"
 
     - name: Check out code into the Go module directory
       uses: actions/checkout@v4
@@ -76,7 +76,7 @@ jobs:
     - name: Set up Go
       uses: actions/setup-go@v5
       with:
-        go-version: "1.24"
+        go-version: "1.25"
 
     - name: Check out code into the Go module directory
       uses: actions/checkout@v4
