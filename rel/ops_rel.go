@@ -135,7 +135,7 @@ func Reduce(
 		value := e.Current()
 		key := getKey(value)
 
-		var slot Set = None
+		var slot = None
 		if v, found := buckets.Get(key); found {
 			slot = v.(Set)
 		}
