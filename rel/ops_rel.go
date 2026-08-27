@@ -130,17 +130,17 @@ func Reduce(
 	getKey func(value Value) Value,
 	reduce func(key Value, tuples Set) Set,
 ) Set {
-	var buckets frozen.Map[Value, any]
+	var buckets frozen.Map[Value, Value]
 	for e := a.Enumerator(); e.MoveNext(); {
 		value := e.Current()
 		key := getKey(value)
 
-		slot, found := buckets.Get(key)
-		if !found {
-			slot = None
+		var slot Set = None
+		if v, found := buckets.Get(key); found {
+			slot = v.(Set)
 		}
 
-		slot = slot.(Set).With(value)
+		slot = slot.With(value)
 		buckets = buckets.With(key, slot)
 	}
 
