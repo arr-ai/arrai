@@ -78,6 +78,7 @@ func main() {
 		app.Before = func(c *cli.Context) error {
 			if helpAgent {
 				fmt.Print(agentsGuide)
+				stopProfilers()
 				os.Exit(0)
 			}
 			return nil
