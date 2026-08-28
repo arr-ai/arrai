@@ -37,7 +37,8 @@ var cmds = []*cli.Command{
 }
 
 func main() {
-	prepareProfilers()
+	stopProfilers := prepareProfilers()
+	defer stopProfilers()
 
 	app := cli.NewApp()
 	// logrus.SetLevel(logrus.InfoLevel)
@@ -123,6 +124,7 @@ VERSION:
 		if debug {
 			shell.CreateDebugSession(err)
 		}
+		stopProfilers()
 		os.Exit(1)
 	}
 }
@@ -138,7 +140,11 @@ func setupVersion(app *cli.App) {
 	buildinfo.SetBuildInfo(Version, BuildDate, GitFullCommit, GitTags, BuildOS, BuildArch, GoVersion)
 }
 
-func prepareProfilers() {
+// prepareProfilers consumes leading -cpuprofile/-memprofile flags and
+// returns a cleanup function that the caller must defer in main() (not
+// here) so profiling covers the whole run, not just this setup call.
+func prepareProfilers() func() {
+	var cleanups []func()
 	args := os.Args[1:]
 loop:
 	for len(args) >= 1 {
@@ -150,18 +156,18 @@ loop:
 			if err != nil {
 				log.Fatalf("could not create cpu profile: %v", err)
 			}
-			defer func() {
+			cleanups = append(cleanups, func() {
 				if err := f.Close(); err != nil {
 					log.Printf("error closing cpu profile: %v", err)
 				}
-			}()
+			})
 			if err := pprof.StartCPUProfile(f); err != nil {
 				logrus.Fatal(err)
 			}
-			defer pprof.StopCPUProfile()
+			cleanups = append(cleanups, pprof.StopCPUProfile)
 		case "-memprofile":
 			memprofile := flag[1]
-			defer func() {
+			cleanups = append(cleanups, func() {
 				f, err := os.Create(memprofile)
 				if err != nil {
 					log.Fatalf("could not create memory profile: %v", err)
@@ -175,11 +181,16 @@ loop:
 				if err := pprof.WriteHeapProfile(f); err != nil {
 					log.Fatal("could not write memory profile: ", err)
 				}
-			}()
+			})
 		default:
 			break loop
 		}
 		args = args[1:]
 	}
 	os.Args = append(os.Args[:1], args...)
+	return func() {
+		for i := len(cleanups) - 1; i >= 0; i-- {
+			cleanups[i]()
+		}
+	}
 }
