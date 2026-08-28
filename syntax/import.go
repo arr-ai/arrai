@@ -121,11 +121,11 @@ func importExternalContent(
 	ctx context.Context,
 	scanner parser.Scanner,
 	decoder rel.Tuple,
-	importPath string,
+	importPath, sourceDir string,
 ) (rel.Expr, error) {
 	var moduleErr error
 	if !strings.HasPrefix(importPath, "http://") && !strings.HasPrefix(importPath, "https://") {
-		v, err := importModuleFile(ctx, decoder, importPath)
+		v, err := importModuleFile(ctx, decoder, importPath, sourceDir)
 		if err == nil {
 			return v, nil
 		}
@@ -154,7 +154,7 @@ func importExternalContent(
 	return v, nil
 }
 
-func importModuleFile(ctx context.Context, decoder rel.Tuple, importPath string) (rel.Expr, error) {
+func importModuleFile(ctx context.Context, decoder rel.Tuple, importPath, sourceDir string) (rel.Expr, error) {
 	if isRunningBundle(ctx) {
 		return fileValue(ctx, decoder, path.Join(ModuleDir, importPath))
 	}
@@ -164,7 +164,14 @@ func importModuleFile(ctx context.Context, decoder rel.Tuple, importPath string)
 		return nil, errors.New("per-importing versioning is not allowed")
 	}
 
-	m, err := retrieveModule(modPath, ver)
+	moduleRoot := ""
+	if sourceDir != "" {
+		if root, err := findRootFromModule(ctx, sourceDir); err == nil {
+			moduleRoot = root
+		}
+	}
+
+	m, err := retrieveModule(modPath, ver, moduleRoot)
 	if err != nil {
 		return nil, err
 	}

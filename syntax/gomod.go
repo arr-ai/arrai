@@ -10,10 +10,17 @@ import (
 	"sync"
 )
 
-// goModule holds the result of `go mod download -json`.
+// goModule holds the result of module resolution (from go list or go mod download).
 type goModule struct {
 	Name string
 	Dir  string
+}
+
+// requiredModule is one entry from `go list -m -json all` for a non-main module.
+type requiredModule struct {
+	Path    string
+	Version string
+	Dir     string // effective directory (honours replace)
 }
 
 // extractVersion splits "module@version" into ("module", "version").
@@ -23,69 +30,106 @@ func extractVersion(path string) (module, version string) {
 	return
 }
 
-var (
-	requiredModuleVersionsOnce sync.Once
-	requiredModuleVersions     map[string]string
-)
+// requiredModulesByRoot caches `go list -m -json all` results keyed by module root
+// directory (empty string = process working directory).
+var requiredModulesByRoot sync.Map // map[string]map[string]requiredModule
 
-// requiredModuleVersionOf returns the version already pinned for importPath (or
-// an ancestor package path of it) in the enclosing project's go.mod/go.sum, as
-// reported by `go list -m -json all`. It returns false if the enclosing
-// project has no go.mod, or no such requirement exists.
-func requiredModuleVersionOf(importPath string) (modPath, version string, ok bool) {
-	requiredModuleVersionsOnce.Do(func() {
-		requiredModuleVersions = loadRequiredModuleVersions()
-	})
-	for path, ver := range requiredModuleVersions {
-		if (path == importPath || strings.HasPrefix(importPath, path+"/")) && len(path) > len(modPath) {
-			modPath, version, ok = path, ver, true
-		}
-	}
-	return
+// resetRequiredModulesCache clears the memoized go.mod graphs. Tests only.
+func resetRequiredModulesCache() {
+	requiredModulesByRoot = sync.Map{}
 }
 
-// loadRequiredModuleVersions runs `go list -m -json all` in the working
-// directory and returns the versions already required by its go.mod, keyed
-// by module path. It returns an empty map if there is no enclosing module or
-// the module graph can't be resolved.
-func loadRequiredModuleVersions() map[string]string {
-	versions := map[string]string{}
+// requiredModuleOf returns the longest-prefix module matching importPath from
+// the go.mod graph rooted at moduleRoot. Dir is the effective module directory
+// (including replace targets) when go list reported one.
+func requiredModuleOf(moduleRoot, importPath string) (requiredModule, bool) {
+	mods := loadRequiredModules(moduleRoot)
+	var best requiredModule
+	found := false
+	for path, mod := range mods {
+		if path == importPath || strings.HasPrefix(importPath, path+"/") {
+			if !found || len(path) > len(best.Path) {
+				best, found = mod, true
+			}
+		}
+	}
+	return best, found
+}
+
+// loadRequiredModules runs `go list -m -json all` in moduleRoot (or the process
+// cwd when moduleRoot is empty) and returns modules keyed by path. Results are
+// memoized per moduleRoot. Returns an empty map if there is no enclosing module
+// or the module graph can't be resolved.
+func loadRequiredModules(moduleRoot string) map[string]requiredModule {
+	if cached, ok := requiredModulesByRoot.Load(moduleRoot); ok {
+		return cached.(map[string]requiredModule) //nolint:forcetypeassert
+	}
+
+	mods := map[string]requiredModule{}
 	cmd := exec.Command("go", "list", "-m", "-json", "all") //nolint:gosec
+	if moduleRoot != "" {
+		cmd.Dir = moduleRoot
+	}
 	out, err := cmd.Output()
 	if err != nil {
-		return versions
+		requiredModulesByRoot.Store(moduleRoot, mods)
+		return mods
 	}
 	dec := json.NewDecoder(bytes.NewReader(out))
 	for {
 		var m struct {
 			Path    string
 			Version string
+			Dir     string
 			Main    bool
+			Replace *struct {
+				Path string
+				Dir  string
+			}
 		}
 		if err := dec.Decode(&m); err != nil {
 			if err == io.EOF {
 				break
 			}
-			return versions
+			requiredModulesByRoot.Store(moduleRoot, mods)
+			return mods
 		}
-		if !m.Main && m.Version != "" {
-			versions[m.Path] = m.Version
+		if m.Main {
+			continue
+		}
+		dir := m.Dir
+		if m.Replace != nil && m.Replace.Dir != "" {
+			dir = m.Replace.Dir
+		}
+		if m.Path != "" {
+			mods[m.Path] = requiredModule{Path: m.Path, Version: m.Version, Dir: dir}
 		}
 	}
-	return versions
+	requiredModulesByRoot.Store(moduleRoot, mods)
+	return mods
 }
 
-// retrieveModule downloads a Go module and returns its local directory.
-// If the enclosing project's go.mod already requires a module matching
-// importPath, that pinned version is used. Otherwise, since importPath may
-// include a file path within the module (e.g. "github.com/org/repo/file.arrai"),
-// it tries progressively shorter prefixes at the given version (or "latest"
-// when none is given) until it finds a valid module.
-func retrieveModule(importPath, version string) (*goModule, error) {
+// seedRequiredModules marks the memoized go.mod graph for moduleRoot as already
+// loaded. Tests only.
+func seedRequiredModules(moduleRoot string, mods map[string]requiredModule) {
+	requiredModulesByRoot.Store(moduleRoot, mods)
+}
+
+// retrieveModule resolves importPath to a local module directory.
+// moduleRoot is the importing project's go.mod directory (may be empty to use
+// the process working directory). If that go.mod already requires a matching
+// module, its pinned version and effective Dir (honouring replace) are used.
+// Otherwise importPath prefixes are tried at the given version (or "latest").
+func retrieveModule(importPath, version, moduleRoot string) (*goModule, error) {
 	if version == "" {
-		if modPath, pinned, ok := requiredModuleVersionOf(importPath); ok {
-			if m, err := downloadModule(modPath, pinned); err == nil {
-				return m, nil
+		if pinned, ok := requiredModuleOf(moduleRoot, importPath); ok {
+			if pinned.Dir != "" {
+				return &goModule{Name: pinned.Path, Dir: pinned.Dir}, nil
+			}
+			if pinned.Version != "" {
+				if m, err := downloadModule(pinned.Path, pinned.Version); err == nil {
+					return m, nil
+				}
 			}
 			// Fall through to latest-version resolution below.
 		}
