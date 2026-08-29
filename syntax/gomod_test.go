@@ -42,7 +42,7 @@ require github.com/pkg/errors v0.8.0
 	m, err := retrieveModule("github.com/pkg/errors", "", root)
 	require.NoError(t, err)
 	require.Equal(t, "github.com/pkg/errors", m.Name)
-	require.Contains(t, m.Dir, "github.com/pkg/errors@v0.8.0")
+	require.Contains(t, filepath.ToSlash(m.Dir), "github.com/pkg/errors@v0.8.0")
 }
 
 func TestRetrieveModuleHonoursReplaceDir(t *testing.T) {
@@ -57,7 +57,8 @@ replace github.com/pkg/errors => ./errors-fork
 
 	fork := filepath.Join(root, "errors-fork")
 	require.NoError(t, os.MkdirAll(fork, 0o700))
-	require.NoError(t, os.WriteFile(filepath.Join(fork, "go.mod"), []byte("module github.com/pkg/errors\n\ngo 1.21\n"), 0o600))
+	gomod := []byte("module github.com/pkg/errors\n\ngo 1.21\n")
+	require.NoError(t, os.WriteFile(filepath.Join(fork, "go.mod"), gomod, 0o600))
 	require.NoError(t, os.WriteFile(filepath.Join(fork, "errors.go"), []byte("package errors\n"), 0o600))
 
 	resetRequiredModulesCache()
@@ -91,7 +92,7 @@ require github.com/pkg/errors v0.8.0
 
 	m, err := retrieveModule("github.com/pkg/errors", "", root)
 	require.NoError(t, err)
-	require.Contains(t, m.Dir, "github.com/pkg/errors@v0.8.0")
+	require.Contains(t, filepath.ToSlash(m.Dir), "github.com/pkg/errors@v0.8.0")
 }
 
 func TestRetrieveModuleFallsBackWithoutPin(t *testing.T) {
