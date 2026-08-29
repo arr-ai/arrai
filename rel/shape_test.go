@@ -113,3 +113,42 @@ func TestRelationRowsInflateWithoutCopy(t *testing.T) {
 	assert.True(t, where.Equal(mustRel(t, NewTuple(NewAttr("a", NewNumber(3)), NewAttr("b", NewNumber(4))))))
 	assert.Equal(t, 1, where.Count())
 }
+
+// Array memoises its hash, which depends on both its values and its offset.
+// Every operation that derives a differing array must not serve the
+// original's cached hash.
+func TestArrayHashCacheInvalidation(t *testing.T) {
+	t.Parallel()
+
+	a := NewArray(NewNumber(1), NewNumber(2), NewNumber(3))
+	h := a.Hash128() // populate the cache before deriving
+	assert.Equal(t, h, a.Hash128(), "stable")
+	assert.Equal(t, h, NewArray(NewNumber(1), NewNumber(2), NewNumber(3)).Hash128(), "equal arrays agree")
+
+	shifted := a.(Array).Shift(5)
+	assert.NotEqual(t, h, shifted.Hash128(), "offset participates in the hash")
+	assert.Equal(t, NewOffsetArray(5, NewNumber(1), NewNumber(2), NewNumber(3)).Hash128(), shifted.Hash128())
+
+	withItem := a.With(NewArrayItemTuple(3, NewNumber(4)))
+	assert.NotEqual(t, h, withItem.Hash128())
+	assert.Equal(t, NewArray(NewNumber(1), NewNumber(2), NewNumber(3), NewNumber(4)).Hash128(), withItem.Hash128())
+
+	filtered, err := a.Where(func(v Value) (bool, error) {
+		return !v.(ArrayItemTuple).item.Equal(NewNumber(2)), nil
+	})
+	require.NoError(t, err)
+	assert.NotEqual(t, h, filtered.Hash128())
+
+	without := a.Without(NewArrayItemTuple(0, NewNumber(1)))
+	assert.NotEqual(t, h, without.Hash128())
+	assert.Equal(t, NewOffsetArray(1, NewNumber(2), NewNumber(3)).Hash128(), without.Hash128())
+
+	// Sets of arrays rely on the hash agreeing with equality.
+	s, err := NewSet(a, shifted, withItem, filtered, without,
+		NewArray(NewNumber(1), NewNumber(2), NewNumber(3)))
+	require.NoError(t, err)
+	assert.Equal(t, 5, s.Count(), "the duplicate collapses, the rest do not")
+	for _, v := range []Value{a, shifted, withItem, filtered, without} {
+		assert.True(t, s.Has(v))
+	}
+}
