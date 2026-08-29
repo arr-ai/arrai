@@ -3,7 +3,6 @@ package rel
 import (
 	"testing"
 
-	"github.com/arr-ai/frozen"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -16,13 +15,10 @@ func TestHash128TupleRepresentationsAgree(t *testing.T) {
 	// Build GenericTuples directly: NewTuple would canonicalise (@, @item)
 	// and friends into the specialised kinds, which is what this test checks
 	// against.
-	generic := func(attrs ...Attr) Value {
-		var m frozen.MapBuilder[string, Value]
-		for _, a := range attrs {
-			m.Put(a.Name, a.Value)
-		}
-		return &GenericTuple{tuple: m.Finish()}
-	}
+	// Build GenericTuples directly: NewTuple would canonicalise (@, @item)
+	// and friends into the specialised kinds, which is what this test checks
+	// against.
+	generic := func(attrs ...Attr) Value { return newGenericTuple(attrs...) }
 	cases := []struct {
 		name string
 		a, b Value

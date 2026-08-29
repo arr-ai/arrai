@@ -3,6 +3,7 @@ package rel
 import (
 	"context"
 	"fmt"
+	"sync/atomic"
 
 	"github.com/arr-ai/wbnf/parser"
 	"github.com/go-errors/errors"
@@ -31,12 +32,21 @@ type DotExpr struct {
 	ExprScanner
 	lhs  Expr
 	attr string
+
+	// cache remembers where attr lives in the shape last seen here. Shapes
+	// are interned, so a pointer compare validates the entry.
+	cache atomic.Pointer[dotCache]
+}
+
+type dotCache struct {
+	shape *Shape
+	index int
 }
 
 // NewDotExpr returns a new DotExpr that fetches the given attr from the
 // lhs, which is expected to be a tuple.
 func NewDotExpr(scanner parser.Scanner, lhs Expr, attr string) Expr {
-	return &DotExpr{ExprScanner{scanner}, lhs, attr}
+	return &DotExpr{ExprScanner: ExprScanner{scanner}, lhs: lhs, attr: attr}
 }
 
 // Subject returns the DotExpr's LHS.
@@ -64,7 +74,16 @@ func (x *DotExpr) Eval(ctx context.Context, local Scope) (_ Value, err error) {
 		return nil, WrapContextErr(err, x, local)
 	}
 	get := func(ctx context.Context, t Tuple) (Value, error) {
-		if value, found := t.Get(x.attr); found {
+		if g, ok := t.(*GenericTuple); ok {
+			shape := g.sh()
+			if c := x.cache.Load(); c != nil && c.shape == shape {
+				return g.vals[c.index], nil
+			}
+			if i, found := shape.Index(x.attr); found {
+				x.cache.Store(&dotCache{shape: shape, index: i})
+				return g.vals[i], nil
+			}
+		} else if value, found := t.Get(x.attr); found {
 			return value, nil
 		}
 		if len(x.attr) > 0 && x.attr[:1] != "&" {
