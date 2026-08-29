@@ -173,13 +173,80 @@ func NewWithoutExpr(scanner parser.Scanner, a, b Expr) Expr {
 		})
 }
 
+// eqAttrPredicate describes a where-predicate of the form `.attr = key`
+// (or `key = .attr`) where key does not depend on `.`. Such predicates can be
+// answered from a relation's cached attribute index instead of a full scan.
+type eqAttrPredicate struct {
+	attr string
+	key  Expr
+}
+
+// matchEqAttrPredicate recognises `\. .attr = key` predicates.
+func matchEqAttrPredicate(f *Function) *eqAttrPredicate {
+	if ident, is := f.arg.(IdentPattern); !is || ident != "." {
+		return nil
+	}
+	cmp, is := f.body.(CompareExpr)
+	if !is || len(cmp.args) != 2 || cmp.ops[0] != "=" {
+		return nil
+	}
+	isDotAttr := func(e Expr) (string, bool) {
+		if d, is := e.(*DotExpr); is {
+			if id, is := d.lhs.(IdentExpr); is && id.ident == "." {
+				return d.attr, true
+			}
+		}
+		return "", false
+	}
+	isDotFree := func(e Expr) bool {
+		// Conservative: only simple identifiers other than `.` and literals.
+		switch e := e.(type) {
+		case IdentExpr:
+			return e.ident != "."
+		case LiteralExpr:
+			return true
+		}
+		return false
+	}
+	if attr, ok := isDotAttr(cmp.args[0]); ok && isDotFree(cmp.args[1]) {
+		return &eqAttrPredicate{attr: attr, key: cmp.args[1]}
+	}
+	if attr, ok := isDotAttr(cmp.args[1]); ok && isDotFree(cmp.args[0]) {
+		return &eqAttrPredicate{attr: attr, key: cmp.args[0]}
+	}
+	return nil
+}
+
+// whereByIndex answers `r where .attr = key` from r's cached groupBy index.
+func (r Relation) whereByIndex(ctx context.Context, scope Scope, p *eqAttrPredicate) (Value, bool, error) {
+	index, has := r.attrMap[p.attr]
+	if !has {
+		return nil, false, nil
+	}
+	key, err := p.key.Eval(ctx, scope)
+	if err != nil {
+		return nil, false, err
+	}
+	rows, has := r.rows.groupBy(valueProjector{index}).Get(Values{key})
+	if !has || rows.IsEmpty() {
+		return None, true, nil
+	}
+	return r.newBody(&positionalRelation{set: rows}), true, nil
+}
+
 // NewWhereExpr evaluates a where pred, given a set lhs.
 func NewWhereExpr(scanner parser.Scanner, a, pred Expr) Expr {
 	pred = ExprAsFunction(pred)
+	eqPred := matchEqAttrPredicate(pred.(*Function))
 	return newBinExpr(scanner, a, pred, "where", "(%s where %s)",
 		func(ctx context.Context, a, pred Value, local Scope) (Value, error) {
 			if x, ok := a.(Set); ok {
 				if p, ok := pred.(Closure); ok {
+					if r, is := x.(Relation); is && eqPred != nil {
+						if v, done, err := r.whereByIndex(ctx, p.scope, eqPred); done || err != nil {
+							return v, err
+						}
+					}
 					s, err := x.Where(func(v Value) (bool, error) {
 						r, err := SetCall(ctx, p, v)
 						if err != nil {

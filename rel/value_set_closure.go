@@ -142,6 +142,16 @@ func (c Closure) Where(p func(v Value) (bool, error)) (Set, error) {
 
 // FIXME: context not used properly
 func (c Closure) CallAll(ctx context.Context, arg Value, b SetBuilder) error {
+	val, err := c.call(ctx, arg)
+	if err != nil {
+		return err
+	}
+	b.Add(val)
+	return nil
+}
+
+// call applies the closure to arg and returns its single result.
+func (c Closure) call(ctx context.Context, arg Value) (Value, error) {
 	niladic := c.f.Arg() == "-"
 	noArg := arg == nil
 	if niladic != noArg {
@@ -149,23 +159,13 @@ func (c Closure) CallAll(ctx context.Context, arg Value, b SetBuilder) error {
 			"nullary-vs-unary function arg mismatch (%s vs %s)", c.f.Arg(), arg))
 	}
 	if niladic {
-		val, err := c.f.body.Eval(ctx, c.scope)
-		if err != nil {
-			return err
-		}
-		b.Add(val)
-		return nil
+		return c.f.body.Eval(ctx, c.scope)
 	}
 	ctx, scope, err := c.f.arg.Bind(ctx, c.scope, arg)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	val, err := c.f.body.Eval(ctx, c.scope.Update(scope))
-	if err != nil {
-		return err
-	}
-	b.Add(val)
-	return nil
+	return c.f.body.Eval(ctx, c.scope.Update(scope))
 }
 
 func (Closure) unionSetSubsetBucket() string {
