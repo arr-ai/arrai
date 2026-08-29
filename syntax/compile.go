@@ -1335,7 +1335,7 @@ func (pc ParseContext) compilePackage(ctx context.Context, b ast.Branch, c ast.C
 			}
 			return NewImportExpr(scanner, expr, importPath), nil
 		}
-		expr, err := importExternalContent(ctx, pkg.Scanner(), decoderTuple, name)
+		expr, err := importExternalContent(ctx, pkg.Scanner(), decoderTuple, name, pc.SourceDir)
 		if err != nil {
 			return nil, err
 		}
