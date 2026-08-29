@@ -1,9 +1,9 @@
 package rel
 
 import (
-	"fmt"
+	"github.com/arr-ai/hash/hash128"
 
-	"github.com/arr-ai/hash"
+	"fmt"
 
 	"github.com/arr-ai/arrai/pkg/fu"
 )
@@ -53,9 +53,14 @@ func (v Values) equalValues(v2 Values) bool {
 }
 
 func (v Values) Hash(seed uintptr) uintptr {
-	h := seed
+	return v.Hash128().Seeded(seed)
+}
+
+// Hash128 computes the 128-bit hash of a row: its values mixed in order.
+func (v Values) Hash128() hash128.H128 {
+	h := valuesSalt
 	for _, val := range v {
-		h = hash.Any(val, h)
+		h = h.Mix(val.Hash128())
 	}
 	return h
 }
@@ -138,9 +143,14 @@ func (p valueProjector) isContiguous() bool {
 }
 
 func (p valueProjector) Hash(seed uintptr) uintptr {
-	h := seed
+	return p.Hash128().Seeded(seed)
+}
+
+// Hash128 computes the 128-bit hash of a projector.
+func (p valueProjector) Hash128() hash128.H128 {
+	h := valuesSalt
 	for _, i := range p {
-		h = hash.Int(i, h)
+		h = h.Mix(hash128.Int(i))
 	}
 	return h
 }
@@ -209,9 +219,15 @@ func (pv projectedValues) Format(f fmt.State, verb rune) {
 }
 
 func (pv projectedValues) Hash(seed uintptr) uintptr {
-	h := seed
+	return pv.Hash128().Seeded(seed)
+}
+
+// Hash128 computes the 128-bit hash of the projected row, equal to the hash
+// of the same values as a plain row.
+func (pv projectedValues) Hash128() hash128.H128 {
+	h := valuesSalt
 	for _, i := range pv.p {
-		h = hash.Any(pv.v[i], h)
+		h = h.Mix(pv.v[i].Hash128())
 	}
 	return h
 }

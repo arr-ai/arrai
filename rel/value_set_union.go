@@ -1,6 +1,8 @@
 package rel
 
 import (
+	"github.com/arr-ai/hash/hash128"
+
 	"context"
 	"fmt"
 	"reflect"
@@ -287,9 +289,14 @@ func (u UnionSet) Equal(s Value) bool {
 }
 
 func (u UnionSet) Hash(seed uintptr) uintptr {
-	h := seed
+	return u.Hash128().Seeded(seed)
+}
+
+// Hash128 computes the 128-bit hash of a UnionSet: the xor of its elements.
+func (u UnionSet) Hash128() hash128.H128 {
+	h := unionSalt
 	for e := u.Enumerator(); e.MoveNext(); {
-		h ^= e.Current().Hash(0)
+		h = h.Xor(e.Current().Hash128())
 	}
 	return h
 }

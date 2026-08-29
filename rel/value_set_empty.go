@@ -1,6 +1,8 @@
 package rel
 
 import (
+	"github.com/arr-ai/hash/hash128"
+
 	"context"
 	"fmt"
 	"reflect"
@@ -57,7 +59,12 @@ func (e EmptySet) Equal(i Value) bool {
 }
 
 func (e EmptySet) Hash(seed uintptr) uintptr {
-	return seed
+	return e.Hash128().Seeded(seed)
+}
+
+// Hash128 computes the 128-bit hash of the empty set.
+func (e EmptySet) Hash128() hash128.H128 {
+	return emptySetSalt
 }
 
 func (e EmptySet) Eval(ctx context.Context, local Scope) (Value, error) {

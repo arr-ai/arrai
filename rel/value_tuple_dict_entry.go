@@ -1,6 +1,8 @@
 package rel
 
 import (
+	"github.com/arr-ai/hash/hash128"
+
 	"context"
 	"fmt"
 	"reflect"
@@ -55,7 +57,13 @@ func (t DictEntryTuple) asGenericTuple() Tuple {
 
 // Hash computes a hash for a CharTuple.
 func (t DictEntryTuple) Hash(seed uintptr) uintptr {
-	return t.value.Hash(t.at.Hash(seed))
+	return t.Hash128().Seeded(seed)
+}
+
+// Hash128 computes the 128-bit hash of a DictEntryTuple, consistent with the
+// same tuple represented generically.
+func (t DictEntryTuple) Hash128() hash128.H128 {
+	return hashTuple2(atNameHash, t.at, valueNameHash, t.value)
 }
 
 // Equal tests two Tuples for equality. Any other type returns false.

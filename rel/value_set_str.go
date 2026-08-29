@@ -1,11 +1,12 @@
 package rel
 
 import (
+	"github.com/arr-ai/hash/hash128"
+
 	"context"
 	"fmt"
 	"reflect"
 
-	"github.com/arr-ai/hash"
 	"github.com/arr-ai/wbnf/parser"
 
 	"github.com/arr-ai/arrai/pkg/fu"
@@ -80,8 +81,12 @@ func AsString(v Value) (String, bool) {
 
 // Hash computes a hash for a String.
 func (s String) Hash(seed uintptr) uintptr {
-	// TODO: implement a []rune-friendly hash function.
-	return hash.String(string(s.s), seed)
+	return s.Hash128().Seeded(seed)
+}
+
+// Hash128 computes the 128-bit hash of a String over its rune buffer.
+func (s String) Hash128() hash128.H128 {
+	return hash128.Runes(s.s)
 }
 
 // Equal tests two Sets for equality. Any other type returns false.

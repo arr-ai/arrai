@@ -1,11 +1,12 @@
 package rel
 
 import (
+	"github.com/arr-ai/hash/hash128"
+
 	"context"
 	"fmt"
 	"reflect"
 	"sort"
-	"sync"
 
 	"github.com/go-errors/errors"
 
@@ -36,28 +37,26 @@ func (m multipleValues) Hash(seed uintptr) uintptr {
 	return frozen.Set[Value](m).Hash(seed)
 }
 
+// Hash128 computes the 128-bit hash of the set of values.
+func (m multipleValues) Hash128() hash128.H128 {
+	return frozen.Set[Value](m).Hash128()
+}
+
 func (m multipleValues) String() string {
 	return frozen.Set[Value](m).String()
 }
 
 // Dict is a map from keys to values.
 type Dict struct {
-	m         frozen.Map[Value, any]
-	hashCache *dictHashCache // shared across copies; nil only for empty Dict{}
-}
-
-// dictHashCache memoises Dict.Hash for seeds 0 and 1 (frozen's H128 path).
-// Dicts are immutable, so a single computation is valid for the Dict's lifetime.
-type dictHashCache struct {
-	once   sync.Once
-	h0, h1 uintptr
+	m    frozen.Map[Value, any]
+	hash *hashCell // shared across copies; nil only for empty Dict{}
 }
 
 func newDict(m frozen.Map[Value, any]) Dict {
 	if m.IsEmpty() {
 		return Dict{}
 	}
-	return Dict{m: m, hashCache: &dictHashCache{}}
+	return Dict{m: m, hash: &hashCell{}}
 }
 
 // AsDict checks whether a Value is a valid dictionary.
@@ -105,30 +104,22 @@ func NewDict(allowDupKeys bool, entries ...DictEntryTuple) (Set, error) {
 }
 
 func (d Dict) Hash(seed uintptr) uintptr {
-	if d.m.IsEmpty() {
-		return seed
-	}
-	if d.hashCache != nil && (seed == 0 || seed == 1) {
-		d.hashCache.once.Do(func() {
-			d.hashCache.h0 = d.hashUncached(0)
-			d.hashCache.h1 = d.hashUncached(1)
-		})
-		if seed == 0 {
-			return d.hashCache.h0
-		}
-		return d.hashCache.h1
-	}
-	return d.hashUncached(seed)
+	return d.Hash128().Seeded(seed)
 }
 
-func (d Dict) hashUncached(seed uintptr) uintptr {
-	// TODO: Prefer a content-hash H0 on the underlying map once frozen
-	// exposes one that covers key+value (tree H0 is key-only for Map).
-	h := seed
-	for e := d.Enumerator(); e.MoveNext(); {
-		h ^= e.Current().Hash(seed)
+// Hash128 computes the 128-bit hash of a Dict: the xor of its entry tuples,
+// computed once per Dict.
+func (d Dict) Hash128() hash128.H128 {
+	if d.hash == nil {
+		return dictSalt
 	}
-	return h
+	return d.hash.get(func() hash128.H128 {
+		h := dictSalt
+		for e := d.Enumerator(); e.MoveNext(); {
+			h = h.Xor(e.Current().Hash128())
+		}
+		return h
+	})
 }
 
 func (d Dict) Equal(v Value) bool {

@@ -1,6 +1,8 @@
 package rel
 
 import (
+	"github.com/arr-ai/hash/hash128"
+
 	"context"
 	"fmt"
 	"reflect"
@@ -38,6 +40,7 @@ type Value interface {
 	fmt.Formatter
 
 	frozen.Key[Value]
+	hash128.Hashable
 
 	// Values are Exprs.
 	Expr

@@ -1,13 +1,14 @@
 package rel
 
 import (
+	"github.com/arr-ai/hash/hash128"
+
 	"context"
 	"fmt"
 	"unsafe"
 
 	"github.com/arr-ai/arrai/pkg/fu"
 
-	"github.com/arr-ai/hash"
 	"github.com/arr-ai/wbnf/parser"
 )
 
@@ -48,8 +49,12 @@ func (f *Function) Body() Expr {
 // than from formatting its body, which is expensive and, for recursive
 // functions, self-referential.
 func (f *Function) Hash(seed uintptr) uintptr {
-	const salt = 17297263775284131973 >> (64 - 8*unsafe.Sizeof(uintptr(0)))
-	return hash.Uintptr(uintptr(unsafe.Pointer(f)), hash.Uintptr(salt, seed))
+	return f.Hash128().Seeded(seed)
+}
+
+// Hash128 computes the 128-bit hash of a Function, by identity.
+func (f *Function) Hash128() hash128.H128 {
+	return hash128.Uintptr(uintptr(unsafe.Pointer(f)))
 }
 
 // Equal tests two Values for equality. Any other type returns false.

@@ -1,6 +1,8 @@
 package rel
 
 import (
+	"github.com/arr-ai/hash/hash128"
+
 	"fmt"
 	"strings"
 	"sync"
@@ -69,6 +71,11 @@ func (r *positionalRelation) Has(v Values) bool {
 
 func (r *positionalRelation) Hash(seed uintptr) uintptr {
 	return r.set.Hash(seed)
+}
+
+// Hash128 returns the 128-bit hash maintained by the underlying frozen set.
+func (r *positionalRelation) Hash128() hash128.H128 {
+	return r.set.Hash128()
 }
 
 func (r *positionalRelation) IsEmpty() bool {

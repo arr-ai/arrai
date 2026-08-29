@@ -1,6 +1,8 @@
 package rel
 
 import (
+	"github.com/arr-ai/hash/hash128"
+
 	"context"
 	"fmt"
 	"reflect"
@@ -78,6 +80,11 @@ func NewBool(b bool) Set {
 // re-walking every element (important when GenericSets nest inside other sets).
 func (s GenericSet) Hash(seed uintptr) uintptr {
 	return s.set.Hash(seed)
+}
+
+// Hash128 returns the 128-bit hash maintained by the underlying frozen set.
+func (s GenericSet) Hash128() hash128.H128 {
+	return s.set.Hash128()
 }
 
 // Equal tests two Sets for equality. Any other type returns false.

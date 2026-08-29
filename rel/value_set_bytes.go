@@ -1,13 +1,14 @@
 package rel
 
 import (
+	"github.com/arr-ai/hash/hash128"
+
 	"bytes"
 	"context"
 	"fmt"
 	"reflect"
 	"regexp"
 
-	"github.com/arr-ai/hash"
 	"github.com/arr-ai/wbnf/parser"
 
 	"github.com/arr-ai/arrai/pkg/fu"
@@ -68,8 +69,12 @@ func (b Bytes) Bytes() []byte {
 
 // Hash computes a hash for a Bytes.
 func (b Bytes) Hash(seed uintptr) uintptr {
-	// TODO: implement a []byte-friendly hash function.
-	return hash.String(string(b.b), seed)
+	return b.Hash128().Seeded(seed)
+}
+
+// Hash128 computes the 128-bit hash of a Bytes.
+func (b Bytes) Hash128() hash128.H128 {
+	return hash128.Bytes(b.b)
 }
 
 // Equal tests two Byteses for equality. Any other type returns false.

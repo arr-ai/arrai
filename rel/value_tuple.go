@@ -1,6 +1,8 @@
 package rel
 
 import (
+	"github.com/arr-ai/hash/hash128"
+
 	"context"
 	"fmt"
 	"reflect"
@@ -18,6 +20,7 @@ import (
 // GenericTuple is the default implementation of Tuple.
 type GenericTuple struct {
 	tuple            frozen.Map[string, Value]
+	hash             hashCell
 	names            []string
 	orderNamesOnce   sync.Once
 	cachedNames      Names
@@ -211,7 +214,19 @@ func (t *GenericTuple) Canonical() Tuple {
 
 // Hash computes a hash for a GenericTuple.
 func (t *GenericTuple) Hash(seed uintptr) uintptr {
-	return t.tuple.Hash(seed)
+	return t.Hash128().Seeded(seed)
+}
+
+// Hash128 computes the 128-bit hash of a GenericTuple once: the xor over its
+// attributes of the name hash mixed with the value hash.
+func (t *GenericTuple) Hash128() hash128.H128 {
+	return t.hash.get(func() hash128.H128 {
+		h := tupleSalt
+		for i := t.tuple.Range(); i.Next(); {
+			h = h.Xor(hashAttr(hash128.String(i.Key()), i.Value()))
+		}
+		return h
+	})
 }
 
 // Equal tests two Tuples for equality. Any other type returns false.

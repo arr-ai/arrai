@@ -1,6 +1,8 @@
 package rel
 
 import (
+	"github.com/arr-ai/hash/hash128"
+
 	"context"
 	"fmt"
 	"reflect"
@@ -8,7 +10,6 @@ import (
 
 	"github.com/arr-ai/arrai/pkg/fu"
 
-	"github.com/arr-ai/hash"
 	"github.com/arr-ai/wbnf/parser"
 )
 
@@ -42,7 +43,13 @@ func (f *NativeFunction) Name() string {
 
 // Hash computes a hash for a NativeFunction.
 func (f *NativeFunction) Hash(seed uintptr) uintptr {
-	return hash.String(f.String(), hash.Uintptr(9714745597188477233>>(64-8*unsafe.Sizeof(uintptr(0))), seed))
+	return f.Hash128().Seeded(seed)
+}
+
+// Hash128 computes the 128-bit hash of a NativeFunction, by identity, which
+// is how Equal compares them.
+func (f *NativeFunction) Hash128() hash128.H128 {
+	return hash128.Uintptr(uintptr(unsafe.Pointer(f)))
 }
 
 // Equal tests two Values for equality. Any other type returns false.
