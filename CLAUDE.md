@@ -74,7 +74,8 @@ Supports local files, `//` standard library modules (`//str`, `//math`, `//seq`,
 
 ## Release mechanics
 
-- Releases are cut by **goreleaser** triggered on `push: tags: 'v*.*.*'` — not by `gh release create`. Just push the tag from master and goreleaser creates the GitHub release and uploads binaries automatically. Config lives at `.github/goreleaser_configs/goreleaser.yml`.
+- Releases are cut by **goreleaser** triggered on `push: tags: 'v*.*.*'` — not by `gh release create`. Push the tag from master (`/release` does this: minor bump, annotated tag, then `gh release edit --notes-file` once goreleaser has created the release) and goreleaser creates the GitHub release and uploads binaries automatically. Config lives at `.github/goreleaser_configs/goreleaser.yml`.
+- Tags are **not** auto-generated on merge. The former `generate-tag.yml` (anothrNick/github-tag-action with a `RELEASE_PAT` secret) was removed after v0.339.0; the `RELEASE_PAT` repo secret is unused and can be deleted.
 - arrai is **not** in `marcelocantos/homebrew-tap` — don't try to install via `brew install marcelocantos/tap/arrai`. Users get binaries from the GitHub release page.
 - Version is injected at build time via `-ldflags -X main.Version=v{{.Version}}`; no in-source version constant to bump.
 
@@ -86,6 +87,6 @@ Supports local files, `//` standard library modules (`//str`, `//math`, `//seq`,
 
 ## CI / deploy previews
 
-- **GitHub Actions** (`.github/workflows/`): `go.yml`, `docs.yml`, `release.yml`, `docker.yml`, `wasm.yml`, `generate-tag.yml`. `docs.yml` runs only on `pull_request`.
+- **GitHub Actions** (`.github/workflows/`): `go.yml`, `docs.yml`, `release.yml`, `docker.yml`, `wasm.yml`. `docs.yml` runs only on `pull_request`.
 - **Netlify** is connected as a GitHub App and posts deploy-preview checks (`deploy/netlify`, `Header rules`, `Pages changed`, `Redirect rules`) on every docs PR. Netlify runs its **own** build pipeline separate from GitHub Actions — fixing `docs.yml` does not fix Netlify. There is no `netlify.toml` in the repo; config is in the Netlify dashboard, which I usually don't have direct access to.
 - `arr-ai/arrai`'s master branch protection has **empty** `required_status_checks.contexts` and `checks` — so Netlify failures are informational only and don't block merge. Don't get stuck waiting for them, and don't let `gh pr checks --watch --fail-fast` bail out early because of them — either drop `--fail-fast` or filter to the GitHub Actions checks only.
