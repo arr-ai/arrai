@@ -5,3 +5,4 @@ syntax/*.arraiz
 .vscode
 .claude/
 go.work
+go.work.sum
