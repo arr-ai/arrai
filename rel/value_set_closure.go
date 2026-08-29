@@ -167,6 +167,13 @@ func (c Closure) call(ctx context.Context, arg Value) (Value, error) {
 	if niladic {
 		return c.f.body.Eval(ctx, c.scope)
 	}
+	// Fast path for the common `\x ...` shape: IdentPattern.Bind never fails
+	// and only produces a one-entry scope, so bind directly instead of
+	// building and merging a throwaway Scope. With ignores "_" exactly as
+	// Bind+Update would.
+	if ident, is := c.f.arg.(IdentPattern); is {
+		return c.f.body.Eval(ctx, c.scope.With(string(ident), arg))
+	}
 	ctx, scope, err := c.f.arg.Bind(ctx, c.scope, arg)
 	if err != nil {
 		return nil, err

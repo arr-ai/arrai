@@ -33,14 +33,21 @@ func (e *DArrowExpr) Eval(ctx context.Context, local Scope) (_ Value, err error)
 	}
 	if set, ok := value.(Set); ok {
 		b := NewSetBuilder()
+		ident, isIdent := e.fn.arg.(IdentPattern)
 		for i := set.Enumerator(); i.MoveNext(); {
-			var scope Scope
+			var v Value
 			var err error
-			ctx, scope, err = e.fn.arg.Bind(ctx, local, i.Current())
-			if err != nil {
-				return nil, WrapContextErr(err, e, local)
+			if isIdent {
+				// Fast path for `set => \x body`: see Closure.call.
+				v, err = e.fn.body.Eval(ctx, local.With(string(ident), i.Current()))
+			} else {
+				var scope Scope
+				ctx, scope, err = e.fn.arg.Bind(ctx, local, i.Current())
+				if err != nil {
+					return nil, WrapContextErr(err, e, local)
+				}
+				v, err = e.fn.body.Eval(ctx, local.Update(scope))
 			}
-			v, err := e.fn.body.Eval(ctx, local.Update(scope))
 			if err != nil {
 				return nil, WrapContextErr(err, e, local)
 			}
