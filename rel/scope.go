@@ -283,3 +283,45 @@ func (e *ScopeEnumerator) MoveNext() bool {
 func (e *ScopeEnumerator) Current() (string, Expr) {
 	return e.names[e.i], e.vals[e.i]
 }
+
+// scopeBuilder accumulates pattern bindings into a single frame. Patterns
+// bind their parts one at a time; collecting them here (rather than merging
+// a scope per part) gives the enclosing Update one flat frame to push and
+// keeps every binding of a pattern in a fixed slot.
+type scopeBuilder struct {
+	names []string
+	vals  []Expr
+}
+
+// matchedAdd adds t's bindings, with MatchedUpdate's rule: a name bound
+// twice must be bound to the same value.
+func (b *scopeBuilder) matchedAdd(t Scope) error {
+	names, vals := t.flatten()
+	for i, name := range names {
+		if j := b.index(name); j >= 0 {
+			if b.vals[j].String() != vals[i].String() {
+				return fmt.Errorf("the value of %s is different in both scopes", name)
+			}
+			continue
+		}
+		b.names = append(b.names, name)
+		b.vals = append(b.vals, vals[i])
+	}
+	return nil
+}
+
+func (b *scopeBuilder) index(name string) int {
+	for i, n := range b.names {
+		if n == name {
+			return i
+		}
+	}
+	return -1
+}
+
+func (b *scopeBuilder) finish() Scope {
+	if len(b.names) == 0 {
+		return EmptyScope
+	}
+	return Scope{&frame{names: b.names, vals: b.vals}}
+}

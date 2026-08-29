@@ -295,10 +295,33 @@ func newFloatFuncAttr(name string, f func(float64) float64) rel.Attr {
 	})
 }
 
-func parseGrammar(_ context.Context, v rel.Value) (rel.Value, error) {
+// compiledGrammars memoises grammar compilation by grammar value. Programs
+// invoke //grammar.parse with the same grammar value repeatedly (macros,
+// per-item parsing), and compiling a WBNF grammar is far more expensive than
+// a parse. Entries are verified with Equal, so a hash collision costs a
+// recompile, never a wrong grammar.
+var compiledGrammars sync.Map // hash128.H128 -> *compiledGrammar
+
+type compiledGrammar struct {
+	grammar rel.Value
+	parsers parser.Parsers
+}
+
+func compileGrammar(v rel.Value) parser.Parsers {
+	key := v.Hash128()
+	if cached, ok := compiledGrammars.Load(key); ok {
+		if cg := cached.(*compiledGrammar); cg.grammar.Equal(v) {
+			return cg.parsers
+		}
+	}
 	astNode := rel.ASTNodeFromValue(v).(ast.Branch)
-	g := wbnf.NewFromAst(astNode)
-	parsers := g.Compile(astNode)
+	parsers := wbnf.NewFromAst(astNode).Compile(astNode)
+	compiledGrammars.Store(key, &compiledGrammar{grammar: v, parsers: parsers})
+	return parsers
+}
+
+func parseGrammar(_ context.Context, v rel.Value) (rel.Value, error) {
+	parsers := compileGrammar(v)
 	return rel.NewNativeFunction("parse(<grammar>)", func(_ context.Context, v rel.Value) (rel.Value, error) {
 		rule := v.String()
 		return rel.NewNativeFunction(

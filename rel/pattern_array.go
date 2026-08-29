@@ -3,7 +3,6 @@ package rel
 import (
 	"bytes"
 	"context"
-	"fmt"
 )
 
 type ArrayPattern struct {
@@ -20,41 +19,41 @@ func (p ArrayPattern) Bind(ctx context.Context, local Scope, value Value) (conte
 		if len(p.items) == 0 {
 			return ctx, EmptyScope, nil
 		}
-		return ctx, EmptyScope, fmt.Errorf("value [] is empty but pattern %s is not", p)
+		return ctx, EmptyScope, lazyErrorf("value [] is empty but pattern %s is not", p)
 	case GenericSet:
-		return ctx, EmptyScope, fmt.Errorf("value %s is not an array", value)
+		return ctx, EmptyScope, lazyErrorf("value %s is not an array", value)
 	}
 
 	array, is := value.(Array)
 	if !is {
-		return ctx, EmptyScope, fmt.Errorf("value %s is not an array", value)
+		return ctx, EmptyScope, lazyErrorf("value %s is not an array", value)
 	}
 
 	extraElements := make(map[int]int)
 	for i, item := range p.items {
 		if _, is := item.pattern.(ExtraElementPattern); is {
 			if len(extraElements) == 1 {
-				return ctx, EmptyScope, fmt.Errorf("non-deterministic pattern is not supported yet")
+				return ctx, EmptyScope, lazyErrorf("non-deterministic pattern is not supported yet")
 			}
 			extraElements[i] = array.Count() - len(p.items)
 		}
 		if item.fallback != nil {
 			if len(extraElements) == 1 {
-				return ctx, EmptyScope, fmt.Errorf("non-deterministic pattern is not supported yet")
+				return ctx, EmptyScope, lazyErrorf("non-deterministic pattern is not supported yet")
 			}
 			extraElements[i] = array.Count() - len(p.items)
 		}
 	}
 
 	if len(p.items) > array.Count()+len(extraElements) {
-		return ctx, EmptyScope, fmt.Errorf("length of array %s shorter than array pattern %s", array, p)
+		return ctx, EmptyScope, lazyErrorf("length of array %s shorter than array pattern %s", array, p)
 	}
 
 	if len(extraElements) == 0 && len(p.items) < array.Count() {
-		return ctx, EmptyScope, fmt.Errorf("length of array %s longer than array pattern %s", array, p)
+		return ctx, EmptyScope, lazyErrorf("length of array %s longer than array pattern %s", array, p)
 	}
 
-	result := EmptyScope
+	var result scopeBuilder
 	offset := 0
 	for i, item := range p.items {
 		var value Value
@@ -67,7 +66,7 @@ func (p ArrayPattern) Bind(ctx context.Context, local Scope, value Value) (conte
 			value = arr
 		} else if array.Count() <= i+offset {
 			if item.fallback == nil {
-				return ctx, EmptyScope, fmt.Errorf("length of array %s shorter than array pattern %s", array, p)
+				return ctx, EmptyScope, lazyErrorf("length of array %s shorter than array pattern %s", array, p)
 			}
 			var err error
 			value, err = item.fallback.Eval(ctx, local)
@@ -84,13 +83,12 @@ func (p ArrayPattern) Bind(ctx context.Context, local Scope, value Value) (conte
 		if err != nil {
 			return ctx, EmptyScope, err
 		}
-		result, err = result.MatchedUpdate(scope)
-		if err != nil {
+		if err := result.matchedAdd(scope); err != nil {
 			return ctx, Scope{}, err
 		}
 	}
 
-	return ctx, result, nil
+	return ctx, result.finish(), nil
 }
 
 func (p ArrayPattern) String() string {

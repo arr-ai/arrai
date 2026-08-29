@@ -396,10 +396,30 @@ func (r Relation) canonicalRelation() *positionalRelation {
 }
 
 func (r Relation) EqualRelation(r2 Relation) bool {
-	if !r.attrs.EqualNamesSlice(r2.attrs) {
+	if r.rows.Count() != r2.rows.Count() || !r.attrs.EqualNamesSlice(r2.attrs) {
 		return false
 	}
+	// Rows are positional; when both relations lay their attributes out
+	// identically the row sets compare directly (frozen checks the sets'
+	// hashes first). Only differing layouts need canonicalising.
+	if r.sameLayout(r2) {
+		return r.rows.set.Equal(r2.rows.set)
+	}
 	return r.canonicalRelation().set.Equal(r2.canonicalRelation().set)
+}
+
+// sameLayout reports whether r and r2 store each attribute at the same
+// position.
+func (r Relation) sameLayout(r2 Relation) bool {
+	if len(r.attrs) != len(r2.attrs) {
+		return false
+	}
+	for i, name := range r.attrs {
+		if r2.attrMap[name] != r.p[i] {
+			return false
+		}
+	}
+	return true
 }
 
 func (r Relation) Hash(seed uintptr) uintptr {
