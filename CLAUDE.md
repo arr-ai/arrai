@@ -74,7 +74,8 @@ Supports local files, `//` standard library modules (`//str`, `//math`, `//seq`,
 
 ## Release mechanics
 
-- Releases are cut by **goreleaser** triggered on `push: tags: 'v*.*.*'` — not by `gh release create`. Just push the tag from master and goreleaser creates the GitHub release and uploads binaries automatically. Config lives at `.github/goreleaser_configs/goreleaser.yml`.
+- Releases are cut by **goreleaser** triggered on `push: tags: 'v*.*.*'` — not by `gh release create`. Push the tag from master (`/release` does this: minor bump, annotated tag, then `gh release edit --notes-file` once goreleaser has created the release) and goreleaser creates the GitHub release and uploads binaries automatically. Config lives at `.github/goreleaser_configs/goreleaser.yml`.
+- Tags are **not** auto-generated on merge. The former `generate-tag.yml` (anothrNick/github-tag-action with a `RELEASE_PAT` secret) was removed in v0.340.0-era; if `RELEASE_PAT` still exists as a repo secret it is unused and can be deleted.
 - arrai is **not** in `marcelocantos/homebrew-tap` — don't try to install via `brew install marcelocantos/tap/arrai`. Users get binaries from the GitHub release page.
 - Version is injected at build time via `-ldflags -X main.Version=v{{.Version}}`; no in-source version constant to bump.
 
