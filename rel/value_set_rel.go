@@ -21,10 +21,39 @@ type Relation struct {
 	p       valueProjector
 	rows    *positionalRelation // TODO: experiment with column table
 	attrMap map[string]int      // cached mapIndices(attrs, p)
+
+	// shape is the tuple shape of every row; layout[i] is the row position of
+	// shape.names[i]. When layout is the identity a row's values already are
+	// the tuple's values, so inflating a row is a wrap, not a copy.
+	shape  *Shape
+	layout []int
+	direct bool
 }
 
 func newRelation(attrs NamesSlice, p valueProjector, rows *positionalRelation) Relation {
-	return Relation{attrs: attrs, p: p, rows: rows, attrMap: mapIndices(attrs, p)}
+	r := Relation{attrs: attrs, p: p, rows: rows, attrMap: mapIndices(attrs, p)}
+	r.shape = shapeOf(attrs.GetSorted())
+	r.layout = make([]int, len(r.shape.names))
+	r.direct = true
+	for i, name := range r.shape.names {
+		r.layout[i] = r.attrMap[name]
+		if r.layout[i] != i {
+			r.direct = false
+		}
+	}
+	return r
+}
+
+// tuple inflates a row to a Tuple.
+func (r Relation) tuple(row Values) Tuple {
+	if r.direct && len(row) == len(r.layout) {
+		return newShapedTuple(r.shape, row)
+	}
+	vals := make([]Value, len(r.layout))
+	for i, j := range r.layout {
+		vals[i] = row[j]
+	}
+	return newShapedTuple(r.shape, vals)
 }
 
 func mapIndices(n NamesSlice, indices valueProjector) map[string]int {
@@ -89,18 +118,10 @@ func (r Relation) Has(v Value) bool {
 	return false
 }
 
-func valuesToTuple(val Values, names map[string]int) Tuple {
-	var b frozen.MapBuilder[string, Value]
-	for name, index := range names {
-		b.Put(name, val[index])
-	}
-	return &GenericTuple{tuple: b.Finish()}
-}
-
 func (r Relation) Enumerator() ValueEnumerator {
 	return &relationEnumerator{
-		attrs: r.attrMap,
-		i:     r.rows.Range(),
+		r: r,
+		i: r.rows.Range(),
 	}
 }
 
@@ -110,8 +131,8 @@ func (r Relation) OrderedValues() ValueEnumerator {
 
 func (r Relation) ArrayEnumerator() ValueEnumerator {
 	return &relationEnumerator{
-		attrs: r.attrMap,
-		i:     r.rows.OrderedRange(r.p),
+		r: r,
+		i: r.rows.OrderedRange(r.p),
 	}
 }
 
@@ -133,13 +154,13 @@ func (r Relation) Without(v Value) Set {
 
 func (r Relation) Map(f func(Value) (Value, error)) (Set, error) {
 	return r.rows.Map(func(v Values) (Value, error) {
-		return f(valuesToTuple(v, r.attrMap))
+		return f(r.tuple(v))
 	})
 }
 
 func (r Relation) Where(p func(Value) (bool, error)) (_ Set, err error) {
 	s, err := r.rows.Where(func(v Values) (bool, error) {
-		return p(valuesToTuple(v, r.attrMap))
+		return p(r.tuple(v))
 	})
 	if err != nil {
 		return nil, err
@@ -287,6 +308,7 @@ type relationBuilder struct {
 	prb     *positionalRelationBuilder
 	mapping map[string]int
 	names   NamesSlice
+	shape   *Shape // set when names are in shape order, enabling zero-copy Add
 }
 
 func newRelationBuilder(names []string, cap int) *relationBuilder {
@@ -294,14 +316,23 @@ func newRelationBuilder(names []string, cap int) *relationBuilder {
 	for i, n := range names {
 		m[n] = i
 	}
-	return &relationBuilder{
+	b := &relationBuilder{
 		prb:     &positionalRelationBuilder{sb: frozen.NewSetBuilder[any](cap)},
 		mapping: m,
 		names:   names,
 	}
+	if sort.StringsAreSorted(names) {
+		b.shape = shapeOf(names)
+	}
+	return b
 }
 
 func (r *relationBuilder) Add(v Value) {
+	if g, ok := v.(*GenericTuple); ok && r.shape != nil && g.shape == r.shape {
+		// The tuple's values already are the row: both are immutable.
+		r.prb.Add(Values(g.vals))
+		return
+	}
 	t := v.(Tuple)
 	values := make(Values, len(r.names))
 	for name, index := range r.mapping {
@@ -476,8 +507,8 @@ func (r Relation) OrderedValuesEnumerator(names NamesSlice) *RelationValuesEnume
 }
 
 type relationEnumerator struct {
-	attrs map[string]int
-	i     *positionalRelationValuesEnumerator
+	r Relation
+	i *positionalRelationValuesEnumerator
 }
 
 func (r *relationEnumerator) MoveNext() bool {
@@ -485,5 +516,5 @@ func (r *relationEnumerator) MoveNext() bool {
 }
 
 func (r *relationEnumerator) Current() Value {
-	return valuesToTuple(r.i.Values(), r.attrs)
+	return r.r.tuple(r.i.Values())
 }

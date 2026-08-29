@@ -3,6 +3,8 @@ package rel
 import (
 	"bytes"
 	"context"
+	"sort"
+	"strings"
 
 	"github.com/arr-ai/wbnf/parser"
 	"github.com/go-errors/errors"
@@ -67,6 +69,41 @@ type TupleExpr struct {
 	ExprScanner
 	attrs   []AttrExpr
 	attrMap map[string]Expr
+
+	// shape and slots are set when the literal's attribute names are static
+	// (no wildcards, no view attributes, no repeats): the tuple can then be
+	// built by storing each value into its slot.
+	shape *Shape
+	slots []int
+}
+
+// staticShape precomputes the shape of a literal with static attribute names.
+func (e *TupleExpr) staticShape() {
+	names := make([]string, 0, len(e.attrs))
+	for _, attr := range e.attrs {
+		if attr.IsWildcard() || strings.HasPrefix(attr.name, "&") {
+			return
+		}
+		names = append(names, attr.name)
+	}
+	sorted := append([]string(nil), names...)
+	sort.Strings(sorted)
+	for i := 1; i < len(sorted); i++ {
+		if sorted[i] == sorted[i-1] {
+			return
+		}
+	}
+	shape := shapeOf(sorted)
+	// The "@"-indexed two-attribute shapes canonicalise to specialised
+	// kinds; leave those to the general path.
+	if len(sorted) == 2 && sorted[0] == "@" && strings.HasPrefix(sorted[1], "@") {
+		return
+	}
+	e.slots = make([]int, len(names))
+	for i, name := range names {
+		e.slots[i], _ = shape.Index(name)
+	}
+	e.shape = shape
 }
 
 // NewTupleExpr returns a new TupleExpr.
@@ -80,7 +117,9 @@ func NewTupleExpr(scanner parser.Scanner, attrs ...AttrExpr) Expr {
 			for _, attr := range attrs {
 				attrMap[attr.name] = attr.expr
 			}
-			return &TupleExpr{ExprScanner{scanner}, attrs, attrMap}
+			e := &TupleExpr{ExprScanner: ExprScanner{scanner}, attrs: attrs, attrMap: attrMap}
+			e.staticShape()
+			return e
 		}
 	}
 	return NewLiteralExpr(scanner, NewTuple(attrValues...))
@@ -101,7 +140,9 @@ func NewTupleExprFromMap(scanner parser.Scanner, attrMap map[string]Expr) Expr {
 				attrs[i] = AttrExpr{ExprScanner{scanner}, name, expr}
 				i++
 			}
-			return &TupleExpr{ExprScanner{scanner}, attrs, attrMap}
+			e := &TupleExpr{ExprScanner: ExprScanner{scanner}, attrs: attrs, attrMap: attrMap}
+			e.staticShape()
+			return e
 		}
 	}
 	return NewTuple(attrValues...)
@@ -132,6 +173,17 @@ func (e *TupleExpr) String() string { //nolint:dupl
 
 // Eval returns the subject
 func (e *TupleExpr) Eval(ctx context.Context, local Scope) (Value, error) {
+	if e.shape != nil {
+		vals := make([]Value, len(e.slots))
+		for i, attr := range e.attrs {
+			value, err := attr.expr.Eval(ctx, local)
+			if err != nil {
+				return nil, WrapContextErr(err, e, local)
+			}
+			vals[e.slots[i]] = value
+		}
+		return newShapedTuple(e.shape, vals), nil
+	}
 	tuple := EmptyTuple
 	var err error
 	for _, attr := range e.attrs {
