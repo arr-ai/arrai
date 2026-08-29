@@ -195,16 +195,15 @@ func (s Scope) flatten() ([]string, []Expr) {
 // MatchedUpdate merges s and t. New keys are added as Update,
 // but existing keys fail unless the new value equals the existing value
 func (s Scope) MatchedUpdate(t Scope) (Scope, error) {
-	t = t.Without("_")
-	for e := s.Enumerator(); e.MoveNext(); {
-		name, v := e.Current()
-		if expr, exists := t.Get(name); exists {
-			if expr.String() != v.String() {
-				return Scope{}, fmt.Errorf("the value of %s is different in both scopes", name)
-			}
+	// With never binds "_", so no Without("_") pass is needed. t is usually
+	// a single small frame from a pattern; check its bindings against s
+	// directly rather than enumerating s.
+	names, vals := t.flatten()
+	for i, name := range names {
+		if v, exists := s.Get(name); exists && v.String() != vals[i].String() {
+			return Scope{}, fmt.Errorf("the value of %s is different in both scopes", name)
 		}
 	}
-
 	return s.Update(t), nil
 }
 
@@ -236,17 +235,19 @@ func (s Scope) Names() []string {
 // Enumerator returns an enumerator over the Values in the Scope. Bindings
 // are visited oldest-first; a shadowed binding is not visited.
 func (s Scope) Enumerator() *ScopeEnumerator {
-	// Collect newest-first, dropping shadowed names, then reverse.
-	seen := map[string]struct{}{}
+	// Collect newest-first, dropping shadowed names, then reverse. Scopes
+	// are small, so a linear duplicate check beats a map.
 	var names []string
 	var vals []Expr
 	for f := s.f; f != nil; f = f.parent {
+	entries:
 		for i := len(f.names) - 1; i >= 0; i-- {
 			n := f.names[i]
-			if _, dup := seen[n]; dup {
-				continue
+			for _, seen := range names {
+				if seen == n {
+					continue entries
+				}
 			}
-			seen[n] = struct{}{}
 			names = append(names, n)
 			vals = append(vals, f.vals[i])
 		}
