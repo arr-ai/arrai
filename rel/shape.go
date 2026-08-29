@@ -25,6 +25,10 @@ type Shape struct {
 	nameH []hash128.H128
 	index map[string]int // nil for small shapes, which scan linearly
 
+	// namesH is the xor of the attribute-name hashes, the half of a tuple's
+	// hash that depends only on its shape.
+	namesH hash128.H128
+
 	bucket    hashableNamesSlice
 	namesOnce sync.Once
 	namesSet  Names
@@ -70,6 +74,7 @@ func shapeOf(names []string) *Shape {
 	}
 	for i, n := range names {
 		s.nameH[i] = hash128.String(n)
+		s.namesH = s.namesH.Xor(s.nameH[i])
 	}
 	if len(names) > shapeLinearScanMax {
 		s.index = make(map[string]int, len(names))
