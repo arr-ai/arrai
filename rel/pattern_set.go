@@ -25,28 +25,28 @@ func NewSetPattern(patterns ...Pattern) SetPattern {
 func (p SetPattern) Bind(ctx context.Context, local Scope, value Value) (context.Context, Scope, error) {
 	set, is := value.(Set)
 	if !is {
-		return ctx, EmptyScope, fmt.Errorf("value %s is not a set", value)
+		return ctx, EmptyScope, lazyErrorf("value %s is not a set", value)
 	}
 	extraElements := make(map[int]int)
 	for i, ptn := range p.patterns {
 		switch ptn.(type) {
 		case ExtraElementPattern, IdentPattern, DynIdentPattern:
 			if len(extraElements) == 1 {
-				return ctx, EmptyScope, fmt.Errorf("non-deterministic pattern is not supported yet")
+				return ctx, EmptyScope, lazyErrorf("non-deterministic pattern is not supported yet")
 			}
 			extraElements[i] = set.Count() - len(p.patterns)
 		}
 	}
 
 	if len(p.patterns) > set.Count()+len(extraElements) {
-		return ctx, EmptyScope, fmt.Errorf("length of set %v shorter than set pattern %s", set, p)
+		return ctx, EmptyScope, lazyErrorf("length of set %v shorter than set pattern %s", set, p)
 	}
 
 	if len(extraElements) == 0 && len(p.patterns) < set.Count() {
-		return ctx, EmptyScope, fmt.Errorf("length of set %v longer than set pattern %s", set, p)
+		return ctx, EmptyScope, lazyErrorf("length of set %v longer than set pattern %s", set, p)
 	}
 
-	result := EmptyScope
+	var result scopeBuilder
 	for _, ptn := range p.patterns {
 		if _, is := ptn.(ExtraElementPattern); is {
 			continue
@@ -57,14 +57,14 @@ func (p SetPattern) Bind(ctx context.Context, local Scope, value Value) (context
 		case ExprPattern:
 			if v, is := t.Expr.(Value); is {
 				if !set.Has(v) {
-					return ctx, EmptyScope, fmt.Errorf("item %s is not included in set %s", v, value)
+					return ctx, EmptyScope, lazyErrorf("item %s is not included in set %s", v, value)
 				}
 				set = set.Without(v)
 				continue
 			}
 
 			if _, is := t.Expr.(IdentExpr); !is {
-				return ctx, EmptyScope, fmt.Errorf("item type %s is not supported yet", t)
+				return ctx, EmptyScope, lazyErrorf("item type %s is not supported yet", t)
 			}
 		case ExprsPattern:
 			// Support cases:
@@ -73,10 +73,10 @@ func (p SetPattern) Bind(ctx context.Context, local Scope, value Value) (context
 			if identExpr, is := t.exprs[0].(IdentExpr); is {
 				v, has := local.Get(identExpr.ident)
 				if !has {
-					return ctx, EmptyScope, fmt.Errorf("%q not in scope", identExpr.ident)
+					return ctx, EmptyScope, lazyErrorf("%q not in scope", identExpr.ident)
 				}
 				if !set.Has(v.(Value)) {
-					return ctx, EmptyScope, fmt.Errorf("item %s is not included in set %s", v, value)
+					return ctx, EmptyScope, lazyErrorf("item %s is not included in set %s", v, value)
 				}
 				set = set.Without(v.(Value))
 			}
@@ -97,7 +97,7 @@ func (p SetPattern) Bind(ctx context.Context, local Scope, value Value) (context
 			ctx, scope, err = p.patterns[i].Bind(ctx, local, set)
 		} else {
 			if set.Count() != 1 {
-				return ctx, EmptyScope, fmt.Errorf("the length of set %v is wrong", set)
+				return ctx, EmptyScope, lazyErrorf("the length of set %v is wrong", set)
 			}
 
 			e := set.Enumerator()
@@ -113,13 +113,12 @@ func (p SetPattern) Bind(ctx context.Context, local Scope, value Value) (context
 			return ctx, EmptyScope, err
 		}
 
-		result, err = result.MatchedUpdate(scope)
-		if err != nil {
+		if err := result.matchedAdd(scope); err != nil {
 			return ctx, EmptyScope, err
 		}
 	}
 
-	return ctx, result, nil
+	return ctx, result.finish(), nil
 }
 
 func (p SetPattern) String() string {

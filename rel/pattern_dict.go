@@ -44,34 +44,34 @@ func NewDictPattern(entries ...DictPatternEntry) DictPattern {
 func (p DictPattern) Bind(ctx context.Context, local Scope, value Value) (context.Context, Scope, error) {
 	dict, is := value.(Dict)
 	if !is {
-		return ctx, EmptyScope, fmt.Errorf("%s is not a dict", value)
+		return ctx, EmptyScope, lazyErrorf("%s is not a dict", value)
 	}
 
 	extraElements := make(map[int]int)
 	for i, entry := range p.entries {
 		if _, is := entry.pattern.pattern.(ExtraElementPattern); is {
 			if len(extraElements) == 1 {
-				return ctx, EmptyScope, fmt.Errorf("non-deterministic pattern is not supported yet")
+				return ctx, EmptyScope, lazyErrorf("non-deterministic pattern is not supported yet")
 			}
 			extraElements[i] = dict.Count() - len(p.entries)
 		}
 		if entry.pattern.fallback != nil {
 			if len(extraElements) == 1 {
-				return ctx, EmptyScope, fmt.Errorf("non-deterministic pattern is not supported yet")
+				return ctx, EmptyScope, lazyErrorf("non-deterministic pattern is not supported yet")
 			}
 			extraElements[i] = dict.Count() - len(p.entries)
 		}
 	}
 
 	if len(p.entries) > dict.Count()+len(extraElements) {
-		return ctx, EmptyScope, fmt.Errorf("length of dict %s shorter than dict pattern %s", dict, p)
+		return ctx, EmptyScope, lazyErrorf("length of dict %s shorter than dict pattern %s", dict, p)
 	}
 
 	if len(extraElements) == 0 && len(p.entries) < dict.Count() {
-		return ctx, EmptyScope, fmt.Errorf("length of dict %s longer than dict pattern %s", dict, p)
+		return ctx, EmptyScope, lazyErrorf("length of dict %s longer than dict pattern %s", dict, p)
 	}
 
-	result := EmptyScope
+	var result scopeBuilder
 	m := dict.m
 	for _, entry := range p.entries {
 		var dictValue Value
@@ -90,7 +90,7 @@ func (p DictPattern) Bind(ctx context.Context, local Scope, value Value) (contex
 			dictExpr, found := m.Get(key.(Value))
 			if !found {
 				if entry.pattern.fallback == nil {
-					return ctx, EmptyScope, fmt.Errorf("couldn't find %s in dict %s", key, m)
+					return ctx, EmptyScope, lazyErrorf("couldn't find %s in dict %s", key, m)
 				}
 				var err error
 				dictValue, err = entry.pattern.fallback.Eval(ctx, local)
@@ -109,13 +109,12 @@ func (p DictPattern) Bind(ctx context.Context, local Scope, value Value) (contex
 		if err != nil {
 			return ctx, EmptyScope, err
 		}
-		result, err = result.MatchedUpdate(scope)
-		if err != nil {
+		if err := result.matchedAdd(scope); err != nil {
 			return ctx, EmptyScope, err
 		}
 	}
 
-	return ctx, result, nil
+	return ctx, result.finish(), nil
 }
 
 func (p DictPattern) String() string {

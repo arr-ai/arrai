@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"regexp"
+	"sync"
+	"sync/atomic"
 
 	"github.com/arr-ai/arrai/rel"
 	"github.com/arr-ai/arrai/tools"
@@ -15,7 +17,7 @@ var (
 		if !is {
 			return nil, fmt.Errorf("//re.compile: re not a string: %v", re)
 		}
-		regex, err := regexp.Compile(reStr)
+		regex, err := compileRegexp(reStr)
 		if err != nil {
 			return nil, fmt.Errorf("//re.compile: %s", err)
 		}
@@ -66,6 +68,34 @@ var (
 		), nil
 	})
 )
+
+// compiledRegexps memoises //re.compile by pattern. Patterns are almost
+// always program literals, but a function that compiles inside its body would
+// otherwise recompile on every call. The cache is bounded so a program that
+// builds patterns dynamically cannot grow it without limit.
+var (
+	compiledRegexps   sync.Map // string -> *regexp.Regexp
+	compiledRegexpsN  atomic.Int64
+	maxCompiledRegexp = int64(4096)
+)
+
+func compileRegexp(pattern string) (*regexp.Regexp, error) {
+	if re, ok := compiledRegexps.Load(pattern); ok {
+		return re.(*regexp.Regexp), nil
+	}
+	re, err := regexp.Compile(pattern)
+	if err != nil {
+		return nil, err
+	}
+	if compiledRegexpsN.Load() >= maxCompiledRegexp {
+		compiledRegexps.Range(func(k, _ any) bool { compiledRegexps.Delete(k); return true })
+		compiledRegexpsN.Store(0)
+	}
+	if _, loaded := compiledRegexps.LoadOrStore(pattern, re); !loaded {
+		compiledRegexpsN.Add(1)
+	}
+	return re, nil
+}
 
 func stdRe() rel.Attr {
 	return rel.NewTupleAttr("re",
