@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/arr-ai/frozen"
+	"github.com/arr-ai/hash"
 	"github.com/arr-ai/wbnf/parser"
 
 	"github.com/arr-ai/arrai/pkg/fu"
@@ -401,11 +402,14 @@ func (r Relation) EqualRelation(r2 Relation) bool {
 }
 
 func (r Relation) Hash(seed uintptr) uintptr {
-	var h uintptr
-	for i := r.Enumerator(); i.MoveNext(); {
-		h ^= i.Current().Hash(seed)
+	// Prefer the positional row set's H0 (seeds 0/1) over re-inflating every
+	// row to a named tuple and deep-hashing. Include attr names so relations
+	// that Equal distinguishes by schema also hash differently.
+	h := seed
+	for _, name := range r.attrs {
+		h ^= hash.String(name, seed)
 	}
-	return h
+	return h ^ r.rows.Hash(seed)
 }
 
 // RelationValuesEnumerator enumerates the values as Values.

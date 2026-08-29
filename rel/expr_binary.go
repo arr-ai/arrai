@@ -365,5 +365,5 @@ func mergeDicts(lhs Dict, rhs Dict) Dict {
 		key, value := e.Current()
 		tempMap = tempMap.With(key, value)
 	}
-	return Dict{m: tempMap}
+	return newDict(tempMap)
 }

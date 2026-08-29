@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"reflect"
 	"sort"
+	"sync"
 
 	"github.com/go-errors/errors"
 
@@ -41,7 +42,22 @@ func (m multipleValues) String() string {
 
 // Dict is a map from keys to values.
 type Dict struct {
-	m frozen.Map[Value, any]
+	m         frozen.Map[Value, any]
+	hashCache *dictHashCache // shared across copies; nil only for empty Dict{}
+}
+
+// dictHashCache memoises Dict.Hash for seeds 0 and 1 (frozen's H128 path).
+// Dicts are immutable, so a single computation is valid for the Dict's lifetime.
+type dictHashCache struct {
+	once   sync.Once
+	h0, h1 uintptr
+}
+
+func newDict(m frozen.Map[Value, any]) Dict {
+	if m.IsEmpty() {
+		return Dict{}
+	}
+	return Dict{m: m, hashCache: &dictHashCache{}}
 }
 
 // AsDict checks whether a Value is a valid dictionary.
@@ -85,11 +101,29 @@ func NewDict(allowDupKeys bool, entries ...DictEntryTuple) (Set, error) {
 			mb.Put(entry.at, entry.value)
 		}
 	}
-	return Dict{m: mb.Finish()}, nil
+	return newDict(mb.Finish()), nil
 }
 
 func (d Dict) Hash(seed uintptr) uintptr {
-	// TODO: Optimize.
+	if d.m.IsEmpty() {
+		return seed
+	}
+	if d.hashCache != nil && (seed == 0 || seed == 1) {
+		d.hashCache.once.Do(func() {
+			d.hashCache.h0 = d.hashUncached(0)
+			d.hashCache.h1 = d.hashUncached(1)
+		})
+		if seed == 0 {
+			return d.hashCache.h0
+		}
+		return d.hashCache.h1
+	}
+	return d.hashUncached(seed)
+}
+
+func (d Dict) hashUncached(seed uintptr) uintptr {
+	// TODO: Prefer a content-hash H0 on the underlying map once frozen
+	// exposes one that covers key+value (tree H0 is key-only for Map).
 	h := seed
 	for e := d.Enumerator(); e.MoveNext(); {
 		h ^= e.Current().Hash(seed)
@@ -297,12 +331,12 @@ func (d Dict) With(v Value) Set {
 		if u, has := d.m.Get(t.at); has {
 			switch u := u.(type) {
 			case multipleValues:
-				return Dict{m: d.m.With(t.at, multipleValues(frozen.Set[Value](u).With(t.value)))}
+				return newDict(d.m.With(t.at, multipleValues(frozen.Set[Value](u).With(t.value))))
 			default:
-				return Dict{m: d.m.With(t.at, newMultipleValues(u.(Value), t.value))}
+				return newDict(d.m.With(t.at, newMultipleValues(u.(Value), t.value)))
 			}
 		}
-		return Dict{m: d.m.With(t.at, t.value)}
+		return newDict(d.m.With(t.at, t.value))
 	}
 	return toUnionSetWithItem(d, v)
 }
@@ -315,7 +349,7 @@ func (d Dict) Without(v Value) Set {
 				if m.IsEmpty() {
 					return None
 				}
-				return Dict{m: m}
+				return newDict(m)
 			}
 		}
 	}
@@ -350,7 +384,7 @@ func (d Dict) Where(p func(v Value) (bool, error)) (Set, error) {
 	if m.IsEmpty() {
 		return None, nil
 	}
-	return Dict{m: m}, nil
+	return newDict(m), nil
 }
 
 func (d Dict) CallAll(_ context.Context, arg Value, b SetBuilder) error {

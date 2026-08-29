@@ -314,16 +314,16 @@ func (t *GenericTuple) Less(v Value) bool {
 			if u.Count() != 1 {
 				panic(negateTag + " kind not single-attr tuple")
 			}
-			if y, ok := v.(Tuple).Get(negateTag); ok {
+			if y, ok := u.Get(negateTag); ok {
 				return y.Less(x)
 			}
 			panic(negateTag + " kind missing " + negateTag + " attr")
 		}
 	}
 
-	x := v.(*GenericTuple)
+	u := v.(Tuple)
 	a := TupleOrderedNames(t)
-	b := TupleOrderedNames(x)
+	b := orderedTupleNames(u)
 	n := len(a)
 	if n > len(b) {
 		n = len(b)
@@ -333,7 +333,7 @@ func (t *GenericTuple) Less(v Value) bool {
 			return a[i] < b[i]
 		}
 		va, _ := t.Get(a[i])
-		vb, _ := x.Get(b[i])
+		vb, _ := u.Get(b[i])
 		if va.Less(vb) {
 			return true
 		}
@@ -342,6 +342,20 @@ func (t *GenericTuple) Less(v Value) bool {
 		}
 	}
 	return len(a) < len(b)
+}
+
+// orderedTupleNames returns sorted attribute names for any Tuple.
+func orderedTupleNames(t Tuple) []string {
+	if g, ok := t.(*GenericTuple); ok {
+		return TupleOrderedNames(g)
+	}
+	names := make([]string, 0, t.Count())
+	for e := t.Enumerator(); e.MoveNext(); {
+		name, _ := e.Current()
+		names = append(names, name)
+	}
+	sort.Strings(names)
+	return names
 }
 
 // Negate returns x if t matches {(negateTag): x} else {(negateTag): t}.

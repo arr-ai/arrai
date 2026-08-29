@@ -74,12 +74,10 @@ func NewBool(b bool) Set {
 }
 
 // Hash computes a hash for a genericSet.
+// Delegates to frozen.Set, which uses the tree's H0 for seeds 0/1 instead of
+// re-walking every element (important when GenericSets nest inside other sets).
 func (s GenericSet) Hash(seed uintptr) uintptr {
-	h := seed
-	for e := s.Enumerator(); e.MoveNext(); {
-		h ^= e.Current().Hash(0)
-	}
-	return h
+	return s.set.Hash(seed)
 }
 
 // Equal tests two Sets for equality. Any other type returns false.
