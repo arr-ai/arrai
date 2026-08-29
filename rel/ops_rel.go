@@ -130,22 +130,22 @@ func Reduce(
 	getKey func(value Value) Value,
 	reduce func(key Value, tuples Set) Set,
 ) Set {
-	var buckets frozen.Map[Value, Value]
+	// MapBuilder avoids Map.With's per-put value-equality / same checks while
+	// buckets grow — each Put replaces the previous bucket for that key.
+	var mb frozen.MapBuilder[Value, Value]
 	for e := a.Enumerator(); e.MoveNext(); {
 		value := e.Current()
 		key := getKey(value)
 
-		var slot = None
-		if v, found := buckets.Get(key); found {
+		slot := None
+		if v, found := mb.Get(key); found {
 			slot = v.(Set)
 		}
-
-		slot = slot.With(value)
-		buckets = buckets.With(key, slot)
+		mb.Put(key, slot.With(value))
 	}
 
 	result := None
-	for i := buckets.Range(); i.Next(); {
+	for i := mb.Finish().Range(); i.Next(); {
 		result = Union(result, reduce(i.Key(), i.Value().(Set)))
 	}
 	return result

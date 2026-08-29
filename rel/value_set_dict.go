@@ -1,6 +1,8 @@
 package rel
 
 import (
+	"github.com/arr-ai/hash/hash128"
+
 	"context"
 	"fmt"
 	"reflect"
@@ -35,13 +37,26 @@ func (m multipleValues) Hash(seed uintptr) uintptr {
 	return frozen.Set[Value](m).Hash(seed)
 }
 
+// Hash128 computes the 128-bit hash of the set of values.
+func (m multipleValues) Hash128() hash128.H128 {
+	return frozen.Set[Value](m).Hash128()
+}
+
 func (m multipleValues) String() string {
 	return frozen.Set[Value](m).String()
 }
 
 // Dict is a map from keys to values.
 type Dict struct {
-	m frozen.Map[Value, any]
+	m    frozen.Map[Value, any]
+	hash *hashCell // shared across copies; nil only for empty Dict{}
+}
+
+func newDict(m frozen.Map[Value, any]) Dict {
+	if m.IsEmpty() {
+		return Dict{}
+	}
+	return Dict{m: m, hash: &hashCell{}}
 }
 
 // AsDict checks whether a Value is a valid dictionary.
@@ -85,16 +100,26 @@ func NewDict(allowDupKeys bool, entries ...DictEntryTuple) (Set, error) {
 			mb.Put(entry.at, entry.value)
 		}
 	}
-	return Dict{m: mb.Finish()}, nil
+	return newDict(mb.Finish()), nil
 }
 
 func (d Dict) Hash(seed uintptr) uintptr {
-	// TODO: Optimize.
-	h := seed
-	for e := d.Enumerator(); e.MoveNext(); {
-		h ^= e.Current().Hash(seed)
+	return d.Hash128().Seeded(seed)
+}
+
+// Hash128 computes the 128-bit hash of a Dict: the xor of its entry tuples,
+// computed once per Dict.
+func (d Dict) Hash128() hash128.H128 {
+	if d.hash == nil {
+		return dictSalt
 	}
-	return h
+	return d.hash.get(func() hash128.H128 {
+		h := dictSalt
+		for e := d.Enumerator(); e.MoveNext(); {
+			h = h.Xor(e.Current().Hash128())
+		}
+		return h
+	})
 }
 
 func (d Dict) Equal(v Value) bool {
@@ -297,12 +322,12 @@ func (d Dict) With(v Value) Set {
 		if u, has := d.m.Get(t.at); has {
 			switch u := u.(type) {
 			case multipleValues:
-				return Dict{m: d.m.With(t.at, multipleValues(frozen.Set[Value](u).With(t.value)))}
+				return newDict(d.m.With(t.at, multipleValues(frozen.Set[Value](u).With(t.value))))
 			default:
-				return Dict{m: d.m.With(t.at, newMultipleValues(u.(Value), t.value))}
+				return newDict(d.m.With(t.at, newMultipleValues(u.(Value), t.value)))
 			}
 		}
-		return Dict{m: d.m.With(t.at, t.value)}
+		return newDict(d.m.With(t.at, t.value))
 	}
 	return toUnionSetWithItem(d, v)
 }
@@ -315,7 +340,7 @@ func (d Dict) Without(v Value) Set {
 				if m.IsEmpty() {
 					return None
 				}
-				return Dict{m: m}
+				return newDict(m)
 			}
 		}
 	}
@@ -350,7 +375,7 @@ func (d Dict) Where(p func(v Value) (bool, error)) (Set, error) {
 	if m.IsEmpty() {
 		return None, nil
 	}
-	return Dict{m: m}, nil
+	return newDict(m), nil
 }
 
 func (d Dict) CallAll(_ context.Context, arg Value, b SetBuilder) error {

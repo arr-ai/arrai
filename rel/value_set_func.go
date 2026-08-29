@@ -1,13 +1,14 @@
 package rel
 
 import (
+	"github.com/arr-ai/hash/hash128"
+
 	"context"
 	"fmt"
 	"unsafe"
 
 	"github.com/arr-ai/arrai/pkg/fu"
 
-	"github.com/arr-ai/hash"
 	"github.com/arr-ai/wbnf/parser"
 )
 
@@ -43,10 +44,17 @@ func (f *Function) Body() Expr {
 	return f.body
 }
 
-// Hash computes a hash for a Function.
+// Hash computes a hash for a Function. Functions are compared by identity
+// (see EqualFunction), so the hash is derived from the node's address rather
+// than from formatting its body, which is expensive and, for recursive
+// functions, self-referential.
 func (f *Function) Hash(seed uintptr) uintptr {
-	//TODO: function should be an expr but hash is called by Closure
-	return hash.String(f.String(), hash.Uintptr(17297263775284131973>>(64-8*unsafe.Sizeof(uintptr(0))), seed))
+	return f.Hash128().Seeded(seed)
+}
+
+// Hash128 computes the 128-bit hash of a Function, by identity.
+func (f *Function) Hash128() hash128.H128 {
+	return hash128.Uintptr(uintptr(unsafe.Pointer(f)))
 }
 
 // Equal tests two Values for equality. Any other type returns false.
@@ -60,8 +68,10 @@ func (f *Function) Equal(i interface{}) bool {
 
 // Equal tests two Values for equality. Any other type returns false.
 func (f *Function) EqualFunction(g *Function) bool {
-	// Function equality is undecidable in the general case. Should we panic?
-	return f.body == g.body
+	// Function equality is undecidable in the general case, so functions are
+	// equal iff they are the same compiled node. (Comparing bodies with ==
+	// panics when the body is an uncomparable expression type.)
+	return f == g
 }
 
 // String returns a string representation of the expression.

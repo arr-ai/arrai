@@ -1,6 +1,8 @@
 package rel
 
 import (
+	"github.com/arr-ai/hash/hash128"
+
 	"context"
 	"fmt"
 	"reflect"
@@ -74,12 +76,15 @@ func NewBool(b bool) Set {
 }
 
 // Hash computes a hash for a genericSet.
+// Delegates to frozen.Set, which uses the tree's H0 for seeds 0/1 instead of
+// re-walking every element (important when GenericSets nest inside other sets).
 func (s GenericSet) Hash(seed uintptr) uintptr {
-	h := seed
-	for e := s.Enumerator(); e.MoveNext(); {
-		h ^= e.Current().Hash(0)
-	}
-	return h
+	return s.set.Hash(seed)
+}
+
+// Hash128 returns the 128-bit hash maintained by the underlying frozen set.
+func (s GenericSet) Hash128() hash128.H128 {
+	return s.set.Hash128()
 }
 
 // Equal tests two Sets for equality. Any other type returns false.

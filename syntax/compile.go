@@ -433,13 +433,11 @@ func (pc ParseContext) compileLet(ctx context.Context, c ast.Children) (rel.Expr
 	rhs = rel.NewFunction(source, p, rhs)
 
 	if c.(ast.One).Node.One("rec") != nil {
-		fix, fixt := FixFuncs()
 		identPattern, is := p.(rel.IdentPattern)
 		if !is {
 			return nil, fmt.Errorf("let rec parameter must be IDENT, not %v", p)
 		}
-		name := identPattern.Ident()
-		expr = rel.NewRecursionExpr(c.Scanner(), name, expr, fix, fixt)
+		expr = rel.NewRecursionExpr(c.Scanner(), identPattern.Ident(), expr)
 	}
 
 	return binops["->"](source, expr, rhs), nil
@@ -1403,8 +1401,7 @@ func (pc ParseContext) compileTuple(ctx context.Context, b ast.Branch, c ast.Chi
 			}
 			scanner := pair.One("v").(ast.Branch).Scanner()
 			if pair.One("rec") != nil {
-				fix, fixt := FixFuncs()
-				v = rel.NewRecursionExpr(scanner, k, v, fix, fixt)
+				v = rel.NewRecursionExpr(scanner, k, v)
 			}
 
 			attr, err := rel.NewAttrExpr(scanner, k, v)

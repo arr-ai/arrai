@@ -1,11 +1,12 @@
 package rel
 
 import (
+	"github.com/arr-ai/hash/hash128"
+
 	"context"
 	"fmt"
 	"reflect"
 
-	"github.com/arr-ai/hash"
 	"github.com/arr-ai/wbnf/parser"
 
 	"github.com/arr-ai/arrai/pkg/fu"
@@ -56,8 +57,13 @@ func (t ArrayItemTuple) asGenericTuple() Tuple {
 
 // Hash computes a hash for a CharTuple.
 func (t ArrayItemTuple) Hash(seed uintptr) uintptr {
-	h := hash.Int(t.at, seed)
-	return t.item.Hash(h)
+	return t.Hash128().Seeded(seed)
+}
+
+// Hash128 computes the 128-bit hash of an ArrayItemTuple, consistent with the
+// same tuple represented generically.
+func (t ArrayItemTuple) Hash128() hash128.H128 {
+	return hashTuple2(atNameHash, NewNumber(float64(t.at)), itemNameHash, t.item)
 }
 
 // Equal tests two Tuples for equality. Any other type returns false.

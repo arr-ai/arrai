@@ -1,6 +1,8 @@
 package rel
 
 import (
+	"github.com/arr-ai/hash/hash128"
+
 	"context"
 	"fmt"
 	"math"
@@ -115,9 +117,16 @@ func (a Array) Values() []Value {
 
 // Hash computes a hash for a Array.
 func (a Array) Hash(seed uintptr) uintptr {
-	h := seed
-	for e := a.Enumerator(); e.MoveNext(); {
-		h ^= e.Current().Hash(seed)
+	return a.Hash128().Seeded(seed)
+}
+
+// Hash128 computes the 128-bit hash of an Array: the xor of its item tuples.
+func (a Array) Hash128() hash128.H128 {
+	h := arraySalt
+	for i, v := range a.values {
+		if v != nil {
+			h = h.Xor(hashTuple2(atNameHash, NewNumber(float64(a.offset+i)), itemNameHash, v))
+		}
 	}
 	return h
 }

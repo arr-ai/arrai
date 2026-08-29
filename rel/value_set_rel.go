@@ -1,6 +1,8 @@
 package rel
 
 import (
+	"github.com/arr-ai/hash/hash128"
+
 	"context"
 	"fmt"
 	"reflect"
@@ -401,11 +403,18 @@ func (r Relation) EqualRelation(r2 Relation) bool {
 }
 
 func (r Relation) Hash(seed uintptr) uintptr {
-	var h uintptr
-	for i := r.Enumerator(); i.MoveNext(); {
-		h ^= i.Current().Hash(seed)
+	return r.Hash128().Seeded(seed)
+}
+
+// Hash128 computes the 128-bit hash of a Relation from the positional row
+// set's own hash (O(1)) and the attribute names, so relations that Equal
+// distinguishes by schema also hash differently.
+func (r Relation) Hash128() hash128.H128 {
+	h := relationSalt
+	for _, name := range r.attrs {
+		h = h.Xor(hash128.String(name))
 	}
-	return h
+	return h.Xor(r.rows.Hash128())
 }
 
 // RelationValuesEnumerator enumerates the values as Values.

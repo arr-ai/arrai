@@ -79,7 +79,7 @@ func (p DictPattern) Bind(ctx context.Context, local Scope, value Value) (contex
 			if m.IsEmpty() {
 				dictValue = None
 			} else {
-				dictValue = Dict{m: m}
+				dictValue = newDict(m)
 			}
 		} else {
 			key := entry.at

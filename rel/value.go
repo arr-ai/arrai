@@ -1,6 +1,8 @@
 package rel
 
 import (
+	"github.com/arr-ai/hash/hash128"
+
 	"context"
 	"fmt"
 	"reflect"
@@ -38,6 +40,7 @@ type Value interface {
 	fmt.Formatter
 
 	frozen.Key[Value]
+	hash128.Hashable
 
 	// Values are Exprs.
 	Expr
@@ -154,6 +157,15 @@ func (n NoReturnError) Error() string {
 // SetCall is a convenience wrapper to call a set and return the result or an
 // error if there isn't exactly one result.
 func SetCall(ctx context.Context, s Set, arg Value) (Value, error) {
+	// Fast path: callables that yield exactly one result return it directly
+	// instead of round-tripping through a one-element set (which deep-hashes
+	// the result to build a frozen set and then immediately unpacks it).
+	switch s := s.(type) {
+	case Closure:
+		return s.call(ctx, arg)
+	case *NativeFunction:
+		return s.fn(ctx, arg)
+	}
 	b := NewSetBuilder()
 	err := s.CallAll(ctx, arg, b)
 	if err != nil {

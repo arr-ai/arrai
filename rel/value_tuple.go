@@ -1,6 +1,8 @@
 package rel
 
 import (
+	"github.com/arr-ai/hash/hash128"
+
 	"context"
 	"fmt"
 	"reflect"
@@ -18,6 +20,7 @@ import (
 // GenericTuple is the default implementation of Tuple.
 type GenericTuple struct {
 	tuple            frozen.Map[string, Value]
+	hash             hashCell
 	names            []string
 	orderNamesOnce   sync.Once
 	cachedNames      Names
@@ -211,7 +214,19 @@ func (t *GenericTuple) Canonical() Tuple {
 
 // Hash computes a hash for a GenericTuple.
 func (t *GenericTuple) Hash(seed uintptr) uintptr {
-	return t.tuple.Hash(seed)
+	return t.Hash128().Seeded(seed)
+}
+
+// Hash128 computes the 128-bit hash of a GenericTuple once: the xor over its
+// attributes of the name hash mixed with the value hash.
+func (t *GenericTuple) Hash128() hash128.H128 {
+	return t.hash.get(func() hash128.H128 {
+		h := tupleSalt
+		for i := t.tuple.Range(); i.Next(); {
+			h = h.Xor(hashAttr(hash128.String(i.Key()), i.Value()))
+		}
+		return h
+	})
 }
 
 // Equal tests two Tuples for equality. Any other type returns false.
@@ -314,16 +329,16 @@ func (t *GenericTuple) Less(v Value) bool {
 			if u.Count() != 1 {
 				panic(negateTag + " kind not single-attr tuple")
 			}
-			if y, ok := v.(Tuple).Get(negateTag); ok {
+			if y, ok := u.Get(negateTag); ok {
 				return y.Less(x)
 			}
 			panic(negateTag + " kind missing " + negateTag + " attr")
 		}
 	}
 
-	x := v.(*GenericTuple)
+	u := v.(Tuple)
 	a := TupleOrderedNames(t)
-	b := TupleOrderedNames(x)
+	b := orderedTupleNames(u)
 	n := len(a)
 	if n > len(b) {
 		n = len(b)
@@ -333,7 +348,7 @@ func (t *GenericTuple) Less(v Value) bool {
 			return a[i] < b[i]
 		}
 		va, _ := t.Get(a[i])
-		vb, _ := x.Get(b[i])
+		vb, _ := u.Get(b[i])
 		if va.Less(vb) {
 			return true
 		}
@@ -342,6 +357,20 @@ func (t *GenericTuple) Less(v Value) bool {
 		}
 	}
 	return len(a) < len(b)
+}
+
+// orderedTupleNames returns sorted attribute names for any Tuple.
+func orderedTupleNames(t Tuple) []string {
+	if g, ok := t.(*GenericTuple); ok {
+		return TupleOrderedNames(g)
+	}
+	names := make([]string, 0, t.Count())
+	for e := t.Enumerator(); e.MoveNext(); {
+		name, _ := e.Current()
+		names = append(names, name)
+	}
+	sort.Strings(names)
+	return names
 }
 
 // Negate returns x if t matches {(negateTag): x} else {(negateTag): t}.
