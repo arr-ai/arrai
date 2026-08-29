@@ -6,16 +6,55 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/arr-ai/frozen"
 	"github.com/go-errors/errors"
 )
 
 // EmptyScope is the scope with no variables.
 var EmptyScope Scope
 
-// Scope represents an expression scope.
+// Scope represents an expression scope: a chain of immutable frames, newest
+// first. Arr.ai scoping is lexical, so every binding construct (a call, a
+// let, a pattern match, a cond arm) pushes exactly one frame of a fixed
+// shape, and a given identifier always finds its binding the same number of
+// frames up in the same slot. IdentExpr exploits that with an inline cache;
+// the chain itself is the only source of truth.
+//
+// Frames are never mutated after construction. Closures capture a Scope by
+// value (a frame pointer), so chains are shared freely between the scope a
+// closure was created in and the scopes derived from it.
 type Scope struct {
-	m frozen.Map[string, Expr]
+	f *frame
+}
+
+// frame is one link of a scope chain. names and vals are parallel; within a
+// frame a later entry shadows an earlier one with the same name, and any
+// entry shadows the whole parent chain.
+type frame struct {
+	parent *frame
+	names  []string
+	vals   []Expr
+}
+
+// lookup finds the newest binding of name, returning the frame, the slot and
+// the number of parent hops taken.
+func (s Scope) lookup(name string) (f *frame, slot, hops int) {
+	for f = s.f; f != nil; f, hops = f.parent, hops+1 {
+		for i := len(f.names) - 1; i >= 0; i-- {
+			if f.names[i] == name {
+				return f, i, hops
+			}
+		}
+	}
+	return nil, 0, 0
+}
+
+// at returns the frame hops links up the chain, or nil.
+func (s Scope) at(hops int) *frame {
+	f := s.f
+	for ; hops > 0 && f != nil; hops-- {
+		f = f.parent
+	}
+	return f
 }
 
 func (s Scope) String() string {
@@ -57,13 +96,13 @@ func (s Scope) Eval(ctx context.Context, local Scope) (Value, error) {
 
 // Count returns the number of variables in this Scope.
 func (s Scope) Count() int {
-	return s.m.Count()
+	return len(s.Names())
 }
 
 // Get returns the Expr for the given name or nil.
 func (s Scope) Get(name string) (Expr, bool) {
-	if expr, found := s.m.Get(name); found {
-		return expr, true
+	if f, slot, _ := s.lookup(name); f != nil {
+		return f.vals[slot], true
 	}
 	return nil, false
 }
@@ -82,7 +121,7 @@ func (s Scope) With(name string, expr Expr) Scope {
 	if name == "_" {
 		return s
 	}
-	return Scope{s.m.With(name, expr)}
+	return Scope{&frame{parent: s.f, names: []string{name}, vals: []Expr{expr}}}
 }
 
 // MatchedWith returns a new scope. New keys are added as With,
@@ -104,17 +143,53 @@ func (s Scope) MatchedWith(name string, expr Expr) (Scope, error) {
 // Without returns a new scope with with all the old bindings except the ones
 // that correspond to the provided names.
 func (s Scope) Without(name ...string) Scope {
-	m := s.m
+	drop := make(map[string]struct{}, len(name))
 	for _, n := range name {
-		m = m.Without(n)
+		drop[n] = struct{}{}
 	}
-	return Scope{m}
+	var names []string
+	var vals []Expr
+	for e := s.Enumerator(); e.MoveNext(); {
+		n, v := e.Current()
+		if _, dropped := drop[n]; !dropped {
+			names = append(names, n)
+			vals = append(vals, v)
+		}
+	}
+	if len(names) == 0 {
+		return EmptyScope
+	}
+	return Scope{&frame{names: names, vals: vals}}
 }
 
 // s.Update(t) merges s and t, choosing t's binding in the event of a name clash.
 // It's like calling s.With(t0).With(t1).With(t2)... for each element of t
 func (s Scope) Update(t Scope) Scope {
-	return Scope{m: s.m.Update(t.m)}
+	if t.f == nil {
+		return s
+	}
+	if s.f == nil {
+		return t
+	}
+	// t is typically a small scope built by a pattern; flatten it into one
+	// frame so its bindings occupy fixed slots above s.
+	names, vals := t.flatten()
+	return Scope{&frame{parent: s.f, names: names, vals: vals}}
+}
+
+// flatten returns the scope's bindings oldest-first, one entry per name.
+func (s Scope) flatten() ([]string, []Expr) {
+	if s.f != nil && s.f.parent == nil {
+		return s.f.names, s.f.vals
+	}
+	var names []string
+	var vals []Expr
+	for e := s.Enumerator(); e.MoveNext(); {
+		n, v := e.Current()
+		names = append(names, n)
+		vals = append(vals, v)
+	}
+	return names, vals
 }
 
 // MatchedUpdate merges s and t. New keys are added as Update,
@@ -150,18 +225,37 @@ func (s Scope) Project(names Names) (Scope, error) {
 
 // Names returns the attribute names as a slice.
 func (s Scope) Names() []string {
-	names := make([]string, s.Count())
-	i := 0
+	var names []string
 	for e := s.Enumerator(); e.MoveNext(); {
-		names[i], _ = e.Current()
-		i++
+		name, _ := e.Current()
+		names = append(names, name)
 	}
 	return names
 }
 
-// Enumerator returns an enumerator over the Values in the Scope.
+// Enumerator returns an enumerator over the Values in the Scope. Bindings
+// are visited oldest-first; a shadowed binding is not visited.
 func (s Scope) Enumerator() *ScopeEnumerator {
-	return &ScopeEnumerator{i: s.m.Range()}
+	// Collect newest-first, dropping shadowed names, then reverse.
+	seen := map[string]struct{}{}
+	var names []string
+	var vals []Expr
+	for f := s.f; f != nil; f = f.parent {
+		for i := len(f.names) - 1; i >= 0; i-- {
+			n := f.names[i]
+			if _, dup := seen[n]; dup {
+				continue
+			}
+			seen[n] = struct{}{}
+			names = append(names, n)
+			vals = append(vals, f.vals[i])
+		}
+	}
+	for i, j := 0, len(names)-1; i < j; i, j = i+1, j-1 {
+		names[i], names[j] = names[j], names[i]
+		vals[i], vals[j] = vals[j], vals[i]
+	}
+	return &ScopeEnumerator{names: names, vals: vals, i: -1}
 }
 
 // OrderedNames returns the names of this tuple in sorted order.
@@ -173,15 +267,18 @@ func (s Scope) OrderedNames() []string {
 
 // ScopeEnumerator represents an enumerator over a Scope.
 type ScopeEnumerator struct {
-	i frozen.MapIterator[string, Expr]
+	names []string
+	vals  []Expr
+	i     int
 }
 
 // MoveNext moves the enumerator to the next Value.
 func (e *ScopeEnumerator) MoveNext() bool {
-	return e.i.Next()
+	e.i++
+	return e.i < len(e.names)
 }
 
 // Current returns the enumerator's current Value.
 func (e *ScopeEnumerator) Current() (string, Expr) {
-	return e.i.Key(), e.i.Value()
+	return e.names[e.i], e.vals[e.i]
 }
