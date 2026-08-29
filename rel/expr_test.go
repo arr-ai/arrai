@@ -21,13 +21,13 @@ func TestGetLastScope(t *testing.T) {
 		EmptyTuple,
 		scope,
 	)
-	assert.True(t, err.(ContextErr).GetLastScope().m.Equal(scope.m))
+	assert.True(t, err.(ContextErr).GetLastScope().String() == scope.String())
 
 	err = WrapContextErr(fmt.Errorf("random"), EmptyTuple, scope)
-	assert.True(t, err.(ContextErr).GetLastScope().m.Equal(scope.m))
+	assert.True(t, err.(ContextErr).GetLastScope().String() == scope.String())
 
 	err = WrapContextErr(fmt.Errorf("random"), EmptyTuple, EmptyScope)
-	assert.True(t, err.(ContextErr).GetLastScope().m.Equal(EmptyScope.m))
+	assert.True(t, err.(ContextErr).GetLastScope().String() == EmptyScope.String())
 }
 
 func TestGetImportantFrames(t *testing.T) {
