@@ -88,13 +88,14 @@ func TestGroupBy(t *testing.T) {
 
 	testGroup(valueProjector{}, frozen.NewMap(kv(row(), s(row1, row2, row3))))
 
-	testGroup(valueProjector{0}, frozen.NewMap(kv(row(1), s(row1, row2, row3))))
+	// A single-column projection keys on the column's Value, wrapped.
+	testGroup(valueProjector{0}, frozen.NewMap(kv(valueKey{NewNumber(1)}, s(row1, row2, row3))))
 
 	testGroup(
 		valueProjector{1},
 		frozen.NewMap(
-			kv(row(1), s(row1, row2)),
-			kv(row(2), s(row3)),
+			kv(valueKey{NewNumber(1)}, s(row1, row2)),
+			kv(valueKey{NewNumber(2)}, s(row3)),
 		),
 	)
 

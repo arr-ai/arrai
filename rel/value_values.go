@@ -69,25 +69,47 @@ func (v Values) Hash128() hash128.H128 {
 // and consumer of a groupBy index must agree on this encoding, so they all
 // go through keyOf or mapper.
 //
-// Keys are always Values, never a bare Value, even for a single-column
-// projection where the Value alone would save two allocations per row. Both
-// attempts at that were measured and discarded:
+// valueKey is the group-by key for a single-column projection: one Value,
+// wrapped so that it satisfies Equaler[any] and frozen compares it without
+// reflection.
 //
-//   - Before frozen v1.14.0 it was wrong. frozen resolved equality for an
-//     `any` map key via Equal(any) bool, which Values has and an arr.ai
-//     Value does not, so every lookup silently missed.
-//   - Since frozen v1.14.0 it is correct but slower. Equality for such a key
-//     falls to frozen's reflective dispatch on the dynamic type's own Equal
-//     method, and a reflect call per comparison costs far more than the two
-//     allocations saved: building a group-by index over 12000 rows went from
-//     7ms to 22ms, and from 81k allocations to 171k.
-//
-// Values keeps the fast path because it satisfies Equaler[any] directly.
+// A bare Value would need no wrapper at all, but a group-by index is a
+// frozen.Map[any, ...] and frozen resolves equality for an `any` key by
+// looking for Equal(any) bool. An arr.ai Value has Equal(Value) bool, so it
+// misses that: before frozen v1.14.0 the lookup silently failed, and since
+// then it falls to frozen's reflective dispatch, which measured 7x slower
+// than this wrapper. A one-element Values, the earlier encoding, satisfies
+// Equaler[any] but costs a second allocation for its backing slice.
+type valueKey struct{ v Value }
+
+func (k valueKey) Equal(i interface{}) bool {
+	o, is := i.(valueKey)
+	return is && k.v.Equal(o.v)
+}
+
+func (k valueKey) Hash(seed uintptr) uintptr {
+	return k.v.Hash(seed)
+}
+
+func (k valueKey) Hash128() hash128.H128 {
+	return k.v.Hash128()
+}
+
+func (k valueKey) String() string {
+	return k.v.String()
+}
+
+// keyOf encodes the projection of a row as a group-by key. Every producer
+// and consumer of a groupBy index must agree on this encoding, so they all
+// go through keyOf or mapper.
 func (p valueProjector) keyOf(row Values) interface{} {
-	if len(p) == 0 {
+	switch len(p) {
+	case 0:
 		// Disjoint join keys: every row shares the one empty key, matching
 		// groupBy's special case for an empty projector.
 		return Values{}
+	case 1:
+		return valueKey{row[p[0]]}
 	}
 	if p.isContiguous() {
 		a, b := p[0], p[len(p)-1]+1
@@ -101,6 +123,10 @@ func (p valueProjector) keyOf(row Values) interface{} {
 func (p valueProjector) mapper() func(interface{}) interface{} {
 	if len(p) == 0 {
 		return func(interface{}) interface{} { return Values{} }
+	}
+	if len(p) == 1 {
+		i := p[0]
+		return func(el interface{}) interface{} { return valueKey{el.(Values)[i]} }
 	}
 	if p.isContiguous() {
 		a, b := p[0], p[len(p)-1]+1

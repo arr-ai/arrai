@@ -302,11 +302,9 @@ func (r *positionalRelation) JoinCommonOnly(
 			return e
 		case projectedValues:
 			return e.values()
+		case valueKey:
+			return Values{e.v}
 		default:
-			// A single-column key is the column's Value itself.
-			if v, is := elem.(Value); is {
-				return Values{v}
-			}
 			panic(fmt.Errorf("unhandled element type: %T", e))
 		}
 	}
