@@ -284,8 +284,8 @@ func (r *positionalRelation) JoinIfCommonExist(
 	}
 	group := r.groupBy(leftKey)
 	for i := r2.set.Range(); i.Next(); {
-		values := i.Value().(Values).project(rightKey).values()
-		if group.Has(values) {
+		key := rightKey.keyOf(i.Value().(Values))
+		if group.Has(key) {
 			return truePosRel
 		}
 	}
@@ -303,6 +303,10 @@ func (r *positionalRelation) JoinCommonOnly(
 		case projectedValues:
 			return e.values()
 		default:
+			// A single-column key is the column's Value itself.
+			if v, is := elem.(Value); is {
+				return Values{v}
+			}
 			panic(fmt.Errorf("unhandled element type: %T", e))
 		}
 	}
@@ -354,7 +358,7 @@ func joinOneSide(
 ) *positionalRelation {
 	if output.isIdentity(base.Width()) {
 		result, err := base.Where(func(v Values) (bool, error) {
-			return intersector.Has(v.project(key).values()), nil
+			return intersector.Has(key.keyOf(v)), nil
 		})
 		if err != nil {
 			panic(err)
@@ -364,7 +368,7 @@ func joinOneSide(
 	sb := frozen.SetBuilder[any]{}
 	for i := base.set.Range(); i.Next(); {
 		values := i.Value().(Values)
-		if intersector.Has(values.project(key).values()) {
+		if intersector.Has(key.keyOf(values)) {
 			sb.Add(values.project(output).values())
 		}
 	}
