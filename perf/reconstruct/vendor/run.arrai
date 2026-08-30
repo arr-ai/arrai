@@ -1,0 +1,6 @@
+let [_, proto] = //os.args;
+let sysl = //{/sysl/pkg/arrai/sysl};
+let reconstruct = //{/sysl/pkg/arrai/reconstruct};
+
+let rel = sysl.newNormalize(sysl.load(proto));
+$`${reconstruct(rel)}`

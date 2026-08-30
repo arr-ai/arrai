@@ -1,0 +1,363 @@
+let (:syslSafeName, :syslSafePath, ...) = //{/sysl/pkg/importer/utils};
+\m
+
+let sysl = //{./sysl};
+
+let import = m.import?:{};
+let app = m.app?:{};
+let enum = m.enum?:{};
+let ep = m.ep?:{};
+let event = m.event?:{};
+let field = m.field?:{};
+let mixin = m.mixin?:{};
+let param = m.param?:{};
+let stmt = m.stmt?:{};
+let table = m.table?:{};
+let type = m.type?:{};
+let view = m.view?:{};
+let anno = (
+    app: m.anno?.app?:{},
+    ep: m.anno?.ep?:{},
+    field: m.anno?.field?:{},
+    mixin: m.anno?.mixin?:{},
+    stmt: m.anno?.stmt?:{},
+    type: m.anno?.type?:{},
+    view: m.anno?.view?:{},
+);
+let tag = (
+    app: m.tag?.app?:{},
+    ep: m.tag?.ep?:{},
+    field: m.tag?.field?:{},
+    mixin: m.tag?.mixin?:{},
+    stmt: m.tag?.stmt?:{},
+    type: m.tag?.type?:{},
+    view: m.tag?.view?:{},
+);
+let src = (
+    app: m.src?.app?:{},
+    ep: m.src?.ep?:{},
+    field: m.src?.field?:{},
+    mixin: m.src?.mixin?:{},
+    stmt: m.src?.stmt?:{},
+    type: m.src?.type?:{},
+    view: m.src?.view?:{},
+);
+
+# groupByAppName(rel) builds a one-time index from appName to the subset of
+# rel with that appName, so per-app lookups are O(1) instead of a full
+# linear scan of rel (via `rel where .appName = appName`) for every app.
+# `nest` strips the grouping key (appName) from the nested rows, so it's
+# merged back in to keep this a drop-in replacement for the `where` scan.
+let groupByAppName = \rel
+    let idx = (rel nest ~|appName|rows) => (@:.appName, @value:.rows);
+    \appName (idx(appName)?:{}) => (. +> (appName: appName));
+
+let epByApp = groupByAppName(ep);
+let typeByApp = groupByAppName(type);
+let fieldByApp = groupByAppName(field);
+let tableByApp = groupByAppName(table);
+let enumByApp = groupByAppName(enum);
+let eventByApp = groupByAppName(event);
+let mixinByApp = groupByAppName(mixin);
+let paramByApp = groupByAppName(param);
+let stmtByApp = groupByAppName(stmt);
+let appByApp = groupByAppName(app);
+
+let (:annotations, ...) = //{./sysl};
+
+let (:reduce, ...) = //{/arrai-contrib/util};
+let (nativeDataTypes: native, :trimLines, :dictMerge, ...) = //{./util};
+
+# Like groupByAppName, but built via reduce instead of nest: some relations
+# (e.g. certain anno/tag sub-relations) aren't shaped as plain
+# name-attributed Relations, and nest requires that. Field access via
+# .appName works regardless of representation, so this is more robust,
+# at the cost of an orderby to turn the input Set into an Array for reduce.
+let groupByAppNameSafe = \rel
+    let idx = reduce(rel orderby ., \dict \row
+        let key = row.appName;
+        dict +> {key: (dict(key)?:{}) | {row}},
+    {});
+    \appName (idx(appName)?:{});
+
+# anno.app/tag.app are excluded here: for this data they turn out to be
+# shaped as a generic Set rather than a plain name-attributed Relation
+# (reported attrs |@, @item|), so .appName field access on their rows
+# fails. They're small (app-level tags/annos only), so they keep using
+# the original where-scan below instead of being indexed.
+let annoByApp = (
+    ep: groupByAppNameSafe(anno.ep),
+    field: groupByAppNameSafe(anno.field),
+    mixin: groupByAppNameSafe(anno.mixin),
+    stmt: groupByAppNameSafe(anno.stmt),
+    type: groupByAppNameSafe(anno.type),
+    view: groupByAppNameSafe(anno.view),
+);
+let tagByApp = (
+    ep: groupByAppNameSafe(tag.ep),
+    field: groupByAppNameSafe(tag.field),
+    mixin: groupByAppNameSafe(tag.mixin),
+    stmt: groupByAppNameSafe(tag.stmt),
+    type: groupByAppNameSafe(tag.type),
+    view: groupByAppNameSafe(tag.view),
+);
+
+# General form of groupByAppNameSafe, keyed by an arbitrary function of the
+# row rather than just .appName.
+let groupByKey = \rel \keyFn
+    let idx = reduce(rel orderby ., \dict \row
+        let key = keyFn(row);
+        dict +> {key: (dict(key)?:{}) | {row}},
+    {});
+    \key (idx(key)?:{});
+
+# resolveStmts (below) looks up anno.stmt/tag.stmt once per statement via
+# a stmtKey join; indexed here once instead, by the same (appName, epName,
+# stmtIndex) key. Extra fields on the matched rows are harmless since the
+# call sites below immediately re-project onto just the fields they need.
+let stmtKeyFn = \row (:row.appName, :row.epName, :row.stmtIndex);
+let annoStmtByKey = groupByKey(anno.stmt, stmtKeyFn);
+let tagStmtByKey = groupByKey(tag.stmt, stmtKeyFn);
+
+# syslSafeName adds suffix `_` to all keywords including native data types in case a field name is a sysl keyword.
+# This function is only used to sanitise type.
+let syslSafeType = \name (name <: native && name) || syslSafeName(name);
+
+let joinedName = //seq.join(' :: ');
+
+let tagsArr = \tags tags => $`~${.}` orderby .;
+
+# Given a set of tags, return a Sysl source string to append to an element.
+# e.g. {'b', 'a'} -> ' [~a, ~b]'
+let tagsString = \tags cond {tags: ' ' ++ $`[${//seq.join(', ', tagsArr(tags))}]`};
+
+let inlineAnnoArr = \inlineAnnos
+    let rec resolveVal = \v
+        cond v {
+            {k: _, ...}: $`${v orderby .@ >> $`${.@}=${resolveVal(.@value)}`::, }`,
+            (a: (:elt)): resolveVal(elt),
+            (a: [...]): resolveVal(v.a),
+            [...]: $`[${v >> resolveVal(.)::, }]`,
+            (:s): resolveVal(s),
+            _: $`"${v}"`,
+        };
+    inlineAnnos orderby .@ >> $`${.@}=${resolveVal(.@value)}`
+;
+
+let inlineAnnoStr = \inlineAnnos cond {inlineAnnos: ' ' ++ $`${inlineAnnoArr(inlineAnnos)::, }`};
+
+let renderInlineAnnoAndTags = \annos \tags
+    let annos = inlineAnnoArr(annos);
+    let tags = tagsArr(tags);
+    cond {(annos || tags): ' ' ++ $`[${tags ++ annos::, }]`}
+;
+
+let resolveStmts = \stmt
+    stmt >>
+        let stmtKey = stmtKeyFn(.);
+        let stmtAnno = (annoStmtByKey(stmtKey)) => (@: .stmtAnnoName, @value: .stmtAnnoValue);
+        let stmtTags = (tagStmtByKey(stmtKey)) => .stmtTag;
+        cond {
+            .stmtAction: $`${.stmtAction}`,
+            .stmtAlt: .stmtAlt -> \(:choice, ...) $`
+                one of:
+                    ${choice >> \c
+                        # TODO: handle parent
+                        # TODO: change the name attribute of cond
+                        $`
+                            ${c.cond?:''}:
+                                ...
+                        `
+                    ::\i}
+            `,
+            .stmtCall: .stmtCall -> \(:appName, :epName, ...) $`${joinedName(appName)} <- ${epName}`,
+            .stmtCond: '', # TODO: seems something is wrong with this
+            .stmtForeach: '', # TODO
+            .stmtGroup: '', # TODO
+            .stmtLoop: '', # TODO
+            .stmtLoopN: '', # TODO
+            # TODO: currently return statement anno and tags aren't stored in the relational model anno and tag fields
+            # because of a parsing issue. It's currently stored in attr.modifier and attr.nvp. These annotations need to
+            # be moved to the correct fields of the relational model.
+            .stmtRet: .stmtRet -> \(attr: (:modifier, :nvp), ?:status:'ok', :type) $`
+                return ${status} <: ${sysl.resolvedType(type)}${renderInlineAnnoAndTags(nvp, modifier)}
+            `
+        } ++ renderInlineAnnoAndTags(stmtAnno, stmtTags)
+;
+
+let stmtBlock = \stmtByEp \epName resolveStmts((stmtByEp(epName)) orderby .stmtIndex) where .@item;
+
+let resolvedAnnotations = \annotations
+    let rec renderValue = \value
+        cond value {
+            [...]: $`[${value >> renderValue(.)::, }]`,
+            _: cond {
+                //seq.contains('\n', value):
+                    let value = //seq.trim_suffix('\n', trimLines(value));
+                    $`${//seq.split('\n', value) >> $`| ${.}`::\i}`,
+
+                _: $`${value:q}`,
+            }
+        }
+    ;
+    let isStr = \value (value where (.).@char?:false) = value;
+    annotations orderby .name >> \(:name, :value)
+        cond {
+            isStr(value) && //seq.contains('\n', value):
+                $`
+                    @${name} =:
+                        ${renderValue(value)}
+                `
+            ,
+            _: $`@${name} = ${renderValue(value)}`
+        }
+;
+
+let resolvedTypeAnno = \typeAnno \typeName
+    resolvedAnnotations(
+        (typeAnno where .typeName = typeName) => (name: .typeAnnoName, value: .typeAnnoValue)
+    )
+;
+
+let resolvedFieldAnno = \fieldAnno \typeName \fieldName
+    resolvedAnnotations(
+        (fieldAnno where .fieldName = fieldName && .typeName = typeName) => (name: .fieldAnnoName, value: .fieldAnnoValue)
+    )
+;
+
+let orderedField = \field \typeName
+    (field where typeName = .typeName && .fieldType != 'inplace') orderby .fieldName
+;
+
+# Transform a REST endpoint spec to a path with type information on params.
+let typedPath =
+    let namesRe = //re.compile(`\{(\w+)\}`);
+    let namesInPath = \path namesRe.match(path) >> (.(1) rank (:.@));
+    let paramTypes = \params params => (@: .paramName, @value: sysl.resolvedType(.paramType));
+    # Given types for names, return path with name substituted for name <: type.
+    let subNameWithType = \types \path \name
+        let type = types(name)?:'';
+        //seq.sub($`{${name}}`, $`{${name}${type && ' ' ++ $`<: ${type}`}}`, path);
+    \path \params reduce(namesInPath(path), subNameWithType(paramTypes(params)), path)
+;
+
+let fileContents = \file \apps
+    let apps = apps orderby .appSrc.start?.line?:(.appName);
+    //{./util}.trimLines($`
+        ${import >> $`import ${.target}${cond {.name: ' as ' ++ joinedName(.name >> syslSafeName(.))}}`::\n}
+
+        ${apps >> \(:appName, ...)
+            # TODO: appDocstring
+            let appLongName = ((appByApp(appName)) single).appLongName?:{};
+            let appTags = tagsString((tag.app where .appName = appName) => .appTag);
+            let anno = (annoByApp :> \v v(appName)) +> (app: anno.app where .appName = appName);
+            let tag = (tagByApp :> \v v(appName)) +> (app: tag.app where .appName = appName);
+            let appAnno = anno.app;
+            let (
+                :ep,
+                :type,
+                :field,
+                :table,
+                :enum,
+                :event,
+                :mixin,
+                :param,
+                :stmt
+            ) = (
+                ep: epByApp(appName),
+                type: typeByApp(appName),
+                field: fieldByApp(appName),
+                table: tableByApp(appName),
+                enum: enumByApp(appName),
+                event: eventByApp(appName),
+                mixin: mixinByApp(appName),
+                param: paramByApp(appName),
+                stmt: stmtByApp(appName),
+            );
+            let stmtByEp = groupByKey(stmt, \row row.epName);
+
+            # TODO: exclude union and alias
+            let type =
+                # TODO: inplace fields
+                type where .typeName !<: (enum => .typeName)
+            ;
+            let typeByTypeName = groupByKey(type, \row row.typeName);
+            let annoTypeByTypeName = groupByKey(anno.type, \row row.typeName);
+            let tagTypeByTypeName = groupByKey(tag.type, \row row.typeName);
+            let fieldByTypeName = groupByKey(field, \row row.typeName);
+            let annoFieldByKey = groupByKey(anno.field, \row (:row.typeName, :row.fieldName));
+            let tagFieldByKey = groupByKey(tag.field, \row (:row.typeName, :row.fieldName));
+            let isEmpty = //rel.union({ep, type, field, table, enum, mixin, appAnno}) = {};
+            $`
+                ${joinedName(appName >> syslSafeName(.))}${appLongName && (' ' ++ $`"${appLongName}"`)}${appTags}:
+                    ${cond {isEmpty: '...'}}
+                    ${resolvedAnnotations(
+                        anno.app => \(:appAnnoName, :appAnnoValue, ...) (name: appAnnoName, value: appAnnoValue)
+                    )::\i}
+                    ${enum orderby .typeName >> \(:typeName, :enumItems, ...)
+                        $`
+                            !enum ${syslSafeName(typeName)}:
+                                ${(enumItems orderby .@value >> $`${.@}: ${.@value}`) || ['...']::\i}
+                        `
+                    ::\i\n:\n}
+                    ${type orderby .typeName >> \(:typeName, ...)
+                        let typeTags = tagsString((tagTypeByTypeName(typeName)) => .typeTag);
+                        let isTable = (typeByTypeName(typeName)) --- table;
+                        $`
+                            ${cond {isTable: "!table", _: "!type"}} ${syslSafeName(typeName)}${typeTags}:
+                                ${resolvedTypeAnno(annoTypeByTypeName(typeName), typeName)::\i}
+                                ${(orderedField(fieldByTypeName(typeName), typeName) >> \(:fieldName, :fieldType, :fieldOpt, ...)
+                                    let fieldTags = tagsString(tagFieldByKey((:typeName, :fieldName)) => .fieldTag);
+                                    $`
+                                        ${syslSafeName(fieldName)} <: ${sysl.resolvedType(fieldType)}${cond {fieldOpt: '?'}}${fieldTags}${
+                                            let anno = resolvedFieldAnno(annoFieldByKey((:typeName, :fieldName)), typeName, fieldName);
+                                            anno && $`
+                                                :
+                                                    ${anno::\i}
+                                            `
+                                        }
+                                    `)
+                                || ['...'] ::\i}
+                        `
+                    ::\i\n:\n}
+                    ${((ep where .rest) =>
+                        let path = typedPath(.rest.path, {. +> (paramLoc: 'path')} -&> param);
+                        . +> (:.rest.method, :path)) nest ~|path|eps orderby .path
+                            >> \(:path, :eps)
+                                # TODO: stmts with parents
+                                # TODO: handle parameterized path
+                                $`
+                                    ${path}:
+                                        ${(eps orderby .method >> \(:method, :epName, ...)
+                                            $`
+                                                ${method}:
+                                                    ${stmtBlock(stmtByEp, epName) || ['...']::\i}
+                                            `
+                                        ) || ['...'] ::\i}
+
+                                `
+                    ::\i\n:\n}
+                    ${(ep where !.rest orderby .epName) >> \(:epName, ...)
+                        $`
+                            ${syslSafeName(epName)}:
+                                ${stmtBlock(stmtByEp, epName) || ['...']::\i}
+                        `
+                    ::\i\n:\n}
+            `
+        ::\n:\n}
+    `)
+;
+
+let fileMap = \file \apps
+    let rec _fileMap = \parts
+        cond parts {
+            [f]: {f: fileContents(file, apps)},
+            [head, ...tail]: {head: _fileMap(tail)}
+        };
+    _fileMap(//seq.split('/', //seq.trim_prefix('/', file)))
+;
+
+let missingSrc = app &~ (app <&- src.app) => (:.appName, appSrc: (file: "default.sysl"));
+let files = ((src.app <&- app) | missingSrc => \(:appName, :appSrc, ...) (:appName, :appSrc, :appSrc.file)) nest |appName, appSrc|apps;
+let fileMaps = files => fileMap(.file, .apps);
+reduce(fileMaps orderby ., \k \v dictMerge(v, k), {})
