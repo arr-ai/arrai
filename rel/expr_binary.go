@@ -230,7 +230,7 @@ func (r Relation) whereByIndex(ctx context.Context, scope Scope, p *eqAttrPredic
 	proj := valueProjector{index}
 	row := make(Values, index+1)
 	row[index] = key
-	rows, has := r.rows.groupBy(proj).Get(proj.keyOf(row))
+	rows, has := r.rows.groupBy(proj).get(proj.keyOf(row))
 	if !has || rows.IsEmpty() {
 		return None, true, nil
 	}
