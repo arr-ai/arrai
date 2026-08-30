@@ -70,12 +70,19 @@ func (v Values) Hash128() hash128.H128 {
 // go through keyOf or mapper.
 //
 // Keys are always Values, never a bare Value, even for a single-column
-// projection where the Value alone would save two allocations per row. A
-// groupBy index is a frozen.Map[any, ...], and frozen resolves equality for
-// an `any` key by looking for Equal(any) bool: Values has that method, but
-// an arr.ai Value has Equal(Value) bool, so a bare Value key falls through
-// to frozen's comparability fallback, which reports two equal Strings as
-// unequal and makes every lookup miss.
+// projection where the Value alone would save two allocations per row. Both
+// attempts at that were measured and discarded:
+//
+//   - Before frozen v1.14.0 it was wrong. frozen resolved equality for an
+//     `any` map key via Equal(any) bool, which Values has and an arr.ai
+//     Value does not, so every lookup silently missed.
+//   - Since frozen v1.14.0 it is correct but slower. Equality for such a key
+//     falls to frozen's reflective dispatch on the dynamic type's own Equal
+//     method, and a reflect call per comparison costs far more than the two
+//     allocations saved: building a group-by index over 12000 rows went from
+//     7ms to 22ms, and from 81k allocations to 171k.
+//
+// Values keeps the fast path because it satisfies Equaler[any] directly.
 func (p valueProjector) keyOf(row Values) interface{} {
 	if len(p) == 0 {
 		// Disjoint join keys: every row shares the one empty key, matching
