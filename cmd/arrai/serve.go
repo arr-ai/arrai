@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"net"
 	"net/http"
 
@@ -50,7 +51,8 @@ func serve(c *cli.Context) error {
 	go func() {
 		lis, err := net.Listen("tcp", wsListen)
 		if err != nil {
-			log.Fatalf("failed to listen: %v", err)
+			errors <- fmt.Errorf("failed to listen: %w", err)
+			return
 		}
 
 		wsFrontend := newWebsocketFrontend(eng)
@@ -67,10 +69,15 @@ func serve(c *cli.Context) error {
 	go func() {
 		lis, err := net.Listen("tcp", listen)
 		if err != nil {
-			log.Fatalf("failed to listen: %v", err)
+			errors <- fmt.Errorf("failed to listen: %w", err)
+			return
 		}
 
-		grpcServer := newGrpcServer(cert, key, eng)
+		grpcServer, err := newGrpcServer(cert, key, eng)
+		if err != nil {
+			errors <- err
+			return
+		}
 
 		log.Printf("gRPC server listening on %s", listen)
 		errors <- grpcServer.Serve(lis)

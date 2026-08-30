@@ -6,7 +6,6 @@ import (
 	"io"
 	"os"
 
-	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
 
 	"github.com/arr-ai/arrai/pkg/fu"
@@ -32,7 +31,7 @@ func fromJSON(cli *cli.Context) error {
 	}
 	val, err := translate.StrictTranslator().ToArrai(data)
 	if err != nil {
-		logrus.Fatal(err)
+		return err
 	}
 	fmt.Println(fu.Repr(val))
 	return nil

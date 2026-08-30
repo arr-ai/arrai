@@ -55,7 +55,7 @@ func sync(c *cli.Context) error {
 
 	watch := path.Join(dir, "...")
 	if err := notify.Watch(watch, eich, notify.All); err != nil {
-		log.Fatal(err)
+		return err
 	}
 	defer notify.Stop(eich)
 
