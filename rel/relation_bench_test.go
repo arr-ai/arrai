@@ -163,7 +163,7 @@ func TestGroupByKeyRoundTrip(t *testing.T) {
 		group := r.rows.groupBy(p)
 		for e := r.Enumerator(); e.MoveNext(); {
 			row := r.tupleToValues(e.Current().(Tuple))
-			got, has := group.Get(p.keyOf(row))
+			got, has := group.get(p.keyOf(row))
 			assert.True(t, has, "probing %s with %v must find its own row", attr, row)
 			assert.True(t, has && got.Has(any(row)) || !has)
 		}

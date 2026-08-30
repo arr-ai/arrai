@@ -82,20 +82,38 @@ func TestGroupBy(t *testing.T) {
 		return frozen.NewSet[any](rows...)
 	}
 	testGroup := func(grouper valueProjector, grouped frozen.Map[any, frozen.Set[any]]) {
-		assert.True(t, pr.groupBy(grouper).Equal(grouped))
-		assert.True(t, pr.meta.indices.MustGet(grouper).(frozen.Map[any, frozen.Set[any]]).Equal(grouped))
+		index := pr.groupBy(grouper)
+		assert.Equal(t, grouped.Count(), index.count(), "group count for %v", grouper)
+		for i := grouped.Range(); i.Next(); {
+			var k groupKey
+			switch key := i.Key().(type) {
+			case Values:
+				if len(grouper) == 1 {
+					k = groupKey{v: key[0], single: true}
+				} else {
+					k = groupKey{row: key}
+				}
+			default:
+				k = groupKey{row: key}
+			}
+			rows, has := index.get(k)
+			assert.True(t, has, "group %v missing for %v", i.Key(), grouper)
+			assert.True(t, has && rows.Equal(i.Value()), "group %v rows for %v", i.Key(), grouper)
+		}
+		// The memoised index is the same one.
+		assert.Equal(t, index.count(),
+			pr.meta.indices.MustGet(grouper).(groupIndex).count())
 	}
 
 	testGroup(valueProjector{}, frozen.NewMap(kv(row(), s(row1, row2, row3))))
 
-	// A single-column projection keys on the column's Value, wrapped.
-	testGroup(valueProjector{0}, frozen.NewMap(kv(valueKey{NewNumber(1)}, s(row1, row2, row3))))
+	testGroup(valueProjector{0}, frozen.NewMap(kv(row(1), s(row1, row2, row3))))
 
 	testGroup(
 		valueProjector{1},
 		frozen.NewMap(
-			kv(valueKey{NewNumber(1)}, s(row1, row2)),
-			kv(valueKey{NewNumber(2)}, s(row3)),
+			kv(row(1), s(row1, row2)),
+			kv(row(2), s(row3)),
 		),
 	)
 

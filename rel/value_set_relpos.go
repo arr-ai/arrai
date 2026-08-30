@@ -38,16 +38,11 @@ func (prm *positionalRelationMetadata) computeIndex(key any, fn func() any) any 
 	return index
 }
 
-func (r *positionalRelation) groupBy(p valueProjector) frozen.Map[any, frozen.Set[any]] {
+func (r *positionalRelation) groupBy(p valueProjector) groupIndex {
 	return r.getMeta().computeIndex(
 		p,
-		func() any {
-			if len(p) == 0 {
-				return frozen.NewMap[any, frozen.Set[any]](frozen.KV[any, frozen.Set[any]](Values{}, r.set))
-			}
-			return frozen.SetGroupBy(r.set, p.mapper())
-		},
-	).(frozen.Map[any, frozen.Set[any]])
+		func() any { return newGroupIndex(r.set, p) },
+	).(groupIndex) //nolint:forcetypeassert
 }
 
 func (r *positionalRelation) getMeta() *positionalRelationMetadata {
@@ -253,22 +248,21 @@ func (r *positionalRelation) JoinKeepEverything(
 ) *positionalRelation {
 	leftGroup, rightGroup := r.groupBy(leftKey), r2.groupBy(rightKey)
 	sb := frozen.NewSetBuilder[any](0)
-	for i := leftGroup.Range(); i.Next(); {
-		key, leftSubset := i.Entry()
-		rightSubset, has := rightGroup.Get(key)
+	leftGroup.each(func(key groupKey, leftSubset frozen.Set[any]) {
+		rightSubset, has := rightGroup.get(key)
 		if !has {
-			continue
+			return
 		}
 		for j := leftSubset.Range(); j.Next(); {
-			leftVal := j.Value().(Values)
+			leftVal := j.Value().(Values) //nolint:forcetypeassert
 			for k := rightSubset.Range(); k.Next(); {
-				rightVal := k.Value().(Values).project(rightOutput).values()
+				rightVal := k.Value().(Values).project(rightOutput).values() //nolint:forcetypeassert
 				sb.Add(
 					append(leftVal.project(leftOutput).values(), rightVal...),
 				)
 			}
 		}
-	}
+	})
 	return &positionalRelation{set: sb.Finish()}
 }
 
@@ -284,8 +278,7 @@ func (r *positionalRelation) JoinIfCommonExist(
 	}
 	group := r.groupBy(leftKey)
 	for i := r2.set.Range(); i.Next(); {
-		key := rightKey.keyOf(i.Value().(Values))
-		if group.Has(key) {
+		if group.has(rightKey.keyOf(i.Value().(Values))) { //nolint:forcetypeassert
 			return truePosRel
 		}
 	}
@@ -296,14 +289,16 @@ func (r *positionalRelation) JoinCommonOnly(
 	r2 *positionalRelation,
 	leftKey, rightKey, leftOutput, rightOutput valueProjector,
 ) *positionalRelation {
-	mapper := func(elem interface{}) interface{} {
-		switch e := elem.(type) {
+	// toRow turns a shared key back into an output row.
+	toRow := func(k groupKey) Values {
+		if k.single {
+			return Values{k.v}
+		}
+		switch e := k.row.(type) {
 		case Values:
 			return e
 		case projectedValues:
 			return e.values()
-		case valueKey:
-			return Values{e.v}
 		default:
 			panic(fmt.Errorf("unhandled element type: %T", e))
 		}
@@ -334,8 +329,11 @@ func (r *positionalRelation) JoinCommonOnly(
 			)
 		}
 		// remaps the values into output.
-		mapper = func(elem interface{}) interface{} {
-			switch e := elem.(type) {
+		toRow = func(k groupKey) Values {
+			if k.single {
+				return Values{k.v}.project(output).values()
+			}
+			switch e := k.row.(type) {
 			case projectable:
 				return e.project(output).values()
 			default:
@@ -344,19 +342,18 @@ func (r *positionalRelation) JoinCommonOnly(
 		}
 	}
 
-	keys := r.groupBy(leftKey).Keys().Intersection(r2.groupBy(rightKey).Keys())
 	return &positionalRelation{
-		set: frozen.SetMap(keys, mapper),
+		set: r.groupBy(leftKey).commonKeyRows(r2.groupBy(rightKey), toRow),
 	}
 }
 
 func joinOneSide(
-	base *positionalRelation, intersector frozen.Map[any, frozen.Set[any]],
+	base *positionalRelation, intersector groupIndex,
 	key, output valueProjector,
 ) *positionalRelation {
 	if output.isIdentity(base.Width()) {
 		result, err := base.Where(func(v Values) (bool, error) {
-			return intersector.Has(key.keyOf(v)), nil
+			return intersector.has(key.keyOf(v)), nil
 		})
 		if err != nil {
 			panic(err)
@@ -365,8 +362,8 @@ func joinOneSide(
 	}
 	sb := frozen.SetBuilder[any]{}
 	for i := base.set.Range(); i.Next(); {
-		values := i.Value().(Values)
-		if intersector.Has(key.keyOf(values)) {
+		values := i.Value().(Values) //nolint:forcetypeassert
+		if intersector.has(key.keyOf(values)) {
 			sb.Add(values.project(output).values())
 		}
 	}
