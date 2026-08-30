@@ -46,7 +46,7 @@ func newRelation(attrs NamesSlice, p valueProjector, rows *positionalRelation) R
 
 // tuple inflates a row to a Tuple.
 func (r Relation) tuple(row Values) Tuple {
-	if r.direct && len(row) == len(r.layout) {
+	if fastPaths && r.direct && len(row) == len(r.layout) {
 		return newShapedTuple(r.shape, row)
 	}
 	vals := make([]Value, len(r.layout))
@@ -104,7 +104,7 @@ func (r Relation) Count() int {
 // Shapes are interned, so for a shaped tuple this is a pointer comparison;
 // other Tuple kinds fall back to comparing the attribute sets.
 func (r Relation) hasShape(t Tuple) bool {
-	if g, is := t.(*GenericTuple); is {
+	if g, is := t.(*GenericTuple); is && fastPaths {
 		return g.sh() == r.shape
 	}
 	return r.attrs.EqualTupleAttrs(t)
@@ -115,7 +115,7 @@ func (r Relation) hasShape(t Tuple) bool {
 // only needs permuting — or nothing at all when the layout is the identity,
 // in which case the row shares the tuple's values (both are immutable).
 func (r Relation) tupleToValues(t Tuple) Values {
-	if g, is := t.(*GenericTuple); is && g.sh() == r.shape {
+	if g, is := t.(*GenericTuple); is && fastPaths && g.sh() == r.shape {
 		if r.direct {
 			return Values(g.vals)
 		}
@@ -352,7 +352,7 @@ func newRelationBuilder(names []string, cap int) *relationBuilder {
 }
 
 func (r *relationBuilder) Add(v Value) {
-	if g, ok := v.(*GenericTuple); ok && r.shape != nil && g.shape == r.shape {
+	if g, ok := v.(*GenericTuple); ok && fastPaths && r.shape != nil && g.shape == r.shape {
 		// The tuple's values already are the row: both are immutable.
 		r.prb.Add(Values(g.vals))
 		return
@@ -457,7 +457,7 @@ func (r Relation) EqualRelation(r2 Relation) bool {
 	// Rows are positional; when both relations lay their attributes out
 	// identically the row sets compare directly (frozen checks the sets'
 	// hashes first). Only differing layouts need canonicalising.
-	if r.sameLayout(r2) {
+	if fastPaths && r.sameLayout(r2) {
 		return r.rows.set.Equal(r2.rows.set)
 	}
 	return r.canonicalRelation().set.Equal(r2.canonicalRelation().set)

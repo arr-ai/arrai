@@ -230,7 +230,8 @@ func (r Relation) whereByIndex(ctx context.Context, scope Scope, p *eqAttrPredic
 	proj := valueProjector{index}
 	row := make(Values, index+1)
 	row[index] = key
-	rows, has := r.rows.groupBy(proj).get(proj.keyOf(row))
+	group := r.rows.groupBy(proj)
+	rows, has := group.get(group.keyFrom(proj, row))
 	if !has || rows.IsEmpty() {
 		return None, true, nil
 	}
@@ -245,7 +246,7 @@ func NewWhereExpr(scanner parser.Scanner, a, pred Expr) Expr {
 		func(ctx context.Context, a, pred Value, local Scope) (Value, error) {
 			if x, ok := a.(Set); ok {
 				if p, ok := pred.(Closure); ok {
-					if r, is := x.(Relation); is && eqPred != nil {
+					if r, is := x.(Relation); is && fastPaths && eqPred != nil {
 						if v, done, err := r.whereByIndex(ctx, p.scope, eqPred); done || err != nil {
 							return v, err
 						}

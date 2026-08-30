@@ -22,31 +22,43 @@ type groupIndex struct {
 	single  bool
 }
 
-// groupKey is a key in whichever form its index uses. It is passed by value
-// and never stored, so it costs no allocation.
+// groupKey is a key in whichever form its index uses. Only the index
+// constructs one, from a projector of the same width as its own, so the two
+// can never disagree about the encoding. It is passed by value and never
+// stored, so it costs no allocation.
 type groupKey struct {
 	v      Value
 	row    any
 	single bool
 }
 
-// keyOf encodes the projection of a row as a key for an index built over
-// the same projector.
-func (p valueProjector) keyOf(row Values) groupKey {
+// keyFrom encodes p's projection of row as a key for this index. p must have
+// the same width as the projector the index was built from — true of any
+// join's two sides — but need not be the same projector: the two sides of a
+// join name the shared columns at different positions.
+func (g groupIndex) keyFrom(p valueProjector, row Values) groupKey {
+	if g.single {
+		return groupKey{v: row[p[0]], single: true}
+	}
+	return groupKey{row: p.rowKey(row)}
+}
+
+// rowKey encodes the projection of a row as a row-shaped key.
+func (p valueProjector) rowKey(row Values) interface{} {
 	switch len(p) {
 	case 0:
 		// Disjoint join keys: every row shares the one empty key.
-		return groupKey{row: Values{}}
+		return Values{}
 	case 1:
-		return groupKey{v: row[p[0]], single: true}
+		return Values{row[p[0]]}
 	}
 	if p.isContiguous() {
 		a, b := p[0], p[len(p)-1]+1
 		v := make(Values, b-a)
 		copy(v, row[a:b])
-		return groupKey{row: v}
+		return v
 	}
-	return groupKey{row: row.project(p).values()}
+	return row.project(p).values()
 }
 
 // newGroupIndex groups a row set by p.
@@ -58,15 +70,19 @@ func newGroupIndex(rows frozen.Set[any], p valueProjector) groupIndex {
 				frozen.KV[any, frozen.Set[any]](Values{}, rows)),
 		}
 	case 1:
-		i := p[0]
-		return groupIndex{
-			single: true,
-			byValue: frozen.SetGroupBy(rows, func(el any) Value {
-				return el.(Values)[i] //nolint:forcetypeassert
-			}),
+		if fastPaths {
+			i := p[0]
+			return groupIndex{
+				single: true,
+				byValue: frozen.SetGroupBy(rows, func(el any) Value {
+					return el.(Values)[i] //nolint:forcetypeassert
+				}),
+			}
 		}
 	}
-	return groupIndex{byRow: frozen.SetGroupBy(rows, p.mapper())}
+	return groupIndex{byRow: frozen.SetGroupBy(rows, func(el any) any {
+		return p.rowKey(el.(Values)) //nolint:forcetypeassert
+	})}
 }
 
 // get returns the rows sharing k.

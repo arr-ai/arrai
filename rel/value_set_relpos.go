@@ -278,7 +278,7 @@ func (r *positionalRelation) JoinIfCommonExist(
 	}
 	group := r.groupBy(leftKey)
 	for i := r2.set.Range(); i.Next(); {
-		if group.has(rightKey.keyOf(i.Value().(Values))) { //nolint:forcetypeassert
+		if group.has(group.keyFrom(rightKey, i.Value().(Values))) { //nolint:forcetypeassert
 			return truePosRel
 		}
 	}
@@ -353,7 +353,7 @@ func joinOneSide(
 ) *positionalRelation {
 	if output.isIdentity(base.Width()) {
 		result, err := base.Where(func(v Values) (bool, error) {
-			return intersector.has(key.keyOf(v)), nil
+			return intersector.has(intersector.keyFrom(key, v)), nil
 		})
 		if err != nil {
 			panic(err)
@@ -363,7 +363,7 @@ func joinOneSide(
 	sb := frozen.SetBuilder[any]{}
 	for i := base.set.Range(); i.Next(); {
 		values := i.Value().(Values) //nolint:forcetypeassert
-		if intersector.has(key.keyOf(values)) {
+		if intersector.has(intersector.keyFrom(key, values)) {
 			sb.Add(values.project(output).values())
 		}
 	}
