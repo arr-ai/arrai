@@ -138,3 +138,22 @@ func TestRetrieveModuleWithInvalidPath(t *testing.T) {
 	require.Error(t, err)
 	require.Nil(t, m)
 }
+
+func TestRetrieveModuleSelfHealsMissingGoSum(t *testing.T) {
+	root := withTempModule(t, `module example.com/pintest
+
+go 1.21
+
+require github.com/pkg/errors v0.8.0
+`)
+
+	// Deliberately skip `go mod download`: go.sum has no entry for the pinned
+	// module. Under plain -mod=readonly, `go list -m -json all` would fail and
+	// the pin would be missed entirely, falling back to @latest.
+	require.NoFileExists(t, filepath.Join(root, "go.sum"))
+
+	m, err := retrieveModule("github.com/pkg/errors", "", root)
+	require.NoError(t, err)
+	require.Equal(t, "github.com/pkg/errors", m.Name)
+	require.Contains(t, filepath.ToSlash(m.Dir), "github.com/pkg/errors@v0.8.0")
+}

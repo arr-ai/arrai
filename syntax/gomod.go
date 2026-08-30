@@ -66,7 +66,12 @@ func loadRequiredModules(moduleRoot string) map[string]requiredModule {
 	}
 
 	mods := map[string]requiredModule{}
-	cmd := exec.Command("go", "list", "-m", "-json", "all") //nolint:gosec
+	// -mod=mod lets this self-heal a go.sum that's missing entries (e.g. a
+	// module required but not needed to build the main module's packages),
+	// matching how `go mod download` behaves. Under the default -mod=readonly,
+	// `go list` would instead fail outright and we'd wrongly treat the module
+	// as unpinned.
+	cmd := exec.Command("go", "list", "-mod=mod", "-m", "-json", "all") //nolint:gosec
 	if moduleRoot != "" {
 		cmd.Dir = moduleRoot
 	}
