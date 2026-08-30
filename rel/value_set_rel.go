@@ -100,7 +100,31 @@ func (r Relation) Count() int {
 	return r.rows.Count()
 }
 
+// hasShape reports whether t has exactly this relation's attributes.
+// Shapes are interned, so for a shaped tuple this is a pointer comparison;
+// other Tuple kinds fall back to comparing the attribute sets.
+func (r Relation) hasShape(t Tuple) bool {
+	if g, is := t.(*GenericTuple); is {
+		return g.sh() == r.shape
+	}
+	return r.attrs.EqualTupleAttrs(t)
+}
+
+// tupleToValues converts a tuple to a row in this relation's layout. A tuple
+// of the relation's own shape already holds its values in shape order, so it
+// only needs permuting — or nothing at all when the layout is the identity,
+// in which case the row shares the tuple's values (both are immutable).
 func (r Relation) tupleToValues(t Tuple) Values {
+	if g, is := t.(*GenericTuple); is && g.sh() == r.shape {
+		if r.direct {
+			return Values(g.vals)
+		}
+		values := make(Values, len(g.vals))
+		for i, j := range r.layout {
+			values[j] = g.vals[i]
+		}
+		return values
+	}
 	if len(r.attrs) != t.Count() {
 		panic("tupleToValues: names and values don't have the same number")
 	}
@@ -113,7 +137,7 @@ func (r Relation) tupleToValues(t Tuple) Values {
 
 func (r Relation) Has(v Value) bool {
 	if t, is := v.(Tuple); is {
-		return r.attrs.EqualTupleAttrs(t) && r.rows.Has(r.tupleToValues(t))
+		return r.hasShape(t) && r.rows.Has(r.tupleToValues(t))
 	}
 	return false
 }
@@ -137,14 +161,14 @@ func (r Relation) ArrayEnumerator() ValueEnumerator {
 }
 
 func (r Relation) With(v Value) Set {
-	if t, is := v.(Tuple); is && r.attrs.EqualTupleAttrs(t) {
+	if t, is := v.(Tuple); is && r.hasShape(t) {
 		return newRelation(r.attrs, r.p, r.rows.With(r.tupleToValues(t)))
 	}
 	return toUnionSetWithItem(r, v)
 }
 
 func (r Relation) Without(v Value) Set {
-	if t, is := v.(Tuple); is && r.attrs.EqualTupleAttrs(t) {
+	if t, is := v.(Tuple); is && r.hasShape(t) {
 		values := r.tupleToValues(t)
 		pr := r.rows.Without(values)
 		return r.newBody(pr)

@@ -65,7 +65,36 @@ func (v Values) Hash128() hash128.H128 {
 	return h
 }
 
+// keyOf encodes the projection of a row as a group-by key. Every producer
+// and consumer of a groupBy index must agree on this encoding, so they all
+// go through keyOf or mapper.
+//
+// Keys are always Values, never a bare Value, even for a single-column
+// projection where the Value alone would save two allocations per row. A
+// groupBy index is a frozen.Map[any, ...], and frozen resolves equality for
+// an `any` key by looking for Equal(any) bool: Values has that method, but
+// an arr.ai Value has Equal(Value) bool, so a bare Value key falls through
+// to frozen's comparability fallback, which reports two equal Strings as
+// unequal and makes every lookup miss.
+func (p valueProjector) keyOf(row Values) interface{} {
+	if len(p) == 0 {
+		// Disjoint join keys: every row shares the one empty key, matching
+		// groupBy's special case for an empty projector.
+		return Values{}
+	}
+	if p.isContiguous() {
+		a, b := p[0], p[len(p)-1]+1
+		v := make(Values, b-a)
+		copy(v, row[a:b])
+		return v
+	}
+	return row.project(p).values()
+}
+
 func (p valueProjector) mapper() func(interface{}) interface{} {
+	if len(p) == 0 {
+		return func(interface{}) interface{} { return Values{} }
+	}
 	if p.isContiguous() {
 		a, b := p[0], p[len(p)-1]+1
 		return func(el interface{}) interface{} {

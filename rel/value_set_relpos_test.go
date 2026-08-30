@@ -94,7 +94,7 @@ func TestGroupBy(t *testing.T) {
 		valueProjector{1},
 		frozen.NewMap(
 			kv(row(1), s(row1, row2)),
-			kv(Values{NewNumber(2)}, s(row3)),
+			kv(row(2), s(row3)),
 		),
 	)
 
