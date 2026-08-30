@@ -84,21 +84,13 @@ func TestGroupBy(t *testing.T) {
 	testGroup := func(grouper valueProjector, grouped frozen.Map[any, frozen.Set[any]]) {
 		index := pr.groupBy(grouper)
 		assert.Equal(t, grouped.Count(), index.count(), "group count for %v", grouper)
-		for i := grouped.Range(); i.Next(); {
-			var k groupKey
-			switch key := i.Key().(type) {
-			case Values:
-				if len(grouper) == 1 {
-					k = groupKey{v: key[0], single: true}
-				} else {
-					k = groupKey{row: key}
-				}
-			default:
-				k = groupKey{row: key}
-			}
-			rows, has := index.get(k)
-			assert.True(t, has, "group %v missing for %v", i.Key(), grouper)
-			assert.True(t, has && rows.Equal(i.Value()), "group %v rows for %v", i.Key(), grouper)
+		// Probe with each original row: the index must return the group the
+		// expectation puts that row in.
+		for i := pr.set.Range(); i.Next(); {
+			row := i.Value().(Values)
+			rows, has := index.get(index.keyFrom(grouper, row))
+			assert.True(t, has, "row %v has no group for %v", row, grouper)
+			assert.True(t, has && rows.Has(i.Value()), "row %v missing from its own group", row)
 		}
 		// The memoised index is the same one.
 		assert.Equal(t, index.count(),

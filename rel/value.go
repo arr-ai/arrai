@@ -160,11 +160,13 @@ func SetCall(ctx context.Context, s Set, arg Value) (Value, error) {
 	// Fast path: callables that yield exactly one result return it directly
 	// instead of round-tripping through a one-element set (which deep-hashes
 	// the result to build a frozen set and then immediately unpacks it).
-	switch s := s.(type) {
-	case Closure:
-		return s.call(ctx, arg)
-	case *NativeFunction:
-		return s.fn(ctx, arg)
+	if fastPaths {
+		switch s := s.(type) {
+		case Closure:
+			return s.call(ctx, arg)
+		case *NativeFunction:
+			return s.fn(ctx, arg)
+		}
 	}
 	b := NewSetBuilder()
 	err := s.CallAll(ctx, arg, b)

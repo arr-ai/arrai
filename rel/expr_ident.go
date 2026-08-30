@@ -59,7 +59,7 @@ func (e IdentExpr) Eval(ctx context.Context, local Scope) (Value, error) {
 // resolve returns the ident's binding in local, or nil. It tries the cached
 // address first and verifies the name at that slot before trusting it.
 func (e IdentExpr) resolve(local Scope) Expr {
-	if e.where != nil {
+	if e.where != nil && fastPaths {
 		if w := e.where.Load(); w != 0 {
 			w--
 			hops, slot := int(w>>32), int(w&0xffffffff)

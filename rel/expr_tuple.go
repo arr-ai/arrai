@@ -173,7 +173,7 @@ func (e *TupleExpr) String() string { //nolint:dupl
 
 // Eval returns the subject
 func (e *TupleExpr) Eval(ctx context.Context, local Scope) (Value, error) {
-	if e.shape != nil {
+	if fastPaths && e.shape != nil {
 		vals := make([]Value, len(e.slots))
 		for i, attr := range e.attrs {
 			value, err := attr.expr.Eval(ctx, local)

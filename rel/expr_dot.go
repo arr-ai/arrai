@@ -74,7 +74,7 @@ func (x *DotExpr) Eval(ctx context.Context, local Scope) (_ Value, err error) {
 		return nil, WrapContextErr(err, x, local)
 	}
 	get := func(ctx context.Context, t Tuple) (Value, error) {
-		if g, ok := t.(*GenericTuple); ok {
+		if g, ok := t.(*GenericTuple); ok && fastPaths {
 			shape := g.sh()
 			if c := x.cache.Load(); c != nil && c.shape == shape {
 				return g.vals[c.index], nil
