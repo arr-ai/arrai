@@ -157,3 +157,17 @@ require github.com/pkg/errors v0.8.0
 	require.Equal(t, "github.com/pkg/errors", m.Name)
 	require.Contains(t, filepath.ToSlash(m.Dir), "github.com/pkg/errors@v0.8.0")
 }
+
+func TestRetrieveModuleErrorsWhenPinnedVersionUnavailable(t *testing.T) {
+	root := t.TempDir()
+	resetRequiredModulesCache()
+	t.Cleanup(resetRequiredModulesCache)
+	seedRequiredModules(root, map[string]requiredModule{
+		"github.com/pkg/errors": {Path: "github.com/pkg/errors", Version: "v99.99.99-does-not-exist"},
+	})
+
+	m, err := retrieveModule("github.com/pkg/errors", "", root)
+	require.Error(t, err)
+	require.Nil(t, m)
+	require.Contains(t, err.Error(), "github.com/pkg/errors@v99.99.99-does-not-exist")
+}
