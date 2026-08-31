@@ -103,22 +103,20 @@ func (r *positionalRelation) Map(f func(Values) (Value, error)) (Set, error) {
 	return sb.Finish()
 }
 
-func (r *positionalRelation) Where(p func(Values) (bool, error)) (_ *positionalRelation, err error) {
+func (r *positionalRelation) Where(p func(Values) (bool, error)) (*positionalRelation, error) {
+	var failure whereErr
 	set := r.set.Where(func(elem any) bool {
+		if failure.failed() || elem == nil {
+			return false
+		}
+		match, err := p(elem.(Values)) //nolint:forcetypeassert
 		if err != nil {
-			return false
-		}
-		if elem == nil {
-			return false
-		}
-		match, err2 := p(elem.(Values))
-		if err2 != nil {
-			err = err2
+			failure.set(err)
 			return false
 		}
 		return match
 	})
-	if err != nil {
+	if err := failure.get(); err != nil {
 		return &positionalRelation{}, err
 	}
 	return &positionalRelation{set: set}, nil
