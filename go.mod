@@ -3,7 +3,7 @@ module github.com/arr-ai/arrai
 go 1.25.0
 
 require (
-	github.com/arr-ai/frozen v1.13.0
+	github.com/arr-ai/frozen v1.14.0
 	github.com/arr-ai/hash v1.2.0
 	github.com/arr-ai/proto v0.0.0-20180422074755-2ffbedebee50
 	github.com/arr-ai/wbnf v0.38.0
