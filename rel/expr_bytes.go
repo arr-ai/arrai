@@ -45,7 +45,7 @@ func (b BytesExpr) Eval(ctx context.Context, local Scope) (Value, error) {
 			if err := b.handleOffset(v); err != nil {
 				return nil, WrapContextErr(err, b, local)
 			}
-			bytes = append(bytes, []byte(string(v.s))...)
+			bytes = append(bytes, []byte(v.goString())...)
 		case EmptySet:
 		default:
 			return nil, WrapContextErr(errors.Errorf("BytesExpr.Eval: %s is not supported", ValueTypeAsString(v)), b, local)

@@ -140,7 +140,7 @@ func unparseXML(v rel.Value) ([]xml.Token, error) {
 							}
 							tupNS, ok := tup.Get(nsKey)
 							if !ok {
-								tupNS = rel.NewString([]rune(""))
+								tupNS = rel.NewGoString("")
 							}
 
 							xmlValue, ok := tools.ValueAsString(tupValue)
@@ -221,7 +221,7 @@ func parseXML(decoder *xml.Decoder, config XMLDecodeConfig) (rel.Value, error) {
 			if config.TrimSurroundingWhitespace && strings.TrimSpace(string(t)) == "" {
 				continue
 			}
-			values = append(values, rel.NewString([]rune(string(t))))
+			values = append(values, rel.NewGoString(string(t)))
 		case xml.Comment:
 			tuple = rel.NewTuple(rel.NewStringAttr(comment, []rune(string(t))))
 		case xml.StartElement:

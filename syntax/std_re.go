@@ -50,20 +50,20 @@ var (
 				if !is {
 					return nil, fmt.Errorf("//re.compile(re).sub: s not a string: %v", a)
 				}
-				return rel.NewString([]rune(regex.ReplaceAllString(s, nw))), nil
+				return rel.NewGoString(regex.ReplaceAllString(s, nw)), nil
 			}),
 			createFunc2Attr("subf", func(ctx context.Context, a, b rel.Value) (rel.Value, error) {
 				s, is := tools.ValueAsString(b)
 				if !is {
 					return nil, fmt.Errorf("//re.compile(re).subf: s not a string: %v", a)
 				}
-				return rel.NewString([]rune(regex.ReplaceAllStringFunc(s, func(match string) string {
+				return rel.NewGoString(regex.ReplaceAllStringFunc(s, func(match string) string {
 					result, err := rel.Call(ctx, a, rel.NewString([]rune(match)), rel.EmptyScope)
 					if err != nil {
 						panic(err)
 					}
 					return result.(rel.String).String()
-				}))), nil
+				})), nil
 			}),
 		), nil
 	})

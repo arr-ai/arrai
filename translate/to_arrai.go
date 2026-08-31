@@ -31,7 +31,7 @@ func (t Translator) ToArrai(data interface{}) (rel.Value, error) {
 	case []interface{}:
 		return t.arrToArrai(v)
 	case string:
-		value := rel.NewString([]rune(v))
+		value := rel.NewGoString(v)
 		if t.strict {
 			return rel.NewTuple(rel.NewAttr("s", value)), nil
 		}
@@ -70,7 +70,7 @@ func (t Translator) objToArrai(data map[string]interface{}) (rel.Value, error) {
 		if err != nil {
 			return nil, err
 		}
-		b.Add(rel.NewDictEntryTuple(rel.NewString([]rune(key)), item))
+		b.Add(rel.NewDictEntryTuple(rel.NewGoString(key), item))
 		i++
 	}
 	return b.Finish()

@@ -75,7 +75,7 @@ func SafeStdScopeTuple() rel.Tuple {
 				entries := make([]rel.DictEntryTuple, 0, t.Count())
 				for e := t.Enumerator(); e.MoveNext(); {
 					name, value := e.Current()
-					entries = append(entries, rel.NewDictEntryTuple(rel.NewString([]rune(name)), value))
+					entries = append(entries, rel.NewDictEntryTuple(rel.NewGoString(name), value))
 				}
 				return rel.NewDict(false, entries...)
 			}

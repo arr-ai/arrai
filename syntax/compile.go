@@ -1443,7 +1443,7 @@ func (pc ParseContext) compileIdent(_ context.Context, c ast.Children) rel.Expr 
 
 func (pc ParseContext) compileString(_ context.Context, c ast.Children) rel.Expr {
 	scanner := c.(ast.One).Node.One("").Scanner()
-	return rel.NewLiteralExpr(scanner, rel.NewString([]rune(parseArraiString(scanner.String()))))
+	return rel.NewLiteralExpr(scanner, rel.NewGoString(parseArraiString(scanner.String())))
 }
 
 func (pc ParseContext) compileNumber(_ context.Context, c ast.Children) (rel.Expr, error) {

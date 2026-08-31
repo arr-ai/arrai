@@ -288,7 +288,7 @@ func fileValue(ctx context.Context, decoder rel.Tuple, filename string) (rel.Exp
 		return rel.NewCallExprCurry(
 			parser.Scanner{},
 			implicitDecoder(),
-			rel.NewString([]rune(ext)),
+			rel.NewGoString(ext),
 			rel.NewBytes(bytes),
 		), nil
 	}

@@ -76,7 +76,7 @@ func FromProtoValue(val protoreflect.Value) (rel.Value, error) {
 				return false
 			}
 
-			at := rel.NewString([]rune(key.String()))
+			at := rel.NewGoString(key.String())
 			entries = append(entries, rel.NewDictEntryTuple(at, val))
 			return true
 		})
