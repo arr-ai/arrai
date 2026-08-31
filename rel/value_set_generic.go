@@ -16,6 +16,13 @@ import (
 // GenericSet is a set of Values.
 type GenericSet struct {
 	set frozen.Set[Value]
+
+	// canonical records that CanonicalSet has already verified this set
+	// stays a GenericSet (every element in the generic bucket), so
+	// re-canonicalising it is a no-op. A union of two canonical sets is
+	// canonical — their elements' buckets don't change — which lets
+	// accumulator folds (acc | {x}) skip an O(n) rebuild per step.
+	canonical bool
 }
 
 // genericSet equivalents for Boolean true and false
@@ -34,6 +41,9 @@ var (
 
 func CanonicalSet(s Set) Set {
 	if s, ok := s.(GenericSet); ok {
+		if s.canonical {
+			return s
+		}
 		b := NewSetBuilder()
 		for e := s.Enumerator(); e.MoveNext(); {
 			b.Add(e.Current())
@@ -41,6 +51,10 @@ func CanonicalSet(s Set) Set {
 		result, err := b.Finish()
 		if err != nil {
 			panic(err)
+		}
+		if g, ok := result.(GenericSet); ok {
+			g.canonical = true
+			return g
 		}
 		return result
 	}
@@ -64,7 +78,7 @@ func newSetFromFrozenSet(s frozen.Set[Value]) Set {
 			return True
 		}
 	}
-	return GenericSet{s}
+	return GenericSet{set: s}
 }
 
 // NewBool constructs a bool as a relation.
@@ -215,7 +229,9 @@ func (s GenericSet) Has(value Value) bool {
 // already present, the original genericSet is returned.
 func (s GenericSet) With(v Value) Set {
 	if v.getBucket() == genericType {
-		return GenericSet{s.set.With(v)}
+		// Adding a generic-bucket value cannot change any element's bucket,
+		// so canonicality is preserved.
+		return GenericSet{set: s.set.With(v), canonical: s.canonical}
 	}
 	return toUnionSetWithItem(s, v)
 }

@@ -563,5 +563,5 @@ func makeGenericSet(n int) GenericSet {
 			NewAttr("b", NewNumber(float64(i+1))),
 		))
 	}
-	return GenericSet{sb.Finish()}
+	return GenericSet{set: sb.Finish()}
 }

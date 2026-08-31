@@ -65,6 +65,32 @@ func Union(a, b Set) Set {
 	}
 	if ga, ok := a.(GenericSet); ok {
 		if gb, ok := b.(GenericSet); ok {
+			// Adding a small set to a large one goes element by element:
+			// frozen's tree merge rebuilds far more than it shares, which
+			// made accumulator folds (acc | {x}) quadratic with a huge
+			// constant — measured 878ms/691MB for a 3,000-step fold, against
+			// ~3ms via With.
+			// A union of two canonical generic sets is canonical: no
+			// element's bucket changes, so skip re-canonicalising — which
+			// otherwise rebuilds the whole accumulator on every step of an
+			// acc | {x} fold (measured 878ms/691MB for 3,000 steps).
+			if fastPaths && ga.canonical && gb.canonical {
+				big, small := ga.set, gb.set
+				if big.Count() < small.Count() {
+					big, small = small, big
+				}
+				if small.Count() <= 8 && big.Count() >= 4*small.Count() {
+					for i := small.Range(); i.Next(); {
+						big = big.With(i.Value())
+					}
+				} else {
+					big = big.Union(small)
+				}
+				if u := (GenericSet{set: big, canonical: true}); u.set.Count() != 0 {
+					return u
+				}
+				return None
+			}
 			return CanonicalSet(newSetFromFrozenSet(ga.set.Union(gb.set)))
 		}
 	}

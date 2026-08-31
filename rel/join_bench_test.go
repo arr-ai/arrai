@@ -31,7 +31,7 @@ func genericSetTuples(n int) (GenericSet, GenericSet) {
 		for _, tu := range t {
 			sb.Add(tu)
 		}
-		return GenericSet{sb.Finish()}
+		return GenericSet{set: sb.Finish()}
 	}
 	return f(t1), f(t2)
 }

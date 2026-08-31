@@ -330,9 +330,7 @@ func Concatenate(a, b Set) (Set, error) {
 		case Array:
 			if b, ok := b.(Array); ok &&
 				a.offset == 0 && a.count == len(a.values) && b.offset == 0 && b.count == len(b.values) {
-				v := make([]Value, 0, len(a.values)+len(b.values))
-				v = append(append(v, a.values...), b.values...)
-				return NewArray(v...), nil
+				return concatArrays(a, b), nil
 			}
 		}
 	}

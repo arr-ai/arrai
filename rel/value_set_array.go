@@ -23,6 +23,24 @@ type Array struct {
 	// so any copy that changes either must take a fresh cell: derive such
 	// copies with derive(), never by assigning to a plain struct copy.
 	hash *hashCell
+
+	// abuf, when non-nil, is the shared append buffer this array is a
+	// prefix of, so concatenation chains (acc ++ [x] folds) extend one
+	// buffer in place instead of copying the accumulator per step. See
+	// appendBuf; elements below any array's length never change.
+	abuf *appendBuf[Value]
+}
+
+// concatArrays concatenates two contiguous zero-offset arrays, extending
+// a's buffer in place when a is its frontier.
+func concatArrays(a, b Array) Array {
+	if a.abuf != nil {
+		if v := a.abuf.extend(len(a.values), b.values); v != nil {
+			return Array{values: v, count: len(v), hash: &hashCell{}, abuf: a.abuf}
+		}
+	}
+	abuf, v := newAppendBuf(a.values, b.values)
+	return Array{values: v, count: len(v), hash: &hashCell{}, abuf: abuf}
 }
 
 // derive returns a copy of a with a fresh hash cell, for callers that go on

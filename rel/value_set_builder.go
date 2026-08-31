@@ -14,7 +14,15 @@ var (
 		for _, v := range values {
 			sb.Add(v)
 		}
-		return newSetFromFrozenSet(sb.Finish()), nil
+		// Everything in this bucket has the generic bucket kind, so the
+		// result is canonical by construction: CanonicalSet would rebuild
+		// it into exactly this.
+		s := newSetFromFrozenSet(sb.Finish())
+		if g, ok := s.(GenericSet); ok {
+			g.canonical = true
+			return g, nil
+		}
+		return s, nil
 	}
 
 	stringFinish = func(values ...Value) (Set, error) {
