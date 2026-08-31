@@ -96,16 +96,7 @@ func (e *SeqArrowExpr) Eval(ctx context.Context, local Scope) (_ Value, err erro
 		}
 		return NewOffsetBytes(bytes, value.offset), nil
 	case Array:
-		items := make([]Value, len(value.values))
-		for at, item := range value.values {
-			if item != nil {
-				items[at], err = call(NewNumber(float64(value.offset+at)), item)
-				if err != nil {
-					return nil, WrapContextErr(err, e, local)
-				}
-			}
-		}
-		return NewOffsetArray(value.offset, items...), nil
+		return e.evalArray(local, value, call)
 	case Dict:
 		entries := make([]DictEntryTuple, 0, value.m.Count())
 		for i := value.Enumerator(); i.MoveNext(); {
@@ -150,4 +141,46 @@ func (e *SeqArrowExpr) Eval(ctx context.Context, local Scope) (_ Value, err erro
 	}
 	return nil, WrapContextErr(errors.Errorf(
 		"%s lhs must be an indexed type, not %s", e.op, ValueTypeAsString(value)), e, local)
+}
+
+// evalArray maps an array's elements, in parallel when the array is large:
+// call's captures are read-only and each element writes only its own slot.
+// The reported error is the first element's in index order, as the
+// sequential path reports (no worker is interrupted, so every range below
+// the lowest failing one completes).
+func (e *SeqArrowExpr) evalArray(
+	local Scope, value Array, call func(_, _ Value) (Value, error),
+) (Value, error) {
+	items := make([]Value, len(value.values))
+	if fastPaths {
+		if ranges := parallelRanges(len(value.values)); ranges != nil {
+			errs := make([]error, len(ranges))
+			runRanges(ranges, func(w, lo, hi int) {
+				for at := lo; at < hi; at++ {
+					if item := value.values[at]; item != nil {
+						v, err := call(NewNumber(float64(value.offset+at)), item)
+						if err != nil {
+							errs[w] = err
+							return
+						}
+						items[at] = v
+					}
+				}
+			})
+			if err := firstErr(errs); err != nil {
+				return nil, WrapContextErr(err, e, local)
+			}
+			return NewOffsetArray(value.offset, items...), nil
+		}
+	}
+	for at, item := range value.values {
+		if item != nil {
+			v, err := call(NewNumber(float64(value.offset+at)), item)
+			if err != nil {
+				return nil, WrapContextErr(err, e, local)
+			}
+			items[at] = v
+		}
+	}
+	return NewOffsetArray(value.offset, items...), nil
 }
