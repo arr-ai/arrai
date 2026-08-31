@@ -98,20 +98,7 @@ func (e *SeqArrowExpr) Eval(ctx context.Context, local Scope) (_ Value, err erro
 	case Array:
 		return e.evalArray(local, value, call)
 	case Dict:
-		entries := make([]DictEntryTuple, 0, value.m.Count())
-		for i := value.Enumerator(); i.MoveNext(); {
-			entry := i.Current().(DictEntryTuple)
-			newValue, err := call(entry.at, entry.value)
-			if err != nil {
-				return nil, WrapContextErr(err, e, local)
-			}
-			entries = append(entries, NewDictEntryTuple(entry.at, newValue))
-		}
-		d, err := NewDict(true, entries...)
-		if err != nil {
-			return nil, WrapContextErr(err, e, local)
-		}
-		return d, nil
+		return e.evalDict(local, value, call)
 	case Set:
 		b := NewSetBuilder()
 		for i := value.Enumerator(); i.MoveNext(); {
@@ -183,4 +170,46 @@ func (e *SeqArrowExpr) evalArray(
 		}
 	}
 	return NewOffsetArray(value.offset, items...), nil
+}
+
+// evalDict maps a dict's entries, in parallel when the dict is large — the
+// apps/endpoints maps a model pipeline iterates are dicts, so this is often
+// the outermost loop. Enumeration order is deterministic for a given dict,
+// so the first-error contract matches the sequential path.
+func (e *SeqArrowExpr) evalDict(
+	local Scope, value Dict, call func(_, _ Value) (Value, error),
+) (Value, error) {
+	entries := make([]DictEntryTuple, 0, value.m.Count())
+	for i := value.Enumerator(); i.MoveNext(); {
+		entries = append(entries, i.Current().(DictEntryTuple))
+	}
+	if ranges := parallelRanges(len(entries)); fastPaths && ranges != nil {
+		errs := make([]error, len(ranges))
+		runRanges(ranges, func(w, lo, hi int) {
+			for j := lo; j < hi; j++ {
+				newValue, err := call(entries[j].at, entries[j].value)
+				if err != nil {
+					errs[w] = err
+					return
+				}
+				entries[j] = NewDictEntryTuple(entries[j].at, newValue)
+			}
+		})
+		if err := firstErr(errs); err != nil {
+			return nil, WrapContextErr(err, e, local)
+		}
+	} else {
+		for j, entry := range entries {
+			newValue, err := call(entry.at, entry.value)
+			if err != nil {
+				return nil, WrapContextErr(err, e, local)
+			}
+			entries[j] = NewDictEntryTuple(entry.at, newValue)
+		}
+	}
+	d, err := NewDict(true, entries...)
+	if err != nil {
+		return nil, WrapContextErr(err, e, local)
+	}
+	return d, nil
 }

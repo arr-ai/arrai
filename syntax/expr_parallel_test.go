@@ -59,3 +59,15 @@ func TestParallelSeqArrow(t *testing.T) {
 		`//seq.repeat(5000, [0]) => (@: .@, @item: .@) >> {0: 9, 1: 9}(.)`,
 	)
 }
+
+func TestParallelSeqArrowDict(t *testing.T) {
+	t.Parallel()
+	AssertCodesEvalToSameValue(t,
+		`5000`,
+		`((//seq.repeat(5000, [0]) => (@: .@, @value: .@)) >>> \k \v k + v) count`,
+	)
+	// Exactly one entry fails, so the reported error is order-independent.
+	AssertCodeErrors(t, "Call: no return values for input 4999",
+		`(//seq.repeat(5000, [0]) => (@: .@, @value: .@)) >> cond {. = 4999: {}(4999), _: .}`,
+	)
+}
