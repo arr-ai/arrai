@@ -65,26 +65,6 @@ func (v Values) Hash128() hash128.H128 {
 	return h
 }
 
-// keyOf encodes the projection of a row as a group-by key. Every producer
-// and consumer of a groupBy index must agree on this encoding, so they all
-// go through keyOf or mapper.
-func (p valueProjector) mapper() func(interface{}) interface{} {
-	if len(p) == 0 {
-		return func(interface{}) interface{} { return Values{} }
-	}
-	if p.isContiguous() {
-		a, b := p[0], p[len(p)-1]+1
-		return func(el interface{}) interface{} {
-			v := make(Values, b-a)
-			copy(v, el.(Values)[a:b])
-			return v
-		}
-	}
-	return func(el interface{}) interface{} {
-		return el.(Values).project(p)
-	}
-}
-
 type valueProjector []int
 
 func (p valueProjector) compose(p2 valueProjector) valueProjector {
@@ -180,10 +160,6 @@ func (p valueProjector) EqualValueProjector(p2 valueProjector) bool {
 	return true
 }
 
-type projectable interface {
-	project(valueProjector) projectedValues
-}
-
 type projectedValues struct {
 	p valueProjector
 	v Values
@@ -191,13 +167,6 @@ type projectedValues struct {
 
 func (pv projectedValues) get(i int) Value {
 	return pv.v[pv.p[i]]
-}
-
-func (pv projectedValues) project(p valueProjector) projectedValues {
-	return projectedValues{
-		p: pv.p.compose(p),
-		v: pv.v,
-	}
 }
 
 func (pv projectedValues) values() Values {
