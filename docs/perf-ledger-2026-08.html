@@ -71,7 +71,7 @@ li{margin-bottom:.4rem}
 <p>Each row is a commit or group of commits, measured on the same machine, same model, output checked byte-for-byte every time. Speedup is against the reported v0.338.0 run (range midpoints) as 1×: <em>total</em> is wall clock; <em>algo</em> subtracts a baseline compile phase of 925&nbsp;ms (parsing the program and the sysl library, assumed constant across builds), which is what the evaluator work actually moves.</p>
 <div class="tbl"><table>
 <tr><th rowspan="2">Build</th><th class="num" rowspan="2">Repro</th><th class="spanhead" colspan="2">Speedup</th><th rowspan="2">Commit</th></tr>
-<tr><th class="num">Total</th><th class="num">Algo</th></tr>
+<tr><th class="num">Total<sup>†</sup></th><th class="num">Algo</th></tr>
 <tr><td>v0.338.0 — as reported</td><td class="num"><span class="bar hot" style="width:200px"></span>58.8–67.8s</td><td class="num">1.0×</td><td class="num">1.0×</td><td class="sha">—</td></tr>
 <tr><td>v0.321.0 — before the generics migration</td><td class="num"><span class="bar" style="width:40px"></span>11.6–12.6s</td><td class="num">5.2×</td><td class="num">5.6×</td><td class="sha">reference</td></tr>
 <tr><td>Start of this work</td><td class="num"><span class="bar hot" style="width:73px"></span>20.5–25.3s</td><td class="num">2.8×</td><td class="num">2.8×</td><td class="sha">9a1ce45</td></tr>
@@ -89,7 +89,9 @@ li{margin-bottom:.4rem}
 <tr><td>Reflection-free sorts (<code>slices.SortFunc</code> sweep)</td><td class="num"><span class="bar" style="width:6px"></span>1.85s</td><td class="num">34×</td><td class="num">67×</td><td class="sha">a955967</td></tr>
 <tr><td><strong>Linear string/array concatenation</strong></td><td class="num"><span class="bar" style="width:6px"></span><strong>1.81s</strong></td><td class="num"><strong>35×</strong></td><td class="num"><strong>70×</strong></td><td class="sha">b051b91</td></tr>
 <tr><td>ASCII strings backed by bytes</td><td class="num"><span class="bar" style="width:6px"></span>1.77s</td><td class="num">36×</td><td class="num">74×</td><td class="sha">8099984</td></tr>
-</table></div>
+</table>
+<p class="muted" style="font-size:.8rem;margin:.4rem 0 0"><sup>†</sup> Total covers end-to-end wall clock: the compile phase (parsing <code>run.arrai</code> and the vendored sysl library, ~925&nbsp;ms, assumed constant across builds) plus evaluation and output rendering. Algo excludes the compile phase.</p>
+</div>
 <p class="muted">The frozen fan-out row is flat on purpose: reconstruct's relations are a few thousand rows and its time is dominated by grammar parsing, so it is the wrong workload to show parallelism. On a 60,000-row relational script the same change is worth 25%.</p>
 
 <h2>What landed</h2>
