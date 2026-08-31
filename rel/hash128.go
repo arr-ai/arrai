@@ -28,7 +28,6 @@ var (
 	valuesSalt   = hash128.String("rel.Values")
 	emptySetSalt = hash128.String("rel.EmptySet")
 	arraySalt    = hash128.String("rel.Array")
-	dictSalt     = hash128.String("rel.Dict")
 	unionSalt    = hash128.String("rel.UnionSet")
 	relationSalt = hash128.String("rel.Relation")
 

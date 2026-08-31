@@ -406,15 +406,31 @@ func (r Relation) Hash(seed uintptr) uintptr {
 	return r.Hash128().Seeded(seed)
 }
 
-// Hash128 computes the 128-bit hash of a Relation from the positional row
-// set's own hash (O(1)) and the attribute names, so relations that Equal
-// distinguishes by schema also hash differently.
+// Hash128 computes the 128-bit hash of a Relation: the xor over attribute
+// names, xor'd with the xor over rows of each row's own name/value hash
+// (the same per-attribute formula GenericTuple uses). Row hashes must be
+// computed this way, and not taken from the positional row set's own hash,
+// because that mixes values in strict positional order — which would make
+// Hash128 disagree with EqualRelation whenever two equal relations differ
+// only in their internal attribute ordering (e.g. from different
+// join/projection code paths), violating the hash/equals contract.
 func (r Relation) Hash128() hash128.H128 {
+	nameHash := make(map[string]hash128.H128, len(r.attrs))
 	h := relationSalt
 	for _, name := range r.attrs {
-		h = h.Xor(hash128.String(name))
+		nh := hash128.String(name)
+		nameHash[name] = nh
+		h = h.Xor(nh)
 	}
-	return h.Xor(r.rows.Hash128())
+	for e := r.rows.set.Range(); e.Next(); {
+		row := e.Value().(Values)
+		var rh hash128.H128
+		for name, index := range r.attrMap {
+			rh = rh.Xor(hashAttr(nameHash[name], row[index]))
+		}
+		h = h.Xor(rh)
+	}
+	return h
 }
 
 // RelationValuesEnumerator enumerates the values as Values.

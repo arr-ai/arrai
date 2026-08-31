@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/arr-ai/arrai/pkg/arraictx"
+	"github.com/arr-ai/frozen"
 )
 
 func TestDictEntryTupleLess(t *testing.T) {
@@ -34,6 +35,29 @@ func TestDictEntryTupleOrdered(t *testing.T) {
 	AssertEqualValues(t, NewDictEntryTuple(NewString([]rune("a")), NewNumber(2)), entries[1])
 	AssertEqualValues(t, NewDictEntryTuple(NewString([]rune("b")), NewNumber(1)), entries[2])
 	AssertEqualValues(t, NewDictEntryTuple(NewString([]rune("b")), NewNumber(2)), entries[3])
+}
+
+// TestDictHash128AgreesWithGenericSetEqual guards against a hash/equals
+// contract violation: Dict.Equal treats a Dict as equal to a generic Set of
+// the same (@, @value) entry tuples, and an empty Dict as equal to
+// EmptySet{}. Hash128 must agree in both cases, or a Set/Map keyed on Dict
+// values can silently fail to recognize an existing equal entry depending
+// on which representation it happens to be constructed as
+// (see https://github.com/arr-ai/arrai/issues/PLACEHOLDER).
+func TestDictHash128AgreesWithGenericSetEqual(t *testing.T) {
+	t.Parallel()
+
+	key := NewString([]rune("k"))
+	value := NewNumber(1)
+	d := MustNewDict(false, NewDictEntryTuple(key, value)).(Dict)
+	entryTuple := NewTuple(NewAttr("@", key), NewAttr(DictValueAttr, value))
+	gs := GenericSet{set: frozen.NewSet[Value](entryTuple)}
+
+	assert.True(t, d.Equal(gs), "a Dict must equal an equivalent generic Set of entry tuples")
+	assert.Equal(t, d.Hash128(), gs.Hash128(), "equal Dict/Set values must hash the same")
+
+	assert.True(t, Dict{}.Equal(EmptySet{}), "an empty Dict must equal EmptySet{}")
+	assert.Equal(t, Dict{}.Hash128(), EmptySet{}.Hash128(), "an empty Dict must hash like EmptySet{}")
 }
 
 func TestDictLess(t *testing.T) {

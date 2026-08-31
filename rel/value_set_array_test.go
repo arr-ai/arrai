@@ -11,6 +11,29 @@ import (
 	"github.com/arr-ai/arrai/pkg/arraictx"
 )
 
+// TestArrayHash128DistinguishesRepeatedElementValue guards against a
+// cancellation bug: Array.Hash128 combined per-index item hashes with xor,
+// but each item hash already xors together an index-hash and a value-hash
+// via hashTuple2. When the same value occurs at two different indices (e.g.
+// ["x", "x"] vs ["y", "y"]), the value-dependent part of those two item
+// hashes is identical and cancels out under xor, making the array's hash
+// completely independent of the repeated value -- so, for example,
+// ["AppA", "AppA"] and ["AppB", "AppB"] hashed identically despite being
+// unequal, silently corrupting any hash-based Set/Map containing such
+// arrays as elements or as part of a composite key (this is how it was
+// found: architecture-specs' fully-qualified app name paths often repeat
+// a segment, e.g. `MVISION :: MVISION`).
+func TestArrayHash128DistinguishesRepeatedElementValue(t *testing.T) {
+	t.Parallel()
+
+	a := NewArray(NewString([]rune("AppA")), NewString([]rune("AppA")))
+	b := NewArray(NewString([]rune("AppB")), NewString([]rune("AppB")))
+
+	assert.False(t, a.Equal(b), "arrays with different repeated values must not be equal")
+	assert.NotEqual(t, a.(Array).Hash128(), b.(Array).Hash128(),
+		"arrays with different repeated values must not hash the same")
+}
+
 func TestAsArray(t *testing.T) {
 	t.Parallel()
 	AssertEqualValues(t,
