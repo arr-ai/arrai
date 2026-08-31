@@ -108,13 +108,18 @@ func (d Dict) Hash(seed uintptr) uintptr {
 }
 
 // Hash128 computes the 128-bit hash of a Dict: the xor of its entry tuples,
-// computed once per Dict.
+// computed once per Dict. This must agree with the hash of an equal generic
+// Set of the same (@, @value) entry tuples — Dict.Equal treats the two as
+// equal — so, unlike other kinds, Dict does NOT mix in a kind-specific salt:
+// a non-empty Dict hashes exactly like GenericSet (plain xor of elements),
+// and an empty Dict hashes exactly like EmptySet (emptySetSalt), since
+// Dict{}.Equal(EmptySet{}) is also true.
 func (d Dict) Hash128() hash128.H128 {
 	if d.hash == nil {
-		return dictSalt
+		return emptySetSalt
 	}
 	return d.hash.get(func() hash128.H128 {
-		h := dictSalt
+		var h hash128.H128
 		for e := d.Enumerator(); e.MoveNext(); {
 			h = h.Xor(e.Current().Hash128())
 		}

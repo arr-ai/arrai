@@ -120,12 +120,19 @@ func (a Array) Hash(seed uintptr) uintptr {
 	return a.Hash128().Seeded(seed)
 }
 
-// Hash128 computes the 128-bit hash of an Array: the xor of its item tuples.
+// Hash128 computes the 128-bit hash of an Array by mixing its item tuples in
+// index order. Each item's hash already binds its index (via hashTuple2), so
+// this doesn't need to be order-independent like a set/dict combination —
+// and using Mix here, rather than Xor, matters: xor-ing per-element hashes
+// together is vulnerable to cancellation when the same value occurs at two
+// different indices (e.g. ["x", "x"]), since the value-dependent part of
+// hashTuple2's own internal xor is identical at both positions and cancels
+// out, making the array's hash independent of that repeated value.
 func (a Array) Hash128() hash128.H128 {
 	h := arraySalt
 	for i, v := range a.values {
 		if v != nil {
-			h = h.Xor(hashTuple2(atNameHash, NewNumber(float64(a.offset+i)), itemNameHash, v))
+			h = h.Mix(hashTuple2(atNameHash, NewNumber(float64(a.offset+i)), itemNameHash, v))
 		}
 	}
 	return h
