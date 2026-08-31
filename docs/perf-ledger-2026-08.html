@@ -54,14 +54,14 @@ li{margin-bottom:.4rem}
 .repo h3{margin:0}
 </style>
 <main>
-<div class="eyebrow">arr.ai · performance · 28–31 Aug 2026</div>
+<div class="eyebrow">arr.ai · performance · 28–31 Aug 2026 · updated 31 Aug</div>
 <h1>Arr.ai Performance Ledger</h1>
 <p class="lede">Where the evaluator work stands: what landed, what it bought, what it fixed along the way, and what is still ahead. The measuring stick throughout is Arieh's <code>reconstruct</code> workload — 1000 synthetic sysl apps, protobuf to relations to rendered source — with output byte-identical to arrai v0.321.0 at every step.</p>
 
 <div class="grid">
-  <div class="stat"><div class="v">2.25s</div><div class="k">now (median of 5)</div></div>
-  <div class="stat"><div class="v">26×</div><div class="k">vs v0.338.0, the reported regression</div></div>
-  <div class="stat"><div class="v">5.2×</div><div class="k">vs v0.321.0, before generics</div></div>
+  <div class="stat"><div class="v">2.08s</div><div class="k">now</div></div>
+  <div class="stat"><div class="v">29×</div><div class="k">vs v0.338.0, the reported regression</div></div>
+  <div class="stat"><div class="v">5.7×</div><div class="k">vs v0.321.0, before generics</div></div>
   <div class="stat"><div class="v">8</div><div class="k">correctness bugs fixed<br><span style="font-size:.85em">(4 in released frozen)</span></div></div>
 </div>
 
@@ -80,12 +80,13 @@ li{margin-bottom:.4rem}
 <tr><td><strong>Shape-backed tuples</strong></td><td class="num"><span class="bar" style="width:8px"></span><strong>2.13s</strong></td><td class="sha">e4691e6</td></tr>
 <tr><td>Relation shape matching, typed group index</td><td class="num"><span class="bar" style="width:8px"></span>2.1s</td><td class="sha">d066aa5 · fbfffdd</td></tr>
 <tr><td>frozen fans out from 256 elements</td><td class="num"><span class="bar" style="width:8px"></span>2.25s <span class="muted">(no change here)</span></td><td class="sha">953bdfb</td></tr>
+<tr><td><strong>Flat-arena relations with lazy indexing</strong></td><td class="num"><span class="bar" style="width:7px"></span><strong>2.08s</strong></td><td class="sha">41352d9</td></tr>
 </table></div>
 <p class="muted">The last row is flat on purpose: reconstruct's relations are a few thousand rows and its time is dominated by grammar parsing, so it is the wrong workload to show parallelism. On a 60,000-row relational script the same change is worth 25%.</p>
 
 <h2>What landed</h2>
 
-<div class="repo"><h3>arr.ai — 13 commits</h3><span class="pill acc">local only</span></div>
+<div class="repo"><h3>arr.ai — 15 commits</h3><span class="pill acc">local only</span></div>
 <ul>
 <li><strong>Function application returns its result directly</strong> instead of building and unpacking a one-element set — which had been deep-hashing every result and <code>Sprintf</code>-formatting every closure body to hash it. 5.8M calls on this workload.</li>
 <li><strong><code>where .attr = key</code> is answered from the relation's index</strong>, recognised at compile time. Two sites accounted for 4,000,000 scanned rows.</li>
@@ -94,6 +95,7 @@ li{margin-bottom:.4rem}
 <li><strong>Scopes are chained lexical frames</strong> and identifier reads cache their <code>(hops, slot)</code> address <span class="pill good">🎯T7</span>.</li>
 <li><strong>Tuples are shape-backed structs</strong> — an interned <code>Shape</code> plus values in shape order, so relation rows <em>are</em> tuple values, inflated with no copying <span class="pill good">🎯T7 · 🎯T9</span>. This was the single biggest step and it came from your observation that tuples are C-style structs, not dictionaries.</li>
 <li>Lazy pattern-match errors, flat pattern frames, memoised grammars and regexes, <code>Relation.Equal</code> fast paths, shape-based attribute matching, a typed group-by index.</li>
+<li><strong>Relations store rows in a flat arena with selection-vector views and a lazy hash index</strong> <span class="pill good">🎯T11</span> — the columnar project, landed. Building a relation is one arena allocation instead of a HAMT (12k rows: 44,163 allocations → 139); <code>where</code> shares the arena and allocates only a row-id vector; joins assemble output rows straight into a builder arena (115k allocations → 173, 3× faster); a cold group-by is 11× faster and <code>Has</code> allocates nothing. <code>acc | {x}</code> fold chains extend one arena in place. Group-by keys are never materialised: each bucket's key is the projection of a representative row.</li>
 </ul>
 
 <div class="repo"><h3>arr-ai/frozen — 3 commits</h3><span class="pill acc">local only</span></div>
@@ -153,7 +155,6 @@ li{margin-bottom:.4rem}
 
 <h3>Large, with evidence behind them</h3>
 <ul>
-<li><strong>Columnar relations with lazy indexing.</strong> The measured ceiling: building 1000 rows costs 1,946 allocations as a HAMT versus 1 as a flat column, and a <code>where</code> that shares columns and returns a row-index vector is 9× cheaper than rebuilding the tree. Most relational operations preserve distinctness and so never need the index at all — <code>where</code>, projections onto a superkey, injective <code>=&gt;</code>. This is the biggest remaining lever and a genuine project.</li>
 <li><strong>🎯T10 — accumulator folds.</strong> Instrumentation showed ordinary code never extends large collections incrementally, but the sysl workload does it 12,000+ times through <code>acc | {x}</code> inside folds. A conservative last-use analysis would let those build through a mutable builder. The research is mapped: Lean 4's <em>Counting Immutable Beans</em>, Koka's <em>Perceus</em>, Clojure transients.</li>
 <li><strong>Parallel evaluation inside arr.ai.</strong> frozen now fans out, but <code>=&gt;</code>, <code>&gt;&gt;</code> and <code>where</code> bodies are still evaluated one element at a time, and they are ~20% of profile time each. The language is pure and the caches are already concurrency-safe, so the semantics are favourable; the work is chunking, deterministic error selection, and cancellation.</li>
 <li><strong>String representation.</strong> <code>[]rune</code> makes hashing, equality and concatenation allocate; the sysl library builds names one character at a time. A UTF-8 or rope representation with a cached hash helps every text-rendering workload.</li>
@@ -165,6 +166,7 @@ li{margin-bottom:.4rem}
 <li><strong>Bare <code>Value</code> group-by keys</strong> — tried three times. Silently wrong before the frozen fix; 7× slower after it (reflective dispatch); superseded by a <code>Map[Value, …]</code> index that is 14% faster with 24% fewer allocations.</li>
 <li><strong>A <code>posTuple</code> row view</strong> — regressed 20s → 26s in the pre-shapes era, then made moot: rows and tuples are now the same thing.</li>
 <li><strong>Full closure conversion</strong> — shelved. Frames plus inline caches already took the win; the remainder measured at a few percent.</li>
+<li><strong>HAMT-backed relation rows</strong> — replaced by the flat arena. The one case the HAMT wins is repeatedly branching a large shared base (<code>big | {x}</code> from the same snapshot in a loop): an arena branch copies O(n) where the tree shared structure. Chains are unaffected — they extend in place — and no measured workload branches this way, but it is the known trade.</li>
 <li><strong>Concrete element types in frozen's containers</strong> — measured <em>worse</em> (4,700 vs 3,959 allocations), because the tree's leaf copies grow with the element.</li>
 </ul>
 </main>
