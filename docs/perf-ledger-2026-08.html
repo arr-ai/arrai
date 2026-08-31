@@ -63,6 +63,7 @@ li{margin-bottom:.4rem}
   <div class="stat"><div class="v">34×</div><div class="k">vs v0.338.0, the reported regression</div></div>
   <div class="stat"><div class="v">6.5×</div><div class="k">vs v0.321.0, before generics</div></div>
   <div class="stat"><div class="v">8</div><div class="k">correctness bugs fixed<br><span style="font-size:.85em">(4 in released frozen)</span></div></div>
+  <div class="stat"><div class="v">6.3ms</div><div class="k">handcrafted C++ floor (~300× below)</div></div>
 </div>
 
 <h2>The ladder</h2>
@@ -145,6 +146,9 @@ li{margin-bottom:.4rem}
 <tr><td><code>arr-ai/arrai</code> — 13 commits, then bump <code>go.mod</code> to the new frozen</td><td><span class="pill wait">needs PR + release</span></td></tr>
 </table></div>
 <p>The frozen fixes are worth shipping on their own merits, independently of the performance work: two of them are silent-wrong-answer bugs and one is a data race, all present in every published version.</p>
+
+<h2>The native floor</h2>
+<p>A handcrafted single-file C++ implementation of the same scenario — wire-format protobuf decode, same normalisation and rendering rules, byte-identical output, enforced by <code>TestNativeReconstruct</code> against the same golden — runs in <strong>6.3&nbsp;ms</strong> where the evaluator takes 1.90&nbsp;s. That ~300× gap is the honest measure of remaining interpretation overhead: everything the evaluator pays for grammar-parsing the program, immutable relational values, and per-element closure dispatch. It bounds the remaining ladder — after 34× there is still roughly two and a half orders of magnitude of headroom, which is fuel for the compiler-shaped items below (🎯T10's builders, string representation, and eventually compilation rather than tree-walking). <span class="mono">perf/reconstruct/native/</span>.</p>
 
 <h2>What's ahead</h2>
 
