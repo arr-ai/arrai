@@ -32,8 +32,16 @@ func (e *DArrowExpr) Eval(ctx context.Context, local Scope) (_ Value, err error)
 		return nil, WrapContextErr(err, e, local)
 	}
 	if set, ok := value.(Set); ok {
-		b := NewSetBuilder()
 		ident, isIdent := e.fn.arg.(IdentPattern)
+		if fastPaths && isIdent {
+			// The ident path threads nothing between elements, so a large
+			// set can evaluate its bodies in parallel. Other patterns
+			// thread ctx through Bind and stay sequential.
+			if v, done, err := e.evalParallel(ctx, set, string(ident), local); done || err != nil {
+				return v, err
+			}
+		}
+		b := NewSetBuilder()
 		for i := set.Enumerator(); i.MoveNext(); {
 			var v Value
 			var err error
@@ -61,4 +69,45 @@ func (e *DArrowExpr) Eval(ctx context.Context, local Scope) (_ Value, err error)
 	}
 	return nil, WrapContextErr(errors.Errorf(
 		"=> lhs must be set, not %s: %v", ValueTypeAsString(value), value), e, local)
+}
+
+// evalParallel evaluates the transform's body over a large set's elements in
+// parallel, returning done == false when the set is below the parallel
+// threshold. The error, if any, is the first element's in enumeration
+// order, matching the sequential path.
+func (e *DArrowExpr) evalParallel(
+	ctx context.Context, set Set, ident string, local Scope,
+) (_ Value, done bool, err error) {
+	ranges := parallelRanges(set.Count())
+	if ranges == nil {
+		return nil, false, nil
+	}
+	elems := make([]Value, 0, set.Count())
+	for i := set.Enumerator(); i.MoveNext(); {
+		elems = append(elems, i.Current())
+	}
+	out := make([]Value, len(elems))
+	errs := make([]error, len(ranges))
+	runRanges(ranges, func(w, lo, hi int) {
+		for i := lo; i < hi; i++ {
+			v, err := e.fn.body.Eval(ctx, local.With(ident, elems[i]))
+			if err != nil {
+				errs[w] = err
+				return
+			}
+			out[i] = v
+		}
+	})
+	if err := firstErr(errs); err != nil {
+		return nil, true, WrapContextErr(err, e, local)
+	}
+	b := NewSetBuilder()
+	for _, v := range out {
+		b.Add(v)
+	}
+	s, err := b.Finish()
+	if err != nil {
+		return nil, true, WrapContextErr(err, e, local)
+	}
+	return s, true, nil
 }

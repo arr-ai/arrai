@@ -246,8 +246,15 @@ func (r *positionalRelation) Without(v Values) *positionalRelation {
 }
 
 // Where returns the view of rows satisfying p: the same store behind a
-// selection, with no rows copied.
+// selection, with no rows copied. Large views evaluate the predicate in
+// parallel; concatenating the per-range selections in range order keeps the
+// selection ascending.
 func (r *positionalRelation) Where(p func(Values) (bool, error)) (*positionalRelation, error) {
+	if fastPaths {
+		if ranges := parallelRanges(r.n); ranges != nil {
+			return r.whereParallel(ranges, p)
+		}
+	}
 	sel := make([]uint32, 0, r.n)
 	for i := 0; i < r.n; i++ {
 		match, err := p(r.rowAt(i))
@@ -260,6 +267,42 @@ func (r *positionalRelation) Where(p func(Values) (bool, error)) (*positionalRel
 	}
 	if len(sel) == r.n {
 		return r, nil
+	}
+	return r.selView(sel), nil
+}
+
+func (r *positionalRelation) whereParallel(
+	ranges [][2]int, p func(Values) (bool, error),
+) (*positionalRelation, error) {
+	sels := make([][]uint32, len(ranges))
+	errs := make([]error, len(ranges))
+	runRanges(ranges, func(w, lo, hi int) {
+		sel := make([]uint32, 0, hi-lo)
+		for i := lo; i < hi; i++ {
+			match, err := p(r.rowAt(i))
+			if err != nil {
+				errs[w] = err
+				return
+			}
+			if match {
+				sel = append(sel, r.arenaID(i))
+			}
+		}
+		sels[w] = sel
+	})
+	if err := firstErr(errs); err != nil {
+		return nil, err
+	}
+	total := 0
+	for _, s := range sels {
+		total += len(s)
+	}
+	if total == r.n {
+		return r, nil
+	}
+	sel := make([]uint32, 0, total)
+	for _, s := range sels {
+		sel = append(sel, s...)
 	}
 	return r.selView(sel), nil
 }
