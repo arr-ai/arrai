@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"testing"
 	"time"
 
@@ -29,6 +30,9 @@ func TestNativeReconstruct(t *testing.T) {
 	dir, err := filepath.Abs("reconstruct")
 	require.NoError(t, err)
 	bin := filepath.Join(t.TempDir(), "reconstruct-native")
+	if runtime.GOOS == "windows" {
+		bin += ".exe" // MinGW appends it; exec needs the real path.
+	}
 	build := exec.Command(cxx, "-std=c++20", "-O2", "-o", bin,
 		filepath.Join(dir, "native", "reconstruct.cpp"))
 	out, err := build.CombinedOutput()
