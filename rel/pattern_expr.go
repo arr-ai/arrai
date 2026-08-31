@@ -4,8 +4,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-
-	"github.com/go-errors/errors"
 )
 
 type ExprPattern struct {
@@ -25,20 +23,20 @@ func NewExprPattern(expr Expr) Pattern {
 	return ExprPattern{Expr: expr}
 }
 
-func (p ExprPattern) Bind(ctx context.Context, scope Scope, value Value) (context.Context, Scope, error) {
+func (p ExprPattern) Bind(ctx context.Context, scope Scope, value Value, b *scopeBuilder) (context.Context, error) {
 	if identExpr, is := p.Expr.(IdentExpr); is {
 		// Bind value for identexpr in Pattern, like `let (a: x, b: y) = (a: 4, b: 7); x`
-		return ctx, Scope{}.With(identExpr.ident, value), nil
+		return ctx, b.add(identExpr.ident, value)
 	}
 
 	v, err := p.Expr.Eval(ctx, scope)
 	if err != nil {
-		return ctx, Scope{}, err
+		return ctx, err
 	}
 	if v.Equal(value) {
-		return ctx, Scope{}, nil
+		return ctx, nil
 	}
-	return ctx, Scope{}, fmt.Errorf("no match: %v != %v", v, value)
+	return ctx, lazyErrorf("no match: %v != %v", v, value)
 }
 
 func (p ExprPattern) String() string {
@@ -57,27 +55,27 @@ func NewExprsPattern(exprs ...Expr) ExprsPattern {
 	return ExprsPattern{exprs: exprs}
 }
 
-func (p ExprsPattern) Bind(ctx context.Context, scope Scope, value Value) (context.Context, Scope, error) {
+func (p ExprsPattern) Bind(ctx context.Context, scope Scope, value Value, b *scopeBuilder) (context.Context, error) {
 	if len(p.exprs) == 0 {
-		return ctx, EmptyScope, errors.Errorf("there is not any rel.Expr in rel.ExprsPattern")
+		return ctx, lazyErrorf("there is not any rel.Expr in rel.ExprsPattern")
 	}
 
 	incomingVal, err := value.Eval(ctx, scope)
 	if err != nil {
-		return ctx, EmptyScope, err
+		return ctx, err
 	}
 
 	for _, e := range p.exprs {
 		val, err := e.Eval(ctx, scope)
 		if err != nil {
-			return ctx, EmptyScope, err
+			return ctx, err
 		}
 		if incomingVal.Equal(val) {
-			return ctx, EmptyScope, nil
+			return ctx, nil
 		}
 	}
 
-	return ctx, EmptyScope, errors.Errorf("didn't find matched value")
+	return ctx, lazyErrorf("didn't find matched value")
 }
 
 func (p ExprsPattern) String() string {

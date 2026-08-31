@@ -62,22 +62,16 @@ func validTuplePattern(p TuplePattern) error {
 	return nil
 }
 
-func (p TuplePattern) Bind(ctx context.Context, local Scope, value Value) (context.Context, Scope, error) {
+func (p TuplePattern) Bind(ctx context.Context, local Scope, value Value, b *scopeBuilder) (context.Context, error) {
 	tuple, is := value.(Tuple)
 	if !is {
-		return ctx, EmptyScope, lazyErrorf("%s is not a tuple", value)
+		return ctx, lazyErrorf("%s is not a tuple", value)
 	}
 
-	var result scopeBuilder
-	bind := func(ctx context.Context, attr TuplePatternAttr, tupleValue Value) (context.Context, error) {
-		ctx, scope, err := attr.pattern.Bind(ctx, local, tupleValue)
-		if err != nil {
-			return ctx, err
-		}
-		return ctx, result.matchedAdd(scope)
-	}
-
-	names := tuple.Names()
+	// matched counts the tuple's attributes consumed by the pattern; the
+	// leftover (for the `...` pattern, or the too-long check) is everything
+	// else. This replaces maintaining a shrinking frozen name set per step.
+	matched := 0
 	var extraPattern *TuplePatternAttr
 
 	for i, attr := range p.attrs {
@@ -85,53 +79,58 @@ func (p TuplePattern) Bind(ctx context.Context, local Scope, value Value) (conte
 		if _, is := attr.pattern.pattern.(ExtraElementPattern); is {
 			// detects a second `...`
 			if extraPattern != nil {
-				return ctx, EmptyScope, lazyErrorf("non-deterministic pattern is not supported yet")
+				return ctx, lazyErrorf("non-deterministic pattern is not supported yet")
 			}
 			extraPattern = &p.attrs[i]
 			continue
 		}
-		if attr.pattern.fallback == nil && !names.IsTrue() {
-			return ctx, EmptyScope, lazyErrorf("length of tuple %s shorter than tuple pattern %s", tuple, p)
+		if attr.pattern.fallback == nil && matched == tuple.Count() {
+			return ctx, lazyErrorf("length of tuple %s shorter than tuple pattern %s", tuple, p)
 		}
 		var found bool
 		tupleValue, found = tuple.Get(attr.name)
 		if !found {
 			if attr.pattern.fallback == nil {
-				return ctx, EmptyScope, lazyErrorf("couldn't find %s in tuple %s", attr.name, tuple)
+				return ctx, lazyErrorf("couldn't find %s in tuple %s", attr.name, tuple)
 			}
 			var err error
 			tupleValue, err = attr.pattern.fallback.Eval(ctx, local)
 			if err != nil {
-				return ctx, EmptyScope, err
+				return ctx, err
 			}
+		} else {
+			matched++
 		}
 
 		var err error
-		ctx, err = bind(ctx, attr, tupleValue)
+		ctx, err = attr.pattern.Bind(ctx, local, tupleValue, b)
 		if err != nil {
-			return ctx, EmptyScope, err
+			return ctx, err
 		}
-		names = names.Without(attr.name)
 	}
 
 	if extraPattern != nil {
+		// Leftover names are computed once, only when a `...` needs them.
+		names := tuple.Names()
+		for _, attr := range p.attrs {
+			if _, is := attr.pattern.pattern.(ExtraElementPattern); !is {
+				names = names.Without(attr.name)
+			}
+		}
 		tupleValue := tuple.Project(names)
 		if tupleValue == nil {
-			return ctx, EmptyScope, lazyErrorf("tuple %s cannot match tuple pattern %s", tuple, p)
+			return ctx, lazyErrorf("tuple %s cannot match tuple pattern %s", tuple, p)
 		}
 		var err error
-		ctx, err = bind(ctx, *extraPattern, tupleValue)
+		ctx, err = extraPattern.pattern.Bind(ctx, local, tupleValue, b)
 		if err != nil {
-			return ctx, EmptyScope, err
+			return ctx, err
 		}
-		names = EmptyNames
+	} else if matched < tuple.Count() {
+		return ctx, lazyErrorf("length of tuple %s longer than tuple pattern %s", tuple, p)
 	}
 
-	if names.IsTrue() {
-		return ctx, EmptyScope, lazyErrorf("length of tuple %s longer than tuple pattern %s", tuple, p)
-	}
-
-	return ctx, result.finish(), nil
+	return ctx, nil
 }
 
 func (p TuplePattern) String() string { //nolint:dupl

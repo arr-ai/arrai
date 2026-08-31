@@ -2,7 +2,6 @@ package rel
 
 import (
 	"context"
-	"errors"
 	"fmt"
 )
 
@@ -18,21 +17,21 @@ func NewFallbackPattern(pattern Pattern, fallback Expr) FallbackPattern {
 	}
 }
 
-func (p FallbackPattern) Bind(ctx context.Context, local Scope, value Value) (context.Context, Scope, error) {
+func (p FallbackPattern) Bind(ctx context.Context, local Scope, value Value, b *scopeBuilder) (context.Context, error) {
 	if value != nil {
-		return p.pattern.Bind(ctx, local, value)
+		return p.pattern.Bind(ctx, local, value, b)
 	}
 
 	if p.fallback == nil {
-		return ctx, EmptyScope, errors.New("no value and no fallback")
+		return ctx, lazyErrorf("no value and no fallback")
 	}
 
 	var err error
 	value, err = p.fallback.Eval(ctx, local)
 	if err != nil {
-		return ctx, EmptyScope, err
+		return ctx, err
 	}
-	return p.pattern.Bind(ctx, EmptyScope, value)
+	return p.pattern.Bind(ctx, EmptyScope, value, b)
 }
 
 func (p FallbackPattern) String() string {

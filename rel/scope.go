@@ -335,20 +335,20 @@ type scopeBuilder struct {
 	vals  []Expr
 }
 
-// matchedAdd adds t's bindings, with MatchedUpdate's rule: a name bound
-// twice must be bound to the same value.
-func (b *scopeBuilder) matchedAdd(t Scope) error {
-	names, vals := t.flatten()
-	for i, name := range names {
-		if j := b.index(name); j >= 0 {
-			if b.vals[j].String() != vals[i].String() {
-				return fmt.Errorf("the value of %s is different in both scopes", name)
-			}
-			continue
-		}
-		b.names = append(b.names, name)
-		b.vals = append(b.vals, vals[i])
+// add adds one binding, with MatchedUpdate's rule: a name bound twice must
+// be bound to the same value. "_" is a discard, as in Scope.With.
+func (b *scopeBuilder) add(name string, val Expr) error {
+	if name == "_" {
+		return nil
 	}
+	if j := b.index(name); j >= 0 {
+		if b.vals[j].String() != val.String() {
+			return lazyErrorf("the value of %s is different in both scopes", name)
+		}
+		return nil
+	}
+	b.names = append(b.names, name)
+	b.vals = append(b.vals, val)
 	return nil
 }
 
@@ -365,5 +365,20 @@ func (b *scopeBuilder) finish() Scope {
 	if len(b.names) == 0 {
 		return EmptyScope
 	}
+	if len(b.names) == 1 {
+		return Scope{&frame{name: b.names[0], val: b.vals[0]}}
+	}
 	return Scope{&frame{names: b.names, vals: b.vals}}
+}
+
+// updateWith pushes b's bindings above s as one frame: Update without
+// materialising an intermediate scope.
+func (s Scope) updateWith(b *scopeBuilder) Scope {
+	switch len(b.names) {
+	case 0:
+		return s
+	case 1:
+		return Scope{&frame{parent: s.f, name: b.names[0], val: b.vals[0]}}
+	}
+	return Scope{&frame{parent: s.f, names: b.names, vals: b.vals}}
 }

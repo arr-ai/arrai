@@ -174,11 +174,12 @@ func (c Closure) call(ctx context.Context, arg Value) (Value, error) {
 	if ident, is := c.f.arg.(IdentPattern); is {
 		return c.f.body.Eval(ctx, c.scope.With(string(ident), arg))
 	}
-	ctx, scope, err := c.f.arg.Bind(ctx, c.scope, arg)
+	var b scopeBuilder
+	ctx, err := c.f.arg.Bind(ctx, c.scope, arg, &b)
 	if err != nil {
 		return nil, err
 	}
-	return c.f.body.Eval(ctx, c.scope.Update(scope))
+	return c.f.body.Eval(ctx, c.scope.updateWith(&b))
 }
 
 func (Closure) unionSetSubsetBucket() string {
