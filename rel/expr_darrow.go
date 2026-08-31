@@ -41,6 +41,9 @@ func (e *DArrowExpr) Eval(ctx context.Context, local Scope) (_ Value, err error)
 				return v, err
 			}
 		}
+		// NOTE: not converted to range-over-All: this body assigns captured
+		// locals (ctx, err), which range-over-func turns into heap cells per
+		// call — measured as a regression on small-set-heavy workloads.
 		b := NewSetBuilder()
 		for i := set.Enumerator(); i.MoveNext(); {
 			var v Value
@@ -83,8 +86,8 @@ func (e *DArrowExpr) evalParallel(
 		return nil, false, nil
 	}
 	elems := make([]Value, 0, set.Count())
-	for i := set.Enumerator(); i.MoveNext(); {
-		elems = append(elems, i.Current())
+	for elem := range All(set) {
+		elems = append(elems, elem)
 	}
 	out := make([]Value, len(elems))
 	errs := make([]error, len(ranges))
