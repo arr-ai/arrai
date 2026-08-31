@@ -59,33 +59,35 @@ li{margin-bottom:.4rem}
 <p class="lede">Where the evaluator work stands: what landed, what it bought, what it fixed along the way, and what is still ahead. The measuring stick throughout is Arieh's <code>reconstruct</code> workload — 1000 synthetic sysl apps, protobuf to relations to rendered source — with output byte-identical to arrai v0.321.0 at every step.</p>
 
 <div class="grid">
-  <div class="stat"><div class="v">1.81s</div><div class="k">now (0.94s compile + 0.87s eval)</div></div>
-  <div class="stat"><div class="v">34×</div><div class="k">vs v0.338.0, the reported regression</div></div>
+  <div class="stat"><div class="v">1.77s</div><div class="k">now (0.93s compile + 0.85s eval)</div></div>
+  <div class="stat"><div class="v">36×</div><div class="k">vs v0.338.0, the reported regression</div></div>
   <div class="stat"><div class="v">6.5×</div><div class="k">vs v0.321.0, before generics</div></div>
   <div class="stat"><div class="v">8</div><div class="k">correctness bugs fixed<br><span style="font-size:.85em">(4 in released frozen)</span></div></div>
-  <div class="stat"><div class="v">6.3ms</div><div class="k">handcrafted C++ floor (~145× below eval)</div></div>
+  <div class="stat"><div class="v">6.3ms</div><div class="k">handcrafted C++ floor (~134× below eval)</div></div>
 </div>
 
 <h2>The ladder</h2>
-<p>Each row is a commit or group of commits, measured on the same machine, same model, output checked byte-for-byte every time. Speedup is against the reported v0.338.0 run (range midpoints) as 1×.</p>
+<p>Each row is a commit or group of commits, measured on the same machine, same model, output checked byte-for-byte every time. Speedup is against the reported v0.338.0 run (range midpoints) as 1×: <em>total</em> is wall clock; <em>algo</em> subtracts a baseline compile phase of 925&nbsp;ms (parsing the program and the sysl library, assumed constant across builds), which is what the evaluator work actually moves.</p>
 <div class="tbl"><table>
-<tr><th>Build</th><th class="num">Repro</th><th class="num">Speedup</th><th>Commit</th></tr>
-<tr><td>v0.338.0 — as reported</td><td class="num"><span class="bar hot" style="width:200px"></span>58.8–67.8s</td><td class="num">1×</td><td class="sha">—</td></tr>
-<tr><td>v0.321.0 — before the generics migration</td><td class="num"><span class="bar" style="width:40px"></span>11.6–12.6s</td><td class="num">5.2×</td><td class="sha">reference</td></tr>
-<tr><td>Start of this work</td><td class="num"><span class="bar hot" style="width:73px"></span>20.5–25.3s</td><td class="num">2.8×</td><td class="sha">9a1ce45</td></tr>
-<tr><td>Direct calls + index-backed <code>where</code></td><td class="num"><span class="bar" style="width:26px"></span>7.2–7.8s</td><td class="num">8.4×</td><td class="sha">8b76cd4</td></tr>
-<tr><td>Direct <code>let rec</code>, functions hashed by identity</td><td class="num"><span class="bar" style="width:24px"></span>6.6–7.1s</td><td class="num">9.2×</td><td class="sha">8a642c0</td></tr>
-<tr><td>Single-pass 128-bit hashing, three repos</td><td class="num"><span class="bar" style="width:17px"></span>4.4–5.1s</td><td class="num">13×</td><td class="sha">b04a5ac</td></tr>
-<tr><td>Scopes as lexical frames + identifier caches</td><td class="num"><span class="bar" style="width:14px"></span>3.6–4.3s</td><td class="num">16×</td><td class="sha">c722ec4</td></tr>
-<tr><td>Evaluator hygiene (four items)</td><td class="num"><span class="bar" style="width:12px"></span>3.2–3.9s</td><td class="num">18×</td><td class="sha">bf07041</td></tr>
-<tr><td><strong>Shape-backed tuples</strong></td><td class="num"><span class="bar" style="width:8px"></span><strong>2.13s</strong></td><td class="num"><strong>30×</strong></td><td class="sha">e4691e6</td></tr>
-<tr><td>Relation shape matching, typed group index</td><td class="num"><span class="bar" style="width:8px"></span>2.1s</td><td class="num">30×</td><td class="sha">d066aa5 · fbfffdd</td></tr>
-<tr><td>frozen fans out from 256 elements</td><td class="num"><span class="bar" style="width:8px"></span>2.25s <span class="muted">(no change here)</span></td><td class="num">28×</td><td class="sha">953bdfb</td></tr>
-<tr><td><strong>Flat-arena relations with lazy indexing</strong></td><td class="num"><span class="bar" style="width:7px"></span><strong>2.08s</strong></td><td class="num"><strong>30×</strong></td><td class="sha">41352d9</td></tr>
-<tr><td><strong>Parallel <code>where</code> and <code>=&gt;</code> bodies</strong></td><td class="num"><span class="bar" style="width:6px"></span><strong>1.87s</strong></td><td class="num"><strong>34×</strong></td><td class="sha">d669219</td></tr>
-<tr><td>Hash128/Equal contract restored for arena relations (rebase over #736–#738, #740)</td><td class="num"><span class="bar" style="width:6px"></span>1.90s</td><td class="num">33×</td><td class="sha">5ad9966</td></tr>
-<tr><td>Reflection-free sorts (<code>slices.SortFunc</code> sweep)</td><td class="num"><span class="bar" style="width:6px"></span>1.85s</td><td class="num">34×</td><td class="sha">a955967</td></tr>
-<tr><td><strong>Linear string/array concatenation</strong></td><td class="num"><span class="bar" style="width:6px"></span><strong>1.81s</strong></td><td class="num"><strong>35×</strong></td><td class="sha">b051b91</td></tr>
+<tr><th rowspan="2">Build</th><th class="num" rowspan="2">Repro</th><th class="num" colspan="2">Speedup</th><th rowspan="2">Commit</th></tr>
+<tr><th class="num">Total</th><th class="num">Algo</th></tr>
+<tr><td>v0.338.0 — as reported</td><td class="num"><span class="bar hot" style="width:200px"></span>58.8–67.8s</td><td class="num">1.0×</td><td class="num">1.0×</td><td class="sha">—</td></tr>
+<tr><td>v0.321.0 — before the generics migration</td><td class="num"><span class="bar" style="width:40px"></span>11.6–12.6s</td><td class="num">5.2×</td><td class="num">5.6×</td><td class="sha">reference</td></tr>
+<tr><td>Start of this work</td><td class="num"><span class="bar hot" style="width:73px"></span>20.5–25.3s</td><td class="num">2.8×</td><td class="num">2.8×</td><td class="sha">9a1ce45</td></tr>
+<tr><td>Direct calls + index-backed <code>where</code></td><td class="num"><span class="bar" style="width:26px"></span>7.2–7.8s</td><td class="num">8.4×</td><td class="num">9.5×</td><td class="sha">8b76cd4</td></tr>
+<tr><td>Direct <code>let rec</code>, functions hashed by identity</td><td class="num"><span class="bar" style="width:24px"></span>6.6–7.1s</td><td class="num">9.2×</td><td class="num">11×</td><td class="sha">8a642c0</td></tr>
+<tr><td>Single-pass 128-bit hashing, three repos</td><td class="num"><span class="bar" style="width:17px"></span>4.4–5.1s</td><td class="num">13×</td><td class="num">16×</td><td class="sha">b04a5ac</td></tr>
+<tr><td>Scopes as lexical frames + identifier caches</td><td class="num"><span class="bar" style="width:14px"></span>3.6–4.3s</td><td class="num">16×</td><td class="num">21×</td><td class="sha">c722ec4</td></tr>
+<tr><td>Evaluator hygiene (four items)</td><td class="num"><span class="bar" style="width:12px"></span>3.2–3.9s</td><td class="num">18×</td><td class="num">24×</td><td class="sha">bf07041</td></tr>
+<tr><td><strong>Shape-backed tuples</strong></td><td class="num"><span class="bar" style="width:8px"></span><strong>2.13s</strong></td><td class="num"><strong>30×</strong></td><td class="num"><strong>52×</strong></td><td class="sha">e4691e6</td></tr>
+<tr><td>Relation shape matching, typed group index</td><td class="num"><span class="bar" style="width:8px"></span>2.1s</td><td class="num">30×</td><td class="num">53×</td><td class="sha">d066aa5 · fbfffdd</td></tr>
+<tr><td>frozen fans out from 256 elements</td><td class="num"><span class="bar" style="width:8px"></span>2.25s <span class="muted">(no change here)</span></td><td class="num">28×</td><td class="num">47×</td><td class="sha">953bdfb</td></tr>
+<tr><td><strong>Flat-arena relations with lazy indexing</strong></td><td class="num"><span class="bar" style="width:7px"></span><strong>2.08s</strong></td><td class="num"><strong>30×</strong></td><td class="num"><strong>54×</strong></td><td class="sha">41352d9</td></tr>
+<tr><td><strong>Parallel <code>where</code> and <code>=&gt;</code> bodies</strong></td><td class="num"><span class="bar" style="width:6px"></span><strong>1.87s</strong></td><td class="num"><strong>34×</strong></td><td class="num"><strong>66×</strong></td><td class="sha">d669219</td></tr>
+<tr><td>Hash128/Equal contract restored for arena relations (rebase over #736–#738, #740)</td><td class="num"><span class="bar" style="width:6px"></span>1.90s</td><td class="num">33×</td><td class="num">64×</td><td class="sha">5ad9966</td></tr>
+<tr><td>Reflection-free sorts (<code>slices.SortFunc</code> sweep)</td><td class="num"><span class="bar" style="width:6px"></span>1.85s</td><td class="num">34×</td><td class="num">67×</td><td class="sha">a955967</td></tr>
+<tr><td><strong>Linear string/array concatenation</strong></td><td class="num"><span class="bar" style="width:6px"></span><strong>1.81s</strong></td><td class="num"><strong>35×</strong></td><td class="num"><strong>70×</strong></td><td class="sha">b051b91</td></tr>
+<tr><td>ASCII strings backed by bytes</td><td class="num"><span class="bar" style="width:6px"></span>1.77s</td><td class="num">36×</td><td class="num">74×</td><td class="sha">8099984</td></tr>
 </table></div>
 <p class="muted">The frozen fan-out row is flat on purpose: reconstruct's relations are a few thousand rows and its time is dominated by grammar parsing, so it is the wrong workload to show parallelism. On a 60,000-row relational script the same change is worth 25%.</p>
 
@@ -161,7 +163,7 @@ li{margin-bottom:.4rem}
 <div class="tbl"><table>
 <tr><th>Phase</th><th class="num">Time</th><th class="num">vs native</th></tr>
 <tr><td>Compile — parse the program and the sysl library</td><td class="num">~0.93s</td><td class="num">—</td></tr>
-<tr><td><strong>Eval — the algorithm</strong></td><td class="num"><strong>~0.93s</strong></td><td class="num"><strong>~145×</strong></td></tr>
+<tr><td><strong>Eval — the algorithm</strong></td><td class="num"><strong>~0.85s</strong></td><td class="num"><strong>~134×</strong></td></tr>
 <tr><td>Native C++ (algorithm, compiled at build time)</td><td class="num">6.3ms</td><td class="num">1×</td></tr>
 </table></div>
 <p>So the like-for-like interpretation overhead is <strong>~145×</strong>, not 300×: the price of tree-walking, immutable relational values, and per-element closure dispatch. The other half is the compile phase, attackable independently (compiled program caching, bundling, or the wbnf work). Both halves are fuel for the items below. <span class="mono">perf/reconstruct/native/</span>.</p>
