@@ -240,19 +240,20 @@ func (s GenericSet) Map(f func(v Value) (Value, error)) (Set, error) {
 }
 
 // Where returns a new genericSet with all the Values satisfying predicate p.
-func (s GenericSet) Where(p func(v Value) (bool, error)) (_ Set, err error) {
+func (s GenericSet) Where(p func(v Value) (bool, error)) (Set, error) {
+	var failure whereErr
 	set := s.set.Where(func(elem Value) bool {
-		if err != nil {
+		if failure.failed() {
 			return false
 		}
-		match, err2 := p(elem)
-		if err2 != nil {
-			err = err2
+		match, err := p(elem)
+		if err != nil {
+			failure.set(err)
 			return false
 		}
 		return match
 	})
-	if err != nil {
+	if err := failure.get(); err != nil {
 		return nil, err
 	}
 	return newSetFromFrozenSet(set), nil

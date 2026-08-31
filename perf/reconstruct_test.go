@@ -88,8 +88,8 @@ func TestReconstruct(t *testing.T) {
 	require.Equal(t, string(expected), out.String(),
 		"output differs from the v0.321.0 reference; this is a correctness regression")
 
-	if !fastPathsEnabled {
-		t.Log("built with -tags slowpath: output was checked, allocation budget skipped")
+	if !fastPathsEnabled || raceEnabled {
+		t.Log("fast paths disabled or -race: output was checked, allocation budget skipped")
 		return
 	}
 	if allocsM > reconstructAllocBudgetM {
