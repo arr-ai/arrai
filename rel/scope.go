@@ -26,19 +26,54 @@ type Scope struct {
 	f *frame
 }
 
-// frame is one link of a scope chain. names and vals are parallel; within a
-// frame a later entry shadows an earlier one with the same name, and any
-// entry shadows the whole parent chain.
+// frame is one link of a scope chain. Within a frame a later entry shadows
+// an earlier one with the same name, and any entry shadows the whole parent
+// chain.
+//
+// A single binding — the overwhelmingly common frame, one per element in
+// `=>`, `where` and `let` — is stored inline (name != ""), costing one
+// allocation instead of three. Multi-binding frames use the parallel
+// names/vals slices. Identifiers are never empty, so name doubles as the
+// discriminant. Access goes through count/nameAt/valAt.
 type frame struct {
 	parent *frame
+	name   string
+	val    Expr
 	names  []string
 	vals   []Expr
+}
+
+func (f *frame) count() int {
+	if f.name != "" {
+		return 1
+	}
+	return len(f.names)
+}
+
+func (f *frame) nameAt(i int) string {
+	if f.name != "" {
+		return f.name
+	}
+	return f.names[i]
+}
+
+func (f *frame) valAt(i int) Expr {
+	if f.name != "" {
+		return f.val
+	}
+	return f.vals[i]
 }
 
 // lookup finds the newest binding of name, returning the frame, the slot and
 // the number of parent hops taken.
 func (s Scope) lookup(name string) (f *frame, slot, hops int) {
 	for f = s.f; f != nil; f, hops = f.parent, hops+1 {
+		if f.name != "" {
+			if f.name == name {
+				return f, 0, hops
+			}
+			continue
+		}
 		for i := len(f.names) - 1; i >= 0; i-- {
 			if f.names[i] == name {
 				return f, i, hops
@@ -102,7 +137,7 @@ func (s Scope) Count() int {
 // Get returns the Expr for the given name or nil.
 func (s Scope) Get(name string) (Expr, bool) {
 	if f, slot, _ := s.lookup(name); f != nil {
-		return f.vals[slot], true
+		return f.valAt(slot), true
 	}
 	return nil, false
 }
@@ -121,7 +156,7 @@ func (s Scope) With(name string, expr Expr) Scope {
 	if name == "_" {
 		return s
 	}
-	return Scope{&frame{parent: s.f, names: []string{name}, vals: []Expr{expr}}}
+	return Scope{&frame{parent: s.f, name: name, val: expr}}
 }
 
 // MatchedWith returns a new scope. New keys are added as With,
@@ -180,6 +215,9 @@ func (s Scope) Update(t Scope) Scope {
 // flatten returns the scope's bindings oldest-first, one entry per name.
 func (s Scope) flatten() ([]string, []Expr) {
 	if s.f != nil && s.f.parent == nil {
+		if s.f.name != "" {
+			return []string{s.f.name}, []Expr{s.f.val}
+		}
 		return s.f.names, s.f.vals
 	}
 	var names []string
@@ -241,15 +279,15 @@ func (s Scope) Enumerator() *ScopeEnumerator {
 	var vals []Expr
 	for f := s.f; f != nil; f = f.parent {
 	entries:
-		for i := len(f.names) - 1; i >= 0; i-- {
-			n := f.names[i]
+		for i := f.count() - 1; i >= 0; i-- {
+			n := f.nameAt(i)
 			for _, seen := range names {
 				if seen == n {
 					continue entries
 				}
 			}
 			names = append(names, n)
-			vals = append(vals, f.vals[i])
+			vals = append(vals, f.valAt(i))
 		}
 	}
 	for i, j := 0, len(names)-1; i < j; i, j = i+1, j-1 {
