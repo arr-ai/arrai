@@ -159,6 +159,23 @@ func NewGoString(s string) Set {
 	return String{ascii: []byte(s)}
 }
 
+// internedStrings canonicalises compile-time string literals so every
+// occurrence of the same literal shares one backing array, letting
+// EqualString's same-backing fast path answer literal-vs-literal
+// comparisons without scanning. Bounded by program text, so entries live
+// for the process.
+var internedStrings sync.Map // string -> Set
+
+// InternedGoString is NewGoString for compile-time literals: the same
+// content always returns the same value.
+func InternedGoString(s string) Set {
+	if v, ok := internedStrings.Load(s); ok {
+		return v.(Set)
+	}
+	v, _ := internedStrings.LoadOrStore(s, NewGoString(s))
+	return v.(Set)
+}
+
 // NewOffsetString constructs an offset string as a relation.
 func NewOffsetString(s []rune, offset int) Set {
 	if len(s) == 0 {
@@ -252,6 +269,11 @@ func (s String) EqualString(t String) bool {
 		return false
 	}
 	if s.ascii != nil && t.ascii != nil {
+		// Shared backing (interned literals, or one string derived from the
+		// other) means equal content without scanning.
+		if len(s.ascii) == len(t.ascii) && (len(s.ascii) == 0 || &s.ascii[0] == &t.ascii[0]) {
+			return true
+		}
 		return bytes.Equal(s.ascii, t.ascii)
 	}
 	for i, n := 0, s.size(); i < n; i++ {

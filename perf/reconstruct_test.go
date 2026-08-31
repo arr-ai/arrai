@@ -44,7 +44,7 @@ import (
 
 // Allocation budget for the reconstruct scenario, in millions. Lower it when
 // an optimisation earns it; raising it needs a reason in the commit message.
-const reconstructAllocBudgetM = 41.0
+const reconstructAllocBudgetM = 40.0
 
 func TestReconstruct(t *testing.T) {
 	if testing.Short() {
