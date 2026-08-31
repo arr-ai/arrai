@@ -1,0 +1,4 @@
+go test fuzz v1
+string("\x89")
+string("\xb8")
+byte('R')
