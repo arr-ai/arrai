@@ -20,18 +20,90 @@ import (
 // completely independent of the repeated value -- so, for example,
 // ["AppA", "AppA"] and ["AppB", "AppB"] hashed identically despite being
 // unequal, silently corrupting any hash-based Set/Map containing such
-// arrays as elements or as part of a composite key (this is how it was
-// found: architecture-specs' fully-qualified app name paths often repeat
-// a segment, e.g. `MVISION :: MVISION`).
+// arrays as elements or as part of a composite key (found via a real
+// fully-qualified name convention that repeats a path segment).
+//
+// Covers repeats at adjacent (0,1) and non-adjacent (0,2) indices, an
+// all-elements-equal array with an even element count (an odd count doesn't
+// fully cancel — xor-ing the same value-dependent term in three times
+// leaves one copy, so a 3-element all-equal array would pass even against
+// the old, buggy formula), and a repeat one level down inside a nested
+// array.
 func TestArrayHash128DistinguishesRepeatedElementValue(t *testing.T) {
 	t.Parallel()
 
-	a := NewArray(NewString([]rune("AppA")), NewString([]rune("AppA")))
-	b := NewArray(NewString([]rune("AppB")), NewString([]rune("AppB")))
+	str := func(s string) Value { return NewString([]rune(s)) }
 
-	assert.False(t, a.Equal(b), "arrays with different repeated values must not be equal")
-	assert.NotEqual(t, a.(Array).Hash128(), b.(Array).Hash128(),
-		"arrays with different repeated values must not hash the same")
+	cases := []struct {
+		name string
+		a, b Set
+	}{
+		{
+			name: "adjacent repeat",
+			a:    NewArray(str("x"), str("x")),
+			b:    NewArray(str("y"), str("y")),
+		},
+		{
+			name: "non-adjacent repeat",
+			a:    NewArray(str("x"), str("mid"), str("x")),
+			b:    NewArray(str("y"), str("mid"), str("y")),
+		},
+		{
+			name: "all elements equal, even count",
+			a:    NewArray(str("x"), str("x"), str("x"), str("x")),
+			b:    NewArray(str("y"), str("y"), str("y"), str("y")),
+		},
+		{
+			name: "repeat nested one level down",
+			a:    NewArray(NewArray(str("x"), str("x")), str("tail")),
+			b:    NewArray(NewArray(str("y"), str("y")), str("tail")),
+		},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			t.Parallel()
+			assert.False(t, c.a.Equal(c.b), "arrays with different repeated values must not be equal")
+			assert.NotEqual(t, c.a.(Array).Hash128(), c.b.(Array).Hash128(),
+				"arrays with different repeated values must not hash the same")
+		})
+	}
+}
+
+// FuzzArrayHash128RepeatedValue generalizes
+// TestArrayHash128DistinguishesRepeatedElementValue's fixed cases across
+// arbitrary element values and repeat counts, so it can catch a
+// reintroduction of the xor-cancellation bug (or a similar one) for
+// combinations the hand-written cases don't happen to cover. Run with
+// `go test -fuzz=FuzzArrayHash128RepeatedValue ./rel/`.
+func FuzzArrayHash128RepeatedValue(f *testing.F) {
+	f.Add("x", "y", uint8(2))
+	f.Add("AppA", "AppB", uint8(2))
+	f.Add("x", "y", uint8(3))
+	f.Add("x", "y", uint8(4))
+	f.Fuzz(func(t *testing.T, x, y string, rawCount uint8) {
+		// Invalid UTF-8 bytes collapse to the same replacement rune, so
+		// compare post-[]rune-round-trip -- that's what NewString actually
+		// sees -- rather than the raw fuzzer-provided strings.
+		xr, yr := string([]rune(x)), string([]rune(y))
+		if xr == yr {
+			return
+		}
+		count := int(rawCount%6) + 2 // 2..7 repeats of the same value.
+		xs := make([]Value, count)
+		ys := make([]Value, count)
+		for i := range xs {
+			xs[i] = NewString([]rune(xr))
+			ys[i] = NewString([]rune(yr))
+		}
+		a, b := NewArray(xs...).(Array), NewArray(ys...).(Array)
+
+		if a.Equal(b) {
+			t.Fatalf("arrays of %d copies of %q and %q must not be equal", count, xr, yr)
+		}
+		if a.Hash128() == b.Hash128() {
+			t.Fatalf("arrays of %d copies of %q and %q hashed the same", count, xr, yr)
+		}
+	})
 }
 
 func TestAsArray(t *testing.T) {
