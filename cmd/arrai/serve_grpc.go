@@ -2,6 +2,8 @@ package main
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"io"
 
 	pb "github.com/arr-ai/proto"
@@ -15,22 +17,22 @@ import (
 	"github.com/arr-ai/arrai/syntax"
 )
 
-func newGrpcServer(cert, key string, e *engine.Engine) *grpc.Server {
+func newGrpcServer(cert, key string, e *engine.Engine) (*grpc.Server, error) {
 	var opts []grpc.ServerOption
 	if cert != "" || key != "" {
 		if !(cert != "" && key != "") {
-			logrus.Fatal("TLS cert and key must be supplied together")
+			return nil, errors.New("TLS cert and key must be supplied together")
 		}
 		creds, err := credentials.NewServerTLSFromFile(cert, key)
 		if err != nil {
-			logrus.Fatalf("Failed to generate credentials %v", err)
+			return nil, fmt.Errorf("failed to generate credentials: %w", err)
 		}
 		opts = append(opts, grpc.Creds(creds))
 	}
 	grpcServer := grpc.NewServer(opts...)
 	server := arraiServer{e}
 	pb.RegisterArraiServer(grpcServer, &server)
-	return grpcServer
+	return grpcServer, nil
 }
 
 type arraiServer struct {

@@ -5,10 +5,13 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"os/signal"
 	"path"
 	"runtime"
 	"runtime/pprof"
 	"strings"
+	"sync/atomic"
+	"syscall"
 
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
@@ -39,6 +42,19 @@ var cmds = []*cli.Command{
 func main() {
 	stopProfilers := prepareProfilers()
 	defer stopProfilers()
+
+	// Commands like `serve`/`sync` run until interrupted, and os.Exit (which a
+	// Ctrl-C default disposition or a stray log.Fatal elsewhere triggers) skips
+	// every deferred function in the process, including the one above. Catch
+	// the common interrupt signals so profiling data still gets flushed.
+	sigCh := make(chan os.Signal, 1)
+	signal.Notify(sigCh, os.Interrupt, syscall.SIGTERM)
+	go func() {
+		sig := <-sigCh
+		logrus.Infof("received %s, flushing profilers before exit", sig)
+		stopProfilers()
+		os.Exit(1)
+	}()
 
 	app := cli.NewApp()
 	// logrus.SetLevel(logrus.InfoLevel)
@@ -189,7 +205,11 @@ loop:
 		args = args[1:]
 	}
 	os.Args = append(os.Args[:1], args...)
+	var stopped atomic.Bool
 	return func() {
+		if !stopped.CompareAndSwap(false, true) {
+			return
+		}
 		for i := len(cleanups) - 1; i >= 0; i-- {
 			cleanups[i]()
 		}
