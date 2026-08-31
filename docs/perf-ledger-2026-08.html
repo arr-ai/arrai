@@ -30,6 +30,7 @@ code{background:var(--code-bg);padding:.08em .35em;border-radius:3px;font-size:.
 .tbl{overflow-x:auto;margin:0 0 1.2rem}
 table{border-collapse:collapse;width:100%;font-size:.9rem;font-variant-numeric:tabular-nums}
 th,td{text-align:left;padding:.5rem .7rem;border-bottom:1px solid var(--line);vertical-align:top}
+th.spanhead{text-align:center}
 th{font-size:.73rem;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3);font-weight:600}
 td.num,th.num{text-align:right}
 .bar{display:inline-block;height:.65rem;background:var(--accent);border-radius:2px;vertical-align:middle;margin-right:.45rem}
@@ -69,7 +70,7 @@ li{margin-bottom:.4rem}
 <h2>The ladder</h2>
 <p>Each row is a commit or group of commits, measured on the same machine, same model, output checked byte-for-byte every time. Speedup is against the reported v0.338.0 run (range midpoints) as 1×: <em>total</em> is wall clock; <em>algo</em> subtracts a baseline compile phase of 925&nbsp;ms (parsing the program and the sysl library, assumed constant across builds), which is what the evaluator work actually moves.</p>
 <div class="tbl"><table>
-<tr><th rowspan="2">Build</th><th class="num" rowspan="2">Repro</th><th class="num" colspan="2">Speedup</th><th rowspan="2">Commit</th></tr>
+<tr><th rowspan="2">Build</th><th class="num" rowspan="2">Repro</th><th class="spanhead" colspan="2">Speedup</th><th rowspan="2">Commit</th></tr>
 <tr><th class="num">Total</th><th class="num">Algo</th></tr>
 <tr><td>v0.338.0 — as reported</td><td class="num"><span class="bar hot" style="width:200px"></span>58.8–67.8s</td><td class="num">1.0×</td><td class="num">1.0×</td><td class="sha">—</td></tr>
 <tr><td>v0.321.0 — before the generics migration</td><td class="num"><span class="bar" style="width:40px"></span>11.6–12.6s</td><td class="num">5.2×</td><td class="num">5.6×</td><td class="sha">reference</td></tr>
