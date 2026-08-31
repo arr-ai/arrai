@@ -66,7 +66,12 @@ func loadRequiredModules(moduleRoot string) map[string]requiredModule {
 	}
 
 	mods := map[string]requiredModule{}
-	cmd := exec.Command("go", "list", "-m", "-json", "all") //nolint:gosec
+	// -mod=mod lets this self-heal a go.sum that's missing entries (e.g. a
+	// module required but not needed to build the main module's packages),
+	// matching how `go mod download` behaves. Under the default -mod=readonly,
+	// `go list` would instead fail outright and we'd wrongly treat the module
+	// as unpinned.
+	cmd := exec.Command("go", "list", "-mod=mod", "-m", "-json", "all") //nolint:gosec
 	if moduleRoot != "" {
 		cmd.Dir = moduleRoot
 	}
@@ -118,8 +123,9 @@ func seedRequiredModules(moduleRoot string, mods map[string]requiredModule) {
 // retrieveModule resolves importPath to a local module directory.
 // moduleRoot is the importing project's go.mod directory (may be empty to use
 // the process working directory). If that go.mod already requires a matching
-// module, its pinned version and effective Dir (honouring replace) are used.
-// Otherwise importPath prefixes are tried at the given version (or "latest").
+// module, its pinned version and effective Dir (honouring replace) are used,
+// and it is an error if that pinned version can't be resolved. Otherwise
+// importPath prefixes are tried at the given version (or "latest").
 func retrieveModule(importPath, version, moduleRoot string) (*goModule, error) {
 	if version == "" {
 		if pinned, ok := requiredModuleOf(moduleRoot, importPath); ok {
@@ -127,11 +133,16 @@ func retrieveModule(importPath, version, moduleRoot string) (*goModule, error) {
 				return &goModule{Name: pinned.Path, Dir: pinned.Dir}, nil
 			}
 			if pinned.Version != "" {
-				if m, err := downloadModule(pinned.Path, pinned.Version); err == nil {
-					return m, nil
+				m, err := downloadModule(pinned.Path, pinned.Version)
+				if err != nil {
+					// go.mod pins a version for this module: report the failure
+					// rather than silently resolving to a different (latest)
+					// version below, which would defeat the pin.
+					return nil, fmt.Errorf("go.mod requires %s@%s but it could not be downloaded: %w",
+						pinned.Path, pinned.Version, err)
 				}
+				return m, nil
 			}
-			// Fall through to latest-version resolution below.
 		}
 	}
 

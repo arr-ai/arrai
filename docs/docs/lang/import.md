@@ -89,7 +89,25 @@ repository. This can be done by the following:
 //{github.com/username/repo_name/path/to/script}
 ```
 
-TODO: versioning
+#### Versioning
+
+By default, `arrai` fetches the latest available version of the repository.
+
+If the importing script's project has a `go.mod` (found the same way as for
+Package Imports above) that already `require`s the module being imported, that
+pinned version is used instead — including following a `replace` directive
+that points it at a fork or a local filepath. This lets you pin or override
+remote imports the same way you would a regular Go dependency:
+
+```go
+require github.com/username/repo_name v1.2.3
+
+replace github.com/username/repo_name => ../local/fork
+```
+
+It is not possible to pin a version inline in the import path itself (e.g.
+`//{github.com/username/repo_name@v1.2.3/path/to/script}`); add or update the
+`require` line in `go.mod` instead.
 
 
 ### HTTP Imports
