@@ -63,8 +63,8 @@ func (e IdentExpr) resolve(local Scope) Expr {
 		if w := e.where.Load(); w != 0 {
 			w--
 			hops, slot := int(w>>32), int(w&0xffffffff)
-			if f := local.at(hops); f != nil && slot < len(f.names) && f.names[slot] == e.ident {
-				return f.vals[slot]
+			if f := local.at(hops); f != nil && slot < f.count() && f.nameAt(slot) == e.ident {
+				return f.valAt(slot)
 			}
 		}
 	}
@@ -75,7 +75,7 @@ func (e IdentExpr) resolve(local Scope) Expr {
 	if e.where != nil {
 		e.where.Store(uint64(hops)<<32 | uint64(slot) + 1)
 	}
-	return f.vals[slot]
+	return f.valAt(slot)
 }
 
 type DynIdentExpr struct {
