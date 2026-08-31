@@ -37,6 +37,8 @@ import (
 
 	"github.com/arr-ai/arrai/pkg/arrai"
 	"github.com/arr-ai/arrai/pkg/arraictx"
+	"github.com/arr-ai/arrai/pkg/importcache"
+	"github.com/arr-ai/arrai/rel"
 	"github.com/arr-ai/arrai/syntax"
 )
 
@@ -65,14 +67,23 @@ func TestReconstruct(t *testing.T) {
 	require.NoError(t, os.Chdir(filepath.Join(dir, "vendor")))
 	defer func() { require.NoError(t, os.Chdir(wd)) }()
 
-	ctx := arraictx.WithArgs(arraictx.InitRunCtx(context.Background()), script, model)
+	ctx := importcache.WithNewImportCache(
+		arraictx.WithArgs(arraictx.InitRunCtx(context.Background()), script, model))
 
 	var before, after runtime.MemStats
 	runtime.GC()
 	runtime.ReadMemStats(&before)
 	start := time.Now()
 
-	value, err := syntax.EvaluateExpr(ctx, script, string(source))
+	// Compile and evaluate as separate phases: compile is the cost of
+	// parsing the program and the sysl library, eval is the algorithm. The
+	// split is what makes comparisons with the native implementation fair —
+	// its compilation happened at build time.
+	expr, err := syntax.Compile(ctx, script, string(source))
+	require.NoError(t, err)
+	compiled := time.Now()
+
+	value, err := expr.Eval(ctx, rel.Scope{})
 	require.NoError(t, err)
 	var out bytes.Buffer
 	require.NoError(t, arrai.OutputValue(ctx, value, &out, ""))
@@ -81,8 +92,11 @@ func TestReconstruct(t *testing.T) {
 	runtime.ReadMemStats(&after)
 
 	allocsM := float64(after.Mallocs-before.Mallocs) / 1e6
-	t.Logf("reconstruct: %s, %.2fM allocations, %.0fMB allocated",
-		elapsed.Round(time.Millisecond), allocsM,
+	t.Logf("reconstruct: %s (compile %s + eval %s), %.2fM allocations, %.0fMB allocated",
+		elapsed.Round(time.Millisecond),
+		compiled.Sub(start).Round(time.Millisecond),
+		time.Since(compiled).Round(time.Millisecond),
+		allocsM,
 		float64(after.TotalAlloc-before.TotalAlloc)/(1<<20))
 
 	require.Equal(t, string(expected), out.String(),
