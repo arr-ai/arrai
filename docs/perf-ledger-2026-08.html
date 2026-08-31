@@ -66,23 +66,23 @@ li{margin-bottom:.4rem}
 </div>
 
 <h2>The ladder</h2>
-<p>Each row is a commit or group of commits, measured on the same machine, same model, output checked byte-for-byte every time.</p>
+<p>Each row is a commit or group of commits, measured on the same machine, same model, output checked byte-for-byte every time. Speedup is against the reported v0.338.0 run (range midpoints) as 1×.</p>
 <div class="tbl"><table>
-<tr><th>Build</th><th class="num">Repro</th><th>Commit</th></tr>
-<tr><td>v0.338.0 — as reported</td><td class="num"><span class="bar hot" style="width:200px"></span>58.8–67.8s</td><td class="sha">—</td></tr>
-<tr><td>v0.321.0 — before the generics migration</td><td class="num"><span class="bar" style="width:40px"></span>11.6–12.6s</td><td class="sha">reference</td></tr>
-<tr><td>Start of this work</td><td class="num"><span class="bar hot" style="width:73px"></span>20.5–25.3s</td><td class="sha">9a1ce45</td></tr>
-<tr><td>Direct calls + index-backed <code>where</code></td><td class="num"><span class="bar" style="width:26px"></span>7.2–7.8s</td><td class="sha">8b76cd4</td></tr>
-<tr><td>Direct <code>let rec</code>, functions hashed by identity</td><td class="num"><span class="bar" style="width:24px"></span>6.6–7.1s</td><td class="sha">8a642c0</td></tr>
-<tr><td>Single-pass 128-bit hashing, three repos</td><td class="num"><span class="bar" style="width:17px"></span>4.4–5.1s</td><td class="sha">b04a5ac</td></tr>
-<tr><td>Scopes as lexical frames + identifier caches</td><td class="num"><span class="bar" style="width:14px"></span>3.6–4.3s</td><td class="sha">c722ec4</td></tr>
-<tr><td>Evaluator hygiene (four items)</td><td class="num"><span class="bar" style="width:12px"></span>3.2–3.9s</td><td class="sha">bf07041</td></tr>
-<tr><td><strong>Shape-backed tuples</strong></td><td class="num"><span class="bar" style="width:8px"></span><strong>2.13s</strong></td><td class="sha">e4691e6</td></tr>
-<tr><td>Relation shape matching, typed group index</td><td class="num"><span class="bar" style="width:8px"></span>2.1s</td><td class="sha">d066aa5 · fbfffdd</td></tr>
-<tr><td>frozen fans out from 256 elements</td><td class="num"><span class="bar" style="width:8px"></span>2.25s <span class="muted">(no change here)</span></td><td class="sha">953bdfb</td></tr>
-<tr><td><strong>Flat-arena relations with lazy indexing</strong></td><td class="num"><span class="bar" style="width:7px"></span><strong>2.08s</strong></td><td class="sha">41352d9</td></tr>
+<tr><th>Build</th><th class="num">Repro</th><th class="num">Speedup</th><th>Commit</th></tr>
+<tr><td>v0.338.0 — as reported</td><td class="num"><span class="bar hot" style="width:200px"></span>58.8–67.8s</td><td class="num">1×</td><td class="sha">—</td></tr>
+<tr><td>v0.321.0 — before the generics migration</td><td class="num"><span class="bar" style="width:40px"></span>11.6–12.6s</td><td class="num">5.2×</td><td class="sha">reference</td></tr>
+<tr><td>Start of this work</td><td class="num"><span class="bar hot" style="width:73px"></span>20.5–25.3s</td><td class="num">2.8×</td><td class="sha">9a1ce45</td></tr>
+<tr><td>Direct calls + index-backed <code>where</code></td><td class="num"><span class="bar" style="width:26px"></span>7.2–7.8s</td><td class="num">8.4×</td><td class="sha">8b76cd4</td></tr>
+<tr><td>Direct <code>let rec</code>, functions hashed by identity</td><td class="num"><span class="bar" style="width:24px"></span>6.6–7.1s</td><td class="num">9.2×</td><td class="sha">8a642c0</td></tr>
+<tr><td>Single-pass 128-bit hashing, three repos</td><td class="num"><span class="bar" style="width:17px"></span>4.4–5.1s</td><td class="num">13×</td><td class="sha">b04a5ac</td></tr>
+<tr><td>Scopes as lexical frames + identifier caches</td><td class="num"><span class="bar" style="width:14px"></span>3.6–4.3s</td><td class="num">16×</td><td class="sha">c722ec4</td></tr>
+<tr><td>Evaluator hygiene (four items)</td><td class="num"><span class="bar" style="width:12px"></span>3.2–3.9s</td><td class="num">18×</td><td class="sha">bf07041</td></tr>
+<tr><td><strong>Shape-backed tuples</strong></td><td class="num"><span class="bar" style="width:8px"></span><strong>2.13s</strong></td><td class="num"><strong>30×</strong></td><td class="sha">e4691e6</td></tr>
+<tr><td>Relation shape matching, typed group index</td><td class="num"><span class="bar" style="width:8px"></span>2.1s</td><td class="num">30×</td><td class="sha">d066aa5 · fbfffdd</td></tr>
+<tr><td>frozen fans out from 256 elements</td><td class="num"><span class="bar" style="width:8px"></span>2.25s <span class="muted">(no change here)</span></td><td class="num">28×</td><td class="sha">953bdfb</td></tr>
+<tr><td><strong>Flat-arena relations with lazy indexing</strong></td><td class="num"><span class="bar" style="width:7px"></span><strong>2.08s</strong></td><td class="num"><strong>30×</strong></td><td class="sha">41352d9</td></tr>
 </table></div>
-<p class="muted">The last row is flat on purpose: reconstruct's relations are a few thousand rows and its time is dominated by grammar parsing, so it is the wrong workload to show parallelism. On a 60,000-row relational script the same change is worth 25%.</p>
+<p class="muted">The frozen fan-out row is flat on purpose: reconstruct's relations are a few thousand rows and its time is dominated by grammar parsing, so it is the wrong workload to show parallelism. On a 60,000-row relational script the same change is worth 25%.</p>
 
 <h2>What landed</h2>
 
