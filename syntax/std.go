@@ -9,7 +9,9 @@ import (
 	"os"
 	"strconv"
 	"sync"
+	"sync/atomic"
 
+	"github.com/arr-ai/hash/hash128"
 	"github.com/arr-ai/wbnf/ast"
 	"github.com/arr-ai/wbnf/parser"
 	"github.com/arr-ai/wbnf/wbnf"
@@ -307,31 +309,63 @@ type compiledGrammar struct {
 	parsers parser.Parsers
 }
 
-func compileGrammar(v rel.Value) parser.Parsers {
+func compileGrammar(v rel.Value) (hash128.H128, parser.Parsers) {
 	key := v.Hash128()
 	if cached, ok := compiledGrammars.Load(key); ok {
 		if cg := cached.(*compiledGrammar); cg.grammar.Equal(v) {
-			return cg.parsers
+			return key, cg.parsers
 		}
 	}
 	astNode := rel.ASTNodeFromValue(v).(ast.Branch)
 	parsers := wbnf.NewFromAst(astNode).Compile(astNode)
 	compiledGrammars.Store(key, &compiledGrammar{grammar: v, parsers: parsers})
-	return parsers
+	return key, parsers
+}
+
+// parsedInputs memoises successful //grammar.parse results by (grammar,
+// rule, input). Programs parse many identical or recurring inputs through
+// the same macro (sysl parses every return-statement payload this way), and
+// both the parse and the AST-to-value conversion are expensive; results are
+// immutable values, so sharing them is free. Bounded like the regexp memo:
+// on overflow the whole map resets. Failures are not memoised — errors can
+// be large and carry input-specific context.
+var (
+	parsedInputs    sync.Map // parsedInputKey -> rel.Value
+	parsedInputsN   atomic.Int64
+	maxParsedInputs = int64(65536)
+)
+
+type parsedInputKey struct {
+	grammar hash128.H128
+	rule    string
+	input   string
 }
 
 func parseGrammar(_ context.Context, v rel.Value) (rel.Value, error) {
-	parsers := compileGrammar(v)
+	gkey, parsers := compileGrammar(v)
 	return rel.NewNativeFunction("parse(<grammar>)", func(_ context.Context, v rel.Value) (rel.Value, error) {
 		rule := v.String()
 		return rel.NewNativeFunction(
 			fmt.Sprintf("parse(%s)", rule),
 			func(_ context.Context, v rel.Value) (rel.Value, error) {
-				node, err := parsers.Parse(parser.Rule(rule), parser.NewScanner(v.String()))
+				input := v.String()
+				key := parsedInputKey{grammar: gkey, rule: rule, input: input}
+				if cached, ok := parsedInputs.Load(key); ok {
+					return cached.(rel.Value), nil
+				}
+				node, err := parsers.Parse(parser.Rule(rule), parser.NewScanner(input))
 				if err != nil {
 					return nil, err
 				}
-				return rel.ASTNodeToValue(ast.FromParserNode(parsers.Grammar(), node)), nil
+				result := rel.ASTNodeToValue(ast.FromParserNode(parsers.Grammar(), node))
+				if parsedInputsN.Load() >= maxParsedInputs {
+					parsedInputs.Range(func(k, _ any) bool { parsedInputs.Delete(k); return true })
+					parsedInputsN.Store(0)
+				}
+				if _, loaded := parsedInputs.LoadOrStore(key, result); !loaded {
+					parsedInputsN.Add(1)
+				}
+				return result, nil
 			}), nil
 	}), nil
 }
