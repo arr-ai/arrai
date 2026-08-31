@@ -32,8 +32,8 @@ func All(s Set) iter.Seq[Value] {
 		}
 	case String:
 		return func(yield func(Value) bool) {
-			for i, r := range s.s {
-				if r >= 0 && !yield(NewStringCharTuple(s.offset+i, r)) {
+			for i, n := 0, s.size(); i < n; i++ {
+				if r := s.runeAt(i); r >= 0 && !yield(NewStringCharTuple(s.offset+i, r)) {
 					return
 				}
 			}

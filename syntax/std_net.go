@@ -178,14 +178,14 @@ func parseResponse(resp *http.Response) (rel.Value, error) {
 	for k, vs := range resp.Header {
 		vals := make([]rel.Value, len(vs))
 		for j, v := range vs {
-			vals[j] = rel.NewString([]rune(v))
+			vals[j] = rel.NewGoString(v)
 		}
-		entries = append(entries, rel.NewDictEntryTuple(rel.NewString([]rune(k)), rel.NewArray(vals...)))
+		entries = append(entries, rel.NewDictEntryTuple(rel.NewGoString(k), rel.NewArray(vals...)))
 	}
 	header := rel.MustNewDict(false, entries...)
 
 	return rel.NewTuple(
-		rel.NewAttr("status", rel.NewString([]rune(resp.Status))),
+		rel.NewAttr("status", rel.NewGoString(resp.Status)),
 		rel.NewAttr("status_code", rel.NewNumber(float64(resp.StatusCode))),
 		rel.NewAttr("header", header),
 		rel.NewAttr("body", rel.NewBytes(buf)),

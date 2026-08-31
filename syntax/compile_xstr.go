@@ -117,9 +117,9 @@ func (pc ParseContext) compileExpandableString(ctx context.Context, b ast.Branch
 				return nil, err
 			}
 			exprs[i] = rel.NewCallExprCurry(part.Scanner(), stdStrExpand,
-				rel.NewString([]rune(format)), expr,
-				rel.NewString([]rune(delim)),
-				rel.NewString([]rune(appendIfNotEmpty)),
+				rel.NewGoString(format), expr,
+				rel.NewGoString(delim),
+				rel.NewGoString(appendIfNotEmpty),
 			)
 		case string:
 			next = part
@@ -127,7 +127,7 @@ func (pc ParseContext) compileExpandableString(ctx context.Context, b ast.Branch
 	}
 	for i, part := range parts {
 		if s, ok := part.(string); ok {
-			exprs[i] = rel.NewTuple(rel.NewAttr("s", rel.NewString([]rune(s))))
+			exprs[i] = rel.NewTuple(rel.NewAttr("s", rel.NewGoString(s)))
 		}
 	}
 	// TODO: Use a more direct approach to invoke concat implementation.
@@ -173,7 +173,7 @@ func xstrConcat(_ context.Context, seq rel.Value) (rel.Value, error) {
 			panic("xstrConcat: not receiving a string")
 		}
 	}
-	return rel.NewString([]rune(sb.String())), nil
+	return rel.NewGoString(sb.String()), nil
 }
 
 // cleanEmptyVal cleans whitespaces of bare strings before and after a computed empty string.
@@ -209,7 +209,7 @@ func cleanEmptyVal(values rel.Array) []rel.Value {
 					match := m[1]
 					arr[i+1] = arr[i+1].(rel.Tuple).With(
 						"s",
-						rel.NewString([]rune(strings.TrimPrefix(s, match))),
+						rel.NewGoString(strings.TrimPrefix(s, match)),
 					)
 				}
 			}
@@ -224,13 +224,13 @@ func cleanEmptyVal(values rel.Array) []rel.Value {
 					match := m[1]
 					arr[i-1] = arr[i-1].(rel.Tuple).With(
 						"s",
-						rel.NewString([]rune(strings.TrimSuffix(s, match))),
+						rel.NewGoString(strings.TrimSuffix(s, match)),
 					)
 				} else if trimmed := strings.TrimLeft(s, " "); trimmed == "" {
 					// this is to remove any whitespace to the left the last empty evaluated str
 					arr[i-1] = arr[i-1].(rel.Tuple).With(
 						"s",
-						rel.NewString([]rune("")),
+						rel.NewGoString(""),
 					)
 				}
 			}
@@ -262,8 +262,8 @@ func cleanEmptyVal(values rel.Array) []rel.Value {
 					rightStr = strings.TrimPrefix(rightStr, newIndent)
 					leftStr += newIndent
 				}
-				arr[i+1] = arr[i+1].(rel.Tuple).With("s", rel.NewString([]rune(rightStr)))
-				arr[i-1] = arr[i-1].(rel.Tuple).With("s", rel.NewString([]rune(leftStr)))
+				arr[i+1] = arr[i+1].(rel.Tuple).With("s", rel.NewGoString(rightStr))
+				arr[i-1] = arr[i-1].(rel.Tuple).With("s", rel.NewGoString(leftStr))
 			}
 		}
 	}

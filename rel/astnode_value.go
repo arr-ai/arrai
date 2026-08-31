@@ -41,7 +41,7 @@ func ASTBranchToValue(b ast.Branch) Tuple {
 			}
 			value = NewArray(values...)
 		case "@rule":
-			value = NewString([]rune(string(children.(ast.One).Node.(ast.Extra).Data.(parser.Rule))))
+			value = NewGoString(string(children.(ast.One).Node.(ast.Extra).Data.(parser.Rule)))
 		case "@skip":
 			value = NewNumber(float64(children.(ast.One).Node.(ast.Extra).Data.(int)))
 		default:

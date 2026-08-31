@@ -233,7 +233,7 @@ func NewValue(v interface{}) (Value, error) {
 	case float64:
 		return NewNumber(x), nil
 	case string:
-		return NewString([]rune(x)), nil
+		return NewGoString(x), nil
 	case []rune:
 		return NewString(x), nil
 	case []byte:

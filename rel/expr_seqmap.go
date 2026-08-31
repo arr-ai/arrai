@@ -63,8 +63,9 @@ func (e *SeqArrowExpr) Eval(ctx context.Context, local Scope) (_ Value, err erro
 
 	switch value := value.(type) {
 	case String: //nolint:dupl
-		runes := make([]rune, len(value.s))
-		for at, char := range value.s {
+		runes := make([]rune, value.size())
+		for at := range runes {
+			char := value.runeAt(at)
 			newChar, err := call(NewNumber(float64(value.offset+at)), NewNumber(float64(char)))
 			if err != nil {
 				return nil, WrapContextErr(err, e, local)

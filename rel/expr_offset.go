@@ -40,7 +40,7 @@ func (o *OffsetExpr) Eval(ctx context.Context, local Scope) (_ Value, err error)
 	case Bytes:
 		return NewOffsetBytes(a.Bytes(), a.offset+int(offset.(Number))), nil
 	case String:
-		return NewOffsetString(a.s, a.offset+int(offset.(Number))), nil
+		return a.withOffset(a.offset + int(offset.(Number))), nil
 	case EmptySet:
 		return None, nil
 	}

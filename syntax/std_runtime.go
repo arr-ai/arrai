@@ -19,20 +19,20 @@ func stdRuntime() rel.Attr {
 // GetBuildInfo returns arr.ai build information.
 func GetBuildInfo(b buildinfo.BuildData) rel.Value {
 	return rel.NewTuple(
-		rel.NewAttr("version", rel.NewString([]rune(b.Version))),
-		rel.NewAttr("date", rel.NewString([]rune(b.Date))),
+		rel.NewAttr("version", rel.NewGoString(b.Version)),
+		rel.NewAttr("date", rel.NewGoString(b.Date)),
 		rel.NewAttr("git", rel.NewTuple(
-			rel.NewAttr("commit", rel.NewString([]rune(b.FullCommit))),
+			rel.NewAttr("commit", rel.NewGoString(b.FullCommit)),
 			// param tags has only one tag now.
-			rel.NewAttr("tags", rel.MustNewSet(rel.NewString([]rune(b.Tags))))),
+			rel.NewAttr("tags", rel.MustNewSet(rel.NewGoString(b.Tags)))),
 		),
 		rel.NewAttr("go", rel.NewTuple(
-			rel.NewAttr("os", rel.NewString([]rune(b.Os))),
-			rel.NewAttr("arch", rel.NewString([]rune(b.Arch))),
+			rel.NewAttr("os", rel.NewGoString(b.Os)),
+			rel.NewAttr("arch", rel.NewGoString(b.Arch)),
 			rel.NewAttr("compiler", rel.NewTuple(
-				rel.NewAttr("version", rel.NewString([]rune(b.GoVersion))),
-				rel.NewAttr("os", rel.NewString([]rune(b.Os))),
-				rel.NewAttr("arch", rel.NewString([]rune(b.Arch)))),
+				rel.NewAttr("version", rel.NewGoString(b.GoVersion)),
+				rel.NewAttr("os", rel.NewGoString(b.Os)),
+				rel.NewAttr("arch", rel.NewGoString(b.Arch))),
 			)),
 		),
 	)
