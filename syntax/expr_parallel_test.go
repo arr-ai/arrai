@@ -44,3 +44,18 @@ func TestParallelDArrow(t *testing.T) {
 		`//seq.repeat(5000, [0]) => {0: 1, 1: 1}(.@)`,
 	)
 }
+
+func TestParallelSeqArrow(t *testing.T) {
+	t.Parallel()
+	AssertCodesEvalToSameValue(t,
+		`5000`,
+		`(//seq.repeat(5000, [0]) >> 1) count`,
+	)
+	AssertCodesEvalToSameValue(t,
+		`[2, 4, 6]`,
+		`//seq.repeat(1, [2, 4, 6]) >> .`,
+	)
+	AssertCodeErrors(t, "Call: no return values for input 2",
+		`//seq.repeat(5000, [0]) => (@: .@, @item: .@) >> {0: 9, 1: 9}(.)`,
+	)
+}
