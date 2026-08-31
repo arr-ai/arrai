@@ -1,6 +1,9 @@
 package rel
 
 import (
+	"slices"
+	"sync"
+
 	"github.com/arr-ai/hash/hash128"
 
 	"context"
@@ -20,6 +23,42 @@ type String struct {
 	s      []rune
 	offset int
 	holes  int
+
+	// buf, when non-nil, is the shared append buffer this string is a
+	// prefix of. A chain of concatenations extends one buffer in place
+	// (amortised O(1) per rune) instead of copying the accumulator per
+	// step; branching from an older string copies out. Runes below any
+	// string's length never change.
+	buf *strBuf
+}
+
+// strBuf tracks ownership of a growable rune buffer shared by the strings
+// concatenation builds. n is the committed length: only the string whose
+// length equals n may extend the buffer, everyone else copies.
+type strBuf struct {
+	mu    sync.Mutex
+	runes []rune
+	n     int
+}
+
+// concatStrings concatenates two contiguous zero-offset strings, extending
+// a's buffer in place when a is its frontier.
+func concatStrings(a, b String) String {
+	na, nb := len(a.s), len(b.s)
+	if a.buf != nil {
+		a.buf.mu.Lock()
+		if a.buf.n == na {
+			a.buf.runes = append(a.buf.runes[:na], b.s...)
+			a.buf.n = na + nb
+			out := String{s: a.buf.runes[:na+nb], buf: a.buf}
+			a.buf.mu.Unlock()
+			return out
+		}
+		a.buf.mu.Unlock()
+	}
+	// Copy out into a fresh buffer with room to grow, which the result owns.
+	runes := append(append(make([]rune, 0, 2*(na+nb)), a.s...), b.s...)
+	return String{s: runes, buf: &strBuf{runes: runes, n: na + nb}}
 }
 
 // NewString constructs a string as a relation.
@@ -152,7 +191,10 @@ func (s String) Less(v Value) bool {
 		return s.Kind() < v.Kind()
 	}
 
-	return s.String() < v.(String).String()
+	// Rune-wise comparison; equivalent to comparing the UTF-8 encodings
+	// (byte order preserves code-point order) without building two Go
+	// strings per call.
+	return slices.Compare(s.s, v.(String).s) < 0
 }
 
 // Negate returns {(negateTag): s}.
@@ -194,7 +236,8 @@ func (s String) with(at int, char rune) Set {
 	case 0 <= i && i < len(s.s) && s.s[i] == char:
 		return s
 	case i == len(s.s):
-		return String{s: append(s.s, char), offset: s.offset, holes: s.holes}
+		// Full slice expression: never extend into a shared buffer's tail.
+		return String{s: append(s.s[:i:i], char), offset: s.offset, holes: s.holes}
 	case at == s.offset-1:
 		return String{
 			s:      append(append(make([]rune, 0, 1+len(s.s)), char), s.s...),
