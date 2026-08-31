@@ -37,9 +37,10 @@ func (e *ArrowExpr) Eval(ctx context.Context, local Scope) (_ Value, err error) 
 	if ident, is := e.fn.arg.(IdentPattern); is {
 		return e.fn.body.Eval(ctx, local.With(string(ident), value))
 	}
-	ctx, scope, err := e.fn.arg.Bind(ctx, local, value)
+	var b scopeBuilder
+	ctx, err = e.fn.arg.Bind(ctx, local, value, &b)
 	if err != nil {
 		return nil, WrapContextErr(err, e, local)
 	}
-	return e.fn.body.Eval(ctx, local.Update(scope))
+	return e.fn.body.Eval(ctx, local.updateWith(&b))
 }
