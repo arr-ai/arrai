@@ -53,8 +53,11 @@ func (e CondPatternControlVarExpr) Eval(ctx context.Context, scope Scope) (Value
 		return nil, WrapContextErr(err, e.controlVarExpr, scope)
 	}
 
+	// One builder serves every arm: a failed arm resets it, so trying and
+	// discarding a match allocates nothing beyond the builder itself.
+	var b scopeBuilder
 	for _, conditionPair := range e.conditionPairs {
-		var b scopeBuilder
+		b.reset()
 		ctx, err := conditionPair.Bind(ctx, scope, varVal, &b)
 		// TODO: This will misbehave if there's a genuine error in pattern matching, err !=nil gets through as nil
 		if err == nil {

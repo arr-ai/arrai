@@ -333,6 +333,21 @@ func (e *ScopeEnumerator) Current() (string, Expr) {
 type scopeBuilder struct {
 	names []string
 	vals  []Expr
+
+	// explain selects rich mismatch errors. The fast path reports every
+	// mismatch as the shared errPatternMismatch — a miss allocates nothing,
+	// which matters because cond tries arms by matching and discards the
+	// misses. A caller that must show the user why a match failed re-runs
+	// the bind with explain set: matching is pure, so the re-run reproduces
+	// the same miss with its lazily-formatted message.
+	explain bool
+}
+
+// reset clears the builder for reuse across match attempts, keeping the
+// backing arrays.
+func (b *scopeBuilder) reset() {
+	b.names = b.names[:0]
+	b.vals = b.vals[:0]
 }
 
 // add adds one binding, with MatchedUpdate's rule: a name bound twice must
@@ -343,6 +358,9 @@ func (b *scopeBuilder) add(name string, val Expr) error {
 	}
 	if j := b.index(name); j >= 0 {
 		if b.vals[j].String() != val.String() {
+			if !b.explain {
+				return errPatternMismatch
+			}
 			return lazyErrorf("the value of %s is different in both scopes", name)
 		}
 		return nil

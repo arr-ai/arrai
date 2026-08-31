@@ -36,6 +36,9 @@ func (p ExprPattern) Bind(ctx context.Context, scope Scope, value Value, b *scop
 	if v.Equal(value) {
 		return ctx, nil
 	}
+	if !b.explain {
+		return ctx, errPatternMismatch
+	}
 	return ctx, lazyErrorf("no match: %v != %v", v, value)
 }
 
@@ -57,6 +60,9 @@ func NewExprsPattern(exprs ...Expr) ExprsPattern {
 
 func (p ExprsPattern) Bind(ctx context.Context, scope Scope, value Value, b *scopeBuilder) (context.Context, error) {
 	if len(p.exprs) == 0 {
+		if !b.explain {
+			return ctx, errPatternMismatch
+		}
 		return ctx, lazyErrorf("there is not any rel.Expr in rel.ExprsPattern")
 	}
 
@@ -75,6 +81,9 @@ func (p ExprsPattern) Bind(ctx context.Context, scope Scope, value Value, b *sco
 		}
 	}
 
+	if !b.explain {
+		return ctx, errPatternMismatch
+	}
 	return ctx, lazyErrorf("didn't find matched value")
 }
 
