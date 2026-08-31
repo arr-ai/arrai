@@ -93,12 +93,12 @@ func TestRelationHash128AgreesWithEqualRegardlessOfAttrOrder(t *testing.T) {
 	r1 := newRelation(
 		NamesSlice{"a", "b"},
 		valueProjector{0, 1},
-		&positionalRelation{set: frozen.NewSet[any](row(1, 2))},
+		newPositionalRelation(2, row(1, 2)),
 	)
 	r2 := newRelation(
 		NamesSlice{"b", "a"},
 		valueProjector{0, 1},
-		&positionalRelation{set: frozen.NewSet[any](row(2, 1))},
+		newPositionalRelation(2, row(2, 1)),
 	)
 
 	assert.True(t, r1.EqualRelation(r2), "relations should be equal regardless of internal attribute order")
