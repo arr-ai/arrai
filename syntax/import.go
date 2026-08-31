@@ -164,12 +164,26 @@ func importModuleFile(ctx context.Context, decoder rel.Tuple, importPath, source
 		return nil, errors.New("per-importing versioning is not allowed")
 	}
 
-	moduleRoot := ""
-	if sourceDir != "" {
-		if root, err := findRootFromModule(ctx, sourceDir); err == nil {
-			moduleRoot = root
+	// Resolve go.mod pins against the primary (top-level) project's module
+	// graph for every import, not each file's own nearest go.mod. Go's
+	// module graph has exactly one resolved version per module (minimal
+	// version selection) computed from the main module's go.mod; a
+	// transitive dependency's own go.mod may pin something older (or
+	// nothing at all) and, since it's found by walking up from a file
+	// inside a read-only module cache directory, running `go list -mod=mod`
+	// there fails outright trying to write go.sum -- silently discarding
+	// every pin found this way and falling back to slow @latest resolution
+	// for every nested import.
+	moduleRoot := ctxrootcache.PrimaryRoot(ctx, func() string {
+		if sourceDir == "" {
+			return ""
 		}
-	}
+		root, err := findRootFromModule(ctx, sourceDir)
+		if err != nil {
+			return ""
+		}
+		return root
+	})
 
 	m, err := retrieveModule(modPath, ver, moduleRoot)
 	if err != nil {

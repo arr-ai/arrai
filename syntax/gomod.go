@@ -5,7 +5,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 	"sync"
 )
@@ -66,11 +68,20 @@ func loadRequiredModules(moduleRoot string) map[string]requiredModule {
 	}
 
 	mods := map[string]requiredModule{}
+	restore, err := snapshotGoModFiles(moduleRoot)
+	if err != nil {
+		requiredModulesByRoot.Store(moduleRoot, mods)
+		return mods
+	}
+	defer restore()
+
 	// -mod=mod lets this self-heal a go.sum that's missing entries (e.g. a
 	// module required but not needed to build the main module's packages),
 	// matching how `go mod download` behaves. Under the default -mod=readonly,
 	// `go list` would instead fail outright and we'd wrongly treat the module
-	// as unpinned.
+	// as unpinned. snapshotGoModFiles/restore above undo any such edits once
+	// we're done, so resolving an import never leaves go.mod/go.sum changed
+	// in the caller's project.
 	cmd := exec.Command("go", "list", "-mod=mod", "-m", "-json", "all") //nolint:gosec
 	if moduleRoot != "" {
 		cmd.Dir = moduleRoot
@@ -112,6 +123,61 @@ func loadRequiredModules(moduleRoot string) map[string]requiredModule {
 	}
 	requiredModulesByRoot.Store(moduleRoot, mods)
 	return mods
+}
+
+// fileSnapshot captures whether a file existed and its content, so it can be
+// put back exactly as found.
+type fileSnapshot struct {
+	path    string
+	existed bool
+	content []byte
+}
+
+func snapshotFile(path string) (fileSnapshot, error) {
+	content, err := os.ReadFile(path)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return fileSnapshot{path: path}, nil
+		}
+		return fileSnapshot{}, err
+	}
+	return fileSnapshot{path: path, existed: true, content: content}, nil
+}
+
+// restore is called via defer with nothing to propagate a failure to; it's a
+// best-effort revert of a self-heal `go list` may have made.
+func (s fileSnapshot) restore() {
+	if s.existed {
+		_ = os.WriteFile(s.path, s.content, 0o600) //nolint:errcheck
+		return
+	}
+	_ = os.Remove(s.path) //nolint:errcheck
+}
+
+// snapshotGoModFiles saves the current go.mod/go.sum in dir (the process cwd
+// if dir is "") and returns a func that restores them exactly as found. `go
+// list -mod=mod` can rewrite either file to self-heal missing entries; the
+// caller's own project files shouldn't come out of an import resolution
+// changed, so loadRequiredModules reverts them once it has what it needs.
+func snapshotGoModFiles(dir string) (restore func(), err error) {
+	if dir == "" {
+		dir, err = os.Getwd()
+		if err != nil {
+			return nil, err
+		}
+	}
+	goMod, err := snapshotFile(filepath.Join(dir, "go.mod"))
+	if err != nil {
+		return nil, err
+	}
+	goSum, err := snapshotFile(filepath.Join(dir, "go.sum"))
+	if err != nil {
+		return nil, err
+	}
+	return func() {
+		goMod.restore()
+		goSum.restore()
+	}, nil
 }
 
 // seedRequiredModules marks the memoized go.mod graph for moduleRoot as already

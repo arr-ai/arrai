@@ -1,12 +1,15 @@
 package syntax
 
 import (
+	"context"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/require"
+
+	"github.com/arr-ai/arrai/pkg/ctxrootcache"
 )
 
 // withTempModule creates a temporary Go module with the given go.mod content
@@ -156,6 +159,110 @@ require github.com/pkg/errors v0.8.0
 	require.NoError(t, err)
 	require.Equal(t, "github.com/pkg/errors", m.Name)
 	require.Contains(t, filepath.ToSlash(m.Dir), "github.com/pkg/errors@v0.8.0")
+}
+
+func TestPrimaryRootMakesNestedImportsUseTheTopLevelPin(t *testing.T) {
+	outer := withTempModule(t, `module example.com/outer
+
+go 1.21
+
+require github.com/pkg/errors v0.8.0
+`)
+	cmd := exec.Command("go", "mod", "download", "github.com/pkg/errors")
+	cmd.Dir = outer
+	out, err := cmd.CombinedOutput()
+	require.NoError(t, err, string(out))
+
+	// Stands in for a dependency's own copy of go.mod (e.g. inside the
+	// read-only module cache) pinning a different, stale version -- this
+	// must lose to the top-level project's pin once it's part of a larger
+	// build graph, not win just because it's nearer the importing file.
+	nested := t.TempDir()
+	require.NoError(t, os.WriteFile(filepath.Join(nested, "go.mod"), []byte(`module example.com/nested
+
+go 1.21
+
+require github.com/pkg/errors v0.9.1
+`), 0o600))
+	cmd = exec.Command("go", "mod", "download", "github.com/pkg/errors")
+	cmd.Dir = nested
+	out, err = cmd.CombinedOutput()
+	require.NoError(t, err, string(out))
+
+	resetRequiredModulesCache()
+
+	ctx := ctxrootcache.WithPrimaryRootCache(context.Background())
+
+	// First resolution, from the top-level project itself: establishes the
+	// primary root.
+	root := ctxrootcache.PrimaryRoot(ctx, func() string { return outer })
+	require.Equal(t, outer, root)
+
+	m, err := retrieveModule("github.com/pkg/errors", "", root)
+	require.NoError(t, err)
+	require.Contains(t, filepath.ToSlash(m.Dir), "github.com/pkg/errors@v0.8.0")
+
+	// Second resolution simulates a nested import made from a file under
+	// `nested`. PrimaryRoot must still return the outer root -- not
+	// `nested`, even though a compute() naively rooted at the importing
+	// file would find `nested`'s go.mod instead.
+	nestedRoot := ctxrootcache.PrimaryRoot(ctx, func() string { return nested })
+	require.Equal(t, outer, nestedRoot, "nested imports must resolve against the primary (top-level) module root")
+
+	m, err = retrieveModule("github.com/pkg/errors", "", nestedRoot)
+	require.NoError(t, err)
+	require.Contains(t, filepath.ToSlash(m.Dir), "github.com/pkg/errors@v0.8.0",
+		"the outer project's pin must win, not the nested directory's own (different) pin")
+}
+
+func TestLoadRequiredModulesDoesNotLeaveGoSumChanged(t *testing.T) {
+	root := withTempModule(t, `module example.com/pintest
+
+go 1.21
+
+require github.com/pkg/errors v0.8.0
+`)
+	// No go.sum at all: resolving requires `go list -mod=mod` to self-heal
+	// it from scratch, the most extreme case of the self-heal touching the
+	// file. It must still come out exactly as it went in afterwards.
+	require.NoFileExists(t, filepath.Join(root, "go.sum"))
+
+	m, err := retrieveModule("github.com/pkg/errors", "", root)
+	require.NoError(t, err)
+	require.Contains(t, filepath.ToSlash(m.Dir), "github.com/pkg/errors@v0.8.0")
+
+	require.NoFileExists(t, filepath.Join(root, "go.sum"),
+		"resolving an import must not leave go.sum changed in the caller's project")
+}
+
+func TestLoadRequiredModulesPreservesExistingGoModAndGoSum(t *testing.T) {
+	root := withTempModule(t, `module example.com/pintest
+
+go 1.21
+
+require github.com/pkg/errors v0.8.0
+`)
+	cmd := exec.Command("go", "mod", "download", "github.com/pkg/errors")
+	cmd.Dir = root
+	out, err := cmd.CombinedOutput()
+	require.NoError(t, err, string(out))
+	resetRequiredModulesCache()
+
+	goModBefore, err := os.ReadFile(filepath.Join(root, "go.mod"))
+	require.NoError(t, err)
+	goSumBefore, err := os.ReadFile(filepath.Join(root, "go.sum"))
+	require.NoError(t, err)
+
+	m, err := retrieveModule("github.com/pkg/errors", "", root)
+	require.NoError(t, err)
+	require.Contains(t, filepath.ToSlash(m.Dir), "github.com/pkg/errors@v0.8.0")
+
+	goModAfter, err := os.ReadFile(filepath.Join(root, "go.mod"))
+	require.NoError(t, err)
+	goSumAfter, err := os.ReadFile(filepath.Join(root, "go.sum"))
+	require.NoError(t, err)
+	require.Equal(t, goModBefore, goModAfter, "resolving an import must not change an existing go.mod")
+	require.Equal(t, goSumBefore, goSumAfter, "resolving an import must not change an existing go.sum")
 }
 
 func TestRetrieveModuleErrorsWhenPinnedVersionUnavailable(t *testing.T) {

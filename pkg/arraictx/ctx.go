@@ -32,6 +32,7 @@ func InitRunCtx(ctx context.Context) context.Context {
 	ctx = ctxfs.SourceFsOnto(ctx, afero.NewOsFs())
 	ctx = ctxfs.RuntimeFsOnto(ctx, afero.NewOsFs())
 	ctx = ctxrootcache.WithRootCache(ctx)
+	ctx = ctxrootcache.WithPrimaryRootCache(ctx)
 	ctx = buildinfo.WithPackageBuildData(ctx)
 	return ctx
 }
