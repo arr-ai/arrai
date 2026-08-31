@@ -44,10 +44,11 @@ type String struct {
 	abuf *appendBuf[byte]
 }
 
-// appendBuf tracks ownership of a growable buffer shared by the strings
-// concatenation builds. n is the committed length: only the string whose
-// length equals n may extend the buffer, everyone else copies.
-type appendBuf[E byte | rune] struct {
+// appendBuf tracks ownership of a growable buffer shared by the sequences
+// concatenation builds (string runes/bytes, array values). n is the
+// committed length: only the sequence whose length equals n may extend the
+// buffer, everyone else copies.
+type appendBuf[E any] struct {
 	mu    sync.Mutex
 	elems []E
 	n     int
@@ -68,7 +69,7 @@ func (b *appendBuf[E]) extend(n int, more []E) []E {
 
 // newAppendBuf starts a buffer owning the concatenation of a and b, with
 // room to grow.
-func newAppendBuf[E byte | rune](a, b []E) (*appendBuf[E], []E) {
+func newAppendBuf[E any](a, b []E) (*appendBuf[E], []E) {
 	elems := append(append(make([]E, 0, 2*(len(a)+len(b))), a...), b...)
 	return &appendBuf[E]{elems: elems, n: len(elems)}, elems
 }

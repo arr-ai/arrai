@@ -34,7 +34,7 @@ func perfMakeGenericSet(count, nAttrs int) GenericSet {
 		}
 		sb.Add(NewTuple(attrs...))
 	}
-	return GenericSet{sb.Finish()}
+	return GenericSet{set: sb.Finish()}
 }
 
 // perfMakeNumberSet builds a GenericSet of count Numbers.
@@ -43,7 +43,7 @@ func perfMakeNumberSet(count int) GenericSet {
 	for i := 0; i < count; i++ {
 		sb.Add(NewNumber(float64(i)))
 	}
-	return GenericSet{sb.Finish()}
+	return GenericSet{set: sb.Finish()}
 }
 
 // perfMakeNames creates a Names with n names: a0..aN.
@@ -334,7 +334,7 @@ func BenchmarkPerfSetUnion(b *testing.B) {
 			for i := n / 2; i < n+n/2; i++ {
 				sb.Add(NewNumber(float64(i)))
 			}
-			s2 := GenericSet{sb.Finish()}
+			s2 := GenericSet{set: sb.Finish()}
 			for i := 0; i < b.N; i++ {
 				_ = Union(s1, s2)
 			}
