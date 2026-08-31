@@ -206,6 +206,10 @@ func (s Scope) Update(t Scope) Scope {
 	if s.f == nil {
 		return t
 	}
+	// A single-binding t re-parents without materialising slices.
+	if t.f.parent == nil && t.f.name != "" {
+		return Scope{&frame{parent: s.f, name: t.f.name, val: t.f.val}}
+	}
 	// t is typically a small scope built by a pattern; flatten it into one
 	// frame so its bindings occupy fixed slots above s.
 	names, vals := t.flatten()
