@@ -55,6 +55,9 @@ func (e *DArrowExpr) Eval(ctx context.Context, local Scope) (_ Value, err error)
 				var b scopeBuilder
 				ctx, err = e.fn.arg.Bind(ctx, local, i.Current(), &b)
 				if err != nil {
+					if err == errPatternMismatch {
+						err = explainBind(ctx, e.fn.arg, local, i.Current())
+					}
 					return nil, WrapContextErr(err, e, local)
 				}
 				v, err = e.fn.body.Eval(ctx, local.updateWith(&b))

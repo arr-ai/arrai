@@ -177,6 +177,9 @@ func (c Closure) call(ctx context.Context, arg Value) (Value, error) {
 	var b scopeBuilder
 	ctx, err := c.f.arg.Bind(ctx, c.scope, arg, &b)
 	if err != nil {
+		if err == errPatternMismatch {
+			err = explainBind(ctx, c.f.arg, c.scope, arg)
+		}
 		return nil, err
 	}
 	return c.f.body.Eval(ctx, c.scope.updateWith(&b))

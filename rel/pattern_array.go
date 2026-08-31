@@ -19,13 +19,22 @@ func (p ArrayPattern) Bind(ctx context.Context, local Scope, value Value, b *sco
 		if len(p.items) == 0 {
 			return ctx, nil
 		}
+		if !b.explain {
+			return ctx, errPatternMismatch
+		}
 		return ctx, lazyErrorf("value [] is empty but pattern %s is not", p)
 	case GenericSet:
+		if !b.explain {
+			return ctx, errPatternMismatch
+		}
 		return ctx, lazyErrorf("value %s is not an array", value)
 	}
 
 	array, is := value.(Array)
 	if !is {
+		if !b.explain {
+			return ctx, errPatternMismatch
+		}
 		return ctx, lazyErrorf("value %s is not an array", value)
 	}
 
@@ -33,12 +42,18 @@ func (p ArrayPattern) Bind(ctx context.Context, local Scope, value Value, b *sco
 	for i, item := range p.items {
 		if _, is := item.pattern.(ExtraElementPattern); is {
 			if len(extraElements) == 1 {
+				if !b.explain {
+					return ctx, errPatternMismatch
+				}
 				return ctx, lazyErrorf("non-deterministic pattern is not supported yet")
 			}
 			extraElements[i] = array.Count() - len(p.items)
 		}
 		if item.fallback != nil {
 			if len(extraElements) == 1 {
+				if !b.explain {
+					return ctx, errPatternMismatch
+				}
 				return ctx, lazyErrorf("non-deterministic pattern is not supported yet")
 			}
 			extraElements[i] = array.Count() - len(p.items)
@@ -46,10 +61,16 @@ func (p ArrayPattern) Bind(ctx context.Context, local Scope, value Value, b *sco
 	}
 
 	if len(p.items) > array.Count()+len(extraElements) {
+		if !b.explain {
+			return ctx, errPatternMismatch
+		}
 		return ctx, lazyErrorf("length of array %s shorter than array pattern %s", array, p)
 	}
 
 	if len(extraElements) == 0 && len(p.items) < array.Count() {
+		if !b.explain {
+			return ctx, errPatternMismatch
+		}
 		return ctx, lazyErrorf("length of array %s longer than array pattern %s", array, p)
 	}
 
@@ -65,6 +86,9 @@ func (p ArrayPattern) Bind(ctx context.Context, local Scope, value Value, b *sco
 			value = arr
 		} else if array.Count() <= i+offset {
 			if item.fallback == nil {
+				if !b.explain {
+					return ctx, errPatternMismatch
+				}
 				return ctx, lazyErrorf("length of array %s shorter than array pattern %s", array, p)
 			}
 			var err error

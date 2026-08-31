@@ -2,8 +2,27 @@ package rel
 
 import (
 	"context"
+	"errors"
 	"fmt"
 )
+
+// errPatternMismatch is every structural mismatch on the fast path: one
+// shared value, so trying and discarding a match — cond's bread and butter —
+// allocates nothing. Bind again with scopeBuilder.explain for the real
+// message.
+var errPatternMismatch = errors.New("pattern did not match")
+
+// explainBind re-runs a failed bind to produce its user-facing error.
+// b must be a fresh builder with explain set.
+func explainBind(ctx context.Context, p Pattern, scope Scope, value Value) error {
+	b := scopeBuilder{explain: true}
+	_, err := p.Bind(ctx, scope, value, &b)
+	if err == nil {
+		// A pure re-match cannot succeed after failing; guard anyway.
+		return errPatternMismatch
+	}
+	return err
+}
 
 // Pattern can be inside an Expr, Expr can be a Pattern.
 type Pattern interface {

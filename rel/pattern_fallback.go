@@ -23,6 +23,9 @@ func (p FallbackPattern) Bind(ctx context.Context, local Scope, value Value, b *
 	}
 
 	if p.fallback == nil {
+		if !b.explain {
+			return ctx, errPatternMismatch
+		}
 		return ctx, lazyErrorf("no value and no fallback")
 	}
 

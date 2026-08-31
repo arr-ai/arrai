@@ -40,6 +40,9 @@ func (e *ArrowExpr) Eval(ctx context.Context, local Scope) (_ Value, err error) 
 	var b scopeBuilder
 	ctx, err = e.fn.arg.Bind(ctx, local, value, &b)
 	if err != nil {
+		if err == errPatternMismatch {
+			err = explainBind(ctx, e.fn.arg, local, value)
+		}
 		return nil, WrapContextErr(err, e, local)
 	}
 	return e.fn.body.Eval(ctx, local.updateWith(&b))

@@ -65,6 +65,9 @@ func validTuplePattern(p TuplePattern) error {
 func (p TuplePattern) Bind(ctx context.Context, local Scope, value Value, b *scopeBuilder) (context.Context, error) {
 	tuple, is := value.(Tuple)
 	if !is {
+		if !b.explain {
+			return ctx, errPatternMismatch
+		}
 		return ctx, lazyErrorf("%s is not a tuple", value)
 	}
 
@@ -79,18 +82,27 @@ func (p TuplePattern) Bind(ctx context.Context, local Scope, value Value, b *sco
 		if _, is := attr.pattern.pattern.(ExtraElementPattern); is {
 			// detects a second `...`
 			if extraPattern != nil {
+				if !b.explain {
+					return ctx, errPatternMismatch
+				}
 				return ctx, lazyErrorf("non-deterministic pattern is not supported yet")
 			}
 			extraPattern = &p.attrs[i]
 			continue
 		}
 		if attr.pattern.fallback == nil && matched == tuple.Count() {
+			if !b.explain {
+				return ctx, errPatternMismatch
+			}
 			return ctx, lazyErrorf("length of tuple %s shorter than tuple pattern %s", tuple, p)
 		}
 		var found bool
 		tupleValue, found = tuple.Get(attr.name)
 		if !found {
 			if attr.pattern.fallback == nil {
+				if !b.explain {
+					return ctx, errPatternMismatch
+				}
 				return ctx, lazyErrorf("couldn't find %s in tuple %s", attr.name, tuple)
 			}
 			var err error
@@ -119,6 +131,9 @@ func (p TuplePattern) Bind(ctx context.Context, local Scope, value Value, b *sco
 		}
 		tupleValue := tuple.Project(names)
 		if tupleValue == nil {
+			if !b.explain {
+				return ctx, errPatternMismatch
+			}
 			return ctx, lazyErrorf("tuple %s cannot match tuple pattern %s", tuple, p)
 		}
 		var err error
@@ -127,6 +142,9 @@ func (p TuplePattern) Bind(ctx context.Context, local Scope, value Value, b *sco
 			return ctx, err
 		}
 	} else if matched < tuple.Count() {
+		if !b.explain {
+			return ctx, errPatternMismatch
+		}
 		return ctx, lazyErrorf("length of tuple %s longer than tuple pattern %s", tuple, p)
 	}
 
