@@ -487,20 +487,12 @@ func (r Relation) Hash(seed uintptr) uintptr {
 // only in their internal attribute ordering (e.g. from different
 // join/projection code paths), violating the hash/equals contract.
 func (r Relation) Hash128() hash128.H128 {
-	// The attribute-name half is a property of the shape. Rows hash per
-	// attribute through the shape's cached name hashes, in shape order via
-	// layout, so Hash128 agrees with EqualRelation regardless of the
-	// relation's internal attribute ordering.
-	h := relationSalt.Xor(r.shape.namesH)
-	for e := r.rows.Range(); e.Next(); {
-		row := e.Values()
-		var rh hash128.H128
-		for i, j := range r.layout {
-			rh = rh.Xor(hashAttr(r.shape.nameH[i], row[j]))
-		}
-		h = h.Xor(rh)
-	}
-	return h
+	// The attribute-name half is a property of the shape; the row half is
+	// layout-independent (each row hashed per attribute through the shape's
+	// cached name hashes) so Hash128 agrees with EqualRelation regardless of
+	// the relation's internal attribute ordering, and is memoised per shape
+	// on the row view.
+	return relationSalt.Xor(r.shape.namesH).Xor(r.rows.shapeHash(r.shape, r.layout))
 }
 
 // RelationValuesEnumerator enumerates the values as Values.

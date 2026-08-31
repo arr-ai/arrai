@@ -38,6 +38,9 @@ type positionalRelationMetadata struct {
 	groups map[string]*groupIndex
 	hash   hash128.H128
 	hashed bool
+	// shapeHashes memoises shapeHash per tuple shape: the layout-independent
+	// half of Relation.Hash128.
+	shapeHashes map[*Shape]hash128.H128
 }
 
 func (r *positionalRelation) getMeta() *positionalRelationMetadata {
@@ -147,6 +150,35 @@ func (r *positionalRelation) Hash128() hash128.H128 {
 		m.hash, m.hashed = h, true
 	}
 	return m.hash
+}
+
+// shapeHash returns the xor over the view's rows of each row's
+// per-attribute hash under sh, taking row values through layout (layout[i]
+// is the row position of sh's i'th attribute). It depends only on each
+// row's name/value pairs — not on the relation's internal attribute order —
+// which is what lets Relation.Hash128 agree with EqualRelation across
+// layouts. Computed once per shape per view.
+func (r *positionalRelation) shapeHash(sh *Shape, layout []int) hash128.H128 {
+	m := r.getMeta()
+	m.Lock()
+	defer m.Unlock()
+	if h, has := m.shapeHashes[sh]; has {
+		return h
+	}
+	var h hash128.H128
+	for i := 0; i < r.n; i++ {
+		row := r.rowAt(i)
+		var rh hash128.H128
+		for k, j := range layout {
+			rh = rh.Xor(hashAttr(sh.nameH[k], row[j]))
+		}
+		h = h.Xor(rh)
+	}
+	if m.shapeHashes == nil {
+		m.shapeHashes = map[*Shape]hash128.H128{}
+	}
+	m.shapeHashes[sh] = h
+	return h
 }
 
 func (r *positionalRelation) EqualPositionalRelation(r2 *positionalRelation) bool {
