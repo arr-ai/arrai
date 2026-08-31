@@ -59,7 +59,7 @@ li{margin-bottom:.4rem}
 <p class="lede">Where the evaluator work stands: what landed, what it bought, what it fixed along the way, and what is still ahead. The measuring stick throughout is Arieh's <code>reconstruct</code> workload — 1000 synthetic sysl apps, protobuf to relations to rendered source — with output byte-identical to arrai v0.321.0 at every step.</p>
 
 <div class="grid">
-  <div class="stat"><div class="v">1.87s</div><div class="k">now</div></div>
+  <div class="stat"><div class="v">1.85s</div><div class="k">now (0.94s compile + 0.90s eval)</div></div>
   <div class="stat"><div class="v">34×</div><div class="k">vs v0.338.0, the reported regression</div></div>
   <div class="stat"><div class="v">6.5×</div><div class="k">vs v0.321.0, before generics</div></div>
   <div class="stat"><div class="v">8</div><div class="k">correctness bugs fixed<br><span style="font-size:.85em">(4 in released frozen)</span></div></div>
@@ -83,12 +83,14 @@ li{margin-bottom:.4rem}
 <tr><td>frozen fans out from 256 elements</td><td class="num"><span class="bar" style="width:8px"></span>2.25s <span class="muted">(no change here)</span></td><td class="num">28×</td><td class="sha">953bdfb</td></tr>
 <tr><td><strong>Flat-arena relations with lazy indexing</strong></td><td class="num"><span class="bar" style="width:7px"></span><strong>2.08s</strong></td><td class="num"><strong>30×</strong></td><td class="sha">41352d9</td></tr>
 <tr><td><strong>Parallel <code>where</code> and <code>=&gt;</code> bodies</strong></td><td class="num"><span class="bar" style="width:6px"></span><strong>1.87s</strong></td><td class="num"><strong>34×</strong></td><td class="sha">d669219</td></tr>
+<tr><td>Hash128/Equal contract restored for arena relations (rebase over #736–#738, #740)</td><td class="num"><span class="bar" style="width:6px"></span>1.90s</td><td class="num">33×</td><td class="sha">5ad9966</td></tr>
+<tr><td>Reflection-free sorts (<code>slices.SortFunc</code> sweep)</td><td class="num"><span class="bar" style="width:6px"></span>1.85s</td><td class="num">34×</td><td class="sha">a955967</td></tr>
 </table></div>
 <p class="muted">The frozen fan-out row is flat on purpose: reconstruct's relations are a few thousand rows and its time is dominated by grammar parsing, so it is the wrong workload to show parallelism. On a 60,000-row relational script the same change is worth 25%.</p>
 
 <h2>What landed</h2>
 
-<div class="repo"><h3>arr.ai — 16 commits</h3><span class="pill acc">local only</span></div>
+<div class="repo"><h3>arr.ai — one draft PR (#739)</h3><span class="pill acc">local only</span></div>
 <ul>
 <li><strong>Function application returns its result directly</strong> instead of building and unpacking a one-element set — which had been deep-hashing every result and <code>Sprintf</code>-formatting every closure body to hash it. 5.8M calls on this workload.</li>
 <li><strong><code>where .attr = key</code> is answered from the relation's index</strong>, recognised at compile time. Two sites accounted for 4,000,000 scanned rows.</li>
@@ -97,6 +99,10 @@ li{margin-bottom:.4rem}
 <li><strong>Scopes are chained lexical frames</strong> and identifier reads cache their <code>(hops, slot)</code> address <span class="pill good">🎯T7</span>.</li>
 <li><strong>Tuples are shape-backed structs</strong> — an interned <code>Shape</code> plus values in shape order, so relation rows <em>are</em> tuple values, inflated with no copying <span class="pill good">🎯T7 · 🎯T9</span>. This was the single biggest step and it came from your observation that tuples are C-style structs, not dictionaries.</li>
 <li>Lazy pattern-match errors, flat pattern frames, memoised grammars and regexes, <code>Relation.Equal</code> fast paths, shape-based attribute matching, a typed group-by index.</li>
+<li><strong><code>ARRAI_TIMING=1</code> reports compile and eval phases separately</strong> on every run — compile (parse the program + imports) and eval (the algorithm) split almost exactly in half on reconstruct, which keeps language-startup cost out of algorithm measurements ahead of an eventual compiled <code>.arraiz</code> form.</li>
+<li><strong>The Hash128/Equal contract holds for arena relations</strong> — rebased over Arieh's #738 (layout-dependent relation hashes, Dict salt mismatch, Array xor self-cancellation, all found via real non-deterministic annotation loss) and reimplemented for the arena: rows hash per attribute through the shape's cached name hashes, memoised per shape on the row view. His regression tests (#738, #740) all pass against the arena.</li>
+<li><strong>Reflection-free sorting</strong> — <code>slices.SortFunc</code>/<code>SortStableFunc</code>/<code>BinarySearch</code> replace <code>sort.Slice</code>'s reflection swapper in <code>OrderedRange</code>, <code>OrderBy</code>, dict ordering and <code>shapeOfAttrs</code>: eval −5%.</li>
+<li><strong><code>rel.All</code>: an <code>iter.Seq</code> over sets, with a measured doctrine</strong> — ~6% over the MoveNext/Current enumerators with one less allocation; adopted only where loop bodies write no captured locals (each written capture becomes a heap cell per loop entry — measured +1.4M allocations and reverted where it hurt). The 5×/zero-alloc result the first benchmark showed was an inlining artifact that <code>testing.B.Loop</code> exposed; the true 5× belongs to concrete indexed loops, which the arena fast paths already are.</li>
 <li><strong>Large <code>where</code> and <code>=&gt;</code> evaluate their closure bodies in parallel</strong> <span class="pill good">🎯T12</span> — closures are pure and the caches are concurrency-safe, so above 512 elements the evaluator fans out (2.2× on <code>where</code>, 2.7× on <code>=&gt;</code> at 50k elements). One knob — frozen's — governs both layers, and errors stay deterministic: the first failing element's, sequential or parallel.</li>
 <li><strong>Relations store rows in a flat arena with selection-vector views and a lazy hash index</strong> <span class="pill good">🎯T11</span> — the columnar project, landed. Building a relation is one arena allocation instead of a HAMT (12k rows: 44,163 allocations → 139); <code>where</code> shares the arena and allocates only a row-id vector; joins assemble output rows straight into a builder arena (115k allocations → 173, 3× faster); a cold group-by is 11× faster and <code>Has</code> allocates nothing. <code>acc | {x}</code> fold chains extend one arena in place. Group-by keys are never materialised: each bucket's key is the projection of a representative row.</li>
 </ul>
@@ -175,8 +181,11 @@ li{margin-bottom:.4rem}
 </ul>
 
 <h2>Measured and deliberately discarded</h2>
-<p>Kept here so nobody re-attempts them without the numbers.</p>
+<p>Kept here so nobody re-attempts them without the numbers. The modern-Go survey lives in <a href="https://github.com/arr-ai/arrai/issues/741">#741</a>.</p>
 <ul>
+<li><strong>Green Tea GC and PGO</strong> — both flat on reconstruct under go1.26.4.</li>
+<li><strong>Small-Number box table</strong> — zero <code>convT</code> presence in both reconstruct and an arithmetic-heavy profile; the evaluator moves existing boxes, it rarely mints them. (<code>ArrayItemTuple.Get</code> boxing its index is the one live lead, parked for the tuple/strings work.)</li>
+<li><strong><code>strings.SplitSeq</code> in <code>//seq.split</code></strong> — parts are materialised as arr.ai Strings immediately; the iterator saves one slice header per call.</li>
 <li><strong>Bare <code>Value</code> group-by keys</strong> — tried three times. Silently wrong before the frozen fix; 7× slower after it (reflective dispatch); superseded by a <code>Map[Value, …]</code> index that is 14% faster with 24% fewer allocations.</li>
 <li><strong>A <code>posTuple</code> row view</strong> — regressed 20s → 26s in the pre-shapes era, then made moot: rows and tuples are now the same thing.</li>
 <li><strong>Full closure conversion</strong> — shelved. Frames plus inline caches already took the win; the remainder measured at a few percent.</li>
