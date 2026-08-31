@@ -92,6 +92,8 @@ func Union(a, b Set) Set {
 		m.Put(b.unionSetSubsetBucket(), b)
 		return newSetFromBuckets(m.Finish())
 	default:
+		// Not range-over-All: the body writes the captured accumulator,
+		// which would heap-allocate a cell per Union call.
 		for e := b.Enumerator(); e.MoveNext(); {
 			a = a.With(e.Current())
 		}
