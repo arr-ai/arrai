@@ -16,6 +16,11 @@
 // Build:  clang++ -std=c++20 -O2 -o reconstruct reconstruct.cpp
 // Run:    ./reconstruct ../model.sysl.pb
 
+#ifdef _WIN32
+#include <fcntl.h>
+#include <io.h>
+#endif
+
 #include <algorithm>
 #include <cstdint>
 #include <cstdio>
@@ -1194,6 +1199,9 @@ int main(int argc, char** argv) {
     }
     result += "}\n";
 
+#ifdef _WIN32
+    _setmode(_fileno(stdout), _O_BINARY); // no LF -> CRLF translation
+#endif
     std::fwrite(result.data(), 1, result.size(), stdout);
     return 0;
 }
