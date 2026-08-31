@@ -361,16 +361,6 @@ func (b *scopeBuilder) index(name string) int {
 	return -1
 }
 
-func (b *scopeBuilder) finish() Scope {
-	if len(b.names) == 0 {
-		return EmptyScope
-	}
-	if len(b.names) == 1 {
-		return Scope{&frame{name: b.names[0], val: b.vals[0]}}
-	}
-	return Scope{&frame{names: b.names, vals: b.vals}}
-}
-
 // updateWith pushes b's bindings above s as one frame: Update without
 // materialising an intermediate scope.
 func (s Scope) updateWith(b *scopeBuilder) Scope {
