@@ -2,7 +2,7 @@ package rel
 
 import (
 	"fmt"
-	"sort"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -124,8 +124,7 @@ func (r *positionalRelation) find(v Values) (uint32, bool) {
 		return 0, false
 	}
 	if r.sel != nil {
-		j := sort.Search(len(r.sel), func(i int) bool { return r.sel[i] >= id })
-		if j == len(r.sel) || r.sel[j] != id {
+		if _, found := slices.BinarySearch(r.sel, id); !found {
 			return 0, false
 		}
 	}
@@ -396,8 +395,14 @@ func (r *positionalRelation) OrderedRange(p valueProjector) *positionalRelationV
 	for i := range order {
 		order[i] = uint32(i)
 	}
-	sort.Slice(order, func(i, j int) bool {
-		return r.rowAt(int(order[i])).project(p).Less(r.rowAt(int(order[j])).project(p))
+	slices.SortFunc(order, func(i, j uint32) int {
+		a, b := r.rowAt(int(i)).project(p), r.rowAt(int(j)).project(p)
+		if a.Less(b) {
+			return -1
+		} else if b.Less(a) {
+			return 1
+		}
+		return 0
 	})
 	return &positionalRelationValuesEnumerator{r: r, order: order, i: -1}
 }

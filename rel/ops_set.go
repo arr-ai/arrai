@@ -1,7 +1,7 @@
 package rel
 
 import (
-	"sort"
+	"slices"
 
 	"github.com/arr-ai/frozen"
 )
@@ -167,18 +167,29 @@ func SymmetricDifference(a, b Set) Set {
 
 // OrderBy returns a slice with the sets Values sorted by the given key.
 func OrderBy(s Set, key func(v Value) (Value, error), less func(a, b Value) bool) ([]Value, error) {
-	o := newOrderer(s.Count(), less)
+	type kv struct{ key, value Value }
+	pairs := make([]kv, s.Count())
 	for i, e := 0, s.Enumerator(); e.MoveNext(); i++ {
 		value := e.Current()
-		o.values[i] = value
-		var err error
-		o.keys[i], err = key(value)
+		k, err := key(value)
 		if err != nil {
 			return nil, err
 		}
+		pairs[i] = kv{key: k, value: value}
 	}
-	sort.Sort(o)
-	return o.values, nil
+	slices.SortStableFunc(pairs, func(a, b kv) int {
+		if less(a.key, b.key) {
+			return -1
+		} else if less(b.key, a.key) {
+			return 1
+		}
+		return 0
+	})
+	values := make([]Value, len(pairs))
+	for i, p := range pairs {
+		values[i] = p.value
+	}
+	return values, nil
 }
 
 func OrderedValueEnumerator(e ValueEnumerator, less Less) ValueEnumerator {
@@ -189,7 +200,14 @@ func OrderedValueEnumerator(e ValueEnumerator, less Less) ValueEnumerator {
 	for e.MoveNext() {
 		values = append(values, e.Current())
 	}
-	sort.Slice(values, func(i, j int) bool { return less(values[i], values[j]) })
+	slices.SortFunc(values, func(a, b Value) int {
+		if less(a, b) {
+			return -1
+		} else if less(b, a) {
+			return 1
+		}
+		return 0
+	})
 	return &valueSliceEnumerator{values: values, i: -1}
 }
 
@@ -212,34 +230,6 @@ func (e *valueSliceEnumerator) MoveNext() bool {
 
 func (e *valueSliceEnumerator) Current() Value {
 	return e.values[e.i]
-}
-
-type orderer struct {
-	values []Value
-	keys   []Value
-	less   func(a, b Value) bool
-}
-
-func newOrderer(n int, less func(a, b Value) bool) *orderer {
-	buf := make([]Value, 2*n)
-	return &orderer{values: buf[:n], keys: buf[n:], less: less}
-}
-
-// Len is the number of elements in the collection.
-func (o *orderer) Len() int {
-	return len(o.values)
-}
-
-// Less reports whether the element with
-// index i should sort before the element with index j.
-func (o *orderer) Less(i, j int) bool {
-	return o.less(o.keys[i], o.keys[j])
-}
-
-// Swap swaps the elements with indexes i and j.
-func (o *orderer) Swap(i, j int) {
-	o.values[i], o.values[j] = o.values[j], o.values[i]
-	o.keys[i], o.keys[j] = o.keys[j], o.keys[i]
 }
 
 // PowerSet computes the power set of a set.

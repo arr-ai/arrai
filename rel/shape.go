@@ -2,7 +2,7 @@ package rel
 
 import (
 	"fmt"
-	"sort"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -101,7 +101,7 @@ func shapeOfAttrs(attrs []Attr) (*Shape, []Value) {
 	}
 	sorted := make([]Attr, len(attrs))
 	copy(sorted, attrs)
-	sort.SliceStable(sorted, func(i, j int) bool { return sorted[i].Name < sorted[j].Name })
+	slices.SortStableFunc(sorted, func(a, b Attr) int { return strings.Compare(a.Name, b.Name) })
 	names := make([]string, 0, len(sorted))
 	vals := make([]Value, 0, len(sorted))
 	for _, a := range sorted {
@@ -142,7 +142,7 @@ func (s *Shape) With(name string) (*Shape, int) {
 		tr := t.(*shapeTransition)
 		return tr.shape, tr.at
 	}
-	at := sort.SearchStrings(s.names, name)
+	at, _ := slices.BinarySearch(s.names, name)
 	names := make([]string, 0, len(s.names)+1)
 	names = append(names, s.names[:at]...)
 	names = append(names, name)

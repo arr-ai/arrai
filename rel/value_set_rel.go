@@ -1,12 +1,13 @@
 package rel
 
 import (
+	"slices"
+
 	"github.com/arr-ai/hash/hash128"
 
 	"context"
 	"fmt"
 	"reflect"
-	"sort"
 	"strings"
 
 	"github.com/arr-ai/wbnf/parser"
@@ -350,7 +351,7 @@ func newRelationBuilder(names []string, cap int) *relationBuilder {
 		mapping: m,
 		names:   names,
 	}
-	if sort.StringsAreSorted(names) {
+	if slices.IsSorted(names) {
 		b.shape = shapeOf(names)
 	}
 	return b
@@ -439,7 +440,7 @@ func (r Relation) Equal(i Value) bool {
 func (r Relation) canonicalRelation() *positionalRelation {
 	names := make(NamesSlice, len(r.attrs))
 	copy(names, r.attrs)
-	sort.Strings(names)
+	slices.Sort(names)
 	projection := make(valueProjector, 0, len(r.attrs))
 	for _, name := range names {
 		projection = append(projection, r.attrMap[name])
