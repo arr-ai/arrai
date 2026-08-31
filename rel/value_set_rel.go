@@ -9,7 +9,6 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/arr-ai/frozen"
 	"github.com/arr-ai/wbnf/parser"
 
 	"github.com/arr-ai/arrai/pkg/fu"
@@ -162,7 +161,13 @@ func (r Relation) ArrayEnumerator() ValueEnumerator {
 
 func (r Relation) With(v Value) Set {
 	if t, is := v.(Tuple); is && r.hasShape(t) {
-		return newRelation(r.attrs, r.p, r.rows.With(r.tupleToValues(t)))
+		rows := r.rows.With(r.tupleToValues(t))
+		if rows == r.rows {
+			return r
+		}
+		// The result is never empty, so newBody just swaps the rows in
+		// without recomputing the relation's shape metadata.
+		return r.newBody(rows)
 	}
 	return toUnionSetWithItem(r, v)
 }
@@ -341,7 +346,7 @@ func newRelationBuilder(names []string, cap int) *relationBuilder {
 		m[n] = i
 	}
 	b := &relationBuilder{
-		prb:     &positionalRelationBuilder{sb: frozen.NewSetBuilder[any](cap)},
+		prb:     newPositionalRelationBuilder(len(names), cap),
 		mapping: m,
 		names:   names,
 	}
@@ -439,15 +444,7 @@ func (r Relation) canonicalRelation() *positionalRelation {
 	for _, name := range names {
 		projection = append(projection, r.attrMap[name])
 	}
-	isContiguous := projection.isContiguous()
-	return &positionalRelation{
-		set: frozen.SetMap(r.rows.set, func(elem any) any {
-			if isContiguous {
-				return elem.(Values)[projection[0] : projection[len(projection)-1]+1]
-			}
-			return elem.(Values).project(projection).values()
-		}),
-	}
+	return r.rows.Project(projection)
 }
 
 func (r Relation) EqualRelation(r2 Relation) bool {
@@ -458,9 +455,9 @@ func (r Relation) EqualRelation(r2 Relation) bool {
 	// identically the row sets compare directly (frozen checks the sets'
 	// hashes first). Only differing layouts need canonicalising.
 	if fastPaths && r.sameLayout(r2) {
-		return r.rows.set.Equal(r2.rows.set)
+		return r.rows.EqualPositionalRelation(r2.rows)
 	}
-	return r.canonicalRelation().set.Equal(r2.canonicalRelation().set)
+	return r.canonicalRelation().EqualPositionalRelation(r2.canonicalRelation())
 }
 
 // sameLayout reports whether r and r2 store each attribute at the same

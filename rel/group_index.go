@@ -1,140 +1,136 @@
 package rel
 
 import (
-	"github.com/arr-ai/frozen"
+	"github.com/arr-ai/hash/hash128"
 )
 
-// groupIndex maps a projection of a relation's rows to the rows sharing it,
-// and backs joins and index-answered `where`.
+// groupIndex maps each distinct projection of a view's rows to the rows
+// sharing it, and backs joins and index-answered `where`. Buckets are keyed
+// by the 128-bit hash of the projected values, and each bucket remembers one
+// representative row — the key *is* that row's projection, so keys are never
+// materialised. Distinct keys colliding on their hash chain through next;
+// with 128-bit hashes that is theoretical, but probes still verify the key
+// against the representative rather than trusting the hash.
 //
-// A single-column projection is stored in a Map keyed by Value rather than
-// by any. That matters because frozen compares an `any` key without
-// reflection only if it satisfies Equaler[any]: an arr.ai Value has
-// Equal(Value) bool, so as an `any` key it was silently wrong before frozen
-// v1.14.0 and reflection-slow after. Keying the map by Value instead lets
-// frozen match Equaler[Value] directly, and stores the key inline rather
-// than boxing it — one allocation per key rather than three.
-//
-// Wider projections key on the projected row as before.
+// Rows are recorded as arena ids of the view's store, ascending, so a bucket
+// can back a view of the same store directly (selView).
 type groupIndex struct {
-	byValue frozen.Map[Value, frozen.Set[any]]
-	byRow   frozen.Map[any, frozen.Set[any]]
-	single  bool
+	rel *positionalRelation
+	p   valueProjector
+	m   map[hash128.H128]*groupBucket
 }
 
-// groupKey is a key in whichever form its index uses. Only the index
-// constructs one, from a projector of the same width as its own, so the two
-// can never disagree about the encoding. It is passed by value and never
-// stored, so it costs no allocation.
-type groupKey struct {
-	v      Value
-	row    any
-	single bool
+type groupBucket struct {
+	rep  uint32   // arena id of a representative row
+	rows []uint32 // ascending arena ids of the group's rows
+	next *groupBucket
 }
 
-// keyFrom encodes p's projection of row as a key for this index. p must have
-// the same width as the projector the index was built from — true of any
-// join's two sides — but need not be the same projector: the two sides of a
-// join name the shared columns at different positions.
-func (g groupIndex) keyFrom(p valueProjector, row Values) groupKey {
-	if g.single {
-		return groupKey{v: row[p[0]], single: true}
+// hashOf hashes p's projection of row, matching projectedValues.Hash128 and
+// the hash of the projected values as a plain row.
+func (p valueProjector) hashOf(row Values) hash128.H128 {
+	h := valuesSalt
+	for _, i := range p {
+		h = h.Mix(row[i].Hash128())
 	}
-	return groupKey{row: p.rowKey(row)}
+	return h
 }
 
-// rowKey encodes the projection of a row as a row-shaped key.
-func (p valueProjector) rowKey(row Values) interface{} {
-	switch len(p) {
-	case 0:
-		// Disjoint join keys: every row shares the one empty key.
-		return Values{}
-	case 1:
-		return Values{row[p[0]]}
-	}
-	if p.isContiguous() {
-		a, b := p[0], p[len(p)-1]+1
-		v := make(Values, b-a)
-		copy(v, row[a:b])
-		return v
-	}
-	return row.project(p).values()
-}
-
-// newGroupIndex groups a row set by p.
-func newGroupIndex(rows frozen.Set[any], p valueProjector) groupIndex {
-	switch len(p) {
-	case 0:
-		return groupIndex{
-			byRow: frozen.NewMap[any, frozen.Set[any]](
-				frozen.KV[any, frozen.Set[any]](Values{}, rows)),
-		}
-	case 1:
-		if fastPaths {
-			i := p[0]
-			return groupIndex{
-				single: true,
-				byValue: frozen.SetGroupBy(rows, func(el any) Value {
-					return el.(Values)[i] //nolint:forcetypeassert
-				}),
+// newGroupIndex groups a view's rows by p. Callers go through
+// positionalRelation.groupBy, which memoises per view.
+func newGroupIndex(r *positionalRelation, p valueProjector) *groupIndex {
+	g := &groupIndex{rel: r, p: p, m: make(map[hash128.H128]*groupBucket, r.n)}
+	for i := 0; i < r.n; i++ {
+		row := r.rowAt(i)
+		h := p.hashOf(row)
+		b := g.m[h]
+		for ; b != nil; b = b.next {
+			if projectionsEqual(g.repRow(b), p, row, p) {
+				break
 			}
 		}
+		if b == nil {
+			b = &groupBucket{rep: r.arenaID(i), next: g.m[h]}
+			g.m[h] = b
+		}
+		b.rows = append(b.rows, r.arenaID(i))
 	}
-	return groupIndex{byRow: frozen.SetGroupBy(rows, func(el any) any {
-		return p.rowKey(el.(Values)) //nolint:forcetypeassert
-	})}
+	return g
 }
 
-// get returns the rows sharing k.
-func (g groupIndex) get(k groupKey) (frozen.Set[any], bool) {
-	if g.single {
-		return g.byValue.Get(k.v)
+// projectionsEqual reports whether pa's projection of a equals pb's
+// projection of b. The projectors must have the same length.
+func projectionsEqual(a Values, pa valueProjector, b Values, pb valueProjector) bool {
+	for i := range pa {
+		if !a[pa[i]].Equal(b[pb[i]]) {
+			return false
+		}
 	}
-	return g.byRow.Get(k.row)
+	return true
 }
 
-// has reports whether any row shares k.
-func (g groupIndex) has(k groupKey) bool {
-	if g.single {
-		return g.byValue.Has(k.v)
+// row returns the store row at an arena id recorded in this index.
+func (g *groupIndex) row(id uint32) Values {
+	return rowOf(g.rel.arena, g.rel.store.width, int(id))
+}
+
+// repRow returns a bucket's representative row: the full row, of which the
+// group key is the projection.
+func (g *groupIndex) repRow(b *groupBucket) Values {
+	return g.row(b.rep)
+}
+
+// bucketOfRow returns the bucket whose key equals q's projection of row, or
+// nil. q must have the same length as the index's projector; probing one
+// side of a join with the other side's rows uses that side's projector.
+func (g *groupIndex) bucketOfRow(row Values, q valueProjector) *groupBucket {
+	for b := g.m[q.hashOf(row)]; b != nil; b = b.next {
+		if projectionsEqual(g.repRow(b), g.p, row, q) {
+			return b
+		}
 	}
-	return g.byRow.Has(k.row)
+	return nil
+}
+
+// getKey returns the arena ids of rows whose projection equals key, given in
+// the same order as the index's projector.
+func (g *groupIndex) getKey(key ...Value) ([]uint32, bool) {
+	h := valuesSalt
+	for _, v := range key {
+		h = h.Mix(v.Hash128())
+	}
+	for b := g.m[h]; b != nil; b = b.next {
+		rep := g.repRow(b)
+		match := true
+		for i, v := range key {
+			if !rep[g.p[i]].Equal(v) {
+				match = false
+				break
+			}
+		}
+		if match {
+			return b.rows, true
+		}
+	}
+	return nil, false
 }
 
 // count returns the number of distinct keys.
-func (g groupIndex) count() int {
-	if g.single {
-		return g.byValue.Count()
+func (g *groupIndex) count() int {
+	n := 0
+	for _, b := range g.m {
+		for ; b != nil; b = b.next {
+			n++
+		}
 	}
-	return g.byRow.Count()
+	return n
 }
 
 // each calls f for every group, in unspecified order.
-func (g groupIndex) each(f func(k groupKey, rows frozen.Set[any])) {
-	if g.single {
-		for i := g.byValue.Range(); i.Next(); {
-			f(groupKey{v: i.Key(), single: true}, i.Value())
+func (g *groupIndex) each(f func(b *groupBucket)) {
+	for _, b := range g.m {
+		for ; b != nil; b = b.next {
+			f(b)
 		}
-		return
 	}
-	for i := g.byRow.Range(); i.Next(); {
-		f(groupKey{row: i.Key()}, i.Value())
-	}
-}
-
-// commonKeyRows returns, for each key present in both indexes, the row that
-// key projects from. Both indexes must have been built over projectors of
-// the same width, which is true of any join's two sides.
-func (g groupIndex) commonKeyRows(h groupIndex, toRow func(k groupKey) Values) frozen.Set[any] {
-	sb := frozen.NewSetBuilder[any](0)
-	if g.single && h.single {
-		for i := g.byValue.Keys().Intersection(h.byValue.Keys()).Range(); i.Next(); {
-			sb.Add(toRow(groupKey{v: i.Value(), single: true}))
-		}
-		return sb.Finish()
-	}
-	for i := g.byRow.Keys().Intersection(h.byRow.Keys()).Range(); i.Next(); {
-		sb.Add(toRow(groupKey{row: i.Value()}))
-	}
-	return sb.Finish()
 }

@@ -1,6 +1,7 @@
 package rel
 
 import (
+	"fmt"
 	"sort"
 	"strconv"
 	"strings"
@@ -29,7 +30,9 @@ type Shape struct {
 	// hash that depends only on its shape.
 	namesH hash128.H128
 
-	bucket    hashableNamesSlice
+	// bucket is the SetBuilder bucket key for tuples of this shape, boxed
+	// once so getBucket never allocates.
+	bucket    fmt.Stringer
 	namesOnce sync.Once
 	namesSet  Names
 

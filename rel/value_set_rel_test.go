@@ -3,7 +3,6 @@ package rel
 import (
 	"testing"
 
-	"github.com/arr-ai/frozen"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -33,26 +32,22 @@ func TestRelationString(t *testing.T) {
 	r := newRelation(
 		NamesSlice{"c", "b", "a"},
 		valueProjector{0, 1, 2},
-		&positionalRelation{
-			set: frozen.NewSet[any](
-				row(1, 1, 2),
-				row(1, 2, 3),
-				row(2, 1, 2),
-			),
-		},
+		newPositionalRelation(3,
+			row(1, 1, 2),
+			row(1, 2, 3),
+			row(2, 1, 2),
+		),
 	)
 	assert.Equal(t, "{|a, b, c| (2, 1, 1), (2, 1, 2), (3, 2, 1)}", r.String())
 
 	r = newRelation(
 		NamesSlice{"c", "b", "a"},
 		valueProjector{2, 0, 1},
-		&positionalRelation{
-			set: frozen.NewSet[any](
-				row(1, 1, 2),
-				row(1, 2, 3),
-				row(2, 1, 2),
-			),
-		},
+		newPositionalRelation(3,
+			row(1, 1, 2),
+			row(1, 2, 3),
+			row(2, 1, 2),
+		),
 	)
 	assert.Equal(t, "{|a, b, c| (1, 1, 2), (1, 2, 2), (2, 1, 3)}", r.String())
 }
@@ -63,17 +58,13 @@ func TestRelationUnion(t *testing.T) {
 	r1 := newRelation(
 		NamesSlice{"a", "b"},
 		valueProjector{0, 1},
-		&positionalRelation{
-			set: frozen.NewSet[any](row(1, 3)),
-		},
+		newPositionalRelation(2, row(1, 3)),
 	)
 
 	r2 := newRelation(
 		NamesSlice{"b", "a"},
 		valueProjector{0, 1},
-		&positionalRelation{
-			set: frozen.NewSet[any](row(1, 3)),
-		},
+		newPositionalRelation(2, row(1, 3)),
 	)
 
 	// this ensures that even if NamesSlice is in different order, as long both Relations have the same names, the union
@@ -82,9 +73,7 @@ func TestRelationUnion(t *testing.T) {
 		newRelation(
 			NamesSlice{"a", "b"},
 			valueProjector{0, 1},
-			&positionalRelation{
-				set: frozen.NewSet[any](row(1, 3), row(3, 1)),
-			},
+			newPositionalRelation(2, row(1, 3), row(3, 1)),
 		),
 		Union(r1, r2),
 	)
@@ -122,9 +111,7 @@ func TestRelationHas(t *testing.T) {
 	r := newRelation(
 		NamesSlice{"c", "b", "a"},
 		valueProjector{0, 1, 2},
-		&positionalRelation{
-			set: frozen.NewSet[any](row(1, 3, 2)),
-		},
+		newPositionalRelation(3, row(1, 3, 2)),
 	)
 	assert.True(t,
 		r.Has(

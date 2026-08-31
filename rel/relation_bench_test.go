@@ -163,9 +163,16 @@ func TestGroupByKeyRoundTrip(t *testing.T) {
 		group := r.rows.groupBy(p)
 		for e := r.Enumerator(); e.MoveNext(); {
 			row := r.tupleToValues(e.Current().(Tuple))
-			got, has := group.get(group.keyFrom(p, row))
+			got, has := group.getKey(row[idx])
 			assert.True(t, has, "probing %s with %v must find its own row", attr, row)
-			assert.True(t, has && got.Has(any(row)) || !has)
+			found := false
+			for _, id := range got {
+				if group.row(id).equalValues(row) {
+					found = true
+					break
+				}
+			}
+			assert.True(t, found, "row %v missing from its group for %s", row, attr)
 		}
 	}
 }

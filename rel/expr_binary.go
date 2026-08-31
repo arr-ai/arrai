@@ -227,15 +227,12 @@ func (r Relation) whereByIndex(ctx context.Context, scope Scope, p *eqAttrPredic
 	if err != nil {
 		return nil, false, err
 	}
-	proj := valueProjector{index}
-	row := make(Values, index+1)
-	row[index] = key
-	group := r.rows.groupBy(proj)
-	rows, has := group.get(group.keyFrom(proj, row))
-	if !has || rows.IsEmpty() {
+	group := r.rows.groupBy(valueProjector{index})
+	rows, has := group.getKey(key)
+	if !has {
 		return None, true, nil
 	}
-	return r.newBody(&positionalRelation{set: rows}), true, nil
+	return r.newBody(r.rows.selView(rows)), true, nil
 }
 
 // NewWhereExpr evaluates a where pred, given a set lhs.
