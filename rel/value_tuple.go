@@ -1,13 +1,14 @@
 package rel
 
 import (
+	"slices"
+
 	"github.com/arr-ai/hash/hash128"
 
 	"context"
 	"fmt"
 	"reflect"
 	"regexp"
-	"sort"
 	"strings"
 
 	"github.com/arr-ai/wbnf/parser"
@@ -392,7 +393,7 @@ func orderedTupleNames(t Tuple) []string {
 		name, _ := e.Current()
 		names = append(names, name)
 	}
-	sort.Strings(names)
+	slices.Sort(names)
 	return names
 }
 
@@ -531,7 +532,7 @@ func (n NamesSlice) LessNamesSlice(n2 NamesSlice) bool {
 func (n NamesSlice) GetSorted() NamesSlice {
 	sorted := make(NamesSlice, len(n))
 	copy(sorted, n)
-	sort.Strings(sorted)
+	slices.Sort(sorted)
 	return sorted
 }
 

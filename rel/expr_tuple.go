@@ -3,7 +3,7 @@ package rel
 import (
 	"bytes"
 	"context"
-	"sort"
+	"slices"
 	"strings"
 
 	"github.com/arr-ai/wbnf/parser"
@@ -87,7 +87,7 @@ func (e *TupleExpr) staticShape() {
 		names = append(names, attr.name)
 	}
 	sorted := append([]string(nil), names...)
-	sort.Strings(sorted)
+	slices.Sort(sorted)
 	for i := 1; i < len(sorted); i++ {
 		if sorted[i] == sorted[i-1] {
 			return

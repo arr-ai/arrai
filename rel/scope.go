@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"sort"
+	"slices"
 
 	"github.com/go-errors/errors"
 )
@@ -262,7 +262,7 @@ func (s Scope) Enumerator() *ScopeEnumerator {
 // OrderedNames returns the names of this tuple in sorted order.
 func (s Scope) OrderedNames() []string {
 	names := s.Names()
-	sort.Strings(names)
+	slices.Sort(names)
 	return names
 }
 
