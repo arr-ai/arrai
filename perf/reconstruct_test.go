@@ -25,8 +25,6 @@
 package perf
 
 import (
-	"bytes"
-	"context"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -34,12 +32,6 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/require"
-
-	"github.com/arr-ai/arrai/pkg/arrai"
-	"github.com/arr-ai/arrai/pkg/arraictx"
-	"github.com/arr-ai/arrai/pkg/importcache"
-	"github.com/arr-ai/arrai/rel"
-	"github.com/arr-ai/arrai/syntax"
 )
 
 // Allocation budget for the reconstruct scenario, in millions. Lower it when
@@ -53,53 +45,18 @@ func TestReconstruct(t *testing.T) {
 
 	dir, err := filepath.Abs("reconstruct")
 	require.NoError(t, err)
-	model := filepath.Join(dir, "model.sysl.pb")
-	script := filepath.Join(dir, "vendor", "run.arrai")
-
-	source, err := os.ReadFile(script)
-	require.NoError(t, err)
 	expected, err := os.ReadFile(filepath.Join(dir, "expected.arrai"))
 	require.NoError(t, err)
 
-	// run.arrai resolves its imports relative to the working directory.
-	wd, err := os.Getwd()
-	require.NoError(t, err)
-	require.NoError(t, os.Chdir(filepath.Join(dir, "vendor")))
-	defer func() { require.NoError(t, os.Chdir(wd)) }()
-
-	ctx := importcache.WithNewImportCache(
-		arraictx.WithArgs(arraictx.InitRunCtx(context.Background()), script, model))
-
-	var before, after runtime.MemStats
-	runtime.GC()
-	runtime.ReadMemStats(&before)
-	start := time.Now()
-
-	// Compile and evaluate as separate phases: compile is the cost of
-	// parsing the program and the sysl library, eval is the algorithm. The
-	// split is what makes comparisons with the native implementation fair —
-	// its compilation happened at build time.
-	expr, err := syntax.Compile(ctx, script, string(source))
-	require.NoError(t, err)
-	compiled := time.Now()
-
-	value, err := expr.Eval(ctx, rel.Scope{})
-	require.NoError(t, err)
-	var out bytes.Buffer
-	require.NoError(t, arrai.OutputValue(ctx, value, &out, ""))
-
-	elapsed := time.Since(start)
-	runtime.ReadMemStats(&after)
-
-	allocsM := float64(after.Mallocs-before.Mallocs) / 1e6
+	got := runReconstruct(t, filepath.Join(dir, "model.sysl.pb"))
 	t.Logf("reconstruct: %s (compile %s + eval %s), %.2fM allocations, %.0fMB allocated",
-		elapsed.Round(time.Millisecond),
-		compiled.Sub(start).Round(time.Millisecond),
-		time.Since(compiled).Round(time.Millisecond),
-		allocsM,
-		float64(after.TotalAlloc-before.TotalAlloc)/(1<<20))
+		got.elapsed.Round(time.Millisecond),
+		got.compile.Round(time.Millisecond),
+		got.eval.Round(time.Millisecond),
+		got.allocsM,
+		got.totalMiB)
 
-	require.Equal(t, string(expected), out.String(),
+	require.Equal(t, string(expected), got.out,
 		"output differs from the v0.321.0 reference; this is a correctness regression")
 
 	if !fastPathsEnabled || raceEnabled || runtime.GOOS == "windows" {
@@ -109,14 +66,14 @@ func TestReconstruct(t *testing.T) {
 		t.Log("fast paths disabled, -race, or windows: output was checked, allocation budget skipped")
 		return
 	}
-	if allocsM > reconstructAllocBudgetM {
+	if got.allocsM > reconstructAllocBudgetM {
 		t.Errorf("allocation budget exceeded: %.2fM > %.2fM. If this is a deliberate "+
 			"trade, raise reconstructAllocBudgetM and say why in the commit message.",
-			allocsM, reconstructAllocBudgetM)
+			got.allocsM, reconstructAllocBudgetM)
 	}
-	if allocsM < reconstructAllocBudgetM*0.9 {
+	if got.allocsM < reconstructAllocBudgetM*0.9 {
 		t.Errorf("allocations are %.2fM, well under the %.2fM budget: lower the budget "+
 			"in the commit that earned it, so the ratchet keeps holding.",
-			allocsM, reconstructAllocBudgetM)
+			got.allocsM, reconstructAllocBudgetM)
 	}
 }

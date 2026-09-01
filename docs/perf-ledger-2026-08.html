@@ -185,6 +185,17 @@ li{margin-bottom:.4rem}
 </table></div>
 <p>So the like-for-like interpretation overhead is <strong>~145×</strong>, not 300×: the price of tree-walking, immutable relational values, and per-element closure dispatch. The other half is the compile phase, attackable independently (compiled program caching, bundling, or the wbnf work). Both halves are fuel for the items below. <span class="mono">perf/reconstruct/native/</span>.</p>
 
+<h2>S0 — first scale profile (🎯T17)</h2>
+<p>The 1000-app reconstruct measured constants. S0 asks what happens at 10× reconstruct and at a million-row join, on the same shipped evaluator, 1 Sep 2026. Large-N tests live in <span class="mono">perf/scale_test.go</span> and skip default CI unless <span class="mono">ARRAI_SCALE=1</span>.</p>
+<div class="tbl"><table>
+<tr><th>Workload</th><th class="num">N</th><th class="num">Compile</th><th class="num">Eval</th><th class="num">Allocs</th><th class="num">vs 0.1× N (eval)</th></tr>
+<tr><td>Reconstruct (generated sysl pb → <span class="mono">run.arrai</span>)</td><td class="num">1,000 apps</td><td class="num">908ms</td><td class="num">532ms</td><td class="num">35.32M</td><td class="num">1×</td></tr>
+<tr><td>Reconstruct</td><td class="num">10,000 apps</td><td class="num">808ms</td><td class="num">3.801s</td><td class="num">188.13M</td><td class="num">7.1× for 10× data</td></tr>
+<tr><td>Join + <span class="mono">where</span> + <span class="mono">=&gt;</span> (<span class="mono">perf/scale/join.arrai</span>)</td><td class="num">100,000 rows</td><td class="num">6ms</td><td class="num">145ms</td><td class="num">—</td><td class="num">1×</td></tr>
+<tr><td>Join + pipeline</td><td class="num">1,000,000 rows</td><td class="num">4ms</td><td class="num">613ms</td><td class="num">14.86M</td><td class="num">4.2× for 10× data</td></tr>
+</table></div>
+<p>Neither workload is super-linear on this machine: reconstruct eval scaled 7.1× for 10× apps (allocs 5.3×); the join scaled 4.2× for 10× rows. Compile stays ~constant on reconstruct, as expected. No new quadratic target filed from this profile. Output: 10k reconstruct sha256 <span class="mono">3120818a5ba3943d94fb1f0b9bff20983238a89aa7158a2bcce829e57c41c5cc</span>; 1M join count 142858 = (n+6)/7.</p>
+
 <h2>What's ahead</h2>
 
 <h3>Small and well-understood</h3>
