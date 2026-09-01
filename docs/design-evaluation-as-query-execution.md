@@ -205,6 +205,43 @@ remains the sound fallback for everything the analysis can't see. Statically
 known-unique indexes drop their bucket lists: half the memory, one-row
 probes.
 
+## Dynamic structure: schema anchors, plan caches, guards
+
+Schemas are not generally known at compile time — externally loaded data
+(protobuf, JSON) has shapes that cannot exist until runtime, and those are
+precisely the biggest relations in the system. The resolution is neither
+pure-static nor dynamic, and the codebase has already won this bet once at
+the value level (interned shapes + inline caches — the hidden-class
+playbook): **runtime-discovered structure, cached and specialized against.**
+
+**Schema anchors.** Idiomatic restructuring is `expr => (x: ..., y: ...,
+z: ...)` — and whatever the input's shape, the *output* schema of a
+tuple-literal body is fully static (`TupleExpr.staticShape` computes it
+today). These sites are schema anchors: static knowledge re-establishes at
+every one, and idiomatic code restructures constantly, usually immediately
+after loading. The dynamically-schemed region of a typical program shrinks
+to the gap between `load` and the first anchor. Better still, the body
+literal is a per-attribute provenance manifest — `x: .a` is rename (class
+1) *for that attribute*, `y: .@ + 1` is provenance-refined injective,
+`z: f(.)` is opaque for `z` only — so keys and FDs propagate attribute-wise
+straight off the anchor's syntax, with no whole-body opacity penalty from
+one computed attribute. A soft corollary: analyzability degrades exactly
+where code avoids literal-body restructuring, so the community's preferred
+idiom is also the optimizer-friendly one, and diagnostics can someday say
+"this pipeline went opaque here".
+
+**Plan caches and guards, at the boundaries only.** For the residue —
+load-to-first-anchor gaps and genuinely polymorphic call sites — plan
+decisions cache per (site, structure): first evaluation with structure S
+plans for S; later evaluations hit the cache, amortized by the same
+structure-stability that makes hidden classes pay. Cache keys are **the
+facts the plan uses** ("has attr `a`; `{a}` is a key"), not whole shapes —
+optional attributes fan one logical type into many concrete shapes, and
+fact-keying keeps the cache coarse and reusable. Cached plans carry their
+guards explicitly, and deoptimization is free: the guard-failure fallback
+is the reference evaluator that the plan-invariance contract keeps in-tree
+anyway.
+
 ## The plan-invariance contract, and how this stays honest
 
 Streaming and rewriting change *when* things evaluate. Errors are arr.ai's
@@ -259,33 +296,46 @@ aside on the same grounds.
 
 ## Staging
 
-Every stage lands with benchmarks, differential oracles, and byte-identical
-goldens, per the overhaul's method. Dependency-ordered:
+One architecture, many bites. Every stage is independently shippable, lands
+with benchmarks, differential oracles, and byte-identical goldens per the
+overhaul's method, and is sized to a few sessions at most. Dependency-
+ordered; stages marked ∥ can interleave with the main line.
 
 - **S0 — Scale benchmark suite** *(prerequisite for everything)*.
   Reconstruct at 10k–50k apps plus a millions-of-rows join/pipeline
   workload. All prior optimization was validated at small scale — constants,
-  not asymptotics. Expect the profile ranking to change and accidental
-  quadratics invisible at 3k rows to surface. Nothing below proceeds on
-  small-data evidence alone.
-- **S1 — Derived-view index inheritance.** Near-term, no new machinery,
-  measurable now; compounds with everything later.
-- **S2 — Suspended sets: sequence-pipeline fusion.** Generalize selection
-  views to suspended operator pipelines for the semantics-free half (`>>`
-  chains over arrays/dicts); metadata passthrough for `count`. First real
-  streaming win, no certificate layer required.
-- **S3 — Certificates and always-win rewrites.** Body classification
-  (classes 1 and 3 first), FD/key propagation, empirical key caching;
-  predicate pushdown and projection pruning as Expr-tree passes. Extends
-  fusion to set pipelines.
-- **S4 — Hash identity.** Algebra audit, `hashidentity` differential tag,
-  measure, flip. Cheap, largely independent; can interleave earlier.
+  not asymptotics. Expect the ranking to change and accidental quadratics
+  invisible at 3k rows to surface. Nothing below proceeds on small-data
+  evidence alone. *Exit: suite in-tree, first scale profile published to
+  the ledger.*
+- **S1 — Derived-view index inheritance.** Selection views filter parent
+  group indexes instead of rebuilding. No new analysis machinery.
+  *Exit: benchmark showing derived-view probes no longer rebuild; scale
+  suite improvement recorded.*
+- **S2 — Suspended sequences.** Generalize selection views to suspended
+  operator pipelines for the semantics-free half only: `>>` chains over
+  arrays and dicts, with `count` metadata passthrough. No certificate layer.
+  *Exit: an n-stage `>>` chain materializes once; scale-suite pipeline
+  workload shows the intermediate-elimination win.*
+- **S3a — Schema anchors + attribute provenance.** Classify tuple-literal
+  `=>` bodies per attribute (classes 1 and 3); propagate keys/FDs through
+  anchors; cache empirically discovered keys from the group index.
+  *Exit: count-passthrough and dedup elision fire on anchor-shaped
+  transforms; measured on the scale suite.*
+- **S3b — Always-win rewrites.** Predicate pushdown and projection pruning
+  as Expr-tree passes, licensed by S3a's facts; extends S2 fusion into set
+  pipelines where certificates permit. *Exit: rewritten plans byte-identical
+  via the reference oracle; pushdown wins measured at scale.*
+- **S4 ∥ — Hash identity.** The algebra injectivity audit (doc + 🎯T16
+  property tests both directions), then the `hashidentity` differential
+  build tag, measurement, and the default flip as a separate decision.
+  Interleaves anywhere after 🎯T16's property layer exists.
 - **S5 — The plan proper.** Per-edge stream/materialize decisions, pipeline
   breakers, fan-out handling, index-as-materialization-format, zone-map
-  statistics for physical choice.
-- **S6 — Plan VM and serialization** *(post-xbnf)*. The operator VM as both
-  execution engine and compiled `.arraiz` format.
+  statistics, fact-keyed plan caches with guards. Only starts once S2+S3
+  exist to plan *with*.
+- **S6 — Plan VM and serialization** *(post-xbnf, deliberately unfiled)*.
+  The operator VM as both execution engine and compiled `.arraiz` format.
 
-Targets are filed per stage as work begins, with acceptance criteria naming
-their oracles; 🎯T16 (property tests for the value laws) runs alongside as
-the standing counterweight.
+🎯T16 (property tests for the value laws) runs alongside throughout as the
+standing counterweight, and is a hard prerequisite of S4.
