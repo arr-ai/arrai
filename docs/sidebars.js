@@ -35,6 +35,7 @@ module.exports = {
         "Command Line": [
             'cli/eval',
             'cli/run',
+            'cli/profiling',
         ],
         "Examples": [
             'examples/all',
