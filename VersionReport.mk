@@ -1,5 +1,5 @@
 ######## Build information report
-originalVersion=$(shell git describe --tags)
+originalVersion := $(shell git describe --tags 2>/dev/null)
 
 ifeq (-, $(findstring -, $(originalVersion))) #it is in branch
 tagName= $(firstword $(subst -,  ,$(originalVersion)))
