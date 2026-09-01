@@ -23,6 +23,20 @@ import (
 //go:embed agents-guide.md
 var agentsGuide string
 
+// profilerFlags document -cpuprofile/-memprofile for `--help`. They're never
+// actually parsed by cli: prepareProfilers() strips them out of os.Args
+// before the app is built, since profiling must start before app.Run().
+var profilerFlags = []cli.Flag{
+	&cli.StringFlag{
+		Name:  "cpuprofile",
+		Usage: "Write a CPU profile to `FILE` for the duration of the run. Must precede the command name.",
+	},
+	&cli.StringFlag{
+		Name:  "memprofile",
+		Usage: "Write a heap profile to `FILE` at the end of the run. Must precede the command name.",
+	},
+}
+
 var cmds = []*cli.Command{
 	shellCommand,
 	runCommand,
@@ -69,15 +83,17 @@ func main() {
 		app.Name = "ai"
 		app.Usage = "arr.ai interactive shell"
 		app.Action = iShell
+		app.Flags = profilerFlags
 	case "ax":
 		app.Name = "ax"
 		app.Usage = "the ultimate data transformer"
 		app.Action = transform
+		app.Flags = profilerFlags
 	default:
 		app.Name = "arrai"
 		app.Usage = "the ultimate data engine"
 		app.Commands = cmds
-		app.Flags = []cli.Flag{
+		app.Flags = append([]cli.Flag{
 			&cli.BoolFlag{
 				Name:        "debug",
 				Aliases:     []string{"d"},
@@ -90,7 +106,7 @@ func main() {
 				Usage:       "Print help text and agent guide for AI coding assistants",
 				Destination: &helpAgent,
 			},
-		}
+		}, profilerFlags...)
 		app.Before = func(c *cli.Context) error {
 			if helpAgent {
 				fmt.Print(agentsGuide)
