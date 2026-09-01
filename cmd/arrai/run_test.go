@@ -42,7 +42,7 @@ func getImportFs(t *testing.T) afero.Fs {
 	//             └── import_from_nested_root.arrai
 	//
 	loadImportFs.Do(func() {
-		importFs = afero.NewMemMapFs()
+		importFs = ctxfs.NewTestMemMapFs()
 		require.NoError(t, importFs.MkdirAll("/path1/path2/path3", os.ModeDir))
 		require.NoError(t, importFs.MkdirAll("/path1/path2/path4", os.ModeDir))
 		files := []struct {
@@ -208,7 +208,7 @@ func TestModuleImportRoot(t *testing.T) {
 func TestNoImportRoot(t *testing.T) {
 	t.Parallel()
 
-	fs := afero.NewMemMapFs()
+	fs := ctxfs.NewTestMemMapFs()
 	require.NoError(t, fs.MkdirAll(syntax.MustAbs(t, "path/to/file"), os.ModeDir))
 	f, err := fs.Create(syntax.MustAbs(t, "path/to/file/test.arrai"))
 	require.NoError(t, err)

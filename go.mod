@@ -2,8 +2,6 @@ module github.com/arr-ai/arrai
 
 go 1.25.0
 
-replace github.com/spf13/afero => github.com/anz-bank/afero v1.2.4
-
 require (
 	github.com/arr-ai/frozen v1.13.0
 	github.com/arr-ai/hash v1.2.0
@@ -18,7 +16,7 @@ require (
 	github.com/rjeczalik/notify v0.9.3
 	github.com/sethvargo/go-retry v0.1.0
 	github.com/sirupsen/logrus v1.9.4
-	github.com/spf13/afero v1.11.0
+	github.com/spf13/afero v1.15.0
 	github.com/stretchr/testify v1.11.1
 	github.com/urfave/cli/v2 v2.2.0
 	github.com/xuri/excelize/v2 v2.11.0

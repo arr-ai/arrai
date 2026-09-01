@@ -29,7 +29,7 @@ func TestCreateFile(t *testing.T) {
 		map[string]string{
 			"file.txt": "hello",
 		},
-		afero.NewMemMapFs(),
+		ctxfs.NewTestMemMapFs(),
 	)
 	testAssertFiles(t,
 		".",
@@ -43,7 +43,7 @@ func TestCreateFile(t *testing.T) {
 		map[string]string{
 			"file.txt": "hello",
 		},
-		afero.NewMemMapFs(),
+		ctxfs.NewTestMemMapFs(),
 	)
 	testAssertFiles(t,
 		".",
@@ -57,7 +57,7 @@ func TestCreateFile(t *testing.T) {
 		map[string]string{
 			"files/file.txt": "hello",
 		},
-		afero.NewMemMapFs(),
+		ctxfs.NewTestMemMapFs(),
 	)
 	testAssertFiles(t,
 		".",
@@ -73,13 +73,13 @@ func TestCreateFile(t *testing.T) {
 		map[string]string{
 			"files/file.txt": "hello",
 		},
-		afero.NewMemMapFs(),
+		ctxfs.NewTestMemMapFs(),
 	)
 }
 
 func TestCreateEmptyFile(t *testing.T) {
 	t.Parallel()
-	fs := afero.NewMemMapFs()
+	fs := ctxfs.NewTestMemMapFs()
 	testAssertFiles(t,
 		".",
 		`
@@ -116,7 +116,7 @@ func TestCreateDeepNestedFile(t *testing.T) {
 		map[string]string{
 			"path/to/file.txt": "hiii",
 		},
-		afero.NewMemMapFs(),
+		ctxfs.NewTestMemMapFs(),
 	)
 }
 
@@ -139,7 +139,7 @@ func TestCreateMultipleFiles(t *testing.T) {
 			"path/to/file.txt": "hiii",
 			"hello.txt":        "hello",
 		},
-		afero.NewMemMapFs(),
+		ctxfs.NewTestMemMapFs(),
 	)
 }
 
@@ -416,7 +416,7 @@ func TestFail(t *testing.T) {
 			ifExists: 'random value',
 			'file': '123'
 		)}`,
-		afero.NewMemMapFs(),
+		ctxfs.NewTestMemMapFs(),
 	)
 
 	testAssertFilesError(t,
@@ -424,7 +424,7 @@ func TestFail(t *testing.T) {
 		".",
 		`
 		{'test': (ifExists: 'replace')}`,
-		afero.NewMemMapFs(),
+		ctxfs.NewTestMemMapFs(),
 	)
 	testAssertFilesError(t,
 		errFileOrDirMustExist.Error(),
@@ -436,7 +436,7 @@ func TestFail(t *testing.T) {
 				'random': 'random'
 			}
 		)}`,
-		afero.NewMemMapFs(),
+		ctxfs.NewTestMemMapFs(),
 	)
 }
 

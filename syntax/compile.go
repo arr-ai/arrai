@@ -49,11 +49,15 @@ func Compile(ctx context.Context, filePath, source string) (rel.Expr, error) {
 	pc := ParseContext{SourceDir: dirpath}
 	// bundle run will always get absolute UNIX filePath. This needs to happen
 	// with windows too.
+	//
+	// filePath here is only ever used as a cosmetic label for the parser
+	// scanner (see below), not for further file I/O, so if it can't be made
+	// relative to "." (e.g. a UNIX-style rooted path with no volume name on
+	// Windows, which Go's filepath treats as unrelated to the cwd's volume)
+	// just leave it as-is rather than failing the whole compilation.
 	if !filepath.IsAbs(filePath) && !isRunningBundle(ctx) {
-		var err error
-		filePath, err = filepath.Rel(".", filePath)
-		if err != nil {
-			return nil, err
+		if rel, err := filepath.Rel(".", filePath); err == nil {
+			filePath = rel
 		}
 	}
 	ast, err := pc.Parse(ctx, parser.NewScannerWithFilename(source, filePath))
