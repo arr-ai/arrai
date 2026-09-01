@@ -52,11 +52,14 @@ func TestNewTestMemMapFsRootsRelativePaths(t *testing.T) {
 		require.Equal(t, "1", string(data), "name=%q", name)
 	}
 
+	// afero.Walk reconstructs paths via filepath.Join as it recurses, so on
+	// Windows it reports "\a.arrai" even though the underlying MemMapFs key
+	// is forward-slashed; normalize before comparing.
 	var found []string
 	require.NoError(t, afero.Walk(fs, "/", func(path string, info os.FileInfo, err error) error {
 		require.NoError(t, err)
 		if !info.IsDir() {
-			found = append(found, path)
+			found = append(found, ToUnixPath(path))
 		}
 		return nil
 	}))
