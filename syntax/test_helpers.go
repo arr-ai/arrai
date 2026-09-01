@@ -13,6 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/arr-ai/arrai/pkg/arraictx"
+	"github.com/arr-ai/arrai/pkg/ctxfs"
 	"github.com/arr-ai/arrai/pkg/importcache"
 	"github.com/arr-ai/arrai/rel"
 )
@@ -202,10 +203,14 @@ func AssertEvalExprString(t *testing.T, expected, source string) bool {
 		assert.Equal(t, expected, expr.String())
 }
 
+// MustAbs resolves filePath to an absolute path and normalizes it to a
+// volume-less, forward-slash form. The latter is needed because callers use
+// this exclusively to key an in-memory afero.MemMapFs, which — unlike a real
+// OS filesystem — doesn't understand Windows volume names.
 func MustAbs(t *testing.T, filePath string) string {
 	t.Helper()
 
 	abs, err := filepath.Abs(filePath)
 	require.NoError(t, err)
-	return abs
+	return ctxfs.ToUnixPath(abs)
 }

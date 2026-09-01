@@ -4,7 +4,6 @@ import (
 	"archive/zip"
 	"bytes"
 	"io"
-	"path/filepath"
 	"testing"
 
 	"github.com/spf13/afero"
@@ -33,15 +32,15 @@ func ZipEqualToFiles(t *testing.T, buf []byte, files map[string]string) {
 	assert.Zero(t, len(cpy))
 }
 
-// CreateTestMemMapFs creates a memory fs from provided files
+// CreateTestMemMapFs creates a memory fs from provided files. Keys are used
+// as given (a bare relative key like "a.arrai" ends up rooted at "/a.arrai",
+// same as an already-absolute "/a.arrai" would) — see NewTestMemMapFs.
 func CreateTestMemMapFs(t *testing.T, files map[string]string) afero.Fs {
-	fs := afero.NewMemMapFs()
+	fs := NewTestMemMapFs()
 	for name, content := range files {
 		if name == "" {
 			continue
 		}
-		name, err := filepath.Abs(name)
-		require.NoError(t, err)
 		file, err := fs.Create(name)
 		require.NoError(t, err)
 		_, err = file.Write([]byte(content))
