@@ -386,6 +386,10 @@ func TestRetrieveModuleErrorsWhenPinnedVersionUnavailable(t *testing.T) {
 func TestIsTransientModuleErr(t *testing.T) {
 	transient := []string{
 		"dial tcp 1.2.3.4:443: connect: connection refused",
+		// Windows phrases a refused connection quite differently -- no
+		// literal "connection refused" -- but still says "dial tcp", which
+		// is itself one of this regex's own match branches.
+		"dial tcp 1.2.3.4:443: connectex: No connection could be made because the target machine actively refused it.",
 		"lookup proxy.golang.org: no such host",
 		"read tcp 1.2.3.4:443: i/o timeout",
 		"read tcp 1.2.3.4:443: connect: connection reset by peer",
@@ -473,7 +477,11 @@ go 1.21
 	m, err := retrieveModule("github.com/arr-ai/arrai-import-tests/sub/sub2", "", root)
 	require.Error(t, err)
 	require.Nil(t, m)
-	require.Contains(t, strings.ToLower(err.Error()), "connection refused")
+	// "dial tcp" (unlike the OS-specific wording after it -- Unix says
+	// "connection refused", Windows says "connectex: ... actively refused
+	// it") is present on every platform's dial-failure message and is
+	// itself one of transientModuleErr's match branches.
+	require.Contains(t, strings.ToLower(err.Error()), "dial tcp")
 	require.Greater(t, strings.Count(err.Error(), "/sub/sub2"), 1, err.Error())
 
 	goMod, err := os.ReadFile(filepath.Join(root, "go.mod"))
