@@ -6,6 +6,7 @@ import (
 	"context"
 	"fmt"
 	"reflect"
+	"sync"
 	"unsafe"
 
 	"github.com/arr-ai/arrai/pkg/fu"
@@ -15,6 +16,8 @@ import (
 
 type NativeFnBody func(context.Context, Value) (Value, error)
 
+var nativeByName sync.Map // string → NativeFnBody, for plan decode (🎯T25)
+
 // NativeFunction represents a binary relation uniquely mapping inputs to outputs.
 type NativeFunction struct {
 	name string
@@ -23,7 +26,19 @@ type NativeFunction struct {
 
 // NewNativeFunction returns a new function.
 func NewNativeFunction(name string, fn NativeFnBody) Value {
-	return &NativeFunction{"⦑" + name + "⦒", fn}
+	full := "⦑" + name + "⦒"
+	nativeByName.Store(full, fn)
+	if name != "" {
+		nativeByName.Store(name, fn)
+	}
+	return &NativeFunction{full, fn}
+}
+
+func lookupNative(name string) *NativeFunction {
+	if v, ok := nativeByName.Load(name); ok {
+		return &NativeFunction{name, v.(NativeFnBody)}
+	}
+	return nil
 }
 
 // NewNativeLambda returns a nameless function.

@@ -123,14 +123,14 @@ func NewDivExpr(scanner parser.Scanner, a, b Expr) Expr {
 
 // NewIdivExpr evaluates ⎣a / b⎦, given two Numbers.
 func NewIdivExpr(scanner parser.Scanner, a, b Expr) Expr {
-	return newArithExpr(scanner, a, b, "/", func(a, b float64) float64 {
+	return newArithExpr(scanner, a, b, "//", func(a, b float64) float64 {
 		return math.Floor(a / b)
 	})
 }
 
 // NewModExpr evaluates a % b, given two Numbers.
 func NewModExpr(scanner parser.Scanner, a, b Expr) Expr {
-	return newArithExpr(scanner, a, b, "%%", func(a, b float64) float64 {
+	return newArithExpr(scanner, a, b, "%", func(a, b float64) float64 {
 		return math.Mod(a, b)
 	})
 }
