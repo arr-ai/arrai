@@ -2,10 +2,19 @@
 package bundle
 
 import (
+	"archive/zip"
+	"bytes"
+	"context"
+	"os"
+	"path/filepath"
 	"testing"
 
+	"github.com/arr-ai/arrai/pkg/arraictx"
 	"github.com/arr-ai/arrai/pkg/ctxfs"
+	"github.com/arr-ai/arrai/rel"
 	"github.com/arr-ai/arrai/syntax"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 type bundleTestCase struct {
@@ -91,6 +100,33 @@ func TestBundleFiles(t *testing.T) {
 			ctxfs.ZipEqualToFiles(t, result, c.expectedFiles)
 		})
 	}
+}
+
+func TestBundleCompiledPlanRunsWithoutParse(t *testing.T) {
+	t.Parallel()
+	ctx := arraictx.InitRunCtx(context.Background())
+	path := filepath.Join(t.TempDir(), "add.arrai")
+	require.NoError(t, os.WriteFile(path, []byte("1 + 2"), 0o644))
+	var buf bytes.Buffer
+	require.NoError(t, BundledScripts(ctx, path, &buf))
+	zr, err := zip.NewReader(bytes.NewReader(buf.Bytes()), int64(buf.Len()))
+	require.NoError(t, err)
+	var hasPlan bool
+	for _, f := range zr.File {
+		if f.Name == "plan.bin" || f.Name == "/plan.bin" {
+			hasPlan = true
+			break
+		}
+	}
+	require.True(t, hasPlan, "bundle zip must contain plan.bin")
+	runCtx, err := syntax.WithBundleRun(ctx, buf.Bytes())
+	require.NoError(t, err)
+	p, err := syntax.LoadCompiledPlan(runCtx)
+	require.NoError(t, err)
+	require.NotNil(t, p, "LoadCompiledPlan must find /plan.bin")
+	v, err := syntax.EvaluateBundleCtx(ctx, buf.Bytes())
+	require.NoError(t, err)
+	assert.True(t, v.Equal(rel.NewNumber(3)), "%s", v)
 }
 
 // FIXME: test github module import, only works locally, unable to locate cached module in CI

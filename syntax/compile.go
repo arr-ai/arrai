@@ -916,7 +916,7 @@ func (pc ParseContext) compileTail(ctx context.Context, base rel.Expr, tail ast.
 	return base, nil
 }
 
-func (pc ParseContext) compileTailFunc(ctx context.Context, tail ast.Node) (rel.SafeTailCallback, error) {
+func (pc ParseContext) compileTailStep(ctx context.Context, tail ast.Node, safe bool) (rel.SafeTailStep, error) {
 	if tail != nil {
 		if call := tail.One("call"); call != nil {
 			args := call.Many("arg")
@@ -924,47 +924,24 @@ func (pc ParseContext) compileTailFunc(ctx context.Context, tail ast.Node) (rel.
 			for _, arg := range args {
 				exprs = append(exprs, arg.One("expr"))
 			}
-
 			compiledExprs, err := pc.compileExprs(ctx, exprs...)
 			if err != nil {
-				return nil, err
+				return rel.SafeTailStep{}, err
 			}
-			return func(ctx context.Context, v rel.Value, local rel.Scope) (rel.Value, error) {
-				for _, arg := range compiledExprs {
-					a, err := arg.Eval(ctx, local)
-					if err != nil {
-						return nil, err
-					}
-					//TODO: scanner won't highlight calls properly in safe call
-					set, is := v.(rel.Set)
-					if !is {
-						return nil, fmt.Errorf("not a set: %v", v)
-					}
-					v, err = rel.SetCall(ctx, set, a)
-					if err != nil {
-						return nil, err
-					}
-				}
-				return v, nil
-			}, nil
+			return rel.NewSafeTailCall(safe, compiledExprs...), nil
 		}
 		if get := tail.One("get"); get != nil {
-			var scanner parser.Scanner
 			var attr string
 			if ident := get.One("IDENT"); ident != nil {
-				scanner = ident.One("").(ast.Leaf).Scanner()
-				attr = scanner.String()
+				attr = ident.One("").(ast.Leaf).Scanner().String()
 			}
 			if str := get.One("STR"); str != nil {
-				scanner = str.One("").Scanner()
-				attr = parseArraiString(scanner.String())
+				attr = parseArraiString(str.One("").Scanner().String())
 			}
-			return func(ctx context.Context, v rel.Value, local rel.Scope) (rel.Value, error) {
-				return rel.NewDotExpr(handleAccessScanners(v.Source(), scanner), v, attr).Eval(ctx, local)
-			}, nil
+			return rel.NewSafeTailGet(safe, attr), nil
 		}
 	}
-	return nil, fmt.Errorf("compileTailFunc: tail AST malformed: %s", tail)
+	return rel.SafeTailStep{}, fmt.Errorf("compileTailStep: tail AST malformed: %s", tail)
 }
 
 func (pc ParseContext) compileGet(_ context.Context, base rel.Expr, get ast.Node) rel.Expr {
@@ -997,29 +974,11 @@ func (pc ParseContext) compileGet(_ context.Context, base rel.Expr, get ast.Node
 func (pc ParseContext) compileSafeTails(ctx context.Context, base rel.Expr, tail ast.Node) (rel.Expr, error) {
 	if tail != nil {
 		firstSafe := tail.One("first_safe").One("tail")
-		safeCallback := func(tailFunc rel.SafeTailCallback) rel.SafeTailCallback {
-			return func(ctx context.Context, v rel.Value, local rel.Scope) (rel.Value, error) {
-				val, err := tailFunc(ctx, v, local)
-				if err != nil {
-					switch e := err.(type) {
-					case rel.NoReturnError:
-						return nil, nil
-					case rel.ContextErr:
-						if _, isMissingAttrError := e.NextErr().(rel.MissingAttrError); isMissingAttrError {
-							return nil, nil
-						}
-					}
-					return nil, err
-				}
-				return val, nil
-			}
-		}
-
-		firstTailFn, err := pc.compileTailFunc(ctx, firstSafe)
+		first, err := pc.compileTailStep(ctx, firstSafe, true)
 		if err != nil {
 			return nil, err
 		}
-		exprStates := []rel.SafeTailCallback{safeCallback(firstTailFn)}
+		steps := []rel.SafeTailStep{first}
 		fallback, err := pc.CompileExpr(ctx, tail.One("fall").(ast.Branch))
 		if err != nil {
 			return nil, err
@@ -1027,25 +986,24 @@ func (pc ParseContext) compileSafeTails(ctx context.Context, base rel.Expr, tail
 
 		for _, o := range tail.Many("ops") {
 			if safeTail := o.One("safe"); safeTail != nil {
-				safeTailFn, err := pc.compileTailFunc(ctx, safeTail.One("tail"))
+				step, err := pc.compileTailStep(ctx, safeTail.One("tail"), true)
 				if err != nil {
 					return nil, err
 				}
-				exprStates = append(exprStates, safeCallback(safeTailFn))
-			} else if tail := o.One("tail"); tail != nil {
-				tailFn, err := pc.compileTailFunc(ctx, tail)
+				steps = append(steps, step)
+			} else if t := o.One("tail"); t != nil {
+				step, err := pc.compileTailStep(ctx, t, false)
 				if err != nil {
 					return nil, err
 				}
-				exprStates = append(exprStates, tailFn)
+				steps = append(steps, step)
 			} else {
 				panic("wat")
 			}
 		}
 
-		return rel.NewSafeTailExpr(tail.Scanner(), fallback, base, exprStates), nil
+		return rel.NewSafeTailExpr(tail.Scanner(), fallback, base, steps), nil
 	}
-	//TODO: panic?
 	return base, nil
 }
 

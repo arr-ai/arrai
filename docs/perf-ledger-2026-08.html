@@ -197,7 +197,7 @@ li{margin-bottom:.4rem}
 <p>Neither workload is super-linear on this machine: reconstruct eval scaled 7.1× for 10× apps (allocs 5.3×); the join scaled 4.2× for 10× rows. Compile stays ~constant on reconstruct, as expected. No new quadratic target filed from this profile. Output: 10k reconstruct sha256 <span class="mono">3120818a5ba3943d94fb1f0b9bff20983238a89aa7158a2bcce829e57c41c5cc</span>; 1M join count 142858 = (n+6)/7.</p>
 
 <h2>S1–S5 — evaluation as query execution (🎯T24)</h2>
-<p>Shipped 2 Sep 2026 on the same S0 programs. <span class="mono">slowpath</span> remains the reference oracle; 10k reconstruct output is still sha256 <span class="mono">3120818a5ba3943d94fb1f0b9bff20983238a89aa7158a2bcce829e57c41c5cc</span>. S6 (plan VM / compiled <span class="mono">.arraiz</span>) stays unfiled, post-xbnf. Hash identity (<span class="mono">-tags hashidentity</span>) is a differential build, not the default.</p>
+<p>Shipped 2 Sep 2026 on the same S0 programs. <span class="mono">slowpath</span> remains the reference oracle; 10k reconstruct output is still sha256 <span class="mono">3120818a5ba3943d94fb1f0b9bff20983238a89aa7158a2bcce829e57c41c5cc</span>. Hash identity (<span class="mono">-tags hashidentity</span>) is a differential build, not the default.</p>
 <div class="tbl"><table>
 <tr><th>Stage</th><th>What landed</th><th class="num">Evidence</th></tr>
 <tr><td>S1 🎯T18</td><td>Selection views wrap the parent group index; probes restrict buckets instead of rescanning.</td><td class="num">groupBy inherit 285&nbsp;ns / 7 allocs vs rebuild 295&nbsp;µs / 2273 allocs (~1000×) at 12k rows</td></tr>
@@ -209,6 +209,15 @@ li{margin-bottom:.4rem}
 </table></div>
 <p>1000-app reconstruct eval is 629&nbsp;ms (was 532&nbsp;ms at S0) with 35.0M allocs, byte-identical. 10k-app eval is 6.68&nbsp;s / 190.06M (was 3.80&nbsp;s / 188.13M): suspension adds observe/force around native calls and <code>$""</code> expansion; identity held. The S2 count-passthrough and S1 wrap are the measured wins; reconstruct is not the workload those stages target.</p>
 
+<h2>S6 — plan VM / compiled <span class="mono">.arraiz</span> (🎯T25)</h2>
+<p>The compiled form is a dataflow/operator graph, not a stack bytecode VM. <span class="mono">arrai bundle</span> writes <span class="mono">/plan.bin</span> next to the sources; <span class="mono">arrai run</span> of that bundle executes the graph and does not re-parse the program. Closures are nested graphs; kernels rebind from op tags (and native names) on load. First compile still uses wbnf; the artifact skips it. 2 Sep 2026.</p>
+<div class="tbl"><table>
+<tr><th>Workload</th><th class="num">Compile / decode</th><th class="num">Eval</th><th>Notes</th></tr>
+<tr><td>Reconstruct 1000 apps, tree-walk</td><td class="num">~900&nbsp;ms parse</td><td class="num">~650&nbsp;ms</td><td>v0.321.0 golden</td></tr>
+<tr><td>Reconstruct 1000 apps, compiled plan</td><td class="num">4&nbsp;ms decode</td><td class="num">660&nbsp;ms</td><td>byte-identical; <span class="mono">TestReconstructPlan</span></td></tr>
+</table></div>
+<p>Parse of the reconstruct program drops off the run path (~900&nbsp;ms → 4&nbsp;ms). Eval is the same operator kernels as the tree-walker. S0 scale programs still run from source in CI; the compiled path is gated by the presence of <span class="mono">plan.bin</span>.</p>
+
 <h2>What's ahead</h2>
 
 <h3>Small and well-understood</h3>
@@ -219,7 +228,6 @@ li{margin-bottom:.4rem}
 
 <h3>Large, with evidence behind them</h3>
 <ul>
-<li><strong>S6 — plan VM / compiled <code>.arraiz</code>.</strong> Unfiled, post-xbnf.</li>
 <li><strong>String representation.</strong> <code>[]rune</code> makes hashing, equality and concatenation allocate; the sysl library builds names one character at a time. A UTF-8 or rope representation with a cached hash helps every text-rendering workload.</li>
 <li><strong>Flipping <code>hashidentity</code> to the default.</strong> Recorded as a separate decision on 🎯T22; not done here.</li>
 </ul>

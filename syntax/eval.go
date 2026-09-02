@@ -75,6 +75,15 @@ func EvaluateBundleCtx(ctx context.Context, bundle []byte, args ...string) (rel.
 	if err != nil {
 		return nil, err
 	}
+	ctx = withBundledConfig(ctx)
+	if p, err := LoadCompiledPlan(ctx); err != nil {
+		return nil, err
+	} else if p != nil {
+		done := timePhase("eval", compiledPlanPath)
+		v, err := p.Eval(arraictx.ContextWithIsCompiling(ctx, false), rel.EmptyScope)
+		done()
+		return v, err
+	}
 	ctx, mainFileSource, path := GetMainBundleSource(ctx)
 	return EvaluateExpr(ctx, path, string(mainFileSource))
 }

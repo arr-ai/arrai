@@ -77,3 +77,25 @@ func TestReconstruct(t *testing.T) {
 			got.allocsM, reconstructAllocBudgetM)
 	}
 }
+
+func TestReconstructPlan(t *testing.T) {
+	if testing.Short() {
+		t.Skip("perf scenario: skipped under -short")
+	}
+
+	dir, err := filepath.Abs("reconstruct")
+	require.NoError(t, err)
+	expected, err := os.ReadFile(filepath.Join(dir, "expected.arrai"))
+	require.NoError(t, err)
+
+	got := runReconstructFromPlan(t, filepath.Join(dir, "model.sysl.pb"))
+	t.Logf("reconstruct plan: %s (decode %s + eval %s), %.2fM allocations, %.0fMB allocated",
+		got.elapsed.Round(time.Millisecond),
+		got.compile.Round(time.Millisecond),
+		got.eval.Round(time.Millisecond),
+		got.allocsM,
+		got.totalMiB)
+
+	require.Equal(t, string(expected), got.out,
+		"plan-executed reconstruct differs from the v0.321.0 reference")
+}
