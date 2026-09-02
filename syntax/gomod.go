@@ -68,30 +68,51 @@ func loadRequiredModules(moduleRoot string) map[string]requiredModule {
 		return cached.(map[string]requiredModule) //nolint:forcetypeassert
 	}
 
-	mods := map[string]requiredModule{}
+	// The overwhelmingly common case is a go.sum that's already complete
+	// enough to answer this under the default -mod=readonly -- which touches
+	// nothing on disk. Only fall back to self-healing (-mod=mod) when that
+	// actually fails, e.g. a go.sum missing an entry for a module that isn't
+	// needed to build the main module's own packages (so plain `go build`
+	// never needed to add it) but is needed to enumerate the full graph here.
+	mods, err := runGoListAllModules(moduleRoot, "-mod=readonly")
+	if err != nil {
+		mods, err = loadRequiredModulesWithSelfHeal(moduleRoot)
+	}
+	if err != nil {
+		mods = map[string]requiredModule{}
+	}
+	requiredModulesByRoot.Store(moduleRoot, mods)
+	return mods
+}
+
+// loadRequiredModulesWithSelfHeal retries the module-graph query with
+// -mod=mod, which lets `go list` self-heal a go.sum that's missing entries,
+// matching how `go mod download` behaves. Whatever edits that makes are
+// reverted once we're done (snapshotGoModFiles/restore), so resolving an
+// import never leaves go.mod/go.sum changed in the caller's project even on
+// this fallback path.
+func loadRequiredModulesWithSelfHeal(moduleRoot string) (map[string]requiredModule, error) {
 	restore, err := snapshotGoModFiles(moduleRoot)
 	if err != nil {
-		requiredModulesByRoot.Store(moduleRoot, mods)
-		return mods
+		return nil, err
 	}
 	defer restore()
+	return runGoListAllModules(moduleRoot, "-mod=mod")
+}
 
-	// -mod=mod lets this self-heal a go.sum that's missing entries (e.g. a
-	// module required but not needed to build the main module's packages),
-	// matching how `go mod download` behaves. Under the default -mod=readonly,
-	// `go list` would instead fail outright and we'd wrongly treat the module
-	// as unpinned. snapshotGoModFiles/restore above undo any such edits once
-	// we're done, so resolving an import never leaves go.mod/go.sum changed
-	// in the caller's project.
-	cmd := exec.Command("go", "list", "-mod=mod", "-m", "-json", "all") //nolint:gosec
+// runGoListAllModules runs `go list <modFlag> -m -json all` in moduleRoot
+// (or the process cwd when moduleRoot is empty) and parses the result into
+// a map keyed by module path, honouring replace directives.
+func runGoListAllModules(moduleRoot, modFlag string) (map[string]requiredModule, error) {
+	cmd := exec.Command("go", "list", modFlag, "-m", "-json", "all") //nolint:gosec
 	if moduleRoot != "" {
 		cmd.Dir = moduleRoot
 	}
 	out, err := cmd.Output()
 	if err != nil {
-		requiredModulesByRoot.Store(moduleRoot, mods)
-		return mods
+		return nil, err
 	}
+	mods := map[string]requiredModule{}
 	dec := json.NewDecoder(bytes.NewReader(out))
 	for {
 		var m struct {
@@ -108,8 +129,7 @@ func loadRequiredModules(moduleRoot string) map[string]requiredModule {
 			if err == io.EOF {
 				break
 			}
-			requiredModulesByRoot.Store(moduleRoot, mods)
-			return mods
+			return mods, err
 		}
 		if m.Main {
 			continue
@@ -122,8 +142,7 @@ func loadRequiredModules(moduleRoot string) map[string]requiredModule {
 			mods[m.Path] = requiredModule{Path: m.Path, Version: m.Version, Dir: dir}
 		}
 	}
-	requiredModulesByRoot.Store(moduleRoot, mods)
-	return mods
+	return mods, nil
 }
 
 // fileSnapshot captures whether a file existed, its content, and its mtime,
