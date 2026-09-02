@@ -2,9 +2,11 @@ package syntax
 
 import (
 	"context"
+	"errors"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -375,4 +377,107 @@ func TestRetrieveModuleErrorsWhenPinnedVersionUnavailable(t *testing.T) {
 	require.Error(t, err)
 	require.Nil(t, m)
 	require.Contains(t, err.Error(), "github.com/pkg/errors@v99.99.99-does-not-exist")
+}
+
+// TestIsTransientModuleErr locks down which `go get` failures are recognized
+// as transient (network/proxy/checksum issues that say nothing about whether
+// modPath is a real module) versus genuine "no such module" failures that
+// should drive retrieveModule's path-shortening loop.
+func TestIsTransientModuleErr(t *testing.T) {
+	transient := []string{
+		"dial tcp 1.2.3.4:443: connect: connection refused",
+		"lookup proxy.golang.org: no such host",
+		"read tcp 1.2.3.4:443: i/o timeout",
+		"read tcp 1.2.3.4:443: connect: connection reset by peer",
+		// Go's actual wording has a colon between "tls" and "handshake"
+		// (e.g. "remote error: tls: handshake failure"), not a bare space --
+		// the regex must match both forms.
+		"remote error: tls: handshake failure",
+		"net/http: TLS handshake timeout",
+		"SECURITY ERROR\nThis download does NOT match the one reported by the checksum server.",
+		"verifying go.sum: checksum mismatch",
+		"context deadline exceeded",
+	}
+	for _, msg := range transient {
+		require.True(t, isTransientModuleErr(&exec.ExitError{Stderr: []byte(msg)}), msg)
+	}
+
+	notTransient := []string{
+		"no matching versions for query \"latest\"",
+		"unknown revision v99.99.99-does-not-exist",
+		"module lookup disabled by GOPROXY=off",
+		"module github.com/foo found (v1.0.0), but does not contain package github.com/foo/bar",
+	}
+	for _, msg := range notTransient {
+		require.False(t, isTransientModuleErr(&exec.ExitError{Stderr: []byte(msg)}), msg)
+	}
+
+	require.False(t, isTransientModuleErr(errors.New("not an ExitError")),
+		"only *exec.ExitError carries the Stderr this classifies on")
+}
+
+// TestRetrieveModuleWithoutAmbientModuleFallsBackToDownload covers
+// resolving with an unknown moduleRoot ("", e.g. the arrai shell/REPL,
+// which has no source file to walk up from) from a working directory that
+// isn't inside any Go module at all. `go get` (which addModule's pinning
+// path uses) hard-fails outside a module ("'go get' is no longer supported
+// outside a module"), so this must use the plain, unpinned download path
+// instead -- confirmed separately that `go mod download` (unlike `go get`)
+// works fine with no go.mod present.
+func TestRetrieveModuleWithoutAmbientModuleFallsBackToDownload(t *testing.T) {
+	resetRequiredModulesCache()
+	t.Cleanup(resetRequiredModulesCache)
+
+	wd, err := os.Getwd()
+	require.NoError(t, err)
+	outside := t.TempDir()
+	require.NoError(t, os.Chdir(outside))
+	t.Cleanup(func() { require.NoError(t, os.Chdir(wd)) })
+
+	out, err := exec.Command("go", "env", "GOMOD").Output()
+	require.NoError(t, err)
+	require.Equal(t, string(os.DevNull), strings.TrimSpace(string(out)),
+		"test dir must not sit inside any Go module for this to be meaningful")
+
+	m, err := retrieveModule("github.com/arr-ai/arrai-import-tests", "", "")
+	require.NoError(t, err)
+	require.Equal(t, "github.com/arr-ai/arrai-import-tests", m.Name)
+	require.NotEmpty(t, m.Dir)
+}
+
+// TestRetrieveModuleStopsImmediatelyOnTransientError guards the other side
+// of the module-boundary fix: a transient `go get` failure (here, a
+// poisoned GOPROXY forcing "connection refused") says nothing about
+// whether the full import path is a real module, so retrieveModule must
+// not shorten and retry -- doing so risks masking the real error, or
+// worse, succeeding at a different, wrong (too-shallow) module.
+//
+// Discriminates old vs. new behaviour via the returned error's content:
+// wrapGoGetErr always labels the error with the *original* (longest)
+// importPath, so that alone can't tell old and new code apart. But the
+// *stderr* it wraps names whichever modPath was actually attempted -- the
+// full path (repeated across `go get`'s own message, its module line, and
+// its proxy URL) if stopped immediately (new), or only the shortened
+// 3-segment prefix if the loop kept going after each transient failure
+// (old). So "/sub/sub2" (only ever present in the full path) appears
+// multiple times in the new behaviour's error but exactly once (from the
+// outer label alone) in the old behaviour's -- confirmed empirically:
+// 4 vs. 1.
+func TestRetrieveModuleStopsImmediatelyOnTransientError(t *testing.T) {
+	root := withTempModule(t, `module example.com/pintest
+
+go 1.21
+`)
+	t.Setenv("GOPROXY", "http://127.0.0.1:1")
+
+	m, err := retrieveModule("github.com/arr-ai/arrai-import-tests/sub/sub2", "", root)
+	require.Error(t, err)
+	require.Nil(t, m)
+	require.Contains(t, strings.ToLower(err.Error()), "connection refused")
+	require.Greater(t, strings.Count(err.Error(), "/sub/sub2"), 1, err.Error())
+
+	goMod, err := os.ReadFile(filepath.Join(root, "go.mod"))
+	require.NoError(t, err)
+	require.NotContains(t, string(goMod), "arrai-import-tests",
+		"a failed resolution must not leave a partial require behind")
 }
