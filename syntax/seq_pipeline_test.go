@@ -32,6 +32,16 @@ func TestPruneStackedProject(t *testing.T) {
 		`{|a, b, c| (1, 2, 3)} => (a: .a, b: .b, c: .c) => (a: .a)`)
 }
 
+func TestWhereIndexCacheKeepsCallerAttrs(t *testing.T) {
+	t.Parallel()
+	AssertCodesEvalToSameValue(t,
+		`[{|k| (1)}, {|a, k| (10, 1)}]`,
+		`let r = {|k, a| (1, 10), (2, 20)}; let p = r => (k: .k); [p where .k = 1, r where .k = 1]`)
+	AssertCodesEvalToSameValue(t,
+		`[{|a, k| (10, 1)}, {|k| (1)}]`,
+		`let r = {|k, a| (1, 10), (2, 20)}; let p = r => (k: .k); [r where .k = 1, p where .k = 1]`)
+}
+
 func TestWherePushdownThroughProject(t *testing.T) {
 	t.Parallel()
 	AssertCodesEvalToSameValue(t,
