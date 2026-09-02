@@ -84,6 +84,11 @@ func SafeStdScopeTuple() rel.Tuple {
 			return nil, fmt.Errorf("dict(): not a tuple")
 		}),
 		rel.NewNativeFunctionAttr("tuple", func(_ context.Context, value rel.Value) (rel.Value, error) {
+			var err error
+			value, err = rel.Observe(value)
+			if err != nil {
+				return nil, err
+			}
 			switch t := value.(type) {
 			case rel.Dict:
 				attrs := make([]rel.Attr, 0, t.Count())

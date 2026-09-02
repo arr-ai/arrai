@@ -95,6 +95,9 @@ func AsArray(v Value) (Array, bool) {
 	switch v := v.(type) {
 	case Array:
 		return v, true
+	case seqPipeline:
+		a, err := v.force()
+		return a, err == nil
 	case EmptySet:
 		return Array{}, true
 	}
@@ -250,7 +253,10 @@ func (a Array) Less(v Value) bool {
 	if a.Kind() != v.Kind() {
 		return a.Kind() < v.Kind()
 	}
-	b := v.(Array)
+	b, ok := AsArray(v)
+	if !ok {
+		return true
+	}
 	if a.offset != b.offset {
 		return a.offset < b.offset
 	}

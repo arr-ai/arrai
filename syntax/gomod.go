@@ -34,6 +34,73 @@ func extractVersion(path string) (module, version string) {
 	return
 }
 
+// goModFilePin reads require directives from go.mod (not go list) so a pin
+// still binds when the module graph cannot be resolved.
+func goModFilePin(moduleRoot, importPath string) (path, version string, ok bool) {
+	modPath := "go.mod"
+	if moduleRoot != "" {
+		modPath = filepath.Join(moduleRoot, "go.mod")
+	}
+	data, err := os.ReadFile(modPath)
+	if err != nil {
+		return "", "", false
+	}
+	var bestPath, bestVer string
+	inRequire := false
+	for _, raw := range strings.Split(string(data), "\n") {
+		line := strings.TrimSpace(raw)
+		if i := strings.Index(line, "//"); i >= 0 {
+			line = strings.TrimSpace(line[:i])
+		}
+		if line == "" {
+			continue
+		}
+		if !inRequire {
+			if line == "require (" {
+				inRequire = true
+				continue
+			}
+			if rest, found := strings.CutPrefix(line, "require "); found {
+				p, v, ok := parseRequireTokens(rest)
+				if ok {
+					bestPath, bestVer = pickLongerPin(bestPath, bestVer, p, v, importPath)
+				}
+			}
+			continue
+		}
+		if line == ")" {
+			inRequire = false
+			continue
+		}
+		p, v, ok := parseRequireTokens(line)
+		if ok {
+			bestPath, bestVer = pickLongerPin(bestPath, bestVer, p, v, importPath)
+		}
+	}
+	if bestPath == "" {
+		return "", "", false
+	}
+	return bestPath, bestVer, true
+}
+
+func parseRequireTokens(s string) (path, version string, ok bool) {
+	fields := strings.Fields(s)
+	if len(fields) < 2 || strings.HasPrefix(fields[1], "/") {
+		return "", "", false
+	}
+	return fields[0], fields[1], true
+}
+
+func pickLongerPin(bestPath, bestVer, path, ver, importPath string) (string, string) {
+	if path != importPath && !strings.HasPrefix(importPath, path+"/") {
+		return bestPath, bestVer
+	}
+	if bestPath == "" || len(path) > len(bestPath) {
+		return path, ver
+	}
+	return bestPath, bestVer
+}
+
 // requiredModulesByRoot caches `go list -m -json all` results keyed by module root
 // directory (empty string = process working directory).
 var requiredModulesByRoot sync.Map // map[string]map[string]requiredModule
@@ -244,6 +311,17 @@ func retrieveModule(importPath, version, moduleRoot string) (*goModule, error) {
 				}
 				return m, nil
 			}
+		}
+		// go list can fail (impossible version, network) and return no graph.
+		// Still honour a require line in go.mod rather than falling through
+		// to @latest (🎯T16).
+		if path, ver, ok := goModFilePin(moduleRoot, importPath); ok {
+			m, err := downloadModule(path, ver)
+			if err != nil {
+				return nil, fmt.Errorf("go.mod requires %s@%s but it could not be downloaded: %w",
+					path, ver, err)
+			}
+			return m, nil
 		}
 	}
 

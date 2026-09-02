@@ -62,6 +62,15 @@ func (e *SeqArrowExpr) Eval(ctx context.Context, local Scope) (_ Value, err erro
 	}
 
 	switch value := value.(type) {
+	case seqPipeline:
+		if fastPaths {
+			return value.then(call), nil
+		}
+		arr, err := value.force()
+		if err != nil {
+			return nil, WrapContextErr(err, e, local)
+		}
+		return e.evalArray(local, arr, call)
 	case String: //nolint:dupl
 		runes := make([]rune, value.size())
 		for at := range runes {
@@ -96,8 +105,23 @@ func (e *SeqArrowExpr) Eval(ctx context.Context, local Scope) (_ Value, err erro
 		}
 		return NewOffsetBytes(bytes, value.offset), nil
 	case Array:
+		if fastPaths {
+			return newSeqPipeline(value, call), nil
+		}
 		return e.evalArray(local, value, call)
+	case dictPipeline:
+		if fastPaths {
+			return value.then(call), nil
+		}
+		d, err := value.force()
+		if err != nil {
+			return nil, WrapContextErr(err, e, local)
+		}
+		return e.evalDict(local, d, call)
 	case Dict:
+		if fastPaths {
+			return newDictPipeline(value, call), nil
+		}
 		return e.evalDict(local, value, call)
 	case Set:
 		b := NewSetBuilder()

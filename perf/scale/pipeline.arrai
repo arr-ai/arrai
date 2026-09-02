@@ -1,0 +1,4 @@
+# n-stage >> pipeline. Size is //os.args(1). Count is n (maps are 1-1).
+let [_, nstr] = //os.args;
+let n = //eval.value(nstr);
+(//seq.repeat(n, [0]) >> . + 1 >> . * 2) count

@@ -17,6 +17,8 @@ type Function struct {
 	ExprScanner
 	arg  Pattern
 	body Expr
+	// plan caches the S5 fan-out decision for this function's ident (🎯T23).
+	plan planCache
 }
 
 // NewFunction returns a new function.

@@ -227,6 +227,12 @@ func (r Relation) whereByIndex(ctx context.Context, scope Scope, p *eqAttrPredic
 	if err != nil {
 		return nil, false, err
 	}
+	if n, is := key.(Number); is {
+		z := r.rows.zone(index)
+		if z.ok && (n.Less(z.min) || z.max.Less(n)) {
+			return None, true, nil
+		}
+	}
 	group := r.rows.groupBy(valueProjector{index})
 	rows, has := group.getKey(key)
 	if !has {
@@ -235,10 +241,47 @@ func (r Relation) whereByIndex(ctx context.Context, scope Scope, p *eqAttrPredic
 	return r.newBody(r.rows.selView(rows)), true, nil
 }
 
+// pushWhereThroughProject rewrites `(rel => (a: .a, ...)) where .a = k` to
+// `(rel where .a = k) => (a: .a, ...)` when the predicate attr is projected
+// unchanged (🎯T21).
+func pushWhereThroughProject(scanner parser.Scanner, a, pred Expr, eq *eqAttrPredicate) Expr {
+	if eq == nil {
+		return nil
+	}
+	d, ok := a.(*DArrowExpr)
+	if !ok {
+		return nil
+	}
+	ident, is := d.fn.arg.(IdentPattern)
+	if !is {
+		return nil
+	}
+	te, ok := d.fn.body.(*TupleExpr)
+	if !ok {
+		return nil
+	}
+	dst, src, ok := te.identDots(string(ident))
+	if !ok {
+		return nil
+	}
+	for i, name := range dst {
+		if name == eq.attr && src[i] == eq.attr {
+			inner := NewWhereExpr(scanner, d.lhs, pred)
+			return NewDArrowExpr(scanner, inner, d.fn)
+		}
+	}
+	return nil
+}
+
 // NewWhereExpr evaluates a where pred, given a set lhs.
 func NewWhereExpr(scanner parser.Scanner, a, pred Expr) Expr {
 	pred = ExprAsFunction(pred)
 	eqPred := matchEqAttrPredicate(pred.(*Function))
+	if fastPaths {
+		if pushed := pushWhereThroughProject(scanner, a, pred, eqPred); pushed != nil {
+			return pushed
+		}
+	}
 	return newBinExpr(scanner, a, pred, "where", "(%s where %s)",
 		func(ctx context.Context, a, pred Value, local Scope) (Value, error) {
 			if x, ok := a.(Set); ok {

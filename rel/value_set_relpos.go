@@ -28,6 +28,10 @@ type positionalRelation struct {
 	arena []Value // snapshot; rows below this view's reach never change
 	n     int
 	sel   []uint32
+	// parent is the view this one was derived from (Where/Without/selView).
+	// A group-by on this view filters parent's memoised index when present
+	// instead of scanning the store again (🎯T18).
+	parent *positionalRelation
 
 	once sync.Once
 	meta *positionalRelationMetadata
@@ -38,6 +42,12 @@ type positionalRelationMetadata struct {
 	groups map[string]*groupIndex
 	hash   hash128.H128
 	hashed bool
+	// keys are memoKeys of projectors that grouped into n distinct buckets:
+	// empirically discovered candidate keys (🎯T20).
+	keys []string
+	// zones[i] is the cached numeric min/max of column i, or nil if not yet
+	// computed. A stored zoneMap with ok=false means the column is not numeric.
+	zones []*zoneMap
 	// shapeHashes memoises shapeHash per tuple shape: the layout-independent
 	// half of Relation.Hash128.
 	shapeHashes map[*Shape]hash128.H128
@@ -78,7 +88,7 @@ func (r *positionalRelation) arenaID(i int) uint32 {
 // selView views the same store restricted to the given ascending arena ids,
 // which must all be visible in this view. The slice is retained.
 func (r *positionalRelation) selView(ids []uint32) *positionalRelation {
-	return &positionalRelation{store: r.store, arena: r.arena, n: len(ids), sel: ids}
+	return &positionalRelation{store: r.store, arena: r.arena, n: len(ids), sel: ids, parent: r}
 }
 
 func (r *positionalRelation) Count() int {
@@ -345,7 +355,11 @@ func (r *positionalRelation) Project(p valueProjector) *positionalRelation {
 	if p.isIdentity(r.store.width) {
 		return r
 	}
-	b := newStoreBuilder(len(p), r.n, !p.isPermutation(r.store.width))
+	dedup := !p.isPermutation(r.store.width)
+	if dedup && fastPaths && r.groupBy(p).count() == r.n {
+		dedup = false
+	}
+	b := newStoreBuilder(len(p), r.n, dedup)
 	for i := 0; i < r.n; i++ {
 		b.addProjection(r.rowAt(i), p)
 	}
@@ -412,16 +426,82 @@ func (r *positionalRelation) groupBy(p valueProjector) *groupIndex {
 	m := r.getMeta()
 	key := p.memoKey()
 	m.Lock()
-	defer m.Unlock()
 	if g, has := m.groups[key]; has {
+		m.Unlock()
 		return g
 	}
-	g := newGroupIndex(r, p)
+	m.Unlock()
+
+	var g *groupIndex
+	if fastPaths {
+		for anc := r.parent; anc != nil; anc = anc.parent {
+			if pg := anc.cachedGroup(p); pg != nil {
+				g = pg.filterToView(r)
+				break
+			}
+		}
+	}
+	if g == nil {
+		g = newGroupIndex(r, p)
+	}
+	m.Lock()
+	if existing, has := m.groups[key]; has {
+		m.Unlock()
+		return existing
+	}
 	if m.groups == nil {
 		m.groups = map[string]*groupIndex{}
 	}
 	m.groups[key] = g
+	if g.filtered {
+		if g.base != nil && g.base.rel.hasCandidateKey(p) {
+			m.keys = appendKey(m.keys, key)
+		}
+	} else if g.count() == r.n {
+		m.keys = appendKey(m.keys, key)
+	}
+	m.Unlock()
 	return g
+}
+
+func (r *positionalRelation) cachedGroup(p valueProjector) *groupIndex {
+	m := r.getMeta()
+	m.Lock()
+	defer m.Unlock()
+	if m.groups == nil {
+		return nil
+	}
+	return m.groups[p.memoKey()]
+}
+
+func appendKey(keys []string, key string) []string {
+	for _, k := range keys {
+		if k == key {
+			return keys
+		}
+	}
+	return append(keys, key)
+}
+
+func (r *positionalRelation) hasArenaID(id uint32) bool {
+	if r.sel != nil {
+		_, ok := slices.BinarySearch(r.sel, id)
+		return ok
+	}
+	return int(id) < r.n
+}
+
+func (r *positionalRelation) hasCandidateKey(p valueProjector) bool {
+	m := r.getMeta()
+	m.Lock()
+	defer m.Unlock()
+	key := p.memoKey()
+	for _, k := range m.keys {
+		if k == key {
+			return true
+		}
+	}
+	return false
 }
 
 func (p valueProjector) memoKey() string {

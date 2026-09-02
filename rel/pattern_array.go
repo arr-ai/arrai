@@ -14,6 +14,11 @@ func NewArrayPattern(elements ...FallbackPattern) ArrayPattern {
 }
 
 func (p ArrayPattern) Bind(ctx context.Context, local Scope, value Value, b *scopeBuilder) (context.Context, error) {
+	forced, err := Observe(value)
+	if err != nil {
+		return ctx, err
+	}
+	value = forced
 	switch value.(type) {
 	case EmptySet:
 		if len(p.items) == 0 {

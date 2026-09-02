@@ -81,6 +81,10 @@ func AssertExprEvalsToType(t *testing.T, expected interface{}, expr Expr) bool {
 	if !assert.NoError(t, err, "evaluating expr: %s", expr) {
 		return false
 	}
+	value, err = Observe(value)
+	if !assert.NoError(t, err, "observing expr: %s", expr) {
+		return false
+	}
 	if reflect.TypeOf(expected) != reflect.TypeOf(value) {
 		t.Logf("\nexpected: %T\nvalue:    %v\nexpr:     %v", expected, value, expr)
 		return false

@@ -65,6 +65,9 @@ func AsDict(v Value) (Dict, bool) {
 	switch v := v.(type) {
 	case Dict:
 		return v, true
+	case dictPipeline:
+		d, err := v.force()
+		return d, err == nil
 	case EmptySet:
 		return Dict{}, true
 	}
@@ -240,7 +243,10 @@ func (d Dict) Less(v Value) bool {
 		return d.Kind() < v.Kind()
 	}
 	dKeys := d.m.Keys().OrderedElements(ValueLess)
-	vDict := v.(Dict)
+	vDict, ok := AsDict(v)
+	if !ok {
+		return true
+	}
 	vKeys := vDict.m.Keys().OrderedElements(ValueLess)
 	n := len(dKeys)
 	if n > len(vKeys) {

@@ -12,6 +12,11 @@ import (
 //
 // FromArrai translation rules is the reverse of ToArrai.
 func (t Translator) FromArrai(v rel.Value) (interface{}, error) {
+	var err error
+	v, err = rel.Observe(v)
+	if err != nil {
+		return nil, err
+	}
 	switch v := v.(type) {
 	case rel.Number:
 		if i, ok := v.Int(); ok {
@@ -111,6 +116,11 @@ func (t Translator) objFromArraiTuple(v rel.Tuple) (map[string]interface{}, erro
 
 // arrFromArrai converts an arrai array to an array.
 func (t Translator) arrFromArrai(s rel.Set) ([]interface{}, error) {
+	obs, err := rel.Observe(s)
+	if err != nil {
+		return nil, err
+	}
+	s = obs.(rel.Set)
 	elts := make([]interface{}, 0, s.Count())
 	switch s := s.(type) {
 	case rel.EmptySet:
