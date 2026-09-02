@@ -42,6 +42,29 @@ func TestWhereIndexCacheKeepsCallerAttrs(t *testing.T) {
 		`let r = {|k, a| (1, 10), (2, 20)}; let p = r => (k: .k); [r where .k = 1, p where .k = 1]`)
 }
 
+func TestWhereIndexCacheKeysByStoreColumn(t *testing.T) {
+	t.Parallel()
+	// Dest name k, store column a: p's .k is r's .a. Cache must not key by dest name.
+	AssertCodesEvalToSameValue(t,
+		`[{|k| (10)}, {}]`,
+		`let r = {|k, a| (1, 10), (2, 20)}; let p = r => (k: .a); [p where .k = 10, r where .k = 10]`)
+	AssertCodesEvalToSameValue(t,
+		`[{}, {|k| (10)}]`,
+		`let r = {|k, a| (1, 10), (2, 20)}; let p = r => (k: .a); [r where .k = 10, p where .k = 10]`)
+	AssertCodesEvalToSameValue(t,
+		`[{}, {|a, k| (10, 1)}]`,
+		`let r = {|k, a| (1, 10), (2, 20)}; let p = r => (k: .a); [p where .k = 1, r where .k = 1]`)
+	AssertCodesEvalToSameValue(t,
+		`[{|a, k| (10, 1)}, {}]`,
+		`let r = {|k, a| (1, 10), (2, 20)}; let p = r => (k: .a); [r where .k = 1, p where .k = 1]`)
+	AssertCodesEvalToSameValue(t,
+		`[{|x| (1)}, {}]`,
+		`let r = {|k, a| (1, 10), (2, 20)}; let p = r => (x: .k); let q = r => (x: .a); [p where .x = 1, q where .x = 1]`)
+	AssertCodesEvalToSameValue(t,
+		`[{}, {|x| (1)}]`,
+		`let r = {|k, a| (1, 10), (2, 20)}; let p = r => (x: .k); let q = r => (x: .a); [q where .x = 1, p where .x = 1]`)
+}
+
 func TestWherePushdownThroughProject(t *testing.T) {
 	t.Parallel()
 	AssertCodesEvalToSameValue(t,
