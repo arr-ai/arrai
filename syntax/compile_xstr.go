@@ -220,9 +220,13 @@ func xstrExpand(ctx context.Context, format string, value rel.Value, delim, tail
 	}
 	var s string
 	if strings.HasPrefix(delim, ":") {
-		array, is := rel.AsArray(value.(rel.Set))
+		forced, err := rel.Observe(value)
+		if err != nil {
+			return "", err
+		}
+		array, is := rel.AsArray(forced.(rel.Set))
 		if !is {
-			return "", fmt.Errorf("expansion arg not an array in ${arg::}: %v", value)
+			return "", fmt.Errorf("expansion arg not an array in ${arg::}: %v", forced)
 		}
 		var jb strings.Builder
 		for i, v := range array.Values() {

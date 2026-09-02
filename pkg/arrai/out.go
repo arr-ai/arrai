@@ -32,6 +32,11 @@ var errFileOrDirMustExist = errors.Errorf("exactly one of %s or %s must exist", 
 
 // OutputValue handles output writing for evaluated values.
 func OutputValue(ctx context.Context, value rel.Value, w io.Writer, out string) error {
+	var err error
+	value, err = rel.Observe(value)
+	if err != nil {
+		return err
+	}
 	if out != "" {
 		return outputValue(ctx, value, out)
 	}

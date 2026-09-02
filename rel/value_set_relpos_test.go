@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestCreateMode(t *testing.T) {
@@ -100,6 +101,47 @@ func TestGroupBy(t *testing.T) {
 	testGroup(valueProjector{2, 0}, 2)
 	testGroup(valueProjector{1, 2}, 3)
 	testGroup(valueProjector{0, 1, 2}, 3)
+}
+
+func TestDerivedViewInheritsGroupIndex(t *testing.T) {
+	t.Parallel()
+	if !fastPaths {
+		t.Skip("slowpath rebuilds indexes per view")
+	}
+	row1 := row(1, 1, 2)
+	row2 := row(1, 1, 3)
+	row3 := row(1, 2, 3)
+	row4 := row(2, 2, 4)
+	pr := newPositionalRelation(3, row1, row2, row3, row4)
+	p := valueProjector{0}
+	parent := pr.groupBy(p)
+	require.Equal(t, 2, parent.count())
+	require.False(t, parent.filtered)
+
+	view, err := pr.Where(func(v Values) (bool, error) {
+		return v[0].(Number).Float64() == 1, nil
+	})
+	require.NoError(t, err)
+	require.Equal(t, 3, view.Count())
+	require.Same(t, pr, view.parent)
+
+	got := view.groupBy(p)
+	assert.True(t, got.filtered, "derived view rebuilt the parent index")
+	assert.Equal(t, 1, got.count(), "filtered index should keep only key=1")
+	b := got.bucketOfRow(row1, p)
+	require.NotNil(t, b)
+	assert.Equal(t, 3, len(b.rows), "three rows have col0=1")
+}
+
+func TestEmpiricalCandidateKeyIsCached(t *testing.T) {
+	t.Parallel()
+	pr := newPositionalRelation(2, row(1, 10), row(2, 20), row(3, 10))
+	uniq := valueProjector{0}
+	dup := valueProjector{1}
+	require.Equal(t, 3, pr.groupBy(uniq).count())
+	require.Equal(t, 2, pr.groupBy(dup).count())
+	assert.True(t, pr.hasCandidateKey(uniq), "col0 is unique, should be cached as a key")
+	assert.False(t, pr.hasCandidateKey(dup), "col1 has duplicates")
 }
 
 // The With fast path appends to a store only when the view is the store's

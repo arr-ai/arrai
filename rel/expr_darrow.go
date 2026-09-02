@@ -34,6 +34,17 @@ func (e *DArrowExpr) Eval(ctx context.Context, local Scope) (_ Value, err error)
 	if set, ok := value.(Set); ok {
 		ident, isIdent := e.fn.arg.(IdentPattern)
 		if fastPaths && isIdent {
+			if te, ok := e.fn.body.(*TupleExpr); ok {
+				if dst, src, ok := te.identDots(string(ident)); ok {
+					if r, is := set.(Relation); is {
+						if v, ok := r.projectDots(dst, src); ok {
+							return v, nil
+						}
+					}
+				}
+			}
+		}
+		if fastPaths && isIdent {
 			// The ident path threads nothing between elements, so a large
 			// set can evaluate its bodies in parallel. Other patterns
 			// thread ctx through Bind and stay sequential.

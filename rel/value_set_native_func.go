@@ -149,6 +149,10 @@ func (*NativeFunction) Where(p func(v Value) (bool, error)) (Set, error) {
 
 // Call calls the NativeFunction with the given parameter.
 func (f *NativeFunction) CallAll(ctx context.Context, arg Value, b SetBuilder) error {
+	arg, err := Observe(arg)
+	if err != nil {
+		return err
+	}
 	v, err := f.fn(ctx, arg)
 	if err != nil {
 		return err

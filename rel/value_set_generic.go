@@ -104,6 +104,9 @@ func (s GenericSet) Hash128() hash128.H128 {
 // Equal tests two Sets for equality. Any other type returns false.
 func (s GenericSet) Equal(v Value) bool {
 	if t, ok := v.(GenericSet); ok {
+		if hashIdentity {
+			return s.Hash128() == t.Hash128()
+		}
 		return s.set.Equal(t.set)
 	}
 	return false

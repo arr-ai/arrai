@@ -165,6 +165,10 @@ func SetCall(ctx context.Context, s Set, arg Value) (Value, error) {
 		case Closure:
 			return s.call(ctx, arg)
 		case *NativeFunction:
+			arg, err := Observe(arg)
+			if err != nil {
+				return nil, err
+			}
 			return s.fn(ctx, arg)
 		}
 	}

@@ -77,6 +77,32 @@ type TupleExpr struct {
 	slots []int
 }
 
+// identDots reports a tuple-literal of bare ident.attr references
+// (the S3a projection/rename class). ident is the => formal (usually ".").
+func (e *TupleExpr) identDots(ident string) (dst, src []string, ok bool) {
+	if e == nil || len(e.attrs) == 0 {
+		return nil, nil, false
+	}
+	dst = make([]string, 0, len(e.attrs))
+	src = make([]string, 0, len(e.attrs))
+	for _, attr := range e.attrs {
+		if attr.IsWildcard() {
+			return nil, nil, false
+		}
+		d, is := attr.expr.(*DotExpr)
+		if !is {
+			return nil, nil, false
+		}
+		id, is := d.lhs.(IdentExpr)
+		if !is || id.ident != ident {
+			return nil, nil, false
+		}
+		dst = append(dst, attr.name)
+		src = append(src, d.attr)
+	}
+	return dst, src, true
+}
+
 // staticShape precomputes the shape of a literal with static attribute names.
 func (e *TupleExpr) staticShape() {
 	names := make([]string, 0, len(e.attrs))

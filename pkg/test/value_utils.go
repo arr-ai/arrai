@@ -11,6 +11,9 @@ import (
 // Tuples, arrays and dictionaries are considered test containers and not leaves, they are recursed into.
 func ForeachLeaf(val rel.Value, path string, leafAction func(val rel.Value, path string)) {
 	path = strings.TrimPrefix(path, ".")
+	if v, err := rel.Observe(val); err == nil {
+		val = v
+	}
 
 	switch v := val.(type) {
 	case rel.Array:

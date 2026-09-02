@@ -198,6 +198,28 @@ func (r Relation) Where(p func(Value) (bool, error)) (_ Set, err error) {
 	return r.newBody(s), nil
 }
 
+func (r Relation) projectDots(dst, src []string) (Set, bool) {
+	if len(dst) != len(src) || len(src) == 0 {
+		return nil, false
+	}
+	p := make(valueProjector, len(src))
+	for i, name := range src {
+		idx := r.getAttrIndex(name)
+		if idx < 0 {
+			return nil, false
+		}
+		p[i] = idx
+	}
+	rows := r.rows.Project(p)
+	out := make(NamesSlice, len(dst))
+	copy(out, dst)
+	id := make(valueProjector, len(dst))
+	for i := range id {
+		id[i] = i
+	}
+	return newRelation(out, id, rows), true
+}
+
 func (r Relation) getAttrIndex(attr string) int {
 	for i, a := range r.attrs {
 		if a == attr {
@@ -431,6 +453,10 @@ func (r Relation) projectionBasedOnNames(names NamesSlice) valueProjector {
 }
 
 func (r Relation) Equal(i Value) bool {
+	if hashIdentity {
+		s, ok := i.(Set)
+		return ok && r.Hash128() == s.Hash128()
+	}
 	if r2, is := i.(Relation); is {
 		return r.EqualRelation(r2)
 	}

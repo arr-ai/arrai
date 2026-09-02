@@ -145,7 +145,8 @@ func (b Bytes) Less(v Value) bool {
 		return b.Kind() < v.Kind()
 	}
 
-	return string(b.b) < string(v.(*Bytes).b)
+	c, ok := v.(Bytes)
+	return ok && string(b.b) < string(c.b)
 }
 
 // Negate returns {(negateTag): b}.

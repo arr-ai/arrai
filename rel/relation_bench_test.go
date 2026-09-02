@@ -2,6 +2,7 @@ package rel
 
 import (
 	"fmt"
+	"sync"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -31,6 +32,43 @@ func benchRelation(b *testing.B) Relation {
 		b.Fatal(err)
 	}
 	return s.(Relation)
+}
+
+func BenchmarkDerivedViewGroupBy(b *testing.B) {
+	r := benchRelation(b)
+	id := valueProjector{0}
+	_ = r.rows.groupBy(id)
+	pred := func(v Values) (bool, error) {
+		return int(v[0].(Number).Float64())%2 == 0, nil
+	}
+	view, err := r.rows.Where(pred)
+	if err != nil {
+		b.Fatal(err)
+	}
+	reset := func(v *positionalRelation) {
+		v.once = sync.Once{}
+		v.meta = nil
+	}
+	b.Run("inherit", func(b *testing.B) {
+		b.ReportAllocs()
+		b.ResetTimer()
+		for i := 0; i < b.N; i++ {
+			reset(view)
+			g := view.groupBy(id)
+			if !g.filtered {
+				b.Fatal("derived view rebuilt the parent index")
+			}
+		}
+	})
+	b.Run("rebuild", func(b *testing.B) {
+		b.ReportAllocs()
+		for i := 0; i < b.N; i++ {
+			reset(view)
+			view.parent = nil
+			_ = view.groupBy(id)
+			view.parent = r.rows
+		}
+	})
 }
 
 func BenchmarkRelationBuild(b *testing.B) {

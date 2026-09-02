@@ -42,6 +42,11 @@ func NewDictPattern(entries ...DictPatternEntry) DictPattern {
 }
 
 func (p DictPattern) Bind(ctx context.Context, local Scope, value Value, b *scopeBuilder) (context.Context, error) {
+	forced, err := Observe(value)
+	if err != nil {
+		return ctx, err
+	}
+	value = forced
 	dict, is := value.(Dict)
 	if !is {
 		if !b.explain {

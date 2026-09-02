@@ -107,6 +107,33 @@ func TestScaleReconstruct(t *testing.T) {
 	}
 }
 
+func TestScaleSeqPipelineSmall(t *testing.T) {
+	if testing.Short() {
+		t.Skip("perf scenario: skipped under -short")
+	}
+	const n = 20000
+	got := runScaleScript(t, filepath.Join("scale", "pipeline.arrai"), strconv.Itoa(n))
+	gotN, err := strconv.ParseFloat(strings.TrimSpace(got.out), 64)
+	require.NoError(t, err)
+	require.Equal(t, float64(n), gotN, "n-stage >> count must equal the base length")
+}
+
+func TestScaleSeqPipeline(t *testing.T) {
+	skipScale(t)
+	got := runScaleScript(t, filepath.Join("scale", "pipeline.arrai"), strconv.Itoa(scaleJoinRows))
+	t.Logf("scale pipeline %d elems: %s (compile %s + eval %s), %.2fM allocations, %.0fMB allocated, out=%s",
+		scaleJoinRows,
+		got.elapsed.Round(time.Millisecond),
+		got.compile.Round(time.Millisecond),
+		got.eval.Round(time.Millisecond),
+		got.allocsM,
+		got.totalMiB,
+		got.out)
+	gotN, err := strconv.ParseFloat(strings.TrimSpace(got.out), 64)
+	require.NoError(t, err)
+	require.Equal(t, float64(scaleJoinRows), gotN, "n-stage >> count must equal the base length")
+}
+
 func TestScaleJoinPipeline(t *testing.T) {
 	skipScale(t)
 	got := runScaleScript(t, filepath.Join("scale", "join.arrai"), strconv.Itoa(scaleJoinRows))

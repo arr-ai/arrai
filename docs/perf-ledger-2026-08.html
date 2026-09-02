@@ -55,7 +55,7 @@ li{margin-bottom:.4rem}
 .repo h3{margin:0}
 </style>
 <main>
-<div class="eyebrow">arr.ai · performance · 28–31 Aug 2026 · updated 31 Aug</div>
+<div class="eyebrow">arr.ai · performance · 28 Aug – 2 Sep 2026 · updated 2 Sep</div>
 <h1>Arr.ai Performance Ledger</h1>
 <p class="lede">Where the evaluator work stands: what landed, what it bought, what it fixed along the way, and what is still ahead. The measuring stick throughout is Arieh's <code>reconstruct</code> workload — 1000 synthetic sysl apps, protobuf to relations to rendered source — with output byte-identical to arrai v0.321.0 at every step.</p>
 
@@ -196,19 +196,32 @@ li{margin-bottom:.4rem}
 </table></div>
 <p>Neither workload is super-linear on this machine: reconstruct eval scaled 7.1× for 10× apps (allocs 5.3×); the join scaled 4.2× for 10× rows. Compile stays ~constant on reconstruct, as expected. No new quadratic target filed from this profile. Output: 10k reconstruct sha256 <span class="mono">3120818a5ba3943d94fb1f0b9bff20983238a89aa7158a2bcce829e57c41c5cc</span>; 1M join count 142858 = (n+6)/7.</p>
 
+<h2>S1–S5 — evaluation as query execution (🎯T24)</h2>
+<p>Shipped 2 Sep 2026 on the same S0 programs. <span class="mono">slowpath</span> remains the reference oracle; 10k reconstruct output is still sha256 <span class="mono">3120818a5ba3943d94fb1f0b9bff20983238a89aa7158a2bcce829e57c41c5cc</span>. S6 (plan VM / compiled <span class="mono">.arraiz</span>) stays unfiled, post-xbnf. Hash identity (<span class="mono">-tags hashidentity</span>) is a differential build, not the default.</p>
+<div class="tbl"><table>
+<tr><th>Stage</th><th>What landed</th><th class="num">Evidence</th></tr>
+<tr><td>S1 🎯T18</td><td>Selection views wrap the parent group index; probes restrict buckets instead of rescanning.</td><td class="num">groupBy inherit 285&nbsp;ns / 7 allocs vs rebuild 295&nbsp;µs / 2273 allocs (~1000×) at 12k rows</td></tr>
+<tr><td>S2 🎯T19</td><td>Suspended <code>&gt;&gt;</code> pipelines over arrays and dicts; <code>count</code> is metadata; n stages force once, in parallel.</td><td class="num">1M-element <span class="mono">pipeline.arrai</span> count 16&nbsp;ms / 0.05M allocs (maps never run)</td></tr>
+<tr><td>S3a 🎯T20</td><td>Anchor-shaped <code>=&gt; (a: .a, …)</code> classified per attribute; empirical keys cached; injective <code>Project</code> skips dedup.</td><td class="num"><span class="mono">({|a,b| …} =&gt; (a: .a)) count</span> passthrough; candidate-key cache</td></tr>
+<tr><td>S3b 🎯T21</td><td><code>where .a = k</code> after a projection of <code>.a</code> pushes through; errors match naive eval.</td><td class="num">plan-invariance tests, including <code>single</code> errors in the key</td></tr>
+<tr><td>S4 🎯T22</td><td><span class="mono">-tags hashidentity</span> Equal via Hash128; default build stays deep Equal.</td><td class="num"><span class="mono">TestHashIdentityDifferential</span> shells out the tagged algebra suite</td></tr>
+<tr><td>S5 🎯T23</td><td>Let fan-out records stream vs materialize; zone maps skip out-of-range <code>where</code>; fact-keyed plan cache with guards.</td><td class="num">join 1M rows 621&nbsp;ms / 14.86M (flat vs S0 613&nbsp;ms)</td></tr>
+</table></div>
+<p>1000-app reconstruct eval is 629&nbsp;ms (was 532&nbsp;ms at S0) with 35.0M allocs, byte-identical. 10k-app eval is 6.68&nbsp;s / 190.06M (was 3.80&nbsp;s / 188.13M): suspension adds observe/force around native calls and <code>$""</code> expansion; identity held. The S2 count-passthrough and S1 wrap are the measured wins; reconstruct is not the workload those stages target.</p>
+
 <h2>What's ahead</h2>
 
 <h3>Small and well-understood</h3>
 <ul>
-<li><strong>🎯T8 — the wbnf crash.</strong> A correctness bug, not a performance one, and cheap to fix.</li>
-<li><strong>The <code>Shape.Index</code> test gap</strong> and property tests for the relational laws.</li>
+<li><strong>🎯T8 — the wbnf crash.</strong> Parked pending xbnf (🎯T8 is set aside).</li>
+<li><strong>🎯T14 — modern Go.</strong> Remaining candidates on <a href="https://github.com/arr-ai/arrai/issues/741">#741</a>.</li>
 </ul>
 
 <h3>Large, with evidence behind them</h3>
 <ul>
-<li><strong>🎯T10 — accumulator folds.</strong> Instrumentation showed ordinary code never extends large collections incrementally, but the sysl workload does it 12,000+ times through <code>acc | {x}</code> inside folds. A conservative last-use analysis would let those build through a mutable builder. The research is mapped: Lean 4's <em>Counting Immutable Beans</em>, Koka's <em>Perceus</em>, Clojure transients.</li>
-<li><strong>Parallel <code>&gt;&gt;</code> and non-ident <code>=&gt;</code> patterns.</strong> <code>where</code> and ident-pattern <code>=&gt;</code> now fan out; <code>&gt;&gt;</code> (sequence map) and <code>=&gt;</code> with structural patterns still evaluate sequentially — the latter because Bind threads ctx between elements.</li>
+<li><strong>S6 — plan VM / compiled <code>.arraiz</code>.</strong> Unfiled, post-xbnf.</li>
 <li><strong>String representation.</strong> <code>[]rune</code> makes hashing, equality and concatenation allocate; the sysl library builds names one character at a time. A UTF-8 or rope representation with a cached hash helps every text-rendering workload.</li>
+<li><strong>Flipping <code>hashidentity</code> to the default.</strong> Recorded as a separate decision on 🎯T22; not done here.</li>
 </ul>
 
 <h2>Measured and deliberately discarded</h2>
