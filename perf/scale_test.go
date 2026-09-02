@@ -134,6 +134,41 @@ func TestScaleSeqPipeline(t *testing.T) {
 	require.Equal(t, float64(scaleJoinRows), gotN, "n-stage >> count must equal the base length")
 }
 
+func TestScalePushdownSmall(t *testing.T) {
+	if testing.Short() {
+		t.Skip("perf scenario: skipped under -short")
+	}
+	const n = 7000
+	got := runScaleScript(t, filepath.Join("scale", "pushdown.arrai"), strconv.Itoa(n))
+	want := n / 1000
+	if n%1000 > 42 {
+		want++
+	}
+	gotN, err := strconv.ParseFloat(strings.TrimSpace(got.out), 64)
+	require.NoError(t, err)
+	require.Equal(t, float64(want), gotN, "eq-key where after project disagrees with k=42 count")
+}
+
+func TestScalePushdown(t *testing.T) {
+	skipScale(t)
+	got := runScaleScript(t, filepath.Join("scale", "pushdown.arrai"), strconv.Itoa(scaleJoinRows))
+	want := scaleJoinRows / 1000
+	if scaleJoinRows%1000 > 42 {
+		want++
+	}
+	t.Logf("scale pushdown %d rows: %s (compile %s + eval %s), %.2fM allocations, %.0fMB allocated, out=%s",
+		scaleJoinRows,
+		got.elapsed.Round(time.Millisecond),
+		got.compile.Round(time.Millisecond),
+		got.eval.Round(time.Millisecond),
+		got.allocsM,
+		got.totalMiB,
+		got.out)
+	gotN, err := strconv.ParseFloat(strings.TrimSpace(got.out), 64)
+	require.NoError(t, err)
+	require.Equal(t, float64(want), gotN, "eq-key where after project disagrees with k=42 count")
+}
+
 func TestScaleJoinPipeline(t *testing.T) {
 	skipScale(t)
 	got := runScaleScript(t, filepath.Join("scale", "join.arrai"), strconv.Itoa(scaleJoinRows))

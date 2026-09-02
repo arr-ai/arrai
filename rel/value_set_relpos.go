@@ -51,6 +51,14 @@ type positionalRelationMetadata struct {
 	// shapeHashes memoises shapeHash per tuple shape: the layout-independent
 	// half of Relation.Hash128.
 	shapeHashes map[*Shape]hash128.H128
+	// plans is the S5 fact-keyed cache of index-answered where results.
+	plans    map[string]planEntry
+	planHits int
+}
+
+type planEntry struct {
+	guard func() bool
+	value Value
 }
 
 func (r *positionalRelation) getMeta() *positionalRelationMetadata {
@@ -489,6 +497,42 @@ func (r *positionalRelation) hasArenaID(id uint32) bool {
 		return ok
 	}
 	return int(id) < r.n
+}
+
+func (r *positionalRelation) planGet(key string, guard func() bool) (Value, bool) {
+	m := r.getMeta()
+	m.Lock()
+	defer m.Unlock()
+	e, ok := m.plans[key]
+	if !ok || e.value == nil || e.guard == nil || !e.guard() || !guard() {
+		return nil, false
+	}
+	m.planHits++
+	return e.value, true
+}
+
+func (r *positionalRelation) planPut(key string, guard func() bool, v Value) {
+	m := r.getMeta()
+	m.Lock()
+	defer m.Unlock()
+	if m.plans == nil {
+		m.plans = map[string]planEntry{}
+	}
+	m.plans[key] = planEntry{guard: guard, value: v}
+}
+
+func (r *positionalRelation) planHitCount() int {
+	m := r.getMeta()
+	m.Lock()
+	defer m.Unlock()
+	return m.planHits
+}
+
+func (r *positionalRelation) seedKey(p valueProjector) {
+	m := r.getMeta()
+	m.Lock()
+	defer m.Unlock()
+	m.keys = appendKey(m.keys, p.memoKey())
 }
 
 func (r *positionalRelation) hasCandidateKey(p valueProjector) bool {

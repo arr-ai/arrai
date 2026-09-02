@@ -17,7 +17,62 @@ type DArrowExpr struct {
 
 // NewDArrowExpr returns a new DArrowExpr.
 func NewDArrowExpr(scanner parser.Scanner, lhs Expr, fn Expr) Expr {
-	return &DArrowExpr{ExprScanner{scanner}, lhs, ExprAsFunction(fn)}
+	e := &DArrowExpr{ExprScanner{scanner}, lhs, ExprAsFunction(fn)}
+	if fastPaths {
+		if p := pruneStackedProjects(e); p != nil {
+			return p
+		}
+	}
+	return e
+}
+
+// pruneStackedProjects drops inner => attributes that the outer identDots
+// body does not read (🎯T21 projection pruning).
+func pruneStackedProjects(outer *DArrowExpr) Expr {
+	inner, ok := outer.lhs.(*DArrowExpr)
+	if !ok {
+		return nil
+	}
+	oident, ok := outer.fn.arg.(IdentPattern)
+	if !ok {
+		return nil
+	}
+	iident, ok := inner.fn.arg.(IdentPattern)
+	if !ok {
+		return nil
+	}
+	ote, ok := outer.fn.body.(*TupleExpr)
+	if !ok {
+		return nil
+	}
+	ite, ok := inner.fn.body.(*TupleExpr)
+	if !ok {
+		return nil
+	}
+	_, osrc, ok := ote.identDots(string(oident))
+	if !ok {
+		return nil
+	}
+	idst, _, ok := ite.identDots(string(iident))
+	if !ok {
+		return nil
+	}
+	needed := map[string]bool{}
+	for _, s := range osrc {
+		needed[s] = true
+	}
+	keep := make([]AttrExpr, 0, len(ite.attrs))
+	for i, name := range idst {
+		if needed[name] {
+			keep = append(keep, ite.attrs[i])
+		}
+	}
+	if len(keep) == 0 || len(keep) == len(ite.attrs) {
+		return nil
+	}
+	innerFn := NewFunction(inner.fn.Src, inner.fn.arg, NewTupleExpr(ite.Src, keep...))
+	newInner := NewDArrowExpr(inner.Src, inner.lhs, innerFn)
+	return NewDArrowExpr(outer.Src, newInner, outer.fn)
 }
 
 // String returns a string representation of the expression.

@@ -268,6 +268,10 @@ func (u UnionSet) Format(f fmt.State, verb rune) {
 }
 
 func (u UnionSet) Equal(s Value) bool {
+	if hashIdentity {
+		t, ok := s.(Set)
+		return ok && u.Hash128() == t.Hash128()
+	}
 	if t, ok := s.(UnionSet); ok {
 		if u.m.Count() != t.m.Count() {
 			return false

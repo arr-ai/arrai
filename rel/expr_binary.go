@@ -199,11 +199,13 @@ func matchEqAttrPredicate(f *Function) *eqAttrPredicate {
 		return "", false
 	}
 	isDotFree := func(e Expr) bool {
-		// Conservative: only simple identifiers other than `.` and literals.
+		// Conservative: identifiers other than `.`, literals, and values.
 		switch e := e.(type) {
 		case IdentExpr:
 			return e.ident != "."
 		case LiteralExpr:
+			return true
+		case Value:
 			return true
 		}
 		return false
@@ -227,18 +229,28 @@ func (r Relation) whereByIndex(ctx context.Context, scope Scope, p *eqAttrPredic
 	if err != nil {
 		return nil, false, err
 	}
+	n0 := r.rows.n
+	fact := p.attr + "=" + key.String()
+	guard := func() bool { return r.rows.n == n0 }
+	if v, ok := r.rows.planGet(fact, guard); ok {
+		return v, true, nil
+	}
 	if n, is := key.(Number); is {
 		z := r.rows.zone(index)
 		if z.ok && (n.Less(z.min) || z.max.Less(n)) {
+			r.rows.planPut(fact, guard, None)
 			return None, true, nil
 		}
 	}
 	group := r.rows.groupBy(valueProjector{index})
 	rows, has := group.getKey(key)
 	if !has {
+		r.rows.planPut(fact, guard, None)
 		return None, true, nil
 	}
-	return r.newBody(r.rows.selView(rows)), true, nil
+	out := r.newBody(r.rows.selView(rows))
+	r.rows.planPut(fact, guard, out)
+	return out, true, nil
 }
 
 // pushWhereThroughProject rewrites `(rel => (a: .a, ...)) where .a = k` to

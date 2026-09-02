@@ -25,6 +25,13 @@ func TestProjectDotsCountPassthrough(t *testing.T) {
 		`({|a,b| (1, 10), (2, 20)} => (a: .a)) count`)
 }
 
+func TestPruneStackedProject(t *testing.T) {
+	t.Parallel()
+	AssertCodesEvalToSameValue(t,
+		`{|a| (1)}`,
+		`{|a, b, c| (1, 2, 3)} => (a: .a, b: .b, c: .c) => (a: .a)`)
+}
+
 func TestWherePushdownThroughProject(t *testing.T) {
 	t.Parallel()
 	AssertCodesEvalToSameValue(t,

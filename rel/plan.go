@@ -95,38 +95,75 @@ func (c *planCache) put(key string, guard func() bool, v Value) {
 	c.value = v
 }
 
-func alwaysTrue() bool { return true }
-
 // recordedFanout is the S5 plan choice for a \ident body: materialize when
-// the ident is consumed more than once. Cached on the function under a
-// fact-keyed plan cache whose guard is the immutable body.
+// the ident is consumed more than once.
 func (f *Function) recordedFanout() edgeDecision {
 	ident, ok := f.arg.(IdentPattern)
 	if !ok {
 		return streamEdge
 	}
-	key := "fanout:" + string(ident)
-	if v, hit := f.plan.get(key, alwaysTrue); hit {
-		n, is := v.(Number)
-		if is && n.Float64() > 1 {
-			return materializeEdge
-		}
-		return streamEdge
-	}
-	uses := countIdentUses(f.body, string(ident))
-	f.plan.put(key, alwaysTrue, NewNumber(float64(uses)))
-	return decideLetFanout(uses)
+	return decideLetFanout(countIdentUses(f.body, string(ident)))
 }
 
-// materializeValue is the pipeline-breaker operator: force a suspended
-// sequence/dict pipeline, and for a relation freeze the identity group
-// index (index-as-materialization-format) plus numeric zone maps.
-func materializeValue(v Value) (Value, error) {
+// demandedEqAttrs returns attributes of ident used in `ident where .attr = k`.
+func demandedEqAttrs(e Expr, ident string) []string {
+	var attrs []string
+	addDemandedEqAttrs(e, ident, &attrs)
+	return attrs
+}
+
+func addDemandedEqAttrs(e Expr, ident string, attrs *[]string) {
+	if e == nil {
+		return
+	}
+	switch e := e.(type) {
+	case *BinExpr:
+		if e.op == "where" {
+			if id, ok := e.a.(IdentExpr); ok && id.ident == ident {
+				if f, ok := e.b.(*Function); ok {
+					if p := matchEqAttrPredicate(f); p != nil {
+						*attrs = append(*attrs, p.attr)
+					}
+				}
+			}
+		}
+		addDemandedEqAttrs(e.a, ident, attrs)
+		addDemandedEqAttrs(e.b, ident, attrs)
+	case *UnaryExpr:
+		addDemandedEqAttrs(e.a, ident, attrs)
+	case *DArrowExpr:
+		addDemandedEqAttrs(e.lhs, ident, attrs)
+	case *ArrowExpr:
+		addDemandedEqAttrs(e.lhs, ident, attrs)
+		if !shadowsIdent(e.fn.arg, ident) {
+			addDemandedEqAttrs(e.fn.body, ident, attrs)
+		}
+	case AndExpr:
+		addDemandedEqAttrs(e.a, ident, attrs)
+		addDemandedEqAttrs(e.b, ident, attrs)
+	case OrExpr:
+		addDemandedEqAttrs(e.a, ident, attrs)
+		addDemandedEqAttrs(e.b, ident, attrs)
+	}
+}
+
+// materializeValue is the pipeline-breaker: force a suspended sequence/dict
+// pipeline, and for a relation freeze the demanded group indexes (index-as-
+// materialization-format) plus zone maps.
+func materializeValue(v Value, attrs []string) (Value, error) {
 	switch v := v.(type) {
 	case seqPipeline:
 		return v.force()
 	case dictPipeline:
 		return v.force()
+	case Relation:
+		for _, attr := range attrs {
+			if i := v.getAttrIndex(attr); i >= 0 {
+				_ = v.rows.groupBy(valueProjector{i})
+				_ = v.rows.zone(i)
+			}
+		}
+		return v, nil
 	default:
 		return v, nil
 	}

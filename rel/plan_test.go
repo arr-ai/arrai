@@ -1,6 +1,7 @@
 package rel
 
 import (
+	"context"
 	"testing"
 
 	"github.com/arr-ai/wbnf/parser"
@@ -38,6 +39,75 @@ func TestPlanCacheGuard(t *testing.T) {
 	live = false
 	_, ok = c.get("k", func() bool { return true })
 	assert.False(t, ok, "stale guard must not reuse the plan")
+}
+
+func TestPruneStackedProjects(t *testing.T) {
+	t.Parallel()
+	if !fastPaths {
+		t.Skip("slowpath does not prune")
+	}
+	sc := *parser.NewScanner("")
+	dot := func(name string) Expr { return NewDotExpr(sc, NewIdentExpr(sc, "."), name) }
+	attr := func(name string) AttrExpr {
+		a, err := NewAttrExpr(sc, name, dot(name))
+		require.NoError(t, err)
+		return a
+	}
+	innerFn := NewFunction(sc, IdentPattern("."), NewTupleExpr(sc, attr("a"), attr("b"), attr("c")))
+	outerFn := NewFunction(sc, IdentPattern("."), NewTupleExpr(sc, attr("a")))
+	base := mustRel(t,
+		NewTuple(NewAttr("a", NewNumber(1)), NewAttr("b", NewNumber(2)), NewAttr("c", NewNumber(3))),
+	)
+	inner := NewDArrowExpr(sc, base, innerFn)
+	outer := NewDArrowExpr(sc, inner, outerFn)
+	d, ok := outer.(*DArrowExpr)
+	require.True(t, ok)
+	in, ok := d.lhs.(*DArrowExpr)
+	require.True(t, ok)
+	te, ok := in.fn.body.(*TupleExpr)
+	require.True(t, ok)
+	require.Equal(t, 1, len(te.attrs), "inner project should keep only a")
+	assert.Equal(t, "a", te.attrs[0].name)
+}
+
+func TestWhereIndexPlanCacheThroughEval(t *testing.T) {
+	t.Parallel()
+	if !fastPaths {
+		t.Skip("slowpath scans")
+	}
+	sc := *parser.NewScanner("")
+	r := mustRel(t,
+		NewTuple(NewAttr("k", NewNumber(1)), NewAttr("a", NewNumber(10))),
+		NewTuple(NewAttr("k", NewNumber(2)), NewAttr("a", NewNumber(20))),
+		NewTuple(NewAttr("k", NewNumber(1)), NewAttr("a", NewNumber(11))),
+	).(Relation)
+	eq := func(a, b Value) (bool, error) { return a.Equal(b), nil }
+	pred := ExprAsFunction(NewCompareExpr(sc,
+		[]Expr{NewDotExpr(sc, NewIdentExpr(sc, "."), "k"), NewNumber(1)},
+		[]CompareFunc{eq},
+		[]string{"="},
+	))
+	w := NewWhereExpr(sc, r, pred)
+	v1, err := w.Eval(context.Background(), EmptyScope)
+	require.NoError(t, err)
+	assert.Equal(t, 2, v1.(Set).Count())
+	hits := r.rows.planHitCount()
+	v2, err := w.Eval(context.Background(), EmptyScope)
+	require.NoError(t, err)
+	assert.Equal(t, 2, v2.(Set).Count())
+	assert.Equal(t, hits+1, r.rows.planHitCount(), "second where must reuse the fact-keyed plan")
+}
+
+func TestMaterializeFreezesDemandedIndex(t *testing.T) {
+	t.Parallel()
+	r := mustRel(t,
+		NewTuple(NewAttr("k", NewNumber(1))),
+		NewTuple(NewAttr("k", NewNumber(2))),
+	).(Relation)
+	_, err := materializeValue(r, []string{"k"})
+	require.NoError(t, err)
+	assert.NotNil(t, r.rows.cachedGroup(valueProjector{r.getAttrIndex("k")}),
+		"breaker must freeze the demanded group index")
 }
 
 func TestCountIdentUsesAndFanout(t *testing.T) {

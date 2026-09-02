@@ -73,11 +73,13 @@ func (s *colStore) insertLocked(h hash128.H128, id uint32) {
 // findLocked returns the id of the row equal to v among the first limit
 // committed rows. Caller holds mu and has called ensureIndexLocked.
 func (s *colStore) findLocked(v Values, h hash128.H128, limit int) (uint32, bool) {
-	if id, ok := s.index[h]; ok && int(id) < limit && rowOf(s.arena, s.width, int(id)).equalValues(v) {
-		return id, true
+	if id, ok := s.index[h]; ok && int(id) < limit {
+		if hashIdentity || rowOf(s.arena, s.width, int(id)).equalValues(v) {
+			return id, true
+		}
 	}
 	for _, id := range s.hashOverflow[h] {
-		if int(id) < limit && rowOf(s.arena, s.width, int(id)).equalValues(v) {
+		if int(id) < limit && (hashIdentity || rowOf(s.arena, s.width, int(id)).equalValues(v)) {
 			return id, true
 		}
 	}

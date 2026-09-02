@@ -43,6 +43,9 @@ func (v Values) equalValues(v2 Values) bool {
 	if len(v) != len(v2) {
 		return false
 	}
+	if hashIdentity {
+		return v.Hash128() == v2.Hash128()
+	}
 
 	for i, el := range v {
 		if !el.Equal(v2[i]) {

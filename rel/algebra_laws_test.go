@@ -71,6 +71,24 @@ func sampleValues(t *testing.T) []Value {
 	}
 }
 
+func TestAlgebraHash128ImpliesEqual(t *testing.T) {
+	t.Parallel()
+	if !hashIdentity {
+		t.Skip("Hash128⇒Equal is the hashidentity contract (🎯T22)")
+	}
+	vs := sampleValues(t)
+	for i, a := range vs {
+		for j, b := range vs {
+			_, aSet := a.(Set)
+			_, bSet := b.(Set)
+			if a.Hash128() == b.Hash128() && (a.Kind() == b.Kind() || aSet && bSet) {
+				assert.True(t, a.Equal(b),
+					"Hash128 equal but Equal is false: [%d]=%s [%d]=%s", i, a, j, b)
+			}
+		}
+	}
+}
+
 func TestAlgebraEqualImpliesHash128(t *testing.T) {
 	t.Parallel()
 	vs := sampleValues(t)
@@ -127,7 +145,11 @@ func TestAlgebraCanonicalisationIdempotent(t *testing.T) {
 	)
 	// Specialized Equal is kind-narrow; GenericTuple.Equal is permissive.
 	// Hash128 still agrees, so a hash-based set treats them as duplicates.
-	assert.False(t, item.Equal(generic))
+	if hashIdentity {
+		assert.True(t, item.Equal(generic), "hashidentity Equal is Hash128")
+	} else {
+		assert.False(t, item.Equal(generic))
+	}
 	assert.True(t, generic.Equal(item))
 	assert.Equal(t, item.Hash128(), generic.Hash128())
 	// NewTuple canonicalises to the specialised kind; that is the identity.

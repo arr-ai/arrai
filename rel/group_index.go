@@ -67,6 +67,12 @@ func newGroupIndex(r *positionalRelation, p valueProjector) *groupIndex {
 // projection of b. The projectors must have the same length.
 func projectionsEqual(a Values, pa valueProjector, b Values, pb valueProjector) bool {
 	for i := range pa {
+		if hashIdentity {
+			if a[pa[i]].Hash128() != b[pb[i]].Hash128() {
+				return false
+			}
+			continue
+		}
 		if !a[pa[i]].Equal(b[pb[i]]) {
 			return false
 		}

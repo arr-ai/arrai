@@ -133,6 +133,46 @@ func TestDerivedViewInheritsGroupIndex(t *testing.T) {
 	assert.Equal(t, 3, len(b.rows), "three rows have col0=1")
 }
 
+func TestProjectDotsSharesStoreWhenInjective(t *testing.T) {
+	t.Parallel()
+	if !fastPaths {
+		t.Skip("slowpath copies projections")
+	}
+	s := mustRel(t,
+		NewTuple(NewAttr("a", NewNumber(1)), NewAttr("b", NewNumber(10))),
+		NewTuple(NewAttr("a", NewNumber(2)), NewAttr("b", NewNumber(20))),
+	)
+	r := s.(Relation)
+	got, ok := r.projectDots([]string{"a"}, []string{"a"})
+	require.True(t, ok)
+	p := got.(Relation)
+	assert.Same(t, r.rows, p.rows, "injective project must not copy the store")
+	assert.Equal(t, r.Count(), p.Count())
+	assert.True(t, p.Has(NewTuple(NewAttr("a", NewNumber(1)))))
+	assert.False(t, p.Has(NewTuple(NewAttr("a", NewNumber(9)))))
+}
+
+func TestProjectDotsCopiesWhenNotInjective(t *testing.T) {
+	t.Parallel()
+	s := mustRel(t,
+		NewTuple(NewAttr("a", NewNumber(1)), NewAttr("b", NewNumber(10))),
+		NewTuple(NewAttr("a", NewNumber(1)), NewAttr("b", NewNumber(20))),
+	)
+	r := s.(Relation)
+	got, ok := r.projectDots([]string{"a"}, []string{"a"})
+	require.True(t, ok)
+	p := got.(Relation)
+	assert.NotSame(t, r.rows, p.rows, "non-injective project must copy to dedup")
+	assert.Equal(t, 1, p.Count())
+}
+
+func TestSequenceAtKeyIsSeeded(t *testing.T) {
+	t.Parallel()
+	pr := newPositionalRelation(2, row(0, 1), row(1, 2))
+	r := newRelation(NamesSlice{"@", ArrayItemAttr}, valueProjector{0, 1}, pr)
+	assert.True(t, r.rows.hasCandidateKey(valueProjector{0}), "@ of a sequence shape is a key")
+}
+
 func TestEmpiricalCandidateKeyIsCached(t *testing.T) {
 	t.Parallel()
 	pr := newPositionalRelation(2, row(1, 10), row(2, 20), row(3, 10))
