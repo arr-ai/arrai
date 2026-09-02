@@ -58,7 +58,9 @@ type positionalRelationMetadata struct {
 
 type planEntry struct {
 	guard func() bool
-	value Value
+	// rows is the selView of matching arena ids, or nil for empty.
+	// Never a Relation wrapper: attrs belong to the caller (🎯T23).
+	rows *positionalRelation
 }
 
 func (r *positionalRelation) getMeta() *positionalRelationMetadata {
@@ -499,26 +501,26 @@ func (r *positionalRelation) hasArenaID(id uint32) bool {
 	return int(id) < r.n
 }
 
-func (r *positionalRelation) planGet(key string, guard func() bool) (Value, bool) {
+func (r *positionalRelation) planGet(key string, guard func() bool) (*positionalRelation, bool) {
 	m := r.getMeta()
 	m.Lock()
 	defer m.Unlock()
 	e, ok := m.plans[key]
-	if !ok || e.value == nil || e.guard == nil || !e.guard() || !guard() {
+	if !ok || e.guard == nil || !e.guard() || !guard() {
 		return nil, false
 	}
 	m.planHits++
-	return e.value, true
+	return e.rows, true
 }
 
-func (r *positionalRelation) planPut(key string, guard func() bool, v Value) {
+func (r *positionalRelation) planPut(key string, guard func() bool, rows *positionalRelation) {
 	m := r.getMeta()
 	m.Lock()
 	defer m.Unlock()
 	if m.plans == nil {
 		m.plans = map[string]planEntry{}
 	}
-	m.plans[key] = planEntry{guard: guard, value: v}
+	m.plans[key] = planEntry{guard: guard, rows: rows}
 }
 
 func (r *positionalRelation) planHitCount() int {

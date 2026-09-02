@@ -232,25 +232,28 @@ func (r Relation) whereByIndex(ctx context.Context, scope Scope, p *eqAttrPredic
 	n0 := r.rows.n
 	fact := p.attr + "=" + key.String()
 	guard := func() bool { return r.rows.n == n0 }
-	if v, ok := r.rows.planGet(fact, guard); ok {
-		return v, true, nil
+	if view, hit := r.rows.planGet(fact, guard); hit {
+		if view == nil {
+			return None, true, nil
+		}
+		return r.newBody(view), true, nil
 	}
 	if n, is := key.(Number); is {
 		z := r.rows.zone(index)
 		if z.ok && (n.Less(z.min) || z.max.Less(n)) {
-			r.rows.planPut(fact, guard, None)
+			r.rows.planPut(fact, guard, nil)
 			return None, true, nil
 		}
 	}
 	group := r.rows.groupBy(valueProjector{index})
-	rows, has := group.getKey(key)
+	ids, has := group.getKey(key)
 	if !has {
-		r.rows.planPut(fact, guard, None)
+		r.rows.planPut(fact, guard, nil)
 		return None, true, nil
 	}
-	out := r.newBody(r.rows.selView(rows))
-	r.rows.planPut(fact, guard, out)
-	return out, true, nil
+	view := r.rows.selView(ids)
+	r.rows.planPut(fact, guard, view)
+	return r.newBody(view), true, nil
 }
 
 // pushWhereThroughProject rewrites `(rel => (a: .a, ...)) where .a = k` to
