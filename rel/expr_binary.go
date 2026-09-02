@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"math"
+	"strconv"
 
 	"github.com/arr-ai/wbnf/parser"
 	"github.com/go-errors/errors"
@@ -230,7 +231,9 @@ func (r Relation) whereByIndex(ctx context.Context, scope Scope, p *eqAttrPredic
 		return nil, false, err
 	}
 	n0 := r.rows.n
-	fact := p.attr + "=" + key.String()
+	// Key by store column, not dest attr: injective projectDots siblings share
+	// the positionalRelation, so dest names like k/x collide across projectors.
+	fact := strconv.Itoa(index) + "=" + key.String()
 	guard := func() bool { return r.rows.n == n0 }
 	if view, hit := r.rows.planGet(fact, guard); hit {
 		if view == nil {
