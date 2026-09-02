@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"sync"
 	"time"
@@ -305,6 +306,15 @@ func downloadModule(modPath, version string) (*goModule, error) {
 	return &goModule{Name: result.Path, Dir: result.Dir}, nil
 }
 
+// moduleFoundButMissingPackage matches `go get`'s error when it correctly
+// identifies a module boundary but the specific package/file within it isn't
+// present in the resolved version -- e.g. a stale proxy cache serving an
+// older pseudo-version than whatever was originally pinned. When this
+// happens the module path is authoritative: `go` already confirmed it, so
+// retrying at a shorter prefix would abandon a real boundary and risk
+// landing on a different, wrong (too-shallow) module instead.
+var moduleFoundButMissingPackage = regexp.MustCompile(`module (\S+)@\S+ found \([^)]*\), but does not contain package`)
+
 // addModule runs `go get` for modPath at version (or "latest" if version is
 // empty) in moduleRoot, adding a require directive (and go.sum entry) to its
 // go.mod, then looks up the resulting directory the same way an
@@ -321,6 +331,11 @@ func addModule(modPath, version, moduleRoot string) (*goModule, error) {
 		cmd.Dir = moduleRoot
 	}
 	if _, err := cmd.Output(); err != nil {
+		if ee, ok := err.(*exec.ExitError); ok {
+			if m := moduleFoundButMissingPackage.FindSubmatch(ee.Stderr); m != nil {
+				return addModule(string(m[1]), version, moduleRoot)
+			}
+		}
 		return nil, err
 	}
 	return downloadModule(modPath, version)

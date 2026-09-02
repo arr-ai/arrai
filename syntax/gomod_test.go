@@ -147,6 +147,29 @@ go 1.21
 	require.NotEmpty(t, pinned.Dir)
 }
 
+// TestRetrieveModuleStopsAtModuleBoundaryOnMissingPackage guards against
+// retrieveModule's fallback loop shortening past a module `go` already
+// confirmed exists, just because the specific package within it wasn't
+// found (e.g. a stale proxy serving an older version than intended, or --
+// as here -- a package path that plain doesn't exist in any version).
+// Continuing to shorten past a confirmed module risks landing on a
+// different, wrong (too-shallow) module instead of reporting the real one.
+func TestRetrieveModuleStopsAtModuleBoundaryOnMissingPackage(t *testing.T) {
+	root := withTempModule(t, `module example.com/pintest
+
+go 1.21
+`)
+
+	// cloud.google.com/go is a real, public multi-module monorepo: the repo
+	// root and cloud.google.com/go/pubsub are each their own Go module. Using
+	// a public module here (resolved via the Go module proxy) keeps this
+	// test independent of any private-repo network access.
+	m, err := retrieveModule(
+		"cloud.google.com/go/pubsub/does/not/exist", "", root)
+	require.NoError(t, err)
+	require.Equal(t, "cloud.google.com/go/pubsub", m.Name)
+}
+
 func TestRequiredModuleOfMatchesLongestPrefix(t *testing.T) {
 	resetRequiredModulesCache()
 	t.Cleanup(resetRequiredModulesCache)
