@@ -109,6 +109,42 @@ go 1.21
 	require.NoError(t, err)
 	require.Equal(t, "github.com/arr-ai/arrai-import-tests", m.Name)
 	require.NotEmpty(t, m.Dir)
+
+	// Resolving an otherwise-unpinned import adds it to go.mod (restoring
+	// v0.321.0's behaviour, lost when anz-bank/pkg/mod was replaced by an
+	// early, unpinned version of this file) so this and every later
+	// resolution -- in this run, and any future one -- is a fast, pinned
+	// lookup instead of hitting this slow path again.
+	goMod, err := os.ReadFile(filepath.Join(root, "go.mod"))
+	require.NoError(t, err)
+	require.Contains(t, string(goMod), "github.com/arr-ai/arrai-import-tests",
+		"resolving an unpinned import must add it as a require in go.mod")
+
+	pinned, ok := requiredModuleOf(root, "github.com/arr-ai/arrai-import-tests")
+	require.True(t, ok, "the newly-added module must be visible to a later lookup in the same run")
+	require.Equal(t, m.Dir, pinned.Dir)
+}
+
+// TestRetrieveModulePersistsAcrossRuns simulates a later, separate run (fresh
+// process, so a fresh memoized-graph cache) finding a module that an earlier
+// run's fallback resolution added to go.mod: it must resolve via the fast
+// pinned path, not fall back to `go get` again.
+func TestRetrieveModulePersistsAcrossRuns(t *testing.T) {
+	root := withTempModule(t, `module example.com/pintest
+
+go 1.21
+`)
+
+	_, err := retrieveModule("github.com/arr-ai/arrai-import-tests", "", root)
+	require.NoError(t, err)
+
+	// Simulate a fresh process: forget the in-memory graph, but go.mod/go.sum
+	// on disk are exactly as the earlier "run" left them.
+	resetRequiredModulesCache()
+
+	pinned, ok := requiredModuleOf(root, "github.com/arr-ai/arrai-import-tests")
+	require.True(t, ok, "a later run must find the module via go.mod, not need to re-add it")
+	require.NotEmpty(t, pinned.Dir)
 }
 
 func TestRequiredModuleOfMatchesLongestPrefix(t *testing.T) {

@@ -246,6 +246,12 @@ func retrieveModule(importPath, version, moduleRoot string) (*goModule, error) {
 		}
 	}
 
+	// moduleRoot's go.mod doesn't already require this: add it there with
+	// `go get` so this and every later resolution of it -- in this run, and
+	// any future one -- becomes a fast, pinned lookup instead of hitting
+	// this slow, unpinned path again. (This restores v0.321.0's behaviour,
+	// lost when anz-bank/pkg/mod -- whose Get() did the same `go get` call
+	// -- was replaced by an early, unpinned version of this file.)
 	modPath := importPath
 	var lastErr error
 	for {
@@ -253,8 +259,12 @@ func retrieveModule(importPath, version, moduleRoot string) (*goModule, error) {
 		if len(parts) < 3 {
 			break
 		}
-		m, err := downloadModule(modPath, version)
+		m, err := addModule(modPath, version, moduleRoot)
 		if err == nil {
+			// go.mod just changed; forget any memoized graph for moduleRoot
+			// so a later resolution in this same run sees the addition
+			// instead of re-adding it or missing it.
+			requiredModulesByRoot.Delete(moduleRoot)
 			return m, nil
 		}
 		lastErr = err
@@ -262,15 +272,17 @@ func retrieveModule(importPath, version, moduleRoot string) (*goModule, error) {
 	}
 	if lastErr != nil {
 		if ee, ok := lastErr.(*exec.ExitError); ok {
-			return nil, fmt.Errorf("go mod download %s: %s", importPath, ee.Stderr)
+			return nil, fmt.Errorf("go get %s: %s", importPath, ee.Stderr)
 		}
-		return nil, fmt.Errorf("go mod download %s: %w", importPath, lastErr)
+		return nil, fmt.Errorf("go get %s: %w", importPath, lastErr)
 	}
-	return nil, fmt.Errorf("go mod download %s: module not found", importPath)
+	return nil, fmt.Errorf("go get %s: module not found", importPath)
 }
 
 // downloadModule runs `go mod download -json` for modPath at version (or
 // "latest" if version is empty) and returns the resulting module info.
+// Unlike addModule, this never changes go.mod -- it's only used for a module
+// go.mod already pins but whose content isn't in the local module cache yet.
 func downloadModule(modPath, version string) (*goModule, error) {
 	arg := modPath
 	if version != "" {
@@ -291,4 +303,25 @@ func downloadModule(modPath, version string) (*goModule, error) {
 		return nil, fmt.Errorf("go mod download %s: parsing output: %w", arg, err)
 	}
 	return &goModule{Name: result.Path, Dir: result.Dir}, nil
+}
+
+// addModule runs `go get` for modPath at version (or "latest" if version is
+// empty) in moduleRoot, adding a require directive (and go.sum entry) to its
+// go.mod, then looks up the resulting directory the same way an
+// already-pinned module would be.
+func addModule(modPath, version, moduleRoot string) (*goModule, error) {
+	arg := modPath
+	if version != "" {
+		arg += "@" + version
+	} else {
+		arg += "@latest"
+	}
+	cmd := exec.Command("go", "get", arg) //nolint:gosec
+	if moduleRoot != "" {
+		cmd.Dir = moduleRoot
+	}
+	if _, err := cmd.Output(); err != nil {
+		return nil, err
+	}
+	return downloadModule(modPath, version)
 }
