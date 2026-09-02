@@ -132,6 +132,10 @@ func (d Dict) Hash128() hash128.H128 {
 }
 
 func (d Dict) Equal(v Value) bool {
+	if hashIdentity {
+		s, ok := v.(Set)
+		return ok && d.Hash128() == s.Hash128()
+	}
 	switch v := v.(type) {
 	case Dict:
 		return d.equalDict(v)

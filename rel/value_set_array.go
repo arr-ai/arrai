@@ -183,6 +183,10 @@ func (a Array) hashUncached() hash128.H128 {
 
 // Equal tests two Sets for equality. Any other type returns false.
 func (a Array) Equal(v Value) bool {
+	if hashIdentity {
+		s, ok := v.(Set)
+		return ok && a.Hash128() == s.Hash128()
+	}
 	switch x := v.(type) {
 	case Array:
 		if len(a.values) != len(x.values) || a.offset != x.offset || a.count != x.count {

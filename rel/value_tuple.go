@@ -243,6 +243,10 @@ func (t *GenericTuple) Hash128() hash128.H128 {
 
 // Equal tests two Tuples for equality. Any other type returns false.
 func (t *GenericTuple) Equal(v Value) bool {
+	if hashIdentity {
+		u, ok := v.(Tuple)
+		return ok && t.Hash128() == u.Hash128()
+	}
 	if u, ok := v.(*GenericTuple); ok {
 		// Shapes are interned: same attribute set iff same shape.
 		if t.sh() != u.sh() {

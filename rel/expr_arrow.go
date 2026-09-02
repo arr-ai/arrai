@@ -35,16 +35,11 @@ func (e *ArrowExpr) Eval(ctx context.Context, local Scope) (_ Value, err error) 
 	}
 	// Fast path for `let x = ...; body` and `lhs -> \x body`: see Closure.call.
 	if ident, is := e.fn.arg.(IdentPattern); is {
-		if fastPaths {
-			switch value.(type) {
-			case seqPipeline, dictPipeline:
-				if e.fn.recordedFanout() == materializeEdge {
-					var merr error
-					value, merr = materializeValue(value)
-					if merr != nil {
-						return nil, WrapContextErr(merr, e, local)
-					}
-				}
+		if fastPaths && e.fn.recordedFanout() == materializeEdge {
+			var merr error
+			value, merr = materializeValue(value, demandedEqAttrs(e.fn.body, string(ident)))
+			if merr != nil {
+				return nil, WrapContextErr(merr, e, local)
 			}
 		}
 		return e.fn.body.Eval(ctx, local.With(string(ident), value))

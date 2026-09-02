@@ -250,17 +250,22 @@ func (s String) Hash(seed uintptr) uintptr {
 // with holes cannot round-trip through UTF-8 (a hole is not a rune) and
 // only ever equal other rune-form strings, so they hash the rune buffer.
 func (s String) Hash128() hash128.H128 {
+	h := stringSalt.Mix(hash128.Int(s.offset))
 	if s.ascii != nil {
-		return stringSalt.Mix(hash128.Bytes(s.ascii))
+		return h.Mix(hash128.Bytes(s.ascii))
 	}
 	if s.holes != 0 {
-		return stringSalt.Mix(hash128.Runes(s.s))
+		return h.Mix(hash128.Runes(s.s))
 	}
-	return stringSalt.Mix(hash128.String(string(s.s)))
+	return h.Mix(hash128.String(string(s.s)))
 }
 
 // Equal tests two Sets for equality. Any other type returns false.
 func (s String) Equal(v Value) bool {
+	if hashIdentity {
+		o, ok := v.(Set)
+		return ok && s.Hash128() == o.Hash128()
+	}
 	t, is := v.(String)
 	return is && s.EqualString(t)
 }

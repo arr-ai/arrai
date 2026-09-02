@@ -41,7 +41,23 @@ func newRelation(attrs NamesSlice, p valueProjector, rows *positionalRelation) R
 			r.direct = false
 		}
 	}
+	r.seedAtKey()
 	return r
+}
+
+// seedAtKey records @ as a candidate key for array/dict/string/bytes
+// encodings, whose @ is unique by construction (🎯T20).
+func (r Relation) seedAtKey() {
+	at, has := r.attrMap["@"]
+	if !has {
+		return
+	}
+	for _, n := range []string{ArrayItemAttr, DictValueAttr, StringCharAttr, BytesByteAttr} {
+		if _, ok := r.attrMap[n]; ok {
+			r.rows.seedKey(valueProjector{at})
+			return
+		}
+	}
 }
 
 // tuple inflates a row to a Tuple.
@@ -128,7 +144,7 @@ func (r Relation) tupleToValues(t Tuple) Values {
 	if len(r.attrs) != t.Count() {
 		panic("tupleToValues: names and values don't have the same number")
 	}
-	values := make(Values, len(r.attrs))
+	values := make(Values, r.rows.Width())
 	for i, name := range r.attrs {
 		values[r.p[i]] = t.MustGet(name)
 	}
@@ -137,7 +153,18 @@ func (r Relation) tupleToValues(t Tuple) Values {
 
 func (r Relation) Has(v Value) bool {
 	if t, is := v.(Tuple); is {
-		return r.hasShape(t) && r.rows.Has(r.tupleToValues(t))
+		if !r.hasShape(t) {
+			return false
+		}
+		if r.rows.Width() == len(r.attrs) {
+			return r.rows.Has(r.tupleToValues(t))
+		}
+		key := make([]Value, len(r.p))
+		for i, name := range r.attrs {
+			key[i] = t.MustGet(name)
+		}
+		_, ok := r.rows.groupBy(r.p).getKey(key...)
+		return ok
 	}
 	return false
 }
@@ -160,8 +187,20 @@ func (r Relation) ArrayEnumerator() ValueEnumerator {
 	}
 }
 
+func (r Relation) materializeProjection() Relation {
+	if r.rows.Width() == len(r.attrs) {
+		return r
+	}
+	id := make(valueProjector, len(r.attrs))
+	for i := range id {
+		id[i] = i
+	}
+	return newRelation(r.attrs, id, r.rows.Project(r.p))
+}
+
 func (r Relation) With(v Value) Set {
 	if t, is := v.(Tuple); is && r.hasShape(t) {
+		r = r.materializeProjection()
 		rows := r.rows.With(r.tupleToValues(t))
 		if rows == r.rows {
 			return r
@@ -175,6 +214,7 @@ func (r Relation) With(v Value) Set {
 
 func (r Relation) Without(v Value) Set {
 	if t, is := v.(Tuple); is && r.hasShape(t) {
+		r = r.materializeProjection()
 		values := r.tupleToValues(t)
 		pr := r.rows.Without(values)
 		return r.newBody(pr)
@@ -210,9 +250,14 @@ func (r Relation) projectDots(dst, src []string) (Set, bool) {
 		}
 		p[i] = idx
 	}
-	rows := r.rows.Project(p)
 	out := make(NamesSlice, len(dst))
 	copy(out, dst)
+	if fastPaths && (r.rows.hasCandidateKey(p) || r.rows.groupBy(p).count() == r.rows.n) {
+		// Injective: share the store so Count is the source cardinality
+		// without copying rows (🎯T20).
+		return newRelation(out, p, r.rows), true
+	}
+	rows := r.rows.Project(p)
 	id := make(valueProjector, len(dst))
 	for i := range id {
 		id[i] = i
@@ -490,6 +535,9 @@ func (r Relation) EqualRelation(r2 Relation) bool {
 // sameLayout reports whether r and r2 store each attribute at the same
 // position.
 func (r Relation) sameLayout(r2 Relation) bool {
+	if r.rows.Width() != r2.rows.Width() {
+		return false
+	}
 	if len(r.attrs) != len(r2.attrs) {
 		return false
 	}
