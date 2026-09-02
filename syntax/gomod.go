@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+	"time"
 )
 
 // goModule holds the result of module resolution (from go list or go mod download).
@@ -125,33 +126,47 @@ func loadRequiredModules(moduleRoot string) map[string]requiredModule {
 	return mods
 }
 
-// fileSnapshot captures whether a file existed and its content, so it can be
-// put back exactly as found.
+// fileSnapshot captures whether a file existed, its content, and its mtime,
+// so it can be put back exactly as found -- including the mtime, since a
+// build tool watching mtimes (like make) shouldn't see a file as touched
+// when a self-heal round-tripped it back to identical content.
 type fileSnapshot struct {
 	path    string
 	existed bool
 	content []byte
+	modTime time.Time
 }
 
 func snapshotFile(path string) (fileSnapshot, error) {
-	content, err := os.ReadFile(path)
+	info, err := os.Stat(path)
 	if err != nil {
 		if os.IsNotExist(err) {
 			return fileSnapshot{path: path}, nil
 		}
 		return fileSnapshot{}, err
 	}
-	return fileSnapshot{path: path, existed: true, content: content}, nil
+	content, err := os.ReadFile(path)
+	if err != nil {
+		return fileSnapshot{}, err
+	}
+	return fileSnapshot{path: path, existed: true, content: content, modTime: info.ModTime()}, nil
 }
 
 // restore is called via defer with nothing to propagate a failure to; it's a
-// best-effort revert of a self-heal `go list` may have made.
+// best-effort revert of a self-heal `go list` may have made. If the content
+// coming back out matches what went in, it doesn't touch the file at all --
+// not even to rewrite identical bytes -- so an untouched go.mod/go.sum keeps
+// its original mtime rather than jumping to "now" on every single resolve.
 func (s fileSnapshot) restore() {
-	if s.existed {
-		_ = os.WriteFile(s.path, s.content, 0o600) //nolint:errcheck
+	if !s.existed {
+		_ = os.Remove(s.path) //nolint:errcheck
 		return
 	}
-	_ = os.Remove(s.path) //nolint:errcheck
+	if current, err := os.ReadFile(s.path); err == nil && bytes.Equal(current, s.content) {
+		return
+	}
+	_ = os.WriteFile(s.path, s.content, 0o600)   //nolint:errcheck
+	_ = os.Chtimes(s.path, s.modTime, s.modTime) //nolint:errcheck
 }
 
 // snapshotGoModFiles saves the current go.mod/go.sum in dir (the process cwd

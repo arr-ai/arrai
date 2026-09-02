@@ -6,6 +6,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 
@@ -263,6 +264,44 @@ require github.com/pkg/errors v0.8.0
 	require.NoError(t, err)
 	require.Equal(t, goModBefore, goModAfter, "resolving an import must not change an existing go.mod")
 	require.Equal(t, goSumBefore, goSumAfter, "resolving an import must not change an existing go.sum")
+}
+
+// TestLoadRequiredModulesPreservesGoSumMtime guards against a regression
+// where restore() wrote go.sum's original content back with os.WriteFile,
+// which updates the mtime even when the bytes are unchanged. A build tool
+// comparing mtimes (e.g. make, deciding whether a .arraiz needs rebuilding
+// because it depends on go.mod) would see an untouched go.sum as "just
+// modified" on every single resolve.
+func TestLoadRequiredModulesPreservesGoSumMtime(t *testing.T) {
+	root := withTempModule(t, `module example.com/pintest
+
+go 1.21
+
+require github.com/pkg/errors v0.8.0
+`)
+	cmd := exec.Command("go", "mod", "download", "github.com/pkg/errors")
+	cmd.Dir = root
+	out, err := cmd.CombinedOutput()
+	require.NoError(t, err, string(out))
+	resetRequiredModulesCache()
+
+	goSumPath := filepath.Join(root, "go.sum")
+	before, err := os.Stat(goSumPath)
+	require.NoError(t, err)
+
+	// mtimes can have coarser resolution than the time between statting and
+	// resolving; back-date the file so a real (bugged) rewrite is detectable
+	// regardless of clock granularity.
+	backdated := before.ModTime().Add(-time.Hour)
+	require.NoError(t, os.Chtimes(goSumPath, backdated, backdated))
+
+	_, err = retrieveModule("github.com/pkg/errors", "", root)
+	require.NoError(t, err)
+
+	after, err := os.Stat(goSumPath)
+	require.NoError(t, err)
+	require.True(t, after.ModTime().Equal(backdated),
+		"resolving an import must not touch go.sum's mtime when its content is unchanged")
 }
 
 func TestRetrieveModuleErrorsWhenPinnedVersionUnavailable(t *testing.T) {
