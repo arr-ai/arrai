@@ -2,6 +2,7 @@ package syntax
 
 import (
 	"context"
+	"path/filepath"
 	"testing"
 
 	"github.com/arr-ai/arrai/pkg/arraictx"
@@ -100,6 +101,14 @@ func TestPlanRoundtripMedian(t *testing.T) {
 	require.NoError(t, err)
 	got := evalPlan(t, code)
 	assert.True(t, got.Equal(direct), "plan=%s eval=%s", got, direct)
+}
+
+func TestPortablePathDropsHostAbsolute(t *testing.T) {
+	t.Parallel()
+	assert.Empty(t, portablePath(filepath.Join(t.TempDir(), "util.arrai")))
+	assert.Equal(t, ModuleDir+"/github.com/x/util.arrai", portablePath(ModuleDir+"/github.com/x/util.arrai"))
+	assert.Equal(t, NoModuleDir+"/main.arrai", portablePath(NoModuleDir+"/main.arrai"))
+	assert.Equal(t, "https://example.com/a.arrai", portablePath("https://example.com/a.arrai"))
 }
 
 func TestPlanRoundtripEqualsEval(t *testing.T) {

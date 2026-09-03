@@ -7,6 +7,7 @@ import (
 	"context"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/arr-ai/arrai/pkg/arraictx"
@@ -100,6 +101,64 @@ func TestBundleFiles(t *testing.T) {
 			ctxfs.ZipEqualToFiles(t, result, c.expectedFiles)
 		})
 	}
+}
+
+func TestBundleZipIsByteIdenticalOnRepeat(t *testing.T) {
+	t.Parallel()
+	files := map[string]string{
+		SentinelPath("/github.com/test/test"):               "module github.com/test/test\n",
+		"/github.com/test/test/test.arrai":                  "//{./module/module2/module.arrai}",
+		SentinelPath("/github.com/test/test/module/"):       "module github.com/test/test/module\n",
+		"/github.com/test/test/module/1.arrai":              "1",
+		"/github.com/test/test/module/module2/module.arrai": "//{/1.arrai}",
+	}
+	path := syntax.MustAbs(t, "/github.com/test/test/test.arrai")
+	a := MustCreateTestBundleFromMap(t, files, path)
+	b := MustCreateTestBundleFromMap(t, files, path)
+	require.Equal(t, a, b)
+}
+
+func TestBundlePlanImportPathsArePortable(t *testing.T) {
+	t.Parallel()
+	files := map[string]string{
+		SentinelPath("/github.com/test/test"):               "module github.com/test/test\n",
+		"/github.com/test/test/test.arrai":                  "//{./module/module2/module.arrai}",
+		SentinelPath("/github.com/test/test/module/"):       "module github.com/test/test/module\n",
+		"/github.com/test/test/module/1.arrai":              "1",
+		"/github.com/test/test/module/module2/module.arrai": "//{/1.arrai}",
+	}
+	zipBytes := MustCreateTestBundleFromMap(t, files, syntax.MustAbs(t, "/github.com/test/test/test.arrai"))
+	ctx, err := syntax.WithBundleRun(arraictx.InitRunCtx(context.Background()), zipBytes)
+	require.NoError(t, err)
+	p, err := syntax.LoadCompiledPlan(ctx)
+	require.NoError(t, err)
+	require.NotNil(t, p)
+	paths := collectImportPaths(p.Root)
+	require.NotEmpty(t, paths, "nested local imports must appear in the compiled plan")
+	var sawModule bool
+	for _, path := range paths {
+		if strings.HasPrefix(path, syntax.ModuleDir+"/") || strings.HasPrefix(path, syntax.NoModuleDir+"/") {
+			sawModule = sawModule || strings.HasPrefix(path, syntax.ModuleDir+"/")
+			continue
+		}
+		require.False(t, filepath.IsAbs(path), "host-absolute import path %q leaked into plan.bin", path)
+	}
+	require.True(t, sawModule, "relative import //{./...} must lower to a /module/... path, got %q", paths)
+}
+
+func collectImportPaths(n rel.PlanNode) []string {
+	var out []string
+	var walk func(rel.PlanNode)
+	walk = func(n rel.PlanNode) {
+		if n.K == "import" {
+			out = append(out, n.Str)
+		}
+		for _, k := range n.Kids {
+			walk(k)
+		}
+	}
+	walk(n)
+	return out
 }
 
 func TestBundleCompiledPlanRunsWithoutParse(t *testing.T) {
