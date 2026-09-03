@@ -2,6 +2,7 @@ package rel
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 )
 
@@ -493,13 +494,22 @@ func encodeSetEnum(s Set) (PlanNode, error) {
 	if !s.IsTrue() {
 		return PlanNode{K: "none"}, nil
 	}
-	kids := make([]PlanNode, 0, s.Count())
+	// s.Enumerator() walks frozen's hash-trie in an order seeded randomly per
+	// process, so it must be canonicalized here -- otherwise the same set
+	// serializes to different bytes on every run, making bundling
+	// non-reproducible (🎯T25 follow-up).
+	values := make([]Value, 0, s.Count())
 	for e := s.Enumerator(); e.MoveNext(); {
-		n, err := encodeValue(e.Current())
+		values = append(values, e.Current())
+	}
+	sort.Slice(values, func(i, j int) bool { return ValueLess(values[i], values[j]) })
+	kids := make([]PlanNode, len(values))
+	for i, v := range values {
+		n, err := encodeValue(v)
 		if err != nil {
 			return PlanNode{}, err
 		}
-		kids = append(kids, n)
+		kids[i] = n
 	}
 	return PlanNode{K: "setval", Kids: kids}, nil
 }
