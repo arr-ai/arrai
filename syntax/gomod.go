@@ -8,8 +8,10 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"sync"
+	"time"
 )
 
 // goModule holds the result of module resolution (from go list or go mod download).
@@ -67,30 +69,51 @@ func loadRequiredModules(moduleRoot string) map[string]requiredModule {
 		return cached.(map[string]requiredModule) //nolint:forcetypeassert
 	}
 
-	mods := map[string]requiredModule{}
+	// The overwhelmingly common case is a go.sum that's already complete
+	// enough to answer this under the default -mod=readonly -- which touches
+	// nothing on disk. Only fall back to self-healing (-mod=mod) when that
+	// actually fails, e.g. a go.sum missing an entry for a module that isn't
+	// needed to build the main module's own packages (so plain `go build`
+	// never needed to add it) but is needed to enumerate the full graph here.
+	mods, err := runGoListAllModules(moduleRoot, "-mod=readonly")
+	if err != nil {
+		mods, err = loadRequiredModulesWithSelfHeal(moduleRoot)
+	}
+	if err != nil {
+		mods = map[string]requiredModule{}
+	}
+	requiredModulesByRoot.Store(moduleRoot, mods)
+	return mods
+}
+
+// loadRequiredModulesWithSelfHeal retries the module-graph query with
+// -mod=mod, which lets `go list` self-heal a go.sum that's missing entries,
+// matching how `go mod download` behaves. Whatever edits that makes are
+// reverted once we're done (snapshotGoModFiles/restore), so resolving an
+// import never leaves go.mod/go.sum changed in the caller's project even on
+// this fallback path.
+func loadRequiredModulesWithSelfHeal(moduleRoot string) (map[string]requiredModule, error) {
 	restore, err := snapshotGoModFiles(moduleRoot)
 	if err != nil {
-		requiredModulesByRoot.Store(moduleRoot, mods)
-		return mods
+		return nil, err
 	}
 	defer restore()
+	return runGoListAllModules(moduleRoot, "-mod=mod")
+}
 
-	// -mod=mod lets this self-heal a go.sum that's missing entries (e.g. a
-	// module required but not needed to build the main module's packages),
-	// matching how `go mod download` behaves. Under the default -mod=readonly,
-	// `go list` would instead fail outright and we'd wrongly treat the module
-	// as unpinned. snapshotGoModFiles/restore above undo any such edits once
-	// we're done, so resolving an import never leaves go.mod/go.sum changed
-	// in the caller's project.
-	cmd := exec.Command("go", "list", "-mod=mod", "-m", "-json", "all") //nolint:gosec
+// runGoListAllModules runs `go list <modFlag> -m -json all` in moduleRoot
+// (or the process cwd when moduleRoot is empty) and parses the result into
+// a map keyed by module path, honouring replace directives.
+func runGoListAllModules(moduleRoot, modFlag string) (map[string]requiredModule, error) {
+	cmd := exec.Command("go", "list", modFlag, "-m", "-json", "all") //nolint:gosec
 	if moduleRoot != "" {
 		cmd.Dir = moduleRoot
 	}
 	out, err := cmd.Output()
 	if err != nil {
-		requiredModulesByRoot.Store(moduleRoot, mods)
-		return mods
+		return nil, err
 	}
+	mods := map[string]requiredModule{}
 	dec := json.NewDecoder(bytes.NewReader(out))
 	for {
 		var m struct {
@@ -107,8 +130,7 @@ func loadRequiredModules(moduleRoot string) map[string]requiredModule {
 			if err == io.EOF {
 				break
 			}
-			requiredModulesByRoot.Store(moduleRoot, mods)
-			return mods
+			return mods, err
 		}
 		if m.Main {
 			continue
@@ -121,37 +143,50 @@ func loadRequiredModules(moduleRoot string) map[string]requiredModule {
 			mods[m.Path] = requiredModule{Path: m.Path, Version: m.Version, Dir: dir}
 		}
 	}
-	requiredModulesByRoot.Store(moduleRoot, mods)
-	return mods
+	return mods, nil
 }
 
-// fileSnapshot captures whether a file existed and its content, so it can be
-// put back exactly as found.
+// fileSnapshot captures whether a file existed, its content, and its mtime,
+// so it can be put back exactly as found -- including the mtime, since a
+// build tool watching mtimes (like make) shouldn't see a file as touched
+// when a self-heal round-tripped it back to identical content.
 type fileSnapshot struct {
 	path    string
 	existed bool
 	content []byte
+	modTime time.Time
 }
 
 func snapshotFile(path string) (fileSnapshot, error) {
-	content, err := os.ReadFile(path)
+	info, err := os.Stat(path)
 	if err != nil {
 		if os.IsNotExist(err) {
 			return fileSnapshot{path: path}, nil
 		}
 		return fileSnapshot{}, err
 	}
-	return fileSnapshot{path: path, existed: true, content: content}, nil
+	content, err := os.ReadFile(path)
+	if err != nil {
+		return fileSnapshot{}, err
+	}
+	return fileSnapshot{path: path, existed: true, content: content, modTime: info.ModTime()}, nil
 }
 
 // restore is called via defer with nothing to propagate a failure to; it's a
-// best-effort revert of a self-heal `go list` may have made.
+// best-effort revert of a self-heal `go list` may have made. If the content
+// coming back out matches what went in, it doesn't touch the file at all --
+// not even to rewrite identical bytes -- so an untouched go.mod/go.sum keeps
+// its original mtime rather than jumping to "now" on every single resolve.
 func (s fileSnapshot) restore() {
-	if s.existed {
-		_ = os.WriteFile(s.path, s.content, 0o600) //nolint:errcheck
+	if !s.existed {
+		_ = os.Remove(s.path) //nolint:errcheck
 		return
 	}
-	_ = os.Remove(s.path) //nolint:errcheck
+	if current, err := os.ReadFile(s.path); err == nil && bytes.Equal(current, s.content) {
+		return
+	}
+	_ = os.WriteFile(s.path, s.content, 0o600)   //nolint:errcheck
+	_ = os.Chtimes(s.path, s.modTime, s.modTime) //nolint:errcheck
 }
 
 // snapshotGoModFiles saves the current go.mod/go.sum in dir (the process cwd
@@ -212,6 +247,26 @@ func retrieveModule(importPath, version, moduleRoot string) (*goModule, error) {
 		}
 	}
 
+	// moduleRoot's go.mod doesn't already require this: add it there with
+	// `go get` so this and every later resolution of it -- in this run, and
+	// any future one -- becomes a fast, pinned lookup instead of hitting
+	// this slow, unpinned path again. (This restores v0.321.0's behaviour,
+	// lost when anz-bank/pkg/mod -- whose Get() did the same `go get` call
+	// -- was replaced by an early, unpinned version of this file.)
+	//
+	// Without a known moduleRoot, `go get` (unset working directory) falls
+	// back to whatever go.mod the process's own cwd happens to sit under.
+	// That's still a real project worth pinning into if one's there -- but
+	// if cwd isn't inside any module at all, skip straight to a plain,
+	// unpinned download instead of letting `go get` fail confusingly.
+	pinning := moduleRoot != "" || hasAmbientGoMod()
+	resolve := downloadModule
+	if pinning {
+		resolve = func(modPath, version string) (*goModule, error) {
+			return addModule(modPath, version, moduleRoot)
+		}
+	}
+
 	modPath := importPath
 	var lastErr error
 	for {
@@ -219,24 +274,73 @@ func retrieveModule(importPath, version, moduleRoot string) (*goModule, error) {
 		if len(parts) < 3 {
 			break
 		}
-		m, err := downloadModule(modPath, version)
+		m, err := resolve(modPath, version)
 		if err == nil {
+			if pinning {
+				// go.mod just changed; forget any memoized graph for
+				// moduleRoot so a later resolution in this same run sees
+				// the addition instead of re-adding it or missing it.
+				requiredModulesByRoot.Delete(moduleRoot)
+			}
 			return m, nil
+		}
+		if isTransientModuleErr(err) {
+			// A failure that doesn't mean modPath isn't a real module --
+			// shortening to a guessed shorter prefix here risks landing on
+			// a different, wrong (but real, e.g. a monorepo root) module
+			// that happens to succeed, permanently pinning it in place of
+			// surfacing the real, transient error.
+			return nil, wrapGoGetErr(importPath, err)
 		}
 		lastErr = err
 		modPath = strings.Join(parts[:len(parts)-1], "/")
 	}
 	if lastErr != nil {
-		if ee, ok := lastErr.(*exec.ExitError); ok {
-			return nil, fmt.Errorf("go mod download %s: %s", importPath, ee.Stderr)
-		}
-		return nil, fmt.Errorf("go mod download %s: %w", importPath, lastErr)
+		return nil, wrapGoGetErr(importPath, lastErr)
 	}
-	return nil, fmt.Errorf("go mod download %s: module not found", importPath)
+	return nil, fmt.Errorf("go get %s: module not found", importPath)
+}
+
+// hasAmbientGoMod reports whether the process's own working directory sits
+// inside a Go module -- the same directory `go get`/`go mod download` fall
+// back to when moduleRoot is unknown (unset cmd.Dir walks up from cwd).
+func hasAmbientGoMod() bool {
+	out, err := exec.Command("go", "env", "GOMOD").Output() //nolint:gosec
+	if err != nil {
+		return false
+	}
+	gomod := strings.TrimSpace(string(out))
+	return gomod != "" && gomod != os.DevNull
+}
+
+func wrapGoGetErr(importPath string, err error) error {
+	if ee, ok := err.(*exec.ExitError); ok {
+		return fmt.Errorf("go get %s: %s", importPath, ee.Stderr)
+	}
+	return fmt.Errorf("go get %s: %w", importPath, err)
+}
+
+// transientModuleErr matches classes of `go get` failure that don't mean
+// modPath isn't a valid module -- network, proxy, and checksum-verification
+// failures can hit what's still the correct, longest path. retrieveModule's
+// loop must not treat these the same as a genuine "no such module" and
+// shorten to a guessed prefix.
+var transientModuleErr = regexp.MustCompile(
+	`(?i)dial tcp|no such host|i/o timeout|connection (refused|reset)|` +
+		`tls:? handshake|checksum mismatch|SECURITY ERROR|context deadline exceeded`)
+
+func isTransientModuleErr(err error) bool {
+	ee, ok := err.(*exec.ExitError)
+	if !ok {
+		return false
+	}
+	return transientModuleErr.Match(ee.Stderr)
 }
 
 // downloadModule runs `go mod download -json` for modPath at version (or
 // "latest" if version is empty) and returns the resulting module info.
+// Unlike addModule, this never changes go.mod -- it's only used for a module
+// go.mod already pins but whose content isn't in the local module cache yet.
 func downloadModule(modPath, version string) (*goModule, error) {
 	arg := modPath
 	if version != "" {
@@ -257,4 +361,54 @@ func downloadModule(modPath, version string) (*goModule, error) {
 		return nil, fmt.Errorf("go mod download %s: parsing output: %w", arg, err)
 	}
 	return &goModule{Name: result.Path, Dir: result.Dir}, nil
+}
+
+// moduleFoundButMissingPackage matches `go get`'s error when it correctly
+// identifies a module boundary but the specific package/file within it isn't
+// present in the resolved version -- e.g. a stale proxy cache serving an
+// older pseudo-version than whatever was originally pinned. When this
+// happens the module path is authoritative: `go` already confirmed it, so
+// retrying at a shorter prefix would abandon a real boundary and risk
+// landing on a different, wrong (too-shallow) module instead.
+var moduleFoundButMissingPackage = regexp.MustCompile(`module (\S+)@\S+ found \([^)]*\), but does not contain package`)
+
+// addModule runs `go get` for modPath at version (or "latest" if version is
+// empty) in moduleRoot, adding a require directive (and go.sum entry) to its
+// go.mod, then looks up the resulting directory the same way an
+// already-pinned module would be.
+func addModule(modPath, version, moduleRoot string) (*goModule, error) {
+	restore, err := snapshotGoModFiles(moduleRoot)
+	if err != nil {
+		return nil, err
+	}
+	arg := modPath
+	if version != "" {
+		arg += "@" + version
+	} else {
+		arg += "@latest"
+	}
+	cmd := exec.Command("go", "get", arg) //nolint:gosec
+	if moduleRoot != "" {
+		cmd.Dir = moduleRoot
+	}
+	if _, err := cmd.Output(); err != nil {
+		restore()
+		if ee, ok := err.(*exec.ExitError); ok {
+			if m := moduleFoundButMissingPackage.FindSubmatch(ee.Stderr); m != nil {
+				return addModule(string(m[1]), version, moduleRoot)
+			}
+		}
+		return nil, err
+	}
+	m, err := downloadModule(modPath, version)
+	if err != nil {
+		// `go get` above already committed modPath to go.mod/go.sum, but its
+		// content can't actually be confirmed available -- leaving that
+		// require in place would permanently pin an unconfirmed module,
+		// including if retrieveModule's caller goes on to succeed at a
+		// different, shorter prefix instead.
+		restore()
+		return nil, err
+	}
+	return m, nil
 }

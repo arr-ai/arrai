@@ -2,10 +2,13 @@ package syntax
 
 import (
 	"context"
+	"errors"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 
@@ -108,6 +111,65 @@ go 1.21
 	require.NoError(t, err)
 	require.Equal(t, "github.com/arr-ai/arrai-import-tests", m.Name)
 	require.NotEmpty(t, m.Dir)
+
+	// Resolving an otherwise-unpinned import adds it to go.mod (restoring
+	// v0.321.0's behaviour, lost when anz-bank/pkg/mod was replaced by an
+	// early, unpinned version of this file) so this and every later
+	// resolution -- in this run, and any future one -- is a fast, pinned
+	// lookup instead of hitting this slow path again.
+	goMod, err := os.ReadFile(filepath.Join(root, "go.mod"))
+	require.NoError(t, err)
+	require.Contains(t, string(goMod), "github.com/arr-ai/arrai-import-tests",
+		"resolving an unpinned import must add it as a require in go.mod")
+
+	pinned, ok := requiredModuleOf(root, "github.com/arr-ai/arrai-import-tests")
+	require.True(t, ok, "the newly-added module must be visible to a later lookup in the same run")
+	require.Equal(t, m.Dir, pinned.Dir)
+}
+
+// TestRetrieveModulePersistsAcrossRuns simulates a later, separate run (fresh
+// process, so a fresh memoized-graph cache) finding a module that an earlier
+// run's fallback resolution added to go.mod: it must resolve via the fast
+// pinned path, not fall back to `go get` again.
+func TestRetrieveModulePersistsAcrossRuns(t *testing.T) {
+	root := withTempModule(t, `module example.com/pintest
+
+go 1.21
+`)
+
+	_, err := retrieveModule("github.com/arr-ai/arrai-import-tests", "", root)
+	require.NoError(t, err)
+
+	// Simulate a fresh process: forget the in-memory graph, but go.mod/go.sum
+	// on disk are exactly as the earlier "run" left them.
+	resetRequiredModulesCache()
+
+	pinned, ok := requiredModuleOf(root, "github.com/arr-ai/arrai-import-tests")
+	require.True(t, ok, "a later run must find the module via go.mod, not need to re-add it")
+	require.NotEmpty(t, pinned.Dir)
+}
+
+// TestRetrieveModuleStopsAtModuleBoundaryOnMissingPackage guards against
+// retrieveModule's fallback loop shortening past a module `go` already
+// confirmed exists, just because the specific package within it wasn't
+// found (e.g. a stale proxy serving an older version than intended, or --
+// as here -- a package path that plain doesn't exist in any version).
+// Continuing to shorten past a confirmed module risks landing on a
+// different, wrong (too-shallow) module instead of reporting the real one.
+func TestRetrieveModuleStopsAtModuleBoundaryOnMissingPackage(t *testing.T) {
+	root := withTempModule(t, `module example.com/pintest
+
+go 1.21
+`)
+
+	// cloud.google.com/go is a real, public multi-module monorepo: the repo
+	// root and cloud.google.com/go/pubsub are each their own Go module. Using
+	// a public module here (resolved via the Go module proxy) keeps this
+	// test independent of any private-repo network access.
+	m, err := retrieveModule(
+		"cloud.google.com/go/pubsub/does/not/exist", "", root)
+	require.NoError(t, err)
+	require.Equal(t, "cloud.google.com/go/pubsub", m.Name)
 }
 
 func TestRequiredModuleOfMatchesLongestPrefix(t *testing.T) {
@@ -265,6 +327,44 @@ require github.com/pkg/errors v0.8.0
 	require.Equal(t, goSumBefore, goSumAfter, "resolving an import must not change an existing go.sum")
 }
 
+// TestLoadRequiredModulesPreservesGoSumMtime guards against a regression
+// where restore() wrote go.sum's original content back with os.WriteFile,
+// which updates the mtime even when the bytes are unchanged. A build tool
+// comparing mtimes (e.g. make, deciding whether a .arraiz needs rebuilding
+// because it depends on go.mod) would see an untouched go.sum as "just
+// modified" on every single resolve.
+func TestLoadRequiredModulesPreservesGoSumMtime(t *testing.T) {
+	root := withTempModule(t, `module example.com/pintest
+
+go 1.21
+
+require github.com/pkg/errors v0.8.0
+`)
+	cmd := exec.Command("go", "mod", "download", "github.com/pkg/errors")
+	cmd.Dir = root
+	out, err := cmd.CombinedOutput()
+	require.NoError(t, err, string(out))
+	resetRequiredModulesCache()
+
+	goSumPath := filepath.Join(root, "go.sum")
+	before, err := os.Stat(goSumPath)
+	require.NoError(t, err)
+
+	// mtimes can have coarser resolution than the time between statting and
+	// resolving; back-date the file so a real (bugged) rewrite is detectable
+	// regardless of clock granularity.
+	backdated := before.ModTime().Add(-time.Hour)
+	require.NoError(t, os.Chtimes(goSumPath, backdated, backdated))
+
+	_, err = retrieveModule("github.com/pkg/errors", "", root)
+	require.NoError(t, err)
+
+	after, err := os.Stat(goSumPath)
+	require.NoError(t, err)
+	require.True(t, after.ModTime().Equal(backdated),
+		"resolving an import must not touch go.sum's mtime when its content is unchanged")
+}
+
 func TestRetrieveModuleErrorsWhenPinnedVersionUnavailable(t *testing.T) {
 	root := t.TempDir()
 	resetRequiredModulesCache()
@@ -277,4 +377,115 @@ func TestRetrieveModuleErrorsWhenPinnedVersionUnavailable(t *testing.T) {
 	require.Error(t, err)
 	require.Nil(t, m)
 	require.Contains(t, err.Error(), "github.com/pkg/errors@v99.99.99-does-not-exist")
+}
+
+// TestIsTransientModuleErr locks down which `go get` failures are recognized
+// as transient (network/proxy/checksum issues that say nothing about whether
+// modPath is a real module) versus genuine "no such module" failures that
+// should drive retrieveModule's path-shortening loop.
+func TestIsTransientModuleErr(t *testing.T) {
+	transient := []string{
+		"dial tcp 1.2.3.4:443: connect: connection refused",
+		// Windows phrases a refused connection quite differently -- no
+		// literal "connection refused" -- but still says "dial tcp", which
+		// is itself one of this regex's own match branches.
+		"dial tcp 1.2.3.4:443: connectex: No connection could be made because the target machine actively refused it.",
+		"lookup proxy.golang.org: no such host",
+		"read tcp 1.2.3.4:443: i/o timeout",
+		"read tcp 1.2.3.4:443: connect: connection reset by peer",
+		// Go's actual wording has a colon between "tls" and "handshake"
+		// (e.g. "remote error: tls: handshake failure"), not a bare space --
+		// the regex must match both forms.
+		"remote error: tls: handshake failure",
+		"net/http: TLS handshake timeout",
+		"SECURITY ERROR\nThis download does NOT match the one reported by the checksum server.",
+		"verifying go.sum: checksum mismatch",
+		"context deadline exceeded",
+	}
+	for _, msg := range transient {
+		require.True(t, isTransientModuleErr(&exec.ExitError{Stderr: []byte(msg)}), msg)
+	}
+
+	notTransient := []string{
+		"no matching versions for query \"latest\"",
+		"unknown revision v99.99.99-does-not-exist",
+		"module lookup disabled by GOPROXY=off",
+		"module github.com/foo found (v1.0.0), but does not contain package github.com/foo/bar",
+	}
+	for _, msg := range notTransient {
+		require.False(t, isTransientModuleErr(&exec.ExitError{Stderr: []byte(msg)}), msg)
+	}
+
+	require.False(t, isTransientModuleErr(errors.New("not an ExitError")),
+		"only *exec.ExitError carries the Stderr this classifies on")
+}
+
+// TestRetrieveModuleWithoutAmbientModuleFallsBackToDownload covers
+// resolving with an unknown moduleRoot ("", e.g. the arrai shell/REPL,
+// which has no source file to walk up from) from a working directory that
+// isn't inside any Go module at all. `go get` (which addModule's pinning
+// path uses) hard-fails outside a module ("'go get' is no longer supported
+// outside a module"), so this must use the plain, unpinned download path
+// instead -- confirmed separately that `go mod download` (unlike `go get`)
+// works fine with no go.mod present.
+func TestRetrieveModuleWithoutAmbientModuleFallsBackToDownload(t *testing.T) {
+	resetRequiredModulesCache()
+	t.Cleanup(resetRequiredModulesCache)
+
+	wd, err := os.Getwd()
+	require.NoError(t, err)
+	outside := t.TempDir()
+	require.NoError(t, os.Chdir(outside))
+	t.Cleanup(func() { require.NoError(t, os.Chdir(wd)) })
+
+	out, err := exec.Command("go", "env", "GOMOD").Output()
+	require.NoError(t, err)
+	require.Equal(t, string(os.DevNull), strings.TrimSpace(string(out)),
+		"test dir must not sit inside any Go module for this to be meaningful")
+
+	m, err := retrieveModule("github.com/arr-ai/arrai-import-tests", "", "")
+	require.NoError(t, err)
+	require.Equal(t, "github.com/arr-ai/arrai-import-tests", m.Name)
+	require.NotEmpty(t, m.Dir)
+}
+
+// TestRetrieveModuleStopsImmediatelyOnTransientError guards the other side
+// of the module-boundary fix: a transient `go get` failure (here, a
+// poisoned GOPROXY forcing "connection refused") says nothing about
+// whether the full import path is a real module, so retrieveModule must
+// not shorten and retry -- doing so risks masking the real error, or
+// worse, succeeding at a different, wrong (too-shallow) module.
+//
+// Discriminates old vs. new behaviour via the returned error's content:
+// wrapGoGetErr always labels the error with the *original* (longest)
+// importPath, so that alone can't tell old and new code apart. But the
+// *stderr* it wraps names whichever modPath was actually attempted -- the
+// full path (repeated across `go get`'s own message, its module line, and
+// its proxy URL) if stopped immediately (new), or only the shortened
+// 3-segment prefix if the loop kept going after each transient failure
+// (old). So "/sub/sub2" (only ever present in the full path) appears
+// multiple times in the new behaviour's error but exactly once (from the
+// outer label alone) in the old behaviour's -- confirmed empirically:
+// 4 vs. 1.
+func TestRetrieveModuleStopsImmediatelyOnTransientError(t *testing.T) {
+	root := withTempModule(t, `module example.com/pintest
+
+go 1.21
+`)
+	t.Setenv("GOPROXY", "http://127.0.0.1:1")
+
+	m, err := retrieveModule("github.com/arr-ai/arrai-import-tests/sub/sub2", "", root)
+	require.Error(t, err)
+	require.Nil(t, m)
+	// "dial tcp" (unlike the OS-specific wording after it -- Unix says
+	// "connection refused", Windows says "connectex: ... actively refused
+	// it") is present on every platform's dial-failure message and is
+	// itself one of transientModuleErr's match branches.
+	require.Contains(t, strings.ToLower(err.Error()), "dial tcp")
+	require.Greater(t, strings.Count(err.Error(), "/sub/sub2"), 1, err.Error())
+
+	goMod, err := os.ReadFile(filepath.Join(root, "go.mod"))
+	require.NoError(t, err)
+	require.NotContains(t, string(goMod), "arrai-import-tests",
+		"a failed resolution must not leave a partial require behind")
 }
