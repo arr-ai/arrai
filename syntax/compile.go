@@ -1286,14 +1286,27 @@ func (pc ParseContext) compilePackage(ctx context.Context, b ast.Branch, c ast.C
 				return nil, fmt.Errorf("local import %q invalid; no local context", name)
 			}
 			importPath := filepath.Clean(filePath)
+			displayPath := importPath
 			if !fromRoot {
 				importPath = filepath.Join(pc.SourceDir, filePath)
+				// importPath is now absolute and, when pc.SourceDir sits inside
+				// a fetched module's cache directory, machine-specific. Use the
+				// same portable, bundle-relative identity this file is stored
+				// under (see bundleLocalFile) as the display path instead, so a
+				// compiled plan embedding it stays reproducible across
+				// machines/containers.
+				displayPath = importPath
+				if isBundling(ctx) {
+					if p, err := portableBundlePath(ctx, importPath); err == nil {
+						displayPath = p
+					}
+				}
 			}
 			expr, err := importLocalFile(ctx, pkg.Scanner(), decoderTuple, fromRoot, importPath, pc.SourceDir)
 			if err != nil {
 				return nil, err
 			}
-			return NewImportExpr(scanner, expr, importPath), nil
+			return NewImportExpr(scanner, expr, displayPath), nil
 		}
 		expr, err := importExternalContent(ctx, pkg.Scanner(), decoderTuple, name, pc.SourceDir)
 		if err != nil {

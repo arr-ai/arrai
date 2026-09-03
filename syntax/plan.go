@@ -3,6 +3,8 @@ package syntax
 import (
 	"context"
 	"os"
+	"path/filepath"
+	"strings"
 
 	"github.com/arr-ai/arrai/pkg/ctxfs"
 	"github.com/arr-ai/arrai/rel"
@@ -16,6 +18,25 @@ func init() {
 	rel.RegisterPlanLift("import", liftImport)
 	rel.RegisterPlanLift("package", liftPackage)
 	rel.RegisterPlanLift("xstr", liftXstr)
+}
+
+// portablePath guards against a machine-specific absolute path ending up in
+// the compiled plan. compile.go already resolves ImportExpr.path to a
+// portable, bundle-relative form (see portableBundlePath) before it gets
+// here, so this should be a no-op in practice; it's a cheap safety net so any
+// future path-construction bug drops the path (losing debug info) rather
+// than silently making the bundle non-reproducible. ModuleDir/NoModuleDir
+// prefixes are allow-listed since they're virtual bundle-zip paths, not real
+// filesystem locations -- filepath.IsAbs would otherwise flag them too, since
+// they start with "/" like any genuine OS-absolute path on Unix.
+func portablePath(p string) string {
+	if strings.HasPrefix(p, ModuleDir+"/") || strings.HasPrefix(p, NoModuleDir+"/") {
+		return p
+	}
+	if filepath.IsAbs(p) {
+		return ""
+	}
+	return p
 }
 
 func lowerChild(e rel.Expr) (rel.PlanNode, error) {
@@ -33,7 +54,7 @@ func lowerSyntaxExpr(e rel.Expr) (rel.PlanNode, bool, error) {
 		if err != nil {
 			return rel.PlanNode{}, true, err
 		}
-		return rel.PlanNode{K: "import", Str: e.path, Kids: []rel.PlanNode{inner}}, true, nil
+		return rel.PlanNode{K: "import", Str: portablePath(e.path), Kids: []rel.PlanNode{inner}}, true, nil
 	case PackageExpr:
 		inner, err := lowerChild(e.a)
 		if err != nil {
