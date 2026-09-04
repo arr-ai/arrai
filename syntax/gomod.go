@@ -288,6 +288,29 @@ func seedRequiredModules(moduleRoot string, mods map[string]requiredModule) {
 	requiredModulesByRoot.Store(moduleRoot, mods)
 }
 
+// mainModuleName returns moduleRoot's own "module" directive (or the process
+// cwd's if moduleRoot is ""), or ok=false if go.mod can't be read or has none.
+func mainModuleName(moduleRoot string) (name string, ok bool) {
+	modPath := "go.mod"
+	if moduleRoot != "" {
+		modPath = filepath.Join(moduleRoot, "go.mod")
+	}
+	data, err := os.ReadFile(modPath)
+	if err != nil {
+		return "", false
+	}
+	for _, raw := range strings.Split(string(data), "\n") {
+		line := strings.TrimSpace(raw)
+		if i := strings.Index(line, "//"); i >= 0 {
+			line = strings.TrimSpace(line[:i])
+		}
+		if rest, found := strings.CutPrefix(line, "module "); found {
+			return strings.TrimSpace(rest), true
+		}
+	}
+	return "", false
+}
+
 // retrieveModule resolves importPath to a local module directory.
 // moduleRoot is the importing project's go.mod directory (may be empty to use
 // the process working directory). If that go.mod already requires a matching
@@ -296,6 +319,24 @@ func seedRequiredModules(moduleRoot string, mods map[string]requiredModule) {
 // importPath prefixes are tried at the given version (or "latest").
 func retrieveModule(importPath, version, moduleRoot string) (*goModule, error) {
 	if version == "" {
+		// An import can name the project's own module -- e.g. importing one
+		// of its own packages by full path instead of a relative "./"
+		// import. go list -m -json all deliberately excludes the main
+		// module (runGoListAllModules), so the pin lookups below never
+		// match it, and this would otherwise fall through to `go get`,
+		// which fails outright: you can't go-get the module you're already
+		// in.
+		if name, ok := mainModuleName(moduleRoot); ok &&
+			(importPath == name || strings.HasPrefix(importPath, name+"/")) {
+			dir := moduleRoot
+			if dir == "" {
+				var err error
+				if dir, err = os.Getwd(); err != nil {
+					return nil, err
+				}
+			}
+			return &goModule{Name: name, Dir: dir}, nil
+		}
 		if pinned, ok := requiredModuleOf(moduleRoot, importPath); ok {
 			if pinned.Dir != "" {
 				return &goModule{Name: pinned.Path, Dir: pinned.Dir}, nil
