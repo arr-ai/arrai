@@ -109,7 +109,7 @@ func liftXstr(n rel.PlanNode) (rel.Expr, error) {
 		}
 		parts[i] = p
 	}
-	return &xstrExpr{parts: parts}, nil
+	return &xstrExpr{ExprScanner: rel.ExprScanner{Src: rel.PlanScanner()}, parts: parts}, nil
 }
 
 // WriteCompiledPlan adds /plan.bin to the bundle zip (🎯T25).
