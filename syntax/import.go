@@ -212,20 +212,21 @@ func findRootFromModule(ctx context.Context, modulePath string) (string, error) 
 		return r, nil
 	}
 
-	systemRoot, err := filepath.Abs(string(os.PathSeparator))
-	if err != nil {
-		return "", err
-	}
-
-	systemRoot = bundleToValidPath(ctx, systemRoot)
-
 	// 16 is enough for pretty much all cases.
 	paths := append(make([]string, 0, 16), currentPath)
 
-	// Keep walking up the directories to find nearest root marker
+	// Keep walking up the directories to find nearest root marker. A
+	// directory whose parent is itself (e.g. "/" on Unix, "C:\" on Windows)
+	// is the top of its filesystem root -- checked like any other directory,
+	// then the walk stops there. This is checked directly rather than
+	// against a single CWD-derived root: modulePath and the process's
+	// working directory can be on different drives on Windows (e.g. a
+	// checkout on D:\ and a temp dir on C:\), which would make a
+	// CWD-derived root never match and loop forever.
 	for {
 		exists, err := tools.FileExists(ctx, filepath.Join(currentPath, ModuleRootSentinel))
-		reachedRoot := currentPath == systemRoot || (err != nil && os.IsPermission(err))
+		parent := filepath.Dir(currentPath)
+		reachedRoot := parent == currentPath || (err != nil && os.IsPermission(err))
 		switch {
 		case exists:
 			for _, p := range paths {
@@ -239,7 +240,7 @@ func findRootFromModule(ctx context.Context, modulePath string) (string, error) 
 		case err != nil:
 			return "", err
 		}
-		currentPath = filepath.Dir(currentPath)
+		currentPath = parent
 		paths = append(paths, currentPath)
 	}
 }
