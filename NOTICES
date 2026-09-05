@@ -10,7 +10,7 @@ upstream repository.
 - github.com/arr-ai/frozen
 - github.com/arr-ai/hash
 - github.com/arr-ai/wbnf
-- github.com/anz-bank/afero (replacing github.com/spf13/afero)
+- github.com/spf13/afero
 - github.com/richardlehane/mscfb
 - github.com/richardlehane/msoleps
 - github.com/sethvargo/go-retry
@@ -54,7 +54,7 @@ upstream repository.
 - github.com/go-errors/errors
 - github.com/iancoleman/strcase
 - github.com/mattn/go-isatty
-- github.com/mohae/deepcopy
+- github.com/tiendc/go-deepcopy
 - github.com/rjeczalik/notify
 - github.com/sirupsen/logrus
 - github.com/stretchr/testify
