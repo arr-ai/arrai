@@ -84,6 +84,28 @@ func canonicalTuple(shape *Shape, vals []Value) Tuple {
 	return newShapedTuple(shape, vals)
 }
 
+// isCanonicalTupleShape reports whether names is one of the reserved
+// "@"-indexed two-attribute shapes (array item, string char, bytes byte, dict
+// entry) that canonicalTuple specialises. Order-independent: names comes from
+// source attribute declaration order, not the sorted Shape order.
+func isCanonicalTupleShape(names []string) bool {
+	if len(names) != 2 {
+		return false
+	}
+	a, b := names[0], names[1]
+	if b == "@" {
+		a, b = b, a
+	}
+	if a != "@" {
+		return false
+	}
+	switch b {
+	case StringCharAttr, BytesByteAttr, ArrayItemAttr, DictValueAttr:
+		return true
+	}
+	return false
+}
+
 // NewAttr returns an Attr with the given name and value.
 func NewAttr(name string, value Value) Attr {
 	return Attr{Name: name, Value: value}
