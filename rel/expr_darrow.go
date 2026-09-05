@@ -90,7 +90,7 @@ func (e *DArrowExpr) Eval(ctx context.Context, local Scope) (_ Value, err error)
 		ident, isIdent := e.fn.arg.(IdentPattern)
 		if fastPaths && isIdent {
 			if te, ok := e.fn.body.(*TupleExpr); ok {
-				if dst, src, ok := te.identDots(string(ident)); ok {
+				if dst, src, ok := te.identDots(string(ident)); ok && !isCanonicalTupleShape(dst) {
 					if r, is := set.(Relation); is {
 						if v, ok := r.projectDots(dst, src); ok {
 							return v, nil
