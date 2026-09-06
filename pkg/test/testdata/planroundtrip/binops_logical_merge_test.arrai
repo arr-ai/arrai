@@ -1,0 +1,16 @@
+(
+    andTrue:  (true && true) = true,
+    andFalse: (true && false) = false,
+    orTrue:   (false || true) = true,
+    orFalse:  (false || false) = false,
+
+    tupleMerge:       ((a: 1, b: 2) +> (c: 3, d: 4)) = (a: 1, b: 2, c: 3, d: 4),
+    tupleMergeShadow: ((a: 1, b: 2) +> (b: 3, c: 4)) = (a: 1, b: 3, c: 4),
+    tupleMergeNested: ((a: 1, b: (c: 2)) +> (b: (c: 4), c: 4)) = (a: 1, b: (c: 4), c: 4),
+
+    dictMergeEmpty: ({} +> {}) = {},
+    dictMerge:      ({'a': 1, 'b': 2} +> {'b': 3, 'd': 4}) = {'a': 1, 'b': 3, 'd': 4},
+
+    # `&&`/`||` are wire-adjacent boolean ops; asymmetric operands catch a mix-up.
+    andNotOr: (true && false) != (true || false),
+)
