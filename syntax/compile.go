@@ -1077,6 +1077,11 @@ func (pc ParseContext) compileDictEntryExprs(ctx context.Context, b ast.Branch) 
 	if pairs := b.Many("pairs"); pairs != nil {
 		entryExprs := make([]rel.DictEntryTupleExpr, 0, len(pairs))
 		for _, pair := range pairs {
+			if extra := pair.One("extra"); extra != nil {
+				return nil, fmt.Errorf("extra element (...) is only valid in a dict pattern, not a dict expression: %v",
+					pair.Scanner().Context(-1))
+			}
+
 			nestedOp := pair.One("nested_op")
 			if nestedOp != nil && !isMerging(ctx) {
 				return nil, errMergeSyntacticSugar(pair.Scanner())
@@ -1322,6 +1327,11 @@ func (pc ParseContext) compileTuple(ctx context.Context, b ast.Branch, c ast.Chi
 	if pairs := c.(ast.One).Node.Many("pairs"); pairs != nil {
 		attrs := make([]rel.AttrExpr, 0, len(pairs))
 		for _, pair := range pairs {
+			if extra := pair.One("extra"); extra != nil {
+				return nil, fmt.Errorf("extra element (...) is only valid in a tuple pattern, not a tuple expression: %v",
+					pair.Scanner().Context(-1))
+			}
+
 			nestedOp := pair.One("nested_op")
 			if nestedOp != nil && !isMerging(ctx) {
 				return nil, errMergeSyntacticSugar(pair.Scanner())
