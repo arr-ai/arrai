@@ -25,7 +25,7 @@ func NewBytesExpr(scanner parser.Scanner, elements ...Expr) Expr {
 		}
 		return BytesExpr{ExprScanner{scanner}, elements}
 	}
-	return NewBytes(bytes)
+	return NewLiteralExpr(scanner, NewBytes(bytes))
 }
 
 func (b BytesExpr) Eval(ctx context.Context, local Scope) (Value, error) {
