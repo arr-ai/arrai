@@ -633,36 +633,5 @@ func decodeValue(n PlanNode) (Value, error) {
 }
 
 func compareCtor(op string) CompareFunc {
-	switch op {
-	case "<:":
-		return func(a, b Value) (bool, error) {
-			set, is := b.(Set)
-			if !is {
-				return false, fmt.Errorf("<: rhs not a set: %v", b)
-			}
-			return set.Has(a), nil
-		}
-	case "!<:":
-		return func(a, b Value) (bool, error) {
-			set, is := b.(Set)
-			if !is {
-				return false, fmt.Errorf("!<: rhs not a set: %v", b)
-			}
-			return !set.Has(a), nil
-		}
-	case "=":
-		return func(a, b Value) (bool, error) { return a.Equal(b), nil }
-	case "!=":
-		return func(a, b Value) (bool, error) { return !a.Equal(b), nil }
-	case "<":
-		return func(a, b Value) (bool, error) { return a.Less(b), nil }
-	case ">":
-		return func(a, b Value) (bool, error) { return b.Less(a), nil }
-	case "<=":
-		return func(a, b Value) (bool, error) { return !b.Less(a), nil }
-	case ">=":
-		return func(a, b Value) (bool, error) { return !a.Less(b), nil }
-	default:
-		return nil
-	}
+	return CompareOps[op]
 }

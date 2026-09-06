@@ -1,0 +1,16 @@
+let r1 = {|a,b| (1,4),(2,5)};
+let r2 = {|b,c| (5,7),(6,7)};
+(
+    join:         r1 <&> r2 = {|a,b,c| (2,5,7)},
+    compose:      r1 <-> r2 = {|a,c| (2,7)},
+    joinExists:   r1 --- r2 = {()},
+    joinCommon:   r1 -&- r2 = {|b| (5)},
+    rightMatch:   r1 -&> r2 = {|b,c| (5,7)},
+    leftMatch:    r1 <&- r2 = {|a,b| (2,5)},
+    rightResidue: r1 --> r2 = {|c| (7)},
+    leftResidue:  r1 <-- r2 = {|a| (2)},
+
+    # `&` (plain intersect) must not decode as `<&>` (natural join): they share no
+    # attributes here, so a mix-up would silently change the shape of the result.
+    intersectNotJoin: {{}, 'null'} & {{}, 'string'} = {{}},
+)

@@ -1534,39 +1534,6 @@ var binops = map[string]binOpFunc{
 	"+>":      rel.NewAddArrowExpr,
 }
 
-var compareOps = map[string]rel.CompareFunc{
-	"<:": func(a, b rel.Value) (bool, error) {
-		set, is := b.(rel.Set)
-		if !is {
-			return false, fmt.Errorf("<: rhs not a set: %v", b)
-		}
-		return set.Has(a), nil
-	},
-	"!<:": func(a, b rel.Value) (bool, error) {
-		set, is := b.(rel.Set)
-		if !is {
-			return false, fmt.Errorf("!<: rhs not a set: %v", b)
-		}
-		return !set.Has(a), nil
-	},
-	"=":  func(a, b rel.Value) (bool, error) { return a.Equal(b), nil },
-	"!=": func(a, b rel.Value) (bool, error) { return !a.Equal(b), nil },
-	"<":  func(a, b rel.Value) (bool, error) { return a.Less(b), nil },
-	">":  func(a, b rel.Value) (bool, error) { return b.Less(a), nil },
-	"<=": func(a, b rel.Value) (bool, error) { return !b.Less(a), nil },
-	">=": func(a, b rel.Value) (bool, error) { return !a.Less(b), nil },
-
-	"(<)":   func(a, b rel.Value) (bool, error) { return subset(a, b), nil },
-	"(>)":   func(a, b rel.Value) (bool, error) { return subset(b, a), nil },
-	"(<=)":  func(a, b rel.Value) (bool, error) { return subsetOrEqual(a, b), nil },
-	"(>=)":  func(a, b rel.Value) (bool, error) { return subsetOrEqual(b, a), nil },
-	"(<>)":  func(a, b rel.Value) (bool, error) { return subsetOrSuperset(a, b), nil },
-	"(<>=)": func(a, b rel.Value) (bool, error) { return subsetSupersetOrEqual(b, a), nil },
-
-	"!(<)":   func(a, b rel.Value) (bool, error) { return !subset(a, b), nil },
-	"!(>)":   func(a, b rel.Value) (bool, error) { return !subset(b, a), nil },
-	"!(<=)":  func(a, b rel.Value) (bool, error) { return !subsetOrEqual(a, b), nil },
-	"!(>=)":  func(a, b rel.Value) (bool, error) { return !subsetOrEqual(b, a), nil },
-	"!(<>)":  func(a, b rel.Value) (bool, error) { return !subsetOrSuperset(a, b), nil },
-	"!(<>=)": func(a, b rel.Value) (bool, error) { return !subsetSupersetOrEqual(b, a), nil },
-}
+// compareOps is rel.CompareOps: the single source of truth shared with plan decoding
+// (rel.compareCtor), so the two can't drift out of sync with each other.
+var compareOps = rel.CompareOps

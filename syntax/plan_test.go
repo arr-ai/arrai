@@ -62,6 +62,46 @@ func TestPlanRoundtripXstrErrorHasSource(t *testing.T) {
 	assert.Contains(t, msg, "Call: no return values for input 2 from set {0: 1, 1: 1}")
 }
 
+// The subset/superset compare operators ((<), (>), (<=), (>=), (<>), (<>=) and their
+// !-negated forms) were only registered in syntax.compareOps, not in rel's plan-decode
+// compareCtor, so using one inside a plan-decoded bundle errored with "unknown compare op".
+func TestPlanRoundtripSubsetCompare(t *testing.T) {
+	t.Parallel()
+	cases := []string{
+		`{1, 2} (<) {1, 2, 3}`,
+		`{1, 2, 3} (>) {1, 2}`,
+		`{1, 2} (<=) {1, 2}`,
+		`{1, 2} (>=) {1, 2}`,
+		`{1, 2} (<>) {1, 2, 3}`,
+		`{1, 2} (<>=) {1, 2}`,
+		`{1, 2, 3} !(<) {1, 2}`,
+	}
+	ctx := arraictx.InitRunCtx(context.Background())
+	for _, code := range cases {
+		code := code
+		t.Run(code, func(t *testing.T) {
+			t.Parallel()
+			direct, err := EvaluateExpr(ctx, "", code)
+			require.NoError(t, err)
+			got := evalPlan(t, code)
+			assert.True(t, got.Equal(direct), "plan=%s eval=%s", got, direct)
+		})
+	}
+}
+
+// NewMedianExpr's ReduceExpr format string said "min" instead of "median", and plan
+// lowering (reduceOp) identifies which reduce operation a ReduceExpr performs by
+// substring-matching its format string, so a plan-decoded median silently ran as a min.
+func TestPlanRoundtripMedian(t *testing.T) {
+	t.Parallel()
+	code := `{1, 2, 3, 4, 5} median .`
+	ctx := arraictx.InitRunCtx(context.Background())
+	direct, err := EvaluateExpr(ctx, "", code)
+	require.NoError(t, err)
+	got := evalPlan(t, code)
+	assert.True(t, got.Equal(direct), "plan=%s eval=%s", got, direct)
+}
+
 func TestPlanRoundtripEqualsEval(t *testing.T) {
 	t.Parallel()
 	cases := []string{
