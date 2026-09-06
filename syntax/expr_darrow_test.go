@@ -26,9 +26,8 @@ func TestDArrowExprIdentHoles(t *testing.T) {
 	AssertCodesEvalToSameValue(t, `{1, , , 2}`, `{1,,,2} => .`)
 }
 
-// 🎯T25 regression: the injective projectDots fast path renamed a Relation's
-// columns to @/@item without canonicalising the result, so `set => (@: .i,
-// @item: .v)` stayed a Relation instead of becoming an Array.
+// `set => (@: .i, @item: .v)` — the idiom for turning a set into an array —
+// must produce a real Array, not a two-column Relation.
 func TestDArrowExprProjectToArrayItemShape(t *testing.T) {
 	t.Parallel()
 
