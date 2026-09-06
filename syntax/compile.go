@@ -846,8 +846,8 @@ func (pc ParseContext) compileCondWithoutControlVar(ctx context.Context, c ast.C
 }
 
 func (pc ParseContext) compilePostfixAndTouch(ctx context.Context, b ast.Branch, c ast.Children) (rel.Expr, error) {
-	if _, has := b["touch"]; has {
-		panic("unfinished")
+	if touch, has := b["touch"]; has {
+		return nil, fmt.Errorf("touch (->*) is not implemented: %v", touch.Scanner().Context(-1))
 	}
 	switch c.Scanner().String() {
 	case "count":
