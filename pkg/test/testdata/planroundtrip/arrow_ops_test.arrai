@@ -1,0 +1,20 @@
+(
+    apply:        (6 -> 7 * .) = 42,
+    darrow:       ({1, 2, 3} => 2 ^ .) = {2, 4, 8},
+    seqArray:     ([1, 2, 3] >> 2 ^ .) = [2, 4, 8],
+    seqStr:       ('hello' >> . - 32) = 'HELLO',
+    seqDict:      ({'a': 7, 'b': 9} >> 6 * .) = {'a': 42, 'b': 54},
+    iSeqArray:    ([1, 2, 3] >>> \i \. 2 ^ (. + i)) = [2, 8, 32],
+    iSeqStr:      ('abc' >>> \i \. . - 32 + i) = 'ACE',
+    tupleMap:     ((a: 1, b: 2) :> 2 ^ .) = (a: 2, b: 4),
+    where:        ({|a,b| (3,41), (2,42), (1,43)} where .a = 3) = {(a: 3, b: 41)},
+    order:        ({3, 2, 1, 0, -1, -2, -3} order \a \b a < b) = [-3, -2, -1, 0, 1, 2, 3],
+    orderby:      ({3, 1, -1, 4, 0, -3, -2, 2} orderby .) = [-3, -2, -1, 0, 1, 2, 3, 4],
+    orderbyNeg:   ({3, 1, -1, 4, 0, -3, -2, 2} orderby -.) = [4, 3, 2, 1, 0, -1, -2, -3],
+    rank:         ({|x| (1), (2), (3)} rank (r: .x)) = {|x,r| (1,0), (2,1), (3,2)},
+    rankNeg:      ({|x| (1), (2), (3)} rank (r: -.x)) = {|x,r| (1,2), (2,1), (3,0)},
+
+    # `order` (with comparator) and `orderby` (with key) are wire-adjacent; use a
+    # descending key so any mix-up between the two would change the result.
+    orderNotOrderby: ({3, 1, 2} order \a \b a > b) != ({3, 1, 2} orderby .),
+)
