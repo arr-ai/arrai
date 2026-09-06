@@ -19,4 +19,7 @@
     projectDrop:    (a: 1, b: 2, c: 3).~|a| = (b: 2, c: 3),
     projectViaDot:  ((a: 1, b: 2, c: 3) -> .|a|) = (a: 1),
     dotAccess:      (a: (b: 1)).a.b = 1,
+
+    tupleAttrShorthand:     (let x = 5; (:x)) = (x: 5),
+    tupleAttrShorthandPath: (let t = (x: 10); (:t.x)) = (x: 10),
 )
