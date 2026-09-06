@@ -187,8 +187,9 @@ func (a Array) Equal(v Value) bool {
 		s, ok := v.(Set)
 		return ok && a.Hash128() == s.Hash128()
 	}
-	switch x := v.(type) {
-	case Array:
+	// AsArray also matches seqPipeline and EmptySet, which represent arrays
+	// without being the concrete Array type.
+	if x, ok := AsArray(v); ok {
 		if len(a.values) != len(x.values) || a.offset != x.offset || a.count != x.count {
 			return false
 		}

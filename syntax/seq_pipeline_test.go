@@ -72,6 +72,16 @@ func TestWherePushdownThroughProject(t *testing.T) {
 		`{|a,b| (1, 10), (2, 20)} => (a: .a) where .a = 1`)
 }
 
+// A `>>` whose body is itself a `>>` leaves an unforced seqPipeline as an
+// element of the outer array; that must still compare equal to a literal.
+func TestSeqPipelineNestedEqualsArrayLiteral(t *testing.T) {
+	t.Parallel()
+	AssertCodesEvalToSameValue(t,
+		`[['bar']]`,
+		`[['bar']] >> (. >> .)`,
+	)
+}
+
 func TestSeqPipelineIsSet(t *testing.T) {
 	t.Parallel()
 	AssertCodesEvalToSameValue(t, `3`,
