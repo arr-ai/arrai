@@ -16,6 +16,9 @@
         _: 'any',
     } = 'any',
 
+    condPatOrMatch:   cond 2 { (1, 2, 3): 'small', _: 'other' } = 'small',
+    condPatOrNoMatch: cond 5 { (1, 2, 3): 'small', _: 'other' } = 'other',
+
     dynlet: (let x = 5; x + 1) = 6,
 
     rec: (
