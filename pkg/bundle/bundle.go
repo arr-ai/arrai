@@ -47,7 +47,11 @@ func BundledScriptsTo(ctx context.Context, path string, w io.Writer, out string)
 		return err
 	}
 
-	if _, err = syntax.Compile(importcache.WithNewImportCache(ctx), path, string(buf)); err != nil {
+	expr, err := syntax.Compile(importcache.WithNewImportCache(ctx), path, string(buf))
+	if err != nil {
+		return err
+	}
+	if err := syntax.WriteCompiledPlan(ctx, expr); err != nil {
 		return err
 	}
 

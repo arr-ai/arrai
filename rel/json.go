@@ -117,7 +117,7 @@ func jsonEscape(value Expr) interface{} {
 		}
 		return result
 	case String:
-		return string(x.s)
+		return x.goString()
 	case EmptySet:
 		return false
 	case Array:
@@ -152,7 +152,7 @@ func jsonUnescape(i interface{}) (Value, error) {
 	case float64:
 		return NewNumber(x), nil
 	case string:
-		return NewString([]rune(x)), nil
+		return NewGoString(x), nil
 	case []interface{}:
 		values := make([]Value, len(x))
 		for i, intf := range x {

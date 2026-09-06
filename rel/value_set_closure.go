@@ -167,11 +167,22 @@ func (c Closure) call(ctx context.Context, arg Value) (Value, error) {
 	if niladic {
 		return c.f.body.Eval(ctx, c.scope)
 	}
-	ctx, scope, err := c.f.arg.Bind(ctx, c.scope, arg)
+	// Fast path for the common `\x ...` shape: IdentPattern.Bind never fails
+	// and only produces a one-entry scope, so bind directly instead of
+	// building and merging a throwaway Scope. With ignores "_" exactly as
+	// Bind+Update would.
+	if ident, is := c.f.arg.(IdentPattern); is {
+		return c.f.body.Eval(ctx, c.scope.With(string(ident), arg))
+	}
+	var b scopeBuilder
+	ctx, err := c.f.arg.Bind(ctx, c.scope, arg, &b)
 	if err != nil {
+		if err == errPatternMismatch {
+			err = explainBind(ctx, c.f.arg, c.scope, arg)
+		}
 		return nil, err
 	}
-	return c.f.body.Eval(ctx, c.scope.Update(scope))
+	return c.f.body.Eval(ctx, c.scope.updateWith(&b))
 }
 
 func (Closure) unionSetSubsetBucket() string {

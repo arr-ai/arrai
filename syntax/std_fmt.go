@@ -15,7 +15,7 @@ func stdFmt() rel.Attr {
 				return nil, err
 			}
 
-			return rel.NewString([]rune(prettifiedString)), nil
+			return rel.NewGoString(prettifiedString), nil
 		}),
 	)
 }

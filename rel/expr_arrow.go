@@ -33,9 +33,24 @@ func (e *ArrowExpr) Eval(ctx context.Context, local Scope) (_ Value, err error) 
 	if err != nil {
 		return nil, WrapContextErr(err, e, local)
 	}
-	ctx, scope, err := e.fn.arg.Bind(ctx, local, value)
+	// Fast path for `let x = ...; body` and `lhs -> \x body`: see Closure.call.
+	if ident, is := e.fn.arg.(IdentPattern); is {
+		if fastPaths && e.fn.recordedFanout() == materializeEdge {
+			var merr error
+			value, merr = materializeValue(value, demandedEqAttrs(e.fn.body, string(ident)))
+			if merr != nil {
+				return nil, WrapContextErr(merr, e, local)
+			}
+		}
+		return e.fn.body.Eval(ctx, local.With(string(ident), value))
+	}
+	var b scopeBuilder
+	ctx, err = e.fn.arg.Bind(ctx, local, value, &b)
 	if err != nil {
+		if err == errPatternMismatch {
+			err = explainBind(ctx, e.fn.arg, local, value)
+		}
 		return nil, WrapContextErr(err, e, local)
 	}
-	return e.fn.body.Eval(ctx, local.Update(scope))
+	return e.fn.body.Eval(ctx, local.updateWith(&b))
 }

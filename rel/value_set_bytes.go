@@ -74,11 +74,15 @@ func (b Bytes) Hash(seed uintptr) uintptr {
 
 // Hash128 computes the 128-bit hash of a Bytes.
 func (b Bytes) Hash128() hash128.H128 {
-	return hash128.Bytes(b.b)
+	return bytesSalt.Mix(hash128.Int(b.offset)).Mix(hash128.Bytes(b.b))
 }
 
 // Equal tests two Byteses for equality. Any other type returns false.
 func (b Bytes) Equal(v Value) bool {
+	if hashIdentity {
+		o, ok := v.(Set)
+		return ok && b.Hash128() == o.Hash128()
+	}
 	c, is := v.(Bytes)
 	return is && b.EqualBytes(c)
 }
@@ -145,7 +149,8 @@ func (b Bytes) Less(v Value) bool {
 		return b.Kind() < v.Kind()
 	}
 
-	return string(b.b) < string(v.(*Bytes).b)
+	c, ok := v.(Bytes)
+	return ok && string(b.b) < string(c.b)
 }
 
 // Negate returns {(negateTag): b}.

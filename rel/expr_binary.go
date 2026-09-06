@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"math"
+	"strconv"
 
 	"github.com/arr-ai/wbnf/parser"
 	"github.com/go-errors/errors"
@@ -122,14 +123,14 @@ func NewDivExpr(scanner parser.Scanner, a, b Expr) Expr {
 
 // NewIdivExpr evaluates ⎣a / b⎦, given two Numbers.
 func NewIdivExpr(scanner parser.Scanner, a, b Expr) Expr {
-	return newArithExpr(scanner, a, b, "/", func(a, b float64) float64 {
+	return newArithExpr(scanner, a, b, "//", func(a, b float64) float64 {
 		return math.Floor(a / b)
 	})
 }
 
 // NewModExpr evaluates a % b, given two Numbers.
 func NewModExpr(scanner parser.Scanner, a, b Expr) Expr {
-	return newArithExpr(scanner, a, b, "%%", func(a, b float64) float64 {
+	return newArithExpr(scanner, a, b, "%", func(a, b float64) float64 {
 		return math.Mod(a, b)
 	})
 }
@@ -199,11 +200,13 @@ func matchEqAttrPredicate(f *Function) *eqAttrPredicate {
 		return "", false
 	}
 	isDotFree := func(e Expr) bool {
-		// Conservative: only simple identifiers other than `.` and literals.
+		// Conservative: identifiers other than `.`, literals, and values.
 		switch e := e.(type) {
 		case IdentExpr:
 			return e.ident != "."
 		case LiteralExpr:
+			return true
+		case Value:
 			return true
 		}
 		return false
@@ -227,22 +230,81 @@ func (r Relation) whereByIndex(ctx context.Context, scope Scope, p *eqAttrPredic
 	if err != nil {
 		return nil, false, err
 	}
-	rows, has := r.rows.groupBy(valueProjector{index}).Get(Values{key})
-	if !has || rows.IsEmpty() {
+	n0 := r.rows.n
+	// Key by store column, not dest attr: injective projectDots siblings share
+	// the positionalRelation, so dest names like k/x collide across projectors.
+	fact := strconv.Itoa(index) + "=" + key.String()
+	guard := func() bool { return r.rows.n == n0 }
+	if view, hit := r.rows.planGet(fact, guard); hit {
+		if view == nil {
+			return None, true, nil
+		}
+		return r.newBody(view), true, nil
+	}
+	if n, is := key.(Number); is {
+		z := r.rows.zone(index)
+		if z.ok && (n.Less(z.min) || z.max.Less(n)) {
+			r.rows.planPut(fact, guard, nil)
+			return None, true, nil
+		}
+	}
+	group := r.rows.groupBy(valueProjector{index})
+	ids, has := group.getKey(key)
+	if !has {
+		r.rows.planPut(fact, guard, nil)
 		return None, true, nil
 	}
-	return r.newBody(&positionalRelation{set: rows}), true, nil
+	view := r.rows.selView(ids)
+	r.rows.planPut(fact, guard, view)
+	return r.newBody(view), true, nil
+}
+
+// pushWhereThroughProject rewrites `(rel => (a: .a, ...)) where .a = k` to
+// `(rel where .a = k) => (a: .a, ...)` when the predicate attr is projected
+// unchanged (🎯T21).
+func pushWhereThroughProject(scanner parser.Scanner, a, pred Expr, eq *eqAttrPredicate) Expr {
+	if eq == nil {
+		return nil
+	}
+	d, ok := a.(*DArrowExpr)
+	if !ok {
+		return nil
+	}
+	ident, is := d.fn.arg.(IdentPattern)
+	if !is {
+		return nil
+	}
+	te, ok := d.fn.body.(*TupleExpr)
+	if !ok {
+		return nil
+	}
+	dst, src, ok := te.identDots(string(ident))
+	if !ok {
+		return nil
+	}
+	for i, name := range dst {
+		if name == eq.attr && src[i] == eq.attr {
+			inner := NewWhereExpr(scanner, d.lhs, pred)
+			return NewDArrowExpr(scanner, inner, d.fn)
+		}
+	}
+	return nil
 }
 
 // NewWhereExpr evaluates a where pred, given a set lhs.
 func NewWhereExpr(scanner parser.Scanner, a, pred Expr) Expr {
 	pred = ExprAsFunction(pred)
 	eqPred := matchEqAttrPredicate(pred.(*Function))
+	if fastPaths {
+		if pushed := pushWhereThroughProject(scanner, a, pred, eqPred); pushed != nil {
+			return pushed
+		}
+	}
 	return newBinExpr(scanner, a, pred, "where", "(%s where %s)",
 		func(ctx context.Context, a, pred Value, local Scope) (Value, error) {
 			if x, ok := a.(Set); ok {
 				if p, ok := pred.(Closure); ok {
-					if r, is := x.(Relation); is && eqPred != nil {
+					if r, is := x.(Relation); is && fastPaths && eqPred != nil {
 						if v, done, err := r.whereByIndex(ctx, p.scope, eqPred); done || err != nil {
 							return v, err
 						}

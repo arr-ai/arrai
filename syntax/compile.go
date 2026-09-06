@@ -359,7 +359,7 @@ func (pc ParseContext) compileArrow(ctx context.Context, b ast.Branch, name stri
 			case "nest":
 				expr = parseNest(expr, branch["nest"].(ast.One).Node.(ast.Branch))
 			case "unnest":
-				panic("unfinished")
+				expr = parseUnnest(expr, branch["unnest"].(ast.One).Node.(ast.Branch))
 			case "ARROW":
 				op := d.(ast.One).Node.One("").(ast.Leaf).Scanner()
 				f := binops[op.String()]
@@ -846,8 +846,8 @@ func (pc ParseContext) compileCondWithoutControlVar(ctx context.Context, c ast.C
 }
 
 func (pc ParseContext) compilePostfixAndTouch(ctx context.Context, b ast.Branch, c ast.Children) (rel.Expr, error) {
-	if _, has := b["touch"]; has {
-		panic("unfinished")
+	if touch, has := b["touch"]; has {
+		return nil, fmt.Errorf("touch (->*) is not implemented: %v", touch.Scanner().Context(-1))
 	}
 	switch c.Scanner().String() {
 	case "count":
@@ -916,7 +916,7 @@ func (pc ParseContext) compileTail(ctx context.Context, base rel.Expr, tail ast.
 	return base, nil
 }
 
-func (pc ParseContext) compileTailFunc(ctx context.Context, tail ast.Node) (rel.SafeTailCallback, error) {
+func (pc ParseContext) compileTailStep(ctx context.Context, tail ast.Node, safe bool) (rel.SafeTailStep, error) {
 	if tail != nil {
 		if call := tail.One("call"); call != nil {
 			args := call.Many("arg")
@@ -924,47 +924,24 @@ func (pc ParseContext) compileTailFunc(ctx context.Context, tail ast.Node) (rel.
 			for _, arg := range args {
 				exprs = append(exprs, arg.One("expr"))
 			}
-
 			compiledExprs, err := pc.compileExprs(ctx, exprs...)
 			if err != nil {
-				return nil, err
+				return rel.SafeTailStep{}, err
 			}
-			return func(ctx context.Context, v rel.Value, local rel.Scope) (rel.Value, error) {
-				for _, arg := range compiledExprs {
-					a, err := arg.Eval(ctx, local)
-					if err != nil {
-						return nil, err
-					}
-					//TODO: scanner won't highlight calls properly in safe call
-					set, is := v.(rel.Set)
-					if !is {
-						return nil, fmt.Errorf("not a set: %v", v)
-					}
-					v, err = rel.SetCall(ctx, set, a)
-					if err != nil {
-						return nil, err
-					}
-				}
-				return v, nil
-			}, nil
+			return rel.NewSafeTailCall(safe, compiledExprs...), nil
 		}
 		if get := tail.One("get"); get != nil {
-			var scanner parser.Scanner
 			var attr string
 			if ident := get.One("IDENT"); ident != nil {
-				scanner = ident.One("").(ast.Leaf).Scanner()
-				attr = scanner.String()
+				attr = ident.One("").(ast.Leaf).Scanner().String()
 			}
 			if str := get.One("STR"); str != nil {
-				scanner = str.One("").Scanner()
-				attr = parseArraiString(scanner.String())
+				attr = parseArraiString(str.One("").Scanner().String())
 			}
-			return func(ctx context.Context, v rel.Value, local rel.Scope) (rel.Value, error) {
-				return rel.NewDotExpr(handleAccessScanners(v.Source(), scanner), v, attr).Eval(ctx, local)
-			}, nil
+			return rel.NewSafeTailGet(safe, attr), nil
 		}
 	}
-	return nil, fmt.Errorf("compileTailFunc: tail AST malformed: %s", tail)
+	return rel.SafeTailStep{}, fmt.Errorf("compileTailStep: tail AST malformed: %s", tail)
 }
 
 func (pc ParseContext) compileGet(_ context.Context, base rel.Expr, get ast.Node) rel.Expr {
@@ -997,29 +974,11 @@ func (pc ParseContext) compileGet(_ context.Context, base rel.Expr, get ast.Node
 func (pc ParseContext) compileSafeTails(ctx context.Context, base rel.Expr, tail ast.Node) (rel.Expr, error) {
 	if tail != nil {
 		firstSafe := tail.One("first_safe").One("tail")
-		safeCallback := func(tailFunc rel.SafeTailCallback) rel.SafeTailCallback {
-			return func(ctx context.Context, v rel.Value, local rel.Scope) (rel.Value, error) {
-				val, err := tailFunc(ctx, v, local)
-				if err != nil {
-					switch e := err.(type) {
-					case rel.NoReturnError:
-						return nil, nil
-					case rel.ContextErr:
-						if _, isMissingAttrError := e.NextErr().(rel.MissingAttrError); isMissingAttrError {
-							return nil, nil
-						}
-					}
-					return nil, err
-				}
-				return val, nil
-			}
-		}
-
-		firstTailFn, err := pc.compileTailFunc(ctx, firstSafe)
+		first, err := pc.compileTailStep(ctx, firstSafe, true)
 		if err != nil {
 			return nil, err
 		}
-		exprStates := []rel.SafeTailCallback{safeCallback(firstTailFn)}
+		steps := []rel.SafeTailStep{first}
 		fallback, err := pc.CompileExpr(ctx, tail.One("fall").(ast.Branch))
 		if err != nil {
 			return nil, err
@@ -1027,25 +986,24 @@ func (pc ParseContext) compileSafeTails(ctx context.Context, base rel.Expr, tail
 
 		for _, o := range tail.Many("ops") {
 			if safeTail := o.One("safe"); safeTail != nil {
-				safeTailFn, err := pc.compileTailFunc(ctx, safeTail.One("tail"))
+				step, err := pc.compileTailStep(ctx, safeTail.One("tail"), true)
 				if err != nil {
 					return nil, err
 				}
-				exprStates = append(exprStates, safeCallback(safeTailFn))
-			} else if tail := o.One("tail"); tail != nil {
-				tailFn, err := pc.compileTailFunc(ctx, tail)
+				steps = append(steps, step)
+			} else if t := o.One("tail"); t != nil {
+				step, err := pc.compileTailStep(ctx, t, false)
 				if err != nil {
 					return nil, err
 				}
-				exprStates = append(exprStates, tailFn)
+				steps = append(steps, step)
 			} else {
 				panic("wat")
 			}
 		}
 
-		return rel.NewSafeTailExpr(tail.Scanner(), fallback, base, exprStates), nil
+		return rel.NewSafeTailExpr(tail.Scanner(), fallback, base, steps), nil
 	}
-	//TODO: panic?
 	return base, nil
 }
 
@@ -1119,6 +1077,11 @@ func (pc ParseContext) compileDictEntryExprs(ctx context.Context, b ast.Branch) 
 	if pairs := b.Many("pairs"); pairs != nil {
 		entryExprs := make([]rel.DictEntryTupleExpr, 0, len(pairs))
 		for _, pair := range pairs {
+			if extra := pair.One("extra"); extra != nil {
+				return nil, fmt.Errorf("extra element (...) is only valid in a dict pattern, not a dict expression: %v",
+					pair.Scanner().Context(-1))
+			}
+
 			nestedOp := pair.One("nested_op")
 			if nestedOp != nil && !isMerging(ctx) {
 				return nil, errMergeSyntacticSugar(pair.Scanner())
@@ -1328,14 +1291,27 @@ func (pc ParseContext) compilePackage(ctx context.Context, b ast.Branch, c ast.C
 				return nil, fmt.Errorf("local import %q invalid; no local context", name)
 			}
 			importPath := filepath.Clean(filePath)
+			displayPath := importPath
 			if !fromRoot {
 				importPath = filepath.Join(pc.SourceDir, filePath)
+				// importPath is now absolute and, when pc.SourceDir sits inside
+				// a fetched module's cache directory, machine-specific. Use the
+				// same portable, bundle-relative identity this file is stored
+				// under (see bundleLocalFile) as the display path instead, so a
+				// compiled plan embedding it stays reproducible across
+				// machines/containers.
+				displayPath = importPath
+				if isBundling(ctx) {
+					if p, err := portableBundlePath(ctx, importPath); err == nil {
+						displayPath = p
+					}
+				}
 			}
 			expr, err := importLocalFile(ctx, pkg.Scanner(), decoderTuple, fromRoot, importPath, pc.SourceDir)
 			if err != nil {
 				return nil, err
 			}
-			return NewImportExpr(scanner, expr, importPath), nil
+			return NewImportExpr(scanner, expr, displayPath), nil
 		}
 		expr, err := importExternalContent(ctx, pkg.Scanner(), decoderTuple, name, pc.SourceDir)
 		if err != nil {
@@ -1351,6 +1327,11 @@ func (pc ParseContext) compileTuple(ctx context.Context, b ast.Branch, c ast.Chi
 	if pairs := c.(ast.One).Node.Many("pairs"); pairs != nil {
 		attrs := make([]rel.AttrExpr, 0, len(pairs))
 		for _, pair := range pairs {
+			if extra := pair.One("extra"); extra != nil {
+				return nil, fmt.Errorf("extra element (...) is only valid in a tuple pattern, not a tuple expression: %v",
+					pair.Scanner().Context(-1))
+			}
+
 			nestedOp := pair.One("nested_op")
 			if nestedOp != nil && !isMerging(ctx) {
 				return nil, errMergeSyntacticSugar(pair.Scanner())
@@ -1443,7 +1424,7 @@ func (pc ParseContext) compileIdent(_ context.Context, c ast.Children) rel.Expr 
 
 func (pc ParseContext) compileString(_ context.Context, c ast.Children) rel.Expr {
 	scanner := c.(ast.One).Node.One("").Scanner()
-	return rel.NewLiteralExpr(scanner, rel.NewString([]rune(parseArraiString(scanner.String()))))
+	return rel.NewLiteralExpr(scanner, rel.InternedGoString(parseArraiString(scanner.String())))
 }
 
 func (pc ParseContext) compileNumber(_ context.Context, c ast.Children) (rel.Expr, error) {
@@ -1563,39 +1544,6 @@ var binops = map[string]binOpFunc{
 	"+>":      rel.NewAddArrowExpr,
 }
 
-var compareOps = map[string]rel.CompareFunc{
-	"<:": func(a, b rel.Value) (bool, error) {
-		set, is := b.(rel.Set)
-		if !is {
-			return false, fmt.Errorf("<: rhs not a set: %v", b)
-		}
-		return set.Has(a), nil
-	},
-	"!<:": func(a, b rel.Value) (bool, error) {
-		set, is := b.(rel.Set)
-		if !is {
-			return false, fmt.Errorf("!<: rhs not a set: %v", b)
-		}
-		return !set.Has(a), nil
-	},
-	"=":  func(a, b rel.Value) (bool, error) { return a.Equal(b), nil },
-	"!=": func(a, b rel.Value) (bool, error) { return !a.Equal(b), nil },
-	"<":  func(a, b rel.Value) (bool, error) { return a.Less(b), nil },
-	">":  func(a, b rel.Value) (bool, error) { return b.Less(a), nil },
-	"<=": func(a, b rel.Value) (bool, error) { return !b.Less(a), nil },
-	">=": func(a, b rel.Value) (bool, error) { return !a.Less(b), nil },
-
-	"(<)":   func(a, b rel.Value) (bool, error) { return subset(a, b), nil },
-	"(>)":   func(a, b rel.Value) (bool, error) { return subset(b, a), nil },
-	"(<=)":  func(a, b rel.Value) (bool, error) { return subsetOrEqual(a, b), nil },
-	"(>=)":  func(a, b rel.Value) (bool, error) { return subsetOrEqual(b, a), nil },
-	"(<>)":  func(a, b rel.Value) (bool, error) { return subsetOrSuperset(a, b), nil },
-	"(<>=)": func(a, b rel.Value) (bool, error) { return subsetSupersetOrEqual(b, a), nil },
-
-	"!(<)":   func(a, b rel.Value) (bool, error) { return !subset(a, b), nil },
-	"!(>)":   func(a, b rel.Value) (bool, error) { return !subset(b, a), nil },
-	"!(<=)":  func(a, b rel.Value) (bool, error) { return !subsetOrEqual(a, b), nil },
-	"!(>=)":  func(a, b rel.Value) (bool, error) { return !subsetOrEqual(b, a), nil },
-	"!(<>)":  func(a, b rel.Value) (bool, error) { return !subsetOrSuperset(a, b), nil },
-	"!(<>=)": func(a, b rel.Value) (bool, error) { return !subsetSupersetOrEqual(b, a), nil },
-}
+// compareOps is rel.CompareOps: the single source of truth shared with plan decoding
+// (rel.compareCtor), so the two can't drift out of sync with each other.
+var compareOps = rel.CompareOps

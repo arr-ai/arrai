@@ -17,7 +17,62 @@ type DArrowExpr struct {
 
 // NewDArrowExpr returns a new DArrowExpr.
 func NewDArrowExpr(scanner parser.Scanner, lhs Expr, fn Expr) Expr {
-	return &DArrowExpr{ExprScanner{scanner}, lhs, ExprAsFunction(fn)}
+	e := &DArrowExpr{ExprScanner{scanner}, lhs, ExprAsFunction(fn)}
+	if fastPaths {
+		if p := pruneStackedProjects(e); p != nil {
+			return p
+		}
+	}
+	return e
+}
+
+// pruneStackedProjects drops inner => attributes that the outer identDots
+// body does not read (🎯T21 projection pruning).
+func pruneStackedProjects(outer *DArrowExpr) Expr {
+	inner, ok := outer.lhs.(*DArrowExpr)
+	if !ok {
+		return nil
+	}
+	oident, ok := outer.fn.arg.(IdentPattern)
+	if !ok {
+		return nil
+	}
+	iident, ok := inner.fn.arg.(IdentPattern)
+	if !ok {
+		return nil
+	}
+	ote, ok := outer.fn.body.(*TupleExpr)
+	if !ok {
+		return nil
+	}
+	ite, ok := inner.fn.body.(*TupleExpr)
+	if !ok {
+		return nil
+	}
+	_, osrc, ok := ote.identDots(string(oident))
+	if !ok {
+		return nil
+	}
+	idst, _, ok := ite.identDots(string(iident))
+	if !ok {
+		return nil
+	}
+	needed := map[string]bool{}
+	for _, s := range osrc {
+		needed[s] = true
+	}
+	keep := make([]AttrExpr, 0, len(ite.attrs))
+	for i, name := range idst {
+		if needed[name] {
+			keep = append(keep, ite.attrs[i])
+		}
+	}
+	if len(keep) == 0 || len(keep) == len(ite.attrs) {
+		return nil
+	}
+	innerFn := NewFunction(inner.fn.Src, inner.fn.arg, NewTupleExpr(ite.Src, keep...))
+	newInner := NewDArrowExpr(inner.Src, inner.lhs, innerFn)
+	return NewDArrowExpr(outer.Src, newInner, outer.fn)
 }
 
 // String returns a string representation of the expression.
@@ -32,15 +87,47 @@ func (e *DArrowExpr) Eval(ctx context.Context, local Scope) (_ Value, err error)
 		return nil, WrapContextErr(err, e, local)
 	}
 	if set, ok := value.(Set); ok {
+		ident, isIdent := e.fn.arg.(IdentPattern)
+		if fastPaths && isIdent {
+			if te, ok := e.fn.body.(*TupleExpr); ok {
+				if dst, src, ok := te.identDots(string(ident)); ok && !isCanonicalTupleShape(dst) {
+					if r, is := set.(Relation); is {
+						if v, ok := r.projectDots(dst, src); ok {
+							return v, nil
+						}
+					}
+				}
+			}
+		}
+		if fastPaths && isIdent {
+			// The ident path threads nothing between elements, so a large
+			// set can evaluate its bodies in parallel. Other patterns
+			// thread ctx through Bind and stay sequential.
+			if v, done, err := e.evalParallel(ctx, set, string(ident), local); done || err != nil {
+				return v, err
+			}
+		}
+		// NOTE: not converted to range-over-All: this body assigns captured
+		// locals (ctx, err), which range-over-func turns into heap cells per
+		// call — measured as a regression on small-set-heavy workloads.
 		b := NewSetBuilder()
 		for i := set.Enumerator(); i.MoveNext(); {
-			var scope Scope
+			var v Value
 			var err error
-			ctx, scope, err = e.fn.arg.Bind(ctx, local, i.Current())
-			if err != nil {
-				return nil, WrapContextErr(err, e, local)
+			if isIdent {
+				// Fast path for `set => \x body`: see Closure.call.
+				v, err = e.fn.body.Eval(ctx, local.With(string(ident), i.Current()))
+			} else {
+				var b scopeBuilder
+				ctx, err = e.fn.arg.Bind(ctx, local, i.Current(), &b)
+				if err != nil {
+					if err == errPatternMismatch {
+						err = explainBind(ctx, e.fn.arg, local, i.Current())
+					}
+					return nil, WrapContextErr(err, e, local)
+				}
+				v, err = e.fn.body.Eval(ctx, local.updateWith(&b))
 			}
-			v, err := e.fn.body.Eval(ctx, local.Update(scope))
 			if err != nil {
 				return nil, WrapContextErr(err, e, local)
 			}
@@ -54,4 +141,45 @@ func (e *DArrowExpr) Eval(ctx context.Context, local Scope) (_ Value, err error)
 	}
 	return nil, WrapContextErr(errors.Errorf(
 		"=> lhs must be set, not %s: %v", ValueTypeAsString(value), value), e, local)
+}
+
+// evalParallel evaluates the transform's body over a large set's elements in
+// parallel, returning done == false when the set is below the parallel
+// threshold. The error, if any, is the first element's in enumeration
+// order, matching the sequential path.
+func (e *DArrowExpr) evalParallel(
+	ctx context.Context, set Set, ident string, local Scope,
+) (_ Value, done bool, err error) {
+	ranges := parallelRanges(set.Count())
+	if ranges == nil {
+		return nil, false, nil
+	}
+	elems := make([]Value, 0, set.Count())
+	for elem := range All(set) {
+		elems = append(elems, elem)
+	}
+	out := make([]Value, len(elems))
+	errs := make([]error, len(ranges))
+	runRanges(ranges, func(w, lo, hi int) {
+		for i := lo; i < hi; i++ {
+			v, err := e.fn.body.Eval(ctx, local.With(ident, elems[i]))
+			if err != nil {
+				errs[w] = err
+				return
+			}
+			out[i] = v
+		}
+	})
+	if err := firstErr(errs); err != nil {
+		return nil, true, WrapContextErr(err, e, local)
+	}
+	b := NewSetBuilder()
+	for _, v := range out {
+		b.Add(v)
+	}
+	s, err := b.Finish()
+	if err != nil {
+		return nil, true, WrapContextErr(err, e, local)
+	}
+	return s, true, nil
 }

@@ -70,7 +70,7 @@ func reprEscape(s string, delim byte, w io.Writer) {
 
 func reprString(str String, w io.Writer) {
 	reprOffset(str.offset, w)
-	reprStr(string(str.s), w)
+	reprStr(str.goString(), w)
 }
 
 func reprStr(s string, w io.Writer) {

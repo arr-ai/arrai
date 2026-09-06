@@ -395,7 +395,7 @@ Extender -> [
 // 	}
 
 // 	parts := make([]rel.AttrExpr, 0, 3)
-// 	tagAttr, err := rel.NewAttrExpr("tag", rel.NewString([]rune(tag)))
+// 	tagAttr, err := rel.NewAttrExpr("tag", rel.NewGoString(tag))
 // 	if err != nil {
 // 		return nil, err
 // 	}
@@ -488,7 +488,7 @@ Extender -> [
 // 	// 				trimmed = strings.Trim(cdata, "\t\n\f\r ")
 // 	// 			}
 // 	// 			if trimmed != "" {
-// 	// 				children = append(children, rel.NewString([]rune(trimmed)))
+// 	// 				children = append(children, rel.NewGoString(trimmed))
 // 	// 			}
 // 	// 		case Token('{'):
 // 	// 			l.Scan()

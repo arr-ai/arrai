@@ -62,9 +62,19 @@ func (e *SeqArrowExpr) Eval(ctx context.Context, local Scope) (_ Value, err erro
 	}
 
 	switch value := value.(type) {
+	case seqPipeline:
+		if fastPaths {
+			return value.then(call), nil
+		}
+		arr, err := value.force()
+		if err != nil {
+			return nil, WrapContextErr(err, e, local)
+		}
+		return e.evalArray(local, arr, call)
 	case String: //nolint:dupl
-		runes := make([]rune, len(value.s))
-		for at, char := range value.s {
+		runes := make([]rune, value.size())
+		for at := range runes {
+			char := value.runeAt(at)
 			newChar, err := call(NewNumber(float64(value.offset+at)), NewNumber(float64(char)))
 			if err != nil {
 				return nil, WrapContextErr(err, e, local)
@@ -95,31 +105,24 @@ func (e *SeqArrowExpr) Eval(ctx context.Context, local Scope) (_ Value, err erro
 		}
 		return NewOffsetBytes(bytes, value.offset), nil
 	case Array:
-		items := make([]Value, len(value.values))
-		for at, item := range value.values {
-			if item != nil {
-				items[at], err = call(NewNumber(float64(value.offset+at)), item)
-				if err != nil {
-					return nil, WrapContextErr(err, e, local)
-				}
-			}
+		if fastPaths {
+			return newSeqPipeline(value, call), nil
 		}
-		return NewOffsetArray(value.offset, items...), nil
-	case Dict:
-		entries := make([]DictEntryTuple, 0, value.m.Count())
-		for i := value.Enumerator(); i.MoveNext(); {
-			entry := i.Current().(DictEntryTuple)
-			newValue, err := call(entry.at, entry.value)
-			if err != nil {
-				return nil, WrapContextErr(err, e, local)
-			}
-			entries = append(entries, NewDictEntryTuple(entry.at, newValue))
+		return e.evalArray(local, value, call)
+	case dictPipeline:
+		if fastPaths {
+			return value.then(call), nil
 		}
-		d, err := NewDict(true, entries...)
+		d, err := value.force()
 		if err != nil {
 			return nil, WrapContextErr(err, e, local)
 		}
-		return d, nil
+		return e.evalDict(local, d, call)
+	case Dict:
+		if fastPaths {
+			return newDictPipeline(value, call), nil
+		}
+		return e.evalDict(local, value, call)
 	case Set:
 		b := NewSetBuilder()
 		for i := value.Enumerator(); i.MoveNext(); {
@@ -149,4 +152,88 @@ func (e *SeqArrowExpr) Eval(ctx context.Context, local Scope) (_ Value, err erro
 	}
 	return nil, WrapContextErr(errors.Errorf(
 		"%s lhs must be an indexed type, not %s", e.op, ValueTypeAsString(value)), e, local)
+}
+
+// evalArray maps an array's elements, in parallel when the array is large:
+// call's captures are read-only and each element writes only its own slot.
+// The reported error is the first element's in index order, as the
+// sequential path reports (no worker is interrupted, so every range below
+// the lowest failing one completes).
+func (e *SeqArrowExpr) evalArray(
+	local Scope, value Array, call func(_, _ Value) (Value, error),
+) (Value, error) {
+	items := make([]Value, len(value.values))
+	if fastPaths {
+		if ranges := parallelRanges(len(value.values)); ranges != nil {
+			errs := make([]error, len(ranges))
+			runRanges(ranges, func(w, lo, hi int) {
+				for at := lo; at < hi; at++ {
+					if item := value.values[at]; item != nil {
+						v, err := call(NewNumber(float64(value.offset+at)), item)
+						if err != nil {
+							errs[w] = err
+							return
+						}
+						items[at] = v
+					}
+				}
+			})
+			if err := firstErr(errs); err != nil {
+				return nil, WrapContextErr(err, e, local)
+			}
+			return NewOffsetArray(value.offset, items...), nil
+		}
+	}
+	for at, item := range value.values {
+		if item != nil {
+			v, err := call(NewNumber(float64(value.offset+at)), item)
+			if err != nil {
+				return nil, WrapContextErr(err, e, local)
+			}
+			items[at] = v
+		}
+	}
+	return NewOffsetArray(value.offset, items...), nil
+}
+
+// evalDict maps a dict's entries, in parallel when the dict is large — the
+// apps/endpoints maps a model pipeline iterates are dicts, so this is often
+// the outermost loop. Enumeration order is deterministic for a given dict,
+// so the first-error contract matches the sequential path.
+func (e *SeqArrowExpr) evalDict(
+	local Scope, value Dict, call func(_, _ Value) (Value, error),
+) (Value, error) {
+	entries := make([]DictEntryTuple, 0, value.m.Count())
+	for i := value.Enumerator(); i.MoveNext(); {
+		entries = append(entries, i.Current().(DictEntryTuple))
+	}
+	if ranges := parallelRanges(len(entries)); fastPaths && ranges != nil {
+		errs := make([]error, len(ranges))
+		runRanges(ranges, func(w, lo, hi int) {
+			for j := lo; j < hi; j++ {
+				newValue, err := call(entries[j].at, entries[j].value)
+				if err != nil {
+					errs[w] = err
+					return
+				}
+				entries[j] = NewDictEntryTuple(entries[j].at, newValue)
+			}
+		})
+		if err := firstErr(errs); err != nil {
+			return nil, WrapContextErr(err, e, local)
+		}
+	} else {
+		for j, entry := range entries {
+			newValue, err := call(entry.at, entry.value)
+			if err != nil {
+				return nil, WrapContextErr(err, e, local)
+			}
+			entries[j] = NewDictEntryTuple(entry.at, newValue)
+		}
+	}
+	d, err := NewDict(true, entries...)
+	if err != nil {
+		return nil, WrapContextErr(err, e, local)
+	}
+	return d, nil
 }

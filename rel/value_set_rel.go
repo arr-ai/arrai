@@ -1,15 +1,15 @@
 package rel
 
 import (
+	"slices"
+
 	"github.com/arr-ai/hash/hash128"
 
 	"context"
 	"fmt"
 	"reflect"
-	"sort"
 	"strings"
 
-	"github.com/arr-ai/frozen"
 	"github.com/arr-ai/wbnf/parser"
 
 	"github.com/arr-ai/arrai/pkg/fu"
@@ -21,10 +21,55 @@ type Relation struct {
 	p       valueProjector
 	rows    *positionalRelation // TODO: experiment with column table
 	attrMap map[string]int      // cached mapIndices(attrs, p)
+
+	// shape is the tuple shape of every row; layout[i] is the row position of
+	// shape.names[i]. When layout is the identity a row's values already are
+	// the tuple's values, so inflating a row is a wrap, not a copy.
+	shape  *Shape
+	layout []int
+	direct bool
 }
 
 func newRelation(attrs NamesSlice, p valueProjector, rows *positionalRelation) Relation {
-	return Relation{attrs: attrs, p: p, rows: rows, attrMap: mapIndices(attrs, p)}
+	r := Relation{attrs: attrs, p: p, rows: rows, attrMap: mapIndices(attrs, p)}
+	r.shape = shapeOf(attrs.GetSorted())
+	r.layout = make([]int, len(r.shape.names))
+	r.direct = true
+	for i, name := range r.shape.names {
+		r.layout[i] = r.attrMap[name]
+		if r.layout[i] != i {
+			r.direct = false
+		}
+	}
+	r.seedAtKey()
+	return r
+}
+
+// seedAtKey records @ as a candidate key for array/dict/string/bytes
+// encodings, whose @ is unique by construction (🎯T20).
+func (r Relation) seedAtKey() {
+	at, has := r.attrMap["@"]
+	if !has {
+		return
+	}
+	for _, n := range []string{ArrayItemAttr, DictValueAttr, StringCharAttr, BytesByteAttr} {
+		if _, ok := r.attrMap[n]; ok {
+			r.rows.seedKey(valueProjector{at})
+			return
+		}
+	}
+}
+
+// tuple inflates a row to a Tuple.
+func (r Relation) tuple(row Values) Tuple {
+	if fastPaths && r.direct && len(row) == len(r.layout) {
+		return newShapedTuple(r.shape, row)
+	}
+	vals := make([]Value, len(r.layout))
+	for i, j := range r.layout {
+		vals[i] = row[j]
+	}
+	return newShapedTuple(r.shape, vals)
 }
 
 func mapIndices(n NamesSlice, indices valueProjector) map[string]int {
@@ -71,11 +116,35 @@ func (r Relation) Count() int {
 	return r.rows.Count()
 }
 
+// hasShape reports whether t has exactly this relation's attributes.
+// Shapes are interned, so for a shaped tuple this is a pointer comparison;
+// other Tuple kinds fall back to comparing the attribute sets.
+func (r Relation) hasShape(t Tuple) bool {
+	if g, is := t.(*GenericTuple); is && fastPaths {
+		return g.sh() == r.shape
+	}
+	return r.attrs.EqualTupleAttrs(t)
+}
+
+// tupleToValues converts a tuple to a row in this relation's layout. A tuple
+// of the relation's own shape already holds its values in shape order, so it
+// only needs permuting — or nothing at all when the layout is the identity,
+// in which case the row shares the tuple's values (both are immutable).
 func (r Relation) tupleToValues(t Tuple) Values {
+	if g, is := t.(*GenericTuple); is && fastPaths && g.sh() == r.shape {
+		if r.direct {
+			return Values(g.vals)
+		}
+		values := make(Values, len(g.vals))
+		for i, j := range r.layout {
+			values[j] = g.vals[i]
+		}
+		return values
+	}
 	if len(r.attrs) != t.Count() {
 		panic("tupleToValues: names and values don't have the same number")
 	}
-	values := make(Values, len(r.attrs))
+	values := make(Values, r.rows.Width())
 	for i, name := range r.attrs {
 		values[r.p[i]] = t.MustGet(name)
 	}
@@ -84,23 +153,26 @@ func (r Relation) tupleToValues(t Tuple) Values {
 
 func (r Relation) Has(v Value) bool {
 	if t, is := v.(Tuple); is {
-		return r.attrs.EqualTupleAttrs(t) && r.rows.Has(r.tupleToValues(t))
+		if !r.hasShape(t) {
+			return false
+		}
+		if r.rows.Width() == len(r.attrs) {
+			return r.rows.Has(r.tupleToValues(t))
+		}
+		key := make([]Value, len(r.p))
+		for i, name := range r.attrs {
+			key[i] = t.MustGet(name)
+		}
+		_, ok := r.rows.groupBy(r.p).getKey(key...)
+		return ok
 	}
 	return false
 }
 
-func valuesToTuple(val Values, names map[string]int) Tuple {
-	var b frozen.MapBuilder[string, Value]
-	for name, index := range names {
-		b.Put(name, val[index])
-	}
-	return &GenericTuple{tuple: b.Finish()}
-}
-
 func (r Relation) Enumerator() ValueEnumerator {
 	return &relationEnumerator{
-		attrs: r.attrMap,
-		i:     r.rows.Range(),
+		r: r,
+		i: r.rows.Range(),
 	}
 }
 
@@ -110,20 +182,39 @@ func (r Relation) OrderedValues() ValueEnumerator {
 
 func (r Relation) ArrayEnumerator() ValueEnumerator {
 	return &relationEnumerator{
-		attrs: r.attrMap,
-		i:     r.rows.OrderedRange(r.p),
+		r: r,
+		i: r.rows.OrderedRange(r.p),
 	}
 }
 
+func (r Relation) materializeProjection() Relation {
+	if r.rows.Width() == len(r.attrs) {
+		return r
+	}
+	id := make(valueProjector, len(r.attrs))
+	for i := range id {
+		id[i] = i
+	}
+	return newRelation(r.attrs, id, r.rows.Project(r.p))
+}
+
 func (r Relation) With(v Value) Set {
-	if t, is := v.(Tuple); is && r.attrs.EqualTupleAttrs(t) {
-		return newRelation(r.attrs, r.p, r.rows.With(r.tupleToValues(t)))
+	if t, is := v.(Tuple); is && r.hasShape(t) {
+		r = r.materializeProjection()
+		rows := r.rows.With(r.tupleToValues(t))
+		if rows == r.rows {
+			return r
+		}
+		// The result is never empty, so newBody just swaps the rows in
+		// without recomputing the relation's shape metadata.
+		return r.newBody(rows)
 	}
 	return toUnionSetWithItem(r, v)
 }
 
 func (r Relation) Without(v Value) Set {
-	if t, is := v.(Tuple); is && r.attrs.EqualTupleAttrs(t) {
+	if t, is := v.(Tuple); is && r.hasShape(t) {
+		r = r.materializeProjection()
 		values := r.tupleToValues(t)
 		pr := r.rows.Without(values)
 		return r.newBody(pr)
@@ -133,18 +224,45 @@ func (r Relation) Without(v Value) Set {
 
 func (r Relation) Map(f func(Value) (Value, error)) (Set, error) {
 	return r.rows.Map(func(v Values) (Value, error) {
-		return f(valuesToTuple(v, r.attrMap))
+		return f(r.tuple(v))
 	})
 }
 
 func (r Relation) Where(p func(Value) (bool, error)) (_ Set, err error) {
 	s, err := r.rows.Where(func(v Values) (bool, error) {
-		return p(valuesToTuple(v, r.attrMap))
+		return p(r.tuple(v))
 	})
 	if err != nil {
 		return nil, err
 	}
 	return r.newBody(s), nil
+}
+
+func (r Relation) projectDots(dst, src []string) (Set, bool) {
+	if len(dst) != len(src) || len(src) == 0 {
+		return nil, false
+	}
+	p := make(valueProjector, len(src))
+	for i, name := range src {
+		idx := r.getAttrIndex(name)
+		if idx < 0 {
+			return nil, false
+		}
+		p[i] = idx
+	}
+	out := make(NamesSlice, len(dst))
+	copy(out, dst)
+	if fastPaths && (r.rows.hasCandidateKey(p) || r.rows.groupBy(p).count() == r.rows.n) {
+		// Injective: share the store so Count is the source cardinality
+		// without copying rows (🎯T20).
+		return newRelation(out, p, r.rows), true
+	}
+	rows := r.rows.Project(p)
+	id := make(valueProjector, len(dst))
+	for i := range id {
+		id[i] = i
+	}
+	return newRelation(out, id, rows), true
 }
 
 func (r Relation) getAttrIndex(attr string) int {
@@ -287,6 +405,7 @@ type relationBuilder struct {
 	prb     *positionalRelationBuilder
 	mapping map[string]int
 	names   NamesSlice
+	shape   *Shape // set when names are in shape order, enabling zero-copy Add
 }
 
 func newRelationBuilder(names []string, cap int) *relationBuilder {
@@ -294,14 +413,23 @@ func newRelationBuilder(names []string, cap int) *relationBuilder {
 	for i, n := range names {
 		m[n] = i
 	}
-	return &relationBuilder{
-		prb:     &positionalRelationBuilder{sb: frozen.NewSetBuilder[any](cap)},
+	b := &relationBuilder{
+		prb:     newPositionalRelationBuilder(len(names), cap),
 		mapping: m,
 		names:   names,
 	}
+	if slices.IsSorted(names) {
+		b.shape = shapeOf(names)
+	}
+	return b
 }
 
 func (r *relationBuilder) Add(v Value) {
+	if g, ok := v.(*GenericTuple); ok && fastPaths && r.shape != nil && g.shape == r.shape {
+		// The tuple's values already are the row: both are immutable.
+		r.prb.Add(Values(g.vals))
+		return
+	}
 	t := v.(Tuple)
 	values := make(Values, len(r.names))
 	for name, index := range r.mapping {
@@ -370,6 +498,10 @@ func (r Relation) projectionBasedOnNames(names NamesSlice) valueProjector {
 }
 
 func (r Relation) Equal(i Value) bool {
+	if hashIdentity {
+		s, ok := i.(Set)
+		return ok && r.Hash128() == s.Hash128()
+	}
 	if r2, is := i.(Relation); is {
 		return r.EqualRelation(r2)
 	}
@@ -379,27 +511,42 @@ func (r Relation) Equal(i Value) bool {
 func (r Relation) canonicalRelation() *positionalRelation {
 	names := make(NamesSlice, len(r.attrs))
 	copy(names, r.attrs)
-	sort.Strings(names)
+	slices.Sort(names)
 	projection := make(valueProjector, 0, len(r.attrs))
 	for _, name := range names {
 		projection = append(projection, r.attrMap[name])
 	}
-	isContiguous := projection.isContiguous()
-	return &positionalRelation{
-		set: frozen.SetMap(r.rows.set, func(elem any) any {
-			if isContiguous {
-				return elem.(Values)[projection[0] : projection[len(projection)-1]+1]
-			}
-			return elem.(Values).project(projection).values()
-		}),
-	}
+	return r.rows.Project(projection)
 }
 
 func (r Relation) EqualRelation(r2 Relation) bool {
-	if !r.attrs.EqualNamesSlice(r2.attrs) {
+	if r.rows.Count() != r2.rows.Count() || !r.attrs.EqualNamesSlice(r2.attrs) {
 		return false
 	}
-	return r.canonicalRelation().set.Equal(r2.canonicalRelation().set)
+	// Rows are positional; when both relations lay their attributes out
+	// identically the row sets compare directly (frozen checks the sets'
+	// hashes first). Only differing layouts need canonicalising.
+	if fastPaths && r.sameLayout(r2) {
+		return r.rows.EqualPositionalRelation(r2.rows)
+	}
+	return r.canonicalRelation().EqualPositionalRelation(r2.canonicalRelation())
+}
+
+// sameLayout reports whether r and r2 store each attribute at the same
+// position.
+func (r Relation) sameLayout(r2 Relation) bool {
+	if r.rows.Width() != r2.rows.Width() {
+		return false
+	}
+	if len(r.attrs) != len(r2.attrs) {
+		return false
+	}
+	for i, name := range r.attrs {
+		if r2.attrMap[name] != r.p[i] {
+			return false
+		}
+	}
+	return true
 }
 
 func (r Relation) Hash(seed uintptr) uintptr {
@@ -415,22 +562,12 @@ func (r Relation) Hash(seed uintptr) uintptr {
 // only in their internal attribute ordering (e.g. from different
 // join/projection code paths), violating the hash/equals contract.
 func (r Relation) Hash128() hash128.H128 {
-	nameHash := make(map[string]hash128.H128, len(r.attrs))
-	h := relationSalt
-	for _, name := range r.attrs {
-		nh := hash128.String(name)
-		nameHash[name] = nh
-		h = h.Xor(nh)
-	}
-	for e := r.rows.set.Range(); e.Next(); {
-		row := e.Value().(Values)
-		var rh hash128.H128
-		for name, index := range r.attrMap {
-			rh = rh.Xor(hashAttr(nameHash[name], row[index]))
-		}
-		h = h.Xor(rh)
-	}
-	return h
+	// The attribute-name half is a property of the shape; the row half is
+	// layout-independent (each row hashed per attribute through the shape's
+	// cached name hashes) so Hash128 agrees with EqualRelation regardless of
+	// the relation's internal attribute ordering, and is memoised per shape
+	// on the row view.
+	return relationSalt.Xor(r.shape.namesH).Xor(r.rows.shapeHash(r.shape, r.layout))
 }
 
 // RelationValuesEnumerator enumerates the values as Values.
@@ -456,8 +593,8 @@ func (r Relation) OrderedValuesEnumerator(names NamesSlice) *RelationValuesEnume
 }
 
 type relationEnumerator struct {
-	attrs map[string]int
-	i     *positionalRelationValuesEnumerator
+	r Relation
+	i *positionalRelationValuesEnumerator
 }
 
 func (r *relationEnumerator) MoveNext() bool {
@@ -465,5 +602,5 @@ func (r *relationEnumerator) MoveNext() bool {
 }
 
 func (r *relationEnumerator) Current() Value {
-	return valuesToTuple(r.i.Values(), r.attrs)
+	return r.r.tuple(r.i.Values())
 }

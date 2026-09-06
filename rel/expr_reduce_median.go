@@ -31,7 +31,7 @@ func NewMedianExpr(scanner parser.Scanner, a, b Expr) Expr {
 		n int
 	}
 	return NewReduceExpr(
-		scanner, a, ExprAsFunction(b), "%s min ???",
+		scanner, a, ExprAsFunction(b), "%s median ???",
 		func(s Set) (interface{}, error) {
 			if n := s.Count(); n > 0 {
 				return Agg{h: make(float64Heap, 0, n/2+2), n: n}, nil

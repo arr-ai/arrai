@@ -135,7 +135,7 @@ func csvDecodeFnBody(fn string, value rel.Value, config decodeConfig) (rel.Value
 
 		row := make([]rel.Value, len(record))
 		for j, item := range record {
-			row[j] = rel.NewString([]rune(item))
+			row[j] = rel.NewGoString(item)
 		}
 		rows = append(rows, rel.NewArray(row...))
 	}

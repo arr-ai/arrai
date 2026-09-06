@@ -25,3 +25,18 @@ func TestDArrowExprIdentHoles(t *testing.T) {
 
 	AssertCodesEvalToSameValue(t, `{1, , , 2}`, `{1,,,2} => .`)
 }
+
+// `set => (@: .i, @item: .v)` — the idiom for turning a set into an array —
+// must produce a real Array, not a two-column Relation.
+func TestDArrowExprProjectToArrayItemShape(t *testing.T) {
+	t.Parallel()
+
+	AssertCodesEvalToSameValue(t,
+		`['a']`,
+		`{(index: 0, val: 'a')} => (@: .index, @item: .val)`,
+	)
+	AssertCodesEvalToSameValue(t,
+		`['a', 'b']`,
+		`{(index: 0, val: 'a'), (index: 1, val: 'b')} => (@: .index, @item: .val)`,
+	)
+}

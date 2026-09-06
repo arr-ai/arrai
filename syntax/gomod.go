@@ -34,6 +34,73 @@ func extractVersion(path string) (module, version string) {
 	return
 }
 
+// goModFilePin reads require directives from go.mod (not go list) so a pin
+// still binds when the module graph cannot be resolved.
+func goModFilePin(moduleRoot, importPath string) (path, version string, ok bool) {
+	modPath := "go.mod"
+	if moduleRoot != "" {
+		modPath = filepath.Join(moduleRoot, "go.mod")
+	}
+	data, err := os.ReadFile(modPath)
+	if err != nil {
+		return "", "", false
+	}
+	var bestPath, bestVer string
+	inRequire := false
+	for _, raw := range strings.Split(string(data), "\n") {
+		line := strings.TrimSpace(raw)
+		if i := strings.Index(line, "//"); i >= 0 {
+			line = strings.TrimSpace(line[:i])
+		}
+		if line == "" {
+			continue
+		}
+		if !inRequire {
+			if line == "require (" {
+				inRequire = true
+				continue
+			}
+			if rest, found := strings.CutPrefix(line, "require "); found {
+				p, v, ok := parseRequireTokens(rest)
+				if ok {
+					bestPath, bestVer = pickLongerPin(bestPath, bestVer, p, v, importPath)
+				}
+			}
+			continue
+		}
+		if line == ")" {
+			inRequire = false
+			continue
+		}
+		p, v, ok := parseRequireTokens(line)
+		if ok {
+			bestPath, bestVer = pickLongerPin(bestPath, bestVer, p, v, importPath)
+		}
+	}
+	if bestPath == "" {
+		return "", "", false
+	}
+	return bestPath, bestVer, true
+}
+
+func parseRequireTokens(s string) (path, version string, ok bool) {
+	fields := strings.Fields(s)
+	if len(fields) < 2 || strings.HasPrefix(fields[1], "/") {
+		return "", "", false
+	}
+	return fields[0], fields[1], true
+}
+
+func pickLongerPin(bestPath, bestVer, path, ver, importPath string) (string, string) {
+	if path != importPath && !strings.HasPrefix(importPath, path+"/") {
+		return bestPath, bestVer
+	}
+	if bestPath == "" || len(path) > len(bestPath) {
+		return path, ver
+	}
+	return bestPath, bestVer
+}
+
 // requiredModulesByRoot caches `go list -m -json all` results keyed by module root
 // directory (empty string = process working directory).
 var requiredModulesByRoot sync.Map // map[string]map[string]requiredModule
@@ -221,6 +288,29 @@ func seedRequiredModules(moduleRoot string, mods map[string]requiredModule) {
 	requiredModulesByRoot.Store(moduleRoot, mods)
 }
 
+// mainModuleName returns moduleRoot's own "module" directive (or the process
+// cwd's if moduleRoot is ""), or ok=false if go.mod can't be read or has none.
+func mainModuleName(moduleRoot string) (name string, ok bool) {
+	modPath := "go.mod"
+	if moduleRoot != "" {
+		modPath = filepath.Join(moduleRoot, "go.mod")
+	}
+	data, err := os.ReadFile(modPath)
+	if err != nil {
+		return "", false
+	}
+	for _, raw := range strings.Split(string(data), "\n") {
+		line := strings.TrimSpace(raw)
+		if i := strings.Index(line, "//"); i >= 0 {
+			line = strings.TrimSpace(line[:i])
+		}
+		if rest, found := strings.CutPrefix(line, "module "); found {
+			return strings.TrimSpace(rest), true
+		}
+	}
+	return "", false
+}
+
 // retrieveModule resolves importPath to a local module directory.
 // moduleRoot is the importing project's go.mod directory (may be empty to use
 // the process working directory). If that go.mod already requires a matching
@@ -229,6 +319,24 @@ func seedRequiredModules(moduleRoot string, mods map[string]requiredModule) {
 // importPath prefixes are tried at the given version (or "latest").
 func retrieveModule(importPath, version, moduleRoot string) (*goModule, error) {
 	if version == "" {
+		// An import can name the project's own module -- e.g. importing one
+		// of its own packages by full path instead of a relative "./"
+		// import. go list -m -json all deliberately excludes the main
+		// module (runGoListAllModules), so the pin lookups below never
+		// match it, and this would otherwise fall through to `go get`,
+		// which fails outright: you can't go-get the module you're already
+		// in.
+		if name, ok := mainModuleName(moduleRoot); ok &&
+			(importPath == name || strings.HasPrefix(importPath, name+"/")) {
+			dir := moduleRoot
+			if dir == "" {
+				var err error
+				if dir, err = os.Getwd(); err != nil {
+					return nil, err
+				}
+			}
+			return &goModule{Name: name, Dir: dir}, nil
+		}
 		if pinned, ok := requiredModuleOf(moduleRoot, importPath); ok {
 			if pinned.Dir != "" {
 				return &goModule{Name: pinned.Path, Dir: pinned.Dir}, nil
@@ -244,6 +352,17 @@ func retrieveModule(importPath, version, moduleRoot string) (*goModule, error) {
 				}
 				return m, nil
 			}
+		}
+		// go list can fail (impossible version, network) and return no graph.
+		// Still honour a require line in go.mod rather than falling through
+		// to @latest (🎯T16).
+		if path, ver, ok := goModFilePin(moduleRoot, importPath); ok {
+			m, err := downloadModule(path, ver)
+			if err != nil {
+				return nil, fmt.Errorf("go.mod requires %s@%s but it could not be downloaded: %w",
+					path, ver, err)
+			}
+			return m, nil
 		}
 	}
 

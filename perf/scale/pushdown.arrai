@@ -1,0 +1,6 @@
+# Eq-key where after a fat projection, then a narrower project.
+# Size is //os.args(1). Count of k=42 is n/1000 or n/1000+1.
+let [_, nstr] = //os.args;
+let n = //eval.value(nstr);
+let left = //seq.repeat(n, [0]) => (k: .@ % 1000, a: .@, pad: .@);
+((left => (k: .k, a: .a, pad: .pad, extra: .a)) where .k = 42 => (k: .k, a: .a)) count

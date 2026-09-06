@@ -2,10 +2,12 @@ package syntax
 
 import (
 	"context"
+	"fmt"
 	"regexp"
 	"strings"
 
 	"github.com/arr-ai/wbnf/ast"
+	"github.com/arr-ai/wbnf/parser"
 
 	"github.com/arr-ai/arrai/rel"
 )
@@ -78,7 +80,7 @@ func (pc ParseContext) compileExpandableString(ctx context.Context, b ast.Branch
 	}
 
 	next := ""
-	exprs := make([]rel.Expr, len(parts))
+	interps := make(map[int]xstrPart, len(parts))
 	for i := len(parts) - 1; i >= 0; i-- {
 		part := parts[i]
 		switch part := part.(type) {
@@ -116,81 +118,151 @@ func (pc ParseContext) compileExpandableString(ctx context.Context, b ast.Branch
 			if err != nil {
 				return nil, err
 			}
-			exprs[i] = rel.NewCallExprCurry(part.Scanner(), stdStrExpand,
-				rel.NewString([]rune(format)), expr,
-				rel.NewString([]rune(delim)),
-				rel.NewString([]rune(appendIfNotEmpty)),
-			)
+			interps[i] = xstrPart{expr: expr, format: format, delim: delim, tail: appendIfNotEmpty}
 		case string:
 			next = part
 		}
 	}
+	xparts := make([]xstrPart, len(parts))
 	for i, part := range parts {
 		if s, ok := part.(string); ok {
-			exprs[i] = rel.NewTuple(rel.NewAttr("s", rel.NewString([]rune(s))))
+			xparts[i] = xstrPart{literal: s}
+		} else {
+			xparts[i] = interps[i]
 		}
 	}
-	// TODO: Use a more direct approach to invoke concat implementation.
-	return rel.NewCallExpr(b.Scanner(),
-		rel.NewNativeFunction("xstr_concat", xstrConcat),
-		rel.NewArrayExpr(b.Scanner(), exprs...)), nil
+	return &xstrExpr{ExprScanner: rel.ExprScanner{Src: b.Scanner()}, parts: xparts}, nil
 }
 
-func xstrConcat(_ context.Context, seq rel.Value) (rel.Value, error) {
-	// this is always a sequence of values between bare string and computed expressions
-	// all bare strings are wrapped in a tuple of one attribute "s"
-	//
-	// bare strings are wrapped in a tuple to differentiate between
-	// regular string and computed expressions
-	values := cleanEmptyVal(seq.(rel.Array))
-	recentIndent := "\n"
-	if len(values) == 0 {
-		return rel.None, nil
-	}
-	var sb strings.Builder
-	for _, i := range values {
-		// suppress empty string
-		if !i.IsTrue() {
+// xstrExpr is a compiled $-string: literal segments interleaved with
+// interpolations. It renders straight into a byte builder — literal
+// segments are plain Go strings interned at compile time, never arr.ai
+// values, and interpolations expand without the Array-of-parts and curried
+// native calls the old path allocated per evaluation.
+type xstrExpr struct {
+	rel.ExprScanner
+	parts []xstrPart
+}
+
+// xstrPart is one segment: a literal (expr == nil) or an interpolation with
+// its ${...:format:delim:tail} controls.
+type xstrPart struct {
+	literal string
+	expr    rel.Expr
+	format  string
+	delim   string
+	tail    string // appended iff the expansion is non-empty
+}
+
+// xstrPiece is a rendered part: the string it contributes and whether it
+// was a bare literal (which drives indent tracking) or computed (which has
+// newlines rewritten to the most recent literal indent).
+type xstrPiece struct {
+	s    string
+	bare bool
+}
+
+func (e *xstrExpr) Source() parser.Scanner {
+	return e.Src
+}
+
+func (e *xstrExpr) String() string {
+	return "$-string"
+}
+
+// Eval renders the template. The semantics — expansion, empty-part
+// whitespace cleanup, indent propagation — are exactly the old
+// xstrConcat/cleanEmptyVal pipeline's, ported from values to strings.
+func (e *xstrExpr) Eval(ctx context.Context, local rel.Scope) (rel.Value, error) {
+	pieces := make([]xstrPiece, 0, len(e.parts))
+	for _, p := range e.parts {
+		if p.expr == nil {
+			pieces = append(pieces, xstrPiece{s: p.literal, bare: true})
 			continue
 		}
-		switch i := i.(type) {
-		// handle computed expressions
-		case rel.String:
-			sb.WriteString(strings.ReplaceAll(i.String(), "\n", recentIndent))
-
-		// handle bare string
-		case rel.Tuple:
-			v := i.MustGet("s")
-			if !v.IsTrue() {
-				continue
-			}
-			s := v.String()
-			sb.WriteString(s)
-			if m := indentRE.FindStringSubmatch(s); m != nil {
+		v, err := p.expr.Eval(ctx, local)
+		if err != nil {
+			return nil, rel.WrapContextErr(err, e, local)
+		}
+		s, err := xstrExpand(ctx, p.format, v, p.delim, p.tail)
+		if err != nil {
+			return nil, rel.WrapContextErr(err, e, local)
+		}
+		pieces = append(pieces, xstrPiece{s: s})
+	}
+	pieces = cleanEmptyPieces(pieces)
+	if len(pieces) == 0 {
+		return rel.None, nil
+	}
+	recentIndent := "\n"
+	var sb strings.Builder
+	for _, p := range pieces {
+		if p.s == "" {
+			continue
+		}
+		if p.bare {
+			sb.WriteString(p.s)
+			if m := indentRE.FindStringSubmatch(p.s); m != nil {
 				recentIndent = m[1]
 			}
-		default:
-			panic("xstrConcat: not receiving a string")
+		} else {
+			sb.WriteString(strings.ReplaceAll(p.s, "\n", recentIndent))
 		}
 	}
-	return rel.NewString([]rune(sb.String())), nil
+	return rel.NewGoString(sb.String()), nil
 }
 
-// cleanEmptyVal cleans whitespaces of bare strings before and after a computed empty string.
-func cleanEmptyVal(values rel.Array) []rel.Value {
-	arr := values.Values()
+// xstrExpand renders one interpolated value per //str.expand's rules.
+func xstrExpand(ctx context.Context, format string, value rel.Value, delim, tail string) (string, error) {
+	f := "%v"
+	if format != "" {
+		f = "%" + format
+	}
+	var s string
+	if strings.HasPrefix(delim, ":") {
+		forced, err := rel.Observe(value)
+		if err != nil {
+			return "", err
+		}
+		array, is := rel.AsArray(forced.(rel.Set))
+		if !is {
+			return "", fmt.Errorf("expansion arg not an array in ${arg::}: %v", forced)
+		}
+		var jb strings.Builder
+		for i, v := range array.Values() {
+			if i > 0 {
+				jb.WriteString(delim[1:])
+			}
+			if v != nil {
+				jb.WriteString(formatValue(ctx, f, v))
+			}
+		}
+		s = jb.String()
+	} else {
+		s = formatValue(ctx, f, value)
+	}
+	if s != "" {
+		s += tail
+	}
+	return s, nil
+}
+
+// cleanEmptyPieces cleans whitespace of bare literals before and after a
+// computed empty part, then drops empty parts.
+func cleanEmptyPieces(arr []xstrPiece) []xstrPiece {
 	length := len(arr)
 	if length == 1 {
 		return arr
 	}
 
 	getStr := func(i int) string {
-		if t, isBareString := arr[i].(rel.Tuple); isBareString {
-			if s := t.MustGet("s"); s.IsTrue() {
-				return s.String()
-			}
+		if arr[i].bare {
+			return arr[i].s
 		}
 		return ""
+	}
+	setStr := func(i int, s string) {
+		arr[i].s = s
 	}
 	clean := func(i int) {
 		if i < 0 || i >= length {
@@ -207,10 +279,7 @@ func cleanEmptyVal(values rel.Array) []rel.Value {
 			if s := getStr(i + 1); s != "" {
 				if m := firstIndentRE.FindStringSubmatch(s); m != nil && m[1] != "" {
 					match := m[1]
-					arr[i+1] = arr[i+1].(rel.Tuple).With(
-						"s",
-						rel.NewString([]rune(strings.TrimPrefix(s, match))),
-					)
+					setStr(i+1, strings.TrimPrefix(s, match))
 				}
 			}
 		// e.g.
@@ -222,16 +291,10 @@ func cleanEmptyVal(values rel.Array) []rel.Value {
 			if s := getStr(i - 1); s != "" {
 				if m := lastSpacesRE.FindStringSubmatch(s); m != nil && m[1] != "" {
 					match := m[1]
-					arr[i-1] = arr[i-1].(rel.Tuple).With(
-						"s",
-						rel.NewString([]rune(strings.TrimSuffix(s, match))),
-					)
+					setStr(i-1, strings.TrimSuffix(s, match))
 				} else if trimmed := strings.TrimLeft(s, " "); trimmed == "" {
 					// this is to remove any whitespace to the left the last empty evaluated str
-					arr[i-1] = arr[i-1].(rel.Tuple).With(
-						"s",
-						rel.NewString([]rune("")),
-					)
+					setStr(i-1, "")
 				}
 			}
 		case i > 0 && i < length-1:
@@ -262,8 +325,8 @@ func cleanEmptyVal(values rel.Array) []rel.Value {
 					rightStr = strings.TrimPrefix(rightStr, newIndent)
 					leftStr += newIndent
 				}
-				arr[i+1] = arr[i+1].(rel.Tuple).With("s", rel.NewString([]rune(rightStr)))
-				arr[i-1] = arr[i-1].(rel.Tuple).With("s", rel.NewString([]rune(leftStr)))
+				setStr(i+1, rightStr)
+				setStr(i-1, leftStr)
 			}
 		}
 	}
@@ -272,18 +335,12 @@ func cleanEmptyVal(values rel.Array) []rel.Value {
 		length--
 	}
 	for i := 0; i < length; {
-		switch v := arr[i].(type) {
-		case rel.Set:
-			if !v.IsTrue() {
+		if arr[i].s == "" {
+			if !arr[i].bare {
 				clean(i)
-				shorten(i)
-				continue
 			}
-		case rel.Tuple:
-			if getStr(i) == "" {
-				shorten(i)
-				continue
-			}
+			shorten(i)
+			continue
 		}
 		i++
 	}

@@ -85,11 +85,11 @@ var (
 			}
 			s += tail
 		}
-		return rel.NewString([]rune(s)), nil
+		return rel.NewGoString(s), nil
 	})
 
 	stdStrRepr = rel.NewNativeFunction("repr", func(_ context.Context, value rel.Value) (rel.Value, error) {
-		return rel.NewString([]rune(fu.Repr(value))), nil
+		return rel.NewGoString(fu.Repr(value)), nil
 	})
 )
 
@@ -98,20 +98,20 @@ func stdStr() rel.Attr {
 		rel.NewAttr("expand", stdStrExpand),
 		createNestedFuncAttr("lower", 1, func(_ context.Context, args ...rel.Value) (rel.Value, error) {
 			if s, is := tools.ValueAsString(args[0]); is {
-				return rel.NewString([]rune(strings.ToLower(s))), nil
+				return rel.NewGoString(strings.ToLower(s)), nil
 			}
 			return nil, fmt.Errorf("//str.lower: arg not a string: %v", args[0])
 		}),
 		rel.NewAttr("repr", stdStrRepr),
 		createNestedFuncAttr("title", 1, func(_ context.Context, args ...rel.Value) (rel.Value, error) {
 			if s, is := tools.ValueAsString(args[0]); is {
-				return rel.NewString([]rune(cases.Title(language.English, cases.NoLower).String(s))), nil
+				return rel.NewGoString(cases.Title(language.English, cases.NoLower).String(s)), nil
 			}
 			return nil, fmt.Errorf("//str.title: arg not a string: %v", args[0])
 		}),
 		createNestedFuncAttr("upper", 1, func(_ context.Context, args ...rel.Value) (rel.Value, error) {
 			if s, is := tools.ValueAsString(args[0]); is {
-				return rel.NewString([]rune(strings.ToUpper(s))), nil
+				return rel.NewGoString(strings.ToUpper(s)), nil
 			}
 			return nil, fmt.Errorf("//str.upper: arg not a string: %v", args[0])
 		}),

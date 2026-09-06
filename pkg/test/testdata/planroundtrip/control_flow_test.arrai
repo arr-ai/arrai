@@ -1,0 +1,45 @@
+(
+    ifElseTrue:  (1 if 2 > 0 else 3) = 1,
+    ifElseFalse: (1 if 2 < 0 else 3) = 3,
+
+    cond:        cond {1 > 2: 1, 2 < 3: 2, _: 1 + 2} = 2,
+    condDefault: cond {1 > 2: 1, 2 > 3: 2, _: 1 + 2} = 3,
+
+    condPat: cond 'boolean' {
+        'boolean': 'bool',
+        'string': 'str',
+        _: 'any',
+    } = 'bool',
+    condPatDefault: cond 'unknown' {
+        'boolean': 'bool',
+        'string': 'str',
+        _: 'any',
+    } = 'any',
+
+    condPatOrMatch:   cond 2 { (1, 2, 3): 'small', _: 'other' } = 'small',
+    condPatOrNoMatch: cond 5 { (1, 2, 3): 'small', _: 'other' } = 'other',
+
+    dynlet: (let x = 5; x + 1) = 6,
+
+    rec: (
+        let rec fib = \n cond {(n = 0): 0, (n = 1): 1, (n > 0): fib(n-1) + fib(n-2), _: 0};
+        fib(10)
+    ) = 55,
+
+    recMutual: (
+        let rec eo = (
+            even: \n n = 0 || eo.odd(n - 1),
+            odd:  \n n != 0 && eo.even(n - 1),
+        );
+        eo.even(6)
+    ),
+
+    safeTailPresent: (a: 1).a?:42 = 1,
+    safeTailFallback: (a: 1).b?:42 = 42,
+    safeTailChainPresent: (a: (b: 1)).a?.b:42 = 1,
+    safeTailChainFallback: (a: (b: 1)).a.c?:42 = 42,
+    safeTailCallPresent:  {"b": {"c": 1}}("b", "c")?:42 = 1,
+    safeTailCallFallback: {"b": {"c": 1}}("b", "x")?:42 = 42,
+
+    offset: (5\[1, 2, 3])(6) = 2,
+)

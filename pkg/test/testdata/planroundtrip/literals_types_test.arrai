@@ -1,0 +1,36 @@
+(
+    # Array vs seqPipeline vs EmptySet must all compare equal when they hold the
+    # same elements: this is exactly the shape of a bug found earlier in this
+    # branch, where Array.Equal only recognised a concrete Array.
+    seqPipelineEqualsArrayLiteral: ([1, 2, 3] >> . + 1) = [2, 3, 4],
+    emptySeqPipelineEqualsEmptyArray: ([] >> . + 1) = [],
+    emptyArrayEqualsEmptySet: [] = {},
+    emptySetEqualsEmptyArray: {} = [],
+
+    # `=>` projecting a relation into (@:, @item:) shape must canonicalise into a
+    # real Array, not stay a Relation (another bug found earlier in this branch).
+    # The same canonicalisation applies to the other three special shapes
+    # ((@:, @value:) -> Dict, (@:, @char:) -> String, (@:, @byte:) -> Bytes).
+    darrowProjectToArray: ({|k, a| (0, 'x'), (1, 'y')} => (@: .k, @item: .a)) = ['x', 'y'],
+    darrowProjectToDict:  ({|k, a| (0, 'x'), (1, 'y')} => (@: .k, @value: .a)) = {0: 'x', 1: 'y'},
+    darrowProjectToString: ({|k, a| (0, 120), (1, 121)} => (@: .k, @char: .a)) = 'xy',
+    darrowProjectToBytes:  ({|k, a| (0, 97), (1, 98)} => (@: .k, @byte: .a)) = <<97, 98>>,
+
+    dictPipelineEqualsDictLiteral: ({'a': 1, 'b': 2} >> . * 10) = {'a': 10, 'b': 20},
+
+    bytesLiteral:      <<'a', 'b'>> = <<97, 98>>,
+    bytesFromWithout:  {} = (<<'a'>> without (@: 0, @byte: 97)),
+    stringCharAccess:  'abc'(1) = 98,
+    stringFromWithout: {} = ('a' without (@: 0, @char: 97)),
+
+    tupleLiteral: (a: 1, b: 2).a = 1,
+    dictLiteral:  {'x': 1, 'y': 2}('x') = 1,
+    setLiteral:   2 <: {1, 2, 3},
+
+    xstrInterp: $"1 + 1 = ${1 + 1}" = "1 + 1 = 2",
+    xstrNested: $"${$"${1}"}" = "1",
+
+    sparseArray:      [1, , 3] = [1, , 3],
+    sparseArrayFirst: [1, , 3](0) = 1,
+    sparseArrayLast:  [1, , 3](2) = 3,
+)

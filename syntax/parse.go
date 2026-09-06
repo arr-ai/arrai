@@ -208,3 +208,8 @@ func parseNest(lhs rel.Expr, branch ast.Branch) rel.Expr {
 	_, isInverse := branch["inv"]
 	return rel.NewNestExpr(attr, isInverse, lhs, rel.NewNames(namestrings...), attr.String())
 }
+
+func parseUnnest(lhs rel.Expr, branch ast.Branch) rel.Expr {
+	attr := branch.One("IDENT").One("").Scanner()
+	return rel.NewUnnestExpr(attr, lhs, attr.String())
+}

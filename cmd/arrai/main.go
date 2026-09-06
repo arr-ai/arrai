@@ -61,14 +61,7 @@ func main() {
 	// Ctrl-C default disposition or a stray log.Fatal elsewhere triggers) skips
 	// every deferred function in the process, including the one above. Catch
 	// the common interrupt signals so profiling data still gets flushed.
-	sigCh := make(chan os.Signal, 1)
-	signal.Notify(sigCh, os.Interrupt, syscall.SIGTERM)
-	go func() {
-		sig := <-sigCh
-		logrus.Infof("received %s, flushing profilers before exit", sig)
-		stopProfilers()
-		os.Exit(1)
-	}()
+	flushProfilersOnSignal(stopProfilers)
 
 	app := cli.NewApp()
 	// logrus.SetLevel(logrus.InfoLevel)
@@ -160,6 +153,21 @@ VERSION:
 		stopProfilers()
 		os.Exit(1)
 	}
+}
+
+// flushProfilersOnSignal runs stop then os.Exit(1) on SIGINT/SIGTERM so
+// deferred profiler cleanup still happens (#737).
+func flushProfilersOnSignal(stop func()) {
+	sigCh := make(chan os.Signal, 1)
+	signal.Notify(sigCh, os.Interrupt, syscall.SIGTERM)
+	go waitAndFlush(sigCh, stop, os.Exit)
+}
+
+func waitAndFlush(sig <-chan os.Signal, stop func(), exit func(int)) {
+	s := <-sig
+	logrus.Infof("received %s, flushing profilers before exit", s)
+	stop()
+	exit(1)
 }
 
 func setupVersion(app *cli.App) {
