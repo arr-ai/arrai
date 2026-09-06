@@ -20,4 +20,5 @@
     count:    {1, 2, 3} count = 3,
     single:   ({42} single) = 42,
     not:      !false = true,
+    evalCall: (*\_ 42) = 42,
 )
