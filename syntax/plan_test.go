@@ -26,6 +26,16 @@ func evalPlan(t *testing.T, code string) rel.Value {
 	return v
 }
 
+// `&` (intersect) and `<&>` (join) shared a plan op tag, so decoding a plan
+// containing `&` reconstructed it as `<&>` instead.
+func TestPlanRoundtripIntersectNotJoin(t *testing.T) {
+	t.Parallel()
+	v := evalPlan(t, `{{}, 'null'} & {{}, 'string'}`)
+	direct, err := EvaluateExpr(arraictx.InitRunCtx(context.Background()), "", `{{}, 'null'} & {{}, 'string'}`)
+	require.NoError(t, err)
+	assert.True(t, direct.Equal(v), "plan=%s eval=%s", v, direct)
+}
+
 // A $-string decoded from a plan must carry a real source scanner, so that
 // formatting an error raised inside the interpolation doesn't panic.
 func TestPlanRoundtripXstrErrorHasSource(t *testing.T) {
