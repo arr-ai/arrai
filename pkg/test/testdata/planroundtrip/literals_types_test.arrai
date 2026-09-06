@@ -29,4 +29,8 @@
 
     xstrInterp: $"1 + 1 = ${1 + 1}" = "1 + 1 = 2",
     xstrNested: $"${$"${1}"}" = "1",
+
+    sparseArray:      [1, , 3] = [1, , 3],
+    sparseArrayFirst: [1, , 3](0) = 1,
+    sparseArrayLast:  [1, , 3](2) = 3,
 )
