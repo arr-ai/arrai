@@ -11,6 +11,11 @@
     dictMergeEmpty: ({} +> {}) = {},
     dictMerge:      ({'a': 1, 'b': 2} +> {'b': 3, 'd': 4}) = {'a': 1, 'b': 3, 'd': 4},
 
+    # Nested merge shorthand (`+>:`/`|:` inside a literal desugars into nested +>/|
+    # calls at compile time) - a distinct desugaring code path from plain +>.
+    tupleNestedMerge: ((a: (b: (c: {1}))) +> (a+>: (b+>: (c|: {2})))) = (a: (b: (c: {1, 2}))),
+    dictNestedMerge:  ({'a': {'b': {'c': {1}}}} +> {'a'+>: {'b'+>: {'c'|: {2}}}}) = {'a': {'b': {'c': {1, 2}}}},
+
     # `&&`/`||` are wire-adjacent boolean ops; asymmetric operands catch a mix-up.
     andNotOr: (true && false) != (true || false),
 )
