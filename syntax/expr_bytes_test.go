@@ -37,6 +37,12 @@ func TestBytesExpr(t *testing.T) {
 	AssertCodeErrors(t,
 		"BytesExpr.Eval: array is not supported",
 		`<<([1, 2, 3])>>`)
+
+	// A constant-folded all-numeric bytes literal used to lose its source scanner
+	// (falling back to Bytes.Source()'s hardcoded empty scanner instead of the real
+	// one), which broke comparing it against an expression that still carried a real
+	// scanner: merging the two scanners errored with "sources are not the same".
+	AssertCodesEvalToSameValue(t, `true`, `<<'a', 'b'>> = <<97, 98>>`)
 }
 
 func toBytes(s string) string {
