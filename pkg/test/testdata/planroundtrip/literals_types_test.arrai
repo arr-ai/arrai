@@ -9,7 +9,12 @@
 
     # `=>` projecting a relation into (@:, @item:) shape must canonicalise into a
     # real Array, not stay a Relation (another bug found earlier in this branch).
+    # The same canonicalisation applies to the other three special shapes
+    # ((@:, @value:) -> Dict, (@:, @char:) -> String, (@:, @byte:) -> Bytes).
     darrowProjectToArray: ({|k, a| (0, 'x'), (1, 'y')} => (@: .k, @item: .a)) = ['x', 'y'],
+    darrowProjectToDict:  ({|k, a| (0, 'x'), (1, 'y')} => (@: .k, @value: .a)) = {0: 'x', 1: 'y'},
+    darrowProjectToString: ({|k, a| (0, 120), (1, 121)} => (@: .k, @char: .a)) = 'xy',
+    darrowProjectToBytes:  ({|k, a| (0, 97), (1, 98)} => (@: .k, @byte: .a)) = <<97, 98>>,
 
     dictPipelineEqualsDictLiteral: ({'a': 1, 'b': 2} >> . * 10) = {'a': 10, 'b': 20},
 
