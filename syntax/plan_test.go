@@ -26,10 +26,8 @@ func evalPlan(t *testing.T, code string) rel.Value {
 	return v
 }
 
-// A $-string decoded from a plan must carry a real source scanner (🎯T25
-// regression): liftXstr used to leave it at the zero value, so formatting an
-// error raised inside the interpolation panicked in wbnf's Scanner.Contains
-// instead of returning a message.
+// A $-string decoded from a plan must carry a real source scanner, so that
+// formatting an error raised inside the interpolation doesn't panic.
 func TestPlanRoundtripXstrErrorHasSource(t *testing.T) {
 	t.Parallel()
 	code := `$"${ {0: 1, 1: 1}(2) }"`
