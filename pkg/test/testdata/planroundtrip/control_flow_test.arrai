@@ -1,0 +1,30 @@
+(
+    ifElseTrue:  (1 if 2 > 0 else 3) = 1,
+    ifElseFalse: (1 if 2 < 0 else 3) = 3,
+
+    cond:        cond {1 > 2: 1, 2 < 3: 2, _: 1 + 2} = 2,
+    condDefault: cond {1 > 2: 1, 2 > 3: 2, _: 1 + 2} = 3,
+
+    condPat: cond 'boolean' {
+        'boolean': 'bool',
+        'string': 'str',
+        _: 'any',
+    } = 'bool',
+    condPatDefault: cond 'unknown' {
+        'boolean': 'bool',
+        'string': 'str',
+        _: 'any',
+    } = 'any',
+
+    dynlet: (let x = 5; x + 1) = 6,
+
+    rec: (
+        let rec fib = \n cond {(n = 0): 0, (n = 1): 1, (n > 0): fib(n-1) + fib(n-2), _: 0};
+        fib(10)
+    ) = 55,
+
+    safeTailPresent: (a: 1).a?:42 = 1,
+    safeTailFallback: (a: 1).b?:42 = 42,
+    safeTailChainPresent: (a: (b: 1)).a?.b:42 = 1,
+    safeTailChainFallback: (a: (b: 1)).a.c?:42 = 42,
+)
