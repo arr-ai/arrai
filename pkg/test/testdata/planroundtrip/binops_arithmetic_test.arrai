@@ -1,0 +1,38 @@
+(
+    add:    1 + 2 = 3,
+    sub:    5 - 2 = 3,
+    mul:    4 * 3 = 12,
+    div:    7 / 2 = 3.5,
+    idiv:   (7 // 2) = 3,
+    mod:    (7 % 3) = 1,
+    submod: (7 -% 3) = 6,
+    pow:    2 ^ 10 = 1024,
+    pos:    +5 = 5,
+    neg:    -5 = 0 - 5,
+    concat: [1, 2] ++ [3, 4] = [1, 2, 3, 4],
+    concatStr: "ab" ++ "cd" = "abcd",
+
+    # `%` (mod) and `-%` (submod) and `//` (idiv) are wire-adjacent numeric ops;
+    # use operands where a tag mix-up would change the result.
+    modNotSubmod: (7 % 3) != (7 -% 3),
+    modNotIdiv:   (7 % 3) != (7 // 3),
+
+    sum:    ({1, 2, 3} sum .) = 6,
+    max:    ({1, 2, 3} max .) = 3,
+    min:    ({1, 2, 3} min .) = 1,
+    mean:   ({2, 4, 6} mean .) = 4,
+    median: ({1, 2, 3, 4, 5} median .) = 3,
+
+    cmpLt:    1 < 2,
+    cmpLe:    2 <= 2,
+    cmpGt:    2 > 1,
+    cmpGe:    2 >= 2,
+    cmpEq:    2 = 2,
+    cmpNe:    2 != 3,
+    cmpIn:    2 <: {1, 2, 3},
+    cmpNotIn: 5 !<: {1, 2, 3},
+    cmpSubset:        {1, 2} (<) {1, 2, 3},
+    cmpSuperset:      {1, 2, 3} (>) {1, 2},
+    cmpSubsetEq:      {1, 2} (<=) {1, 2},
+    cmpSupersetEq:    {1, 2} (>=) {1, 2},
+)
