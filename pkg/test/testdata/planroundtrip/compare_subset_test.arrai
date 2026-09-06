@@ -1,0 +1,16 @@
+(
+    subset:          {1, 2} (<) {1, 2, 3},
+    subsetFalseEq:   !({1, 2} (<) {1, 2}),
+    superset:        {1, 2, 3} (>) {1, 2},
+    subsetOrEqual:   {1, 2} (<=) {1, 2},
+    supersetOrEqual: {1, 2} (>=) {1, 2},
+    subsetOrSuperset:      {1, 2} (<>) {1, 2, 3},
+    subsetSupersetOrEqual: {1, 2} (<>=) {1, 2},
+
+    notSubset:          {1, 2, 3} !(<) {1, 2},
+    notSuperset:        {1, 2} !(>) {1, 2, 3},
+    notSubsetOrEqual:   !({1, 2} !(<=) {1, 2}),
+    notSupersetOrEqual: !({1, 2} !(>=) {1, 2}),
+    notSubsetOrSuperset:      !({1, 2} !(<>) {1, 2, 3}),
+    notSubsetSupersetOrEqual: !({1, 2} !(<>=) {1, 2}),
+)
