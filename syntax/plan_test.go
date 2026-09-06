@@ -118,6 +118,7 @@ func TestPlanRoundtripEqualsEval(t *testing.T) {
 		`[1, 2, 3](1)`,
 		`( '': 'App143' ).'' rank (:.@)`,
 		`(x: ( '': 'hi' )).x?.''?:'no'`,
+		`{(a: {(x: 1, y: 1)}, z: 2), (a: {(x: 1, y: 1)}, z: 3)} unnest a`,
 	}
 	ctx := arraictx.InitRunCtx(context.Background())
 	for _, code := range cases {

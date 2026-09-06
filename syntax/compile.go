@@ -359,7 +359,7 @@ func (pc ParseContext) compileArrow(ctx context.Context, b ast.Branch, name stri
 			case "nest":
 				expr = parseNest(expr, branch["nest"].(ast.One).Node.(ast.Branch))
 			case "unnest":
-				panic("unfinished")
+				expr = parseUnnest(expr, branch["unnest"].(ast.One).Node.(ast.Branch))
 			case "ARROW":
 				op := d.(ast.One).Node.One("").(ast.Leaf).Scanner()
 				f := binops[op.String()]
