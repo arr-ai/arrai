@@ -14,5 +14,10 @@
         join:     (r <&> {(y: 0, z: 'a'), (y: 1, z: 'b')}) count = 12,
         nest:     (r nest ~|x|rest) count = 30,
         rank:     (r rank (rk: .x)) count = 30,
+
+        # `.y = literal` matches the where-by-index fast path (whereByIndex),
+        # bypassing the generic positional-relation Where entirely. A
+        # non-equality predicate forces the generic path instead.
+        whereNonEq: (r where .y > 2) count = 12,
     )
 )
