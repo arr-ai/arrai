@@ -88,6 +88,61 @@
     # Dict bucket, both keyed by "@" but on disjoint ranges.
     unionSetCallAll: ([10, 20] | {5: 'a', 6: 'b'})(5) = 'a',
 
+    # `ArrayEnumerator` (distinct from `Enumerator`: it yields raw values in
+    # index order rather than (@:,@item:)-style tuples) has no dedicated
+    # arr.ai operator - the only real caller besides internal delegation is
+    # `//log.printf`, whose native-function argument passing does *not*
+    # force/convert its `rel.Set` argument the way calling something forces
+    # a seqPipeline, so it reaches Bytes/String/UnionSet's own
+    # ArrayEnumerator directly. The format string's %v count matches the
+    # element count so nothing is left over for Go's fmt to flag as EXTRA.
+    unionSetArrayEnumerator:
+        (//log.printf('%v %v %v %v', [1, 2, 3] | {(x: 1, y: 2)})) count = 4,
+
+    # `with`ing a *non*-UnionSet with an item of a different bucket builds a
+    # fresh UnionSet via toUnionSetWithItem - a different construction path
+    # from `|`, which the cases above all use.
+    unionSetFromWith: ([1, 2, 3] with (x: 1, y: 2)) count = 4,
+
+    # `|`-ing a third, differently-bucketed set onto an *already-existing*
+    # UnionSet takes unionWithSubset, distinct from the two-plain-sets case
+    # above that builds a UnionSet from scratch.
+    unionSetUnionWithSubset:
+        (([1, 2, 3] | {(x: 1, y: 2)}) | {5: 'a'}) count = 5,
+
+    # Unary `-` on any Set wraps it in a `(@neg: ...)` tuple regardless of
+    # concrete type, exercising UnionSet's own Negate.
+    unionSetNegate: (let u = [1, 2, 3] | {(x: 1, y: 2)}; -u = (@neg: u)),
+
+    # Nesting a UnionSet as an *element* of another set requires hashing and
+    # bucketing the UnionSet itself (Hash/Hash128/getBucket/getSetBuilder),
+    # not just its own contents - a different role from every other UnionSet
+    # case here, which only ever appear as the outermost value.
+    unionSetAsSetElement:
+        (let u = [1, 2, 3] | {(x: 1, y: 2)}; u <: {u, 99}),
+
+    # A UnionSet nested as an element alongside a Number lands both in the
+    # generic bucket (UnionSet.getBucket() is always generic), so `{u, 99}`
+    # is a genuine GenericSet, not a nested UnionSet. Printing it exercises
+    # GenericSet.ArrayEnumerator on non-"@"-tuple elements - this used to
+    # panic (`interface conversion: ... is not rel.Tuple: missing method
+    # Enumerator`) since ArrayEnumerator assumed every element was an
+    # "@"-indexed tuple, an assumption that can never hold for a genuine
+    # GenericSet (a homogeneous set of those would have canonicalised to a
+    # specialised type instead of staying a GenericSet). Formatting `u`
+    # itself here also exercises UnionSet's own String/Format/OrderedValues.
+    unionSetInGenericSetArrayEnumerator:
+        (let u = [1, 2, 3] | {(x: 1, y: 2)}; (//log.printf('%v %v', {u, 99})) count = 2),
+
+    # `<` calls Less directly (unlike the subset-check compare ops elsewhere
+    # in this corpus, which use Has/Enumerator instead) - covering
+    # UnionSet.Less's cross-kind branch (against a Number) and its
+    # same-kind branch (against another UnionSet, comparing ordered bucket
+    # subsets pairwise).
+    unionSetLessCrossKind: (let u = [1, 2, 3] | {(x: 1, y: 2)}; 99 < u),
+    unionSetLessSameKind:
+        (([1, 2, 3] | {(x: 1, y: 2)}) < ([4, 5, 6] | {(x: 9, y: 9)})),
+
     dictPipelineEqualsDictLiteral: ({'a': 1, 'b': 2} >> . * 10) = {'a': 10, 'b': 20},
 
     # dictPipeline mirrors seqPipeline (a suspended `>>` over a Dict rather
@@ -121,11 +176,17 @@
     bytesWith:  (<<97, 98>> with (@: 2, @byte: 99)) = <<97, 98, 99>>,
     bytesWhere: (<<97, 98, 99>> where .@byte > 97) count = 2,
     bytesEnumerator: (<<97, 98>> => \x (x.@byte + 1)) = {98, 99},
+    bytesCallAll: <<97, 98>>(0) = 97,
+
+    # See unionSetArrayEnumerator above for why `//log.printf` is the real
+    # trigger for this method.
+    bytesArrayEnumerator: (//log.printf('%v %v', <<97, 98>>)) count = 2,
 
     stringHas:   (@: 0, @char: 97) <: 'ab',
     stringWith:  ('ab' with (@: 2, @char: 99)) = 'abc',
     stringWhere: ('abc' where .@char > 97) count = 2,
     stringEnumerator: ('ab' => \x (x.@char + 1)) = {98, 99},
+    stringArrayEnumerator: (//log.printf('%v %v', 'ab')) count = 2,
 
     tupleLiteral: (a: 1, b: 2).a = 1,
     dictLiteral:  {'x': 1, 'y': 2}('x') = 1,
