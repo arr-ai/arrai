@@ -22,7 +22,7 @@ func strJoin(joiner, subject rel.Value) (rel.Value, error) {
 		toJoin = append(toJoin, s)
 	}
 	if j, is := tools.ValueAsString(joiner); is {
-		return rel.NewString([]rune(strings.Join(toJoin, j))), nil
+		return rel.NewGoString(strings.Join(toJoin, j)), nil
 	}
 	return nil, fmt.Errorf("join: sep not a string: %v", joiner)
 }
@@ -51,7 +51,7 @@ func stdSeqConcat(_ context.Context, seq rel.Value) (rel.Value, error) {
 			}
 			sb.WriteString(s)
 		}
-		return rel.NewString([]rune(sb.String())), nil
+		return rel.NewGoString(sb.String()), nil
 	case rel.Set:
 		result := v0
 		for _, value := range values[1:] {
@@ -179,7 +179,7 @@ func stdSeqRepeat(_ context.Context, arg rel.Value) (rel.Value, error) {
 	return rel.NewNativeFunction("repeat(n)", func(_ context.Context, arg rel.Value) (rel.Value, error) {
 		switch seq := arg.(type) {
 		case rel.String:
-			return rel.NewString([]rune(strings.Repeat(seq.String(), n))), nil
+			return rel.NewGoString(strings.Repeat(seq.String(), n)), nil
 		case rel.Array:
 			values := []rel.Value{}
 			seqValues := seq.Values()
@@ -213,7 +213,7 @@ func stdSeqSub(_ context.Context, old, new, subject rel.Value) (rel.Value, error
 		if !is {
 			return nil, fmt.Errorf("//seq.sub: new not a string: %v", new)
 		}
-		return rel.NewString([]rune(strings.ReplaceAll(subjectStr, oldStr, newStr))), nil
+		return rel.NewGoString(strings.ReplaceAll(subjectStr, oldStr, newStr)), nil
 	case rel.Array:
 		return arraySub(old, new, subject)
 	case rel.Bytes:
@@ -259,7 +259,7 @@ func stdSeqSplit(_ context.Context, delimiter, subject rel.Value) (rel.Value, er
 		splitted := strings.Split(subject.String(), delimStr)
 		vals := make([]rel.Value, 0, len(splitted))
 		for _, s := range splitted {
-			vals = append(vals, rel.NewString([]rune(s)))
+			vals = append(vals, rel.NewGoString(s))
 		}
 		return rel.NewArray(vals...), nil
 	case rel.Array:
@@ -290,7 +290,7 @@ func stdSeqTrimPrefix(ctx context.Context, prefix, subject rel.Value) (rel.Value
 		case rel.String:
 			subjectStr := subject.String()
 			if prefixStr, is := tools.ValueAsString(prefix); is {
-				return rel.NewString([]rune(strings.TrimPrefix(subjectStr, prefixStr))), nil
+				return rel.NewGoString(strings.TrimPrefix(subjectStr, prefixStr)), nil
 			}
 			return nil, fmt.Errorf("//seq.trim_prefix: prefix not a string: %v", prefix)
 		case rel.Array:
@@ -314,7 +314,7 @@ func stdSeqTrimSuffix(_ context.Context, suffix, subject rel.Value) (rel.Value, 
 	case rel.String:
 		subjectStr := subject.String()
 		if suffixStr, is := tools.ValueAsString(suffix); is {
-			return rel.NewString([]rune(strings.TrimSuffix(subjectStr, suffixStr))), nil
+			return rel.NewGoString(strings.TrimSuffix(subjectStr, suffixStr)), nil
 		}
 		return nil, fmt.Errorf("//seq.trim_suffix: suffix not a string: %v", suffix)
 	case rel.Array:

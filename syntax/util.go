@@ -9,7 +9,7 @@ import (
 func strArrToRelArr(s []string) rel.Value {
 	values := make([]rel.Value, 0, len(s))
 	for _, a := range s {
-		values = append(values, rel.NewString([]rune(a)))
+		values = append(values, rel.NewGoString(a))
 	}
 	return rel.NewArray(values...)
 }

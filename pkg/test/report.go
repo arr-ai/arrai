@@ -70,7 +70,7 @@ func relPath(absPath string) string {
 		return absPath
 	}
 
-	return relPath
+	return filepath.ToSlash(relPath)
 }
 
 // reportTest writes a formatted output of a single test result (PASS/FAIL/SKIP/??) with the optional included Message.

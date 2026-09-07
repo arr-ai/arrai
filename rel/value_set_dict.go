@@ -1,12 +1,13 @@
 package rel
 
 import (
+	"slices"
+
 	"github.com/arr-ai/hash/hash128"
 
 	"context"
 	"fmt"
 	"reflect"
-	"sort"
 
 	"github.com/go-errors/errors"
 
@@ -64,6 +65,9 @@ func AsDict(v Value) (Dict, bool) {
 	switch v := v.(type) {
 	case Dict:
 		return v, true
+	case dictPipeline:
+		d, err := v.force()
+		return d, err == nil
 	case EmptySet:
 		return Dict{}, true
 	}
@@ -128,6 +132,10 @@ func (d Dict) Hash128() hash128.H128 {
 }
 
 func (d Dict) Equal(v Value) bool {
+	if hashIdentity {
+		s, ok := v.(Set)
+		return ok && d.Hash128() == s.Hash128()
+	}
 	switch v := v.(type) {
 	case Dict:
 		return d.equalDict(v)
@@ -203,7 +211,14 @@ func (d Dict) OrderedEntries() []DictEntryTuple {
 	for e := d.Enumerator(); e.MoveNext(); {
 		result = append(result, e.Current().(DictEntryTuple))
 	}
-	sort.Sort(result)
+	slices.SortFunc(result, func(a, b DictEntryTuple) int {
+		if dictEntryTupleLess(a, b) {
+			return -1
+		} else if dictEntryTupleLess(b, a) {
+			return 1
+		}
+		return 0
+	})
 	return result
 }
 
@@ -232,7 +247,10 @@ func (d Dict) Less(v Value) bool {
 		return d.Kind() < v.Kind()
 	}
 	dKeys := d.m.Keys().OrderedElements(ValueLess)
-	vDict := v.(Dict)
+	vDict, ok := AsDict(v)
+	if !ok {
+		return true
+	}
 	vKeys := vDict.m.Keys().OrderedElements(ValueLess)
 	n := len(dKeys)
 	if n > len(vKeys) {
@@ -479,19 +497,9 @@ func (a *DictEnumerator) Current() (key, value Value) {
 
 type dictEntryTupleSort []DictEntryTuple
 
-func (s dictEntryTupleSort) Len() int {
-	return len(s)
-}
-
-func (s dictEntryTupleSort) Less(a, b int) bool {
-	x := s[a]
-	y := s[b]
+func dictEntryTupleLess(x, y DictEntryTuple) bool {
 	if !x.at.Equal(y.at) {
 		return x.at.Less(y.at)
 	}
 	return x.value.Less(y.value)
-}
-
-func (s dictEntryTupleSort) Swap(a, b int) {
-	s[a], s[b] = s[b], s[a]
 }

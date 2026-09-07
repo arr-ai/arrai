@@ -298,25 +298,33 @@ func bundleLocalFile(ctx context.Context, filePath string) (err error) {
 		return err
 	}
 
-	var dir string
-	if isImportModule(ctx) {
-		dir = ModuleDir
-		filePath, err = createModulePath(ctx, filePath)
-		if err != nil {
-			return err
-		}
-	} else {
-		config := fromBundleConfig(ctx)
-		if config.mainRoot != "" {
-			dir = ModuleDir
-			filePath = path.Join(config.mainRoot, ctxfs.ToUnixPath(strings.TrimPrefix(filePath, config.absRootPath)))
-		} else {
-			dir = NoModuleDir
-			filePath = ctxfs.ToUnixPath(strings.TrimPrefix(filePath, config.absRootPath))
-		}
+	bundlePath, err := portableBundlePath(ctx, filePath)
+	if err != nil {
+		return err
 	}
+	return ctxfs.ZipCreate(ctx, bundleFsKey, bundlePath, source)
+}
 
-	return ctxfs.ZipCreate(ctx, bundleFsKey, path.Join(dir, filePath), source)
+// portableBundlePath returns filePath's path inside the bundle's own zip
+// structure: module-relative (under ModuleDir) for content resolved from an
+// external module, project-relative (also under ModuleDir, or under
+// NoModuleDir for a module-less project) otherwise. filePath must be
+// absolute. This is also reused as an import's machine-independent display
+// path (see ImportExpr/lowerSyntaxExpr), since it's already exactly the
+// portable identity the bundle gives this file.
+func portableBundlePath(ctx context.Context, filePath string) (string, error) {
+	if isImportModule(ctx) {
+		modPath, err := createModulePath(ctx, filePath)
+		if err != nil {
+			return "", err
+		}
+		return path.Join(ModuleDir, modPath), nil
+	}
+	config := fromBundleConfig(ctx)
+	if config.mainRoot != "" {
+		return path.Join(ModuleDir, config.mainRoot, ctxfs.ToUnixPath(strings.TrimPrefix(filePath, config.absRootPath))), nil
+	}
+	return path.Join(NoModuleDir, ctxfs.ToUnixPath(strings.TrimPrefix(filePath, config.absRootPath))), nil
 }
 
 func bundleModule(ctx context.Context, relImportPath string, m *goModule) (context.Context, error) {

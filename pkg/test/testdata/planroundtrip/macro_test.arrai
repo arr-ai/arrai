@@ -1,0 +1,12 @@
+(
+    # `{: macro : content :}` embeds a custom sub-grammar and transform
+    # (compileMacro / the "embed" node kind) - a rarely-exercised parser
+    # extension mechanism, distinct from every other construct in this corpus.
+    invokeMacro:
+        let date = (
+            @grammar: {://grammar.lang.wbnf:date -> y=\d{4} "-" m=\d{2} "-" d=\d{2};:},
+            @transform: (date: \ast ast -> (year: .y, month: .m, day: .d) :> //eval.value(.''))
+        );
+        {:date:2020-06-09:} = (day: 9, month: 6, year: 2020)
+    ,
+)

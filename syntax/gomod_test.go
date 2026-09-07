@@ -101,6 +101,87 @@ require github.com/pkg/errors v0.8.0
 	require.Contains(t, filepath.ToSlash(m.Dir), "github.com/pkg/errors@v0.8.0")
 }
 
+// TestRetrieveModuleResolvesSelfImportWithoutGoGet guards against a project
+// importing one of its own packages by full module path (e.g.
+// //{github.com/anzx/sysl/pkg/arrai/reconstruct} from inside
+// github.com/anzx/sysl itself), rather than a relative "./" import.
+// go list -m -json all deliberately excludes the main module
+// (runGoListAllModules), so without this the pin lookups below would never
+// match it, falling through to `go get`, which fails outright: "go: can't
+// request version 'latest' of the main module".
+func TestRetrieveModuleResolvesSelfImportWithoutGoGet(t *testing.T) {
+	root := withTempModule(t, `module example.com/selftest
+
+go 1.21
+`)
+	goModBefore, err := os.ReadFile(filepath.Join(root, "go.mod"))
+	require.NoError(t, err)
+
+	m, err := retrieveModule("example.com/selftest/pkg/sub", "", root)
+	require.NoError(t, err)
+	require.Equal(t, "example.com/selftest", m.Name)
+	require.Equal(t, root, m.Dir)
+
+	goModAfter, err := os.ReadFile(filepath.Join(root, "go.mod"))
+	require.NoError(t, err)
+	require.Equal(t, goModBefore, goModAfter, "resolving a self-import must not touch go.mod")
+}
+
+func TestRetrieveModuleResolvesSelfImportExactMatch(t *testing.T) {
+	root := withTempModule(t, `module example.com/selftest
+
+go 1.21
+`)
+	m, err := retrieveModule("example.com/selftest", "", root)
+	require.NoError(t, err)
+	require.Equal(t, "example.com/selftest", m.Name)
+	require.Equal(t, root, m.Dir)
+}
+
+// TestRetrieveModuleSelfImportDoesNotFalseMatchSimilarName guards the
+// boundary check: "example.com/selftest" sharing a string prefix with module
+// "example.com/self" must not be treated as a self-import of it. Seeds the
+// module graph directly rather than resolving over the network, isolating
+// this to the boundary check itself.
+func TestRetrieveModuleSelfImportDoesNotFalseMatchSimilarName(t *testing.T) {
+	root := withTempModule(t, `module example.com/self
+
+go 1.21
+`)
+	seedRequiredModules(root, map[string]requiredModule{
+		"example.com/selftest": {Path: "example.com/selftest", Dir: "/mod/selftest"},
+	})
+
+	m, err := retrieveModule("example.com/selftest", "", root)
+	require.NoError(t, err)
+	require.Equal(t, "/mod/selftest", m.Dir,
+		"a similarly-named-but-different module must resolve via the normal pin lookup, not be mistaken for a self-import")
+}
+
+// TestRetrieveModuleResolvesSelfImportUsingCwdWhenRootEmpty covers moduleRoot
+// == "" (e.g. the arrai shell/REPL), which falls back to the process's
+// working directory for mainModuleName just like goModFilePin already does.
+func TestRetrieveModuleResolvesSelfImportUsingCwdWhenRootEmpty(t *testing.T) {
+	root := withTempModule(t, `module example.com/selftest
+
+go 1.21
+`)
+	wd, err := os.Getwd()
+	require.NoError(t, err)
+	require.NoError(t, os.Chdir(root))
+	t.Cleanup(func() { require.NoError(t, os.Chdir(wd)) })
+
+	m, err := retrieveModule("example.com/selftest/pkg/sub", "", "")
+	require.NoError(t, err)
+	require.Equal(t, "example.com/selftest", m.Name)
+
+	wantDir, err := filepath.EvalSymlinks(root)
+	require.NoError(t, err)
+	gotDir, err := filepath.EvalSymlinks(m.Dir)
+	require.NoError(t, err)
+	require.Equal(t, wantDir, gotDir)
+}
+
 func TestRetrieveModuleFallsBackWithoutPin(t *testing.T) {
 	root := withTempModule(t, `module example.com/pintest
 

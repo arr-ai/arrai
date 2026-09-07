@@ -1,0 +1,283 @@
+(
+    # Array vs seqPipeline vs EmptySet must all compare equal when they hold the
+    # same elements: this is exactly the shape of a bug found earlier in this
+    # branch, where Array.Equal only recognised a concrete Array.
+    seqPipelineEqualsArrayLiteral: ([1, 2, 3] >> . + 1) = [2, 3, 4],
+    emptySeqPipelineEqualsEmptyArray: ([] >> . + 1) = [],
+
+    # Both sides unforced `>>` chains - a distinct seqPipeline.Equal branch
+    # (forcing *both* operands) from comparing one against a plain Array.
+    seqPipelineEqualsSeqPipeline: ([1, 2, 3] >> . + 1) = ([0, 1, 2] >> . + 2),
+
+    # Operations applied directly to an unforced `>>` chain (rather than
+    # comparing it for equality, which is the only thing forcing it above) -
+    # each dispatches through a different Set-interface method that
+    # seqPipeline must implement, most of which just force then delegate.
+    seqPipelineCount:    ([1, 2, 3] >> . + 1) count = 3,
+    seqPipelineIndex:    ([1, 2, 3] >> . + 1)(0) = 2,
+    seqPipelineWith:     (([1, 2, 3] >> . + 1) with (@: 3, @item: 100)) count = 4,
+    seqPipelineWithout:  (([1, 2, 3] >> . + 1) without (@: 1, @item: 3)) count = 2,
+
+    # `<:` never forces its rhs (CompareExpr.Eval passes the raw evaluated
+    # Value straight into the comparator), so this reaches seqPipeline.Has
+    # directly rather than via mustArray()+Has on a forced Array.
+    seqPipelineHas: (@: 0, @item: 2) <: ([1, 2, 3] >> . + 1),
+
+    # `where`'s implementation calls x.Where(...) on whatever Set the lhs
+    # evaluates to - an unforced `>>` chain included - so this reaches
+    # seqPipeline.Where directly. Each element is the array's (@:,@item:)
+    # tuple, not the bare value, hence `.@item`.
+    seqPipelineWhere: (([1, 2, 3] >> . + 1) where .@item > 2) count = 2,
+
+    # `=>`'s generic (non-projectDots) path iterates via set.Enumerator()
+    # (either directly, or through evalParallel's All(), which also falls
+    # back to Enumerator() for any type it doesn't special-case) - reaching
+    # seqPipeline.Enumerator directly instead of mustArray().Enumerator().
+    seqPipelineEnumerator: (([1, 2, 3] >> . + 1) => \x (x.@item + 10)) = {12, 13, 14},
+
+    emptyArrayEqualsEmptySet: [] = {},
+    emptySetEqualsEmptyArray: {} = [],
+
+    # `=>` projecting a relation into (@:, @item:) shape must canonicalise into a
+    # real Array, not stay a Relation (another bug found earlier in this branch).
+    # The same canonicalisation applies to the other three special shapes
+    # ((@:, @value:) -> Dict, (@:, @char:) -> String, (@:, @byte:) -> Bytes).
+    darrowProjectToArray: ({|k, a| (0, 'x'), (1, 'y')} => (@: .k, @item: .a)) = ['x', 'y'],
+    darrowProjectToDict:  ({|k, a| (0, 'x'), (1, 'y')} => (@: .k, @value: .a)) = {0: 'x', 1: 'y'},
+    darrowProjectToString: ({|k, a| (0, 120), (1, 121)} => (@: .k, @char: .a)) = 'xy',
+    darrowProjectToBytes:  ({|k, a| (0, 97), (1, 98)} => (@: .k, @byte: .a)) = <<97, 98>>,
+
+    # A relation-heading literal (`{|names| rows...}`) whose heading is itself
+    # one of the 4 canonical 2-attr shapes is a compile-time-distinct path
+    # from both a plain tuple-literal set (`{(@:0,@item:'x'), ...}`, which
+    # constant-folds via NewTuple) and the `=>`-projection cases just above
+    # (which build the shape at *runtime* from an existing relation):
+    # NewRelationExpr special-cases this heading shape directly into
+    # ArrayItemTupleExpr/StringCharTupleExpr/DictEntryTupleExpr nodes, not a
+    # plain TupleExpr. `let n = 1` (rather than a second literal row index)
+    # keeps one row non-constant so the whole literal can't fold away at
+    # compile time, forcing these Exprs' own Eval to actually run.
+    relationHeadingToArray: (let n = 1; {|@, @item| (0, 'x'), (n, 'y')}) = ['x', 'y'],
+    relationHeadingToDict:  (let n = 1; {|@, @value| (0, 'x'), (n, 'y')}) = {0: 'x', 1: 'y'},
+    relationHeadingToString: (let n = 1; {|@, @char| (0, 88), (n, 89)}) = 'XY',
+    relationHeadingToBytes: (let n = 1; {|@, @byte| (0, 88), (n, 89)}) = <<88, 89>>,
+
+    # `|` unions two sets whose elements land in genuinely different
+    # "buckets" (an Array's items vs a differently-shaped Relation's tuples)
+    # into a real UnionSet - a completely different Set representation from
+    # everything else in this corpus, entirely untested elsewhere. `<:`,
+    # `with`/`without`, `where`, and calling it as a function each dispatch
+    # to a distinct UnionSet method that just delegates per-bucket.
+    unionSetHasInArrayBucket: (@: 0, @item: 1) <: ([1, 2, 3] | {(x: 1, y: 2)}),
+    unionSetHasInRelationBucket: (x: 1, y: 2) <: ([1, 2, 3] | {(x: 1, y: 2)}),
+    unionSetWith: (([1, 2, 3] | {(x: 1, y: 2)}) with (x: 5, y: 6)) count = 5,
+
+    # Removing the relation bucket's only tuple leaves just the array bucket,
+    # which collapses back to a plain Array rather than staying a
+    # single-bucket UnionSet.
+    unionSetWithoutCollapsesToArray:
+        (([1, 2, 3] | {(x: 1, y: 2)}) without (x: 1, y: 2)) = [1, 2, 3],
+
+    # A predicate valid across every bucket's element shape (ignoring the
+    # element entirely) so `where` doesn't error accessing an attr that only
+    # exists in one bucket.
+    unionSetWhere: (([1, 2, 3] | {(x: 1, y: 2)}) where \_ true) count = 4,
+
+    # Calling a UnionSet as a function dispatches the call across every
+    # bucket and merges whichever one(s) match - here an Array bucket and a
+    # Dict bucket, both keyed by "@" but on disjoint ranges.
+    unionSetCallAll: ([10, 20] | {5: 'a', 6: 'b'})(5) = 'a',
+
+    # `ArrayEnumerator` (distinct from `Enumerator`: it yields raw values in
+    # index order rather than (@:,@item:)-style tuples) has no dedicated
+    # arr.ai operator - the only real caller besides internal delegation is
+    # `//log.printf`, whose native-function argument passing does *not*
+    # force/convert its `rel.Set` argument the way calling something forces
+    # a seqPipeline, so it reaches Bytes/String/UnionSet's own
+    # ArrayEnumerator directly. The format string's %v count matches the
+    # element count so nothing is left over for Go's fmt to flag as EXTRA.
+    unionSetArrayEnumerator:
+        (//log.printf('%v %v %v %v', [1, 2, 3] | {(x: 1, y: 2)})) count = 4,
+
+    # `with`ing a *non*-UnionSet with an item of a different bucket builds a
+    # fresh UnionSet via toUnionSetWithItem - a different construction path
+    # from `|`, which the cases above all use.
+    unionSetFromWith: ([1, 2, 3] with (x: 1, y: 2)) count = 4,
+
+    # `|`-ing a third, differently-bucketed set onto an *already-existing*
+    # UnionSet takes unionWithSubset, distinct from the two-plain-sets case
+    # above that builds a UnionSet from scratch.
+    unionSetUnionWithSubset:
+        (([1, 2, 3] | {(x: 1, y: 2)}) | {5: 'a'}) count = 5,
+
+    # Unary `-` on any Set wraps it in a `(@neg: ...)` tuple regardless of
+    # concrete type, exercising UnionSet's own Negate.
+    unionSetNegate: (let u = [1, 2, 3] | {(x: 1, y: 2)}; -u = (@neg: u)),
+
+    # Nesting a UnionSet as an *element* of another set requires hashing and
+    # bucketing the UnionSet itself (Hash/Hash128/getBucket/getSetBuilder),
+    # not just its own contents - a different role from every other UnionSet
+    # case here, which only ever appear as the outermost value.
+    unionSetAsSetElement:
+        (let u = [1, 2, 3] | {(x: 1, y: 2)}; u <: {u, 99}),
+
+    # A UnionSet nested as an element alongside a Number lands both in the
+    # generic bucket (UnionSet.getBucket() is always generic), so `{u, 99}`
+    # is a genuine GenericSet, not a nested UnionSet. Printing it exercises
+    # GenericSet.ArrayEnumerator on non-"@"-tuple elements - this used to
+    # panic (`interface conversion: ... is not rel.Tuple: missing method
+    # Enumerator`) since ArrayEnumerator assumed every element was an
+    # "@"-indexed tuple, an assumption that can never hold for a genuine
+    # GenericSet (a homogeneous set of those would have canonicalised to a
+    # specialised type instead of staying a GenericSet). Formatting `u`
+    # itself here also exercises UnionSet's own String/Format/OrderedValues.
+    unionSetInGenericSetArrayEnumerator:
+        (let u = [1, 2, 3] | {(x: 1, y: 2)}; (//log.printf('%v %v', {u, 99})) count = 2),
+
+    # `<` calls Less directly (unlike the subset-check compare ops elsewhere
+    # in this corpus, which use Has/Enumerator instead) - covering
+    # UnionSet.Less's cross-kind branch (against a Number) and its
+    # same-kind branch (against another UnionSet, comparing ordered bucket
+    # subsets pairwise).
+    unionSetLessCrossKind: (let u = [1, 2, 3] | {(x: 1, y: 2)}; 99 < u),
+    unionSetLessSameKind:
+        (([1, 2, 3] | {(x: 1, y: 2)}) < ([4, 5, 6] | {(x: 9, y: 9)})),
+
+    dictPipelineEqualsDictLiteral: ({'a': 1, 'b': 2} >> . * 10) = {'a': 10, 'b': 20},
+
+    # dictPipeline mirrors seqPipeline (a suspended `>>` over a Dict rather
+    # than an Array) but is a separate implementation with its own Equal/
+    # Count/index/With/Without/force, untested by the literal comparison
+    # above (which only forces the pipeline side, not a same-type compare).
+    dictPipelineEqualsDictPipeline: ({'a': 1, 'b': 2} >> . * 10) = ({'a': 2, 'b': 4} >> . * 5),
+    dictPipelineCount:   ({'a': 1, 'b': 2} >> . * 10) count = 2,
+    dictPipelineIndex:   ({'a': 1, 'b': 2} >> . * 10)('a') = 10,
+    dictPipelineWith:    (({'a': 1, 'b': 2} >> . * 10) with (@: 'c', @value: 30)) count = 3,
+    dictPipelineWithout: (({'a': 1, 'b': 2} >> . * 10) without (@: 'a', @value: 10)) count = 1,
+
+    # dictPipeline's counterparts to the three seqPipeline direct-dispatch
+    # cases above (Has via `<:`, Where via `where`, Enumerator via `=>`).
+    dictPipelineHas: (@: 'a', @value: 10) <: ({'a': 1, 'b': 2} >> . * 10),
+    dictPipelineWhere: (({'a': 1, 'b': 2} >> . * 10) where .@value > 15) count = 1,
+    dictPipelineEnumerator: (({'a': 1, 'b': 2} >> . * 10) => \x (x.@value + 1)) = {11, 21},
+
+    bytesLiteral:      <<'a', 'b'>> = <<97, 98>>,
+    emptyBytesLiteral: <<>> = <<''>>,
+    charLiteral:       <<%A, %B, %C>> = <<'A', 'B', 'C'>>,
+    charLiteralNumber: %A = 65,
+    bytesFromWithout:  {} = (<<'a'>> without (@: 0, @byte: 97)),
+    stringCharAccess:  'abc'(1) = 98,
+    stringFromWithout: {} = ('a' without (@: 0, @char: 97)),
+
+    # Bytes/String's own Has/With/Where/Enumerator, distinct Set-interface
+    # methods from `without`/index above and untested by anything else in
+    # this corpus.
+    bytesHas:   (@: 0, @byte: 97) <: <<97, 98>>,
+    bytesWith:  (<<97, 98>> with (@: 2, @byte: 99)) = <<97, 98, 99>>,
+    bytesWhere: (<<97, 98, 99>> where .@byte > 97) count = 2,
+    bytesEnumerator: (<<97, 98>> => \x (x.@byte + 1)) = {98, 99},
+    bytesCallAll: <<97, 98>>(0) = 97,
+
+    # See unionSetArrayEnumerator above for why `//log.printf` is the real
+    # trigger for this method.
+    bytesArrayEnumerator: (//log.printf('%v %v', <<97, 98>>)) count = 2,
+
+    stringHas:   (@: 0, @char: 97) <: 'ab',
+    stringWith:  ('ab' with (@: 2, @char: 99)) = 'abc',
+    stringWhere: ('abc' where .@char > 97) count = 2,
+    stringEnumerator: ('ab' => \x (x.@char + 1)) = {98, 99},
+    stringArrayEnumerator: (//log.printf('%v %v', 'ab')) count = 2,
+
+    tupleLiteral: (a: 1, b: 2).a = 1,
+    dictLiteral:  {'x': 1, 'y': 2}('x') = 1,
+    setLiteral:   2 <: {1, 2, 3},
+
+    # A set mixing element shapes (number, string, tuple) can't canonicalise
+    # into a Relation/Dict/UnionSet, so it constant-folds to a real GenericSet
+    # value - a distinct encodeValue/decodeValue path from every other set
+    # shape in this corpus.
+    genericSetMixedShapes: {1, 'a', (x: 1)} = {1, 'a', (x: 1)},
+
+    xstrInterp: $"1 + 1 = ${1 + 1}" = "1 + 1 = 2",
+    xstrNested: $"${$"${1}"}" = "1",
+
+    # Backtick-delimited $-string - a distinct string-literal delimiter from
+    # `$"..."`, sharing the same xstr compile path but with its own escaping
+    # rules (no `\n` processing, since backtick strings are meant for
+    # multi-line source text as written).
+    xstrBackquote: $`a${1 + 1}b` = "a2b",
+
+    # `${expr:format}` - a format-spec suffix (Go fmt verb) on an interpolated
+    # value, a distinct xstrExpand path from the plain `${expr}` cases above.
+    xstrFormatSpec: $"${42:05d}" = "00042",
+
+    # formatValue's other format-verb branches (bool/hex), untested elsewhere.
+    xstrFormatBool: $"${1 = 1:t}" = "true",
+    xstrFormatHex:  $"${255:x}" = "ff",
+
+    # `${array:format:sep}` - per-element format plus a join separator, the
+    # array-expansion branch of xstrExpand (distinct from the scalar formatValue
+    # path just above).
+    xstrFormatSpecArrayJoin: $"${[1, 2, 3]:03d:, }" = "001, 002, 003",
+
+    # A multi-line backtick $-string strips the common leading indentation of
+    # each source line - the cleanEmptyPieces/indent-tracking logic in
+    # xstrExpr.Eval, barely exercised by the single-line cases above.
+    xstrIndentMultiline: $`
+        a
+        b` = "a\nb",
+
+    # `::\i` after an array-valued interpolation joins each mapped element
+    # using "continue the current line's indent" as the separator - a distinct
+    # cleanEmptyPieces code path (indent propagation across joined pieces)
+    # from the plain `:format:sep` array-join case above.
+    xstrIndentArrayJoin: $"${['a', 'b', 'c'] >> $'letter: ${.}'::\i}" = "letter: a\nletter: b\nletter: c",
+
+    sparseArray:      [1, , 3] = [1, , 3],
+    sparseArrayFirst: [1, , 3](0) = 1,
+    sparseArrayLast:  [1, , 3](2) = 3,
+
+    # Concatenate's fastPaths cover contiguous zero-offset String/Array pairs
+    # only; Bytes (no fast path at all) and a sparse array (has holes, so it
+    # fails the fast-path's `count == len(values)` check) both fall through
+    # to the generic element-by-element `+` path instead.
+    bytesConcatenate:       <<'a', 'b'>> ++ <<'c'>> = <<'a', 'b', 'c'>>,
+    sparseArrayConcatenate: [1, , 3] ++ [4, 5] = [1, , 3, 4, 5],
+
+    # Special-shape tuple literals constant-fold to their own Value types
+    # (ArrayItemTuple/StringCharTuple/BytesByteTuple/DictEntryTuple) at compile
+    # time, a distinct encodeValue/decodeValue path from a plain tuple literal.
+    arrayItemTupleLiteral:  (@: 1, @item: 2) = (@: 1, @item: 2),
+    stringCharTupleLiteral: (@: 1, @char: 65) = (@: 1, @char: 65),
+    bytesByteTupleLiteral:  (@: 1, @byte: 97) = (@: 1, @byte: 97),
+    dictEntryTupleLiteral:  (@: {1, 2}, @value: 3) = (@: {1, 2}, @value: 3),
+
+    # Same 4 canonical shapes, but built at *runtime* from a function
+    # argument rather than as compile-time-foldable literals - this is the
+    # only way to reach canonicalTuple's own dispatch switch, since a literal
+    # canonical-shape tuple constant-folds straight to its specialised Value
+    # type without ever calling it.
+    arrayItemTupleRuntime:  (\i (@: i, @item: i * 2))(1) = (@: 1, @item: 2),
+    stringCharTupleRuntime: (\i (@: i, @char: i + 64))(1) = (@: 1, @char: 65),
+    bytesByteTupleRuntime:  (\i (@: i, @byte: i + 96))(1) = (@: 1, @byte: 97),
+    dictEntryTupleRuntime:  (\i (@: {i, i + 1}, @value: i + 2))(1) = (@: {1, 2}, @value: 3),
+
+    # Comparing a plain GenericTuple against one of the canonical 2-attr
+    # shapes (a different concrete Go type implementing Tuple) exercises
+    # GenericTuple.Equal's cross-type fallback branch, untested by the
+    # same-type comparisons everywhere else in this corpus.
+    genericTupleNotEqualCanonicalShape: (a: 1) != (@: 1, @item: 2),
+
+    # A bare package member reference (no call) constant-folds to a
+    # *NativeFunction value.
+    nativeFunctionLiteral: (//str.lower)("ABC") = "abc",
+
+    # A literal *set* of special-shape tuples constant-folds the whole set to a
+    # Value at compile time (NewSetExpr), which recurses into encodeValue's
+    # aitemval/scharval/bbyteval/dentryval cases for each element - a different
+    # path from a single bare special-shape tuple literal above.
+    setOfArrayItemTuples:  {(@: 0, @item: 'x'), (@: 1, @item: 'y')} = {(@: 0, @item: 'x'), (@: 1, @item: 'y')},
+    setOfStringCharTuples: {(@: 0, @char: 65), (@: 1, @char: 66)} = {(@: 0, @char: 65), (@: 1, @char: 66)},
+    setOfBytesByteTuples:  {(@: 0, @byte: 97), (@: 1, @byte: 98)} = {(@: 0, @byte: 97), (@: 1, @byte: 98)},
+    setOfDictEntryTuples:  {(@: {1}, @value: 'a'), (@: {2}, @value: 'b')} = {(@: {1}, @value: 'a'), (@: {2}, @value: 'b')},
+)

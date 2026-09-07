@@ -26,6 +26,8 @@ import (
 var (
 	tupleSalt    = hash128.String("rel.Tuple")
 	valuesSalt   = hash128.String("rel.Values")
+	stringSalt   = hash128.String("rel.String")
+	bytesSalt    = hash128.String("rel.Bytes")
 	emptySetSalt = hash128.String("rel.EmptySet")
 	arraySalt    = hash128.String("rel.Array")
 	unionSalt    = hash128.String("rel.UnionSet")

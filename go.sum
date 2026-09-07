@@ -1,6 +1,6 @@
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
-github.com/arr-ai/frozen v1.13.0 h1:m4x8ULgMnYpLNLhMolDV9YHIvCtOwMNGQohdvpn9TBQ=
-github.com/arr-ai/frozen v1.13.0/go.mod h1:VNCuVE6JNVR025R/8e11kuUYavxwXs1ZaGNZKQrT35c=
+github.com/arr-ai/frozen v1.14.0 h1:z+oP7MeH2V4Str0KmoXCP+2sS+2K4A9B5+DQ3jr9ejA=
+github.com/arr-ai/frozen v1.14.0/go.mod h1:VNCuVE6JNVR025R/8e11kuUYavxwXs1ZaGNZKQrT35c=
 github.com/arr-ai/hash v1.2.0 h1:t3fdmWyVujLhfn6KXEZj1/1W7QHSDr957rTFY8mWfbQ=
 github.com/arr-ai/hash v1.2.0/go.mod h1:t+NkgqdI8scxkER48AXU/QE4NVojIBZKOB/US7mYVxQ=
 github.com/arr-ai/proto v0.0.0-20180422074755-2ffbedebee50 h1:IKdl2NU9J9dt4qtet3WarYf5X9jqmO7x9hCqvoKi1kI=

@@ -41,37 +41,56 @@ func NewDictPattern(entries ...DictPatternEntry) DictPattern {
 	return DictPattern{entries}
 }
 
-func (p DictPattern) Bind(ctx context.Context, local Scope, value Value) (context.Context, Scope, error) {
+func (p DictPattern) Bind(ctx context.Context, local Scope, value Value, b *scopeBuilder) (context.Context, error) {
+	forced, err := Observe(value)
+	if err != nil {
+		return ctx, err
+	}
+	value = forced
 	dict, is := value.(Dict)
 	if !is {
-		return ctx, EmptyScope, fmt.Errorf("%s is not a dict", value)
+		if !b.explain {
+			return ctx, errPatternMismatch
+		}
+		return ctx, lazyErrorf("%s is not a dict", value)
 	}
 
 	extraElements := make(map[int]int)
 	for i, entry := range p.entries {
 		if _, is := entry.pattern.pattern.(ExtraElementPattern); is {
 			if len(extraElements) == 1 {
-				return ctx, EmptyScope, fmt.Errorf("non-deterministic pattern is not supported yet")
+				if !b.explain {
+					return ctx, errPatternMismatch
+				}
+				return ctx, lazyErrorf("non-deterministic pattern is not supported yet")
 			}
 			extraElements[i] = dict.Count() - len(p.entries)
 		}
 		if entry.pattern.fallback != nil {
 			if len(extraElements) == 1 {
-				return ctx, EmptyScope, fmt.Errorf("non-deterministic pattern is not supported yet")
+				if !b.explain {
+					return ctx, errPatternMismatch
+				}
+				return ctx, lazyErrorf("non-deterministic pattern is not supported yet")
 			}
 			extraElements[i] = dict.Count() - len(p.entries)
 		}
 	}
 
 	if len(p.entries) > dict.Count()+len(extraElements) {
-		return ctx, EmptyScope, fmt.Errorf("length of dict %s shorter than dict pattern %s", dict, p)
+		if !b.explain {
+			return ctx, errPatternMismatch
+		}
+		return ctx, lazyErrorf("length of dict %s shorter than dict pattern %s", dict, p)
 	}
 
 	if len(extraElements) == 0 && len(p.entries) < dict.Count() {
-		return ctx, EmptyScope, fmt.Errorf("length of dict %s longer than dict pattern %s", dict, p)
+		if !b.explain {
+			return ctx, errPatternMismatch
+		}
+		return ctx, lazyErrorf("length of dict %s longer than dict pattern %s", dict, p)
 	}
 
-	result := EmptyScope
 	m := dict.m
 	for _, entry := range p.entries {
 		var dictValue Value
@@ -90,12 +109,15 @@ func (p DictPattern) Bind(ctx context.Context, local Scope, value Value) (contex
 			dictExpr, found := m.Get(key.(Value))
 			if !found {
 				if entry.pattern.fallback == nil {
-					return ctx, EmptyScope, fmt.Errorf("couldn't find %s in dict %s", key, m)
+					if !b.explain {
+						return ctx, errPatternMismatch
+					}
+					return ctx, lazyErrorf("couldn't find %s in dict %s", key, m)
 				}
 				var err error
 				dictValue, err = entry.pattern.fallback.Eval(ctx, local)
 				if err != nil {
-					return ctx, EmptyScope, err
+					return ctx, err
 				}
 			} else {
 				dictValue = dictExpr.(Value)
@@ -103,19 +125,14 @@ func (p DictPattern) Bind(ctx context.Context, local Scope, value Value) (contex
 			}
 		}
 
-		var scope Scope
 		var err error
-		ctx, scope, err = entry.pattern.pattern.Bind(ctx, local, dictValue)
+		ctx, err = entry.pattern.pattern.Bind(ctx, local, dictValue, b)
 		if err != nil {
-			return ctx, EmptyScope, err
-		}
-		result, err = result.MatchedUpdate(scope)
-		if err != nil {
-			return ctx, EmptyScope, err
+			return ctx, err
 		}
 	}
 
-	return ctx, result, nil
+	return ctx, nil
 }
 
 func (p DictPattern) String() string {

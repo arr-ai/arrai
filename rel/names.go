@@ -2,7 +2,7 @@ package rel
 
 import (
 	"fmt"
-	"sort"
+	"slices"
 	"strings"
 
 	"github.com/arr-ai/frozen"
@@ -35,7 +35,7 @@ func (n Names) Names() []string {
 // Names returns a sorted slice of the names in the set.
 func (n Names) OrderedNames() []string {
 	names := n.Names()
-	sort.Strings(names)
+	slices.Sort(names)
 	return names
 }
 

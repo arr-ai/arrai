@@ -1,0 +1,126 @@
+(
+    strLower:  //str.lower("ABC") = "abc",
+    strUpper:  //str.upper("abc") = "ABC",
+    strTitle:  //str.title("hello") = "Hello",
+    seqSplit:  //seq.split(',', "a,b,c") = ['a', 'b', 'c'],
+    seqJoin:   //seq.join(", ", ["a", "b"]) = "a, b",
+    mathSin:   //math.sin(0) = 0,
+
+    # Encoding packages (//encoding.json, //encoding.csv) are entirely
+    # untested elsewhere in this corpus - a different NativeFunction call
+    # shape (byte-string in/out) from the plain scalar stdlib calls above.
+    # The default (strict) JSON decoder disambiguates JSON strings/arrays from
+    # arr.ai's own by wrapping them as `(s: ...)`/`(a: ...)` tuples; the
+    # non-strict decoder used here gives the more direct string/array shape.
+    jsonDecode: //encoding.json.decoder((strict: false))('{"a": 1, "b": "x"}') = {'a': 1, 'b': 'x'},
+    jsonEncode: //encoding.json.encode({'a': 1}) = <<'{"a":1}\n'>>,
+    csvDecode:  //encoding.csv.decode(<<'a,b,c\n1,2,3\n'>>) = [['a', 'b', 'c'], ['1', '2', '3']],
+    csvEncode:  //encoding.csv.encode([['a', 'b'], ['1', '2']]) = <<'a,b\n1,2\n'>>,
+    csvDecoderComma: //encoding.csv.decoder((comma: %|))(<<'a|b\n1|2\n'>>) = [['a', 'b'], ['1', '2']],
+    csvEncoderComma: //encoding.csv.encoder((comma: %|))([['a', 'b'], ['1', '2']]) = <<'a|b\n1|2\n'>>,
+
+    # //rel.union takes a *set of sets* and flattens them via n-ary union -
+    # distinct from the binary `|` operator tested elsewhere in this corpus.
+    relUnion: //rel.union({{1, 2}, {2, 3}, {4}}) = {1, 2, 3, 4},
+
+    fmtPretty: //fmt.pretty([1, 2, 3]) = "[1, 2, 3]",
+
+    bitsSet:  //bits.set(6) = {1, 2},
+    bitsMask: //bits.mask({1, 2}) = 6,
+
+    # //seq.concat is a distinct stdlib function from the `+` array-concat
+    # binop tested elsewhere - it concatenates an *array of sequences*
+    # (strings here) into one.
+    seqConcatStrings: //seq.concat(["a", "b", "c"]) = "abc",
+
+    # //seq.join on Bytes interleaves the joiner between each byte - a
+    # distinct bytesJoin path from the string-array join tested above.
+    seqJoinBytes: //seq.join(<<0>>, <<1, 2, 3>>) = <<1, 0, 2, 0, 3>>,
+
+    # //re.compile returns a tuple of closures (match/sub/subf) over a cached
+    # *regexp.Regexp - a completely different shape (a native closure factory,
+    # not a plain NativeFunctionAttr) from every other stdlib call in this
+    # corpus, and its own offset-string submatch representation.
+    reMatch: //re.compile(`.(\d)`).match('a1b2c3') = [['a1', 1\'1'], [2\'b2', 3\'2'], [4\'c3', 5\'3']],
+    reSub:   //re.compile(`.(\d)`).sub(`-$1`, 'a1b2c3') = '-1-2-3',
+    reSubf:  //re.compile(`.(\d)`).subf(//str.upper, 'a1b2c3') = 'A1B2C3',
+
+    # //encoding.yaml mirrors //encoding.json's shape (strict/non-strict
+    # decoder, byte-string encode/decode) but is a completely separate
+    # codepath/library - untested elsewhere in this corpus.
+    yamlDecode: //encoding.yaml.decoder((strict: false))('a: 1\nb: x\n') = {'a': 1, 'b': 'x'},
+    yamlEncode: //encoding.yaml.encode({'a': 1}) = <<'a: 1\n'>>,
+
+    # //archive.tar/zip have no unit test coverage anywhere in the repo (only
+    # exercised indirectly via bundling), so this is new coverage for the
+    # whole codebase, not just this corpus. There's no decode/untar function
+    # to round-trip against, and tar/zip headers here carry no timestamps, so
+    # output is deterministic - asserted via self-comparison rather than a
+    # hardcoded byte literal (which would be one more thing to keep in sync
+    # with the archive libraries' exact header layout).
+    archiveTarDeterministic: //archive.tar.tar({'a.txt': 'hi', 'b.txt': 'bye'}) = //archive.tar.tar({'a.txt': 'hi', 'b.txt': 'bye'}),
+    archiveZipDeterministic: //archive.zip.zip({'a.txt': 'hi', 'b.txt': 'bye'}) = //archive.zip.zip({'a.txt': 'hi', 'b.txt': 'bye'}),
+
+    # //os.isatty is the one //os function that's safe to assert on here: fds
+    # 0/1 are never a real tty under `go test`, so this is deterministic in
+    # any CI/local environment. The rest of //os (exists/tree/file/cwd/
+    # get_env) depends on the filesystem/environment the test happens to run
+    # in, so deliberately left untested here rather than risk flakiness.
+    osIsattyStdin:  //os.isatty(0) = false,
+    osIsattyStdout: //os.isatty(1) = false,
+
+    # //test.assert.* (used pervasively by arr.ai's own test suite via `arrai
+    # test`) is otherwise untested in this corpus, which exclusively uses
+    # plain `=` boolean assertions instead.
+    testAssertEqual:   //test.assert.equal(1, 1) = true,
+    testAssertUnequal: //test.assert.unequal(1, 2) = true,
+    testAssertSize:    //test.assert.size(3, {1, 2, 3}) = true,
+    testAssertTrue:    //test.assert.true(1 = 1) = true,
+    testAssertFalse:   //test.assert.false(1 = 2) = true,
+
+    # //seq.repeat(n)(seq) - a curried NativeFunction-returning-NativeFunction
+    # shape, untested elsewhere in this corpus.
+    seqRepeatString: //seq.repeat(3)('ab') = 'ababab',
+    seqRepeatArray:  //seq.repeat(2)([1, 2]) = [1, 2, 1, 2],
+
+    # //eval.value on Bytes (as opposed to String) - the two share one switch
+    # case in evalExpr but are otherwise untested as a pair here.
+    evalValueBytes: //eval.value(<<'1 + 1'>>) = 2,
+
+    # //eval.evaluator(config).eval(expr) - a distinct codepath from plain
+    # //eval.value: it threads a custom scope/stdlib config through
+    # contextualEval, exercising Scope.With per custom binding and (when no
+    # stdlib override is given) Scope.Update(SafeStdScope()) to merge in the
+    # default standard library.
+    evalWithCustomScope: (//eval.evaluator((scope: (x: 5)))).eval('x + 1') = 6,
+
+    # A stdlib override takes the other branch: Scope.With("//", ...)
+    # instead of Scope.Update(SafeStdScope()) - custom scope bindings (`x`
+    # here) still apply on top of it.
+    evalWithCustomScopeAndStdlib:
+        (//eval.evaluator((scope: (x: 5), stdlib: (y: 10)))).eval('x + 1') = 6,
+
+    # //arrai.info() returns build metadata (version/commit) that varies by
+    # build - asserted via self-comparison rather than a hardcoded value.
+    arraiInfoDeterministic: //arrai.info(()) = //arrai.info(()),
+
+    # //os.exists/os.file/os.tree resolve relative to the process's real CWD,
+    # not this file's own SourceDir - unlike `//` imports, which do use
+    # SourceDir. That CWD differs depending on how this corpus gets run: `go
+    # test ./pkg/test/...` sets it to this package's directory, but this
+    # corpus *also* gets run via `arrai test` from the repo root (see
+    # rel/hashidentity_test.go's TestHashIdentityDifferential), where the
+    # same relative path wouldn't resolve. No single fixture path satisfies
+    # both, so these three are deliberately left untested here.
+    #
+    # An unset env var reliably reads back as "" on any platform/CI.
+    osGetEnvUnset: //os.get_env('ARRAI_CORPUS_DEFINITELY_UNSET_VAR') = '',
+
+    # path_separator/path_list_separator are platform-dependent values (POSIX
+    # vs Windows), so assert portable membership rather than a hardcoded '/'.
+    osPathSeparator:     //os.path_separator <: {'/', '\\'},
+    osPathListSeparator: //os.path_list_separator <: {':', ';'},
+
+    # //os.cwd varies by environment, so self-compared rather than hardcoded.
+    osCwdDeterministic: //os.cwd = //os.cwd,
+)

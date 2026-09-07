@@ -66,6 +66,10 @@ func (t BytesByteTuple) Hash128() hash128.H128 {
 
 // Equal tests two Tuples for equality. Any other type returns false.
 func (t BytesByteTuple) Equal(v Value) bool {
+	if hashIdentity {
+		u, ok := v.(Tuple)
+		return ok && t.Hash128() == u.Hash128()
+	}
 	if u, ok := v.(BytesByteTuple); ok {
 		return t == u
 	}

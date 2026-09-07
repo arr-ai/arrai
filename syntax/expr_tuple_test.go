@@ -19,6 +19,16 @@ func TestTupleType(t *testing.T) {
 	AssertCodeEvalsToType(t, rel.DictEntryTuple{}, `(@: {1, 2}, @value: 2)`)
 }
 
+// The tuple grammar's `pairs` rule shares its "extra" (...) alternative with tuple
+// patterns, so it parses in a tuple expression too, but compileTuple never handled
+// it there and crashed with a raw type-assertion panic instead of a compile error.
+func TestTupleExtraElementIsExpressionError(t *testing.T) {
+	t.Parallel()
+	AssertCodeErrors(t,
+		"extra element (...) is only valid in a tuple pattern, not a tuple expression",
+		`let t = (a: 1); (...t, b: 2)`)
+}
+
 func TestTupleGet(t *testing.T) {
 	t.Parallel()
 	AssertCodesEvalToSameValue(t, `42`, `(a: 1, b: 42).b`)
@@ -93,4 +103,15 @@ func TestTuplePattern(t *testing.T) {
 
 	AssertCodesEvalToSameValue(t, `42`, `let (?: x:42) = (); x      `)
 	AssertCodesEvalToSameValue(t, `24`, `let (?: x:42) = (x: 24); x `)
+}
+
+// A fallback default (`pattern:expr`) is only meaningful on an optional attr
+// (`name?: pattern:expr`); the grammar doesn't tie the two together, so
+// compileTuplePattern rejects a fallback default attached to a required attr
+// with a clean error instead of silently ignoring the default.
+func TestTuplePatternFallbackWithoutOptionalIsError(t *testing.T) {
+	t.Parallel()
+	AssertCodeParseErrors(t,
+		"fallback item does not match",
+		`(a: 1) -> \(a: x:99) x`)
 }

@@ -116,7 +116,11 @@ func RunExpr(ctx context.Context, expr rel.Expr) ([]Result, error) {
 	if err != nil {
 		return nil, err
 	}
+	return classifyResults(result), nil
+}
 
+// classifyResults walks a test tree's leaves and classifies each one as Passed, Failed or Invalid.
+func classifyResults(result rel.Value) []Result {
 	results := make([]Result, 0)
 	ForeachLeaf(result, "", func(val rel.Value, path string) {
 		result := Result{
@@ -142,5 +146,5 @@ func RunExpr(ctx context.Context, expr rel.Expr) ([]Result, error) {
 		results = append(results, result)
 	})
 
-	return results, nil
+	return results
 }

@@ -2,10 +2,20 @@
 package bundle
 
 import (
+	"archive/zip"
+	"bytes"
+	"context"
+	"os"
+	"path/filepath"
+	"strings"
 	"testing"
 
+	"github.com/arr-ai/arrai/pkg/arraictx"
 	"github.com/arr-ai/arrai/pkg/ctxfs"
+	"github.com/arr-ai/arrai/rel"
 	"github.com/arr-ai/arrai/syntax"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 type bundleTestCase struct {
@@ -91,6 +101,93 @@ func TestBundleFiles(t *testing.T) {
 			ctxfs.ZipEqualToFiles(t, result, c.expectedFiles)
 		})
 	}
+}
+
+func TestBundleZipIsByteIdenticalOnRepeat(t *testing.T) {
+	t.Parallel()
+	files := map[string]string{
+		SentinelPath("/github.com/test/test"):               "module github.com/test/test\n",
+		"/github.com/test/test/test.arrai":                  "//{./module/module2/module.arrai}",
+		SentinelPath("/github.com/test/test/module/"):       "module github.com/test/test/module\n",
+		"/github.com/test/test/module/1.arrai":              "1",
+		"/github.com/test/test/module/module2/module.arrai": "//{/1.arrai}",
+	}
+	path := syntax.MustAbs(t, "/github.com/test/test/test.arrai")
+	a := MustCreateTestBundleFromMap(t, files, path)
+	b := MustCreateTestBundleFromMap(t, files, path)
+	require.Equal(t, a, b)
+}
+
+func TestBundlePlanImportPathsArePortable(t *testing.T) {
+	t.Parallel()
+	files := map[string]string{
+		SentinelPath("/github.com/test/test"):               "module github.com/test/test\n",
+		"/github.com/test/test/test.arrai":                  "//{./module/module2/module.arrai}",
+		SentinelPath("/github.com/test/test/module/"):       "module github.com/test/test/module\n",
+		"/github.com/test/test/module/1.arrai":              "1",
+		"/github.com/test/test/module/module2/module.arrai": "//{/1.arrai}",
+	}
+	zipBytes := MustCreateTestBundleFromMap(t, files, syntax.MustAbs(t, "/github.com/test/test/test.arrai"))
+	ctx, err := syntax.WithBundleRun(arraictx.InitRunCtx(context.Background()), zipBytes)
+	require.NoError(t, err)
+	p, err := syntax.LoadCompiledPlan(ctx)
+	require.NoError(t, err)
+	require.NotNil(t, p)
+	paths := collectImportPaths(p.Root)
+	require.NotEmpty(t, paths, "nested local imports must appear in the compiled plan")
+	var sawModule bool
+	for _, path := range paths {
+		if strings.HasPrefix(path, syntax.ModuleDir+"/") || strings.HasPrefix(path, syntax.NoModuleDir+"/") {
+			sawModule = sawModule || strings.HasPrefix(path, syntax.ModuleDir+"/")
+			continue
+		}
+		require.False(t, filepath.IsAbs(path), "host-absolute import path %q leaked into plan.bin", path)
+	}
+	require.True(t, sawModule, "relative import //{./...} must lower to a /module/... path, got %q", paths)
+}
+
+func collectImportPaths(n rel.PlanNode) []string {
+	var out []string
+	var walk func(rel.PlanNode)
+	walk = func(n rel.PlanNode) {
+		if n.K == "import" {
+			out = append(out, n.Str)
+		}
+		for _, k := range n.Kids {
+			walk(k)
+		}
+	}
+	walk(n)
+	return out
+}
+
+func TestBundleCompiledPlanRunsWithoutParse(t *testing.T) {
+	t.Parallel()
+	ctx := arraictx.InitRunCtx(context.Background())
+	path := filepath.Join(t.TempDir(), "add.arrai")
+	require.NoError(t, os.WriteFile(path, []byte("1 + 2"), 0o644))
+	var buf bytes.Buffer
+	require.NoError(t, BundledScripts(ctx, path, &buf))
+	zr, err := zip.NewReader(bytes.NewReader(buf.Bytes()), int64(buf.Len()))
+	require.NoError(t, err)
+	var hasPlan bool
+	names := make([]string, 0, len(zr.File))
+	for _, f := range zr.File {
+		names = append(names, f.Name)
+		if f.Name == "plan.bin" || f.Name == "/plan.bin" {
+			hasPlan = true
+			break
+		}
+	}
+	require.True(t, hasPlan, "bundle zip must contain plan.bin; got %q", names)
+	runCtx, err := syntax.WithBundleRun(ctx, buf.Bytes())
+	require.NoError(t, err)
+	p, err := syntax.LoadCompiledPlan(runCtx)
+	require.NoError(t, err)
+	require.NotNil(t, p, "LoadCompiledPlan must find /plan.bin")
+	v, err := syntax.EvaluateBundleCtx(ctx, buf.Bytes())
+	require.NoError(t, err)
+	assert.True(t, v.Equal(rel.NewNumber(3)), "%s", v)
 }
 
 // FIXME: test github module import, only works locally, unable to locate cached module in CI

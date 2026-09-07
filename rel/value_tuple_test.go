@@ -33,8 +33,13 @@ func TestSpecializedTupleHash128AgreesWithGenericTuple(t *testing.T) {
 			t.Parallel()
 			generic := c.t.(interface{ asGenericTuple() Tuple }).asGenericTuple()
 
-			assert.False(t, c.t.Equal(generic),
-				"specialized tuple's own Equal is narrower and doesn't match a generic tuple (by design)")
+			if hashIdentity {
+				assert.True(t, c.t.Equal(generic),
+					"hashidentity Equal is Hash128, which agrees across representations")
+			} else {
+				assert.False(t, c.t.Equal(generic),
+					"specialized tuple's own Equal is narrower and doesn't match a generic tuple (by design)")
+			}
 			assert.True(t, generic.Equal(c.t), "generic tuple must equal its specialized equivalent")
 			assert.Equal(t, generic.(*GenericTuple).Hash128(), c.t.(interface{ Hash128() hash128.H128 }).Hash128(),
 				"specialized tuple and its generic equivalent must hash the same, since generic.Equal considers them equal")

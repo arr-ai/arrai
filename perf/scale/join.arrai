@@ -1,0 +1,6 @@
+# Millions-of-rows join + pipeline. Size is //os.args(1), evaluated as a number.
+let [_, nstr] = //os.args;
+let n = //eval.value(nstr);
+let left = //seq.repeat(n, [0]) => (k: .@ % 1000, a: .@);
+let right = //seq.repeat(1000, [0]) => (k: .@, b: .@ * 3);
+((left <&> right) where .a % 7 = 0 => (s: .a + .b)) count

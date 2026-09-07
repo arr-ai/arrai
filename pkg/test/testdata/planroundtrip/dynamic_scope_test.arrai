@@ -1,0 +1,10 @@
+(
+    # `let TUPLE; expr` without a pattern binds TUPLE's attrs as dynamic
+    # (context-scoped, not lexically-scoped) variables. Attr names must use the
+    # `@{name}` dynamic-identifier form; referencing `@{name}` elsewhere resolves
+    # it dynamically rather than through the lexical scope chain.
+    dynLet: (let (@{x}: 5); @{x} + 1) = 6,
+
+    # A `\@{name} body` lambda parameter binds its argument as a dynamic name too.
+    dynPattern: ((\@{x} @{x} + 1)(0)) = 1,
+)

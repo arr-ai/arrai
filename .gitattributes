@@ -1,3 +1,9 @@
 **/go.sum linguist-generated
 **/yarn.lock linguist-generated=true
 syntax/parser.go linguist-generated=true
+# The reconstruct corpus and its golden are byte-exact fixtures: no eol
+# conversion, ever - CRLF checkouts break template indent handling and the
+# byte-identity oracle.
+perf/reconstruct/** -text
+# $-string indent and golden comparisons are newline-sensitive.
+*.arrai text eol=lf

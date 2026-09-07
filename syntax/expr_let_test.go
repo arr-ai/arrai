@@ -298,6 +298,22 @@ func TestExprLetDynIdentPattern(t *testing.T) {
 	`)
 }
 
+// TestExprLetIdentFastPath exercises the IdentPattern fast path in
+// Closure.call, ArrowExpr and DArrowExpr: "_" is discarded, inner bindings
+// shadow outer ones without leaking, and a curried closure keeps the scope
+// it was defined in after escaping it.
+func TestExprLetIdentFastPath(t *testing.T) {
+	t.Parallel()
+	AssertCodesEvalToSameValue(t, `1`, `let _ = 2; 1`)
+	AssertCodeErrors(t, "", `let _ = 2; _`)
+	AssertCodesEvalToSameValue(t, `[2, 1]`, `let x = 1; [let x = 2; x, x]`)
+	AssertCodesEvalToSameValue(t, `[3, 1]`, `let x = 1; let f = \x x + 1; [f(2), x]`)
+	AssertCodesEvalToSameValue(t, `42`, `let x = 1; (\_ x + 41)(99)`)
+	AssertCodesEvalToSameValue(t, `{2, 3, 4}`, `let y = 1; {1, 2, 3} => \x x + y`)
+	AssertCodesEvalToSameValue(t, `13`, `let g = (let k = 10; \a \b a + b + k); let k = 0; g(1)(2)`)
+	AssertCodesEvalToSameValue(t, `[11, 12]`, `let add = \n \m n + m; let add10 = add(10); [add10(1), add10(2)]`)
+}
+
 func TestExprDynLet(t *testing.T) {
 	t.Parallel()
 	AssertCodesEvalToSameValue(t, `42`, `let (@{x}: 42); @{x}`)

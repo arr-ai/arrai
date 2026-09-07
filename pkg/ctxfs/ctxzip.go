@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"path/filepath"
+	"path"
 	"strings"
 	"sync"
 
@@ -22,7 +22,7 @@ const sep = "/"
 
 // WithZipFs adds a filesystem that can be used to output a zip file.
 func WithZipFs(ctx context.Context, key interface{}) context.Context {
-	return context.WithValue(ctx, key, &zipFs{fs: afero.NewMemMapFs()})
+	return context.WithValue(ctx, key, &zipFs{fs: NewTestMemMapFs()})
 }
 
 // ZipCreate creates a file with the provided filepath and content. The filepath has to be
@@ -36,7 +36,7 @@ func ZipCreate(ctx context.Context, key interface{}, filePath string, content []
 	fs.Lock()
 	defer fs.Unlock()
 
-	if err := fs.fs.MkdirAll(filepath.Dir(filePath), os.ModeDir); err != nil {
+	if err := fs.fs.MkdirAll(path.Dir(filePath), os.ModeDir); err != nil {
 		return err
 	}
 
@@ -104,8 +104,8 @@ func OutputZip(ctx context.Context, key interface{}, w io.Writer) error {
 		}
 
 		// paths must be a relative UNIX path
-		path = strings.TrimPrefix(path, sep)
-		zipF, err := zipWriter.Create(path)
+		name := strings.TrimPrefix(ToUnixPath(path), sep)
+		zipF, err := zipWriter.Create(name)
 		if err != nil {
 			return err
 		}

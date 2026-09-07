@@ -317,10 +317,42 @@ func GenericJoin(
 //
 // E.g., [1, 2] + [3] = [1, 2, 3]; "hell" + "o" = "hello"
 func Concatenate(a, b Set) (Set, error) {
-	offset := a.Count()
+	// Two contiguous zero-offset sequences concatenate by appending their
+	// backing slices: the generic path below costs a boxed tuple per element
+	// plus a set rebuild, which made string-building folds quadratic with a
+	// huge constant (measured 9,000 allocations per ++ on a 2,000-step fold).
+	if fastPaths {
+		switch a := a.(type) {
+		case String:
+			if b, ok := b.(String); ok && a.offset == 0 && a.holes == 0 && b.offset == 0 && b.holes == 0 {
+				return concatStrings(a, b), nil
+			}
+		case Array:
+			if b, ok := b.(Array); ok &&
+				a.offset == 0 && a.count == len(a.values) && b.offset == 0 && b.count == len(b.values) {
+				return concatArrays(a, b), nil
+			}
+		}
+	}
+	// offset must be one past a's highest "@" index, not a.Count(): a sparse
+	// array's element count skips holes, and a non-zero-offset array's count
+	// doesn't reflect its indices at all, so either would place b's elements
+	// at the wrong position (even colliding with a's own elements) instead
+	// of strictly after them.
+	offset := 0
 	sb := NewSetBuilder()
 	for e := a.Enumerator(); e.MoveNext(); {
-		sb.Add(e.Current())
+		elt := e.Current()
+		sb.Add(elt)
+		if t, ok := elt.(Tuple); ok {
+			if pos, found := t.Get("@"); found {
+				if n, ok := pos.(Number); ok {
+					if next := int(n.Float64()) + 1; next > offset {
+						offset = next
+					}
+				}
+			}
+		}
 	}
 	for e := b.Enumerator(); e.MoveNext(); {
 		elt := e.Current()

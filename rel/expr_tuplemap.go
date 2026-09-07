@@ -31,11 +31,15 @@ func (e *TupleMapExpr) Eval(ctx context.Context, local Scope) (Value, error) {
 		return nil, WrapContextErr(err, e, local)
 	}
 	return value.(Tuple).Map(func(v Value) (Value, error) {
-		ctx, scope, err := e.fn.arg.Bind(ctx, local, v)
+		var b scopeBuilder
+		ctx, err := e.fn.arg.Bind(ctx, local, v, &b)
 		if err != nil {
+			if err == errPatternMismatch {
+				err = explainBind(ctx, e.fn.arg, local, v)
+			}
 			return nil, err
 		}
-		ans, err := e.fn.body.Eval(ctx, local.Update(scope))
+		ans, err := e.fn.body.Eval(ctx, local.updateWith(&b))
 		if err != nil {
 			return nil, err
 		}

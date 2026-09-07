@@ -24,8 +24,8 @@ func (p IdentPattern) Ident() string {
 	return string(p)
 }
 
-func (p IdentPattern) Bind(ctx context.Context, scope Scope, value Value) (context.Context, Scope, error) {
-	return ctx, Scope{}.With(string(p), value), nil
+func (p IdentPattern) Bind(ctx context.Context, scope Scope, value Value, b *scopeBuilder) (context.Context, error) {
+	return ctx, b.add(string(p), value)
 }
 
 func (p IdentPattern) String() string {
@@ -38,8 +38,8 @@ func (p IdentPattern) Bindings() []string {
 
 type DynIdentPattern string
 
-func (p DynIdentPattern) Bind(ctx context.Context, scope Scope, value Value) (context.Context, Scope, error) {
-	return context.WithValue(ctx, DynIdent(p), value), Scope{}, nil
+func (p DynIdentPattern) Bind(ctx context.Context, scope Scope, value Value, b *scopeBuilder) (context.Context, error) {
+	return context.WithValue(ctx, DynIdent(p), value), nil
 }
 
 func (p DynIdentPattern) String() string {

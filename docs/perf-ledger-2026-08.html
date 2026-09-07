@@ -1,0 +1,247 @@
+<title>Arr.ai Performance Ledger</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,500;8..60,600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root{
+  --bg:#F5F6F8; --surface:#FFFFFF; --ink:#1A1E25; --ink-2:#4A5260; --ink-3:#7A8390;
+  --line:#DCE0E6; --accent:#0F6F78; --accent-soft:#E3F1F2; --hot:#B85C1B; --hot-soft:#FBEEE3;
+  --good:#2C7A45; --good-soft:#E4F2E8; --code-bg:#EEF1F4; --wait:#6B5AA8; --wait-soft:#EDEAF6;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#13161B; --surface:#1B1F26; --ink:#E6E9EE; --ink-2:#B3BAC5; --ink-3:#7F8896;
+  --line:#2C323B; --accent:#5CC4CC; --accent-soft:#16333A; --hot:#E39A5C; --hot-soft:#3A2717;
+  --good:#7CCB93; --good-soft:#1C3324; --code-bg:#22272F; --wait:#A99AE0; --wait-soft:#241F38;
+}}
+:root[data-theme="dark"]{
+  --bg:#13161B; --surface:#1B1F26; --ink:#E6E9EE; --ink-2:#B3BAC5; --ink-3:#7F8896;
+  --line:#2C323B; --accent:#5CC4CC; --accent-soft:#16333A; --hot:#E39A5C; --hot-soft:#3A2717;
+  --good:#7CCB93; --good-soft:#1C3324; --code-bg:#22272F; --wait:#A99AE0; --wait-soft:#241F38;
+}
+body{background:var(--bg);color:var(--ink);font-family:"IBM Plex Sans",system-ui,-apple-system,Segoe UI,sans-serif;font-size:15.5px;line-height:1.55;margin:0}
+main{max-width:78ch;margin:0 auto;padding:3rem 1.25rem 5rem}
+h1,h2,h3{font-family:"Source Serif 4",Georgia,serif;font-weight:600;text-wrap:balance;line-height:1.2;margin:0}
+h1{font-size:2.3rem;margin-bottom:.4rem}
+h2{font-size:1.5rem;margin-top:3rem;margin-bottom:.9rem;padding-top:1.2rem;border-top:1px solid var(--line)}
+h3{font-size:1.1rem;margin-top:1.8rem;margin-bottom:.5rem}
+p{margin:0 0 1rem}
+.eyebrow{font-size:.74rem;letter-spacing:.09em;text-transform:uppercase;color:var(--accent);font-weight:600;margin-bottom:.8rem}
+.lede{font-size:1.1rem;color:var(--ink-2);max-width:66ch}
+code,pre,.mono{font-family:"IBM Plex Mono",ui-monospace,Menlo,monospace}
+code{background:var(--code-bg);padding:.08em .35em;border-radius:3px;font-size:.87em}
+.tbl{overflow-x:auto;margin:0 0 1.2rem}
+table{border-collapse:collapse;width:100%;font-size:.9rem;font-variant-numeric:tabular-nums}
+th,td{text-align:left;padding:.5rem .7rem;border-bottom:1px solid var(--line);vertical-align:top}
+th.spanhead{text-align:center}
+th{font-size:.73rem;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3);font-weight:600}
+td.num,th.num{text-align:right}
+.bar{display:inline-block;height:.65rem;background:var(--accent);border-radius:2px;vertical-align:middle;margin-right:.45rem}
+.bar.hot{background:var(--hot)}
+.pill{display:inline-block;font-size:.7rem;font-weight:600;letter-spacing:.04em;padding:.12em .55em;border-radius:999px;white-space:nowrap}
+.pill.hot{background:var(--hot-soft);color:var(--hot)}
+.pill.good{background:var(--good-soft);color:var(--good)}
+.pill.acc{background:var(--accent-soft);color:var(--accent)}
+.pill.wait{background:var(--wait-soft);color:var(--wait)}
+.callout{border-left:3px solid var(--accent);background:var(--accent-soft);padding:.8rem 1rem;border-radius:0 4px 4px 0;margin:0 0 1.2rem}
+.callout.wait{border-color:var(--wait);background:var(--wait-soft)}
+.callout p:last-child{margin:0}
+ul,ol{padding-left:1.25rem;margin:0 0 1rem}
+li{margin-bottom:.4rem}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:.8rem;margin:0 0 1.4rem}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:4px;padding:.8rem .95rem}
+.stat .v{font-family:"Source Serif 4",serif;font-size:1.75rem;font-weight:600;line-height:1.1;font-variant-numeric:tabular-nums}
+.stat .k{font-size:.75rem;color:var(--ink-3);letter-spacing:.03em;text-transform:uppercase;margin-top:.25rem}
+.sha{font-family:"IBM Plex Mono",monospace;font-size:.8rem;color:var(--ink-3)}
+.muted{color:var(--ink-3)}
+.repo{display:flex;align-items:baseline;gap:.5rem;margin-top:1.6rem;margin-bottom:.4rem}
+.repo h3{margin:0}
+</style>
+<main>
+<div class="eyebrow">arr.ai · performance · 28 Aug – 2 Sep 2026 · updated 2 Sep</div>
+<h1>Arr.ai Performance Ledger</h1>
+<p class="lede">Where the evaluator work stands: what landed, what it bought, what it fixed along the way, and what is still ahead. The measuring stick throughout is Arieh's <code>reconstruct</code> workload — 1000 synthetic sysl apps, protobuf to relations to rendered source — with output byte-identical to arrai v0.321.0 at every step.</p>
+
+<div class="grid">
+  <div class="stat"><div class="v">1.51s</div><div class="k">now (0.95s compile + 0.56s eval)</div></div>
+  <div class="stat"><div class="v">36×</div><div class="k">vs v0.338.0, the reported regression</div></div>
+  <div class="stat"><div class="v">6.5×</div><div class="k">vs v0.321.0, before generics</div></div>
+  <div class="stat"><div class="v">8</div><div class="k">correctness bugs fixed<br><span style="font-size:.85em">(4 in released frozen)</span></div></div>
+  <div class="stat"><div class="v">6.3ms</div><div class="k">handcrafted C++ floor (~134× below eval)</div></div>
+</div>
+
+<h2>The ladder</h2>
+<p>Each row is a commit or group of commits, measured on the same machine, same model, output checked byte-for-byte every time; adjacent rows with close times were ordered by interleaved A/B runs, since cross-session load variance exceeds their deltas. Speedup is against the reported v0.338.0 run (range midpoints) as 1×: <em>total</em> is wall clock; <em>algo</em> subtracts a baseline compile phase of 925&nbsp;ms (parsing the program and the sysl library, assumed constant across builds), which is what the evaluator work actually moves.</p>
+<div class="tbl"><table>
+<tr><th rowspan="2">Build</th><th class="num" rowspan="2">Repro</th><th class="spanhead" colspan="2">Speedup</th><th rowspan="2">Commit</th></tr>
+<tr><th class="num">Total<sup>†</sup></th><th class="num">Algo</th></tr>
+<tr><td>v0.338.0 — as reported</td><td class="num"><span class="bar hot" style="width:200px"></span>58.8–67.8s</td><td class="num">1.0×</td><td class="num">1.0×</td><td class="sha">—</td></tr>
+<tr><td>v0.321.0 — before the generics migration</td><td class="num"><span class="bar" style="width:40px"></span>11.6–12.6s</td><td class="num">5.2×</td><td class="num">5.6×</td><td class="sha">reference</td></tr>
+<tr><td>Start of this work</td><td class="num"><span class="bar hot" style="width:73px"></span>20.5–25.3s</td><td class="num">2.8×</td><td class="num">2.8×</td><td class="sha">9a1ce45</td></tr>
+<tr><td>Direct calls + index-backed <code>where</code></td><td class="num"><span class="bar" style="width:26px"></span>7.2–7.8s</td><td class="num">8.4×</td><td class="num">9.5×</td><td class="sha">8b76cd4</td></tr>
+<tr><td>Direct <code>let rec</code>, functions hashed by identity</td><td class="num"><span class="bar" style="width:24px"></span>6.6–7.1s</td><td class="num">9.2×</td><td class="num">11×</td><td class="sha">8a642c0</td></tr>
+<tr><td>Single-pass 128-bit hashing, three repos</td><td class="num"><span class="bar" style="width:17px"></span>4.4–5.1s</td><td class="num">13×</td><td class="num">16×</td><td class="sha">b04a5ac</td></tr>
+<tr><td>Scopes as lexical frames + identifier caches</td><td class="num"><span class="bar" style="width:14px"></span>3.6–4.3s</td><td class="num">16×</td><td class="num">21×</td><td class="sha">c722ec4</td></tr>
+<tr><td>Evaluator hygiene (four items)</td><td class="num"><span class="bar" style="width:12px"></span>3.2–3.9s</td><td class="num">18×</td><td class="num">24×</td><td class="sha">bf07041</td></tr>
+<tr><td><strong>Shape-backed tuples</strong></td><td class="num"><span class="bar" style="width:8px"></span><strong>2.13s</strong></td><td class="num"><strong>30×</strong></td><td class="num"><strong>52×</strong></td><td class="sha">e4691e6</td></tr>
+<tr><td>Relation shape matching, typed group index</td><td class="num"><span class="bar" style="width:8px"></span>2.1s</td><td class="num">30×</td><td class="num">53×</td><td class="sha">d066aa5 · fbfffdd</td></tr>
+<tr><td>frozen fans out from 256 elements</td><td class="num"><span class="bar" style="width:8px"></span>2.25s <span class="muted">(no change here)</span></td><td class="num">28×</td><td class="num">47×</td><td class="sha">953bdfb</td></tr>
+<tr><td><strong>Flat-arena relations with lazy indexing</strong></td><td class="num"><span class="bar" style="width:7px"></span><strong>2.08s</strong></td><td class="num"><strong>30×</strong></td><td class="num"><strong>54×</strong></td><td class="sha">41352d9</td></tr>
+<tr><td><strong>Parallel <code>where</code> and <code>=&gt;</code> bodies</strong></td><td class="num"><span class="bar" style="width:6px"></span><strong>1.87s</strong></td><td class="num"><strong>34×</strong></td><td class="num"><strong>66×</strong></td><td class="sha">d669219</td></tr>
+<tr><td>Hash128/Equal contract restored for arena relations (rebase over #736–#738, #740)</td><td class="num"><span class="bar" style="width:6px"></span>1.90s</td><td class="num">33×</td><td class="num">64×</td><td class="sha">5ad9966</td></tr>
+<tr><td>Reflection-free sorts (<code>slices.SortFunc</code> sweep)</td><td class="num"><span class="bar" style="width:6px"></span>1.85s</td><td class="num">34×</td><td class="num">67×</td><td class="sha">a955967</td></tr>
+<tr><td><strong>Linear string/array concatenation</strong></td><td class="num"><span class="bar" style="width:6px"></span><strong>1.81s</strong></td><td class="num"><strong>35×</strong></td><td class="num"><strong>70×</strong></td><td class="sha">b051b91</td></tr>
+<tr><td>ASCII strings backed by bytes</td><td class="num"><span class="bar" style="width:6px"></span>1.80s</td><td class="num">35×</td><td class="num">71×</td><td class="sha">8099984</td></tr>
+<tr><td><strong>Dedicated <code>$</code>-string expression + interned literals</strong></td><td class="num"><span class="bar" style="width:6px"></span><strong>1.77s</strong></td><td class="num"><strong>36×</strong></td><td class="num"><strong>74×</strong></td><td class="sha">c92d670</td></tr>
+<tr><td><strong>Inline single-binding scope frames</strong></td><td class="num"><span class="bar" style="width:6px"></span><strong>1.73s</strong></td><td class="num"><strong>37×</strong></td><td class="num"><strong>77×</strong></td><td class="sha">d6e2522</td></tr>
+<tr><td>Grammar-parse memo + single-binding Update</td><td class="num"><span class="bar" style="width:6px"></span>1.73s</td><td class="num">37×</td><td class="num">77×</td><td class="sha">10ceece</td></tr>
+<tr><td><strong>Parallel <code>&gt;&gt;</code> over arrays</strong></td><td class="num"><span class="bar" style="width:5px"></span><strong>1.60s</strong></td><td class="num"><strong>40×</strong></td><td class="num"><strong>92×</strong></td><td class="sha">a45d1af</td></tr>
+<tr><td><strong>Parallel <code>&gt;&gt;</code>/<code>&gt;&gt;&gt;</code> over dicts</strong></td><td class="num"><span class="bar" style="width:5px"></span><strong>1.51s</strong></td><td class="num"><strong>42×</strong></td><td class="num"><strong>106×</strong></td><td class="sha">1b8e4a4</td></tr>
+<tr><td>Linear generic-set and array folds (🎯T10)</td><td class="num"><span class="bar" style="width:5px"></span>1.55s <span class="muted">(no change here)</span></td><td class="num">41×</td><td class="num">100×</td><td class="sha">8768213</td></tr>
+<tr><td><strong>Flat pattern binding, allocation-free misses (🎯T15)</strong></td><td class="num"><span class="bar" style="width:5px"></span><strong>1.51s</strong></td><td class="num"><strong>42×</strong></td><td class="num"><strong>107×</strong></td><td class="sha">f989c45</td></tr>
+</table>
+<p class="muted" style="font-size:.8rem;margin:.4rem 0 0"><sup>†</sup> Total covers end-to-end wall clock: the compile phase (parsing <code>run.arrai</code> and the vendored sysl library, ~925&nbsp;ms, assumed constant across builds) plus evaluation and output rendering. Algo excludes the compile phase.</p>
+</div>
+<p class="muted">The frozen fan-out row is flat on purpose: reconstruct's relations are a few thousand rows and its time is dominated by grammar parsing, so it is the wrong workload to show parallelism. On a 60,000-row relational script the same change is worth 25%.</p>
+
+<h2>What landed</h2>
+
+<div class="repo"><h3>arr.ai — one draft PR (#739)</h3><span class="pill acc">local only</span></div>
+<ul>
+<li><strong>Function application returns its result directly</strong> instead of building and unpacking a one-element set — which had been deep-hashing every result and <code>Sprintf</code>-formatting every closure body to hash it. 5.8M calls on this workload.</li>
+<li><strong><code>where .attr = key</code> is answered from the relation's index</strong>, recognised at compile time. Two sites accounted for 4,000,000 scanned rows.</li>
+<li><strong><code>let rec</code> is implemented directly</strong> through a once-written scope cell instead of a Y combinator — your long-standing bugbear, and the thing whose earlier attempts kept failing.</li>
+<li><strong>Every value hashes once, in one pass</strong> (🎯T7's sibling work), with cached hashes on tuples, dicts and arrays.</li>
+<li><strong>Scopes are chained lexical frames</strong> and identifier reads cache their <code>(hops, slot)</code> address <span class="pill good">🎯T7</span>.</li>
+<li><strong>Tuples are shape-backed structs</strong> — an interned <code>Shape</code> plus values in shape order, so relation rows <em>are</em> tuple values, inflated with no copying <span class="pill good">🎯T7 · 🎯T9</span>. This was the single biggest step and it came from your observation that tuples are C-style structs, not dictionaries.</li>
+<li>Lazy pattern-match errors, flat pattern frames, memoised grammars and regexes, <code>Relation.Equal</code> fast paths, shape-based attribute matching, a typed group-by index.</li>
+<li><strong><code>ARRAI_TIMING=1</code> reports compile and eval phases separately</strong> on every run — compile (parse the program + imports) and eval (the algorithm) split almost exactly in half on reconstruct, which keeps language-startup cost out of algorithm measurements ahead of an eventual compiled <code>.arraiz</code> form.</li>
+<li><strong>The Hash128/Equal contract holds for arena relations</strong> — rebased over Arieh's #738 (layout-dependent relation hashes, Dict salt mismatch, Array xor self-cancellation, all found via real non-deterministic annotation loss) and reimplemented for the arena: rows hash per attribute through the shape's cached name hashes, memoised per shape on the row view. His regression tests (#738, #740) all pass against the arena.</li>
+<li><strong>Reflection-free sorting</strong> — <code>slices.SortFunc</code>/<code>SortStableFunc</code>/<code>BinarySearch</code> replace <code>sort.Slice</code>'s reflection swapper in <code>OrderedRange</code>, <code>OrderBy</code>, dict ordering and <code>shapeOfAttrs</code>: eval −5%.</li>
+<li><strong><code>rel.All</code>: an <code>iter.Seq</code> over sets, with a measured doctrine</strong> — ~6% over the MoveNext/Current enumerators with one less allocation; adopted only where loop bodies write no captured locals (each written capture becomes a heap cell per loop entry — measured +1.4M allocations and reverted where it hurt). The 5×/zero-alloc result the first benchmark showed was an inlining artifact that <code>testing.B.Loop</code> exposed; the true 5× belongs to concrete indexed loops, which the arena fast paths already are.</li>
+<li><strong>Pattern matching binds flat and misses are free (🎯T15)</strong> — every pattern part bound a throwaway mini-scope that got flattened back into slices; patterns now bind into one shared fixed-slot builder, and a discarded mismatch is a shared sentinel costing zero allocations (proven by <code>AllocsPerRun == 0</code>), with the full contextual message reproduced on demand by a pure re-match. Tuple destructuring −33%, mostly-miss <code>cond</code> arms −42% time/−38% allocations. The planned match VM was measured unnecessary: after the protocol change, dispatch is 6% of even the stress benchmark.</li>
+<li><strong>Accumulator folds are linear across all four kinds (🎯T10)</strong> — generic-set folds (<code>acc | {x}</code>) were catastrophic: <code>CanonicalSet</code> rebuilt the whole accumulator per step (878ms/691MB for 3,000 steps). A provable <code>canonical</code> flag skips the rebuild: <strong>4.9ms/5.1MB (178×)</strong>. Array <code>++</code> folds joined the ownership append buffer: 11.4ms/80MB → 2.0ms/2.2MB. Relations (arena) and dicts were already linear; fold benchmarks now guard all four. The Perceus/last-use research program dissolved into representation-level ownership frontiers.</li>
+<li><strong><code>&gt;&gt;</code>/<code>&gt;&gt;&gt;</code> map large dicts in parallel</strong> — the outermost loop of model pipelines (the 1000-app map). Takes the algo column through <strong>100×</strong>.</li>
+<li><strong><code>&gt;&gt;</code> maps large arrays in parallel</strong> — the last sequential per-element loop of the big three (after <code>where</code> and <code>=&gt;</code>), 7.4% of eval; same knob and deterministic-error contract. Eval −20% on reconstruct. Also: <code>//grammar.parse</code> results are memoised by (grammar, rule, input) — sysl parses every return payload twice, and repeat-parse workloads skip wbnf entirely.</li>
+<li><strong>Single-binding scope frames are inline</strong> — <code>Scope.With</code> allocated a frame plus two one-element slices per binding, one per element in <code>=&gt;</code>/<code>where</code>/<code>let</code> (reconstruct's single largest allocator at 4.1M). Name and value now live in the frame: one allocation, −2.2M on reconstruct.</li>
+<li><strong>Interpolated strings render directly</strong> — <code>$"..."</code> compiled to an Array of parts plus a curried native call per interpolation; it now compiles to a dedicated expression writing into a byte builder, with literal segments as plain interned Go strings that are never arr.ai values. Whitespace/indent semantics held byte-for-byte on the first run. Template rendering −42% time and −50% allocations; the set-of-strings workload −53% allocations. String literals in code intern through one canonical backing, and <code>EqualString</code> answers same-backing comparisons without scanning.</li>
+<li><strong>ASCII strings are backed by bytes</strong> — pure-ASCII hole-free content (the overwhelmingly common case) lives in a <code>[]byte</code>: byte index equals rune index, so hashing, equality, comparison, concatenation and Go-string conversion work on a quarter of the memory; non-ASCII and holey strings keep <code>[]rune</code>, and rare character-level edits convert. <code>Hash128</code> hashes the UTF-8 encoding in both forms (salted — an existing test caught a collision with <code>Bytes</code>), so the hash/equals contract holds by construction. At parity on time; 4× smaller string payloads.</li>
+<li><strong>String and array concatenation is linear</strong> — <code>++</code> went through the generic set path (a boxed tuple per element plus a set rebuild per concat, ~9,000 allocations each); it now appends backing slices, and concatenation-built strings share an ownership-tracked append buffer — the arena trick — so a fold's accumulator extends in place. A 2,000-step concat fold: <strong>482ms/1.9GB → 2.9ms/3.0MB</strong> (165×). <code>String.Less</code> compares runes directly instead of building two Go strings per comparison (string sorts −30%). New eval-only string benchmarks (<code>BenchmarkStr*</code>) pin all of it.</li>
+<li><strong>Large <code>where</code> and <code>=&gt;</code> evaluate their closure bodies in parallel</strong> <span class="pill good">🎯T12</span> — closures are pure and the caches are concurrency-safe, so above 512 elements the evaluator fans out (2.2× on <code>where</code>, 2.7× on <code>=&gt;</code> at 50k elements). One knob — frozen's — governs both layers, and errors stay deterministic: the first failing element's, sequential or parallel.</li>
+<li><strong>Relations store rows in a flat arena with selection-vector views and a lazy hash index</strong> <span class="pill good">🎯T11</span> — the columnar project, landed. Building a relation is one arena allocation instead of a HAMT (12k rows: 44,163 allocations → 139); <code>where</code> shares the arena and allocates only a row-id vector; joins assemble output rows straight into a builder arena (115k allocations → 173, 3× faster); a cold group-by is 11× faster and <code>Has</code> allocates nothing. <code>acc | {x}</code> fold chains extend one arena in place. Group-by keys are never materialised: each bucket's key is the projection of a representative row.</li>
+</ul>
+
+<div class="repo"><h3>arr-ai/frozen — 3 commits</h3><span class="pill acc">local only</span></div>
+<ul>
+<li><strong>Equality dispatch fixed</strong> for interface-typed and uncomparable elements — four distinct defects, including builders silently keeping duplicate keys.</li>
+<li><strong>Fan-out from 256 elements per goroutine</strong> instead of 131,072, expressed as what it actually controls, plus a programmable API (<code>SetMinParallelChunk</code>, <code>DisableParallel</code>, <code>NoParallel</code>).</li>
+<li><strong>A data race in <code>Union</code> and <code>Map.Update</code></strong>, latent in every release, fixed.</li>
+</ul>
+
+<div class="repo"><h3>arr-ai/hash — released</h3><span class="pill good">v1.2.0 shipped</span></div>
+<p>New <code>hash128</code> package: single-pass 128-bit hashing with a seedless interface, AES assembly on amd64 and arm64. It replaced a two-seeded-passes hack that defeated caching for every nested value.</p>
+
+<h2>Bugs found and fixed along the way</h2>
+<p>Nine correctness defects surfaced (eight fixed, one filed), most of them by the performance work rather than by tests. Four were in released code.</p>
+<div class="tbl"><table>
+<tr><th>Defect</th><th>Where</th><th>Status</th></tr>
+<tr><td>Recursive closures in a set panicked: function equality compared bodies with <code>==</code></td><td>arr.ai</td><td><span class="pill good">fixed</span></td></tr>
+<tr><td><code>equalBoxed</code> panicked on uncomparable dynamic types</td><td>frozen <span class="muted">(released)</span></td><td><span class="pill good">fixed</span></td></tr>
+<tr><td>Comparability probe used <code>defer recover()</code>, which does not recover</td><td>frozen <span class="muted">(released)</span></td><td><span class="pill good">fixed</span></td></tr>
+<tr><td><code>==</code> chosen for types that panic on it at runtime</td><td>frozen <span class="muted">(released)</span></td><td><span class="pill good">fixed</span></td></tr>
+<tr><td>Builders kept duplicate keys that <code>Map.With</code> would collapse</td><td>frozen <span class="muted">(released)</span></td><td><span class="pill good">fixed</span></td></tr>
+<tr><td>Data race in <code>CombineArgs.Flip</code> — <code>Union</code>, <code>Map.Update</code></td><td>frozen <span class="muted">(released)</span></td><td><span class="pill good">fixed</span></td></tr>
+<tr><td>Data race capturing a <code>where</code> predicate's error</td><td>arr.ai</td><td><span class="pill good">fixed</span></td></tr>
+<tr><td>Disjoint-attribute joins broke under any eager key encoding</td><td>arr.ai</td><td><span class="pill good">fixed</span></td></tr>
+<tr><td>A <em>failing</em> <code>//grammar.parse</code> crashes the process (wbnf stack overflow)</td><td>wbnf</td><td><span class="pill hot">🎯T8 open</span></td></tr>
+</table></div>
+
+<h2>Testing, because the fast paths keep multiplying</h2>
+<p>There are now 16 conditional fast paths in the evaluator, and the way they break is by diverging from the fallback they shortcut. Coverage confirmed the risk: several fallbacks were never executed by any test.</p>
+<ul>
+<li><strong>A differential oracle.</strong> <code>-tags slowpath</code> forces every shortcut to its general fallback; the whole corpus runs both ways and must agree. Costs nothing in a normal build, because the switch is a constant. It found a design hazard on its first run.</li>
+<li><strong>The reconstruct scenario is now in-tree</strong> as <code>perf/reconstruct</code>. Output is pinned byte-for-byte against a v0.321.0 golden; allocations are ratcheted against a committed budget in <em>both</em> directions, so an improvement has to lower the budget in the commit that earned it. Time is reported, never asserted.</li>
+<li>Relation benchmarks, scope and shape unit tests, and race regression tests at frozen's real parallelism threshold — each mutation-tested by reverting its fix and confirming the failure.</li>
+</ul>
+<p class="muted">Known gap: nothing builds a tuple with more than eight attributes, so <code>Shape.Index</code>'s map branch is still dark. There is no property-based testing of the algebraic laws.</p>
+
+<h2>Not shipped — the release chain</h2>
+<div class="callout wait">
+<p><strong>16 commits sit locally across two repos.</strong> Nothing is pushed. Because arr.ai's <code>go.mod</code> still pins frozen v1.13.0, the workspace is the only place this works today.</p>
+</div>
+<div class="tbl"><table>
+<tr><th>Step</th><th>State</th></tr>
+<tr><td><code>arr-ai/hash</code> v1.2.0 — <code>hash128</code></td><td><span class="pill good">released</span></td></tr>
+<tr><td><code>arr-ai/frozen</code> — 3 commits, two of them correctness fixes in released code</td><td><span class="pill wait">needs PR + release</span></td></tr>
+<tr><td><code>arr-ai/arrai</code> — 13 commits, then bump <code>go.mod</code> to the new frozen</td><td><span class="pill wait">needs PR + release</span></td></tr>
+</table></div>
+<p>The frozen fixes are worth shipping on their own merits, independently of the performance work: two of them are silent-wrong-answer bugs and one is a data race, all present in every published version.</p>
+
+<h2>The native floor</h2>
+<p>A handcrafted single-file C++ implementation of the same scenario — wire-format protobuf decode, same normalisation and rendering rules, byte-identical output, enforced by <code>TestNativeReconstruct</code> against the same golden — runs in <strong>6.3&nbsp;ms</strong> where the evaluator takes 1.87&nbsp;s end to end.</p>
+<p>End-to-end is not a fair comparison, though: the C++ paid its compilation at build time, while arrai parses <code>run.arrai</code> and the whole sysl library on every run. The perf test now times the phases separately, and they split almost exactly in half:</p>
+<div class="tbl"><table>
+<tr><th>Phase</th><th class="num">Time</th><th class="num">vs native</th></tr>
+<tr><td>Compile — parse the program and the sysl library</td><td class="num">~0.93s</td><td class="num">—</td></tr>
+<tr><td><strong>Eval — the algorithm</strong></td><td class="num"><strong>~0.85s</strong></td><td class="num"><strong>~134×</strong></td></tr>
+<tr><td>Native C++ (algorithm, compiled at build time)</td><td class="num">6.3ms</td><td class="num">1×</td></tr>
+</table></div>
+<p>So the like-for-like interpretation overhead is <strong>~145×</strong>, not 300×: the price of tree-walking, immutable relational values, and per-element closure dispatch. The other half is the compile phase, attackable independently (compiled program caching, bundling, or the wbnf work). Both halves are fuel for the items below. <span class="mono">perf/reconstruct/native/</span>.</p>
+
+<h2>S0 — first scale profile (🎯T17)</h2>
+<p>The 1000-app reconstruct measured constants. S0 asks what happens at 10× reconstruct and at a million-row join, on the same shipped evaluator, 1 Sep 2026. Large-N tests live in <span class="mono">perf/scale_test.go</span> and skip default CI unless <span class="mono">ARRAI_SCALE=1</span>.</p>
+<div class="tbl"><table>
+<tr><th>Workload</th><th class="num">N</th><th class="num">Compile</th><th class="num">Eval</th><th class="num">Allocs</th><th class="num">vs 0.1× N (eval)</th></tr>
+<tr><td>Reconstruct (generated sysl pb → <span class="mono">run.arrai</span>)</td><td class="num">1,000 apps</td><td class="num">908ms</td><td class="num">532ms</td><td class="num">35.32M</td><td class="num">1×</td></tr>
+<tr><td>Reconstruct</td><td class="num">10,000 apps</td><td class="num">808ms</td><td class="num">3.801s</td><td class="num">188.13M</td><td class="num">7.1× for 10× data</td></tr>
+<tr><td>Join + <span class="mono">where</span> + <span class="mono">=&gt;</span> (<span class="mono">perf/scale/join.arrai</span>)</td><td class="num">100,000 rows</td><td class="num">6ms</td><td class="num">145ms</td><td class="num">—</td><td class="num">1×</td></tr>
+<tr><td>Join + pipeline</td><td class="num">1,000,000 rows</td><td class="num">4ms</td><td class="num">613ms</td><td class="num">14.86M</td><td class="num">4.2× for 10× data</td></tr>
+</table></div>
+<p>Neither workload is super-linear on this machine: reconstruct eval scaled 7.1× for 10× apps (allocs 5.3×); the join scaled 4.2× for 10× rows. Compile stays ~constant on reconstruct, as expected. No new quadratic target filed from this profile. Output: 10k reconstruct sha256 <span class="mono">3120818a5ba3943d94fb1f0b9bff20983238a89aa7158a2bcce829e57c41c5cc</span>; 1M join count 142858 = (n+6)/7.</p>
+
+<h2>S1–S5 — evaluation as query execution (🎯T24)</h2>
+<p>Shipped 2 Sep 2026 on the same S0 programs. <span class="mono">slowpath</span> remains the reference oracle; 10k reconstruct output is still sha256 <span class="mono">3120818a5ba3943d94fb1f0b9bff20983238a89aa7158a2bcce829e57c41c5cc</span>. Hash identity (<span class="mono">-tags hashidentity</span>) is a differential build, not the default.</p>
+<div class="tbl"><table>
+<tr><th>Stage</th><th>What landed</th><th class="num">Evidence</th></tr>
+<tr><td>S1 🎯T18</td><td>Selection views wrap the parent group index; probes restrict buckets instead of rescanning.</td><td class="num">groupBy inherit 285&nbsp;ns / 7 allocs vs rebuild 295&nbsp;µs / 2273 allocs (~1000×) at 12k rows</td></tr>
+<tr><td>S2 🎯T19</td><td>Suspended <code>&gt;&gt;</code> pipelines over arrays and dicts; <code>count</code> is metadata; n stages force once, in parallel.</td><td class="num">1M-element <span class="mono">pipeline.arrai</span> count 16&nbsp;ms / 0.05M allocs (maps never run)</td></tr>
+<tr><td>S3a 🎯T20</td><td>Injective anchor <code>=&gt;</code> shares the parent store so <code>count</code> is source cardinality; <code>@</code>-keys of sequence shapes are seeded; empirical keys stay cached.</td><td class="num"><span class="mono">TestProjectDotsSharesStoreWhenInjective</span> (Same rows pointer)</td></tr>
+<tr><td>S3b 🎯T21</td><td>Stacked <code>=&gt;</code> prunes unread attributes; <code>where .k = k</code> pushes through a projection onto an index.</td><td class="num"><span class="mono">pushdown.arrai</span> 1M rows, k=42: 736&nbsp;ms / 14.12M, count 1000</td></tr>
+<tr><td>S4 🎯T22</td><td><span class="mono">-tags hashidentity</span> Equal is Hash128 for sets, tuples, arrays, dicts, strings, bytes, and group-index probes; default stays deep Equal.</td><td class="num">Set Equal 30.8&nbsp;ns → 7.9&nbsp;ns; Has 78&nbsp;ns → 60&nbsp;ns; corpus 108/108 under the tag</td></tr>
+<tr><td>S5 🎯T23</td><td>Let fan-out freezes demanded group indexes; fact-keyed where cache with <code>n</code>-guards, hit on second Eval.</td><td class="num"><span class="mono">TestWhereIndexPlanCacheThroughEval</span>; join 1M 841&nbsp;ms / 14.87M</td></tr>
+</table></div>
+<p>1000-app reconstruct eval is 629&nbsp;ms (was 532&nbsp;ms at S0) with 35.0M allocs, byte-identical. 10k-app eval is 6.68&nbsp;s / 190.06M (was 3.80&nbsp;s / 188.13M): suspension adds observe/force around native calls and <code>$""</code> expansion; identity held. The S2 count-passthrough and S1 wrap are the measured wins; reconstruct is not the workload those stages target.</p>
+
+<h2>S6 — plan VM / compiled <span class="mono">.arraiz</span> (🎯T25)</h2>
+<p>The compiled form is a dataflow/operator graph, not a stack bytecode VM. <span class="mono">arrai bundle</span> writes <span class="mono">/plan.bin</span> next to the sources; <span class="mono">arrai run</span> of that bundle executes the graph and does not re-parse the program. Closures are nested graphs; kernels rebind from op tags (and native names) on load. First compile still uses wbnf; the artifact skips it. 2 Sep 2026.</p>
+<div class="tbl"><table>
+<tr><th>Workload</th><th class="num">Compile / decode</th><th class="num">Eval</th><th>Notes</th></tr>
+<tr><td>Reconstruct 1000 apps, tree-walk</td><td class="num">~900&nbsp;ms parse</td><td class="num">~650&nbsp;ms</td><td>v0.321.0 golden</td></tr>
+<tr><td>Reconstruct 1000 apps, compiled plan</td><td class="num">4&nbsp;ms decode</td><td class="num">660&nbsp;ms</td><td>byte-identical; <span class="mono">TestReconstructPlan</span></td></tr>
+</table></div>
+<p>Parse of the reconstruct program drops off the run path (~900&nbsp;ms → 4&nbsp;ms). Eval is the same operator kernels as the tree-walker. S0 scale programs still run from source in CI; the compiled path is gated by the presence of <span class="mono">plan.bin</span>.</p>
+
+<h2>What's ahead</h2>
+
+<h3>Small and well-understood</h3>
+<ul>
+<li><strong>🎯T8 — the wbnf crash.</strong> Parked pending xbnf (🎯T8 is set aside).</li>
+<li><strong>🎯T14 — modern Go.</strong> Remaining candidates on <a href="https://github.com/arr-ai/arrai/issues/741">#741</a>.</li>
+</ul>
+
+<h3>Large, with evidence behind them</h3>
+<ul>
+<li><strong>String representation.</strong> <code>[]rune</code> makes hashing, equality and concatenation allocate; the sysl library builds names one character at a time. A UTF-8 or rope representation with a cached hash helps every text-rendering workload.</li>
+<li><strong>Flipping <code>hashidentity</code> to the default.</strong> Recorded as a separate decision on 🎯T22; not done here.</li>
+</ul>
+
+<h2>Measured and deliberately discarded</h2>
+<p>Kept here so nobody re-attempts them without the numbers. The modern-Go survey lives in <a href="https://github.com/arr-ai/arrai/issues/741">#741</a>.</p>
+<ul>
+<li><strong>Green Tea GC and PGO</strong> — both flat on reconstruct under go1.26.4.</li>
+<li><strong>Small-Number box table</strong> — zero <code>convT</code> presence in both reconstruct and an arithmetic-heavy profile; the evaluator moves existing boxes, it rarely mints them. (<code>ArrayItemTuple.Get</code> boxing its index is the one live lead, parked for the tuple/strings work.)</li>
+<li><strong><code>strings.SplitSeq</code> in <code>//seq.split</code></strong> — parts are materialised as arr.ai Strings immediately; the iterator saves one slice header per call.</li>
+<li><strong>Bare <code>Value</code> group-by keys</strong> — tried three times. Silently wrong before the frozen fix; 7× slower after it (reflective dispatch); superseded by a <code>Map[Value, …]</code> index that is 14% faster with 24% fewer allocations.</li>
+<li><strong>A <code>posTuple</code> row view</strong> — regressed 20s → 26s in the pre-shapes era, then made moot: rows and tuples are now the same thing.</li>
+<li><strong>Full closure conversion</strong> — shelved. Frames plus inline caches already took the win; the remainder measured at a few percent.</li>
+<li><strong>HAMT-backed relation rows</strong> — replaced by the flat arena. The one case the HAMT wins is repeatedly branching a large shared base (<code>big | {x}</code> from the same snapshot in a loop): an arena branch copies O(n) where the tree shared structure. Chains are unaffected — they extend in place — and no measured workload branches this way, but it is the known trade.</li>
+<li><strong>Concrete element types in frozen's containers</strong> — measured <em>worse</em> (4,700 vs 3,959 allocations), because the tree's leaf copies grow with the element.</li>
+</ul>
+</main>

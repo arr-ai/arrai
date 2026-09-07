@@ -16,6 +16,13 @@ import (
 // GenericSet is a set of Values.
 type GenericSet struct {
 	set frozen.Set[Value]
+
+	// canonical records that CanonicalSet has already verified this set
+	// stays a GenericSet (every element in the generic bucket), so
+	// re-canonicalising it is a no-op. A union of two canonical sets is
+	// canonical — their elements' buckets don't change — which lets
+	// accumulator folds (acc | {x}) skip an O(n) rebuild per step.
+	canonical bool
 }
 
 // genericSet equivalents for Boolean true and false
@@ -34,6 +41,9 @@ var (
 
 func CanonicalSet(s Set) Set {
 	if s, ok := s.(GenericSet); ok {
+		if s.canonical {
+			return s
+		}
 		b := NewSetBuilder()
 		for e := s.Enumerator(); e.MoveNext(); {
 			b.Add(e.Current())
@@ -41,6 +51,10 @@ func CanonicalSet(s Set) Set {
 		result, err := b.Finish()
 		if err != nil {
 			panic(err)
+		}
+		if g, ok := result.(GenericSet); ok {
+			g.canonical = true
+			return g
 		}
 		return result
 	}
@@ -64,7 +78,7 @@ func newSetFromFrozenSet(s frozen.Set[Value]) Set {
 			return True
 		}
 	}
-	return GenericSet{s}
+	return GenericSet{set: s}
 }
 
 // NewBool constructs a bool as a relation.
@@ -89,6 +103,10 @@ func (s GenericSet) Hash128() hash128.H128 {
 
 // Equal tests two Sets for equality. Any other type returns false.
 func (s GenericSet) Equal(v Value) bool {
+	if hashIdentity {
+		t, ok := v.(Set)
+		return ok && s.Hash128() == t.Hash128()
+	}
 	if t, ok := v.(GenericSet); ok {
 		return s.set.Equal(t.set)
 	}
@@ -215,7 +233,9 @@ func (s GenericSet) Has(value Value) bool {
 // already present, the original genericSet is returned.
 func (s GenericSet) With(v Value) Set {
 	if v.getBucket() == genericType {
-		return GenericSet{s.set.With(v)}
+		// Adding a generic-bucket value cannot change any element's bucket,
+		// so canonicality is preserved.
+		return GenericSet{set: s.set.With(v), canonical: s.canonical}
 	}
 	return toUnionSetWithItem(s, v)
 }
@@ -240,19 +260,20 @@ func (s GenericSet) Map(f func(v Value) (Value, error)) (Set, error) {
 }
 
 // Where returns a new genericSet with all the Values satisfying predicate p.
-func (s GenericSet) Where(p func(v Value) (bool, error)) (_ Set, err error) {
+func (s GenericSet) Where(p func(v Value) (bool, error)) (Set, error) {
+	var failure whereErr
 	set := s.set.Where(func(elem Value) bool {
-		if err != nil {
+		if failure.failed() {
 			return false
 		}
-		match, err2 := p(elem)
-		if err2 != nil {
-			err = err2
+		match, err := p(elem)
+		if err != nil {
+			failure.set(err)
 			return false
 		}
 		return match
 	})
-	if err != nil {
+	if err := failure.get(); err != nil {
 		return nil, err
 	}
 	return newSetFromFrozenSet(set), nil
@@ -282,26 +303,13 @@ func (s GenericSet) Any() Value {
 	panic("Any(): empty set")
 }
 
-type genericSetValueEnumerator struct {
-	*genericSetEnumerator
-}
-
-func (g *genericSetValueEnumerator) Current() Value {
-	// TODO: this is just a placeholder to replicate old functionality
-	// this should return anything that's not @
-	return g.i.Value().(Tuple).MustGet(ArrayItemAttr)
-}
-
+// ArrayEnumerator orders a GenericSet's elements by the general Value total
+// order: unlike Array/Bytes/String/Relation, a GenericSet's elements are
+// never uniformly "@"-indexed tuples (a homogeneous set of those would have
+// canonicalised to a specialised type instead of staying a GenericSet), so
+// there's no positional index to order by.
 func (s GenericSet) ArrayEnumerator() ValueEnumerator {
-	return &genericSetValueEnumerator{
-		&genericSetEnumerator{
-			s.set.OrderedRange(
-				func(a, b Value) bool {
-					return a.(Tuple).MustGet("@").(Number) < b.(Tuple).MustGet("@").(Number)
-				},
-			),
-		},
-	}
+	return s.OrderedValues()
 }
 
 // genericSetEnumerator represents an enumerator over a genericSet.

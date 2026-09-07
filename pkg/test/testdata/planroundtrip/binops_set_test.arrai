@@ -1,0 +1,24 @@
+(
+    union:        {1, 2} | {2, 3} = {1, 2, 3},
+    intersect:    {1, 2} & {2, 3} = {2},
+    diff:         {1, 2, 3} &~ {2} = {1, 3},
+    symmDiff:     {1, 2, 3} ~~ {2, 3, 4} = {1, 4},
+    with:         ({1, 2, 3} with 4) = {1, 2, 3, 4},
+    withoutEmpty: {} = ({1} without 1),
+    withoutArray: {} = ([1] without (@: 0, @item: 1)),
+    withoutBytes: {} = (<<'a'>> without (@: 0, @byte: 97)),
+    withoutStr:   {} = ('a' without (@: 0, @char: 97)),
+    withoutDict:  {} = ({0: 1} without (@: 0, @value: 1)),
+    withoutMiss:  ({1, 2, 3} without 5) = {1, 2, 3},
+
+    # `&~` (set difference) and `~~` (symmetric difference) are wire-adjacent to `&`
+    # (intersect); use asymmetric operands so a tag mix-up between any of them would
+    # be caught here.
+    diffNotSymmDiff: ({1, 2, 3} &~ {2, 3, 4}) != ({1, 2, 3} ~~ {2, 3, 4}),
+
+    powerset: ^{1, 2} = {{}, {1}, {2}, {1, 2}},
+    count:    {1, 2, 3} count = 3,
+    single:   ({42} single) = 42,
+    not:      !false = true,
+    evalCall: (*\_ 42) = 42,
+)

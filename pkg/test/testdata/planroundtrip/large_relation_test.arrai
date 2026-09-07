@@ -1,0 +1,123 @@
+(
+    # Small (2-3 tuple) relations elsewhere in this corpus stay under whatever
+    # size threshold triggers this branch's positional-relation optimizations
+    # (With/EqualPositionalRelation/groupBy on a real column store, rather than
+    # a handful of individually-built tuples). A relation this size forces that
+    # code to run under the plan round trip too, not just the generic small-set
+    # path already covered elsewhere.
+    #
+    # 600 rows also clears frozen's default parallel-chunk threshold (256, so
+    # >=512 rows gives at least 2 workers), forcing `where`'s whereParallel
+    # path - a 30-row relation never got big enough to fan out.
+    let r = //seq.repeat(600, [0]) => \(@: i, @item: _) (x: i, y: i % 5);
+    (
+        count:    r count = 600,
+        where:    (r where .y = 0) count = 120,
+        without:  (r without (x: 0, y: 0)) count = 599,
+        orderby:  (r orderby .x) count = 600,
+        join:     (r <&> {(y: 0, z: 'a'), (y: 1, z: 'b')}) count = 240,
+        nest:     (r nest ~|x|rest) count = 600,
+        rank:     (r rank (rk: .x)) count = 600,
+
+        # `.y = literal` matches the where-by-index fast path (whereByIndex),
+        # bypassing the generic positional-relation Where entirely. A
+        # non-equality predicate forces the generic path (and, at this size,
+        # whereParallel) instead.
+        whereNonEq: (r where .y > 2) count = 240,
+
+        # `r => \t (x: t.x, y: t.y * 2)` isn't a plain dot-projection (the
+        # value is computed, not just renamed/dropped), so it takes
+        # positionalRelation's generic Map path rather than the projectDots
+        # fast path below.
+        mapTransform: (r => \t (x: t.x, y: t.y * 2)) count = 600,
+
+        # A plain dot-projection (`t.attr` renamed, nothing else) hits
+        # DArrowExpr's projectDots fast path instead of Map. Projecting to
+        # just `x` (all 600 values distinct) is *injective*, so projectDots
+        # shares the underlying store via hasCandidateKey rather than
+        # rebuilding+deduping it.
+        projectInjective: (r => \t (X: t.x)) count = 600,
+
+        # The same projection (by `x`), but on a `where`-derived *child view*
+        # of `r` rather than `r` itself. Since projectInjective above already
+        # computed+cached r's own groupBy(x) and confirmed it's a candidate
+        # key, this child's groupBy call should walk its parent chain
+        # (r.parent) and reuse that cached group index (filtering it down to
+        # just the child's rows) instead of building a fresh one - untested
+        # by every other projectDots/join case here, which only ever groups
+        # a relation that has no parent view of its own.
+        projectInjectiveOnChildView: ((r where .x > 0) => \t (X: t.x)) count = 599,
+
+        # Projecting to just `y` (only 5 distinct values across 600 rows) is
+        # *not* injective, forcing projectDots/positionalRelation.Project's
+        # actual dedup path instead of the share-the-store fast path above.
+        projectDedup: (r => \t (Y: t.y)) count = 5,
+
+        # `where`'s compile-time pushWhereThroughProject optimisation rewrites
+        # `rel => (x: .x, y: .y) where .x = 5` into
+        # `(rel where .x = 5) => (x: .x, y: .y)` when the filtered attr (`x`)
+        # survives the projection as a pure, same-named dot-rename - untested
+        # by every other `where`/`=>` case in this corpus, since none of them
+        # combine an equality predicate with a `where` whose lhs is itself a
+        # pure-rename `=>` projection. This only fires with the implicit-dot
+        # `=>` function shorthand and no redundant outer parens around the
+        # `=>`: an explicit `\t (...)` lambda's body greedily absorbs a
+        # trailing `where` instead of leaving it to bind at the outer level,
+        # and wrapping the `=>` itself in parens compiles it to an ExprExpr
+        # (for the parens' own source position), which defeats the
+        # `*DArrowExpr` type assertion the optimisation relies on.
+        pushWhereThroughProjectSameAttr:
+            (r => (x: .x, y: .y) where .x = 5) count = 1,
+
+        # Same shape, but the filtered attr is a *renamed* projection (`.y`
+        # renamed to `Y`) rather than a same-named passthrough - the rewrite
+        # only fires when the source and destination names both equal the
+        # predicate's attr, so this hits the loop's no-match fallthrough
+        # instead (the predicate is still valid: `.Y` exists on the
+        # projected output, just not via an eligible pure-rename).
+        pushWhereThroughProjectRenamedAttrNoMatch:
+            (r => (Y: .y) where .Y = 3) count = 1,
+
+        # A body that isn't a tuple constructor at all (just `.`, the element
+        # unchanged) can't be a pure-rename projection, so this hits the
+        # rewrite's "body isn't *TupleExpr" guard. Parenthesising the bare
+        # `.` (rather than leaving it bare) is needed only to stop `.` from
+        # lexing together with the following `where` as `.where` - it
+        # doesn't defeat the optimisation, since only the outer `=>` itself
+        # (not its body) needs to avoid an ExprExpr wrapper.
+        pushWhereThroughProjectBodyNotTuple:
+            (r => (.) where .x = 5) count = 1,
+
+        # A tuple-constructor body whose attr is *computed* rather than a
+        # pure dot-rename (`.x + 1`, not just `.x`) fails identDots, hitting
+        # the rewrite's third guard.
+        pushWhereThroughProjectIdentDotsFails:
+            (r => (X: .x + 1, y: .y) where .X = 6) count = 1,
+
+        # A non-equality `where` on a relation small enough to stay below the
+        # parallel threshold: without this, every non-eq `where` in the
+        # corpus would run against the 600-row `r` above and only ever
+        # exercise positionalRelation.Where's whereParallel branch, leaving
+        # its plain sequential-scan branch completely uncovered.
+        whereNonEqSmall: ({(x: 1), (x: 2), (x: 3)} where .x > 1) count = 2,
+
+        # A 600-element `>>` chain over an Array (not a relation) clears the
+        # same parallel-chunk threshold as `r` above, forcing
+        # seqPipeline.force's parallel path - every other `>>` test in this
+        # corpus uses small arrays that stay sequential. Comparing two such
+        # pipelines directly (rather than against a plain Array literal) also
+        # exercises seqPipeline.Equal's force-both-sides branch.
+        #
+        # Both sides must be built via genuinely different computations, not
+        # the same expression twice: a bug in force's parallel range-splitting
+        # (e.g. positions scrambled across chunk boundaries) would corrupt
+        # both sides identically and still compare equal if they're literal
+        # duplicates. The cycling [0,1,2,3] base (rather than a constant) also
+        # makes position-dependent corruption within a chunk detectable. The
+        # RHS additionally chains a second `>>` onto an already-suspended
+        # pipeline, exercising `then` (0% covered otherwise).
+        seqPipelineParallel:
+            (//seq.repeat(150, [0, 1, 2, 3]) >> . + 1) =
+                ((//seq.repeat(150, [0, 1, 2, 3]) >> . + 3) >> (. - 2)),
+    )
+)

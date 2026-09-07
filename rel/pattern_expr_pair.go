@@ -36,8 +36,9 @@ func (p PatternExprPair) Bind(
 	ctx context.Context,
 	local Scope,
 	value Value,
-) (context.Context, Scope, error) {
-	return p.pattern.Bind(ctx, local, value)
+	b *scopeBuilder,
+) (context.Context, error) {
+	return p.pattern.Bind(ctx, local, value, b)
 }
 
 func (p PatternExprPair) eval(ctx context.Context, local Scope) (Value, error) {

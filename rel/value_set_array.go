@@ -18,6 +18,36 @@ type Array struct {
 	values []Value
 	offset int
 	count  int
+
+	// hash memoises Hash128. The array's hash depends on values and offset,
+	// so any copy that changes either must take a fresh cell: derive such
+	// copies with derive(), never by assigning to a plain struct copy.
+	hash *hashCell
+
+	// abuf, when non-nil, is the shared append buffer this array is a
+	// prefix of, so concatenation chains (acc ++ [x] folds) extend one
+	// buffer in place instead of copying the accumulator per step. See
+	// appendBuf; elements below any array's length never change.
+	abuf *appendBuf[Value]
+}
+
+// concatArrays concatenates two contiguous zero-offset arrays, extending
+// a's buffer in place when a is its frontier.
+func concatArrays(a, b Array) Array {
+	if a.abuf != nil {
+		if v := a.abuf.extend(len(a.values), b.values); v != nil {
+			return Array{values: v, count: len(v), hash: &hashCell{}, abuf: a.abuf}
+		}
+	}
+	abuf, v := newAppendBuf(a.values, b.values)
+	return Array{values: v, count: len(v), hash: &hashCell{}, abuf: abuf}
+}
+
+// derive returns a copy of a with a fresh hash cell, for callers that go on
+// to change its values or offset.
+func (a Array) derive() Array {
+	a.hash = &hashCell{}
+	return a
 }
 
 // NewArray constructs an array as a relation.
@@ -58,13 +88,16 @@ func NewOffsetArray(offset int, values ...Value) Set {
 		}
 	}
 
-	return Array{values: values, offset: offset, count: n}
+	return Array{values: values, offset: offset, count: n, hash: &hashCell{}}
 }
 
 func AsArray(v Value) (Array, bool) {
 	switch v := v.(type) {
 	case Array:
 		return v, true
+	case seqPipeline:
+		a, err := v.force()
+		return a, err == nil
 	case EmptySet:
 		return Array{}, true
 	}
@@ -97,14 +130,17 @@ func asArray(values ...Value) Array {
 		values: items,
 		offset: minIndex,
 		count:  n,
+		hash:   &hashCell{},
 	}
 }
 
+// clone copies the array's backing values so the caller can modify them.
 func (a Array) clone() Array {
 	values := make([]Value, len(a.values))
 	copy(values, a.values)
-	a.values = values
-	return a
+	b := a.derive()
+	b.values = values
+	return b
 }
 
 // Values returns the slice of values in the array. Holes in the indices are
@@ -129,6 +165,13 @@ func (a Array) Hash(seed uintptr) uintptr {
 // hashTuple2's own internal xor is identical at both positions and cancels
 // out, making the array's hash independent of that repeated value.
 func (a Array) Hash128() hash128.H128 {
+	if a.hash == nil {
+		return a.hashUncached()
+	}
+	return a.hash.get(a.hashUncached)
+}
+
+func (a Array) hashUncached() hash128.H128 {
 	h := arraySalt
 	for i, v := range a.values {
 		if v != nil {
@@ -140,8 +183,13 @@ func (a Array) Hash128() hash128.H128 {
 
 // Equal tests two Sets for equality. Any other type returns false.
 func (a Array) Equal(v Value) bool {
-	switch x := v.(type) {
-	case Array:
+	if hashIdentity {
+		s, ok := v.(Set)
+		return ok && a.Hash128() == s.Hash128()
+	}
+	// AsArray also matches seqPipeline and EmptySet, which represent arrays
+	// without being the concrete Array type.
+	if x, ok := AsArray(v); ok {
 		if len(a.values) != len(x.values) || a.offset != x.offset || a.count != x.count {
 			return false
 		}
@@ -177,8 +225,9 @@ func (a Array) Format(f fmt.State, verb rune) {
 
 // Shift increments the Array's offset
 func (a Array) Shift(offset int) Array {
-	a.offset += offset
-	return a
+	b := a.derive()
+	b.offset += offset
+	return b
 }
 
 // Eval returns the string.
@@ -209,7 +258,10 @@ func (a Array) Less(v Value) bool {
 	if a.Kind() != v.Kind() {
 		return a.Kind() < v.Kind()
 	}
-	b := v.(Array)
+	b, ok := AsArray(v)
+	if !ok {
+		return true
+	}
 	if a.offset != b.offset {
 		return a.offset < b.offset
 	}
@@ -278,7 +330,7 @@ func (a Array) Has(value Value) bool {
 }
 
 func (a Array) withItem(index int, item Value) Set {
-	b := a
+	b := a.derive()
 	index -= a.offset
 	switch {
 	case index < 0:
@@ -331,6 +383,7 @@ func (a Array) Without(value Value) Set {
 						values: a.values[1:],
 						offset: a.offset + 1,
 						count:  a.count - 1,
+						hash:   &hashCell{},
 					}
 				}
 				if t.at == a.offset+len(a.values)-1 {
@@ -338,6 +391,7 @@ func (a Array) Without(value Value) Set {
 						values: a.values[:len(a.values)-1],
 						offset: a.offset,
 						count:  a.count - 1,
+						hash:   &hashCell{},
 					}
 				}
 				result := a.clone()

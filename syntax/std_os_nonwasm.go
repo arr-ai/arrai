@@ -34,7 +34,7 @@ func stdOsGetEnv(ctx context.Context, value rel.Value) (rel.Value, error) {
 	if arraictx.IsCompiling(ctx) {
 		return rel.None, nil
 	}
-	return rel.NewString([]rune(os.Getenv(value.(rel.String).String()))), nil
+	return rel.NewGoString(os.Getenv(value.(rel.String).String())), nil
 }
 
 func stdOsPathSeparator() rel.Value {
@@ -50,7 +50,7 @@ func stdOsCwd() rel.Value {
 	if err != nil {
 		panic(err)
 	}
-	return rel.NewString([]rune(wd))
+	return rel.NewGoString(wd)
 }
 
 func stdOsExists(ctx context.Context, v rel.Value) (rel.Value, error) {

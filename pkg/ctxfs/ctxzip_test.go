@@ -22,6 +22,7 @@ func TestOutputZip(t *testing.T) {
 		"/test/test.txt":      "123",
 		"/test.txt":           "321",
 		"/more/more/test.txt": "test",
+		"/plan.bin":           "plan",
 	}
 
 	ctx := WithZipFs(context.Background(), key)
