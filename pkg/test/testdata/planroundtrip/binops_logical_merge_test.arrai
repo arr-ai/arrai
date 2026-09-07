@@ -18,4 +18,33 @@
 
     # `&&`/`||` are wire-adjacent boolean ops; asymmetric operands catch a mix-up.
     andNotOr: (true && false) != (true || false),
+
+    # `true` is itself `{()}` (a real Set, not a distinct boolean type), and
+    # `false` is `{}` (EmptySet) - direct set operations on them exercise
+    # TrueSet's own Set-interface methods, untested elsewhere since nothing
+    # else in this corpus operates on a boolean *as a set*.
+    trueCount:  true count = 1,
+    trueHas:    () <: true,
+    trueHasNot: !(1 <: true),
+    trueNegate: (-true) = (@neg: true),
+    trueLessThanOther:  true < 'a',
+    trueNotLessThanFalse: !(true < false),
+    trueWith:    (true with 5) count = 2,
+    trueWithout: (true without ()) = false,
+    trueWithoutOther: (true without 5) = true,
+    trueWhereTrue:  (true where \_ true) = true,
+    trueWhereFalse: (true where \_ false) = false,
+    trueEnumerator: (true => \x x) = {()},
+    trueArrayEnumerator: (//log.printf('%v', true)) count = 1,
+
+    # Number's own Less dispatches via Kind() for a cross-type comparison,
+    # a different (and real) trigger for TrueSet.Kind() from the other side
+    # of `<` - TrueSet's own Less doesn't call Kind() at all.
+    numberLessTrueViaKind: 5 < true,
+
+    # Nesting `true` as a set element (Hash/Hash128) or unioning it with a
+    # differently-bucketed set (getBucket/getSetBuilder) are both untested
+    # by the direct-operation cases above.
+    trueAsSetElement: {true, 1, 'a'} count = 3,
+    trueUnionWithRelation: (true | {(x: 1, y: 2)}) count = 2,
 )
