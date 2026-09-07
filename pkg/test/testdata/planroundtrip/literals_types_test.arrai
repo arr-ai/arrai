@@ -49,6 +49,10 @@
     # value, a distinct xstrExpand path from the plain `${expr}` cases above.
     xstrFormatSpec: $"${42:05d}" = "00042",
 
+    # formatValue's other format-verb branches (bool/hex), untested elsewhere.
+    xstrFormatBool: $"${1 = 1:t}" = "true",
+    xstrFormatHex:  $"${255:x}" = "ff",
+
     # `${array:format:sep}` - per-element format plus a join separator, the
     # array-expansion branch of xstrExpand (distinct from the scalar formatValue
     # path just above).
