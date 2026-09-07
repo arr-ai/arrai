@@ -15,6 +15,9 @@
     jsonDecode: //encoding.json.decoder((strict: false))('{"a": 1, "b": "x"}') = {'a': 1, 'b': 'x'},
     jsonEncode: //encoding.json.encode({'a': 1}) = <<'{"a":1}\n'>>,
     csvDecode:  //encoding.csv.decode(<<'a,b,c\n1,2,3\n'>>) = [['a', 'b', 'c'], ['1', '2', '3']],
+    csvEncode:  //encoding.csv.encode([['a', 'b'], ['1', '2']]) = <<'a,b\n1,2\n'>>,
+    csvDecoderComma: //encoding.csv.decoder((comma: %|))(<<'a|b\n1|2\n'>>) = [['a', 'b'], ['1', '2']],
+    csvEncoderComma: //encoding.csv.encoder((comma: %|))([['a', 'b'], ['1', '2']]) = <<'a|b\n1|2\n'>>,
 
     # //rel.union takes a *set of sets* and flattens them via n-ary union -
     # distinct from the binary `|` operator tested elsewhere in this corpus.
