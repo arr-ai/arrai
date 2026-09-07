@@ -11,4 +11,7 @@
     # (compileTuplePattern's `fall`/`tail` handling) from a plain required attr.
     tuplePatternFallbackUsed:    ((a: 1) -> \(a: x, b?: y:99) [x, y]) = [1, 99],
     tuplePatternFallbackUnused:  ((a: 1, b: 2) -> \(a: x, b?: y:99) [x, y]) = [1, 2],
+
+    arrayPatternFallbackUsed:    ([1] -> \[x, ?y:99] [x, y]) = [1, 99],
+    arrayPatternFallbackUnused:  ([1, 2] -> \[x, ?y:99] [x, y]) = [1, 2],
 )

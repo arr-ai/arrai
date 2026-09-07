@@ -35,4 +35,16 @@
     sparseArray:      [1, , 3] = [1, , 3],
     sparseArrayFirst: [1, , 3](0) = 1,
     sparseArrayLast:  [1, , 3](2) = 3,
+
+    # Special-shape tuple literals constant-fold to their own Value types
+    # (ArrayItemTuple/StringCharTuple/BytesByteTuple/DictEntryTuple) at compile
+    # time, a distinct encodeValue/decodeValue path from a plain tuple literal.
+    arrayItemTupleLiteral:  (@: 1, @item: 2) = (@: 1, @item: 2),
+    stringCharTupleLiteral: (@: 1, @char: 65) = (@: 1, @char: 65),
+    bytesByteTupleLiteral:  (@: 1, @byte: 97) = (@: 1, @byte: 97),
+    dictEntryTupleLiteral:  (@: {1, 2}, @value: 3) = (@: {1, 2}, @value: 3),
+
+    # A bare package member reference (no call) constant-folds to a
+    # *NativeFunction value.
+    nativeFunctionLiteral: (//str.lower)("ABC") = "abc",
 )
