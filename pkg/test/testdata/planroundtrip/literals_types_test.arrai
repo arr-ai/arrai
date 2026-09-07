@@ -62,6 +62,32 @@
     relationHeadingToString: (let n = 1; {|@, @char| (0, 88), (n, 89)}) = 'XY',
     relationHeadingToBytes: (let n = 1; {|@, @byte| (0, 88), (n, 89)}) = <<88, 89>>,
 
+    # `|` unions two sets whose elements land in genuinely different
+    # "buckets" (an Array's items vs a differently-shaped Relation's tuples)
+    # into a real UnionSet - a completely different Set representation from
+    # everything else in this corpus, entirely untested elsewhere. `<:`,
+    # `with`/`without`, `where`, and calling it as a function each dispatch
+    # to a distinct UnionSet method that just delegates per-bucket.
+    unionSetHasInArrayBucket: (@: 0, @item: 1) <: ([1, 2, 3] | {(x: 1, y: 2)}),
+    unionSetHasInRelationBucket: (x: 1, y: 2) <: ([1, 2, 3] | {(x: 1, y: 2)}),
+    unionSetWith: (([1, 2, 3] | {(x: 1, y: 2)}) with (x: 5, y: 6)) count = 5,
+
+    # Removing the relation bucket's only tuple leaves just the array bucket,
+    # which collapses back to a plain Array rather than staying a
+    # single-bucket UnionSet.
+    unionSetWithoutCollapsesToArray:
+        (([1, 2, 3] | {(x: 1, y: 2)}) without (x: 1, y: 2)) = [1, 2, 3],
+
+    # A predicate valid across every bucket's element shape (ignoring the
+    # element entirely) so `where` doesn't error accessing an attr that only
+    # exists in one bucket.
+    unionSetWhere: (([1, 2, 3] | {(x: 1, y: 2)}) where \_ true) count = 4,
+
+    # Calling a UnionSet as a function dispatches the call across every
+    # bucket and merges whichever one(s) match - here an Array bucket and a
+    # Dict bucket, both keyed by "@" but on disjoint ranges.
+    unionSetCallAll: ([10, 20] | {5: 'a', 6: 'b'})(5) = 'a',
+
     dictPipelineEqualsDictLiteral: ({'a': 1, 'b': 2} >> . * 10) = {'a': 10, 'b': 20},
 
     # dictPipeline mirrors seqPipeline (a suspended `>>` over a Dict rather
@@ -87,6 +113,19 @@
     bytesFromWithout:  {} = (<<'a'>> without (@: 0, @byte: 97)),
     stringCharAccess:  'abc'(1) = 98,
     stringFromWithout: {} = ('a' without (@: 0, @char: 97)),
+
+    # Bytes/String's own Has/With/Where/Enumerator, distinct Set-interface
+    # methods from `without`/index above and untested by anything else in
+    # this corpus.
+    bytesHas:   (@: 0, @byte: 97) <: <<97, 98>>,
+    bytesWith:  (<<97, 98>> with (@: 2, @byte: 99)) = <<97, 98, 99>>,
+    bytesWhere: (<<97, 98, 99>> where .@byte > 97) count = 2,
+    bytesEnumerator: (<<97, 98>> => \x (x.@byte + 1)) = {98, 99},
+
+    stringHas:   (@: 0, @char: 97) <: 'ab',
+    stringWith:  ('ab' with (@: 2, @char: 99)) = 'abc',
+    stringWhere: ('abc' where .@char > 97) count = 2,
+    stringEnumerator: ('ab' => \x (x.@char + 1)) = {98, 99},
 
     tupleLiteral: (a: 1, b: 2).a = 1,
     dictLiteral:  {'x': 1, 'y': 2}('x') = 1,
