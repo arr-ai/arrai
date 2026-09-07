@@ -17,4 +17,10 @@
     # `order` (with comparator) and `orderby` (with key) are wire-adjacent; use a
     # descending key so any mix-up between the two would change the result.
     orderNotOrderby: ({3, 1, 2} order \a \b a > b) != ({3, 1, 2} orderby .),
+
+    # Unary-prefix `=>`/`>>` (applied to `.` implicitly) - a distinct compile path
+    # (dotUnary) from the binary infix forms above.
+    darrowUnaryNested: ({{1, 2}, {3, 4}} => => 2 ^ .) = {{2, 4}, {8, 16}},
+    seqArrowUnaryOnArray: ({[1, 2], [3, 4]} => >> 2 ^ .) = {[2, 4], [8, 16]},
+    darrowUnaryInSeqArrow: ([{1, 2}, {3, 4}] >> => 2 ^ .) = [{2, 4}, {8, 16}],
 )

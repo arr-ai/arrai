@@ -41,5 +41,17 @@
     safeTailCallPresent:  {"b": {"c": 1}}("b", "c")?:42 = 1,
     safeTailCallFallback: {"b": {"c": 1}}("b", "x")?:42 = 42,
 
+    # Two `?` checkpoints in one chain: the second one is a distinct compile
+    # branch (compileSafeTails' "ops" loop, the "safe" case) from the first,
+    # which is handled separately via "first_safe".
+    safeTailMultiCheckpointPresent: (
+        let a = (b: (c: (d: (e: 1))));
+        a.b.c?.d.e?:42
+    ) = 1,
+    safeTailMultiCheckpointFallback: (
+        let a = (b: (c: (d: (e: 1))));
+        a.b.c?.d.f?:42
+    ) = 42,
+
     offset: (5\[1, 2, 3])(6) = 2,
 )
