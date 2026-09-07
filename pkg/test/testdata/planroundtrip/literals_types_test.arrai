@@ -47,4 +47,13 @@
     # A bare package member reference (no call) constant-folds to a
     # *NativeFunction value.
     nativeFunctionLiteral: (//str.lower)("ABC") = "abc",
+
+    # A literal *set* of special-shape tuples constant-folds the whole set to a
+    # Value at compile time (NewSetExpr), which recurses into encodeValue's
+    # aitemval/scharval/bbyteval/dentryval cases for each element - a different
+    # path from a single bare special-shape tuple literal above.
+    setOfArrayItemTuples:  {(@: 0, @item: 'x'), (@: 1, @item: 'y')} = {(@: 0, @item: 'x'), (@: 1, @item: 'y')},
+    setOfStringCharTuples: {(@: 0, @char: 65), (@: 1, @char: 66)} = {(@: 0, @char: 65), (@: 1, @char: 66)},
+    setOfBytesByteTuples:  {(@: 0, @byte: 97), (@: 1, @byte: 98)} = {(@: 0, @byte: 97), (@: 1, @byte: 98)},
+    setOfDictEntryTuples:  {(@: {1}, @value: 'a'), (@: {2}, @value: 'b')} = {(@: {1}, @value: 'a'), (@: {2}, @value: 'b')},
 )
