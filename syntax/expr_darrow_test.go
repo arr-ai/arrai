@@ -40,3 +40,13 @@ func TestDArrowExprProjectToArrayItemShape(t *testing.T) {
 		`{(index: 0, val: 'a'), (index: 1, val: 'b')} => (@: .index, @item: .val)`,
 	)
 }
+
+// A destructuring => pattern that doesn't match an element's shape re-runs
+// the bind with explain=true (explainBind) to produce a detailed message,
+// rather than the generic "pattern did not match" used internally to try
+// candidate patterns cheaply.
+func TestDArrowExprPatternMismatchExplains(t *testing.T) {
+	t.Parallel()
+
+	AssertCodeErrors(t, "couldn't find x in tuple (y: 1)", `{(y: 1)} => \(x: a) a`)
+}
