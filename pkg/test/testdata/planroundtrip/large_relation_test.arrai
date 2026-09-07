@@ -66,7 +66,17 @@
         # corpus uses small arrays that stay sequential. Comparing two such
         # pipelines directly (rather than against a plain Array literal) also
         # exercises seqPipeline.Equal's force-both-sides branch.
+        #
+        # Both sides must be built via genuinely different computations, not
+        # the same expression twice: a bug in force's parallel range-splitting
+        # (e.g. positions scrambled across chunk boundaries) would corrupt
+        # both sides identically and still compare equal if they're literal
+        # duplicates. The cycling [0,1,2,3] base (rather than a constant) also
+        # makes position-dependent corruption within a chunk detectable. The
+        # RHS additionally chains a second `>>` onto an already-suspended
+        # pipeline, exercising `then` (0% covered otherwise).
         seqPipelineParallel:
-            (//seq.repeat(600, [0]) >> . + 1) = (//seq.repeat(600, [0]) >> . + 1),
+            (//seq.repeat(150, [0, 1, 2, 3]) >> . + 1) =
+                ((//seq.repeat(150, [0, 1, 2, 3]) >> . + 3) >> (. - 2)),
     )
 )
