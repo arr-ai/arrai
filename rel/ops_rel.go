@@ -334,10 +334,25 @@ func Concatenate(a, b Set) (Set, error) {
 			}
 		}
 	}
-	offset := a.Count()
+	// offset must be one past a's highest "@" index, not a.Count(): a sparse
+	// array's element count skips holes, and a non-zero-offset array's count
+	// doesn't reflect its indices at all, so either would place b's elements
+	// at the wrong position (even colliding with a's own elements) instead
+	// of strictly after them.
+	offset := 0
 	sb := NewSetBuilder()
 	for e := a.Enumerator(); e.MoveNext(); {
-		sb.Add(e.Current())
+		elt := e.Current()
+		sb.Add(elt)
+		if t, ok := elt.(Tuple); ok {
+			if pos, found := t.Get("@"); found {
+				if n, ok := pos.(Number); ok {
+					if next := int(n.Float64()) + 1; next > offset {
+						offset = next
+					}
+				}
+			}
+		}
 	}
 	for e := b.Enumerator(); e.MoveNext(); {
 		elt := e.Current()

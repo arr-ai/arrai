@@ -75,6 +75,13 @@
     sparseArrayFirst: [1, , 3](0) = 1,
     sparseArrayLast:  [1, , 3](2) = 3,
 
+    # Concatenate's fastPaths cover contiguous zero-offset String/Array pairs
+    # only; Bytes (no fast path at all) and a sparse array (has holes, so it
+    # fails the fast-path's `count == len(values)` check) both fall through
+    # to the generic element-by-element `+` path instead.
+    bytesConcatenate:       <<'a', 'b'>> ++ <<'c'>> = <<'a', 'b', 'c'>>,
+    sparseArrayConcatenate: [1, , 3] ++ [4, 5] = [1, , 3, 4, 5],
+
     # Special-shape tuple literals constant-fold to their own Value types
     # (ArrayItemTuple/StringCharTuple/BytesByteTuple/DictEntryTuple) at compile
     # time, a distinct encodeValue/decodeValue path from a plain tuple literal.
