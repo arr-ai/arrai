@@ -47,4 +47,14 @@
     # codepath/library - untested elsewhere in this corpus.
     yamlDecode: //encoding.yaml.decoder((strict: false))('a: 1\nb: x\n') = {'a': 1, 'b': 'x'},
     yamlEncode: //encoding.yaml.encode({'a': 1}) = <<'a: 1\n'>>,
+
+    # //archive.tar/zip have no unit test coverage anywhere in the repo (only
+    # exercised indirectly via bundling), so this is new coverage for the
+    # whole codebase, not just this corpus. There's no decode/untar function
+    # to round-trip against, and tar/zip headers here carry no timestamps, so
+    # output is deterministic - asserted via self-comparison rather than a
+    # hardcoded byte literal (which would be one more thing to keep in sync
+    # with the archive libraries' exact header layout).
+    archiveTarDeterministic: //archive.tar.tar({'a.txt': 'hi', 'b.txt': 'bye'}) = //archive.tar.tar({'a.txt': 'hi', 'b.txt': 'bye'}),
+    archiveZipDeterministic: //archive.zip.zip({'a.txt': 'hi', 'b.txt': 'bye'}) = //archive.zip.zip({'a.txt': 'hi', 'b.txt': 'bye'}),
 )
