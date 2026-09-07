@@ -91,23 +91,15 @@
     # build - asserted via self-comparison rather than a hardcoded value.
     arraiInfoDeterministic: //arrai.info(()) = //arrai.info(()),
 
-    # //os.exists/os.file resolve relative to the process's real CWD (`go
-    # test`'s package directory), not this file's own SourceDir - unlike `//`
-    # imports, which do use SourceDir. `fixture.txt` is a stable, dedicated
-    # fixture (not matching `*_test.arrai`, so the corpus loader ignores it)
-    # committed alongside this file specifically so this stays deterministic
-    # across environments without touching anything outside the repo.
-    osExists:      //os.exists('testdata/planroundtrip/fixture.txt') = true,
-    osExistsFalse: //os.exists('testdata/planroundtrip/doesnotexist.arrai') = false,
-    osFile:        //os.file('testdata/planroundtrip/fixture.txt') = <<'hello fixture\n'>>,
-
-    # //os.tree's result tuples include mod_time (the file's real, checkout-
-    # dependent modification timestamp), so project it away before comparing
-    # to keep this deterministic across environments.
-    osTree: (//os.tree('testdata/planroundtrip/fixture.txt') => .|name, path, is_dir, size|) = {
-        (name: 'fixture.txt', path: 'testdata/planroundtrip/fixture.txt', is_dir: false, size: 14),
-    },
-
+    # //os.exists/os.file/os.tree resolve relative to the process's real CWD,
+    # not this file's own SourceDir - unlike `//` imports, which do use
+    # SourceDir. That CWD differs depending on how this corpus gets run: `go
+    # test ./pkg/test/...` sets it to this package's directory, but this
+    # corpus *also* gets run via `arrai test` from the repo root (see
+    # rel/hashidentity_test.go's TestHashIdentityDifferential), where the
+    # same relative path wouldn't resolve. No single fixture path satisfies
+    # both, so these three are deliberately left untested here.
+    #
     # An unset env var reliably reads back as "" on any platform/CI.
     osGetEnvUnset: //os.get_env('ARRAI_CORPUS_DEFINITELY_UNSET_VAR') = '',
 
