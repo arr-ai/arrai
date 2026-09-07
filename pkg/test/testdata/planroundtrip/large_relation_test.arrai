@@ -78,6 +78,22 @@
         pushWhereThroughProjectRenamedAttrNoMatch:
             (r => (Y: .y) where .Y = 3) count = 1,
 
+        # A body that isn't a tuple constructor at all (just `.`, the element
+        # unchanged) can't be a pure-rename projection, so this hits the
+        # rewrite's "body isn't *TupleExpr" guard. Parenthesising the bare
+        # `.` (rather than leaving it bare) is needed only to stop `.` from
+        # lexing together with the following `where` as `.where` - it
+        # doesn't defeat the optimisation, since only the outer `=>` itself
+        # (not its body) needs to avoid an ExprExpr wrapper.
+        pushWhereThroughProjectBodyNotTuple:
+            (r => (.) where .x = 5) count = 1,
+
+        # A tuple-constructor body whose attr is *computed* rather than a
+        # pure dot-rename (`.x + 1`, not just `.x`) fails identDots, hitting
+        # the rewrite's third guard.
+        pushWhereThroughProjectIdentDotsFails:
+            (r => (X: .x + 1, y: .y) where .X = 6) count = 1,
+
         # A non-equality `where` on a relation small enough to stay below the
         # parallel threshold: without this, every non-eq `where` in the
         # corpus would run against the 600-row `r` above and only ever
