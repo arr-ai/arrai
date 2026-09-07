@@ -54,4 +54,13 @@
     ) = 42,
 
     offset: (5\[1, 2, 3])(6) = 2,
+
+    # `{}` as a PATTERN (not an expr) - since `compilePattern` checks "dict"
+    # before "set", and the pattern grammar (mirroring the expr grammar's own
+    # ambiguity) only ever populates the "set" key for bare `{}`, this hits
+    # compileSetPattern's no-"elt" branch (`rel.NewSetPattern()`, empty).
+    # Previously untested - the earlier guess (an empty-set-pattern used as a
+    # cond condition) caused an 8s parser-backtracking failure; a plain `let`
+    # binding avoids whatever ambiguity that caused.
+    emptySetPatternLet: (let {} = {}; 1) = 1,
 )
