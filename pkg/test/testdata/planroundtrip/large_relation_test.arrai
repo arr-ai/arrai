@@ -1,0 +1,18 @@
+(
+    # Small (2-3 tuple) relations elsewhere in this corpus stay under whatever
+    # size threshold triggers this branch's positional-relation optimizations
+    # (With/EqualPositionalRelation/groupBy on a real column store, rather than
+    # a handful of individually-built tuples). A relation this size forces that
+    # code to run under the plan round trip too, not just the generic small-set
+    # path already covered elsewhere.
+    let r = //seq.repeat(30, [0]) => \(@: i, @item: _) (x: i, y: i % 5);
+    (
+        count:    r count = 30,
+        where:    (r where .y = 0) count = 6,
+        without:  (r without (x: 0, y: 0)) count = 29,
+        orderby:  (r orderby .x) count = 30,
+        join:     (r <&> {(y: 0, z: 'a'), (y: 1, z: 'b')}) count = 12,
+        nest:     (r nest ~|x|rest) count = 30,
+        rank:     (r rank (rk: .x)) count = 30,
+    )
+)
