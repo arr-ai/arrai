@@ -33,4 +33,12 @@
     # //seq.join on Bytes interleaves the joiner between each byte - a
     # distinct bytesJoin path from the string-array join tested above.
     seqJoinBytes: //seq.join(<<0>>, <<1, 2, 3>>) = <<1, 0, 2, 0, 3>>,
+
+    # //re.compile returns a tuple of closures (match/sub/subf) over a cached
+    # *regexp.Regexp - a completely different shape (a native closure factory,
+    # not a plain NativeFunctionAttr) from every other stdlib call in this
+    # corpus, and its own offset-string submatch representation.
+    reMatch: //re.compile(`.(\d)`).match('a1b2c3') = [['a1', 1\'1'], [2\'b2', 3\'2'], [4\'c3', 5\'3']],
+    reSub:   //re.compile(`.(\d)`).sub(`-$1`, 'a1b2c3') = '-1-2-3',
+    reSubf:  //re.compile(`.(\d)`).subf(//str.upper, 'a1b2c3') = 'A1B2C3',
 )
