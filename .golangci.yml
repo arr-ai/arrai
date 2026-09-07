@@ -113,6 +113,18 @@ linters:
         text: 'string `\{\|\|\}` has'
         linters:
           - goconst
+      # Plan wire tags (nil/sum/rec/>>>/arrayval/…) are the serialized op names.
+      - path: rel/plan_(lower|lift)\.go$
+        linters:
+          - goconst
+      - path: rel/expr_seqmap.go
+        text: 'string `>>>` has'
+        linters:
+          - goconst
+      # syntax registers plan lower/lift hooks at load; rel cannot import syntax.
+      - path: syntax/plan.go
+        linters:
+          - gochecknoinits
     paths:
       - third_party$
       - builtin$

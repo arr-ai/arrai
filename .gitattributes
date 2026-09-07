@@ -5,3 +5,5 @@ syntax/parser.go linguist-generated=true
 # conversion, ever - CRLF checkouts break template indent handling and the
 # byte-identity oracle.
 perf/reconstruct/** -text
+# $-string indent and golden comparisons are newline-sensitive.
+*.arrai text eol=lf

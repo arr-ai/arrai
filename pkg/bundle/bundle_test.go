@@ -171,13 +171,15 @@ func TestBundleCompiledPlanRunsWithoutParse(t *testing.T) {
 	zr, err := zip.NewReader(bytes.NewReader(buf.Bytes()), int64(buf.Len()))
 	require.NoError(t, err)
 	var hasPlan bool
+	names := make([]string, 0, len(zr.File))
 	for _, f := range zr.File {
+		names = append(names, f.Name)
 		if f.Name == "plan.bin" || f.Name == "/plan.bin" {
 			hasPlan = true
 			break
 		}
 	}
-	require.True(t, hasPlan, "bundle zip must contain plan.bin")
+	require.True(t, hasPlan, "bundle zip must contain plan.bin; got %q", names)
 	runCtx, err := syntax.WithBundleRun(ctx, buf.Bytes())
 	require.NoError(t, err)
 	p, err := syntax.LoadCompiledPlan(runCtx)
