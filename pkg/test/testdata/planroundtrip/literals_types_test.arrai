@@ -47,6 +47,21 @@
     darrowProjectToString: ({|k, a| (0, 120), (1, 121)} => (@: .k, @char: .a)) = 'xy',
     darrowProjectToBytes:  ({|k, a| (0, 97), (1, 98)} => (@: .k, @byte: .a)) = <<97, 98>>,
 
+    # A relation-heading literal (`{|names| rows...}`) whose heading is itself
+    # one of the 4 canonical 2-attr shapes is a compile-time-distinct path
+    # from both a plain tuple-literal set (`{(@:0,@item:'x'), ...}`, which
+    # constant-folds via NewTuple) and the `=>`-projection cases just above
+    # (which build the shape at *runtime* from an existing relation):
+    # NewRelationExpr special-cases this heading shape directly into
+    # ArrayItemTupleExpr/StringCharTupleExpr/DictEntryTupleExpr nodes, not a
+    # plain TupleExpr. `let n = 1` (rather than a second literal row index)
+    # keeps one row non-constant so the whole literal can't fold away at
+    # compile time, forcing these Exprs' own Eval to actually run.
+    relationHeadingToArray: (let n = 1; {|@, @item| (0, 'x'), (n, 'y')}) = ['x', 'y'],
+    relationHeadingToDict:  (let n = 1; {|@, @value| (0, 'x'), (n, 'y')}) = {0: 'x', 1: 'y'},
+    relationHeadingToString: (let n = 1; {|@, @char| (0, 88), (n, 89)}) = 'XY',
+    relationHeadingToBytes: (let n = 1; {|@, @byte| (0, 88), (n, 89)}) = <<88, 89>>,
+
     dictPipelineEqualsDictLiteral: ({'a': 1, 'b': 2} >> . * 10) = {'a': 10, 'b': 20},
 
     # dictPipeline mirrors seqPipeline (a suspended `>>` over a Dict rather
