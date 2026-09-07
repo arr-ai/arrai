@@ -43,6 +43,12 @@ func TestBytesExpr(t *testing.T) {
 	// one), which broke comparing it against an expression that still carried a real
 	// scanner: merging the two scanners errored with "sources are not the same".
 	AssertCodesEvalToSameValue(t, `true`, `<<'a', 'b'>> = <<97, 98>>`)
+
+	// Same bug, different call site: compileBytes' own empty-literal (<<>>) branch
+	// also returned a bare rel.NewBytes(...) instead of wrapping it in
+	// NewLiteralExpr, so it lost its scanner too. <<''>> holds a String item, so
+	// it never takes the all-numeric constant-fold path and keeps a real scanner.
+	AssertCodesEvalToSameValue(t, `true`, `<<>> = <<''>>`)
 }
 
 func toBytes(s string) string {

@@ -1143,7 +1143,7 @@ func (pc ParseContext) compileBytes(ctx context.Context, b ast.Branch, c ast.Chi
 		}
 		return rel.NewBytesExpr(delimsScanner(b), exprs...), nil
 	}
-	return rel.NewBytes([]byte{}), nil
+	return rel.NewLiteralExpr(delimsScanner(b), rel.NewBytes([]byte{})), nil
 }
 
 func (pc ParseContext) compileExprs(ctx context.Context, exprs ...ast.Node) ([]rel.Expr, error) {
