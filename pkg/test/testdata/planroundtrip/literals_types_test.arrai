@@ -19,6 +19,8 @@
     dictPipelineEqualsDictLiteral: ({'a': 1, 'b': 2} >> . * 10) = {'a': 10, 'b': 20},
 
     bytesLiteral:      <<'a', 'b'>> = <<97, 98>>,
+    charLiteral:       <<%A, %B, %C>> = <<'A', 'B', 'C'>>,
+    charLiteralNumber: %A = 65,
     bytesFromWithout:  {} = (<<'a'>> without (@: 0, @byte: 97)),
     stringCharAccess:  'abc'(1) = 98,
     stringFromWithout: {} = ('a' without (@: 0, @char: 97)),

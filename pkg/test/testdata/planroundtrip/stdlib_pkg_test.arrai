@@ -1,0 +1,8 @@
+(
+    strLower:  //str.lower("ABC") = "abc",
+    strUpper:  //str.upper("abc") = "ABC",
+    strTitle:  //str.title("hello") = "Hello",
+    seqSplit:  //seq.split(',', "a,b,c") = ['a', 'b', 'c'],
+    seqJoin:   //seq.join(", ", ["a", "b"]) = "a, b",
+    mathSin:   //math.sin(0) = 0,
+)
