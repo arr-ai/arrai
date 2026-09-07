@@ -9,6 +9,17 @@
     nestedPattern: ([1, [2, 3]] -> \[x, [y, z]] x + y + z) = 6,
     setPattern:    (cond {(y: 1, z: 2)} { {(:y, :z)}: {(y*z)} }) = {(2)},
 
+    # extraPattern above only covers a *trailing* array-pattern rest; leading
+    # and middle positions need the matcher to compute the rest slice from
+    # both ends instead of just "everything after a fixed prefix".
+    arrayPatternRestLeading: ([1, 2, 3, 4] -> \[...t, x, y] [t, x, y]) = [[1, 2], 3, 4],
+    arrayPatternRestMiddle:  ([1, 2, 3, 4] -> \[x, ...t, y] [x, t, y]) = [1, [2, 3], 4],
+
+    # A set pattern's rest (`...t`) is "every element not matched by a
+    # literal", a distinct algorithm from an array's positional slice - sets
+    # are unordered, so there's no fixed prefix/suffix to slice around.
+    setPatternRest: ({1, 2, 3} -> \{1, 2, ...t} t) = {3},
+
     # Optional tuple attr (`b?:`) with a fallback default value, used when the
     # attr is missing from the matched tuple - a distinct compile branch
     # (compileTuplePattern's `fall`/`tail` handling) from a plain required attr.
