@@ -297,6 +297,22 @@
     # be unreachable from any current arr.ai construct.
     nativeFunctionEqual: (let f = //str.lower; f) = //str.lower,
 
+    # A bare *NativeFunction, like every other atomic value, is arr.ai's
+    # "1-element set containing itself" - Count/Negate/IsTrue/Less are real,
+    # working Set/Value-interface methods on it. Hash/Hash128 need forcing
+    # via nesting as a set element.
+    nativeFunctionCount:  //str.lower count = 1,
+    nativeFunctionNegate: (-//str.lower) = (@neg: //str.lower),
+    nativeFunctionIsTrue: (!//str.lower) = false,
+    nativeFunctionLessCrossKind:      (//str.lower < 5) = false,
+    nativeFunctionLessCrossKindOther: (5 < //str.lower) = true,
+
+    # Less's same-kind branch compares two NativeFunctions by String() -
+    # a real trigger for NativeFunction.String() too, since //log.printf's
+    # usual ArrayEnumerator-based trick isn't available here.
+    nativeFunctionLessSameKind: (//str.lower < //str.upper) | (//str.upper < //str.lower),
+    nativeFunctionAsSetElement: {//str.lower, 1, 'a'} count = 3,
+
     # A literal *set* of special-shape tuples constant-folds the whole set to a
     # Value at compile time (NewSetExpr), which recurses into encodeValue's
     # aitemval/scharval/bbyteval/dentryval cases for each element - a different
