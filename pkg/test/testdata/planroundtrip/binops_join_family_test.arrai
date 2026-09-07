@@ -13,4 +13,10 @@ let r2 = {|b,c| (5,7),(6,7)};
     # `&` (plain intersect) must not decode as `<&>` (natural join): they share no
     # attributes here, so a mix-up would silently change the shape of the result.
     intersectNotJoin: {{}, 'null'} & {{}, 'string'} = {{}},
+
+    # A Dict has a canonical (@:, @value:) relation shape (RelationAttrs
+    # recognises it) but isn't itself a `Relation` value, so joining it
+    # against a real Relation takes Joiner's GenericJoin fallback instead of
+    # the Relation<->Relation fast path every other join case above uses.
+    joinDictWithRelation: ({0: 'a', 1: 'b'} <&> {(@: 0, extra: 'x'), (@: 1, extra: 'y')}) count = 2,
 )
