@@ -3,6 +3,8 @@
     tuplePattern:  ((m: 1, n: 2) -> \(m: x, n: y) x + y) = 3,
     dictPattern:   ({"m": 1, "n": 2} -> \{"m": x, "n": y} x + y) = 3,
     dictExtraPattern: ({"m": 1, "n": 2, "o": 3} -> \{"m": x, ...rest} [x, rest]) = [1, {'n': 2, 'o': 3}],
+    dictPatternFallbackUsed:   ({"m": 1} -> \{"m": x, "n"?: y:99} [x, y]) = [1, 99],
+    dictPatternFallbackUnused: ({"m": 1, "n": 2} -> \{"m": x, "n"?: y:99} [x, y]) = [1, 2],
     extraPattern:  ([1, 2, 3, 4] -> \[x, y, ...t] [x + y, t]) = [3, [3, 4]],
     nestedPattern: ([1, [2, 3]] -> \[x, [y, z]] x + y + z) = 6,
     setPattern:    (cond {(y: 1, z: 2)} { {(:y, :z)}: {(y*z)} }) = {(2)},
