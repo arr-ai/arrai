@@ -13,6 +13,12 @@
     (
         count:    r count = 600,
         where:    (r where .y = 0) count = 120,
+
+        # Formatting a Relation directly (not via `=`, which only ever needs
+        # Equal) exercises Relation.Format's own row-by-row Values.project
+        # machinery - untested elsewhere, since every other relation in this
+        # corpus only ever gets compared, never printed.
+        formatProbe: (//log.printf('%v', r)) count = 600,
         without:  (r without (x: 0, y: 0)) count = 599,
         orderby:  (r orderby .x) count = 600,
         join:     (r <&> {(y: 0, z: 'a'), (y: 1, z: 'b')}) count = 240,
