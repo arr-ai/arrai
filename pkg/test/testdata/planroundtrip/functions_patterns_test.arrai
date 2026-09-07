@@ -28,4 +28,14 @@
 
     arrayPatternFallbackUsed:    ([1] -> \[x, ?y:99] [x, y]) = [1, 99],
     arrayPatternFallbackUnused:  ([1, 2] -> \[x, ?y:99] [x, y]) = [1, 2],
+
+    # A lambda value (Closure) is callable like NativeFunction, but its
+    # structural Set-interface methods (Count/Has/Enumerator/With/Without/
+    # Map/Where/ArrayEnumerator) are all panic("unimplemented") stubs -
+    # same class of gap as NativeFunction's, left alone deliberately.
+    # Negate/Less/Kind/EqualFunction are real, working methods though.
+    closureNegate: (let f = \x x; (-f) = (@neg: f)),
+    closureLessCrossKind: !((\x x) < 5),
+    closureLessSameKind: ((\x x) < (\y y)) | ((\y y) < (\x x)),
+    numberLessClosureViaKind: 5 < (\x x),
 )
