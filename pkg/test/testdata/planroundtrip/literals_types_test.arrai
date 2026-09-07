@@ -213,6 +213,13 @@
     # shape in this corpus.
     genericSetMixedShapes: {1, 'a', (x: 1)} = {1, 'a', (x: 1)},
 
+    # A GenericSet nested as a set element (rather than the outermost value,
+    # the only role it plays elsewhere in this corpus) - exercises whatever
+    # the outer set's construction/enumeration needs from a nested Set
+    # element, untested by comparing a bare GenericSet directly (Equal only).
+    genericSetNestedAsElement:
+        (//log.printf('%v', {{3, 'a', (x: 1)}, 99})) count = 2,
+
     xstrInterp: $"1 + 1 = ${1 + 1}" = "1 + 1 = 2",
     xstrNested: $"${$"${1}"}" = "1",
 
