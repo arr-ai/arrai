@@ -303,26 +303,13 @@ func (s GenericSet) Any() Value {
 	panic("Any(): empty set")
 }
 
-type genericSetValueEnumerator struct {
-	*genericSetEnumerator
-}
-
-func (g *genericSetValueEnumerator) Current() Value {
-	// TODO: this is just a placeholder to replicate old functionality
-	// this should return anything that's not @
-	return g.i.Value().(Tuple).MustGet(ArrayItemAttr)
-}
-
+// ArrayEnumerator orders a GenericSet's elements by the general Value total
+// order: unlike Array/Bytes/String/Relation, a GenericSet's elements are
+// never uniformly "@"-indexed tuples (a homogeneous set of those would have
+// canonicalised to a specialised type instead of staying a GenericSet), so
+// there's no positional index to order by.
 func (s GenericSet) ArrayEnumerator() ValueEnumerator {
-	return &genericSetValueEnumerator{
-		&genericSetEnumerator{
-			s.set.OrderedRange(
-				func(a, b Value) bool {
-					return a.(Tuple).MustGet("@").(Number) < b.(Tuple).MustGet("@").(Number)
-				},
-			),
-		},
-	}
+	return s.OrderedValues()
 }
 
 // genericSetEnumerator represents an enumerator over a genericSet.
