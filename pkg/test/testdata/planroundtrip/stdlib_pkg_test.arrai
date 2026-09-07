@@ -21,4 +21,16 @@
     relUnion: //rel.union({{1, 2}, {2, 3}, {4}}) = {1, 2, 3, 4},
 
     fmtPretty: //fmt.pretty([1, 2, 3]) = "[1, 2, 3]",
+
+    bitsSet:  //bits.set(6) = {1, 2},
+    bitsMask: //bits.mask({1, 2}) = 6,
+
+    # //seq.concat is a distinct stdlib function from the `+` array-concat
+    # binop tested elsewhere - it concatenates an *array of sequences*
+    # (strings here) into one.
+    seqConcatStrings: //seq.concat(["a", "b", "c"]) = "abc",
+
+    # //seq.join on Bytes interleaves the joiner between each byte - a
+    # distinct bytesJoin path from the string-array join tested above.
+    seqJoinBytes: //seq.join(<<0>>, <<1, 2, 3>>) = <<1, 0, 2, 0, 3>>,
 )
