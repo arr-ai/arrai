@@ -87,4 +87,14 @@
     # //arrai.info() returns build metadata (version/commit) that varies by
     # build - asserted via self-comparison rather than a hardcoded value.
     arraiInfoDeterministic: //arrai.info(()) = //arrai.info(()),
+
+    # //os.exists/os.file resolve relative to the process's real CWD (`go
+    # test`'s package directory), not this file's own SourceDir - unlike `//`
+    # imports, which do use SourceDir. `fixture.txt` is a stable, dedicated
+    # fixture (not matching `*_test.arrai`, so the corpus loader ignores it)
+    # committed alongside this file specifically so this stays deterministic
+    # across environments without touching anything outside the repo.
+    osExists:      //os.exists('testdata/planroundtrip/fixture.txt') = true,
+    osExistsFalse: //os.exists('testdata/planroundtrip/doesnotexist.arrai') = false,
+    osFile:        //os.file('testdata/planroundtrip/fixture.txt') = <<'hello fixture\n'>>,
 )
