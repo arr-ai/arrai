@@ -33,6 +33,34 @@
     xstrInterp: $"1 + 1 = ${1 + 1}" = "1 + 1 = 2",
     xstrNested: $"${$"${1}"}" = "1",
 
+    # Backtick-delimited $-string - a distinct string-literal delimiter from
+    # `$"..."`, sharing the same xstr compile path but with its own escaping
+    # rules (no `\n` processing, since backtick strings are meant for
+    # multi-line source text as written).
+    xstrBackquote: $`a${1 + 1}b` = "a2b",
+
+    # `${expr:format}` - a format-spec suffix (Go fmt verb) on an interpolated
+    # value, a distinct xstrExpand path from the plain `${expr}` cases above.
+    xstrFormatSpec: $"${42:05d}" = "00042",
+
+    # `${array:format:sep}` - per-element format plus a join separator, the
+    # array-expansion branch of xstrExpand (distinct from the scalar formatValue
+    # path just above).
+    xstrFormatSpecArrayJoin: $"${[1, 2, 3]:03d:, }" = "001, 002, 003",
+
+    # A multi-line backtick $-string strips the common leading indentation of
+    # each source line - the cleanEmptyPieces/indent-tracking logic in
+    # xstrExpr.Eval, barely exercised by the single-line cases above.
+    xstrIndentMultiline: $`
+        a
+        b` = "a\nb",
+
+    # `::\i` after an array-valued interpolation joins each mapped element
+    # using "continue the current line's indent" as the separator - a distinct
+    # cleanEmptyPieces code path (indent propagation across joined pieces)
+    # from the plain `:format:sep` array-join case above.
+    xstrIndentArrayJoin: $"${['a', 'b', 'c'] >> $'letter: ${.}'::\i}" = "letter: a\nletter: b\nletter: c",
+
     sparseArray:      [1, , 3] = [1, , 3],
     sparseArrayFirst: [1, , 3](0) = 1,
     sparseArrayLast:  [1, , 3](2) = 3,
