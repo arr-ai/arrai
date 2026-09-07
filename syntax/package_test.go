@@ -103,26 +103,14 @@ func TestExplicitNonArraiImport(t *testing.T) {
 		`(a: [{'foo': (s: 'bar')}])`,
 		`//[//encoding.yaml]{./examples/yaml/foo.yml}`,
 	)
-	if runtime.GOOS == "windows" {
-		AssertCodesEvalToSameValue(t,
-			`<<'1\r\n'>>`,
-			`//[//encoding.bytes]{./examples/import/bar.arrai}`,
-		)
-		//FIXME: the expected value kept changing for windows
-		// AssertCodesEvalToSameValue(t,
-		// 	`<<'2\x0ev'>>`,
-		// 	`//[(decode: \b b >> . + 1)]{./examples/import/bar.arrai}`,
-		// )
-	} else {
-		AssertCodesEvalToSameValue(t,
-			`<<'1\n'>>`,
-			`//[//encoding.bytes]{./examples/import/bar.arrai}`,
-		)
-		AssertCodesEvalToSameValue(t,
-			`<<'2\v'>>`,
-			`//[(decode: \b b >> . + 1)]{./examples/import/bar.arrai}`,
-		)
-	}
+	AssertCodesEvalToSameValue(t,
+		`<<'1\n'>>`,
+		`//[//encoding.bytes]{./examples/import/bar.arrai}`,
+	)
+	AssertCodesEvalToSameValue(t,
+		`<<'2\v'>>`,
+		`//[(decode: \b b >> . + 1)]{./examples/import/bar.arrai}`,
+	)
 }
 
 func TestExplicitDecoderPrecedence(t *testing.T) {

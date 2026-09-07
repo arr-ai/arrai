@@ -117,8 +117,14 @@ linters:
       - path: rel/plan_(lower|lift)\.go$
         linters:
           - goconst
+          - gocyclo
+          - unparam
       - path: rel/expr_seqmap.go
         text: 'string `>>>` has'
+        linters:
+          - goconst
+      # Kind names in ValueTypeAsString.
+      - path: rel/value_util.go
         linters:
           - goconst
       # syntax registers plan lower/lift hooks at load; rel cannot import syntax.
