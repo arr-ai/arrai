@@ -5,19 +5,49 @@
     # a handful of individually-built tuples). A relation this size forces that
     # code to run under the plan round trip too, not just the generic small-set
     # path already covered elsewhere.
-    let r = //seq.repeat(30, [0]) => \(@: i, @item: _) (x: i, y: i % 5);
+    #
+    # 600 rows also clears frozen's default parallel-chunk threshold (256, so
+    # >=512 rows gives at least 2 workers), forcing `where`'s whereParallel
+    # path - a 30-row relation never got big enough to fan out.
+    let r = //seq.repeat(600, [0]) => \(@: i, @item: _) (x: i, y: i % 5);
     (
-        count:    r count = 30,
-        where:    (r where .y = 0) count = 6,
-        without:  (r without (x: 0, y: 0)) count = 29,
-        orderby:  (r orderby .x) count = 30,
-        join:     (r <&> {(y: 0, z: 'a'), (y: 1, z: 'b')}) count = 12,
-        nest:     (r nest ~|x|rest) count = 30,
-        rank:     (r rank (rk: .x)) count = 30,
+        count:    r count = 600,
+        where:    (r where .y = 0) count = 120,
+        without:  (r without (x: 0, y: 0)) count = 599,
+        orderby:  (r orderby .x) count = 600,
+        join:     (r <&> {(y: 0, z: 'a'), (y: 1, z: 'b')}) count = 240,
+        nest:     (r nest ~|x|rest) count = 600,
+        rank:     (r rank (rk: .x)) count = 600,
 
         # `.y = literal` matches the where-by-index fast path (whereByIndex),
         # bypassing the generic positional-relation Where entirely. A
-        # non-equality predicate forces the generic path instead.
-        whereNonEq: (r where .y > 2) count = 12,
+        # non-equality predicate forces the generic path (and, at this size,
+        # whereParallel) instead.
+        whereNonEq: (r where .y > 2) count = 240,
+
+        # `r => \t (x: t.x, y: t.y * 2)` isn't a plain dot-projection (the
+        # value is computed, not just renamed/dropped), so it takes
+        # positionalRelation's generic Map path rather than the projectDots
+        # fast path below.
+        mapTransform: (r => \t (x: t.x, y: t.y * 2)) count = 600,
+
+        # A plain dot-projection (`t.attr` renamed, nothing else) hits
+        # DArrowExpr's projectDots fast path instead of Map. Projecting to
+        # just `x` (all 600 values distinct) is *injective*, so projectDots
+        # shares the underlying store via hasCandidateKey rather than
+        # rebuilding+deduping it.
+        projectInjective: (r => \t (X: t.x)) count = 600,
+
+        # Projecting to just `y` (only 5 distinct values across 600 rows) is
+        # *not* injective, forcing projectDots/positionalRelation.Project's
+        # actual dedup path instead of the share-the-store fast path above.
+        projectDedup: (r => \t (Y: t.y)) count = 5,
+
+        # A non-equality `where` on a relation small enough to stay below the
+        # parallel threshold: without this, every non-eq `where` in the
+        # corpus would run against the 600-row `r` above and only ever
+        # exercise positionalRelation.Where's whereParallel branch, leaving
+        # its plain sequential-scan branch completely uncovered.
+        whereNonEqSmall: ({(x: 1), (x: 2), (x: 3)} where .x > 1) count = 2,
     )
 )
