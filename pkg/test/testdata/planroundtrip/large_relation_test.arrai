@@ -53,6 +53,31 @@
         # actual dedup path instead of the share-the-store fast path above.
         projectDedup: (r => \t (Y: t.y)) count = 5,
 
+        # `where`'s compile-time pushWhereThroughProject optimisation rewrites
+        # `rel => (x: .x, y: .y) where .x = 5` into
+        # `(rel where .x = 5) => (x: .x, y: .y)` when the filtered attr (`x`)
+        # survives the projection as a pure, same-named dot-rename - untested
+        # by every other `where`/`=>` case in this corpus, since none of them
+        # combine an equality predicate with a `where` whose lhs is itself a
+        # pure-rename `=>` projection. This only fires with the implicit-dot
+        # `=>` function shorthand and no redundant outer parens around the
+        # `=>`: an explicit `\t (...)` lambda's body greedily absorbs a
+        # trailing `where` instead of leaving it to bind at the outer level,
+        # and wrapping the `=>` itself in parens compiles it to an ExprExpr
+        # (for the parens' own source position), which defeats the
+        # `*DArrowExpr` type assertion the optimisation relies on.
+        pushWhereThroughProjectSameAttr:
+            (r => (x: .x, y: .y) where .x = 5) count = 1,
+
+        # Same shape, but the filtered attr is a *renamed* projection (`.y`
+        # renamed to `Y`) rather than a same-named passthrough - the rewrite
+        # only fires when the source and destination names both equal the
+        # predicate's attr, so this hits the loop's no-match fallthrough
+        # instead (the predicate is still valid: `.Y` exists on the
+        # projected output, just not via an eligible pure-rename).
+        pushWhereThroughProjectRenamedAttrNoMatch:
+            (r => (Y: .y) where .Y = 3) count = 1,
+
         # A non-equality `where` on a relation small enough to stay below the
         # parallel threshold: without this, every non-eq `where` in the
         # corpus would run against the 600-row `r` above and only ever
