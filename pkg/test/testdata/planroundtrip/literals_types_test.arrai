@@ -30,6 +30,12 @@
     dictLiteral:  {'x': 1, 'y': 2}('x') = 1,
     setLiteral:   2 <: {1, 2, 3},
 
+    # A set mixing element shapes (number, string, tuple) can't canonicalise
+    # into a Relation/Dict/UnionSet, so it constant-folds to a real GenericSet
+    # value - a distinct encodeValue/decodeValue path from every other set
+    # shape in this corpus.
+    genericSetMixedShapes: {1, 'a', (x: 1)} = {1, 'a', (x: 1)},
+
     xstrInterp: $"1 + 1 = ${1 + 1}" = "1 + 1 = 2",
     xstrNested: $"${$"${1}"}" = "1",
 
