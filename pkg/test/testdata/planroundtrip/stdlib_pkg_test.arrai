@@ -112,4 +112,7 @@
     # vs Windows), so assert portable membership rather than a hardcoded '/'.
     osPathSeparator:     //os.path_separator <: {'/', '\\'},
     osPathListSeparator: //os.path_list_separator <: {':', ';'},
+
+    # //os.cwd varies by environment, so self-compared rather than hardcoded.
+    osCwdDeterministic: //os.cwd = //os.cwd,
 )
