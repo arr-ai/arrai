@@ -9,9 +9,21 @@ Arr.ai supports operations on "true" and "false" values. The values `0`, `()`
 and `{}` are considered "false", while all other values are "true".
 
 1. `expr1 if testexpr else expr2` evaluates to `expr1` if `testexpr` is "true",
-   or `expr2` otherwise.
+   or `expr2` otherwise. **Deprecated:** this form emits a deprecation warning
+   and will be removed in a future release; prefer `cond` (below).
 2. `expr1 && expr2` evaluates to `expr1` if it is "true" or `expr2` otherwise.
 3. `expr1 || expr2` evaluates to `expr1` if it is "false" or `expr2` otherwise.
+4. `cond { cond1: expr1, cond2: expr2, ..., _: exprDefault }` evaluates
+   `cond1`, `cond2`, etc. in turn and evaluates to the `exprN` belonging to the
+   first one that is "true". The `_` arm, if present, matches unconditionally
+   and acts as a default, e.g. `cond {2 > 1: 1, 2 > 3: 2, _: 3}` evaluates to
+   `1`.
+
+   `cond` also accepts a control expression, in which case each arm's key is a
+   [pattern](./binding#pattern-matching) matched against the control
+   expression's value rather than a boolean condition:
+   `cond controlExpr { pattern1: expr1, ..., _: exprDefault }`, e.g.
+   `cond 2 { (1, 2, 3): "small", _: "other" }` evaluates to `"small"`.
 
 All above expressions exhibit short-circuit behaviours, which means that that
 `expr2` will be evaluated if its value is needed. While the arr.ai language has
@@ -125,14 +137,14 @@ following syntax:
 
 1. For regular recursive functions:
 ```arrai
-let rec factorial = \n 1 if n < 2 else n * factorial(n - 1); factorial(5)
+let rec factorial = \n cond {n < 2: 1, _: n * factorial(n - 1)}; factorial(5)
 ```
 
 2. For mutual recursion:
 ```arrai
 let rec oe = (
-   even = \n n == 0 || oe.odd (n - 1),
-   odd  = \n n != 0 && oe.even(n - 1),
+   even: \n n = 0 || oe.odd (n - 1),
+   odd:  \n n != 0 && oe.even(n - 1),
 );
 oe.even(6)
 ```
@@ -141,10 +153,10 @@ It is also possible to use the same syntax in a tuple.
 
 ```arrai
 let t = (
-   rec fact: \n cond n ((0, 1): 1, n: n * fact(n - 1)),
+   rec fact: \n cond n {(0, 1): 1, n: n * fact(n - 1)},
    n       : 5
 );
-t.rec(t.n)
+t.fact(t.n)
 ```
 
 This syntactic sugar only works with expression that evaluates to either a

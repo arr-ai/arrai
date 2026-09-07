@@ -162,6 +162,67 @@ operators to be chained together to transform deeper structures:
 @> {(r:0.7, g:0, b:0), (r:0.4, g:0.6, b:0), (r:0.5, g:0.5, b:1)} => :> . ^ 2
 ```
 
+## `where`
+
+The `where` operator filters a set (or relation), keeping only the elements
+for which the given expression is "true":
+
+```arrai
+@> {1, 2, 3, 4, 5} where . > 2
+@> {|a,b| (3, 41), (2, 42), (1, 43)} where .a = 3
+```
+
+## `filter`
+
+`filter` combines pattern matching with filtering: each element of a set is
+matched against a `cond`-style set of patterns, and elements that don't match
+any pattern are dropped from the result.
+
+```arrai
+@> {1, [2, 3], 4, [5, 6]} filter . {[a, b]: a + b}
+```
+
+Here, only the array elements match the `[a, b]` pattern, so `1` and `4` are
+silently excluded from the result. Add a `_` arm to provide a default for
+non-matching elements instead of dropping them:
+
+```arrai
+@> {1, [2, 3], 4, [5, 6]} filter . {[a, b]: a + b, _: 0}
+```
+
+## Reductions: `sum`, `max`, `min`, `mean`, `median`
+
+These operators reduce a set to a single number by first transforming each
+element (like `=>`), then combining the results:
+
+```arrai
+@> {1, 2, 3} sum .
+@> {1, 5, 3} max .
+@> {1, 5, 3} min .
+@> {2, 4, 6} mean .
+@> {1, 2, 3, 4, 5} median .
+```
+
+## Merging tuples and dictionaries: `+>`
+
+The `+>` operator merges two tuples, or two dictionaries, into one. Where both
+sides define the same attribute or key, the right-hand side wins:
+
+```arrai
+@> (a: 1, b: 2) +> (b: 3, c: 4)
+@> {"a": 1, "b": 2} +> {"b": 3, "c": 4}
+```
+
+Within a tuple or dictionary literal, suffixing an attribute/key with `+>` (or
+`|` for sets) instead of `:` recursively merges its value into the
+corresponding value already being merged in, rather than overwriting it
+wholesale:
+
+```arrai
+@> (a: (b: (c: {1}))) +> (a: (b: (c: {2})))          # plain merge: c is overwritten
+@> (a: (b: (c: {1}))) +> (a+>: (b+>: (c|: {2})))     # recursive merge: c is unioned
+```
+
 ## Interaction with order and orderby
 
 (The following discussion applies equally to `order` and `orderby`, so we'll
