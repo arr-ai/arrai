@@ -5,4 +5,14 @@
     seqSplit:  //seq.split(',', "a,b,c") = ['a', 'b', 'c'],
     seqJoin:   //seq.join(", ", ["a", "b"]) = "a, b",
     mathSin:   //math.sin(0) = 0,
+
+    # Encoding packages (//encoding.json, //encoding.csv) are entirely
+    # untested elsewhere in this corpus - a different NativeFunction call
+    # shape (byte-string in/out) from the plain scalar stdlib calls above.
+    # The default (strict) JSON decoder disambiguates JSON strings/arrays from
+    # arr.ai's own by wrapping them as `(s: ...)`/`(a: ...)` tuples; the
+    # non-strict decoder used here gives the more direct string/array shape.
+    jsonDecode: //encoding.json.decoder((strict: false))('{"a": 1, "b": "x"}') = {'a': 1, 'b': 'x'},
+    jsonEncode: //encoding.json.encode({'a': 1}) = <<'{"a":1}\n'>>,
+    csvDecode:  //encoding.csv.decode(<<'a,b,c\n1,2,3\n'>>) = [['a', 'b', 'c'], ['1', '2', '3']],
 )
