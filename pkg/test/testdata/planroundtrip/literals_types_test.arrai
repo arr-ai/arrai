@@ -277,6 +277,40 @@
     bytesByteTupleRuntime:  (\i (@: i, @byte: i + 96))(1) = (@: 1, @byte: 97),
     dictEntryTupleRuntime:  (\i (@: {i, i + 1}, @value: i + 2))(1) = (@: {1, 2}, @value: 3),
 
+    # The 4 canonical-shape tuples above are only ever constructed and
+    # Equal-compared elsewhere in this corpus - every other Tuple-interface
+    # method on them (MustGet/With/Without/Map/Negate/IsTrue/Names/Project)
+    # is untested. `.@item`/`.@char`/etc access is MustGet; `:>` (TupleMap,
+    # distinct from `=>`'s SetMap) is Map; `.~|@|` (project-drop) exercises
+    # both Names and Project.
+    arrayItemTupleMustGet:  (@: 1, @item: 2).@item = 2,
+    stringCharTupleMustGet: (@: 1, @char: 65).@char = 65,
+    bytesByteTupleMustGet:  (@: 1, @byte: 97).@byte = 97,
+    dictEntryTupleMustGet:  (@: {1, 2}, @value: 3).@value = 3,
+
+    arrayItemTupleMap:  ((@: 1, @item: 2) :> \x x + 1) = (@: 2, @item: 3),
+    stringCharTupleMap: ((@: 1, @char: 65) :> \x x + 1) = (@: 2, @char: 66),
+    bytesByteTupleMap:  ((@: 1, @byte: 97) :> \x x + 1) = (@: 2, @byte: 98),
+    dictEntryTupleMap:  ((@: {1, 2}, @value: 3) :> \x x) = (@: {1, 2}, @value: 3),
+
+    arrayItemTupleProjectDrop:  (@: 1, @item: 2).~|@| = (@item: 2),
+    stringCharTupleProjectDrop: (@: 1, @char: 65).~|@| = (@char: 65),
+    bytesByteTupleProjectDrop:  (@: 1, @byte: 97).~|@| = (@byte: 97),
+    dictEntryTupleProjectDrop:  (@: {1, 2}, @value: 3).~|@| = (@value: 3),
+
+    # Unlike a plain Value's default Negate (wrap in `(@neg: ...)`), each
+    # canonical-shape tuple overrides Negate to negate its position/value
+    # directly, staying in its own shape (or a byte-wrapped equivalent).
+    arrayItemTupleNegate:  (-(@: 1, @item: 2)) = (@: -1, @item: -2),
+    stringCharTupleNegate: (-(@: 1, @char: 65)) = (@: -1, @char: -65),
+    bytesByteTupleNegate:  (-(@: 1, @byte: 97)) = (@: -1, @byte: 159),
+    dictEntryTupleNegate:  (-(@: {1, 2}, @value: 3)) = (@: (@neg: {1, 2}), @value: -3),
+
+    arrayItemTupleIsTrue:  !(@: 1, @item: 2) = false,
+    stringCharTupleIsTrue: !(@: 1, @char: 65) = false,
+    bytesByteTupleIsTrue:  !(@: 1, @byte: 97) = false,
+    dictEntryTupleIsTrue:  !(@: {1, 2}, @value: 3) = false,
+
     # Comparing a plain GenericTuple against one of the canonical 2-attr
     # shapes (a different concrete Go type implementing Tuple) exercises
     # GenericTuple.Equal's cross-type fallback branch, untested by the
