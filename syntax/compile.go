@@ -1241,7 +1241,15 @@ func (pc ParseContext) compileFunction(ctx context.Context, b ast.Branch) (rel.E
 func (pc ParseContext) compileMacro(_ context.Context, b ast.Branch) rel.Expr {
 	childast := b.One("embed").One("subgrammar").One("ast")
 	if value := childast.One("value"); value != nil {
-		return value.(MacroValue).SubExpr()
+		mv := value.(MacroValue)
+		// A macro's result is a Value, eagerly evaluated at parse time (not a
+		// compiled Expr), so it carries whatever generic Source() its own type
+		// defaults to rather than the real location of the {: ... :} embed.
+		// Wrap it in the embed's own scanner, like every other literal fold.
+		if v, ok := mv.SubExpr().(rel.Value); ok {
+			return rel.NewLiteralExpr(mv.Scanner(), v)
+		}
+		return mv.SubExpr()
 	}
 	return rel.ASTNodeToValue(childast)
 }
