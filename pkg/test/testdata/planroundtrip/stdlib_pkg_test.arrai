@@ -65,4 +65,26 @@
     # in, so deliberately left untested here rather than risk flakiness.
     osIsattyStdin:  //os.isatty(0) = false,
     osIsattyStdout: //os.isatty(1) = false,
+
+    # //test.assert.* (used pervasively by arr.ai's own test suite via `arrai
+    # test`) is otherwise untested in this corpus, which exclusively uses
+    # plain `=` boolean assertions instead.
+    testAssertEqual:   //test.assert.equal(1, 1) = true,
+    testAssertUnequal: //test.assert.unequal(1, 2) = true,
+    testAssertSize:    //test.assert.size(3, {1, 2, 3}) = true,
+    testAssertTrue:    //test.assert.true(1 = 1) = true,
+    testAssertFalse:   //test.assert.false(1 = 2) = true,
+
+    # //seq.repeat(n)(seq) - a curried NativeFunction-returning-NativeFunction
+    # shape, untested elsewhere in this corpus.
+    seqRepeatString: //seq.repeat(3)('ab') = 'ababab',
+    seqRepeatArray:  //seq.repeat(2)([1, 2]) = [1, 2, 1, 2],
+
+    # //eval.value on Bytes (as opposed to String) - the two share one switch
+    # case in evalExpr but are otherwise untested as a pair here.
+    evalValueBytes: //eval.value(<<'1 + 1'>>) = 2,
+
+    # //arrai.info() returns build metadata (version/commit) that varies by
+    # build - asserted via self-comparison rather than a hardcoded value.
+    arraiInfoDeterministic: //arrai.info(()) = //arrai.info(()),
 )
