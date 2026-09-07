@@ -23,4 +23,16 @@
     darrowUnaryNested: ({{1, 2}, {3, 4}} => => 2 ^ .) = {{2, 4}, {8, 16}},
     seqArrowUnaryOnArray: ({[1, 2], [3, 4]} => >> 2 ^ .) = {[2, 4], [8, 16]},
     darrowUnaryInSeqArrow: ([{1, 2}, {3, 4}] >> => 2 ^ .) = [{2, 4}, {8, 16}],
+
+    # `&expr` compiles to a thunk (`\- expr`, argument ignored) that a tuple
+    # auto-invokes when accessed via `.attr` if stored under key `&attr` - a
+    # lazy/computed-attribute mechanism (the "amp" case in compileArrow),
+    # distinct from every other arrow-chain form above.
+    lazyTupleAttr: ('&x': &(1 + 2)).x = 3,
+
+    # `expr filter controlVar { pattern: value }` - pattern-matches each
+    # element of `expr` against `controlVar`, dropping non-matches and mapping
+    # matches through `value` (the "FILTER" case in compileArrow, its own
+    # cond-pattern + where + darrow desugaring, untested elsewhere in this corpus).
+    filterPatternMap: ({1, [2, 3], 4, [5, 6]} filter . {[a, b]: a + b}) = {5, 11},
 )

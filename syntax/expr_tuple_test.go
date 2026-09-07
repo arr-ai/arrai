@@ -104,3 +104,14 @@ func TestTuplePattern(t *testing.T) {
 	AssertCodesEvalToSameValue(t, `42`, `let (?: x:42) = (); x      `)
 	AssertCodesEvalToSameValue(t, `24`, `let (?: x:42) = (x: 24); x `)
 }
+
+// A fallback default (`pattern:expr`) is only meaningful on an optional attr
+// (`name?: pattern:expr`); the grammar doesn't tie the two together, so
+// compileTuplePattern rejects a fallback default attached to a required attr
+// with a clean error instead of silently ignoring the default.
+func TestTuplePatternFallbackWithoutOptionalIsError(t *testing.T) {
+	t.Parallel()
+	AssertCodeParseErrors(t,
+		"fallback item does not match",
+		`(a: 1) -> \(a: x:99) x`)
+}
