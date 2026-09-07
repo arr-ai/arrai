@@ -4,6 +4,19 @@
     # branch, where Array.Equal only recognised a concrete Array.
     seqPipelineEqualsArrayLiteral: ([1, 2, 3] >> . + 1) = [2, 3, 4],
     emptySeqPipelineEqualsEmptyArray: ([] >> . + 1) = [],
+
+    # Both sides unforced `>>` chains - a distinct seqPipeline.Equal branch
+    # (forcing *both* operands) from comparing one against a plain Array.
+    seqPipelineEqualsSeqPipeline: ([1, 2, 3] >> . + 1) = ([0, 1, 2] >> . + 2),
+
+    # Operations applied directly to an unforced `>>` chain (rather than
+    # comparing it for equality, which is the only thing forcing it above) -
+    # each dispatches through a different Set-interface method that
+    # seqPipeline must implement, most of which just force then delegate.
+    seqPipelineCount:    ([1, 2, 3] >> . + 1) count = 3,
+    seqPipelineIndex:    ([1, 2, 3] >> . + 1)(0) = 2,
+    seqPipelineWith:     (([1, 2, 3] >> . + 1) with (@: 3, @item: 100)) count = 4,
+    seqPipelineWithout:  (([1, 2, 3] >> . + 1) without (@: 1, @item: 3)) count = 2,
     emptyArrayEqualsEmptySet: [] = {},
     emptySetEqualsEmptyArray: {} = [],
 
@@ -17,6 +30,16 @@
     darrowProjectToBytes:  ({|k, a| (0, 97), (1, 98)} => (@: .k, @byte: .a)) = <<97, 98>>,
 
     dictPipelineEqualsDictLiteral: ({'a': 1, 'b': 2} >> . * 10) = {'a': 10, 'b': 20},
+
+    # dictPipeline mirrors seqPipeline (a suspended `>>` over a Dict rather
+    # than an Array) but is a separate implementation with its own Equal/
+    # Count/index/With/Without/force, untested by the literal comparison
+    # above (which only forces the pipeline side, not a same-type compare).
+    dictPipelineEqualsDictPipeline: ({'a': 1, 'b': 2} >> . * 10) = ({'a': 2, 'b': 4} >> . * 5),
+    dictPipelineCount:   ({'a': 1, 'b': 2} >> . * 10) count = 2,
+    dictPipelineIndex:   ({'a': 1, 'b': 2} >> . * 10)('a') = 10,
+    dictPipelineWith:    (({'a': 1, 'b': 2} >> . * 10) with (@: 'c', @value: 30)) count = 3,
+    dictPipelineWithout: (({'a': 1, 'b': 2} >> . * 10) without (@: 'a', @value: 10)) count = 1,
 
     bytesLiteral:      <<'a', 'b'>> = <<97, 98>>,
     emptyBytesLiteral: <<>> = <<''>>,

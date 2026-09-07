@@ -49,5 +49,14 @@
         # exercise positionalRelation.Where's whereParallel branch, leaving
         # its plain sequential-scan branch completely uncovered.
         whereNonEqSmall: ({(x: 1), (x: 2), (x: 3)} where .x > 1) count = 2,
+
+        # A 600-element `>>` chain over an Array (not a relation) clears the
+        # same parallel-chunk threshold as `r` above, forcing
+        # seqPipeline.force's parallel path - every other `>>` test in this
+        # corpus uses small arrays that stay sequential. Comparing two such
+        # pipelines directly (rather than against a plain Array literal) also
+        # exercises seqPipeline.Equal's force-both-sides branch.
+        seqPipelineParallel:
+            (//seq.repeat(600, [0]) >> . + 1) = (//seq.repeat(600, [0]) >> . + 1),
     )
 )
