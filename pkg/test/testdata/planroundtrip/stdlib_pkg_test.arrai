@@ -57,4 +57,12 @@
     # with the archive libraries' exact header layout).
     archiveTarDeterministic: //archive.tar.tar({'a.txt': 'hi', 'b.txt': 'bye'}) = //archive.tar.tar({'a.txt': 'hi', 'b.txt': 'bye'}),
     archiveZipDeterministic: //archive.zip.zip({'a.txt': 'hi', 'b.txt': 'bye'}) = //archive.zip.zip({'a.txt': 'hi', 'b.txt': 'bye'}),
+
+    # //os.isatty is the one //os function that's safe to assert on here: fds
+    # 0/1 are never a real tty under `go test`, so this is deterministic in
+    # any CI/local environment. The rest of //os (exists/tree/file/cwd/
+    # get_env) depends on the filesystem/environment the test happens to run
+    # in, so deliberately left untested here rather than risk flakiness.
+    osIsattyStdin:  //os.isatty(0) = false,
+    osIsattyStdout: //os.isatty(1) = false,
 )
