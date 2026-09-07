@@ -15,4 +15,10 @@
     jsonDecode: //encoding.json.decoder((strict: false))('{"a": 1, "b": "x"}') = {'a': 1, 'b': 'x'},
     jsonEncode: //encoding.json.encode({'a': 1}) = <<'{"a":1}\n'>>,
     csvDecode:  //encoding.csv.decode(<<'a,b,c\n1,2,3\n'>>) = [['a', 'b', 'c'], ['1', '2', '3']],
+
+    # //rel.union takes a *set of sets* and flattens them via n-ary union -
+    # distinct from the binary `|` operator tested elsewhere in this corpus.
+    relUnion: //rel.union({{1, 2}, {2, 3}, {4}}) = {1, 2, 3, 4},
+
+    fmtPretty: //fmt.pretty([1, 2, 3]) = "[1, 2, 3]",
 )
