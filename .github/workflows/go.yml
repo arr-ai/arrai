@@ -70,17 +70,32 @@ jobs:
     - name: Run tests
       run: make test
 
+  test-slowpath:
+    name: Test (slowpath)
+    runs-on: ${{ vars.RUNNER_UBUNTU && fromJSON(vars.RUNNER_UBUNTU) || 'ubuntu-latest' }}
+    steps:
+    - name: Set up Go
+      uses: actions/setup-go@v7
+      with:
+        go-version: "1.25"
+
+    - name: Check out code into the Go module directory
+      uses: actions/checkout@v7
+
+    - name: Run tests with fast paths disabled
+      run: make test-slowpath
+
   coverage:
     name: Coverage
     runs-on: ${{ vars.RUNNER_UBUNTU && fromJSON(vars.RUNNER_UBUNTU) || 'ubuntu-latest' }}
     steps:
     - name: Set up Go
-      uses: actions/setup-go@v5
+      uses: actions/setup-go@v7
       with:
         go-version: "1.25"
 
     - name: Check out code into the Go module directory
-      uses: actions/checkout@v4
+      uses: actions/checkout@v7
 
     - name: Calculate coverage
       run: go test -v -covermode=atomic -coverprofile=coverage.out -race ./...
