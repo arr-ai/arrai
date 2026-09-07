@@ -35,6 +35,21 @@
     # seqPipeline.Enumerator directly instead of mustArray().Enumerator().
     seqPipelineEnumerator: (([1, 2, 3] >> . + 1) => \x (x.@item + 10)) = {12, 13, 14},
 
+    # Unary `-`/`<`/`!` and nesting-as-a-set-element each reach a seqPipeline
+    # method untested above: Negate/Less/IsTrue (all base-delegating, so no
+    # forcing needed) and Hash/Hash128 (forcing is required, since a set
+    # needs the pipeline's *resulting* elements to bucket/dedupe it).
+    seqPipelineNegate: (-([1, 2, 3] >> . + 1)) = (@neg: [2, 3, 4]),
+    seqPipelineLess: ([1, 2, 3] >> . + 1) < ([4, 5, 6] >> . + 1),
+    seqPipelineIsTrue: !([1, 2, 3] >> . + 1) = false,
+    seqPipelineAsSetElement: {([1, 2, 3] >> . + 1), 99} count = 2,
+
+    # dictPipeline's counterparts to the four seqPipeline cases just above.
+    dictPipelineNegate: (-({'a': 1} >> . + 1)) = (@neg: {'a': 2}),
+    dictPipelineLess: ({'a': 1} >> . + 1) < ({'b': 2} >> . + 1),
+    dictPipelineIsTrue: !({'a': 1} >> . + 1) = false,
+    dictPipelineAsSetElement: {({'a': 1} >> . + 1), 99} count = 2,
+
     emptyArrayEqualsEmptySet: [] = {},
     emptySetEqualsEmptyArray: {} = [],
 
