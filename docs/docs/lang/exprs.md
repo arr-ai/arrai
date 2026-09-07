@@ -25,6 +25,9 @@ Arr.ai supports operations on numbers.
 2. Binary:
    1. Well known: `+`, `-`, `*`, `/`, `%` (modulo), `^` (power)
    2. Modulo-truncation: `-%` (`x -% y = x - x % y`)
+   3. Floor division: `//` (`x // y = ⌊x / y⌋`). Not to be confused with the `//`
+      used to reference stdlib/imports (e.g. `//math`) -- that's a different,
+      unrelated use of the same token.
 3. Comparison operators, which may be chained: `0 <= i < 10`
    1. Set membership is treated the same: `10 <= n <: validIds`.
 

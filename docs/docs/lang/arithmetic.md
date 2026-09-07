@@ -51,6 +51,27 @@ expression. `+` always means mathematical addition, never anything else. The
 `++` operator defines concatenation. It will be discussed in more detail in a
 later tutorial.
 
+## Modulo and floor division
+
+Arr.ai has `%` for modulo and `//` for floor division (integer division that
+rounds down). `x // y` is the same as `⌊x / y⌋`.
+
+```arrai
+@> 7 % 3
+@> 7 // 3
+@> -7 // 3
+```
+
+Note that `//` is also used, in a completely unrelated way, to reference
+imports and the standard library (e.g. `//math`, `//{./util.arrai}`) --
+context always disambiguates the two uses.
+
+There's also `-%`, "modulo-truncation", defined as `x -% y = x - x % y`.
+
+```arrai
+@> 7 -% 3
+```
+
 ## Exponentiation
 
 Arr.ai can exponentiate, *x*<sup>*y*</sup>, using the `^` or "power" operator.
