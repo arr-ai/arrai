@@ -17,6 +17,24 @@
     seqPipelineIndex:    ([1, 2, 3] >> . + 1)(0) = 2,
     seqPipelineWith:     (([1, 2, 3] >> . + 1) with (@: 3, @item: 100)) count = 4,
     seqPipelineWithout:  (([1, 2, 3] >> . + 1) without (@: 1, @item: 3)) count = 2,
+
+    # `<:` never forces its rhs (CompareExpr.Eval passes the raw evaluated
+    # Value straight into the comparator), so this reaches seqPipeline.Has
+    # directly rather than via mustArray()+Has on a forced Array.
+    seqPipelineHas: (@: 0, @item: 2) <: ([1, 2, 3] >> . + 1),
+
+    # `where`'s implementation calls x.Where(...) on whatever Set the lhs
+    # evaluates to - an unforced `>>` chain included - so this reaches
+    # seqPipeline.Where directly. Each element is the array's (@:,@item:)
+    # tuple, not the bare value, hence `.@item`.
+    seqPipelineWhere: (([1, 2, 3] >> . + 1) where .@item > 2) count = 2,
+
+    # `=>`'s generic (non-projectDots) path iterates via set.Enumerator()
+    # (either directly, or through evalParallel's All(), which also falls
+    # back to Enumerator() for any type it doesn't special-case) - reaching
+    # seqPipeline.Enumerator directly instead of mustArray().Enumerator().
+    seqPipelineEnumerator: (([1, 2, 3] >> . + 1) => \x (x.@item + 10)) = {12, 13, 14},
+
     emptyArrayEqualsEmptySet: [] = {},
     emptySetEqualsEmptyArray: {} = [],
 
@@ -40,6 +58,12 @@
     dictPipelineIndex:   ({'a': 1, 'b': 2} >> . * 10)('a') = 10,
     dictPipelineWith:    (({'a': 1, 'b': 2} >> . * 10) with (@: 'c', @value: 30)) count = 3,
     dictPipelineWithout: (({'a': 1, 'b': 2} >> . * 10) without (@: 'a', @value: 10)) count = 1,
+
+    # dictPipeline's counterparts to the three seqPipeline direct-dispatch
+    # cases above (Has via `<:`, Where via `where`, Enumerator via `=>`).
+    dictPipelineHas: (@: 'a', @value: 10) <: ({'a': 1, 'b': 2} >> . * 10),
+    dictPipelineWhere: (({'a': 1, 'b': 2} >> . * 10) where .@value > 15) count = 1,
+    dictPipelineEnumerator: (({'a': 1, 'b': 2} >> . * 10) => \x (x.@value + 1)) = {11, 21},
 
     bytesLiteral:      <<'a', 'b'>> = <<97, 98>>,
     emptyBytesLiteral: <<>> = <<''>>,
