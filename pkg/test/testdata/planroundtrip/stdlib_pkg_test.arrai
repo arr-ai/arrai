@@ -87,6 +87,19 @@
     # case in evalExpr but are otherwise untested as a pair here.
     evalValueBytes: //eval.value(<<'1 + 1'>>) = 2,
 
+    # //eval.evaluator(config).eval(expr) - a distinct codepath from plain
+    # //eval.value: it threads a custom scope/stdlib config through
+    # contextualEval, exercising Scope.With per custom binding and (when no
+    # stdlib override is given) Scope.Update(SafeStdScope()) to merge in the
+    # default standard library.
+    evalWithCustomScope: (//eval.evaluator((scope: (x: 5)))).eval('x + 1') = 6,
+
+    # A stdlib override takes the other branch: Scope.With("//", ...)
+    # instead of Scope.Update(SafeStdScope()) - custom scope bindings (`x`
+    # here) still apply on top of it.
+    evalWithCustomScopeAndStdlib:
+        (//eval.evaluator((scope: (x: 5), stdlib: (y: 10)))).eval('x + 1') = 6,
+
     # //arrai.info() returns build metadata (version/commit) that varies by
     # build - asserted via self-comparison rather than a hardcoded value.
     arraiInfoDeterministic: //arrai.info(()) = //arrai.info(()),
