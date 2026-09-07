@@ -41,4 +41,10 @@
     reMatch: //re.compile(`.(\d)`).match('a1b2c3') = [['a1', 1\'1'], [2\'b2', 3\'2'], [4\'c3', 5\'3']],
     reSub:   //re.compile(`.(\d)`).sub(`-$1`, 'a1b2c3') = '-1-2-3',
     reSubf:  //re.compile(`.(\d)`).subf(//str.upper, 'a1b2c3') = 'A1B2C3',
+
+    # //encoding.yaml mirrors //encoding.json's shape (strict/non-strict
+    # decoder, byte-string encode/decode) but is a completely separate
+    # codepath/library - untested elsewhere in this corpus.
+    yamlDecode: //encoding.yaml.decoder((strict: false))('a: 1\nb: x\n') = {'a': 1, 'b': 'x'},
+    yamlEncode: //encoding.yaml.encode({'a': 1}) = <<'a: 1\n'>>,
 )
