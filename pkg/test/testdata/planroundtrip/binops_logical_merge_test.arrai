@@ -47,4 +47,16 @@
     # by the direct-operation cases above.
     trueAsSetElement: {true, 1, 'a'} count = 3,
     trueUnionWithRelation: (true | {(x: 1, y: 2)}) count = 2,
+
+    # `false` is `{}` (EmptySet) - same rationale as the `true`/TrueSet
+    # block above, for EmptySet's own Set-interface methods.
+    falseHasNot: !(1 <: false),
+    falseLessThanOther: false < 'a',
+    falseNegate: (-false) = (@neg: false),
+    falseWithEmptyTuple: (false with ()) = true,
+    falseWithOther: (false with 5) count = 1,
+    falseWithoutOther: (false without 5) = false,
+    falseWhereTrue: (false where \_ true) = false,
+    falseArrayEnumerator: (//log.printf('empty', false)) count = 0,
+    falseAsSetElement: {false, 1, 'a'} count = 3,
 )
