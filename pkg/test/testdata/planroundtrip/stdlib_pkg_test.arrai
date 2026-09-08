@@ -25,6 +25,12 @@
 
     fmtPretty: //fmt.pretty([1, 2, 3]) = "[1, 2, 3]",
 
+    # //fmt.pretty on an Array needs no reordering (already positional);
+    # a genuine unordered *set* takes PrettifyString's other branch, which
+    # needs OrderedValues/ValueEnumeratorToSlice to produce a canonical
+    # (rather than hash-bucket-arbitrary) element order.
+    fmtPrettySet: //fmt.pretty({3, 1, 2}) = "{1, 2, 3}",
+
     bitsSet:  //bits.set(6) = {1, 2},
     bitsMask: //bits.mask({1, 2}) = 6,
 
