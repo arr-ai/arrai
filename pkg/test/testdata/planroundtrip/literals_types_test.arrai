@@ -273,6 +273,20 @@
     # fails the fast-path's `count == len(values)` check) both fall through
     # to the generic element-by-element `+` path instead.
     bytesConcatenate:       <<'a', 'b'>> ++ <<'c'>> = <<'a', 'b', 'c'>>,
+
+    # Bytes/String/Array are only ever compared/indexed/concatenated
+    # elsewhere in this corpus - unary `-`, cross-kind/same-kind `<`, and
+    # unioning with a differently-bucketed set were all untested.
+    bytesNegate: (-<<97, 98>>) = (@neg: <<97, 98>>),
+    bytesLessCrossKind: !(<<97, 98>> < 5),
+    bytesLessSameKind: <<97, 98>> < <<97, 99>>,
+    bytesUnionDifferentBucket: (<<97, 98>> | {(x: 1, y: 2)}) count = 3,
+
+    stringNegate: (-'ab') = (@neg: 'ab'),
+    stringUnionDifferentBucket: ('ab' | {(x: 1, y: 2)}) count = 3,
+
+    arrayNegate: (-[1, 2]) = (@neg: [1, 2]),
+    arrayUnionDifferentBucket: ([1, 2] | {(x: 1, y: 2)}) count = 3,
     sparseArrayConcatenate: [1, , 3] ++ [4, 5] = [1, , 3, 4, 5],
 
     # Special-shape tuple literals constant-fold to their own Value types
