@@ -4,6 +4,19 @@
     strTitle:  //str.title("hello") = "Hello",
     seqSplit:  //seq.split(',', "a,b,c") = ['a', 'b', 'c'],
     seqJoin:   //seq.join(", ", ["a", "b"]) = "a, b",
+
+    # //seq.* dispatches on the *subject*'s concrete type - every case above
+    # uses a String subject; an Array subject takes a completely separate
+    # implementation (arrayContains/arraySplit/arrayJoin/arrayHasPrefix/
+    # arrayHasSuffix/arrayTrimPrefix/arrayTrimSuffix), untested elsewhere.
+    seqContainsArray:   //seq.contains([2, 3], [1, 2, 3]) = true,
+    seqHasPrefixArray:  //seq.has_prefix([1, 2], [1, 2, 3]) = true,
+    seqHasSuffixArray:  //seq.has_suffix([2, 3], [1, 2, 3]) = true,
+    seqTrimPrefixArray: //seq.trim_prefix([1, 2], [1, 2, 3]) = [3],
+    seqTrimSuffixArray: //seq.trim_suffix([2, 3], [1, 2, 3]) = [1],
+    seqSplitArray:      //seq.split([0], [1, 0, 2, 0, 3]) = [[1], [2], [3]],
+    seqJoinArray:       //seq.join([0], [[1], [2], [3]]) = [1, 0, 2, 0, 3],
+    seqSubArray:        //seq.sub([2], [9], [1, 2, 3]) = [1, 9, 3],
     mathSin:   //math.sin(0) = 0,
 
     # Encoding packages (//encoding.json, //encoding.csv) are entirely
