@@ -205,6 +205,15 @@
 
     tupleLiteral: (a: 1, b: 2).a = 1,
     dictLiteral:  {'x': 1, 'y': 2}('x') = 1,
+
+    # Every other Dict in this corpus only ever gets compared or indexed.
+    # //log.printf formats its *enumerated elements*, not the set itself
+    # (it calls ArrayEnumerator then %v's each result) - so printing the
+    # dict directly (one %v) would format its raw *values*, not the dict.
+    # Nesting it as an element of an outer 2-element set, with matching
+    # %v count, formats the dict itself via that element's own Format -
+    # exercising Dict.Format/OrderedEntries and dictEntryTupleLess.
+    dictFormatProbe: (//log.printf('%v %v', {{'x': 1, 'y': 2}, 99})) count = 2,
     setLiteral:   2 <: {1, 2, 3},
 
     # A set mixing element shapes (number, string, tuple) can't canonicalise
@@ -218,7 +227,7 @@
     # the outer set's construction/enumeration needs from a nested Set
     # element, untested by comparing a bare GenericSet directly (Equal only).
     genericSetNestedAsElement:
-        (//log.printf('%v', {{3, 'a', (x: 1)}, 99})) count = 2,
+        (//log.printf('%v %v', {{3, 'a', (x: 1)}, 99})) count = 2,
 
     xstrInterp: $"1 + 1 = ${1 + 1}" = "1 + 1 = 2",
     xstrNested: $"${$"${1}"}" = "1",
@@ -273,6 +282,11 @@
     stringCharTupleLiteral: (@: 1, @char: 65) = (@: 1, @char: 65),
     bytesByteTupleLiteral:  (@: 1, @byte: 97) = (@: 1, @byte: 97),
     dictEntryTupleLiteral:  (@: {1, 2}, @value: 3) = (@: {1, 2}, @value: 3),
+
+    # A dict-shaped relation literal with two rows sharing the same key
+    # collects both values under it (multipleValues) rather than erroring
+    # like a plain `{'a': 1, 'a': 2}` dict literal would - untested probe.
+    dictHeadingDupKeyProbe: {|@, @value| (1, 'a'), (1, 'b')} count = 1,
 
     # Same 4 canonical shapes, but built at *runtime* from a function
     # argument rather than as compile-time-foldable literals - this is the
