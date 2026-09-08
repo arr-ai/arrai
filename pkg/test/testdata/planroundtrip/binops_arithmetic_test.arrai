@@ -34,6 +34,15 @@
     cmpNe:    2 != 3,
     cmpIn:    2 <: {1, 2, 3},
     cmpNotIn: 5 !<: {1, 2, 3},
+
+    # A chained comparison (`a OP b OP c`) compiles to a single CompareExpr
+    # evaluating each adjacent pair in turn, distinct from two `<`s ANDed
+    # together. `let i = 5` (rather than a literal) keeps this from
+    # constant-folding away, so Eval actually runs; the false case exercises
+    # its short-circuit branch (stopping at the first unsatisfied pair)
+    # untested by the all-true case.
+    chainedCompare:      (let i = 5; 0 <= i < 10),
+    chainedCompareFalse: (let i = 5; !(0 <= i < 3)),
     cmpSubset:        {1, 2} (<) {1, 2, 3},
     cmpSuperset:      {1, 2, 3} (>) {1, 2},
     cmpSubsetEq:      {1, 2} (<=) {1, 2},
