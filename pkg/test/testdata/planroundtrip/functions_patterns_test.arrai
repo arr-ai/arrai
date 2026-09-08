@@ -9,6 +9,17 @@
     nestedPattern: ([1, [2, 3]] -> \[x, [y, z]] x + y + z) = 6,
     setPattern:    (cond {(y: 1, z: 2)} { {(:y, :z)}: {(y*z)} }) = {(2)},
 
+    # A literal-value pattern (as opposed to an ident/array/tuple/dict/set
+    # pattern) compiles to an ExprPattern, matching only if the value is
+    # exactly equal - untested elsewhere (cond's own pattern matching
+    # apparently doesn't route through Pattern.Bind the same way).
+    exprPatternMatch: (5 -> \5 'matched') = 'matched',
+
+    # Closure.Hash delegates to its underlying *Function's Hash - untested
+    # elsewhere, since the earlier Closure coverage only exercised Negate/
+    # Less/Kind (String-based), never actually hashing one.
+    closureAsSetElement: {\x x, 99} count = 2,
+
     # extraPattern above only covers a *trailing* array-pattern rest; leading
     # and middle positions need the matcher to compute the rest slice from
     # both ends instead of just "everything after a fixed prefix".
