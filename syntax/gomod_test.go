@@ -275,6 +275,49 @@ func TestRequiredModuleOfMatchesLongestPrefix(t *testing.T) {
 	require.False(t, ok)
 }
 
+func TestGoModFilePinBlockRequireLongestPrefix(t *testing.T) {
+	root := withTempModule(t, `module example.com/pintest
+
+go 1.21
+
+require (
+	github.com/org/repo v1.0.0
+	github.com/org/repo/sub v1.2.0 // indirect
+)
+`)
+
+	path, version, ok := goModFilePin(root, "github.com/org/repo/sub/file.arrai")
+	require.True(t, ok)
+	require.Equal(t, "github.com/org/repo/sub", path)
+	require.Equal(t, "v1.2.0", version)
+
+	path, version, ok = goModFilePin(root, "github.com/org/repo/file.arrai")
+	require.True(t, ok)
+	require.Equal(t, "github.com/org/repo", path)
+	require.Equal(t, "v1.0.0", version)
+
+	_, _, ok = goModFilePin(root, "github.com/other/repo/file.arrai")
+	require.False(t, ok)
+}
+
+func TestMainModuleNameMissingModuleDirective(t *testing.T) {
+	root := withTempModule(t, `go 1.21
+`)
+
+	_, ok := mainModuleName(root)
+	require.False(t, ok, "a go.mod with no module directive must not report a name")
+}
+
+func TestGoModFilePinMalformedGoModDoesNotPanic(t *testing.T) {
+	root := withTempModule(t, `this is not valid go.mod syntax {{{`)
+
+	_, _, ok := goModFilePin(root, "github.com/org/repo")
+	require.False(t, ok)
+
+	_, ok = mainModuleName(root)
+	require.False(t, ok)
+}
+
 func TestRetrieveModuleWithInvalidPath(t *testing.T) {
 	resetRequiredModulesCache()
 	t.Cleanup(resetRequiredModulesCache)
