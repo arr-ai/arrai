@@ -12,6 +12,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"golang.org/x/mod/modfile"
 )
 
 // goModule holds the result of module resolution (from go list or go mod download).
@@ -34,71 +36,41 @@ func extractVersion(path string) (module, version string) {
 	return
 }
 
-// goModFilePin reads require directives from go.mod (not go list) so a pin
-// still binds when the module graph cannot be resolved.
-func goModFilePin(moduleRoot, importPath string) (path, version string, ok bool) {
+// readGoMod parses the go.mod in moduleRoot (or the process cwd's if
+// moduleRoot is "").
+func readGoMod(moduleRoot string) (*modfile.File, error) {
 	modPath := "go.mod"
 	if moduleRoot != "" {
 		modPath = filepath.Join(moduleRoot, "go.mod")
 	}
 	data, err := os.ReadFile(modPath)
 	if err != nil {
+		return nil, err
+	}
+	return modfile.Parse(modPath, data, nil)
+}
+
+// goModFilePin reads require directives from go.mod (not go list) so a pin
+// still binds when the module graph cannot be resolved.
+func goModFilePin(moduleRoot, importPath string) (path, version string, ok bool) {
+	f, err := readGoMod(moduleRoot)
+	if err != nil {
 		return "", "", false
 	}
 	var bestPath, bestVer string
-	inRequire := false
-	for _, raw := range strings.Split(string(data), "\n") {
-		line := strings.TrimSpace(raw)
-		if i := strings.Index(line, "//"); i >= 0 {
-			line = strings.TrimSpace(line[:i])
-		}
-		if line == "" {
+	for _, r := range f.Require {
+		p, v := r.Mod.Path, r.Mod.Version
+		if p != importPath && !strings.HasPrefix(importPath, p+"/") {
 			continue
 		}
-		if !inRequire {
-			if line == "require (" {
-				inRequire = true
-				continue
-			}
-			if rest, found := strings.CutPrefix(line, "require "); found {
-				p, v, ok := parseRequireTokens(rest)
-				if ok {
-					bestPath, bestVer = pickLongerPin(bestPath, bestVer, p, v, importPath)
-				}
-			}
-			continue
-		}
-		if line == ")" {
-			inRequire = false
-			continue
-		}
-		p, v, ok := parseRequireTokens(line)
-		if ok {
-			bestPath, bestVer = pickLongerPin(bestPath, bestVer, p, v, importPath)
+		if bestPath == "" || len(p) > len(bestPath) {
+			bestPath, bestVer = p, v
 		}
 	}
 	if bestPath == "" {
 		return "", "", false
 	}
 	return bestPath, bestVer, true
-}
-
-func parseRequireTokens(s string) (path, version string, ok bool) {
-	fields := strings.Fields(s)
-	if len(fields) < 2 || strings.HasPrefix(fields[1], "/") {
-		return "", "", false
-	}
-	return fields[0], fields[1], true
-}
-
-func pickLongerPin(bestPath, bestVer, path, ver, importPath string) (string, string) {
-	if path != importPath && !strings.HasPrefix(importPath, path+"/") {
-		return bestPath, bestVer
-	}
-	if bestPath == "" || len(path) > len(bestPath) {
-		return path, ver
-	}
-	return bestPath, bestVer
 }
 
 // requiredModulesByRoot caches `go list -m -json all` results keyed by module root
@@ -291,24 +263,11 @@ func seedRequiredModules(moduleRoot string, mods map[string]requiredModule) {
 // mainModuleName returns moduleRoot's own "module" directive (or the process
 // cwd's if moduleRoot is ""), or ok=false if go.mod can't be read or has none.
 func mainModuleName(moduleRoot string) (name string, ok bool) {
-	modPath := "go.mod"
-	if moduleRoot != "" {
-		modPath = filepath.Join(moduleRoot, "go.mod")
-	}
-	data, err := os.ReadFile(modPath)
-	if err != nil {
+	f, err := readGoMod(moduleRoot)
+	if err != nil || f.Module == nil {
 		return "", false
 	}
-	for _, raw := range strings.Split(string(data), "\n") {
-		line := strings.TrimSpace(raw)
-		if i := strings.Index(line, "//"); i >= 0 {
-			line = strings.TrimSpace(line[:i])
-		}
-		if rest, found := strings.CutPrefix(line, "module "); found {
-			return strings.TrimSpace(rest), true
-		}
-	}
-	return "", false
+	return f.Module.Mod.Path, true
 }
 
 // retrieveModule resolves importPath to a local module directory.
