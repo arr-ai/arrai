@@ -21,25 +21,33 @@ const StringCharAttr = "@char"
 
 // String is a set of Values.
 //
-// Two backings, exactly one active. ASCII content — far and away the common
-// case — lives in ascii, one byte per rune, so byte index equals rune index
-// and hashing, comparison and Go-string conversion all work on a quarter of
-// the memory. Everything else (non-ASCII content, and strings carrying
-// holes from character-level Without) lives in s as []rune. Constructors
-// normalise: contiguous hole-free ASCII content is always in ascii form.
-// Character-level edits (with/Without) are rare in practice and take the
-// rune form; the hot operations all have byte paths.
+// Three backings, exactly one active:
+//
+//   - ascii: hole-free ASCII, one byte per rune (byte index == rune index).
+//   - utf8:  hole-free non-ASCII, stored as UTF-8. nrunes is the character
+//     count. Hashing, equality, comparison and Go-string conversion work
+//     on the bytes; random runeAt is a UTF-8 walk (character-level
+//     access is rare; enumerators walk sequentially).
+//   - s:     []rune, only for strings that carry holes from Without.
+//
+// Constructors normalise into that split. Character-level edits convert
+// to rune form; the hot operations all have byte paths. hash memoises
+// Hash128 and is shared by pointer across copies; any copy that changes
+// content or offset takes a fresh cell.
 type String struct {
 	ascii  []byte // active when non-nil; all bytes < 0x80, holes == 0
-	s      []rune // active when ascii is nil
+	utf8   []byte // active when non-nil; hole-free non-ASCII UTF-8
+	s      []rune // active when ascii and utf8 are nil
+	nrunes int    // character count when utf8 != nil
 	offset int
 	holes  int
+	hash   *hashCell
 
 	// buf/abuf, when non-nil, is the shared append buffer this string is a
 	// prefix of. A chain of concatenations extends one buffer in place
 	// (amortised O(1) per element) instead of copying the accumulator per
 	// step; branching from an older string copies out. Elements below any
-	// string's length never change.
+	// string's length never change. abuf is shared by ascii and utf8 forms.
 	buf  *appendBuf[rune]
 	abuf *appendBuf[byte]
 }
@@ -86,36 +94,89 @@ func concatStrings(a, b String) String {
 		abuf, s := newAppendBuf(a.ascii, b.ascii)
 		return String{ascii: s, abuf: abuf}
 	}
+	if ab, ok := a.bytes(); ok {
+		if bb, ok := b.bytes(); ok {
+			if a.abuf != nil {
+				if s := a.abuf.extend(len(ab), bb); s != nil {
+					return String{utf8: s, nrunes: a.size() + b.size(), abuf: a.abuf}
+				}
+			}
+			abuf, s := newAppendBuf(ab, bb)
+			return String{utf8: s, nrunes: a.size() + b.size(), abuf: abuf}
+		}
+	}
 	ar, br := a.runes(), b.runes()
 	if a.buf != nil {
 		if s := a.buf.extend(len(ar), br); s != nil {
-			return String{s: s, buf: a.buf}
+			return String{s: s, buf: a.buf, hash: &hashCell{}}
 		}
 	}
 	buf, s := newAppendBuf(ar, br)
-	return String{s: s, buf: buf}
+	return String{s: s, buf: buf, hash: &hashCell{}}
 }
 
-// size returns the backing length, holes included.
+// bytes returns the UTF-8 backing of a hole-free string.
+func (s String) bytes() ([]byte, bool) {
+	if s.ascii != nil {
+		return s.ascii, true
+	}
+	if s.utf8 != nil {
+		return s.utf8, true
+	}
+	return nil, false
+}
+
+func isASCIIBytes(b []byte) bool {
+	for _, c := range b {
+		if c >= utf8.RuneSelf {
+			return false
+		}
+	}
+	return true
+}
+
+func stringFromBytes(b []byte, offset int, abuf *appendBuf[byte]) String {
+	if isASCIIBytes(b) {
+		return String{ascii: b, offset: offset, abuf: abuf, hash: &hashCell{}}
+	}
+	return String{utf8: b, nrunes: utf8.RuneCount(b), offset: offset, abuf: abuf, hash: &hashCell{}}
+}
+
+// size returns the character-count backing length, holes included.
 func (s String) size() int {
 	if s.ascii != nil {
 		return len(s.ascii)
 	}
+	if s.utf8 != nil {
+		return s.nrunes
+	}
 	return len(s.s)
 }
 
-// runeAt returns the rune at backing index i (-1 for a hole).
+// runeAt returns the rune at character index i (-1 for a hole).
 func (s String) runeAt(i int) rune {
 	if s.ascii != nil {
 		return rune(s.ascii[i])
+	}
+	if s.utf8 != nil {
+		p := s.utf8
+		for j := 0; j < i; j++ {
+			_, w := utf8.DecodeRune(p)
+			p = p[w:]
+		}
+		r, _ := utf8.DecodeRune(p)
+		return r
 	}
 	return s.s[i]
 }
 
 // runes materialises the backing as []rune.
 func (s String) runes() []rune {
-	if s.ascii == nil {
+	if s.s != nil {
 		return s.s
+	}
+	if s.utf8 != nil {
+		return []rune(string(s.utf8))
 	}
 	r := make([]rune, len(s.ascii))
 	for i, b := range s.ascii {
@@ -130,15 +191,18 @@ func (s String) goString() string {
 	if s.ascii != nil {
 		return string(s.ascii)
 	}
+	if s.utf8 != nil {
+		return string(s.utf8)
+	}
 	return string(s.s)
 }
 
 // asRuneForm returns s backed by runes, for the rare character-level edits.
 func (s String) asRuneForm() String {
-	if s.ascii == nil {
+	if s.s != nil && s.ascii == nil && s.utf8 == nil {
 		return s
 	}
-	return String{s: s.runes(), offset: s.offset}
+	return String{s: s.runes(), offset: s.offset, holes: s.holes, hash: &hashCell{}}
 }
 
 // NewString constructs a string as a relation.
@@ -146,35 +210,48 @@ func NewString(s []rune) Set {
 	return NewOffsetString(s, 0)
 }
 
-// NewGoString constructs a string from a Go string: the cheap path for
-// ASCII content, which stays in byte form without a rune round-trip.
+// internShortMax is the largest NewGoString content interned for the
+// process. Reconstruct-style keys ("name-42") sit well under this;
+// longer runtime strings (templates, rendered source) are not interned.
+const internShortMax = 64
+
+// NewGoString constructs a string from a Go string: ASCII stays one byte
+// per rune; other hole-free content stays UTF-8, with no []rune round-trip.
+// Short contents are interned so repeated keys share one value.
 func NewGoString(s string) Set {
 	if len(s) == 0 {
 		return None
 	}
-	for i := 0; i < len(s); i++ {
-		if s[i] >= utf8.RuneSelf {
-			return NewString([]rune(s))
-		}
+	if len(s) <= internShortMax {
+		return internGoString(s)
 	}
-	return String{ascii: []byte(s)}
+	return newGoString(s)
 }
 
-// internedStrings canonicalises compile-time string literals so every
-// occurrence of the same literal shares one backing array, letting
-// EqualString's same-backing fast path answer literal-vs-literal
-// comparisons without scanning. Bounded by program text, so entries live
-// for the process.
+func newGoString(s string) Set {
+	return stringFromBytes([]byte(s), 0, nil)
+}
+
+// internedStrings canonicalises short / compile-time strings so every
+// occurrence of the same content shares one backing array, letting
+// EqualString's same-backing fast path answer without scanning.
 var internedStrings sync.Map // string -> Set
+
+func internGoString(s string) Set {
+	if v, ok := internedStrings.Load(s); ok {
+		return v.(Set)
+	}
+	v, _ := internedStrings.LoadOrStore(s, newGoString(s))
+	return v.(Set)
+}
 
 // InternedGoString is NewGoString for compile-time literals: the same
 // content always returns the same value.
 func InternedGoString(s string) Set {
-	if v, ok := internedStrings.Load(s); ok {
-		return v.(Set)
+	if len(s) == 0 {
+		return None
 	}
-	v, _ := internedStrings.LoadOrStore(s, NewGoString(s))
-	return v.(Set)
+	return internGoString(s)
 }
 
 // NewOffsetString constructs an offset string as a relation.
@@ -191,14 +268,17 @@ func NewOffsetString(s []rune, offset int) Set {
 			ascii = false
 		}
 	}
-	if ascii && holes == 0 {
-		b := make([]byte, len(s))
-		for i, r := range s {
-			b[i] = byte(r)
+	if holes == 0 {
+		if ascii {
+			b := make([]byte, len(s))
+			for i, r := range s {
+				b[i] = byte(r)
+			}
+			return String{ascii: b, offset: offset, hash: &hashCell{}}
 		}
-		return String{ascii: b, offset: offset}
+		return String{utf8: []byte(string(s)), nrunes: len(s), offset: offset, hash: &hashCell{}}
 	}
-	return String{s: s, offset: offset, holes: holes}
+	return String{s: s, offset: offset, holes: holes, hash: &hashCell{}}
 }
 
 func asString(values ...Value) String {
@@ -245,14 +325,25 @@ func (s String) Hash(seed uintptr) uintptr {
 }
 
 // Hash128 computes the 128-bit hash of a String over its content's UTF-8
-// encoding, so both backings of the same content hash identically, salted
-// so a String never hashes like the Bytes with the same content. Strings
-// with holes cannot round-trip through UTF-8 (a hole is not a rune) and
-// only ever equal other rune-form strings, so they hash the rune buffer.
+// encoding, so ascii and utf8 backings of the same content hash identically,
+// salted so a String never hashes like the Bytes with the same content.
+// Strings with holes cannot round-trip through UTF-8 (a hole is not a rune)
+// and only ever equal other rune-form strings, so they hash the rune buffer.
+// The result is memoised on s.hash.
 func (s String) Hash128() hash128.H128 {
+	if s.hash == nil {
+		return s.hashUncached()
+	}
+	return s.hash.get(s.hashUncached)
+}
+
+func (s String) hashUncached() hash128.H128 {
 	h := stringSalt.Mix(hash128.Int(s.offset))
 	if s.ascii != nil {
 		return h.Mix(hash128.Bytes(s.ascii))
+	}
+	if s.utf8 != nil {
+		return h.Mix(hash128.Bytes(s.utf8))
 	}
 	if s.holes != 0 {
 		return h.Mix(hash128.Runes(s.s))
@@ -274,13 +365,15 @@ func (s String) EqualString(t String) bool {
 	if s.offset != t.offset || s.holes != t.holes || s.size() != t.size() {
 		return false
 	}
-	if s.ascii != nil && t.ascii != nil {
-		// Shared backing (interned literals, or one string derived from the
-		// other) means equal content without scanning.
-		if len(s.ascii) == len(t.ascii) && (len(s.ascii) == 0 || &s.ascii[0] == &t.ascii[0]) {
-			return true
+	if sb, sok := s.bytes(); sok {
+		if tb, tok := t.bytes(); tok {
+			// Shared backing (interned literals, or one string derived from
+			// the other) means equal content without scanning.
+			if len(sb) == len(tb) && (len(sb) == 0 || &sb[0] == &tb[0]) {
+				return true
+			}
+			return bytes.Equal(sb, tb)
 		}
-		return bytes.Equal(s.ascii, t.ascii)
 	}
 	for i, n := 0, s.size(); i < n; i++ {
 		if s.runeAt(i) != t.runeAt(i) {
@@ -335,8 +428,10 @@ func (s String) Less(v Value) bool {
 		return s.Kind() < v.Kind()
 	}
 	t := v.(String)
-	if s.ascii != nil && t.ascii != nil {
-		return bytes.Compare(s.ascii, t.ascii) < 0
+	if sb, sok := s.bytes(); sok {
+		if tb, tok := t.bytes(); tok {
+			return bytes.Compare(sb, tb) < 0
+		}
 	}
 	// Rune-wise comparison; equivalent to comparing the UTF-8 encodings
 	// (byte order preserves code-point order).
@@ -392,12 +487,13 @@ func (s String) with(at int, char rune) Set {
 	switch {
 	case i == len(r.s):
 		// Full slice expression: never extend into a shared buffer's tail.
-		return String{s: append(r.s[:i:i], char), offset: r.offset, holes: r.holes}
+		return String{s: append(r.s[:i:i], char), offset: r.offset, holes: r.holes, hash: &hashCell{}}
 	case at == r.offset-1:
 		return String{
 			s:      append(append(make([]rune, 0, 1+len(r.s)), char), r.s...),
 			offset: r.offset - 1,
 			holes:  r.holes,
+			hash:   &hashCell{},
 		}
 	}
 	// TODO: Support adding holes and doubling up chars, removing the need to
@@ -423,14 +519,14 @@ func (s String) Without(value Value) Set {
 		r := s.asRuneForm()
 		switch {
 		case i == 0 && t.char == r.s[0]:
-			s = String{s: r.s[1:], offset: r.offset + 1, holes: r.holes}
+			s = String{s: r.s[1:], offset: r.offset + 1, holes: r.holes, hash: &hashCell{}}
 		case i == len(r.s)-1 && t.char == r.s[len(r.s)-1]:
-			s = String{s: r.s[:len(r.s)-1], offset: r.offset, holes: r.holes}
+			s = String{s: r.s[:len(r.s)-1], offset: r.offset, holes: r.holes, hash: &hashCell{}}
 		case 0 < i && i < len(r.s)-1 && t.char == r.s[i]:
 			newS := make([]rune, len(r.s))
 			copy(newS, r.s)
 			newS[i] = -1
-			s = String{s: newS, offset: r.offset, holes: r.holes + 1}
+			s = String{s: newS, offset: r.offset, holes: r.holes + 1, hash: &hashCell{}}
 		}
 	}
 	if s.Count() == 0 {
@@ -504,11 +600,24 @@ func (s String) ArrayEnumerator() ValueEnumerator {
 // StringEnumerator represents an enumerator over a String.
 type stringEnumerator struct {
 	s String
-	i int
+	i int // character index; starts at -1
+	b int // byte index into utf8 when that form is active
 }
 
 // MoveNext moves the enumerator to the next Value.
 func (e *stringEnumerator) MoveNext() bool {
+	if e.s.utf8 != nil {
+		next := e.i + 1
+		if next >= e.s.nrunes {
+			return false
+		}
+		if e.i >= 0 {
+			_, w := utf8.DecodeRune(e.s.utf8[e.b:])
+			e.b += w
+		}
+		e.i = next
+		return true
+	}
 	for e.i < e.s.size()-1 {
 		e.i++
 		if e.s.runeAt(e.i) >= 0 {
@@ -520,6 +629,10 @@ func (e *stringEnumerator) MoveNext() bool {
 
 // Current returns the enumerator's current Value.
 func (e *stringEnumerator) Current() Value {
+	if e.s.utf8 != nil {
+		r, _ := utf8.DecodeRune(e.s.utf8[e.b:])
+		return NewStringCharTuple(e.s.offset+e.i, r)
+	}
 	return NewStringCharTuple(e.s.offset+e.i, e.s.runeAt(e.i))
 }
 
@@ -528,6 +641,10 @@ type stringValueEnumerator struct {
 }
 
 func (e *stringValueEnumerator) Current() Value {
+	if e.s.utf8 != nil {
+		r, _ := utf8.DecodeRune(e.s.utf8[e.b:])
+		return NewNumber(float64(r))
+	}
 	return NewNumber(float64(e.s.runeAt(e.i)))
 }
 
@@ -535,5 +652,6 @@ func (e *stringValueEnumerator) Current() Value {
 // backing form.
 func (s String) withOffset(offset int) Set {
 	s.offset = offset
+	s.hash = &hashCell{}
 	return s
 }

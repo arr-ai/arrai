@@ -99,7 +99,7 @@ type Tuple interface {
 	Get(name string) (Value, bool)
 	MustGet(name string) Value
 	HasName(name string) bool
-	Names() Names
+	Names() Names // interned attribute set (a Shape)
 	Enumerator() AttrEnumerator
 
 	// Transform

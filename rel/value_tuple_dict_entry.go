@@ -202,7 +202,7 @@ func (t DictEntryTuple) HasName(name string) bool {
 
 // Names returns the attribute names.
 func (t DictEntryTuple) Names() Names {
-	return NewNames("@", DictValueAttr)
+	return dictEntryNames
 }
 
 // Project returns a tuple with the given names from this tuple, or nil if any

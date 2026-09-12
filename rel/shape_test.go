@@ -13,18 +13,18 @@ func TestShapeInterning(t *testing.T) {
 	a := NewTuple(NewAttr("x", NewNumber(1)), NewAttr("y", NewNumber(2))).(*GenericTuple)
 	b := NewTuple(NewAttr("y", NewNumber(3)), NewAttr("x", NewNumber(4))).(*GenericTuple)
 	c := NewTuple(NewAttr("x", NewNumber(1))).(*GenericTuple)
-	assert.Same(t, a.shape, b.shape, "same attribute set, any order, one shape")
-	assert.NotSame(t, a.shape, c.shape)
+	assert.Equal(t, a.names, b.names, "same attribute set, any order, one Names")
+	assert.NotEqual(t, a.names, c.names)
 	assert.Equal(t, []string{"x", "y"}, TupleOrderedNames(a))
 
-	// Transitions land on the interned shape and are memoised.
+	// Transitions land on the interned set and are memoised.
 	d := c.With("y", NewNumber(9)).(*GenericTuple)
-	assert.Same(t, a.shape, d.shape)
+	assert.Equal(t, a.names, d.names)
 	e := a.Without("y").(*GenericTuple)
-	assert.Same(t, c.shape, e.shape)
-	s1, at1 := c.shape.With("y")
-	s2, at2 := c.shape.With("y")
-	assert.Same(t, s1, s2)
+	assert.Equal(t, c.names, e.names)
+	s1, at1 := c.names.insert("y")
+	s2, at2 := c.names.insert("y")
+	assert.Equal(t, s1, s2)
 	assert.Equal(t, at1, at2)
 	assert.Equal(t, 1, at1)
 }
@@ -102,7 +102,7 @@ func TestRelationRowsInflateWithoutCopy(t *testing.T) {
 	seen := 0
 	for e := rel.Enumerator(); e.MoveNext(); {
 		g := e.Current().(*GenericTuple)
-		assert.Same(t, rel.shape, g.shape)
+		assert.Equal(t, rel.attrSet, g.names)
 		seen++
 	}
 	assert.Equal(t, 2, seen)

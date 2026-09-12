@@ -107,7 +107,7 @@ func benchmarkSetJoin(b *testing.B, s1, s2 Set) {
 	_, err := expr.Eval(context.Background(), EmptyScope)
 	require.NoError(b, err)
 	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		_, err := expr.Eval(context.Background(), EmptyScope)
 		require.NoError(b, err)
 	}

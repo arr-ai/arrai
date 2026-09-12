@@ -22,20 +22,21 @@ type Relation struct {
 	rows    *positionalRelation // TODO: experiment with column table
 	attrMap map[string]int      // cached mapIndices(attrs, p)
 
-	// shape is the tuple shape of every row; layout[i] is the row position of
-	// shape.names[i]. When layout is the identity a row's values already are
-	// the tuple's values, so inflating a row is a wrap, not a copy.
-	shape  *Shape
-	layout []int
-	direct bool
+	// attrSet is the interned attribute set of every row; layout[i] is the
+	// row position of attrSet.names[i]. When layout is the identity a row's
+	// values already are the tuple's values, so inflating a row is a wrap,
+	// not a copy.
+	attrSet Names
+	layout  []int
+	direct  bool
 }
 
 func newRelation(attrs NamesSlice, p valueProjector, rows *positionalRelation) Relation {
 	r := Relation{attrs: attrs, p: p, rows: rows, attrMap: mapIndices(attrs, p)}
-	r.shape = shapeOf(attrs.GetSorted())
-	r.layout = make([]int, len(r.shape.names))
+	r.attrSet = internNames(attrs.GetSorted())
+	r.layout = make([]int, len(r.attrSet.names))
 	r.direct = true
-	for i, name := range r.shape.names {
+	for i, name := range r.attrSet.names {
 		r.layout[i] = r.attrMap[name]
 		if r.layout[i] != i {
 			r.direct = false
@@ -63,13 +64,13 @@ func (r Relation) seedAtKey() {
 // tuple inflates a row to a Tuple.
 func (r Relation) tuple(row Values) Tuple {
 	if fastPaths && r.direct && len(row) == len(r.layout) {
-		return newShapedTuple(r.shape, row)
+		return newShapedTuple(r.attrSet, row)
 	}
 	vals := make([]Value, len(r.layout))
 	for i, j := range r.layout {
 		vals[i] = row[j]
 	}
-	return newShapedTuple(r.shape, vals)
+	return newShapedTuple(r.attrSet, vals)
 }
 
 func mapIndices(n NamesSlice, indices valueProjector) map[string]int {
@@ -117,11 +118,11 @@ func (r Relation) Count() int {
 }
 
 // hasShape reports whether t has exactly this relation's attributes.
-// Shapes are interned, so for a shaped tuple this is a pointer comparison;
+// Names are interned, so for a GenericTuple this is an identity comparison;
 // other Tuple kinds fall back to comparing the attribute sets.
 func (r Relation) hasShape(t Tuple) bool {
 	if g, is := t.(*GenericTuple); is && fastPaths {
-		return g.sh() == r.shape
+		return g.attrSet() == r.attrSet
 	}
 	return r.attrs.EqualTupleAttrs(t)
 }
@@ -131,7 +132,7 @@ func (r Relation) hasShape(t Tuple) bool {
 // only needs permuting — or nothing at all when the layout is the identity,
 // in which case the row shares the tuple's values (both are immutable).
 func (r Relation) tupleToValues(t Tuple) Values {
-	if g, is := t.(*GenericTuple); is && fastPaths && g.sh() == r.shape {
+	if g, is := t.(*GenericTuple); is && fastPaths && g.attrSet() == r.attrSet {
 		if r.direct {
 			return Values(g.vals)
 		}
@@ -405,7 +406,7 @@ type relationBuilder struct {
 	prb     *positionalRelationBuilder
 	mapping map[string]int
 	names   NamesSlice
-	shape   *Shape // set when names are in shape order, enabling zero-copy Add
+	attrSet Names // set when names are in sorted order, enabling zero-copy Add
 }
 
 func newRelationBuilder(names []string, cap int) *relationBuilder {
@@ -419,13 +420,13 @@ func newRelationBuilder(names []string, cap int) *relationBuilder {
 		names:   names,
 	}
 	if slices.IsSorted(names) {
-		b.shape = shapeOf(names)
+		b.attrSet = internNames(names)
 	}
 	return b
 }
 
 func (r *relationBuilder) Add(v Value) {
-	if g, ok := v.(*GenericTuple); ok && fastPaths && r.shape != nil && g.shape == r.shape {
+	if g, ok := v.(*GenericTuple); ok && fastPaths && r.attrSet.namesRep != nil && g.names == r.attrSet {
 		// The tuple's values already are the row: both are immutable.
 		r.prb.Add(Values(g.vals))
 		return
@@ -567,7 +568,7 @@ func (r Relation) Hash128() hash128.H128 {
 	// cached name hashes) so Hash128 agrees with EqualRelation regardless of
 	// the relation's internal attribute ordering, and is memoised per shape
 	// on the row view.
-	return relationSalt.Xor(r.shape.namesH).Xor(r.rows.shapeHash(r.shape, r.layout))
+	return relationSalt.Xor(r.attrSet.namesH).Xor(r.rows.shapeHash(r.attrSet, r.layout))
 }
 
 // RelationValuesEnumerator enumerates the values as Values.

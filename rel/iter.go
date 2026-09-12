@@ -1,6 +1,9 @@
 package rel
 
-import "iter"
+import (
+	"iter"
+	"unicode/utf8"
+)
 
 // All returns a single-pass iterator over a set's values.
 //
@@ -32,6 +35,18 @@ func All(s Set) iter.Seq[Value] {
 		}
 	case String:
 		return func(yield func(Value) bool) {
+			if s.utf8 != nil {
+				i, b := 0, 0
+				for i < s.nrunes {
+					r, w := utf8.DecodeRune(s.utf8[b:])
+					if !yield(NewStringCharTuple(s.offset+i, r)) {
+						return
+					}
+					i++
+					b += w
+				}
+				return
+			}
 			for i, n := 0, s.size(); i < n; i++ {
 				if r := s.runeAt(i); r >= 0 && !yield(NewStringCharTuple(s.offset+i, r)) {
 					return

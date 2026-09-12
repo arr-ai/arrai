@@ -70,11 +70,11 @@ type TupleExpr struct {
 	attrs   []AttrExpr
 	attrMap map[string]Expr
 
-	// shape and slots are set when the literal's attribute names are static
+	// attrSet and slots are set when the literal's attribute names are static
 	// (no wildcards, no view attributes, no repeats): the tuple can then be
 	// built by storing each value into its slot.
-	shape *Shape
-	slots []int
+	attrSet Names
+	slots   []int
 }
 
 // identDots reports a tuple-literal of bare ident.attr references
@@ -119,17 +119,17 @@ func (e *TupleExpr) staticShape() {
 			return
 		}
 	}
-	shape := shapeOf(sorted)
-	// The "@"-indexed two-attribute shapes canonicalise to specialised
+	attrSet := internNames(sorted)
+	// The "@"-indexed two-attribute sets canonicalise to specialised
 	// kinds; leave those to the general path.
 	if len(sorted) == 2 && sorted[0] == "@" && strings.HasPrefix(sorted[1], "@") {
 		return
 	}
 	e.slots = make([]int, len(names))
 	for i, name := range names {
-		e.slots[i], _ = shape.Index(name)
+		e.slots[i], _ = attrSet.Index(name)
 	}
-	e.shape = shape
+	e.attrSet = attrSet
 }
 
 // NewTupleExpr returns a new TupleExpr.
@@ -199,7 +199,7 @@ func (e *TupleExpr) String() string { //nolint:dupl
 
 // Eval returns the subject
 func (e *TupleExpr) Eval(ctx context.Context, local Scope) (Value, error) {
-	if fastPaths && e.shape != nil {
+	if fastPaths && e.attrSet.namesRep != nil {
 		vals := make([]Value, len(e.slots))
 		for i, attr := range e.attrs {
 			value, err := attr.expr.Eval(ctx, local)
@@ -208,7 +208,7 @@ func (e *TupleExpr) Eval(ctx context.Context, local Scope) (Value, error) {
 			}
 			vals[e.slots[i]] = value
 		}
-		return newShapedTuple(e.shape, vals), nil
+		return newShapedTuple(e.attrSet, vals), nil
 	}
 	tuple := EmptyTuple
 	var err error

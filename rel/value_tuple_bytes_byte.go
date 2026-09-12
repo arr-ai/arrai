@@ -211,7 +211,7 @@ func (t BytesByteTuple) HasName(name string) bool {
 
 // Names returns the attribute names.
 func (t BytesByteTuple) Names() Names {
-	return NewNames("@", BytesByteAttr)
+	return bytesByteNames
 }
 
 // Project returns a tuple with the given names from this tuple, or nil if any

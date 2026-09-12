@@ -14,7 +14,7 @@ func BenchmarkSetEqual(b *testing.B) {
 	t := s
 	b.ReportAllocs()
 	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		if !s.Equal(t) {
 			b.Fatal("expected equal")
 		}
@@ -32,7 +32,7 @@ func BenchmarkHashIdentityRelationHas(b *testing.B) {
 	)
 	b.ReportAllocs()
 	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		_ = r.Has(probe)
 	}
 }

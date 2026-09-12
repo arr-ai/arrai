@@ -33,14 +33,14 @@ type DotExpr struct {
 	lhs  Expr
 	attr string
 
-	// cache remembers where attr lives in the shape last seen here. Shapes
-	// are interned, so a pointer compare validates the entry.
+	// cache remembers where attr lives in the Names last seen here. Names
+	// are interned, so an identity compare validates the entry.
 	cache atomic.Pointer[dotCache]
 }
 
 type dotCache struct {
-	shape *Shape
-	index int
+	attrSet Names
+	index   int
 }
 
 // NewDotExpr returns a new DotExpr that fetches the given attr from the
@@ -75,12 +75,12 @@ func (x *DotExpr) Eval(ctx context.Context, local Scope) (_ Value, err error) {
 	}
 	get := func(ctx context.Context, t Tuple) (Value, error) {
 		if g, ok := t.(*GenericTuple); ok && fastPaths {
-			shape := g.sh()
-			if c := x.cache.Load(); c != nil && c.shape == shape {
+			attrSet := g.attrSet()
+			if c := x.cache.Load(); c != nil && c.attrSet == attrSet {
 				return g.vals[c.index], nil
 			}
-			if i, found := shape.Index(x.attr); found {
-				x.cache.Store(&dotCache{shape: shape, index: i})
+			if i, found := attrSet.Index(x.attr); found {
+				x.cache.Store(&dotCache{attrSet: attrSet, index: i})
 				return g.vals[i], nil
 			}
 		} else if value, found := t.Get(x.attr); found {

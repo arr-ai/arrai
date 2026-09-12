@@ -205,7 +205,7 @@ func (t ArrayItemTuple) HasName(name string) bool {
 
 // Names returns the attribute names.
 func (t ArrayItemTuple) Names() Names {
-	return NewNames("@", ArrayItemAttr)
+	return arrayItemNames
 }
 
 // Project returns a tuple with the given names from this tuple, or nil if any

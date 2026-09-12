@@ -400,6 +400,9 @@ func encodeValue(v Value) (PlanNode, error) {
 		if v.ascii != nil {
 			return PlanNode{K: "str", Bytes: append([]byte(nil), v.ascii...), Num: float64(v.offset)}, nil
 		}
+		if v.utf8 != nil {
+			return PlanNode{K: "str", Str: string(v.utf8), Num: float64(v.offset)}, nil
+		}
 		return PlanNode{K: "str", Str: string(v.s), Num: float64(v.offset)}, nil
 	case Bytes:
 		return PlanNode{K: "bytes", Bytes: append([]byte(nil), v.b...), Num: float64(v.offset)}, nil

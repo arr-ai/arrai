@@ -56,3 +56,32 @@ func TestStringCallAll(t *testing.T) {
 		assert.False(t, set.IsTrue())
 	}
 }
+
+func TestStringUTF8Backing(t *testing.T) {
+	t.Parallel()
+
+	const cafe = "café"
+	fromRunes := NewString([]rune(cafe)).(String)
+	fromGo := NewGoString(cafe).(String)
+	require.NotNil(t, fromRunes.utf8)
+	require.NotNil(t, fromGo.utf8)
+	assert.Nil(t, fromRunes.ascii)
+	assert.Nil(t, fromRunes.s)
+	assert.Equal(t, 4, fromRunes.Count())
+	assert.True(t, fromRunes.Equal(fromGo))
+	assert.Equal(t, fromRunes.Hash128(), fromGo.Hash128())
+	assert.Equal(t, cafe, fromRunes.goString())
+
+	ascii := NewGoString("cafe").(String)
+	require.NotNil(t, ascii.ascii)
+	assert.False(t, ascii.Equal(fromGo))
+
+	ctx := arraictx.InitRunCtx(context.Background())
+	AssertEqualValues(t, MustNewSet(NewNumber(float64('é'))), mustCallAll(ctx, fromGo, NewNumber(3)))
+	AssertEqualValues(t, MustNewSet(NewNumber(float64('c'))), mustCallAll(ctx, fromGo, NewNumber(0)))
+
+	joined := concatStrings(fromGo, NewGoString("!").(String))
+	assert.Equal(t, "café!", joined.goString())
+	assert.Equal(t, 5, joined.Count())
+	assert.NotNil(t, joined.utf8)
+}

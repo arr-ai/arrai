@@ -208,7 +208,7 @@ func (t StringCharTuple) HasName(name string) bool {
 
 // Names returns the attribute names.
 func (t StringCharTuple) Names() Names {
-	return NewNames("@", StringCharAttr)
+	return stringCharNames
 }
 
 // Project returns a tuple with the given names from this tuple, or nil if any

@@ -19,7 +19,7 @@ func benchEval(b *testing.B, parallel bool, code string) {
 	}
 	ctx := arraictx.InitRunCtx(context.Background())
 	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		if _, err := EvaluateExpr(ctx, "", code); err != nil {
 			b.Fatal(err)
 		}

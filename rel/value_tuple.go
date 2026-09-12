@@ -16,33 +16,30 @@ import (
 	"github.com/arr-ai/arrai/pkg/fu"
 )
 
-// GenericTuple is the default implementation of Tuple: an interned Shape
-// (the sorted attribute names and everything derived from them) plus the
-// values in shape order. See Shape.
+// GenericTuple is the default implementation of Tuple: an interned Names
+// (the attribute set and everything derived from it) plus the values in
+// name order.
 type GenericTuple struct {
-	shape *Shape
+	names Names
 	vals  []Value
 	hash  hashCell
 }
 
 var (
 	// EmptyTuple is the tuple with no attributes.
-	EmptyTuple Tuple = &GenericTuple{shape: emptyShape}
+	EmptyTuple Tuple = &GenericTuple{names: EmptyNames}
 
 	negateTag = "@neg"
 )
 
-// sh returns the tuple's shape, treating a zero GenericTuple as empty.
-func (t *GenericTuple) sh() *Shape {
-	if t.shape == nil {
-		return emptyShape
-	}
-	return t.shape
+// attrSet returns the tuple's attribute set, treating a zero GenericTuple as empty.
+func (t *GenericTuple) attrSet() Names {
+	return t.names.canon()
 }
 
-// newShapedTuple wraps values already in shape order.
-func newShapedTuple(shape *Shape, vals []Value) *GenericTuple {
-	return &GenericTuple{shape: shape, vals: vals}
+// newShapedTuple wraps values already in name order.
+func newShapedTuple(names Names, vals []Value) *GenericTuple {
+	return &GenericTuple{names: names, vals: vals}
 }
 
 // TupleBuilder accumulates attributes for a tuple. A later Put of the same
@@ -61,16 +58,16 @@ func (b *TupleBuilder) Finish() Tuple {
 	if len(b.attrs) == 0 {
 		return EmptyTuple
 	}
-	shape, vals := shapeOfAttrs(b.attrs)
-	return canonicalTuple(shape, vals)
+	names, vals := internAttrs(b.attrs)
+	return canonicalTuple(names, vals)
 }
 
 // canonicalTuple returns the specialised tuple kind for the "@"-indexed
-// two-attribute shapes, or a GenericTuple otherwise.
-func canonicalTuple(shape *Shape, vals []Value) Tuple {
-	if len(vals) == 2 && shape.names[0] == "@" {
+// two-attribute sets, or a GenericTuple otherwise.
+func canonicalTuple(names Names, vals []Value) Tuple {
+	if len(vals) == 2 && names.names[0] == "@" {
 		i := vals[0]
-		switch shape.names[1] {
+		switch names.names[1] {
 		case StringCharAttr:
 			return NewStringCharTuple(int(i.(Number).Float64()), rune(vals[1].(Number).Float64()))
 		case BytesByteAttr:
@@ -81,7 +78,7 @@ func canonicalTuple(shape *Shape, vals []Value) Tuple {
 			return NewDictEntryTuple(i, vals[1])
 		}
 	}
-	return newShapedTuple(shape, vals)
+	return newShapedTuple(names, vals)
 }
 
 // isCanonicalTupleShape reports whether names is one of the reserved
@@ -233,7 +230,7 @@ func newGenericTuple(attrs ...Attr) Tuple {
 	if len(attrs) == 0 {
 		return EmptyTuple
 	}
-	return newShapedTuple(shapeOfAttrs(attrs))
+	return newShapedTuple(internAttrs(attrs))
 }
 
 func (t *GenericTuple) Canonical() Tuple {
@@ -255,7 +252,7 @@ func (t *GenericTuple) Hash(seed uintptr) uintptr {
 func (t *GenericTuple) Hash128() hash128.H128 {
 	return t.hash.get(func() hash128.H128 {
 		h := tupleSalt
-		nameH := t.sh().nameH
+		nameH := t.attrSet().nameH
 		for i, v := range t.vals {
 			h = h.Xor(hashAttr(nameH[i], v))
 		}
@@ -270,8 +267,8 @@ func (t *GenericTuple) Equal(v Value) bool {
 		return ok && t.Hash128() == u.Hash128()
 	}
 	if u, ok := v.(*GenericTuple); ok {
-		// Shapes are interned: same attribute set iff same shape.
-		if t.sh() != u.sh() {
+		// Names are interned: same attribute set iff same Names.
+		if t.attrSet() != u.attrSet() {
 			return false
 		}
 		for i, tv := range t.vals {
@@ -457,7 +454,7 @@ func (t *GenericTuple) getBucket() fmt.Stringer {
 	if !t.IsTrue() {
 		return genericType
 	}
-	return t.sh().bucket
+	return t.attrSet().bucket
 }
 
 type NamesSlice []string
@@ -580,7 +577,7 @@ func (t *GenericTuple) Count() int {
 
 // Get returns the Value associated with a name, and true iff it was found.
 func (t *GenericTuple) Get(name string) (Value, bool) {
-	if i, ok := t.sh().Index(name); ok {
+	if i, ok := t.attrSet().Index(name); ok {
 		return t.vals[i], true
 	}
 	return nil, false
@@ -603,14 +600,14 @@ func (t *GenericTuple) With(name string, value Value) Tuple {
 	} else {
 		t = t.without("&" + name)
 	}
-	shape := t.sh()
-	if i, ok := shape.Index(name); ok {
+	names := t.attrSet()
+	if i, ok := names.Index(name); ok {
 		vals := make([]Value, len(t.vals))
 		copy(vals, t.vals)
 		vals[i] = value
-		return newShapedTuple(shape, vals)
+		return newShapedTuple(names, vals)
 	}
-	next, at := shape.With(name)
+	next, at := names.insert(name)
 	vals := make([]Value, 0, len(t.vals)+1)
 	vals = append(vals, t.vals[:at]...)
 	vals = append(vals, value)
@@ -625,11 +622,11 @@ func (t *GenericTuple) Without(name string) Tuple {
 }
 
 func (t *GenericTuple) without(name string) *GenericTuple {
-	shape := t.sh()
-	if _, ok := shape.Index(name); !ok {
+	names := t.attrSet()
+	if _, ok := names.Index(name); !ok {
 		return t
 	}
-	next, at := shape.Without(name)
+	next, at := names.remove(name)
 	vals := make([]Value, 0, len(t.vals)-1)
 	vals = append(vals, t.vals[:at]...)
 	vals = append(vals, t.vals[at+1:]...)
@@ -645,18 +642,18 @@ func (t *GenericTuple) Map(f func(Value) (Value, error)) (Tuple, error) {
 		}
 		vals[i] = mapped
 	}
-	return newShapedTuple(t.sh(), vals), nil
+	return newShapedTuple(t.attrSet(), vals), nil
 }
 
 // HasName returns true iff the Tuple has an attribute with the given name.
 func (t *GenericTuple) HasName(name string) bool {
-	_, found := t.sh().Index(name)
+	_, found := t.attrSet().Index(name)
 	return found
 }
 
 // Names returns the attribute names.
 func (t *GenericTuple) Names() Names {
-	return t.sh().Names()
+	return t.attrSet()
 }
 
 // Project returns a tuple with the given names from this tuple, or nil if any
@@ -689,7 +686,7 @@ func (e *GenericTupleEnumerator) MoveNext() bool {
 
 // Current returns the enumerator's current Value.
 func (e *GenericTupleEnumerator) Current() (string, Value) {
-	return e.t.sh().names[e.i], e.t.vals[e.i]
+	return e.t.attrSet().names[e.i], e.t.vals[e.i]
 }
 
 // Enumerator returns an enumerator over the Values in the GenericTuple.
@@ -700,5 +697,5 @@ func (t *GenericTuple) Enumerator() AttrEnumerator {
 // TupleOrderedNames returns the names of this tuple in sorted order. The
 // slice is shared with the tuple's shape and must not be modified.
 func TupleOrderedNames(t *GenericTuple) []string {
-	return t.sh().names
+	return t.attrSet().names
 }
