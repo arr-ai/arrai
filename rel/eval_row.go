@@ -10,6 +10,15 @@ var errNeedRow = errors.New("row cursor needs the row as a value")
 
 // usesIdentAsValue reports whether ident appears as a Value, not only as the
 // lhs of ident.attr (or as the row being extended by +>). 🎯T29.9
+func usesIdentInExprs(ident string, es ...Expr) bool {
+	for _, e := range es {
+		if usesIdentAsValue(e, ident) {
+			return true
+		}
+	}
+	return false
+}
+
 func usesIdentAsValue(e Expr, ident string) bool {
 	if e == nil {
 		return false
@@ -28,22 +37,17 @@ func usesIdentAsValue(e Expr, ident string) bool {
 				return usesIdentAsValue(e.b, ident)
 			}
 		}
-		return usesIdentAsValue(e.a, ident) || usesIdentAsValue(e.b, ident)
+		return usesIdentInExprs(ident, e.a, e.b)
 	case *UnaryExpr:
 		return usesIdentAsValue(e.a, ident)
 	case AndExpr:
-		return usesIdentAsValue(e.a, ident) || usesIdentAsValue(e.b, ident)
+		return usesIdentInExprs(ident, e.a, e.b)
 	case OrExpr:
-		return usesIdentAsValue(e.a, ident) || usesIdentAsValue(e.b, ident)
+		return usesIdentInExprs(ident, e.a, e.b)
 	case *IfElseExpr:
-		return usesIdentAsValue(e.ifTrue, ident) || usesIdentAsValue(e.cond, ident) || usesIdentAsValue(e.ifFalse, ident)
+		return usesIdentInExprs(ident, e.ifTrue, e.cond, e.ifFalse)
 	case CompareExpr:
-		for _, a := range e.args {
-			if usesIdentAsValue(a, ident) {
-				return true
-			}
-		}
-		return false
+		return usesIdentInExprs(ident, e.args...)
 	case *TupleExpr:
 		for _, a := range e.attrs {
 			if usesIdentAsValue(a.expr, ident) {
@@ -57,9 +61,9 @@ func usesIdentAsValue(e Expr, ident string) bool {
 		}
 		return usesIdentAsValue(e.body, ident)
 	case *DArrowExpr:
-		return usesIdentAsValue(e.lhs, ident) || usesIdentAsValue(e.fn, ident)
+		return usesIdentInExprs(ident, e.lhs, e.fn)
 	case *ArrowExpr:
-		return usesIdentAsValue(e.lhs, ident) || usesIdentAsValue(e.fn, ident)
+		return usesIdentInExprs(ident, e.lhs, e.fn)
 	default:
 		return countIdentUses(e, ident) > 0
 	}
@@ -92,26 +96,7 @@ func evalAtRow(
 		}
 		return e.Eval(ctx, local)
 	case *DotExpr:
-		if id, ok := e.lhs.(IdentExpr); ok && id.ident == ident {
-			i, ok := cols[e.attr]
-			if !ok {
-				return nil, errNeedRow
-			}
-			return row[i], nil
-		}
-		lhs, err := evalAtRow(ctx, e.lhs, ident, row, cols, local)
-		if err != nil {
-			return nil, err
-		}
-		t, ok := lhs.(Tuple)
-		if !ok {
-			return e.Eval(ctx, local)
-		}
-		v, found := t.Get(e.attr)
-		if !found {
-			return nil, errNeedRow
-		}
-		return v, nil
+		return evalAtRowDot(ctx, e, ident, row, cols, local)
 	case *BinExpr:
 		a, err := evalAtRow(ctx, e.a, ident, row, cols, local)
 		if err != nil {
@@ -147,25 +132,7 @@ func evalAtRow(
 		}
 		return evalAtRow(ctx, e.b, ident, row, cols, local)
 	case CompareExpr:
-		lhs, err := evalAtRow(ctx, e.args[0], ident, row, cols, local)
-		if err != nil {
-			return nil, err
-		}
-		for i, arg := range e.args[1:] {
-			rhs, err := evalAtRow(ctx, arg, ident, row, cols, local)
-			if err != nil {
-				return nil, err
-			}
-			sat, err := e.comps[i](lhs, rhs)
-			if err != nil {
-				return nil, err
-			}
-			if !sat {
-				return False, nil
-			}
-			lhs = rhs
-		}
-		return True, nil
+		return evalAtRowCompare(ctx, e, ident, row, cols, local)
 	case *IfElseExpr:
 		cond, err := evalAtRow(ctx, e.cond, ident, row, cols, local)
 		if err != nil {
@@ -176,32 +143,87 @@ func evalAtRow(
 		}
 		return evalAtRow(ctx, e.ifFalse, ident, row, cols, local)
 	case *TupleExpr:
-		if e.attrSet.namesRep != nil {
-			vals := make([]Value, len(e.slots))
-			for i, attr := range e.attrs {
-				v, err := evalAtRow(ctx, attr.expr, ident, row, cols, local)
-				if err != nil {
-					return nil, err
-				}
-				vals[e.slots[i]] = v
-			}
-			return newShapedTuple(e.attrSet, vals), nil
+		return evalAtRowTuple(ctx, e, ident, row, cols, local)
+	default:
+		return nil, errNeedRow
+	}
+}
+
+func evalAtRowDot(
+	ctx context.Context, e *DotExpr, ident string, row Values, cols map[string]int, local Scope,
+) (Value, error) {
+	if id, ok := e.lhs.(IdentExpr); ok && id.ident == ident {
+		i, ok := cols[e.attr]
+		if !ok {
+			return nil, errNeedRow
 		}
-		tuple := EmptyTuple
-		for _, attr := range e.attrs {
+		return row[i], nil
+	}
+	lhs, err := evalAtRow(ctx, e.lhs, ident, row, cols, local)
+	if err != nil {
+		return nil, err
+	}
+	t, ok := lhs.(Tuple)
+	if !ok {
+		return e.Eval(ctx, local)
+	}
+	v, found := t.Get(e.attr)
+	if !found {
+		return nil, errNeedRow
+	}
+	return v, nil
+}
+
+func evalAtRowCompare(
+	ctx context.Context, e CompareExpr, ident string, row Values, cols map[string]int, local Scope,
+) (Value, error) {
+	lhs, err := evalAtRow(ctx, e.args[0], ident, row, cols, local)
+	if err != nil {
+		return nil, err
+	}
+	for i, arg := range e.args[1:] {
+		rhs, err := evalAtRow(ctx, arg, ident, row, cols, local)
+		if err != nil {
+			return nil, err
+		}
+		sat, err := e.comps[i](lhs, rhs)
+		if err != nil {
+			return nil, err
+		}
+		if !sat {
+			return False, nil
+		}
+		lhs = rhs
+	}
+	return True, nil
+}
+
+func evalAtRowTuple(
+	ctx context.Context, e *TupleExpr, ident string, row Values, cols map[string]int, local Scope,
+) (Value, error) {
+	if e.attrSet.namesRep != nil {
+		vals := make([]Value, len(e.slots))
+		for i, attr := range e.attrs {
 			v, err := evalAtRow(ctx, attr.expr, ident, row, cols, local)
 			if err != nil {
 				return nil, err
 			}
-			if attr.IsWildcard() {
-				return nil, errNeedRow
-			}
-			tuple = tuple.With(attr.name, v)
+			vals[e.slots[i]] = v
 		}
-		return tuple, nil
-	default:
-		return nil, errNeedRow
+		return newShapedTuple(e.attrSet, vals), nil
 	}
+	tuple := EmptyTuple
+	for _, attr := range e.attrs {
+		v, err := evalAtRow(ctx, attr.expr, ident, row, cols, local)
+		if err != nil {
+			return nil, err
+		}
+		if attr.IsWildcard() {
+			return nil, errNeedRow
+		}
+		tuple = tuple.With(attr.name, v)
+	}
+	return tuple, nil
 }
 
 func (r Relation) whereAtRow(ctx context.Context, scope Scope, fn *Function, ident string) (Value, bool, error) {

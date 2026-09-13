@@ -447,9 +447,9 @@ func matchColPred(f *Function) *colPred {
 	switch cmp.ops[0] {
 	case "!=":
 		return &colPred{attr: attr, kind: colNE, key: other}
-	case "<:":
+	case opMember:
 		return &colPred{attr: attr, kind: colIn, key: other}
-	case "!<:":
+	case opNotMember:
 		return &colPred{attr: attr, kind: colNotIn, key: other}
 	}
 	return nil
@@ -505,9 +505,9 @@ func (r Relation) whereByColumn(ctx context.Context, scope Scope, p *colPred) (V
 func colPredOp(k colPredKind) string {
 	switch k {
 	case colIn:
-		return "<:"
+		return opMember
 	case colNotIn:
-		return "!<:"
+		return opNotMember
 	default:
 		return "!="
 	}

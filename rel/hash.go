@@ -16,13 +16,13 @@ import (
 var hashSeed = maphash.MakeSeed()
 
 const (
-	golden     = 0x9E3779B97F4A7C15
-	mixConst   = 0x2545F4914F6CDD1D
-	fmixC1     = 0xff51afd7ed558ccd
-	fmixC2     = 0xc4ceb9fe1a85ec53
-	floatSalt  = 0x9E3779B97F4A7C15
-	intSalt    = 0xC2B2AE3D27D4EB4F
-	runesSalt  = 0x165667B19E3779F9
+	golden    uint64 = 0x9E3779B97F4A7C15
+	mixConst  uint64 = 0x2545F4914F6CDD1D
+	fmixC1    uint64 = 0xff51afd7ed558ccd
+	fmixC2    uint64 = 0xc4ceb9fe1a85ec53
+	floatSalt uint64 = 0x9E3779B97F4A7C15
+	intSalt   uint64 = 0xC2B2AE3D27D4EB4F
+	runesSalt uint64 = 0x165667B19E3779F9
 )
 
 func fmix64(k uint64) uint64 {
@@ -42,6 +42,9 @@ func mix(h, o uintptr) uintptr {
 
 func xor(h, o uintptr) uintptr { return h ^ o }
 
+// uhash truncates a 64-bit mix constant to uintptr so 32-bit builds compile.
+func uhash(u uint64) uintptr { return uintptr(u) }
+
 func hashSet(xorElems uintptr) uintptr {
 	return mix(setSalt, xorElems)
 }
@@ -59,18 +62,18 @@ func hashString(s string) uintptr {
 }
 
 func hashInt(i int) uintptr {
-	return mix(intSalt, uintptr(i))
+	return mix(uhash(intSalt), uintptr(i))
 }
 
 func hashFloat64(f float64) uintptr {
 	if f == 0 {
 		f = 0
 	}
-	return mix(floatSalt, uintptr(math.Float64bits(f)))
+	return mix(uhash(floatSalt), uintptr(math.Float64bits(f)))
 }
 
 func hashRunes(s []rune) uintptr {
-	h := uintptr(runesSalt)
+	h := uhash(runesSalt)
 	for _, r := range utf16.Encode(s) {
 		h = mix(h, uintptr(r))
 	}

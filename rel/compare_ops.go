@@ -2,21 +2,26 @@ package rel
 
 import "fmt"
 
+const (
+	opMember    = "<:"
+	opNotMember = "!<:"
+)
+
 // CompareOps maps every comparison operator's surface syntax to its implementation. It is the
 // single source of truth for both compiling a CompareExpr (syntax.compile.go) and reconstructing
 // one from a compiled plan (decodeCompare), so the two can't drift out of sync with each other.
 var CompareOps = map[string]CompareFunc{
-	"<:": func(a, b Value) (bool, error) {
+	opMember: func(a, b Value) (bool, error) {
 		set, is := b.(Set)
 		if !is {
-			return false, fmt.Errorf("<: rhs not a set: %v", b)
+			return false, fmt.Errorf("%s rhs not a set: %v", opMember, b)
 		}
 		return set.Has(a), nil
 	},
-	"!<:": func(a, b Value) (bool, error) {
+	opNotMember: func(a, b Value) (bool, error) {
 		set, is := b.(Set)
 		if !is {
-			return false, fmt.Errorf("!<: rhs not a set: %v", b)
+			return false, fmt.Errorf("%s rhs not a set: %v", opNotMember, b)
 		}
 		return !set.Has(a), nil
 	},

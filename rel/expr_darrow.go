@@ -164,41 +164,8 @@ func (e *DArrowExpr) Eval(ctx context.Context, local Scope) (_ Value, err error)
 		ident, isIdent := e.fn.arg.(IdentPattern)
 		if fastPaths {
 			if r, is := set.(Relation); is {
-				if isIdent {
-					if te, ok := e.fn.body.(*TupleExpr); ok {
-						if dst, src, ok := te.identDots(string(ident)); ok {
-							if v, ok := projectIdentDots(r, dst, src); ok {
-								return v, nil
-							}
-						}
-					}
-					if attr, ok := matchColumnExtract(e.fn, string(ident)); ok {
-						if v, ok := r.projectColumn(attr); ok {
-							return v, nil
-						}
-					}
-					identStr := string(ident)
-					if bin, ok := e.fn.body.(*BinExpr); ok && bin.op == "+>" {
-						if id, ok := bin.a.(IdentExpr); ok && id.ident == identStr {
-							if te, ok := bin.b.(*TupleExpr); ok && !usesIdentAsValue(te, identStr) {
-								if v, ok, err := r.mapAddArrow(ctx, local, te, identStr); ok || err != nil {
-									return v, err
-								}
-							}
-						}
-					}
-					if e.fn.isColumnOnly() {
-						if v, ok, err := r.mapAtRow(ctx, local, e.fn, identStr); ok || err != nil {
-							return v, err
-						}
-					}
-				}
-				if dst, src, exact, names, ok := tuplePatternDots(e.fn); ok {
-					if !exact || r.hasOnlyAttrs(names) {
-						if v, ok := projectIdentDots(r, dst, src); ok {
-							return v, nil
-						}
-					}
+				if v, ok, err := e.evalRelationFast(ctx, r, ident, isIdent, local); ok || err != nil {
+					return v, err
 				}
 			}
 		}
@@ -244,6 +211,48 @@ func (e *DArrowExpr) Eval(ctx context.Context, local Scope) (_ Value, err error)
 	}
 	return nil, WrapContextErr(goerrors.Errorf(
 		"=> lhs must be set, not %s: %v", ValueTypeAsString(value), value), e, local)
+}
+
+func (e *DArrowExpr) evalRelationFast(
+	ctx context.Context, r Relation, ident IdentPattern, isIdent bool, local Scope,
+) (Value, bool, error) {
+	if isIdent {
+		if te, ok := e.fn.body.(*TupleExpr); ok {
+			if dst, src, ok := te.identDots(string(ident)); ok {
+				if v, ok := projectIdentDots(r, dst, src); ok {
+					return v, true, nil
+				}
+			}
+		}
+		if attr, ok := matchColumnExtract(e.fn, string(ident)); ok {
+			if v, ok := r.projectColumn(attr); ok {
+				return v, true, nil
+			}
+		}
+		identStr := string(ident)
+		if bin, ok := e.fn.body.(*BinExpr); ok && bin.op == "+>" {
+			if id, ok := bin.a.(IdentExpr); ok && id.ident == identStr {
+				if te, ok := bin.b.(*TupleExpr); ok && !usesIdentAsValue(te, identStr) {
+					if v, ok, err := r.mapAddArrow(ctx, local, te, identStr); ok || err != nil {
+						return v, ok, err
+					}
+				}
+			}
+		}
+		if e.fn.isColumnOnly() {
+			if v, ok, err := r.mapAtRow(ctx, local, e.fn, identStr); ok || err != nil {
+				return v, ok, err
+			}
+		}
+	}
+	if dst, src, exact, names, ok := tuplePatternDots(e.fn); ok {
+		if !exact || r.hasOnlyAttrs(names) {
+			if v, ok := projectIdentDots(r, dst, src); ok {
+				return v, true, nil
+			}
+		}
+	}
+	return nil, false, nil
 }
 
 // evalParallel evaluates the transform's body over a large set's elements in
