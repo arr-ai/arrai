@@ -121,7 +121,7 @@ func addDemandedEqAttrs(e Expr, ident string, attrs *[]string) {
 		if e.op == "where" {
 			if id, ok := e.a.(IdentExpr); ok && id.ident == ident {
 				if f, ok := e.b.(*Function); ok {
-					if p := matchEqAttrPredicate(f); p != nil {
+					for _, p := range matchEqAttrPredicates(f) {
 						*attrs = append(*attrs, p.attr)
 					}
 				}

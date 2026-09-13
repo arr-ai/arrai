@@ -1,13 +1,11 @@
 package rel
 
 import (
-	"github.com/arr-ai/hash/hash128"
-
 	"context"
 	"fmt"
 	"reflect"
 
-	"github.com/arr-ai/frozen"
+	"github.com/arr-ai/frozen/v2"
 	"github.com/arr-ai/wbnf/parser"
 
 	"github.com/arr-ai/arrai/pkg/fu"
@@ -89,24 +87,14 @@ func NewBool(b bool) Set {
 	return False
 }
 
-// Hash computes a hash for a genericSet.
-// Delegates to frozen.Set, which uses the tree's H0 for seeds 0/1 instead of
-// re-walking every element (important when GenericSets nest inside other sets).
-func (s GenericSet) Hash(seed uintptr) uintptr {
-	return s.set.Hash(seed)
-}
-
-// Hash128 returns the 128-bit hash maintained by the underlying frozen set.
-func (s GenericSet) Hash128() hash128.H128 {
-	return s.set.Hash128()
+// Hash delegates to the frozen tree. Frozen already wraps H0 so nested
+// sets do not collapse; wrapping again would double-mix.
+func (s GenericSet) Hash() uintptr {
+	return s.set.Hash()
 }
 
 // Equal tests two Sets for equality. Any other type returns false.
 func (s GenericSet) Equal(v Value) bool {
-	if hashIdentity {
-		t, ok := v.(Set)
-		return ok && s.Hash128() == t.Hash128()
-	}
 	if t, ok := v.(GenericSet); ok {
 		return s.set.Equal(t.set)
 	}

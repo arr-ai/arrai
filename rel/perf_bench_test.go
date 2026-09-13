@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/arr-ai/frozen"
+	"github.com/arr-ai/frozen/v2"
 )
 
 // ---------------------------------------------------------------------------
@@ -400,7 +400,7 @@ func BenchmarkPerfNamesHash(b *testing.B) {
 	b.ReportAllocs()
 	names := perfMakeNames(5)
 	for b.Loop() {
-		_ = names.Hash(0)
+		_ = names.Hash()
 	}
 }
 
@@ -545,21 +545,21 @@ func BenchmarkPerfValueHash(b *testing.B) {
 		b.ReportAllocs()
 		v := NewNumber(42)
 		for b.Loop() {
-			_ = v.Hash(0)
+			_ = v.Hash()
 		}
 	})
 	b.Run("Tuple/3", func(b *testing.B) {
 		b.ReportAllocs()
 		v := perfMakeTuple(3)
 		for b.Loop() {
-			_ = v.Hash(0)
+			_ = v.Hash()
 		}
 	})
 	b.Run("Tuple/5", func(b *testing.B) {
 		b.ReportAllocs()
 		v := perfMakeTuple(5)
 		for b.Loop() {
-			_ = v.Hash(0)
+			_ = v.Hash()
 		}
 	})
 }

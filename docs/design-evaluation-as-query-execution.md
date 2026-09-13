@@ -83,7 +83,7 @@ The runtime shadow of the plan. A set value is in one of three states:
 | **Frontier** | exclusively extended in place between snapshots | `colStore` ownership (relations), `appendBuf` (strings, arrays), the `canonical` flag's fold path |
 | **Suspended** | a plan: base + pending operators; streams under enumeration; forces at identity boundaries; answers `Count` from metadata without forcing | selection-vector views (`where` as base + row ids) — the degenerate case |
 
-Transitions: operator application suspends; `Has`/`Hash128`/`Equal` force;
+Transitions: operator application suspends; `Has`/`Hash`/`Equal` force;
 single-reference extension keeps the frontier. The 2026-08 work built the
 first two states and one instance of the third without naming them; this
 design generalizes the suspended state from "selection vector" to "operator
@@ -147,38 +147,19 @@ Existing machinery this extends rather than replaces: `matchEqAttrPredicate`
 (body analysis in miniature), `TupleExpr.staticShape` (static schemas), the
 memoised `groupBy` (runtime fallback and key detector).
 
-## The hash-identity Rubicon
+## Hash is not equality
 
-Decision baked into the 128-bit hash design from the start: **treat hash
-equality as value equality.** The risk decomposition:
+Hashes are seedless 64-bit. Treating hash equality as value equality does not.
+A set hash is `mix(hash(count), xor of element hashes)`, so `{{1}, {2, 3}}`
+and `{{1, 2}, {3}}` no longer collide (plain XOR of leaves is `h(1)⊕h(2)⊕h(3)`
+for both; the inner counts differ). Frozen compared those two values equal
+under XOR-only `FullHash`. Arrays hit the same class in #738
+(`["x","x"]` vs `["y","y"]`); Mix fixed arrays.
 
-- *Coincidental* collision is a non-issue: at 2⁴⁰ live values, collision
-  odds ≈ 2⁻⁴⁹ — UUID-class safety.
-- The real threat is *algorithmic* convergence: structurally different
-  values whose hash computations land on the same result by construction.
-  We have a live specimen — `["x","x"]` vs `["y","y"]` collided because xor
-  cancels structurally identical terms (fixed in #738 by switching arrays to
-  `Mix`).
-
-Crossing safely therefore requires an **injectivity audit of the hash
-algebra**, written down per kind: Mix binds position; salts bind kind;
-lengths bind arity; and the rule the #738 fix taught — *never xor terms that
-can be identical for structurally different values*. The empirical
-counterpart is 🎯T16's property layer running both directions
-(`Equal ⇒ hash equal` and, fuzzed, `hash equal ⇒ Equal`).
-
-The crossing itself is staged like everything else here: a `hashidentity`
-build tag replaces deep `Equal` with 16-byte comparison, runs differentially
-against the whole corpus (the `slowpath` discipline), gets measured, then
-becomes the default. The payoff: every index-probe verification,
-`equalValues` walk, and set-membership check collapses to one compare;
-hash-consing (global value interning, pointer-fast equality, automatic
-dedup of repetitive data) becomes trivial rather than heroic.
-
-Interaction worth knowing before sequencing: cheap equality makes
-deduplication cheap, which *lowers* the stakes of dedup-elision analysis —
-the analyzer's remaining prizes are then count-passthrough, fusion legality
-and index remapping. The two big ideas partially substitute for each other.
+`Hash()` is an index key; membership still deep-Equals. The `hashidentity`
+build tag is gone. Standing oracle:
+`TestXorNestedSetHashIsNotEquality` (`Equal ⇒ Hash` still holds; the
+converse is not a law).
 
 ## Indices: compile-time demand, runtime choice
 
@@ -326,10 +307,10 @@ ordered; stages marked ∥ can interleave with the main line.
   as Expr-tree passes, licensed by S3a's facts; extends S2 fusion into set
   pipelines where certificates permit. *Exit: rewritten plans byte-identical
   via the reference oracle; pushdown wins measured at scale.*
-- **S4 ∥ — Hash identity.** The algebra injectivity audit (doc + 🎯T16
-  property tests both directions), then the `hashidentity` differential
-  build tag, measurement, and the default flip as a separate decision.
-  Interleaves anywhere after 🎯T16's property layer exists.
+- **S4 ∥ — Hash identity.** Withdrawn. `Hash()` is an index key, not
+  equality. The nested-set XOR specimen (`{{1},{2,3}}` vs `{{1,2},{3}}`)
+  is why the converse is not a law (Equal stays false even after count-mix
+  separates their hashes); see “Hash is not equality” above and 🎯T30.
 - **S5 — The plan proper.** Per-edge stream/materialize decisions, pipeline
   breakers, fan-out handling, index-as-materialization-format, zone-map
   statistics, fact-keyed plan caches with guards. Only starts once S2+S3
@@ -338,4 +319,4 @@ ordered; stages marked ∥ can interleave with the main line.
   The operator VM as both execution engine and compiled `.arraiz` format.
 
 🎯T16 (property tests for the value laws) runs alongside throughout as the
-standing counterweight, and is a hard prerequisite of S4.
+standing counterweight. `Equal ⇒ Hash` is the law; the converse is not.

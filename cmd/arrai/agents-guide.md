@@ -34,7 +34,7 @@ cd arrai
 make install    # builds binary, installs to GOPATH/bin, creates ai/ax symlinks
 ```
 
-Requires Go 1.24 or later.
+Requires Go 1.25 or later.
 
 ### From releases
 
@@ -50,7 +50,7 @@ Download the relevant archive from the
 | `--debug` | `-d` | On evaluation failure, drop into the interactive shell with the last scope. Also set via `ARRAI_DEBUG=1`. |
 | `--version` | `-v` | Print version, OS, arch. |
 | `--help` | `-h` | Print help. |
-| `--help-agent` | | Print this agent guide. |
+| `--help-agent` | | Print CLI help, then this agent guide. |
 
 ### Direct file execution
 
@@ -323,9 +323,22 @@ Source text → Parser (syntax/arrai.wbnf) → AST → Compiler (syntax/compile.
 
 | Package | Description |
 |---|---|
-| `rel/` | Core types: `Value`, `Expr`, `Scope`, `Pattern`. Immutable values over `github.com/arr-ai/frozen`. |
+| `rel/` | Core types: `Value`, `Expr`, `Scope`, `Pattern`. Immutable values over `github.com/arr-ai/frozen/v2`. |
 | `syntax/` | Parser, compiler, stdlib (`std_*.go`), imports, bundler. |
 | `cmd/arrai/` | CLI entry point (urfave/cli). |
 | `pkg/` | REPL, test runner, bundle system, context-based filesystem. |
 | `engine/` | Stateful server evaluation engine. |
 | `translate/` | Format translators (protobuf, XML, YAML). |
+
+## Gotchas
+
+- **Hash is not equality.** Value hashes are seedless 64-bit `uintptr`s
+  (`Hash()`). Equal values hash equal; a hash collision is not equality.
+  Unordered collections XOR element hashes, then wrap with `mix(kindSalt, xor)`
+  so nested grouping does not collapse. `frozen/v2` already wraps its own
+  sets/maps — do not wrap those hashes again.
+- **Names are interned.** Attribute-name sets (`Names`) compare by pointer
+  identity after canonicalisation. Do not assume two equal name strings are the
+  same `Names` value until interned.
+- **`--help-agent` is on `arrai` only.** The `ai` and `ax` shortcuts do not
+  expose `--version` or `--help-agent`.

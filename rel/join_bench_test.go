@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/arr-ai/frozen"
+	"github.com/arr-ai/frozen/v2"
 	"github.com/arr-ai/wbnf/parser"
 	"github.com/stretchr/testify/require"
 )

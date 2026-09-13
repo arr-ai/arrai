@@ -85,6 +85,11 @@ func validNestOp(setAttrs, nestAttrs Names) error {
 
 // Nest groups the given attributes into nested relations.
 func Nest(a Set, relAttrs, attrs Names, attr string) Set {
+	if r, ok := a.(Relation); ok && fastPaths {
+		if s, ok := r.nestOnStore(attrs, attr, false); ok {
+			return s
+		}
+	}
 	return nestWithFunc(a, relAttrs, attrs, attr, func(nest Set, t Tuple) Set {
 		return nest.With(t.Project(attrs))
 	})
@@ -92,6 +97,11 @@ func Nest(a Set, relAttrs, attrs Names, attr string) Set {
 
 // SingleAttrNest nests a single attribute as a set.
 func SingleAttrNest(a Set, relAttrs Names, attr string) Set {
+	if r, ok := a.(Relation); ok && fastPaths {
+		if s, ok := r.nestOnStore(NewNames(attr), attr, true); ok {
+			return s
+		}
+	}
 	return nestWithFunc(a, relAttrs, NewNames(attr), attr, func(nest Set, t Tuple) Set {
 		return nest.With(t.MustGet(attr))
 	})

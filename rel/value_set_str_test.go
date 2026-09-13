@@ -69,7 +69,7 @@ func TestStringUTF8Backing(t *testing.T) {
 	assert.Nil(t, fromRunes.s)
 	assert.Equal(t, 4, fromRunes.Count())
 	assert.True(t, fromRunes.Equal(fromGo))
-	assert.Equal(t, fromRunes.Hash128(), fromGo.Hash128())
+	assert.Equal(t, fromRunes.Hash(), fromGo.Hash())
 	assert.Equal(t, cafe, fromRunes.goString())
 
 	ascii := NewGoString("cafe").(String)

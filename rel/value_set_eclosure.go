@@ -1,8 +1,6 @@
 package rel
 
 import (
-	"github.com/arr-ai/hash/hash128"
-
 	"context"
 	"fmt"
 	"reflect"
@@ -24,14 +22,7 @@ func NewExprClosure(scope Scope, e Expr) Value {
 }
 
 // Hash computes a hash for a ExprClosure.
-func (c ExprClosure) Hash(seed uintptr) uintptr {
-	panic("not implemented")
-	// TODO: Is this enough?
-	// return c.e.Hash(seed)
-}
-
-// Hash128 is not implemented for ExprClosure.
-func (c ExprClosure) Hash128() hash128.H128 {
+func (c ExprClosure) Hash() uintptr {
 	panic("not implemented")
 }
 

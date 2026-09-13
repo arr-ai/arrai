@@ -2,10 +2,11 @@ package rel
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/arr-ai/wbnf/parser"
-	"github.com/go-errors/errors"
+	goerrors "github.com/go-errors/errors"
 )
 
 // DArrowExpr returns the set applied elementwise to a function.
@@ -75,6 +76,79 @@ func pruneStackedProjects(outer *DArrowExpr) Expr {
 	return NewDArrowExpr(outer.Src, newInner, outer.fn)
 }
 
+func projectIdentDots(r Relation, dst, src []string) (Set, bool) {
+	if isCanonicalTupleShape(dst) {
+		return r.projectCanonical(dst, src)
+	}
+	return r.projectDots(dst, src)
+}
+
+// tuplePatternDots recognises `\(:a, :b, ...) (x: a, y: b)` as project/rename
+// (🎯T29.4). Leftover `...` may be present only if unused in the body.
+func tuplePatternDots(f *Function) (dst, src []string, exact bool, names []string, ok bool) {
+	tp, is := f.arg.(TuplePattern)
+	if !is {
+		return nil, nil, false, nil, false
+	}
+	te, is := f.body.(*TupleExpr)
+	if !is || len(te.attrs) == 0 {
+		return nil, nil, false, nil, false
+	}
+	bound := map[string]string{}
+	exact = true
+	for _, attr := range tp.attrs {
+		if attr.pattern.fallback != nil {
+			return nil, nil, false, nil, false
+		}
+		switch p := attr.pattern.pattern.(type) {
+		case ExtraElementPattern:
+			if p.ident != "" {
+				return nil, nil, false, nil, false
+			}
+			exact = false
+		case IdentPattern:
+			bound[string(p)] = attr.name
+			names = append(names, attr.name)
+		default:
+			return nil, nil, false, nil, false
+		}
+	}
+	if len(bound) == 0 {
+		return nil, nil, false, nil, false
+	}
+	dst = make([]string, 0, len(te.attrs))
+	src = make([]string, 0, len(te.attrs))
+	for _, attr := range te.attrs {
+		if attr.IsWildcard() {
+			return nil, nil, false, nil, false
+		}
+		id, is := attr.expr.(IdentExpr)
+		if !is {
+			return nil, nil, false, nil, false
+		}
+		from, has := bound[id.ident]
+		if !has {
+			return nil, nil, false, nil, false
+		}
+		dst = append(dst, attr.name)
+		src = append(src, from)
+	}
+	return dst, src, exact, names, true
+}
+
+// matchColumnExtract reports `ident.attr` as the whole => body (🎯T29.2).
+func matchColumnExtract(f *Function, ident string) (string, bool) {
+	d, ok := f.body.(*DotExpr)
+	if !ok {
+		return "", false
+	}
+	id, ok := d.lhs.(IdentExpr)
+	if !ok || id.ident != ident {
+		return "", false
+	}
+	return d.attr, true
+}
+
 // String returns a string representation of the expression.
 func (e *DArrowExpr) String() string {
 	return fmt.Sprintf("(%s => %s)", e.lhs, e.fn)
@@ -88,11 +162,40 @@ func (e *DArrowExpr) Eval(ctx context.Context, local Scope) (_ Value, err error)
 	}
 	if set, ok := value.(Set); ok {
 		ident, isIdent := e.fn.arg.(IdentPattern)
-		if fastPaths && isIdent {
-			if te, ok := e.fn.body.(*TupleExpr); ok {
-				if dst, src, ok := te.identDots(string(ident)); ok && !isCanonicalTupleShape(dst) {
-					if r, is := set.(Relation); is {
-						if v, ok := r.projectDots(dst, src); ok {
+		if fastPaths {
+			if r, is := set.(Relation); is {
+				if isIdent {
+					if te, ok := e.fn.body.(*TupleExpr); ok {
+						if dst, src, ok := te.identDots(string(ident)); ok {
+							if v, ok := projectIdentDots(r, dst, src); ok {
+								return v, nil
+							}
+						}
+					}
+					if attr, ok := matchColumnExtract(e.fn, string(ident)); ok {
+						if v, ok := r.projectColumn(attr); ok {
+							return v, nil
+						}
+					}
+					identStr := string(ident)
+					if bin, ok := e.fn.body.(*BinExpr); ok && bin.op == "+>" {
+						if id, ok := bin.a.(IdentExpr); ok && id.ident == identStr {
+							if te, ok := bin.b.(*TupleExpr); ok && !usesIdentAsValue(te, identStr) {
+								if v, ok, err := r.mapAddArrow(ctx, local, te, identStr); ok || err != nil {
+									return v, err
+								}
+							}
+						}
+					}
+					if e.fn.isColumnOnly() {
+						if v, ok, err := r.mapAtRow(ctx, local, e.fn, identStr); ok || err != nil {
+							return v, err
+						}
+					}
+				}
+				if dst, src, exact, names, ok := tuplePatternDots(e.fn); ok {
+					if !exact || r.hasOnlyAttrs(names) {
+						if v, ok := projectIdentDots(r, dst, src); ok {
 							return v, nil
 						}
 					}
@@ -139,7 +242,7 @@ func (e *DArrowExpr) Eval(ctx context.Context, local Scope) (_ Value, err error)
 		}
 		return s, nil
 	}
-	return nil, WrapContextErr(errors.Errorf(
+	return nil, WrapContextErr(goerrors.Errorf(
 		"=> lhs must be set, not %s: %v", ValueTypeAsString(value), value), e, local)
 }
 
@@ -154,15 +257,66 @@ func (e *DArrowExpr) evalParallel(
 	if ranges == nil {
 		return nil, false, nil
 	}
+	if r, ok := set.(Relation); ok {
+		return e.evalParallelRelation(ctx, r, ident, local, ranges)
+	}
 	elems := make([]Value, 0, set.Count())
 	for elem := range All(set) {
 		elems = append(elems, elem)
 	}
-	out := make([]Value, len(elems))
+	return e.finishParallel(ctx, local, ident, ranges, len(elems), func(i int) Value {
+		return elems[i]
+	})
+}
+
+func (e *DArrowExpr) evalParallelRelation(
+	ctx context.Context, r Relation, ident string, local Scope, ranges [][2]int,
+) (Value, bool, error) {
+	if e.fn.isColumnOnly() {
+		n := r.rows.n
+		out := make([]Value, n)
+		errs := make([]error, len(ranges))
+		runRanges(ranges, func(w, lo, hi int) {
+			for i := lo; i < hi; i++ {
+				v, err := evalAtRow(ctx, e.fn.body, ident, r.rows.rowAt(i), r.attrMap, local)
+				if err != nil {
+					errs[w] = err
+					return
+				}
+				out[i] = v
+			}
+		})
+		if err := firstErr(errs); err != nil {
+			if errors.Is(err, errNeedRow) {
+				return e.finishParallel(ctx, local, ident, ranges, n, func(i int) Value {
+					return r.tuple(r.rows.rowAt(i))
+				})
+			}
+			return nil, true, WrapContextErr(err, e, local)
+		}
+		b := NewSetBuilder()
+		for _, v := range out {
+			b.Add(v)
+		}
+		s, err := b.Finish()
+		if err != nil {
+			return nil, true, WrapContextErr(err, e, local)
+		}
+		return s, true, nil
+	}
+	return e.finishParallel(ctx, local, ident, ranges, r.rows.n, func(i int) Value {
+		return r.tuple(r.rows.rowAt(i))
+	})
+}
+
+func (e *DArrowExpr) finishParallel(
+	ctx context.Context, local Scope, ident string, ranges [][2]int, n int, elem func(int) Value,
+) (Value, bool, error) {
+	out := make([]Value, n)
 	errs := make([]error, len(ranges))
 	runRanges(ranges, func(w, lo, hi int) {
 		for i := lo; i < hi; i++ {
-			v, err := e.fn.body.Eval(ctx, local.With(ident, elems[i]))
+			v, err := e.fn.body.Eval(ctx, local.With(ident, elem(i)))
 			if err != nil {
 				errs[w] = err
 				return

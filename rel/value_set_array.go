@@ -1,8 +1,6 @@
 package rel
 
 import (
-	"github.com/arr-ai/hash/hash128"
-
 	"context"
 	"fmt"
 	"math"
@@ -19,7 +17,7 @@ type Array struct {
 	offset int
 	count  int
 
-	// hash memoises Hash128. The array's hash depends on values and offset,
+	// hash memoises Hash. The array's hash depends on values and offset,
 	// so any copy that changes either must take a fresh cell: derive such
 	// copies with derive(), never by assigning to a plain struct copy.
 	hash *hashCell
@@ -151,31 +149,21 @@ func (a Array) Values() []Value {
 	return a.values
 }
 
-// Hash computes a hash for a Array.
-func (a Array) Hash(seed uintptr) uintptr {
-	return a.Hash128().Seeded(seed)
-}
-
-// Hash128 computes the 128-bit hash of an Array by mixing its item tuples in
-// index order. Each item's hash already binds its index (via hashTuple2), so
-// this doesn't need to be order-independent like a set/dict combination —
-// and using Mix here, rather than Xor, matters: xor-ing per-element hashes
-// together is vulnerable to cancellation when the same value occurs at two
-// different indices (e.g. ["x", "x"]), since the value-dependent part of
-// hashTuple2's own internal xor is identical at both positions and cancels
-// out, making the array's hash independent of that repeated value.
-func (a Array) Hash128() hash128.H128 {
+// Hash mixes item tuples in index order. Each item's hash already binds its
+// index (via hashTuple2). Mix, not Xor: xor-ing per-element hashes cancels
+// when the same value occurs at two indices (e.g. ["x", "x"]).
+func (a Array) Hash() uintptr {
 	if a.hash == nil {
 		return a.hashUncached()
 	}
 	return a.hash.get(a.hashUncached)
 }
 
-func (a Array) hashUncached() hash128.H128 {
+func (a Array) hashUncached() uintptr {
 	h := arraySalt
 	for i, v := range a.values {
 		if v != nil {
-			h = h.Mix(hashTuple2(atNameHash, NewNumber(float64(a.offset+i)), itemNameHash, v))
+			h = mix(h, hashTuple2(atNameHash, NewNumber(float64(a.offset+i)), itemNameHash, v))
 		}
 	}
 	return h
@@ -183,10 +171,6 @@ func (a Array) hashUncached() hash128.H128 {
 
 // Equal tests two Sets for equality. Any other type returns false.
 func (a Array) Equal(v Value) bool {
-	if hashIdentity {
-		s, ok := v.(Set)
-		return ok && a.Hash128() == s.Hash128()
-	}
 	// AsArray also matches seqPipeline and EmptySet, which represent arrays
 	// without being the concrete Array type.
 	if x, ok := AsArray(v); ok {

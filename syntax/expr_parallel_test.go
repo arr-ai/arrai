@@ -43,6 +43,14 @@ func TestParallelDArrow(t *testing.T) {
 	AssertCodeErrors(t, "Call: no return values for input 2",
 		`//seq.repeat(5000, [0]) => {0: 1, 1: 1}(.@)`,
 	)
+	// Opaque => over a Relation must not pre-box the input (🎯T29.8).
+	AssertCodesEvalToSameValue(t,
+		`5000`,
+		`((//seq.repeat(5000, [0]) => (a: .@)) => .a + 1) count`,
+	)
+	AssertCodeErrors(t, "Call: no return values for input 2",
+		`(//seq.repeat(5000, [0]) => (a: .@)) => {0: 1, 1: 1}(.a)`,
+	)
 }
 
 func TestParallelSeqArrow(t *testing.T) {

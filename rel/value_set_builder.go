@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"reflect"
 
-	"github.com/arr-ai/frozen"
+	"github.com/arr-ai/frozen/v2"
 )
 
 // TODO: Replace genericSetBuilder with custom setBuilders.

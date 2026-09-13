@@ -31,10 +31,8 @@ func TestNumberHash(t *testing.T) {
 	a := NewNumber(42)
 	b := NewNumber(42)
 	c := NewNumber(43)
-	assert.Equal(t, a.Hash(0), b.Hash(0), "%s.Hash(0) vs %s.Hash(0)", a, b)
-	assert.NotEqual(t, a.Hash(0), c.Hash(0), "%s.Hash(0) vs %s.Hash(0)", a, c)
-	assert.NotEqual(t, a.Hash(0), b.Hash(1), "%s.Hash(0) vs %s.Hash(1)", a, b)
-	assert.NotEqual(t, a.Hash(0), c.Hash(1), "%s.Hash(0) vs %s.Hash(1)", a, c)
+	assert.Equal(t, a.Hash(), b.Hash(), "%s.Hash() vs %s.Hash()", a, b)
+	assert.NotEqual(t, a.Hash(), c.Hash(), "%s.Hash() vs %s.Hash()", a, c)
 }
 
 func TestNumberBool(t *testing.T) {

@@ -20,19 +20,3 @@ func BenchmarkSetEqual(b *testing.B) {
 		}
 	}
 }
-
-func BenchmarkHashIdentityRelationHas(b *testing.B) {
-	r := benchRelation(b)
-	probe := NewTuple(
-		NewAttr("id", NewNumber(0)),
-		NewAttr("cust", NewNumber(0)),
-		NewAttr("sku", NewNumber(0)),
-		NewAttr("qty", NewNumber(1)),
-		NewAttr("region", NewString([]rune("r0"))),
-	)
-	b.ReportAllocs()
-	b.ResetTimer()
-	for b.Loop() {
-		_ = r.Has(probe)
-	}
-}

@@ -71,32 +71,34 @@ func sampleValues(t *testing.T) []Value {
 	}
 }
 
-func TestAlgebraHash128ImpliesEqual(t *testing.T) {
+// TestXorNestedSetHashIsNotEquality is the specimen that closed hash-as-equality
+// (🎯T22 flip withdrawn). Plain XOR of element hashes makes
+// {{1}, {2, 3}} and {{1, 2}, {3}} collide (both h(1)⊕h(2)⊕h(3)); frozen v1
+// treated them as equal. Wrapping each set's xor with mix(setSalt, ·)
+// distinguishes them. Equal stays false; Hash is not equality.
+func TestXorNestedSetHashIsNotEquality(t *testing.T) {
 	t.Parallel()
-	if !hashIdentity {
-		t.Skip("Hash128⇒Equal is the hashidentity contract (🎯T22)")
+	mustSet := func(vs ...Value) Set {
+		s, err := NewSet(vs...)
+		require.NoError(t, err)
+		return s
 	}
-	vs := sampleValues(t)
-	for i, a := range vs {
-		for j, b := range vs {
-			_, aSet := a.(Set)
-			_, bSet := b.(Set)
-			if a.Hash128() == b.Hash128() && (a.Kind() == b.Kind() || aSet && bSet) {
-				assert.True(t, a.Equal(b),
-					"Hash128 equal but Equal is false: [%d]=%s [%d]=%s", i, a, j, b)
-			}
-		}
-	}
+	a := mustSet(mustSet(NewNumber(1)), mustSet(NewNumber(2), NewNumber(3)))
+	b := mustSet(mustSet(NewNumber(1), NewNumber(2)), mustSet(NewNumber(3)))
+	assert.False(t, a.Equal(b), "{{1},{2,3}} must not Equal {{1,2},{3}}")
+	assert.False(t, b.Equal(a))
+	assert.NotEqual(t, a.Hash(), b.Hash(),
+		"mix(setSalt, xor of elements) must distinguish the XOR specimen")
 }
 
-func TestAlgebraEqualImpliesHash128(t *testing.T) {
+func TestAlgebraEqualImpliesHash(t *testing.T) {
 	t.Parallel()
 	vs := sampleValues(t)
 	for i, a := range vs {
 		for j, b := range vs {
 			if a.Equal(b) {
-				assert.Equal(t, a.Hash128(), b.Hash128(),
-					"Equal but Hash128 differs: [%d]=%s [%d]=%s", i, a, j, b)
+				assert.Equal(t, a.Hash(), b.Hash(),
+					"Equal but Hash differs: [%d]=%s [%d]=%s", i, a, j, b)
 			}
 		}
 	}
@@ -128,7 +130,7 @@ func TestAlgebraWithWithoutRoundTrip(t *testing.T) {
 	extra := NewNumber(3)
 	got := base.With("c", extra).Without("c")
 	assert.True(t, base.Equal(got), "%s vs %s", base, got)
-	assert.Equal(t, base.Hash128(), got.Hash128())
+	assert.Equal(t, base.Hash(), got.Hash())
 
 	replaced := base.With("a", extra)
 	assert.False(t, base.Equal(replaced))
@@ -144,18 +146,14 @@ func TestAlgebraCanonicalisationIdempotent(t *testing.T) {
 		NewAttr(ArrayItemAttr, NewString([]rune("x"))),
 	)
 	// Specialized Equal is kind-narrow; GenericTuple.Equal is permissive.
-	// Hash128 still agrees, so a hash-based set treats them as duplicates.
-	if hashIdentity {
-		assert.True(t, item.Equal(generic), "hashidentity Equal is Hash128")
-	} else {
-		assert.False(t, item.Equal(generic))
-	}
+	// Hash still agrees, so a hash-based set treats them as duplicates.
+	assert.False(t, item.Equal(generic))
 	assert.True(t, generic.Equal(item))
-	assert.Equal(t, item.Hash128(), generic.Hash128())
+	assert.Equal(t, item.Hash(), generic.Hash())
 	// NewTuple canonicalises to the specialised kind; that is the identity.
 	again := NewTuple(NewAttr("@", NewNumber(3)), NewAttr(ArrayItemAttr, NewString([]rune("x"))))
 	assert.True(t, item.Equal(again))
-	assert.Equal(t, item.Hash128(), again.Hash128())
+	assert.Equal(t, item.Hash(), again.Hash())
 }
 
 func TestAlgebraDictVsGenericSet(t *testing.T) {
@@ -165,7 +163,7 @@ func TestAlgebraDictVsGenericSet(t *testing.T) {
 	s, err := NewSet(NewDictEntryTuple(NewNumber(1), NewNumber(2)))
 	require.NoError(t, err)
 	assert.True(t, d.Equal(s), "Dict must Equal a generic set of the same entries")
-	assert.Equal(t, d.Hash128(), s.Hash128())
+	assert.Equal(t, d.Hash(), s.Hash())
 }
 
 func TestAlgebraLessAgreesWithEqualOnSelf(t *testing.T) {
@@ -173,6 +171,6 @@ func TestAlgebraLessAgreesWithEqualOnSelf(t *testing.T) {
 	for i, v := range sampleValues(t) {
 		assert.True(t, v.Equal(v), "not equal to self: [%d] %s", i, v)
 		assert.False(t, v.Less(v), "less than self: [%d] %s", i, v)
-		assert.Equal(t, v.Hash128(), v.Hash128())
+		assert.Equal(t, v.Hash(), v.Hash())
 	}
 }

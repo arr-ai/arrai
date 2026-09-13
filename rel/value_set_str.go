@@ -5,8 +5,6 @@ import (
 	"sync"
 	"unicode/utf8"
 
-	"github.com/arr-ai/hash/hash128"
-
 	"context"
 	"fmt"
 	"reflect"
@@ -32,7 +30,7 @@ const StringCharAttr = "@char"
 //
 // Constructors normalise into that split. Character-level edits convert
 // to rune form; the hot operations all have byte paths. hash memoises
-// Hash128 and is shared by pointer across copies; any copy that changes
+// Hash and is shared by pointer across copies; any copy that changes
 // content or offset takes a fresh cell.
 type String struct {
 	ascii  []byte // active when non-nil; all bytes < 0x80, holes == 0
@@ -319,44 +317,34 @@ func AsString(v Value) (String, bool) {
 	return String{}, false
 }
 
-// Hash computes a hash for a String.
-func (s String) Hash(seed uintptr) uintptr {
-	return s.Hash128().Seeded(seed)
-}
-
-// Hash128 computes the 128-bit hash of a String over its content's UTF-8
-// encoding, so ascii and utf8 backings of the same content hash identically,
-// salted so a String never hashes like the Bytes with the same content.
-// Strings with holes cannot round-trip through UTF-8 (a hole is not a rune)
-// and only ever equal other rune-form strings, so they hash the rune buffer.
-// The result is memoised on s.hash.
-func (s String) Hash128() hash128.H128 {
+// Hash hashes a String over its content's UTF-8 encoding, so ascii and
+// utf8 backings of the same content hash identically, salted so a String
+// never hashes like the Bytes with the same content. Strings with holes
+// cannot round-trip through UTF-8 and only ever equal other rune-form
+// strings, so they hash the rune buffer. The result is memoised on s.hash.
+func (s String) Hash() uintptr {
 	if s.hash == nil {
 		return s.hashUncached()
 	}
 	return s.hash.get(s.hashUncached)
 }
 
-func (s String) hashUncached() hash128.H128 {
-	h := stringSalt.Mix(hash128.Int(s.offset))
+func (s String) hashUncached() uintptr {
+	h := mix(stringSalt, hashInt(s.offset))
 	if s.ascii != nil {
-		return h.Mix(hash128.Bytes(s.ascii))
+		return mix(h, hashBytes(s.ascii))
 	}
 	if s.utf8 != nil {
-		return h.Mix(hash128.Bytes(s.utf8))
+		return mix(h, hashBytes(s.utf8))
 	}
 	if s.holes != 0 {
-		return h.Mix(hash128.Runes(s.s))
+		return mix(h, hashRunes(s.s))
 	}
-	return h.Mix(hash128.String(string(s.s)))
+	return mix(h, hashString(string(s.s)))
 }
 
 // Equal tests two Sets for equality. Any other type returns false.
 func (s String) Equal(v Value) bool {
-	if hashIdentity {
-		o, ok := v.(Set)
-		return ok && s.Hash128() == o.Hash128()
-	}
 	t, is := v.(String)
 	return is && s.EqualString(t)
 }

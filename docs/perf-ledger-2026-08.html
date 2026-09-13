@@ -55,12 +55,12 @@ li{margin-bottom:.4rem}
 .repo h3{margin:0}
 </style>
 <main>
-<div class="eyebrow">arr.ai · performance · 28 Aug – 8 Sep 2026 · updated 8 Sep</div>
+<div class="eyebrow">arr.ai · performance · 28 Aug – 12 Sep 2026 · updated 12 Sep</div>
 <h1>Arr.ai Performance Ledger</h1>
-<p class="lede">Where the evaluator work stands: what landed, what it bought, what it fixed along the way, and what is still ahead. The measuring stick throughout is Arieh's <code>reconstruct</code> workload — 1000 synthetic sysl apps, protobuf to relations to rendered source — with output byte-identical to arrai v0.321.0 at every step.</p>
+<p class="lede">Where the evaluator work stands: what landed, what it bought, what it fixed along the way, and what is still ahead. The measuring stick throughout is Arieh's <code>reconstruct</code> workload — 1000 synthetic sysl apps, protobuf to relations to rendered source — with output byte-identical to arrai v0.321.0 at every step. The hero numbers and the ladder close the 28 Aug–8 Sep campaign. Work after that date is a paired delta against a named parent, not a new wall-clock “now” — absolute seconds from different days are not the same quantity.</p>
 
 <div class="grid">
-  <div class="stat"><div class="v">1.51s</div><div class="k">now (0.95s compile + 0.56s eval)</div></div>
+  <div class="stat"><div class="v">1.51s</div><div class="k">overhaul close, 8 Sep<br>(0.95s compile + 0.56s eval)</div></div>
   <div class="stat"><div class="v">36×</div><div class="k">vs v0.338.0, the reported regression</div></div>
   <div class="stat"><div class="v">6.5×</div><div class="k">vs v0.321.0, before generics</div></div>
   <div class="stat"><div class="v">8</div><div class="k">correctness bugs fixed<br><span style="font-size:.85em">(4 in released frozen)</span></div></div>
@@ -97,7 +97,7 @@ li{margin-bottom:.4rem}
 <tr><td>Linear generic-set and array folds (🎯T10)</td><td class="num"><span class="bar" style="width:5px"></span>1.55s <span class="muted">(no change here)</span></td><td class="num">41×</td><td class="num">100×</td><td class="sha">8768213</td></tr>
 <tr><td><strong>Flat pattern binding, allocation-free misses (🎯T15)</strong></td><td class="num"><span class="bar" style="width:5px"></span><strong>1.51s</strong></td><td class="num"><strong>42×</strong></td><td class="num"><strong>107×</strong></td><td class="sha">f989c45</td></tr>
 </table>
-<p class="muted" style="font-size:.8rem;margin:.4rem 0 0"><sup>†</sup> Total covers end-to-end wall clock: the compile phase (parsing <code>run.arrai</code> and the vendored sysl library, ~925&nbsp;ms, assumed constant across builds) plus evaluation and output rendering. Algo excludes the compile phase.</p>
+<p class="muted" style="font-size:.8rem;margin:.4rem 0 0"><sup>†</sup> Total covers end-to-end wall clock: the compile phase (parsing <code>run.arrai</code> and the vendored sysl library, ~925&nbsp;ms, assumed constant across builds) plus evaluation and output rendering. Algo excludes the compile phase. This table closes at 🎯T15 (8 Sep). Compile is no longer that 925&nbsp;ms constant (~1.03&nbsp;s on 12 Sep), so a later wall-clock total is not a new rung.</p>
 </div>
 <p class="muted">The frozen fan-out row is flat on purpose: reconstruct's relations are a few thousand rows and its time is dominated by grammar parsing, so it is the wrong workload to show parallelism. On a 60,000-row relational script the same change is worth 25%.</p>
 
@@ -117,6 +117,7 @@ li{margin-bottom:.4rem}
 <li><strong>Reflection-free sorting</strong> — <code>slices.SortFunc</code>/<code>SortStableFunc</code>/<code>BinarySearch</code> replace <code>sort.Slice</code>'s reflection swapper in <code>OrderedRange</code>, <code>OrderBy</code>, dict ordering and <code>shapeOfAttrs</code>: eval −5%.</li>
 <li><strong><code>rel.All</code>: an <code>iter.Seq</code> over sets, with a measured doctrine</strong> — ~6% over the MoveNext/Current enumerators with one less allocation; adopted only where loop bodies write no captured locals (each written capture becomes a heap cell per loop entry — measured +1.4M allocations and reverted where it hurt). The 5×/zero-alloc result the first benchmark showed was an inlining artifact that <code>testing.B.Loop</code> exposed; the true 5× belongs to concrete indexed loops, which the arena fast paths already are.</li>
 <li><strong>Modern Go survey closed (🎯T14)</strong> — remaining candidates evaluated 8 Sep and recorded on <a href="https://github.com/arr-ai/arrai/issues/741">#741</a>. Timed benches now use <code>testing.B.Loop</code> (the first-pass inlining artifact). <code>cmp.Or</code> on two-field <code>Less</code> was 1.8× slower (4.97 vs 8.90&nbsp;ns/op) and stayed out; <code>unique.Handle</code> for attribute names has no remaining hot path once shapes intern them. Standing oracle: <span class="mono">rel/less_cmp_or_bench_test.go</span>.</li>
+<li><strong>Common relational flows no longer reify a row as a Tuple (🎯T29)</strong> — the arena is the row; a <code>Tuple</code> is the leftover (export, <code>All</code>, opaque bodies that consume <code>.</code> as a value). Recognised <code>where</code> / <code>=&gt;</code> / <code>nest</code> / <code>orderby .attr</code> stay on the store. Measured as a paired delta against <span class="mono">d684db5</span>, not as a ladder row — see below.</li>
 <li><strong>Strings are UTF-8 with a cached hash (🎯T27)</strong> — hole-free non-ASCII lives as UTF-8 bytes (<code>[]rune</code> only for holes). <code>Hash128</code> is memoised like Array/Dict. Short <code>NewGoString</code> contents (≤64 bytes) intern through the existing literal map, so repeated keys share one value. <code>BenchmarkStr*</code> allocation drops: concat 45.2k→41.2k, template 63.4k→59.4k, sort 57.0k→50.9k, set 68.2k→58.2k. Reconstruct 35.44M allocs, byte-identical. <code>unique.Handle</code> for short values was measured slower than the map intern (12 vs 9&nbsp;ns) and does not produce a <code>String</code>.</li>
 <li><strong>Pattern matching binds flat and misses are free (🎯T15)</strong> — every pattern part bound a throwaway mini-scope that got flattened back into slices; patterns now bind into one shared fixed-slot builder, and a discarded mismatch is a shared sentinel costing zero allocations (proven by <code>AllocsPerRun == 0</code>), with the full contextual message reproduced on demand by a pure re-match. Tuple destructuring −33%, mostly-miss <code>cond</code> arms −42% time/−38% allocations. The planned match VM was measured unnecessary: after the protocol change, dispatch is 6% of even the stress benchmark.</li>
 <li><strong>Accumulator folds are linear across all four kinds (🎯T10)</strong> — generic-set folds (<code>acc | {x}</code>) were catastrophic: <code>CanonicalSet</code> rebuilt the whole accumulator per step (878ms/691MB for 3,000 steps). A provable <code>canonical</code> flag skips the rebuild: <strong>4.9ms/5.1MB (178×)</strong>. Array <code>++</code> folds joined the ownership append buffer: 11.4ms/80MB → 2.0ms/2.2MB. Relations (arena) and dicts were already linear; fold benchmarks now guard all four. The Perceus/last-use research program dissolved into representation-level ownership frontiers.</li>
@@ -199,14 +200,14 @@ li{margin-bottom:.4rem}
 <p>Neither workload is super-linear on this machine: reconstruct eval scaled 7.1× for 10× apps (allocs 5.3×); the join scaled 4.2× for 10× rows. Compile stays ~constant on reconstruct, as expected. No new quadratic target filed from this profile. Output: 10k reconstruct sha256 <span class="mono">3120818a5ba3943d94fb1f0b9bff20983238a89aa7158a2bcce829e57c41c5cc</span>; 1M join count 142858 = (n+6)/7.</p>
 
 <h2>S1–S5 — evaluation as query execution (🎯T24)</h2>
-<p>Shipped 2 Sep 2026 on the same S0 programs. <span class="mono">slowpath</span> remains the reference oracle; 10k reconstruct output is still sha256 <span class="mono">3120818a5ba3943d94fb1f0b9bff20983238a89aa7158a2bcce829e57c41c5cc</span>. Hash identity (<span class="mono">-tags hashidentity</span>) is a differential build, not the default.</p>
+<p>Shipped 2 Sep 2026 on the same S0 programs. <span class="mono">slowpath</span> remains the reference oracle; 10k reconstruct output is still sha256 <span class="mono">3120818a5ba3943d94fb1f0b9bff20983238a89aa7158a2bcce829e57c41c5cc</span>. Hash-as-equality (S4 / 🎯T22) was a differential tag only and is withdrawn — see discarded.</p>
 <div class="tbl"><table>
 <tr><th>Stage</th><th>What landed</th><th class="num">Evidence</th></tr>
 <tr><td>S1 🎯T18</td><td>Selection views wrap the parent group index; probes restrict buckets instead of rescanning.</td><td class="num">groupBy inherit 285&nbsp;ns / 7 allocs vs rebuild 295&nbsp;µs / 2273 allocs (~1000×) at 12k rows</td></tr>
 <tr><td>S2 🎯T19</td><td>Suspended <code>&gt;&gt;</code> pipelines over arrays and dicts; <code>count</code> is metadata; n stages force once, in parallel.</td><td class="num">1M-element <span class="mono">pipeline.arrai</span> count 16&nbsp;ms / 0.05M allocs (maps never run)</td></tr>
 <tr><td>S3a 🎯T20</td><td>Injective anchor <code>=&gt;</code> shares the parent store so <code>count</code> is source cardinality; <code>@</code>-keys of sequence shapes are seeded; empirical keys stay cached.</td><td class="num"><span class="mono">TestProjectDotsSharesStoreWhenInjective</span> (Same rows pointer)</td></tr>
 <tr><td>S3b 🎯T21</td><td>Stacked <code>=&gt;</code> prunes unread attributes; <code>where .k = k</code> pushes through a projection onto an index.</td><td class="num"><span class="mono">pushdown.arrai</span> 1M rows, k=42: 736&nbsp;ms / 14.12M, count 1000</td></tr>
-<tr><td>S4 🎯T22</td><td><span class="mono">-tags hashidentity</span> Equal is Hash128 for sets, tuples, arrays, dicts, strings, bytes, and group-index probes; default stays deep Equal.</td><td class="num">Set Equal 30.8&nbsp;ns → 7.9&nbsp;ns; Has 78&nbsp;ns → 60&nbsp;ns; corpus 108/108 under the tag</td></tr>
+<tr><td>S4 🎯T22</td><td>Differential <span class="mono">-tags hashidentity</span> Equal-is-Hash128 (default stayed deep Equal). Flip withdrawn 12 Sep: XOR-combined set hashes make <code>{{1},{2,3}}</code> and <code>{{1,2},{3}}</code> collide. Tag removed.</td><td class="num">Set Equal 30.8&nbsp;ns → 7.9&nbsp;ns was the measured win, not taken. <span class="mono">TestXorNestedSetHashIsNotEquality</span></td></tr>
 <tr><td>S5 🎯T23</td><td>Let fan-out freezes demanded group indexes; fact-keyed where cache with <code>n</code>-guards, hit on second Eval.</td><td class="num"><span class="mono">TestWhereIndexPlanCacheThroughEval</span>; join 1M 841&nbsp;ms / 14.87M</td></tr>
 </table></div>
 <p>1000-app reconstruct eval is 629&nbsp;ms (was 532&nbsp;ms at S0) with 35.0M allocs, byte-identical. 10k-app eval is 6.68&nbsp;s / 190.06M (was 3.80&nbsp;s / 188.13M): suspension adds observe/force around native calls and <code>$""</code> expansion; identity held. The S2 count-passthrough and S1 wrap are the measured wins; reconstruct is not the workload those stages target.</p>
@@ -220,6 +221,32 @@ li{margin-bottom:.4rem}
 </table></div>
 <p>Parse of the reconstruct program drops off the run path (~900&nbsp;ms → 4&nbsp;ms). Eval is the same operator kernels as the tree-walker. S0 scale programs still run from source in CI; the compiled path is gated by the presence of <span class="mono">plan.bin</span>.</p>
 
+<h2>T29 — rows stay in the arena (12 Sep, vs <span class="mono">d684db5</span>)</h2>
+<p>Not a ladder row. Same machine, interleaved <span class="mono">go test ./perf -run TestReconstruct$</span> against the parent of this work (<span class="mono">d684db5</span>, interned <code>Names</code> + UTF-8 strings). The 1.51&nbsp;s / 560&nbsp;ms-eval figure stays the overhaul close; a later wall-clock total is not comparable (compile is ~1.03&nbsp;s, and cross-session load already exceeds the deltas).</p>
+<p>The thesis: do not optimise tuples. Stop using a <code>Tuple</code> as the calling convention for “visit every row.” Data at rest is the <code>colStore</code> arena (🎯T11). Tuples remain the language value — literals, leftovers, specialised sequence elements, observe/export.</p>
+<div class="tbl"><table>
+<tr><th>Oracle</th><th class="num">Parent</th><th class="num">T29</th><th>Notes</th></tr>
+<tr><td>Reconstruct allocs</td><td class="num">34.89–35.03M</td><td class="num">33.86–34.17M</td><td>Ratchet 37.5 → 35.0. The reconstruct gate.</td></tr>
+<tr><td>Reconstruct eval (warm, n=3)</td><td class="num">677–687ms</td><td class="num">635–650ms</td><td>−6%. Milliseconds are evidence for the percent, not a new “now”.</td></tr>
+<tr><td>Reconstruct compile</td><td class="num">~1.03s</td><td class="num">~1.03s</td><td>Unchanged. Dominates end-to-end, so wall clock barely moves.</td></tr>
+<tr><td>Opaque Go <code>Where</code> (12k rows)</td><td class="num">~160µs / 12 058 allocs</td><td class="num">flat</td><td>Still inflate-bound, by design. Leftover, not a regression.</td></tr>
+<tr><td>Recognised <code>where .attr = k</code></td><td class="num">—</td><td class="num">~180ns / 6 allocs</td><td>~900× vs the opaque callback. Index probe, no row box.</td></tr>
+<tr><td>Column <code>where .attr &gt; k</code></td><td class="num">—</td><td class="num">~310µs / 5 allocs</td><td>Arena scan, not boxed.</td></tr>
+</table></div>
+<p>What reconstruct actually hits: <code>nest ~|appName|rows =&gt; (@:.appName, @value:.rows)</code>, conjunctive <code>where</code>, column extract. Those are T29.1–T29.3 / T29.7. Standing no-inflate tests: <span class="mono">TestWhereConjEqAttrDoesNotInflate</span>, <span class="mono">TestProjectColumnDoesNotInflate</span>, <span class="mono">TestProjectCanonicalDoesNotInflate</span>, <span class="mono">TestTuplePatternProjectDoesNotInflate</span>, <span class="mono">TestWhereColumnPredDoesNotInflate</span>, <span class="mono">TestNestOnStoreDoesNotInflate</span>, <span class="mono">TestEvalAtRowDoesNotInflate</span>.</p>
+<ul>
+<li><strong>T29.1</strong> — conjunctive <code>where .a = k &amp;&amp; .b = v</code> intersects group indexes.</li>
+<li><strong>T29.2</strong> — <code>rel =&gt; .attr</code> is a column extract to a set of values.</li>
+<li><strong>T29.3</strong> — <code>=&gt; (@: .k, @value: .v)</code> builds Dict/Array/String/Bytes from columns.</li>
+<li><strong>T29.4</strong> — tuple-pattern <code>=&gt;</code> that is project/rename is <code>identDots</code>.</li>
+<li><strong>T29.5</strong> — truthy / <code>!=</code> / <code>&lt;:</code> / <code>!&lt;:</code> scan one arena column.</li>
+<li><strong>T29.6</strong> — <code>orderby .attr</code> argsorts from the store (result array still boxes).</li>
+<li><strong>T29.7</strong> — <code>nest</code> is <code>groupBy</code> + views.</li>
+<li><strong>T29.8</strong> — parallel <code>=&gt;</code> on a Relation does not <code>All()</code> the input first.</li>
+<li><strong>T29.9</strong> — column-only <code>\ident</code> bodies run on a row cursor; <code>. +&gt;</code> widens the relation.</li>
+</ul>
+<p>Still boxed: <code>Enumerator</code> / <code>All</code>, export/print, <code>orderby</code>’s result array, templates/<code>SetCall</code> that take the row as a <code>Value</code>, and parallel <code>=&gt;</code> over generic (non-Relation) sets.</p>
+
 <h2>What's ahead</h2>
 
 <h3>Small and well-understood</h3>
@@ -229,19 +256,20 @@ li{margin-bottom:.4rem}
 
 <h3>Large, with evidence behind them</h3>
 <ul>
-<li><strong>Flipping <code>hashidentity</code> to the default.</strong> Recorded as a separate decision on 🎯T22; not done here.</li>
+<li><strong>🎯T28 — a tree-level simplifier</strong> before evaluation (occurrence analysis, one-shot let folding, algebraic and relational identities). Orthogonal to T29; identified, not started. Eager evaluation plus impurity (<code>//log</code>, <code>//os</code>, <code>//net</code>) is the soundness constraint: syntactic once is not dynamic once, and folding into a <code>cond</code> arm lazifies errors.</li>
 </ul>
 
 <h2>Measured and deliberately discarded</h2>
 <p>Kept here so nobody re-attempts them without the numbers. The modern-Go survey lives in <a href="https://github.com/arr-ai/arrai/issues/741">#741</a>.</p>
 <ul>
+<li><strong>Hash identity as equality</strong> — 🎯T22 built a <span class="mono">-tags hashidentity</span> bridge (Equal is Hash128; default stayed deep Equal). The flip is withdrawn. Frozen v1 treated <code>{{1}, {2, 3}}</code> and <code>{{1, 2}, {3}}</code> as equal under <span class="mono">FullHash</span> (XOR of element hashes is <code>h(1)⊕h(2)⊕h(3)</code> for both). <span class="mono">github.com/arr-ai/frozen/v2@v2.0.0</span> walks; <code>GenericSet.Equal</code> calls <code>Set.Equal</code> again. Set hash is now <code>mix(hash(count), xor of elements)</code>, so that specimen no longer collides. Standing oracle: <span class="mono">TestXorNestedSetHashIsNotEquality</span>.</li>
 <li><strong>Green Tea GC and PGO</strong> — both flat on reconstruct under go1.26.4.</li>
 <li><strong>Small-Number box table</strong> — zero <code>convT</code> presence in both reconstruct and an arithmetic-heavy profile; the evaluator moves existing boxes, it rarely mints them. (<code>ArrayItemTuple.Get</code> boxing its index is the one live lead, parked for the tuple/strings work.)</li>
 <li><strong><code>cmp.Or</code> on hand-rolled <code>Less</code></strong> — two-int lexicographic core (<code>StringCharTuple</code> / <code>FilePos</code> shape), Apple M4 Max, go1.25, <code>testing.B.Loop</code>: hand-rolled 4.97&nbsp;ns/op vs <code>cmp.Or(cmp.Compare, …)</code> 8.90&nbsp;ns/op (~1.8×). Extra calls and a two-way compare per field lose to <code>!=</code> then <code>&lt;</code>.</li>
 <li><strong><code>unique.Handle</code> for short string values</strong> — <code>unique.Make</code> is 12&nbsp;ns/0 allocs vs uninterned <code>NewGoString</code> 15&nbsp;ns/1 alloc, but the existing <code>internedStrings</code> map Load is 9&nbsp;ns/0 alloc and returns a shared <code>String</code>. Adopted the map intern (≤64 bytes); not <code>unique.Handle</code>.</li>
 <li><strong><code>strings.SplitSeq</code> in <code>//seq.split</code></strong> — parts are materialised as arr.ai Strings immediately; the iterator saves one slice header per call.</li>
 <li><strong>Bare <code>Value</code> group-by keys</strong> — tried three times. Silently wrong before the frozen fix; 7× slower after it (reflective dispatch); superseded by a <code>Map[Value, …]</code> index that is 14% faster with 24% fewer allocations.</li>
-<li><strong>A <code>posTuple</code> row view</strong> — regressed 20s → 26s in the pre-shapes era, then made moot: rows and tuples are now the same thing.</li>
+<li><strong>A <code>posTuple</code> row view</strong> — regressed 20s → 26s in the pre-shapes era, then made moot at 🎯T9 (rows and tuples were the same thing). 🎯T29 is the successor: a row cursor on the arena, not a better <code>Tuple</code>.</li>
 <li><strong>Full closure conversion</strong> — shelved. Frames plus inline caches already took the win; the remainder measured at a few percent.</li>
 <li><strong>HAMT-backed relation rows</strong> — replaced by the flat arena. The one case the HAMT wins is repeatedly branching a large shared base (<code>big | {x}</code> from the same snapshot in a loop): an arena branch copies O(n) where the tree shared structure. Chains are unaffected — they extend in place — and no measured workload branches this way, but it is the known trade.</li>
 <li><strong>Concrete element types in frozen's containers</strong> — measured <em>worse</em> (4,700 vs 3,959 allocations), because the tree's leaf copies grow with the element.</li>

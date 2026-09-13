@@ -33,7 +33,7 @@ func TestRelationEqualLayouts(t *testing.T) {
 	assert.True(t, r1.Equal(r2), "same layout, different insertion order")
 	assert.True(t, r1.Equal(r3), "different attribute order")
 	assert.True(t, r3.Equal(r1))
-	assert.Equal(t, r1.Hash128(), r3.Hash128())
+	assert.Equal(t, r1.Hash(), r3.Hash())
 
 	assert.False(t, r1.Equal(mustRel(t, ab(1, 2))), "different count")
 	assert.False(t, r1.Equal(mustRel(t, ab(1, 2), ab(3, 5))), "different row")

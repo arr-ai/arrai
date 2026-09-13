@@ -1,10 +1,12 @@
 package rel
 
 import (
+	"context"
 	"fmt"
 	"sync"
 	"testing"
 
+	"github.com/arr-ai/wbnf/parser"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -93,8 +95,9 @@ func BenchmarkRelationBuild(b *testing.B) {
 	}
 }
 
-// Where keeps a subset of an existing relation: no new rows, no duplicates
-// possible, yet the row set is rebuilt.
+// Where keeps a subset of an existing relation via the Go callback, which
+// still inflates each row. Recognised language predicates use the benches
+// below (🎯T29).
 func BenchmarkRelationWhere(b *testing.B) {
 	r := benchRelation(b)
 	b.ResetTimer()
@@ -103,6 +106,42 @@ func BenchmarkRelationWhere(b *testing.B) {
 		if _, err := r.Where(func(v Value) (bool, error) {
 			return v.(Tuple).MustGet("qty").(Number).Float64() > 4, nil
 		}); err != nil {
+			b.Fatal(err)
+		}
+	}
+}
+
+func BenchmarkRelationWhereEqAttr(b *testing.B) {
+	r := benchRelation(b)
+	sc := *parser.NewScanner("")
+	pred := NewCompareExpr(sc,
+		[]Expr{NewDotExpr(sc, NewIdentExpr(sc, "."), "qty"), NewNumber(4)},
+		[]CompareFunc{func(a, c Value) (bool, error) { return a.Equal(c), nil }},
+		[]string{"="},
+	)
+	w := NewWhereExpr(sc, r, pred)
+	b.ResetTimer()
+	b.ReportAllocs()
+	for b.Loop() {
+		if _, err := w.Eval(context.Background(), EmptyScope); err != nil {
+			b.Fatal(err)
+		}
+	}
+}
+
+func BenchmarkRelationWhereColumn(b *testing.B) {
+	r := benchRelation(b)
+	sc := *parser.NewScanner("")
+	pred := NewCompareExpr(sc,
+		[]Expr{NewDotExpr(sc, NewIdentExpr(sc, "."), "qty"), NewNumber(4)},
+		[]CompareFunc{func(a, c Value) (bool, error) { return !c.Less(a) && !a.Equal(c), nil }},
+		[]string{">"},
+	)
+	w := NewWhereExpr(sc, r, pred)
+	b.ResetTimer()
+	b.ReportAllocs()
+	for b.Loop() {
+		if _, err := w.Eval(context.Background(), EmptyScope); err != nil {
 			b.Fatal(err)
 		}
 	}

@@ -6,15 +6,11 @@ import (
 	"strconv"
 	"strings"
 	"sync"
-
-	"github.com/arr-ai/hash/hash128"
 )
 
 var (
 	truePosRel  = &positionalRelation{store: &colStore{width: 0, n: 1}, n: 1}
 	falsePosRel = &positionalRelation{store: &colStore{width: 0}}
-
-	posRelSalt = hash128.String("github.com/arr-ai/arrai/rel.positionalRelation")
 )
 
 // positionalRelation is a set of distinct rows, all the same width: a view
@@ -40,7 +36,7 @@ type positionalRelation struct {
 type positionalRelationMetadata struct {
 	sync.Mutex
 	groups map[string]*groupIndex
-	hash   hash128.H128
+	hash   uintptr
 	hashed bool
 	// keys are memoKeys of projectors that grouped into n distinct buckets:
 	// empirically discovered candidate keys (🎯T20).
@@ -49,8 +45,8 @@ type positionalRelationMetadata struct {
 	// computed. A stored zoneMap with ok=false means the column is not numeric.
 	zones []*zoneMap
 	// shapeHashes memoises shapeHash per tuple shape: the layout-independent
-	// half of Relation.Hash128.
-	shapeHashes map[Names]hash128.H128
+	// half of Relation.Hash.
+	shapeHashes map[Names]uintptr
 	// plans is the S5 fact-keyed cache of index-answered where results.
 	plans    map[string]planEntry
 	planHits int
@@ -135,7 +131,7 @@ func (r *positionalRelation) find(v Values) (uint32, bool) {
 		return 0, true // the only width-0 row is the empty row, and n > 0
 	}
 	s := r.store
-	h := v.Hash128()
+	h := v.Hash()
 	s.mu.Lock()
 	s.ensureIndexLocked()
 	id, ok := s.findLocked(v, h, len(r.arena)/s.width)
@@ -151,9 +147,9 @@ func (r *positionalRelation) find(v Values) (uint32, bool) {
 	return id, true
 }
 
-// Hash128 returns the set hash of the view: the xor of its row hashes, which
+// Hash returns the set hash of the view: the xor of its row hashes, which
 // the store computes once per row.
-func (r *positionalRelation) Hash128() hash128.H128 {
+func (r *positionalRelation) Hash() uintptr {
 	m := r.getMeta()
 	m.Lock()
 	defer m.Unlock()
@@ -163,7 +159,7 @@ func (r *positionalRelation) Hash128() hash128.H128 {
 		s.mu.Lock()
 		s.ensureIndexLocked()
 		for i := 0; i < r.n; i++ {
-			h = h.Xor(s.hashes[r.arenaID(i)])
+			h = xor(h, s.hashes[r.arenaID(i)])
 		}
 		s.mu.Unlock()
 		m.hash, m.hashed = h, true
@@ -171,30 +167,29 @@ func (r *positionalRelation) Hash128() hash128.H128 {
 	return m.hash
 }
 
-// shapeHash returns the xor over the view's rows of each row's
-// per-attribute hash under sh, taking row values through layout (layout[i]
-// is the row position of sh's i'th attribute). It depends only on each
-// row's name/value pairs — not on the relation's internal attribute order —
-// which is what lets Relation.Hash128 agree with EqualRelation across
-// layouts. Computed once per shape per view.
-func (r *positionalRelation) shapeHash(attrSet Names, layout []int) hash128.H128 {
+// shapeHash returns the xor over the view's rows of each row's finished
+// tuple hash (hashTuple of the xor of name⋈value attrs). Layout only
+// maps attributes to columns; the wrap binds cells to their row so
+// Alice/30+Bob/40 does not hash like Alice/40+Bob/30. Computed once per
+// shape per view.
+func (r *positionalRelation) shapeHash(attrSet Names, layout []int) uintptr {
 	m := r.getMeta()
 	m.Lock()
 	defer m.Unlock()
 	if h, has := m.shapeHashes[attrSet]; has {
 		return h
 	}
-	var h hash128.H128
+	var h uintptr
 	for i := 0; i < r.n; i++ {
 		row := r.rowAt(i)
-		var rh hash128.H128
+		var rh uintptr
 		for k, j := range layout {
-			rh = rh.Xor(hashAttr(attrSet.nameH[k], row[j]))
+			rh = xor(rh, hashAttr(attrSet.nameH[k], row[j]))
 		}
-		h = h.Xor(rh)
+		h = xor(h, hashTuple(rh))
 	}
 	if m.shapeHashes == nil {
-		m.shapeHashes = map[Names]hash128.H128{}
+		m.shapeHashes = map[Names]uintptr{}
 	}
 	m.shapeHashes[attrSet] = h
 	return h
@@ -214,7 +209,7 @@ func (r *positionalRelation) EqualPositionalRelation(r2 *positionalRelation) boo
 		}
 		return true
 	}
-	if r.Hash128() != r2.Hash128() {
+	if r.Hash() != r2.Hash() {
 		return false
 	}
 	for i := 0; i < r.n; i++ {
@@ -237,7 +232,7 @@ func (r *positionalRelation) With(v Values) *positionalRelation {
 	}
 	if r.sel == nil {
 		s := r.store
-		h := v.Hash128()
+		h := v.Hash()
 		s.mu.Lock()
 		s.ensureIndexLocked()
 		if _, found := s.findLocked(v, h, r.n); found {

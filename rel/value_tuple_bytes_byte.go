@@ -1,8 +1,6 @@
 package rel //nolint:dupl
 
 import (
-	"github.com/arr-ai/hash/hash128"
-
 	"context"
 	"fmt"
 	"reflect"
@@ -54,22 +52,12 @@ func (t BytesByteTuple) asGenericTuple() Tuple {
 }
 
 // Hash computes a hash for a BytesByteTuple.
-func (t BytesByteTuple) Hash(seed uintptr) uintptr {
-	return t.Hash128().Seeded(seed)
-}
-
-// Hash128 computes the 128-bit hash of a BytesByteTuple, consistent with the
-// same tuple represented generically.
-func (t BytesByteTuple) Hash128() hash128.H128 {
+func (t BytesByteTuple) Hash() uintptr {
 	return hashTuple2(atNameHash, NewNumber(float64(t.at)), byteNameHash, NewNumber(float64(t.byteval)))
 }
 
 // Equal tests two Tuples for equality. Any other type returns false.
 func (t BytesByteTuple) Equal(v Value) bool {
-	if hashIdentity {
-		u, ok := v.(Tuple)
-		return ok && t.Hash128() == u.Hash128()
-	}
 	if u, ok := v.(BytesByteTuple); ok {
 		return t == u
 	}

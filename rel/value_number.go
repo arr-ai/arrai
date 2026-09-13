@@ -1,8 +1,6 @@
 package rel
 
 import (
-	"github.com/arr-ai/hash/hash128"
-
 	"context"
 	"fmt"
 	"reflect"
@@ -37,13 +35,8 @@ func (n Number) Int() (int, bool) {
 }
 
 // Hash computes a hash for a Number.
-func (n Number) Hash(seed uintptr) uintptr {
-	return n.Hash128().Seeded(seed)
-}
-
-// Hash128 computes the 128-bit hash of a Number.
-func (n Number) Hash128() hash128.H128 {
-	return hash128.Float64(float64(n))
+func (n Number) Hash() uintptr {
+	return hashFloat64(float64(n))
 }
 
 // Equal tests two Values for equality. Any other type returns false.

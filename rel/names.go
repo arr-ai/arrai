@@ -6,8 +6,6 @@ import (
 	"strconv"
 	"strings"
 	"sync"
-
-	"github.com/arr-ai/hash/hash128"
 )
 
 // Names is an interned set of attribute names and everything derived only
@@ -20,12 +18,12 @@ type Names struct {
 
 type namesRep struct {
 	names []string
-	nameH []hash128.H128
+	nameH []uintptr
 	index map[string]int // nil for small sets, which scan linearly
 
 	// namesH is the xor of the attribute-name hashes, the half of a tuple's
 	// hash that depends only on its attribute set.
-	namesH hash128.H128
+	namesH uintptr
 
 	// bucket is the SetBuilder bucket key for tuples of this set, boxed
 	// once so getBucket never allocates.
@@ -70,12 +68,12 @@ func internNames(names []string) Names {
 	}
 	s := &namesRep{
 		names:  names,
-		nameH:  make([]hash128.H128, len(names)),
+		nameH:  make([]uintptr, len(names)),
 		bucket: newHashableNamesSlice(names),
 	}
 	for i, n := range names {
-		s.nameH[i] = hash128.String(n)
-		s.namesH = s.namesH.Xor(s.nameH[i])
+		s.nameH[i] = hashString(n)
+		s.namesH = xor(s.namesH, s.nameH[i])
 	}
 	if len(names) > namesLinearScanMax {
 		s.index = make(map[string]int, len(names))
@@ -214,8 +212,8 @@ func (n Names) Count() int {
 }
 
 // Hash computes a hash value for the set of names.
-func (n Names) Hash(seed uint32) uint32 {
-	return uint32(n.canon().namesH.Seeded(uintptr(seed) + 0x4e351c91))
+func (n Names) Hash() uintptr {
+	return n.canon().namesH
 }
 
 // Equal returns true iff the given sets of names are equal.

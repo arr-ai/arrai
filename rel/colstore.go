@@ -2,8 +2,6 @@ package rel
 
 import (
 	"sync"
-
-	"github.com/arr-ai/hash/hash128"
 )
 
 // colStore holds relation rows in a single flat, append-only arena: row i
@@ -17,23 +15,22 @@ import (
 // views read their own arena snapshot without locking. Appends, and the lazy
 // hash index over committed rows, are guarded by mu.
 //
-// Committed rows are always distinct. The index maps a row's 128-bit hash to
-// its position; it is built the first time membership is asked for (Has,
-// With, dedupe) and extended incrementally as rows are appended, so chains
-// of With calls — `acc | {x}` folds — pay for hashing once per row, not once
+// Committed rows are always distinct. The index maps a row's hash to its
+// position; it is built the first time membership is asked for (Has, With,
+// dedupe) and extended incrementally as rows are appended, so chains of
+// With calls — `acc | {x}` folds — pay for hashing once per row, not once
 // per generation. hashOverflow holds rows whose hash collides with an
-// earlier row's; with 128-bit hashes that is theoretical, but lookups still
-// verify equality rather than trusting the hash.
+// earlier row's; lookups still verify equality rather than trusting the hash.
 type colStore struct {
 	width int
 
 	mu     sync.Mutex
 	arena  []Value
 	n      int // committed rows; rows [0, n) are distinct
-	hashes []hash128.H128
-	index  map[hash128.H128]uint32
+	hashes []uintptr
+	index  map[uintptr]uint32
 	// hashOverflow holds ids of rows whose hash collides with index[h].
-	hashOverflow map[hash128.H128][]uint32
+	hashOverflow map[uintptr][]uint32
 }
 
 // rowOf returns row id of an arena snapshot. The result is capped so no
@@ -48,10 +45,10 @@ func rowOf(arena []Value, width, id int) Values {
 // Caller holds mu.
 func (s *colStore) ensureIndexLocked() {
 	if s.index == nil {
-		s.index = make(map[hash128.H128]uint32, s.n)
+		s.index = make(map[uintptr]uint32, s.n)
 	}
 	for i := len(s.hashes); i < s.n; i++ {
-		h := rowOf(s.arena, s.width, i).Hash128()
+		h := rowOf(s.arena, s.width, i).Hash()
 		s.hashes = append(s.hashes, h)
 		s.insertLocked(h, uint32(i))
 	}
@@ -59,27 +56,27 @@ func (s *colStore) ensureIndexLocked() {
 
 // insertLocked adds an index entry for a row known not to equal any indexed
 // row. Caller holds mu; the row must already be hashed into s.hashes.
-func (s *colStore) insertLocked(h hash128.H128, id uint32) {
+func (s *colStore) insertLocked(h uintptr, id uint32) {
 	if _, exists := s.index[h]; !exists {
 		s.index[h] = id
 		return
 	}
 	if s.hashOverflow == nil {
-		s.hashOverflow = map[hash128.H128][]uint32{}
+		s.hashOverflow = map[uintptr][]uint32{}
 	}
 	s.hashOverflow[h] = append(s.hashOverflow[h], id)
 }
 
 // findLocked returns the id of the row equal to v among the first limit
 // committed rows. Caller holds mu and has called ensureIndexLocked.
-func (s *colStore) findLocked(v Values, h hash128.H128, limit int) (uint32, bool) {
+func (s *colStore) findLocked(v Values, h uintptr, limit int) (uint32, bool) {
 	if id, ok := s.index[h]; ok && int(id) < limit {
-		if hashIdentity || rowOf(s.arena, s.width, int(id)).equalValues(v) {
+		if rowOf(s.arena, s.width, int(id)).equalValues(v) {
 			return id, true
 		}
 	}
 	for _, id := range s.hashOverflow[h] {
-		if int(id) < limit && (hashIdentity || rowOf(s.arena, s.width, int(id)).equalValues(v)) {
+		if int(id) < limit && rowOf(s.arena, s.width, int(id)).equalValues(v) {
 			return id, true
 		}
 	}
@@ -103,7 +100,7 @@ func newStoreBuilder(width, capacity int, dedupe bool) storeBuilder {
 		s.arena = make([]Value, 0, capacity*width)
 	}
 	if dedupe {
-		s.index = make(map[hash128.H128]uint32, capacity)
+		s.index = make(map[uintptr]uint32, capacity)
 	}
 	return storeBuilder{s: s, dedupe: dedupe}
 }
@@ -146,7 +143,7 @@ func (b storeBuilder) commit() {
 		return
 	}
 	v := rowOf(s.arena, s.width, s.n)
-	h := v.Hash128()
+	h := v.Hash()
 	if _, found := s.findLocked(v, h, s.n); found {
 		s.arena = s.arena[:s.n*s.width]
 		return

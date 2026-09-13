@@ -72,7 +72,7 @@ func TestShapedTupleOperations(t *testing.T) {
 	assert.False(t, tup.Equal(tup.With("b", NewNumber(0))))
 	gen := newGenericTuple(NewAttr("@", NewNumber(1)), NewAttr(ArrayItemAttr, NewNumber(2)))
 	assert.True(t, gen.Equal(NewArrayItemTuple(1, NewNumber(2))))
-	assert.Equal(t, gen.Hash128(), NewArrayItemTuple(1, NewNumber(2)).Hash128())
+	assert.Equal(t, gen.Hash(), NewArrayItemTuple(1, NewNumber(2)).Hash())
 
 	// Builder: last Put wins, and canonicalisation still applies.
 	var b TupleBuilder
@@ -121,27 +121,27 @@ func TestArrayHashCacheInvalidation(t *testing.T) {
 	t.Parallel()
 
 	a := NewArray(NewNumber(1), NewNumber(2), NewNumber(3))
-	h := a.Hash128() // populate the cache before deriving
-	assert.Equal(t, h, a.Hash128(), "stable")
-	assert.Equal(t, h, NewArray(NewNumber(1), NewNumber(2), NewNumber(3)).Hash128(), "equal arrays agree")
+	h := a.Hash() // populate the cache before deriving
+	assert.Equal(t, h, a.Hash(), "stable")
+	assert.Equal(t, h, NewArray(NewNumber(1), NewNumber(2), NewNumber(3)).Hash(), "equal arrays agree")
 
 	shifted := a.(Array).Shift(5)
-	assert.NotEqual(t, h, shifted.Hash128(), "offset participates in the hash")
-	assert.Equal(t, NewOffsetArray(5, NewNumber(1), NewNumber(2), NewNumber(3)).Hash128(), shifted.Hash128())
+	assert.NotEqual(t, h, shifted.Hash(), "offset participates in the hash")
+	assert.Equal(t, NewOffsetArray(5, NewNumber(1), NewNumber(2), NewNumber(3)).Hash(), shifted.Hash())
 
 	withItem := a.With(NewArrayItemTuple(3, NewNumber(4)))
-	assert.NotEqual(t, h, withItem.Hash128())
-	assert.Equal(t, NewArray(NewNumber(1), NewNumber(2), NewNumber(3), NewNumber(4)).Hash128(), withItem.Hash128())
+	assert.NotEqual(t, h, withItem.Hash())
+	assert.Equal(t, NewArray(NewNumber(1), NewNumber(2), NewNumber(3), NewNumber(4)).Hash(), withItem.Hash())
 
 	filtered, err := a.Where(func(v Value) (bool, error) {
 		return !v.(ArrayItemTuple).item.Equal(NewNumber(2)), nil
 	})
 	require.NoError(t, err)
-	assert.NotEqual(t, h, filtered.Hash128())
+	assert.NotEqual(t, h, filtered.Hash())
 
 	without := a.Without(NewArrayItemTuple(0, NewNumber(1)))
-	assert.NotEqual(t, h, without.Hash128())
-	assert.Equal(t, NewOffsetArray(1, NewNumber(2), NewNumber(3)).Hash128(), without.Hash128())
+	assert.NotEqual(t, h, without.Hash())
+	assert.Equal(t, NewOffsetArray(1, NewNumber(2), NewNumber(3)).Hash(), without.Hash())
 
 	// Sets of arrays rely on the hash agreeing with equality.
 	s, err := NewSet(a, shifted, withItem, filtered, without,

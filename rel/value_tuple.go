@@ -3,8 +3,6 @@ package rel
 import (
 	"slices"
 
-	"github.com/arr-ai/hash/hash128"
-
 	"context"
 	"fmt"
 	"reflect"
@@ -242,30 +240,21 @@ func (t *GenericTuple) Canonical() Tuple {
 	return NewTuple(attrs...)
 }
 
-// Hash computes a hash for a GenericTuple.
-func (t *GenericTuple) Hash(seed uintptr) uintptr {
-	return t.Hash128().Seeded(seed)
-}
-
-// Hash128 computes the 128-bit hash of a GenericTuple once: the xor over its
-// attributes of the name hash mixed with the value hash.
-func (t *GenericTuple) Hash128() hash128.H128 {
-	return t.hash.get(func() hash128.H128 {
-		h := tupleSalt
+// Hash wraps the xor of name⋈value attrs so a tuple is not a linear piece
+// of a relation or set hash. () uses this wrap; {} uses hashSet.
+func (t *GenericTuple) Hash() uintptr {
+	return t.hash.get(func() uintptr {
+		var h uintptr
 		nameH := t.attrSet().nameH
 		for i, v := range t.vals {
-			h = h.Xor(hashAttr(nameH[i], v))
+			h = xor(h, hashAttr(nameH[i], v))
 		}
-		return h
+		return hashTuple(h)
 	})
 }
 
 // Equal tests two Tuples for equality. Any other type returns false.
 func (t *GenericTuple) Equal(v Value) bool {
-	if hashIdentity {
-		u, ok := v.(Tuple)
-		return ok && t.Hash128() == u.Hash128()
-	}
 	if u, ok := v.(*GenericTuple); ok {
 		// Names are interned: same attribute set iff same Names.
 		if t.attrSet() != u.attrSet() {

@@ -1,15 +1,13 @@
 package rel
 
 import (
-	"github.com/arr-ai/hash/hash128"
-
 	"context"
 	"fmt"
 	"reflect"
 
 	"github.com/arr-ai/arrai/pkg/fu"
 
-	"github.com/arr-ai/frozen"
+	"github.com/arr-ai/frozen/v2"
 	"github.com/arr-ai/wbnf/parser"
 )
 
@@ -268,10 +266,6 @@ func (u UnionSet) Format(f fmt.State, verb rune) {
 }
 
 func (u UnionSet) Equal(s Value) bool {
-	if hashIdentity {
-		t, ok := s.(Set)
-		return ok && u.Hash128() == t.Hash128()
-	}
 	if t, ok := s.(UnionSet); ok {
 		if u.m.Count() != t.m.Count() {
 			return false
@@ -292,17 +286,12 @@ func (u UnionSet) Equal(s Value) bool {
 	return false
 }
 
-func (u UnionSet) Hash(seed uintptr) uintptr {
-	return u.Hash128().Seeded(seed)
-}
-
-// Hash128 computes the 128-bit hash of a UnionSet: the xor of its elements.
-func (u UnionSet) Hash128() hash128.H128 {
-	h := unionSalt
+func (u UnionSet) Hash() uintptr {
+	var h uintptr
 	for e := u.Enumerator(); e.MoveNext(); {
-		h = h.Xor(e.Current().Hash128())
+		h = xor(h, e.Current().Hash())
 	}
-	return h
+	return hashSet(h)
 }
 
 func (u UnionSet) OrderedValues() ValueEnumerator {

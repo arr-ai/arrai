@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/arr-ai/frozen"
+	"github.com/arr-ai/frozen/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

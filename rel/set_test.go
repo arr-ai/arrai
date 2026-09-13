@@ -45,30 +45,17 @@ func TestSetHash(t *testing.T) {
 	e := intSet(4321, 321)
 	f := intSet(321, 4321)
 
-	b.Hash(0)
-	assert.Equal(t, b.Hash(0), c.Hash(0))
-	assert.Equal(t, e.Hash(0), f.Hash(0))
-
-	allSets := []Set{a, b, c, d, e, f}
-	for _, x := range allSets {
-		for i := uintptr(0); i < 10; i++ {
-			assert.NotEqual(t, 0, x.Hash(i))
-		}
-	}
+	b.Hash()
+	assert.Equal(t, b.Hash(), c.Hash())
+	assert.Equal(t, e.Hash(), f.Hash())
 
 	distinctSets := []Set{a, b, d, e}
 	for xi, x := range distinctSets {
 		for yi, y := range distinctSets {
-			for i := uintptr(0); i < 10; i++ {
-				if xi == yi {
-					assert.Equal(t, x.Hash(i), y.Hash(i),
-						"%s.Hash(%d) != %s.Hash(%[2]d)", x, i, y)
-					assert.NotEqual(t, x.Hash(i), y.Hash(i+1),
-						"%s.Hash(%d) == %s.Hash(%[2]d+1)", x, i, y)
-				} else {
-					assert.NotEqual(t, x.Hash(i), y.Hash(i),
-						"%s.Hash(%s) == %s.Hash(%[2]s)", x, i, y)
-				}
+			if xi == yi {
+				assert.Equal(t, x.Hash(), y.Hash(), "%s.Hash() != %s.Hash()", x, y)
+			} else {
+				assert.NotEqual(t, x.Hash(), y.Hash(), "%s.Hash() == %s.Hash()", x, y)
 			}
 		}
 	}

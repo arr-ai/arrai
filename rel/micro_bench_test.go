@@ -7,7 +7,7 @@ package rel
 import (
 	"testing"
 
-	"github.com/arr-ai/frozen"
+	"github.com/arr-ai/frozen/v2"
 )
 
 // benchSink prevents the compiler from optimising away benchmark results.
@@ -115,7 +115,7 @@ func BenchmarkTupleHash2Attrs(b *testing.B) {
 	)
 	b.ResetTimer()
 	for b.Loop() {
-		t.Hash(0)
+		t.Hash()
 	}
 }
 
@@ -123,7 +123,7 @@ func BenchmarkNumberHash(b *testing.B) {
 	n := NewNumber(42)
 	b.ResetTimer()
 	for b.Loop() {
-		n.Hash(0)
+		n.Hash()
 	}
 }
 

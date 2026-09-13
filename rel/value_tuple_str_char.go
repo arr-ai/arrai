@@ -1,8 +1,6 @@
 package rel //nolint:dupl
 
 import (
-	"github.com/arr-ai/hash/hash128"
-
 	"context"
 	"fmt"
 	"reflect"
@@ -54,22 +52,12 @@ func (t StringCharTuple) asGenericTuple() Tuple {
 }
 
 // Hash computes a hash for a CharTuple.
-func (t StringCharTuple) Hash(seed uintptr) uintptr {
-	return t.Hash128().Seeded(seed)
-}
-
-// Hash128 computes the 128-bit hash of a StringCharTuple, consistent with the
-// same tuple represented generically.
-func (t StringCharTuple) Hash128() hash128.H128 {
+func (t StringCharTuple) Hash() uintptr {
 	return hashTuple2(atNameHash, NewNumber(float64(t.at)), charNameHash, NewNumber(float64(t.char)))
 }
 
 // Equal tests two Tuples for equality. Any other type returns false.
 func (t StringCharTuple) Equal(v Value) bool {
-	if hashIdentity {
-		u, ok := v.(Tuple)
-		return ok && t.Hash128() == u.Hash128()
-	}
 	if u, ok := v.(StringCharTuple); ok {
 		return t == u
 	}
