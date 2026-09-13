@@ -50,31 +50,16 @@ func TestTupleHash(t *testing.T) {
 		Attr{"a", NewNumber(4321)},
 	)
 
-	assert.Equal(t, b.Hash(0), c.Hash(0), "should hash the same")
-	assert.Equal(t, f.Hash(0), g.Hash(0), "should hash the same")
-
-	allTuples := []Tuple{a, b, c, d, e, f, g}
-	for _, x := range allTuples {
-		for i := uintptr(0); i < 10; i++ {
-			assert.NotEqual(t, 0, x.Hash(i), "shouldn't hash to zero")
-		}
-	}
+	assert.Equal(t, b.Hash(), c.Hash(), "should hash the same")
+	assert.Equal(t, f.Hash(), g.Hash(), "should hash the same")
 
 	distinctTuples := []Tuple{a, b, d, e, f}
 	for _, x := range distinctTuples {
 		for _, y := range distinctTuples {
-			for i := uintptr(0); i < 10; i++ {
-				if x == y {
-					assert.Equal(t, x.Hash(i), y.Hash(i), "should hash stably")
-					hx, hy := x.Hash(i), y.Hash(i+1)
-					assert.NotEqual(t, hx, hy,
-						"%s and %s should hash differently for different "+
-							"seeds, not %d and %d",
-						x, y, hx, hy)
-				} else {
-					assert.NotEqual(t, x.Hash(i), y.Hash(i),
-						"should hash differently")
-				}
+			if x == y {
+				assert.Equal(t, x.Hash(), y.Hash(), "should hash stably")
+			} else {
+				assert.NotEqual(t, x.Hash(), y.Hash(), "should hash differently")
 			}
 		}
 	}

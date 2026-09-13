@@ -1,7 +1,5 @@
 package rel
 
-import "github.com/arr-ai/frozen"
-
 // CombineOp specifies which pairings to include in Combine().
 type CombineOp int
 
@@ -42,11 +40,11 @@ func Combine(a, b Tuple, op CombineOp) map[string]Pair {
 
 // CombineNames returns names from a and b according to the given mask.
 func CombineNames(a, b Tuple, op CombineOp) Names {
-	var sb frozen.SetBuilder[string]
+	names := make([]string, 0, a.Count()+b.Count())
 	for name := range Combine(a, b, op) {
-		sb.Add(name)
+		names = append(names, name)
 	}
-	return Names(sb.Finish())
+	return NewNames(names...)
 }
 
 // Merge returns the merger of a and b, if possible or nil otherwise.

@@ -1,8 +1,6 @@
 package rel
 
 import (
-	"github.com/arr-ai/hash/hash128"
-
 	"bytes"
 	"context"
 	"fmt"
@@ -68,21 +66,12 @@ func (b Bytes) Bytes() []byte {
 }
 
 // Hash computes a hash for a Bytes.
-func (b Bytes) Hash(seed uintptr) uintptr {
-	return b.Hash128().Seeded(seed)
-}
-
-// Hash128 computes the 128-bit hash of a Bytes.
-func (b Bytes) Hash128() hash128.H128 {
-	return bytesSalt.Mix(hash128.Int(b.offset)).Mix(hash128.Bytes(b.b))
+func (b Bytes) Hash() uintptr {
+	return mix(mix(bytesSalt, hashInt(b.offset)), hashBytes(b.b))
 }
 
 // Equal tests two Byteses for equality. Any other type returns false.
 func (b Bytes) Equal(v Value) bool {
-	if hashIdentity {
-		o, ok := v.(Set)
-		return ok && b.Hash128() == o.Hash128()
-	}
 	c, is := v.(Bytes)
 	return is && b.EqualBytes(c)
 }

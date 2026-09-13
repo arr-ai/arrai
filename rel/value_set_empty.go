@@ -1,12 +1,11 @@
 package rel
 
 import (
-	"github.com/arr-ai/hash/hash128"
-
 	"context"
 	"fmt"
 	"reflect"
 
+	"github.com/arr-ai/frozen/v2"
 	"github.com/arr-ai/wbnf/parser"
 
 	"github.com/arr-ai/arrai/pkg/fu"
@@ -58,13 +57,8 @@ func (e EmptySet) Equal(i Value) bool {
 	return is
 }
 
-func (e EmptySet) Hash(seed uintptr) uintptr {
-	return e.Hash128().Seeded(seed)
-}
-
-// Hash128 computes the 128-bit hash of the empty set.
-func (e EmptySet) Hash128() hash128.H128 {
-	return emptySetSalt
+func (e EmptySet) Hash() uintptr {
+	return frozen.Set[Value]{}.Hash()
 }
 
 func (e EmptySet) Eval(ctx context.Context, local Scope) (Value, error) {

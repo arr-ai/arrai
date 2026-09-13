@@ -13,18 +13,18 @@ func TestShapeInterning(t *testing.T) {
 	a := NewTuple(NewAttr("x", NewNumber(1)), NewAttr("y", NewNumber(2))).(*GenericTuple)
 	b := NewTuple(NewAttr("y", NewNumber(3)), NewAttr("x", NewNumber(4))).(*GenericTuple)
 	c := NewTuple(NewAttr("x", NewNumber(1))).(*GenericTuple)
-	assert.Same(t, a.shape, b.shape, "same attribute set, any order, one shape")
-	assert.NotSame(t, a.shape, c.shape)
+	assert.Equal(t, a.names, b.names, "same attribute set, any order, one Names")
+	assert.NotEqual(t, a.names, c.names)
 	assert.Equal(t, []string{"x", "y"}, TupleOrderedNames(a))
 
-	// Transitions land on the interned shape and are memoised.
+	// Transitions land on the interned set and are memoised.
 	d := c.With("y", NewNumber(9)).(*GenericTuple)
-	assert.Same(t, a.shape, d.shape)
+	assert.Equal(t, a.names, d.names)
 	e := a.Without("y").(*GenericTuple)
-	assert.Same(t, c.shape, e.shape)
-	s1, at1 := c.shape.With("y")
-	s2, at2 := c.shape.With("y")
-	assert.Same(t, s1, s2)
+	assert.Equal(t, c.names, e.names)
+	s1, at1 := c.names.insert("y")
+	s2, at2 := c.names.insert("y")
+	assert.Equal(t, s1, s2)
 	assert.Equal(t, at1, at2)
 	assert.Equal(t, 1, at1)
 }
@@ -72,7 +72,7 @@ func TestShapedTupleOperations(t *testing.T) {
 	assert.False(t, tup.Equal(tup.With("b", NewNumber(0))))
 	gen := newGenericTuple(NewAttr("@", NewNumber(1)), NewAttr(ArrayItemAttr, NewNumber(2)))
 	assert.True(t, gen.Equal(NewArrayItemTuple(1, NewNumber(2))))
-	assert.Equal(t, gen.Hash128(), NewArrayItemTuple(1, NewNumber(2)).Hash128())
+	assert.Equal(t, gen.Hash(), NewArrayItemTuple(1, NewNumber(2)).Hash())
 
 	// Builder: last Put wins, and canonicalisation still applies.
 	var b TupleBuilder
@@ -102,7 +102,7 @@ func TestRelationRowsInflateWithoutCopy(t *testing.T) {
 	seen := 0
 	for e := rel.Enumerator(); e.MoveNext(); {
 		g := e.Current().(*GenericTuple)
-		assert.Same(t, rel.shape, g.shape)
+		assert.Equal(t, rel.attrSet, g.names)
 		seen++
 	}
 	assert.Equal(t, 2, seen)
@@ -121,27 +121,27 @@ func TestArrayHashCacheInvalidation(t *testing.T) {
 	t.Parallel()
 
 	a := NewArray(NewNumber(1), NewNumber(2), NewNumber(3))
-	h := a.Hash128() // populate the cache before deriving
-	assert.Equal(t, h, a.Hash128(), "stable")
-	assert.Equal(t, h, NewArray(NewNumber(1), NewNumber(2), NewNumber(3)).Hash128(), "equal arrays agree")
+	h := a.Hash() // populate the cache before deriving
+	assert.Equal(t, h, a.Hash(), "stable")
+	assert.Equal(t, h, NewArray(NewNumber(1), NewNumber(2), NewNumber(3)).Hash(), "equal arrays agree")
 
 	shifted := a.(Array).Shift(5)
-	assert.NotEqual(t, h, shifted.Hash128(), "offset participates in the hash")
-	assert.Equal(t, NewOffsetArray(5, NewNumber(1), NewNumber(2), NewNumber(3)).Hash128(), shifted.Hash128())
+	assert.NotEqual(t, h, shifted.Hash(), "offset participates in the hash")
+	assert.Equal(t, NewOffsetArray(5, NewNumber(1), NewNumber(2), NewNumber(3)).Hash(), shifted.Hash())
 
 	withItem := a.With(NewArrayItemTuple(3, NewNumber(4)))
-	assert.NotEqual(t, h, withItem.Hash128())
-	assert.Equal(t, NewArray(NewNumber(1), NewNumber(2), NewNumber(3), NewNumber(4)).Hash128(), withItem.Hash128())
+	assert.NotEqual(t, h, withItem.Hash())
+	assert.Equal(t, NewArray(NewNumber(1), NewNumber(2), NewNumber(3), NewNumber(4)).Hash(), withItem.Hash())
 
 	filtered, err := a.Where(func(v Value) (bool, error) {
 		return !v.(ArrayItemTuple).item.Equal(NewNumber(2)), nil
 	})
 	require.NoError(t, err)
-	assert.NotEqual(t, h, filtered.Hash128())
+	assert.NotEqual(t, h, filtered.Hash())
 
 	without := a.Without(NewArrayItemTuple(0, NewNumber(1)))
-	assert.NotEqual(t, h, without.Hash128())
-	assert.Equal(t, NewOffsetArray(1, NewNumber(2), NewNumber(3)).Hash128(), without.Hash128())
+	assert.NotEqual(t, h, without.Hash())
+	assert.Equal(t, NewOffsetArray(1, NewNumber(2), NewNumber(3)).Hash(), without.Hash())
 
 	// Sets of arrays rely on the hash agreeing with equality.
 	s, err := NewSet(a, shifted, withItem, filtered, without,

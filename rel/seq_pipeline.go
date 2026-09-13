@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/arr-ai/hash/hash128"
 	"github.com/arr-ai/wbnf/parser"
 )
 
@@ -123,8 +122,7 @@ func (p seqPipeline) mustArray() Array {
 
 func (p seqPipeline) Count() int { return p.base.Count() }
 
-func (p seqPipeline) Hash(seed uintptr) uintptr { return p.mustArray().Hash(seed) }
-func (p seqPipeline) Hash128() hash128.H128     { return p.mustArray().Hash128() }
+func (p seqPipeline) Hash() uintptr { return p.mustArray().Hash() }
 func (p seqPipeline) Equal(v Value) bool {
 	if q, ok := v.(seqPipeline); ok {
 		a, err1 := p.force()
@@ -279,8 +277,7 @@ func (p dictPipeline) mustDict() Dict {
 
 func (p dictPipeline) Count() int { return p.base.Count() }
 
-func (p dictPipeline) Hash(seed uintptr) uintptr { return p.mustDict().Hash(seed) }
-func (p dictPipeline) Hash128() hash128.H128     { return p.mustDict().Hash128() }
+func (p dictPipeline) Hash() uintptr { return p.mustDict().Hash() }
 func (p dictPipeline) Equal(v Value) bool {
 	if q, ok := v.(dictPipeline); ok {
 		a, err1 := p.force()

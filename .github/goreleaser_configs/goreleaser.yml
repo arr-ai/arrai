@@ -45,6 +45,7 @@ archives:
   files:
     - README.md
     - LICENSE
+    - NOTICES
 
 checksum:
   name_template: '{{.ProjectName}}_v{{.Version}}_checksums.txt'

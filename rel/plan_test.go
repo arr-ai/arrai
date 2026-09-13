@@ -70,6 +70,253 @@ func TestPruneStackedProjects(t *testing.T) {
 	assert.Equal(t, "a", te.attrs[0].name)
 }
 
+func eqDot(sc parser.Scanner, attr string, key Expr) CompareExpr {
+	eq := func(a, b Value) (bool, error) { return a.Equal(b), nil }
+	return NewCompareExpr(sc,
+		[]Expr{NewDotExpr(sc, NewIdentExpr(sc, "."), attr), key},
+		[]CompareFunc{eq},
+		[]string{"="},
+	)
+}
+
+func TestMatchEqAttrPredicatesAndTree(t *testing.T) {
+	t.Parallel()
+	sc := *parser.NewScanner("")
+	one := ExprAsFunction(eqDot(sc, "a", NewNumber(1)))
+	require.Len(t, matchEqAttrPredicates(one), 1)
+
+	two := ExprAsFunction(NewAndExpr(sc, eqDot(sc, "a", NewNumber(1)), eqDot(sc, "b", NewNumber(2))))
+	ps := matchEqAttrPredicates(two)
+	require.Len(t, ps, 2)
+	assert.Equal(t, "a", ps[0].attr)
+	assert.Equal(t, "b", ps[1].attr)
+
+	three := ExprAsFunction(NewAndExpr(sc,
+		NewAndExpr(sc, eqDot(sc, "a", NewNumber(1)), eqDot(sc, "b", NewNumber(2))),
+		eqDot(sc, "c", NewNumber(3)),
+	))
+	require.Len(t, matchEqAttrPredicates(three), 3)
+
+	neq := func(a, b Value) (bool, error) { return !a.Equal(b), nil }
+	mixed := NewCompareExpr(sc,
+		[]Expr{NewDotExpr(sc, NewIdentExpr(sc, "."), "b"), NewNumber(0)},
+		[]CompareFunc{neq},
+		[]string{"!="},
+	)
+	assert.Nil(t, matchEqAttrPredicates(ExprAsFunction(NewAndExpr(sc, eqDot(sc, "a", NewNumber(1)), mixed))))
+}
+
+func TestWhereConjEqAttrDoesNotInflate(t *testing.T) {
+	if !fastPaths {
+		t.Skip("slowpath scans")
+	}
+	var n int
+	tupleInflateHook = func() { n++ }
+	t.Cleanup(func() { tupleInflateHook = nil })
+
+	sc := *parser.NewScanner("")
+	r := mustRel(t,
+		NewTuple(NewAttr("a", NewNumber(1)), NewAttr("b", NewString([]rune("x")))),
+		NewTuple(NewAttr("a", NewNumber(2)), NewAttr("b", NewString([]rune("y")))),
+		NewTuple(NewAttr("a", NewNumber(2)), NewAttr("b", NewString([]rune("z")))),
+	).(Relation)
+	pred := NewAndExpr(sc, eqDot(sc, "a", NewNumber(2)), eqDot(sc, "b", NewString([]rune("y"))))
+	v, err := NewWhereExpr(sc, r, pred).Eval(context.Background(), EmptyScope)
+	require.NoError(t, err)
+	assert.Equal(t, 1, v.(Set).Count())
+	assert.Equal(t, 0, n, "conjunctive eq-attr where must not inflate rows")
+}
+
+func TestWhereConjEqAttrPlanCache(t *testing.T) {
+	t.Parallel()
+	if !fastPaths {
+		t.Skip("slowpath scans")
+	}
+	sc := *parser.NewScanner("")
+	r := mustRel(t,
+		NewTuple(NewAttr("a", NewNumber(1)), NewAttr("b", NewNumber(10))),
+		NewTuple(NewAttr("a", NewNumber(2)), NewAttr("b", NewNumber(20))),
+		NewTuple(NewAttr("a", NewNumber(2)), NewAttr("b", NewNumber(21))),
+	).(Relation)
+	pred := NewAndExpr(sc, eqDot(sc, "a", NewNumber(2)), eqDot(sc, "b", NewNumber(20)))
+	w := NewWhereExpr(sc, r, pred)
+	v1, err := w.Eval(context.Background(), EmptyScope)
+	require.NoError(t, err)
+	assert.Equal(t, 1, v1.(Set).Count())
+	hits := r.rows.planHitCount()
+	v2, err := w.Eval(context.Background(), EmptyScope)
+	require.NoError(t, err)
+	assert.Equal(t, 1, v2.(Set).Count())
+	assert.Equal(t, hits+1, r.rows.planHitCount(), "second conj where must reuse the fact-keyed plan")
+
+	swapped := NewWhereExpr(sc, r, NewAndExpr(sc, eqDot(sc, "b", NewNumber(20)), eqDot(sc, "a", NewNumber(2))))
+	_, err = swapped.Eval(context.Background(), EmptyScope)
+	require.NoError(t, err)
+	assert.Equal(t, hits+2, r.rows.planHitCount(), "conjunct order must share the fact key")
+}
+
+func TestEvalAtRowDoesNotInflate(t *testing.T) {
+	if !fastPaths {
+		t.Skip("slowpath inflates")
+	}
+	var n int
+	tupleInflateHook = func() { n++ }
+	t.Cleanup(func() { tupleInflateHook = nil })
+
+	sc := *parser.NewScanner("")
+	r := mustRel(t,
+		NewTuple(NewAttr("a", NewNumber(1)), NewAttr("b", NewNumber(10))),
+		NewTuple(NewAttr("a", NewNumber(2)), NewAttr("b", NewNumber(20))),
+	).(Relation)
+	fn := NewFunction(sc, IdentPattern("."), NewAddExpr(sc,
+		NewDotExpr(sc, NewIdentExpr(sc, "."), "a"),
+		NewDotExpr(sc, NewIdentExpr(sc, "."), "b"),
+	))
+	v, err := NewDArrowExpr(sc, r, fn).Eval(context.Background(), EmptyScope)
+	require.NoError(t, err)
+	assert.Equal(t, 2, v.(Set).Count())
+	assert.Equal(t, 0, n, "column-only => must not inflate")
+}
+
+func TestNestOnStoreDoesNotInflate(t *testing.T) {
+	if !fastPaths {
+		t.Skip("slowpath reduces tuples")
+	}
+	var n int
+	tupleInflateHook = func() { n++ }
+	t.Cleanup(func() { tupleInflateHook = nil })
+
+	r := mustRel(t,
+		NewTuple(NewAttr("a", NewNumber(1)), NewAttr("b", NewNumber(10))),
+		NewTuple(NewAttr("a", NewNumber(1)), NewAttr("b", NewNumber(11))),
+		NewTuple(NewAttr("a", NewNumber(2)), NewAttr("b", NewNumber(20))),
+	).(Relation)
+	got := Nest(r, r.attrSet, NewNames("b"), "rows")
+	assert.Equal(t, 2, got.(Set).Count())
+	assert.Equal(t, 0, n, "nest must not inflate source rows")
+}
+
+func TestOrderByColumnKeysFromStore(t *testing.T) {
+	if !fastPaths {
+		t.Skip("slowpath enumerates")
+	}
+	var n int
+	tupleInflateHook = func() { n++ }
+	t.Cleanup(func() { tupleInflateHook = nil })
+
+	r := mustRel(t,
+		NewTuple(NewAttr("a", NewNumber(3))),
+		NewTuple(NewAttr("a", NewNumber(1))),
+		NewTuple(NewAttr("a", NewNumber(2))),
+	).(Relation)
+	values, ok := r.orderByColumn("a")
+	require.True(t, ok)
+	require.Len(t, values, 3)
+	assert.Equal(t, NewNumber(1), values[0].(Tuple).MustGet("a"))
+	assert.Equal(t, NewNumber(2), values[1].(Tuple).MustGet("a"))
+	assert.Equal(t, NewNumber(3), values[2].(Tuple).MustGet("a"))
+	assert.Equal(t, 3, n, "orderby boxes the result array only, not the keys")
+}
+
+func TestWhereColumnPredDoesNotInflate(t *testing.T) {
+	if !fastPaths {
+		t.Skip("slowpath scans")
+	}
+	var n int
+	tupleInflateHook = func() { n++ }
+	t.Cleanup(func() { tupleInflateHook = nil })
+
+	sc := *parser.NewScanner("")
+	r := mustRel(t,
+		NewTuple(NewAttr("t", NewString([]rune("x"))), NewAttr("rest", NewNumber(1))),
+		NewTuple(NewAttr("t", NewString([]rune("y"))), NewAttr("rest", NewNumber(0))),
+	).(Relation)
+	pred := NewDotExpr(sc, NewIdentExpr(sc, "."), "rest")
+	v, err := NewWhereExpr(sc, r, pred).Eval(context.Background(), EmptyScope)
+	require.NoError(t, err)
+	assert.Equal(t, 1, v.(Set).Count())
+	assert.Equal(t, 0, n, "column truthy where must not inflate rows")
+}
+
+func TestTuplePatternProjectDoesNotInflate(t *testing.T) {
+	if !fastPaths {
+		t.Skip("slowpath binds")
+	}
+	var n int
+	tupleInflateHook = func() { n++ }
+	t.Cleanup(func() { tupleInflateHook = nil })
+
+	sc := *parser.NewScanner("")
+	r := mustRel(t,
+		NewTuple(NewAttr("a", NewNumber(1)), NewAttr("b", NewNumber(2))),
+		NewTuple(NewAttr("a", NewNumber(3)), NewAttr("b", NewNumber(4))),
+	).(Relation)
+	tp, err := NewTuplePattern(
+		NewTuplePatternAttr("a", NewFallbackPattern(IdentPattern("a"), nil)),
+		NewTuplePatternAttr("b", NewFallbackPattern(IdentPattern("b"), nil)),
+	)
+	require.NoError(t, err)
+	fn := NewFunction(sc, tp, NewTupleExpr(sc,
+		mustAttr(t, sc, "x", NewIdentExpr(sc, "a")),
+		mustAttr(t, sc, "y", NewIdentExpr(sc, "b")),
+	))
+	v, err := NewDArrowExpr(sc, r, fn).Eval(context.Background(), EmptyScope)
+	require.NoError(t, err)
+	assert.Equal(t, 2, v.(Set).Count())
+	assert.Equal(t, 0, n, "tuple-pattern project must not inflate rows")
+}
+
+func TestProjectCanonicalDoesNotInflate(t *testing.T) {
+	if !fastPaths {
+		t.Skip("slowpath enumerates")
+	}
+	var n int
+	tupleInflateHook = func() { n++ }
+	t.Cleanup(func() { tupleInflateHook = nil })
+
+	sc := *parser.NewScanner("")
+	r := mustRel(t,
+		NewTuple(NewAttr("k", NewString([]rune("a"))), NewAttr("v", NewNumber(1))),
+		NewTuple(NewAttr("k", NewString([]rune("b"))), NewAttr("v", NewNumber(2))),
+	).(Relation)
+	fn := NewFunction(sc, IdentPattern("."), NewTupleExpr(sc,
+		mustAttr(t, sc, "@", NewDotExpr(sc, NewIdentExpr(sc, "."), "k")),
+		mustAttr(t, sc, "@value", NewDotExpr(sc, NewIdentExpr(sc, "."), "v")),
+	))
+	v, err := NewDArrowExpr(sc, r, fn).Eval(context.Background(), EmptyScope)
+	require.NoError(t, err)
+	assert.Equal(t, 2, v.(Set).Count())
+	assert.Equal(t, 0, n, "dict-dots must not inflate source rows")
+}
+
+func mustAttr(t *testing.T, sc parser.Scanner, name string, e Expr) AttrExpr {
+	t.Helper()
+	a, err := NewAttrExpr(sc, name, e)
+	require.NoError(t, err)
+	return a
+}
+
+func TestProjectColumnDoesNotInflate(t *testing.T) {
+	if !fastPaths {
+		t.Skip("slowpath enumerates")
+	}
+	var n int
+	tupleInflateHook = func() { n++ }
+	t.Cleanup(func() { tupleInflateHook = nil })
+
+	sc := *parser.NewScanner("")
+	r := mustRel(t,
+		NewTuple(NewAttr("a", NewNumber(1)), NewAttr("b", NewString([]rune("x")))),
+		NewTuple(NewAttr("a", NewNumber(2)), NewAttr("b", NewString([]rune("y")))),
+		NewTuple(NewAttr("a", NewNumber(2)), NewAttr("b", NewString([]rune("z")))),
+	).(Relation)
+	fn := NewFunction(sc, IdentPattern("."), NewDotExpr(sc, NewIdentExpr(sc, "."), "a"))
+	v, err := NewDArrowExpr(sc, r, fn).Eval(context.Background(), EmptyScope)
+	require.NoError(t, err)
+	assert.Equal(t, 2, v.(Set).Count())
+	assert.Equal(t, 0, n, "column extract must not inflate rows")
+}
+
 func TestWhereIndexPlanCacheThroughEval(t *testing.T) {
 	t.Parallel()
 	if !fastPaths {

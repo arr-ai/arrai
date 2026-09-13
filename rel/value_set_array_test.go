@@ -11,8 +11,8 @@ import (
 	"github.com/arr-ai/arrai/pkg/arraictx"
 )
 
-// TestArrayHash128DistinguishesRepeatedElementValue guards against a
-// cancellation bug: Array.Hash128 combined per-index item hashes with xor,
+// TestArrayHashDistinguishesRepeatedElementValue guards against a
+// cancellation bug: Array.Hash combined per-index item hashes with xor,
 // but each item hash already xors together an index-hash and a value-hash
 // via hashTuple2. When the same value occurs at two different indices (e.g.
 // ["x", "x"] vs ["y", "y"]), the value-dependent part of those two item
@@ -29,7 +29,7 @@ import (
 // leaves one copy, so a 3-element all-equal array would pass even against
 // the old, buggy formula), and a repeat one level down inside a nested
 // array.
-func TestArrayHash128DistinguishesRepeatedElementValue(t *testing.T) {
+func TestArrayHashDistinguishesRepeatedElementValue(t *testing.T) {
 	t.Parallel()
 
 	str := func(s string) Value { return NewString([]rune(s)) }
@@ -63,19 +63,19 @@ func TestArrayHash128DistinguishesRepeatedElementValue(t *testing.T) {
 		t.Run(c.name, func(t *testing.T) {
 			t.Parallel()
 			assert.False(t, c.a.Equal(c.b), "arrays with different repeated values must not be equal")
-			assert.NotEqual(t, c.a.(Array).Hash128(), c.b.(Array).Hash128(),
+			assert.NotEqual(t, c.a.(Array).Hash(), c.b.(Array).Hash(),
 				"arrays with different repeated values must not hash the same")
 		})
 	}
 }
 
-// FuzzArrayHash128RepeatedValue generalizes
-// TestArrayHash128DistinguishesRepeatedElementValue's fixed cases across
+// FuzzArrayHashRepeatedValue generalizes
+// TestArrayHashDistinguishesRepeatedElementValue's fixed cases across
 // arbitrary element values and repeat counts, so it can catch a
 // reintroduction of the xor-cancellation bug (or a similar one) for
 // combinations the hand-written cases don't happen to cover. Run with
-// `go test -fuzz=FuzzArrayHash128RepeatedValue ./rel/`.
-func FuzzArrayHash128RepeatedValue(f *testing.F) {
+// `go test -fuzz=FuzzArrayHashRepeatedValue ./rel/`.
+func FuzzArrayHashRepeatedValue(f *testing.F) {
 	f.Add("x", "y", uint8(2))
 	f.Add("AppA", "AppB", uint8(2))
 	f.Add("x", "y", uint8(3))
@@ -100,7 +100,7 @@ func FuzzArrayHash128RepeatedValue(f *testing.F) {
 		if a.Equal(b) {
 			t.Fatalf("arrays of %d copies of %q and %q must not be equal", count, xr, yr)
 		}
-		if a.Hash128() == b.Hash128() {
+		if a.Hash() == b.Hash() {
 			t.Fatalf("arrays of %d copies of %q and %q hashed the same", count, xr, yr)
 		}
 	})

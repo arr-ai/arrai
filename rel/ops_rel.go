@@ -12,35 +12,35 @@ import (
 func RelationAttrs(a Set) (Names, error) {
 	switch a := a.(type) {
 	case Relation:
-		return NewNames(a.attrs...), nil
+		return a.attrSet, nil
 	case EmptySet, TrueSet:
-		return Names{}, nil
+		return EmptyNames, nil
 	case Dict:
-		return NewNames("@", DictValueAttr), nil
+		return dictEntryNames, nil
 	case Array:
-		return NewNames("@", ArrayItemAttr), nil
+		return arrayItemNames, nil
 	case Bytes:
-		return NewNames("@", BytesByteAttr), nil
+		return bytesByteNames, nil
 	case String:
-		return NewNames("@", StringCharAttr), nil
+		return stringCharNames, nil
 	case GenericSet:
 		// this is only for benchmark, in real case, GenericSet would never have tuples.
 		e := a.Enumerator()
 		if !e.MoveNext() {
-			return Names{}, nil
+			return EmptyNames, nil
 		}
 		t, is := e.Current().(Tuple)
 		if !is {
-			return Names{}, fmt.Errorf("not a relation; has non-tuple element(s) (e.g.: %s)", ValueTypeAsString(t))
+			return EmptyNames, fmt.Errorf("not a relation; has non-tuple element(s) (e.g.: %s)", ValueTypeAsString(t))
 		}
 		names := t.Names()
 		for e.MoveNext() {
 			t, is := e.Current().(Tuple)
 			if !is {
-				return Names{}, fmt.Errorf("not a relation; has non-tuple element(s) (e.g.: %s)", ValueTypeAsString(t))
+				return EmptyNames, fmt.Errorf("not a relation; has non-tuple element(s) (e.g.: %s)", ValueTypeAsString(t))
 			}
 			if !names.Equal(t.Names()) {
-				return Names{}, fmt.Errorf(
+				return EmptyNames, fmt.Errorf(
 					"not a relation; inconsistent attribute names between tuples (e.g.: %v vs %v)",
 					names, t.Names(),
 				)
@@ -48,7 +48,7 @@ func RelationAttrs(a Set) (Names, error) {
 		}
 		return names, nil
 	}
-	return Names{}, fmt.Errorf("not a relation")
+	return EmptyNames, fmt.Errorf("not a relation")
 }
 
 func nestWithFunc(a Set, relAttrs, attrs Names, attr string, fn func(Set, Tuple) Set) Set {
@@ -85,6 +85,11 @@ func validNestOp(setAttrs, nestAttrs Names) error {
 
 // Nest groups the given attributes into nested relations.
 func Nest(a Set, relAttrs, attrs Names, attr string) Set {
+	if r, ok := a.(Relation); ok && fastPaths {
+		if s, ok := r.nestOnStore(attrs, attr, false); ok {
+			return s
+		}
+	}
 	return nestWithFunc(a, relAttrs, attrs, attr, func(nest Set, t Tuple) Set {
 		return nest.With(t.Project(attrs))
 	})
@@ -92,6 +97,11 @@ func Nest(a Set, relAttrs, attrs Names, attr string) Set {
 
 // SingleAttrNest nests a single attribute as a set.
 func SingleAttrNest(a Set, relAttrs Names, attr string) Set {
+	if r, ok := a.(Relation); ok && fastPaths {
+		if s, ok := r.nestOnStore(NewNames(attr), attr, true); ok {
+			return s
+		}
+	}
 	return nestWithFunc(a, relAttrs, NewNames(attr), attr, func(nest Set, t Tuple) Set {
 		return nest.With(t.MustGet(attr))
 	})

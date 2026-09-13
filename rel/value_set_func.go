@@ -1,10 +1,9 @@
 package rel
 
 import (
-	"github.com/arr-ai/hash/hash128"
-
 	"context"
 	"fmt"
+	"sync/atomic"
 	"unsafe"
 
 	"github.com/arr-ai/arrai/pkg/fu"
@@ -17,6 +16,8 @@ type Function struct {
 	ExprScanner
 	arg  Pattern
 	body Expr
+	// columnOnly is 0 unknown, 1 yes, 2 no (ident used as a Value). 🎯T29.9
+	columnOnly uint32
 }
 
 // NewFunction returns a new function.
@@ -44,17 +45,32 @@ func (f *Function) Body() Expr {
 	return f.body
 }
 
+// isColumnOnly reports whether the ident formal is only read as ident.attr
+// (or as the row extended by +>), never as a Value. Cached on the Function
+// so plan eval does not re-walk the body (🎯T29.9).
+func (f *Function) isColumnOnly() bool {
+	if ident, ok := f.arg.(IdentPattern); ok {
+		switch atomic.LoadUint32(&f.columnOnly) {
+		case 1:
+			return true
+		case 2:
+			return false
+		}
+		if !usesIdentAsValue(f.body, string(ident)) {
+			atomic.StoreUint32(&f.columnOnly, 1)
+			return true
+		}
+		atomic.StoreUint32(&f.columnOnly, 2)
+	}
+	return false
+}
+
 // Hash computes a hash for a Function. Functions are compared by identity
 // (see EqualFunction), so the hash is derived from the node's address rather
 // than from formatting its body, which is expensive and, for recursive
 // functions, self-referential.
-func (f *Function) Hash(seed uintptr) uintptr {
-	return f.Hash128().Seeded(seed)
-}
-
-// Hash128 computes the 128-bit hash of a Function, by identity.
-func (f *Function) Hash128() hash128.H128 {
-	return hash128.Uintptr(uintptr(unsafe.Pointer(f)))
+func (f *Function) Hash() uintptr {
+	return mix(funcSalt, uintptr(unsafe.Pointer(f)))
 }
 
 // Equal tests two Values for equality. Any other type returns false.

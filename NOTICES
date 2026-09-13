@@ -7,7 +7,7 @@ upstream repository.
 
 ## Apache-2.0
 
-- github.com/arr-ai/frozen
+- github.com/arr-ai/frozen/v2
 - github.com/arr-ai/hash
 - github.com/arr-ai/wbnf
 - github.com/spf13/afero

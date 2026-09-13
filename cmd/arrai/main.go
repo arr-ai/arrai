@@ -102,6 +102,10 @@ func main() {
 		}, profilerFlags...)
 		app.Before = func(c *cli.Context) error {
 			if helpAgent {
+				if err := cli.ShowAppHelp(c); err != nil {
+					return err
+				}
+				fmt.Print("\n")
 				fmt.Print(agentsGuide)
 				stopProfilers()
 				os.Exit(0)

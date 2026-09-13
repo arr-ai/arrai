@@ -46,6 +46,50 @@ func TestWhereEqAttrIndex(t *testing.T) {
 	AssertCodesEvalToSameValue(t, `{2}`, `let k = 2; {1, 2, 3} where . = k`)
 }
 
+// Conjunctive `.attr = k && .other = v` is answered by intersecting per-column
+// indexes (🎯T29.1). Mixed predicates still fall back to the scan.
+func TestWhereConjEqAttrIndex(t *testing.T) {
+	t.Parallel()
+
+	const rel = `let r = {(a: 1, b: 'x', c: 1), (a: 2, b: 'y', c: 1), (a: 2, b: 'z', c: 2), (a: 3, b: 'x', c: 1)};`
+
+	AssertCodesEvalToSameValue(t, `{(a: 2, b: 'y', c: 1)}`, rel+`r where .a = 2 && .b = 'y'`)
+	AssertCodesEvalToSameValue(t, `{(a: 2, b: 'y', c: 1)}`, rel+`r where .b = 'y' && .a = 2`)
+	AssertCodesEvalToSameValue(t, `{(a: 2, b: 'z', c: 2)}`,
+		rel+`let k = 2; let v = 'z'; r where .a = k && .b = v`)
+	AssertCodesEvalToSameValue(t, `{(a: 2, b: 'y', c: 1)}`,
+		rel+`r where .a = 2 && .b = 'y' && .c = 1`)
+	AssertCodesEvalToSameValue(t, `{}`, rel+`r where .a = 2 && .b = 'x'`)
+	AssertCodesEvalToSameValue(t, `{}`, rel+`let k = 9; r where .a = k && .b = 'y'`)
+
+	// Missing attr still errors on the scan fallback.
+	AssertCodeErrors(t, ``, rel+`r where .a = 2 && .d = 1`)
+
+	// A non-eq conjunct is not indexed as a conjunction; the scan is correct.
+	AssertCodesEvalToSameValue(t, `{(a: 2, b: 'y', c: 1)}`, rel+`r where .a = 2 && .b != 'z'`)
+
+	// Pushdown through an unchanged project of both attrs.
+	AssertCodesEvalToSameValue(t, `{(a: 2, b: 'y')}`,
+		rel+`(r => (a: .a, b: .b)) where .a = 2 && .b = 'y'`)
+}
+
+// Column predicates scan the arena (🎯T29.5).
+func TestWhereColumnPred(t *testing.T) {
+	t.Parallel()
+
+	const rel = `let r = {(a: 1, rest: 1, t: 'x'), (a: 2, rest: 0, t: 'y'), (a: 3, rest: 1, t: 'z')};`
+	AssertCodesEvalToSameValue(t, `{(a: 1, rest: 1, t: 'x'), (a: 3, rest: 1, t: 'z')}`, rel+`r where .rest`)
+	AssertCodesEvalToSameValue(t, `{(a: 2, rest: 0, t: 'y')}`, rel+`r where !.rest`)
+	AssertCodesEvalToSameValue(t, `{(a: 1, rest: 1, t: 'x'), (a: 3, rest: 1, t: 'z')}`, rel+`r where .t != 'y'`)
+	AssertCodesEvalToSameValue(t, `{(a: 1, rest: 1, t: 'x'), (a: 3, rest: 1, t: 'z')}`,
+		rel+`let k = 'y'; r where k != .t`)
+	AssertCodesEvalToSameValue(t, `{(a: 1, rest: 1, t: 'x')}`, rel+`r where .t <: {'x', 'w'}`)
+	AssertCodesEvalToSameValue(t, `{(a: 2, rest: 0, t: 'y'), (a: 3, rest: 1, t: 'z')}`,
+		rel+`r where .t !<: {'x'}`)
+	AssertCodesEvalToSameValue(t, `{(a: 1, rest: 1, t: 'x'), (a: 3, rest: 1, t: 'z')}`,
+		rel+`let enum = {(typeName: 'y')}; r where .t !<: (enum => .typeName)`)
+}
+
 // Function application returns its single result directly. These cases pin
 // the result kinds that used to round-trip through a one-element set.
 func TestCallReturnsResultDirectly(t *testing.T) {

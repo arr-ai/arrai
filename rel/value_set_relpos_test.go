@@ -249,7 +249,7 @@ func TestPositionalRelationWhereSharesStore(t *testing.T) {
 	assert.Same(t, r, all)
 	rebuilt := newPositionalRelation(2, row(4, 40), row(3, 30), row(2, 20), row(1, 10))
 	assert.True(t, r.EqualPositionalRelation(rebuilt))
-	assert.Equal(t, r.Hash128(), rebuilt.Hash128())
+	assert.Equal(t, r.Hash(), rebuilt.Hash())
 	assert.False(t, r.EqualPositionalRelation(even))
 }
 

@@ -1,8 +1,6 @@
 package rel
 
 import (
-	"github.com/arr-ai/hash/hash128"
-
 	"context"
 	"fmt"
 	"reflect"
@@ -11,7 +9,7 @@ import (
 
 	"github.com/iancoleman/strcase"
 
-	"github.com/arr-ai/frozen"
+	"github.com/arr-ai/frozen/v2"
 	"github.com/arr-ai/wbnf/parser"
 	"github.com/go-errors/errors"
 )
@@ -40,7 +38,6 @@ type Value interface {
 	fmt.Formatter
 
 	frozen.Key[Value]
-	hash128.Hashable
 
 	// Values are Exprs.
 	Expr
@@ -99,7 +96,7 @@ type Tuple interface {
 	Get(name string) (Value, bool)
 	MustGet(name string) Value
 	HasName(name string) bool
-	Names() Names
+	Names() Names // interned attribute set (a Shape)
 	Enumerator() AttrEnumerator
 
 	// Transform

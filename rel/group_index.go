@@ -1,23 +1,19 @@
 package rel
 
-import (
-	"github.com/arr-ai/hash/hash128"
-)
-
 // groupIndex maps each distinct projection of a view's rows to the rows
 // sharing it, and backs joins and index-answered `where`. Buckets are keyed
-// by the 128-bit hash of the projected values, and each bucket remembers one
+// by the hash of the projected values, and each bucket remembers one
 // representative row — the key *is* that row's projection, so keys are never
 // materialised. Distinct keys colliding on their hash chain through next;
-// with 128-bit hashes that is theoretical, but probes still verify the key
-// against the representative rather than trusting the hash.
+// probes still verify the key against the representative rather than
+// trusting the hash.
 //
 // Rows are recorded as arena ids of the view's store, ascending, so a bucket
 // can back a view of the same store directly (selView).
 type groupIndex struct {
 	rel *positionalRelation
 	p   valueProjector
-	m   map[hash128.H128]*groupBucket
+	m   map[uintptr]*groupBucket
 	// base, when non-nil, is the scanned parent index this view filters.
 	// Probes restrict parent buckets to rows in rel; no copy of the map.
 	base *groupIndex
@@ -31,12 +27,12 @@ type groupBucket struct {
 	next *groupBucket
 }
 
-// hashOf hashes p's projection of row, matching projectedValues.Hash128 and
+// hashOf hashes p's projection of row, matching projectedValues.Hash and
 // the hash of the projected values as a plain row.
-func (p valueProjector) hashOf(row Values) hash128.H128 {
+func (p valueProjector) hashOf(row Values) uintptr {
 	h := valuesSalt
 	for _, i := range p {
-		h = h.Mix(row[i].Hash128())
+		h = mix(h, row[i].Hash())
 	}
 	return h
 }
@@ -44,7 +40,7 @@ func (p valueProjector) hashOf(row Values) hash128.H128 {
 // newGroupIndex groups a view's rows by p. Callers go through
 // positionalRelation.groupBy, which memoises per view.
 func newGroupIndex(r *positionalRelation, p valueProjector) *groupIndex {
-	g := &groupIndex{rel: r, p: p, m: make(map[hash128.H128]*groupBucket, r.n)}
+	g := &groupIndex{rel: r, p: p, m: make(map[uintptr]*groupBucket, r.n)}
 	for i := 0; i < r.n; i++ {
 		row := r.rowAt(i)
 		h := p.hashOf(row)
@@ -67,12 +63,6 @@ func newGroupIndex(r *positionalRelation, p valueProjector) *groupIndex {
 // projection of b. The projectors must have the same length.
 func projectionsEqual(a Values, pa valueProjector, b Values, pb valueProjector) bool {
 	for i := range pa {
-		if hashIdentity {
-			if a[pa[i]].Hash128() != b[pb[i]].Hash128() {
-				return false
-			}
-			continue
-		}
 		if !a[pa[i]].Equal(b[pb[i]]) {
 			return false
 		}
@@ -133,7 +123,7 @@ func (g *groupIndex) getKey(key ...Value) ([]uint32, bool) {
 	src := g.source()
 	h := valuesSalt
 	for _, v := range key {
-		h = h.Mix(v.Hash128())
+		h = mix(h, v.Hash())
 	}
 	for b := src.m[h]; b != nil; b = b.next {
 		rep := src.repRow(b)

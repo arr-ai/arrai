@@ -4,7 +4,7 @@ import (
 	"runtime"
 	"sync"
 
-	"github.com/arr-ai/frozen"
+	"github.com/arr-ai/frozen/v2"
 )
 
 // Element-wise parallelism for evaluator operations that run an arr.ai

@@ -25,7 +25,7 @@ const benchStrTemplateCode = `//seq.join("\n",
 // Sorting strings: Less-heavy.
 const benchStrSortCode = `(//seq.repeat(3000, [0]) => $"key-${(.@ * 7919) % 3000}") orderby .`
 
-// Set-of-strings membership and dedupe: Hash128- and Equal-heavy.
+// Set-of-strings membership and dedupe: Hash- and Equal-heavy.
 const benchStrSetCode = `(//seq.repeat(5000, [0]) => $"name-${.@ % 1250}") count`
 
 func BenchmarkStrConcat(b *testing.B)   { benchEvalLoop(b, benchStrConcatCode) }

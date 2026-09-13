@@ -14,25 +14,9 @@ func BenchmarkSetEqual(b *testing.B) {
 	t := s
 	b.ReportAllocs()
 	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		if !s.Equal(t) {
 			b.Fatal("expected equal")
 		}
-	}
-}
-
-func BenchmarkHashIdentityRelationHas(b *testing.B) {
-	r := benchRelation(b)
-	probe := NewTuple(
-		NewAttr("id", NewNumber(0)),
-		NewAttr("cust", NewNumber(0)),
-		NewAttr("sku", NewNumber(0)),
-		NewAttr("qty", NewNumber(1)),
-		NewAttr("region", NewString([]rune("r0"))),
-	)
-	b.ReportAllocs()
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		_ = r.Has(probe)
 	}
 }

@@ -6,7 +6,7 @@ The ultimate data engine.
 
 ## Install
 
-On a Unix-like OS, [install Go](https://golang.org/doc/install) (1.15 or above),
+On a Unix-like OS, [install Go](https://golang.org/doc/install) (1.25 or above),
 then:
 
 ```bash
@@ -25,18 +25,18 @@ If you use an agentic coding tool, see
 
 ## Learn
 
-Follow the [Arr.ai tutorial](docs/tutorial/README.md) for a step by step guide
-into the world of arr.ai programming.
+Follow the [Arr.ai tutorial](https://arr.ai/docs/tutorial/overview) for a step
+by step guide into the world of arr.ai programming.
 
-See the [Introduction to Arr.ai](docs/README.md) to learn more about the arr.ai
-language.
+See the [Introduction to Arr.ai](https://arr.ai/docs/lang/intro) to learn more
+about the arr.ai language.
 
-See the [Standard Library Reference](docs/std.md) to learn what batteries
-are included in arr.ai.
+See the [Standard Library Reference](https://arr.ai/docs/std/overview) to learn
+what batteries are included in arr.ai.
 
 ### Arr.ai Examples
 
-1. [Snippets](docs/example.md)
+1. [Snippets](https://arr.ai/docs/examples/example)
 2. [More complete examples](examples)
 
 ## Use
@@ -71,11 +71,11 @@ $ ai
 ```
 
 There are more features in the interactive shell. For more info please read the
-[shell tutorial](docs/tutorial/shell.md).
+[shell tutorial](https://arr.ai/docs/lang/shell).
 
 ### Evaluate an expression
 
-(See [here](docs/cmdline/eval.md) for a full description of `eval`.)
+(See [here](https://arr.ai/docs/cli/eval) for a full description of `eval`.)
 
 ```bash
 arrai eval '41 + 1'
@@ -98,7 +98,7 @@ echo {0..10} | ax '2^.'
 
 ### Run an arrai file
 
-(See [here](docs/cmdline/eval.md) for a full description of `run`.)
+(See [here](https://arr.ai/docs/cli/run) for a full description of `run`.)
 
 ```bash
 arrai path/to/file.arrai
@@ -132,3 +132,7 @@ arrai observe localhost '$'
 arrai update localhost '(a: {1, 2, 3}, b: "hello")'
 arrai u localhost '$ + (a: $.a | {4, 5, 6})'
 ```
+
+## Licence
+
+Licensed under the [Apache License 2.0](LICENSE).

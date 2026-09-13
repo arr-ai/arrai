@@ -79,15 +79,15 @@ func TestRelationUnion(t *testing.T) {
 	)
 }
 
-// TestRelationHash128AgreesWithEqualRegardlessOfAttrOrder guards against a
+// TestRelationHashAgreesWithEqualRegardlessOfAttrOrder guards against a
 // hash/equals contract violation: EqualRelation canonicalizes rows into
 // sorted-attribute-name order before comparing, so two relations with the
 // same tuples but different internal attribute ordering (e.g. produced by
-// different join/projection paths) are Equal. Hash128 must agree, or a
+// different join/projection paths) are Equal. Hash must agree, or a
 // Set/Map keyed on Relation values can silently fail to recognize an
 // existing equal entry depending on which internal ordering it happens to
 // have (see https://github.com/arr-ai/arrai/issues/PLACEHOLDER).
-func TestRelationHash128AgreesWithEqualRegardlessOfAttrOrder(t *testing.T) {
+func TestRelationHashAgreesWithEqualRegardlessOfAttrOrder(t *testing.T) {
 	t.Parallel()
 
 	r1 := newRelation(
@@ -102,7 +102,7 @@ func TestRelationHash128AgreesWithEqualRegardlessOfAttrOrder(t *testing.T) {
 	)
 
 	assert.True(t, r1.EqualRelation(r2), "relations should be equal regardless of internal attribute order")
-	assert.Equal(t, r1.Hash128(), r2.Hash128(), "equal relations must hash the same")
+	assert.Equal(t, r1.Hash(), r2.Hash(), "equal relations must hash the same")
 }
 
 func TestRelationHas(t *testing.T) {

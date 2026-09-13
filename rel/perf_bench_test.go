@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/arr-ai/frozen"
+	"github.com/arr-ai/frozen/v2"
 )
 
 // ---------------------------------------------------------------------------
@@ -63,7 +63,7 @@ func BenchmarkPerfNumberEqualMatch(b *testing.B) {
 	b.ReportAllocs()
 	a := NewNumber(42)
 	c := NewNumber(42)
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		_ = a.Equal(c)
 	}
 }
@@ -72,7 +72,7 @@ func BenchmarkPerfNumberEqualMismatch(b *testing.B) {
 	b.ReportAllocs()
 	a := NewNumber(42)
 	c := NewNumber(99)
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		_ = a.Equal(c)
 	}
 }
@@ -83,7 +83,7 @@ func BenchmarkPerfTupleEqual(b *testing.B) {
 			b.ReportAllocs()
 			t1 := perfMakeTuple(n)
 			t2 := perfMakeTuple(n)
-			for i := 0; i < b.N; i++ {
+			for b.Loop() {
 				_ = t1.Equal(t2)
 			}
 		})
@@ -100,7 +100,7 @@ func BenchmarkPerfStringEqual(b *testing.B) {
 			}
 			s1 := NewString(runes)
 			s2 := NewString(runes)
-			for i := 0; i < b.N; i++ {
+			for b.Loop() {
 				_ = s1.(Value).Equal(s2.(Value))
 			}
 		})
@@ -119,7 +119,7 @@ func BenchmarkPerfTupleCreate(b *testing.B) {
 		}
 		b.Run(fmt.Sprintf("attrs=%d", n), func(b *testing.B) {
 			b.ReportAllocs()
-			for i := 0; i < b.N; i++ {
+			for b.Loop() {
 				_ = NewTuple(attrs...)
 			}
 		})
@@ -132,7 +132,7 @@ func BenchmarkPerfTupleGet(b *testing.B) {
 			b.ReportAllocs()
 			t := perfMakeTuple(n)
 			key := fmt.Sprintf("a%d", n/2)
-			for i := 0; i < b.N; i++ {
+			for b.Loop() {
 				_, _ = t.Get(key)
 			}
 		})
@@ -145,7 +145,7 @@ func BenchmarkPerfTupleMustGet(b *testing.B) {
 			b.ReportAllocs()
 			t := perfMakeTuple(n)
 			key := fmt.Sprintf("a%d", n/2)
-			for i := 0; i < b.N; i++ {
+			for b.Loop() {
 				_ = t.MustGet(key)
 			}
 		})
@@ -162,7 +162,7 @@ func BenchmarkPerfTupleProject(b *testing.B) {
 				b.ReportAllocs()
 				t := perfMakeTuple(totalAttrs)
 				names := perfMakeNames(projSize)
-				for i := 0; i < b.N; i++ {
+				for b.Loop() {
 					_ = t.Project(names)
 				}
 			})
@@ -175,7 +175,7 @@ func BenchmarkPerfTupleNames(b *testing.B) {
 		b.Run(fmt.Sprintf("attrs=%d", n), func(b *testing.B) {
 			b.ReportAllocs()
 			t := perfMakeTuple(n)
-			for i := 0; i < b.N; i++ {
+			for b.Loop() {
 				_ = t.Names()
 			}
 		})
@@ -187,7 +187,7 @@ func BenchmarkPerfTupleEnumerator(b *testing.B) {
 		b.Run(fmt.Sprintf("attrs=%d", n), func(b *testing.B) {
 			b.ReportAllocs()
 			t := perfMakeTuple(n)
-			for i := 0; i < b.N; i++ {
+			for b.Loop() {
 				e := t.Enumerator()
 				for e.MoveNext() {
 					_, _ = e.Current()
@@ -203,7 +203,7 @@ func BenchmarkPerfTupleWith(b *testing.B) {
 			b.ReportAllocs()
 			t := perfMakeTuple(n)
 			val := NewNumber(999)
-			for i := 0; i < b.N; i++ {
+			for b.Loop() {
 				_ = t.With("newattr", val)
 			}
 		})
@@ -217,7 +217,7 @@ func BenchmarkPerfTupleGetBucket(b *testing.B) {
 		b.Run(fmt.Sprintf("attrs=%d", n), func(b *testing.B) {
 			b.ReportAllocs()
 			t := perfMakeTuple(n)
-			for i := 0; i < b.N; i++ {
+			for b.Loop() {
 				_ = t.(Value).getBucket()
 			}
 		})
@@ -234,7 +234,7 @@ func BenchmarkPerfSetWith(b *testing.B) {
 			b.ReportAllocs()
 			s := perfMakeNumberSet(n)
 			extra := NewNumber(float64(n + 1))
-			for i := 0; i < b.N; i++ {
+			for b.Loop() {
 				_ = s.With(extra)
 			}
 		})
@@ -249,7 +249,7 @@ func BenchmarkPerfSetBuilderAddNumbers(b *testing.B) {
 		}
 		b.Run(fmt.Sprintf("size=%d", n), func(b *testing.B) {
 			b.ReportAllocs()
-			for i := 0; i < b.N; i++ {
+			for b.Loop() {
 				sb := frozen.NewSetBuilder[Value](n)
 				for _, v := range vals {
 					sb.Add(v)
@@ -273,7 +273,7 @@ func BenchmarkPerfSetBuilderAddTuples(b *testing.B) {
 		}
 		b.Run(fmt.Sprintf("size=%d", n), func(b *testing.B) {
 			b.ReportAllocs()
-			for i := 0; i < b.N; i++ {
+			for b.Loop() {
 				sb := NewSetBuilder()
 				for _, t := range tuples {
 					sb.Add(t)
@@ -290,7 +290,7 @@ func BenchmarkPerfSetHas(b *testing.B) {
 			b.ReportAllocs()
 			s := perfMakeNumberSet(n)
 			target := NewNumber(float64(n / 2))
-			for i := 0; i < b.N; i++ {
+			for b.Loop() {
 				_ = s.Has(target)
 			}
 		})
@@ -302,7 +302,7 @@ func BenchmarkPerfSetEnumerator(b *testing.B) {
 		b.Run(fmt.Sprintf("size=%d", n), func(b *testing.B) {
 			b.ReportAllocs()
 			s := perfMakeNumberSet(n)
-			for i := 0; i < b.N; i++ {
+			for b.Loop() {
 				e := s.Enumerator()
 				for e.MoveNext() {
 					_ = e.Current()
@@ -318,7 +318,7 @@ func BenchmarkPerfSetEqual(b *testing.B) {
 			b.ReportAllocs()
 			s1 := perfMakeNumberSet(n)
 			s2 := perfMakeNumberSet(n)
-			for i := 0; i < b.N; i++ {
+			for b.Loop() {
 				_ = s1.Equal(s2)
 			}
 		})
@@ -335,7 +335,7 @@ func BenchmarkPerfSetUnion(b *testing.B) {
 				sb.Add(NewNumber(float64(i)))
 			}
 			s2 := GenericSet{set: sb.Finish()}
-			for i := 0; i < b.N; i++ {
+			for b.Loop() {
 				_ = Union(s1, s2)
 			}
 		})
@@ -356,7 +356,7 @@ func BenchmarkPerfNamesIntersect(b *testing.B) {
 				s[i] = fmt.Sprintf("a%d", i+n/2)
 			}
 			names2 := NewNames(s...)
-			for i := 0; i < b.N; i++ {
+			for b.Loop() {
 				_ = names1.Intersect(names2)
 			}
 		})
@@ -369,7 +369,7 @@ func BenchmarkPerfNamesEqual(b *testing.B) {
 			b.ReportAllocs()
 			names1 := perfMakeNames(n)
 			names2 := perfMakeNames(n)
-			for i := 0; i < b.N; i++ {
+			for b.Loop() {
 				_ = names1.Equal(names2)
 			}
 		})
@@ -381,7 +381,7 @@ func BenchmarkPerfNamesOrderedNames(b *testing.B) {
 		b.Run(fmt.Sprintf("size=%d", n), func(b *testing.B) {
 			b.ReportAllocs()
 			names := perfMakeNames(n)
-			for i := 0; i < b.N; i++ {
+			for b.Loop() {
 				_ = names.OrderedNames()
 			}
 		})
@@ -391,7 +391,7 @@ func BenchmarkPerfNamesOrderedNames(b *testing.B) {
 func BenchmarkPerfNamesCount(b *testing.B) {
 	b.ReportAllocs()
 	names := perfMakeNames(5)
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		_ = names.Count()
 	}
 }
@@ -399,8 +399,8 @@ func BenchmarkPerfNamesCount(b *testing.B) {
 func BenchmarkPerfNamesHash(b *testing.B) {
 	b.ReportAllocs()
 	names := perfMakeNames(5)
-	for i := 0; i < b.N; i++ {
-		_ = names.Hash(0)
+	for b.Loop() {
+		_ = names.Hash()
 	}
 }
 
@@ -410,7 +410,7 @@ func BenchmarkPerfNamesHas(b *testing.B) {
 			b.ReportAllocs()
 			names := perfMakeNames(n)
 			target := fmt.Sprintf("a%d", n/2)
-			for i := 0; i < b.N; i++ {
+			for b.Loop() {
 				_ = names.Has(target)
 			}
 		})
@@ -428,7 +428,7 @@ func BenchmarkPerfRelationAttrsGenericSet(b *testing.B) {
 		b.Run(fmt.Sprintf("size=%d", n), func(b *testing.B) {
 			b.ReportAllocs()
 			s := perfMakeGenericSet(n, 3)
-			for i := 0; i < b.N; i++ {
+			for b.Loop() {
 				_, _ = RelationAttrs(s) //nolint:errcheck
 			}
 		})
@@ -441,7 +441,7 @@ func BenchmarkPerfRelationAttrsRelation(b *testing.B) {
 		b.Run(fmt.Sprintf("size=%d", n), func(b *testing.B) {
 			b.ReportAllocs()
 			_, r := generateRelations(n / 3)
-			for i := 0; i < b.N; i++ {
+			for b.Loop() {
 				_, _ = RelationAttrs(r) //nolint:errcheck
 			}
 		})
@@ -456,7 +456,7 @@ func BenchmarkPerfGenericJoinGroupBy(b *testing.B) {
 			g1, g2 := genericSetTuples(n)
 			names := NewNames("b")
 			b.ResetTimer()
-			for i := 0; i < b.N; i++ {
+			for b.Loop() {
 				var mb frozen.MapBuilder[Value, any]
 				accumulate := func(s Set, slotKey int) {
 					for e := s.Enumerator(); e.MoveNext(); {
@@ -489,7 +489,7 @@ func BenchmarkPerfRelationJoinDirect(b *testing.B) {
 			left := r1.attrs
 			right := r2.attrs.minus(r1.attrs)
 			b.ResetTimer()
-			for i := 0; i < b.N; i++ {
+			for b.Loop() {
 				_ = r1.Join(r2, common, left, right)
 			}
 		})
@@ -508,7 +508,7 @@ func BenchmarkPerfTupleProjectInLoop(b *testing.B) {
 				tuples = append(tuples, e.Current().(Tuple))
 			}
 			b.ResetTimer()
-			for i := 0; i < b.N; i++ {
+			for b.Loop() {
 				for _, t := range tuples {
 					_ = t.Project(projNames)
 				}
@@ -532,7 +532,7 @@ func BenchmarkPerfMergeTuples(b *testing.B) {
 			}
 			t1 := NewTuple(attrs1...)
 			t2 := NewTuple(attrs2...)
-			for i := 0; i < b.N; i++ {
+			for b.Loop() {
 				_ = Merge(t1, t2)
 			}
 		})
@@ -544,22 +544,22 @@ func BenchmarkPerfValueHash(b *testing.B) {
 	b.Run("Number", func(b *testing.B) {
 		b.ReportAllocs()
 		v := NewNumber(42)
-		for i := 0; i < b.N; i++ {
-			_ = v.Hash(0)
+		for b.Loop() {
+			_ = v.Hash()
 		}
 	})
 	b.Run("Tuple/3", func(b *testing.B) {
 		b.ReportAllocs()
 		v := perfMakeTuple(3)
-		for i := 0; i < b.N; i++ {
-			_ = v.Hash(0)
+		for b.Loop() {
+			_ = v.Hash()
 		}
 	})
 	b.Run("Tuple/5", func(b *testing.B) {
 		b.ReportAllocs()
 		v := perfMakeTuple(5)
-		for i := 0; i < b.N; i++ {
-			_ = v.Hash(0)
+		for b.Loop() {
+			_ = v.Hash()
 		}
 	})
 }

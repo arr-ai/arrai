@@ -3,12 +3,11 @@ package rel
 import (
 	"testing"
 
-	"github.com/arr-ai/hash/hash128"
 	"github.com/stretchr/testify/assert"
 )
 
-// TestSpecializedTupleHash128AgreesWithGenericTuple guards against a
-// regression like the one fixed in Relation/Dict.Hash128: GenericTuple.Equal
+// TestSpecializedTupleHashAgreesWithGenericTuple guards against a
+// regression like the one fixed in Relation/Dict.Hash: GenericTuple.Equal
 // is permissive across kinds (it compares against any Tuple, including
 // these specialized ones), even though each specialized kind's own Equal is
 // narrower (it only matches its own kind). So a specialized tuple and its
@@ -16,7 +15,7 @@ import (
 // claimed equal — generic.Equal(specialized) — or a hash-based Set/Map can
 // fail to recognize them as duplicates depending on which representation
 // it happens to hold.
-func TestSpecializedTupleHash128AgreesWithGenericTuple(t *testing.T) {
+func TestSpecializedTupleHashAgreesWithGenericTuple(t *testing.T) {
 	t.Parallel()
 
 	cases := []struct {
@@ -33,15 +32,10 @@ func TestSpecializedTupleHash128AgreesWithGenericTuple(t *testing.T) {
 			t.Parallel()
 			generic := c.t.(interface{ asGenericTuple() Tuple }).asGenericTuple()
 
-			if hashIdentity {
-				assert.True(t, c.t.Equal(generic),
-					"hashidentity Equal is Hash128, which agrees across representations")
-			} else {
-				assert.False(t, c.t.Equal(generic),
-					"specialized tuple's own Equal is narrower and doesn't match a generic tuple (by design)")
-			}
+			assert.False(t, c.t.Equal(generic),
+				"specialized tuple's own Equal is narrower and doesn't match a generic tuple (by design)")
 			assert.True(t, generic.Equal(c.t), "generic tuple must equal its specialized equivalent")
-			assert.Equal(t, generic.(*GenericTuple).Hash128(), c.t.(interface{ Hash128() hash128.H128 }).Hash128(),
+			assert.Equal(t, generic.(*GenericTuple).Hash(), c.t.Hash(),
 				"specialized tuple and its generic equivalent must hash the same, since generic.Equal considers them equal")
 		})
 	}

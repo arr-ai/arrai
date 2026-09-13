@@ -1,15 +1,13 @@
 package rel
 
 import (
-	"github.com/arr-ai/hash/hash128"
-
 	"context"
 	"fmt"
 	"reflect"
 
 	"github.com/arr-ai/arrai/pkg/fu"
 
-	"github.com/arr-ai/frozen"
+	"github.com/arr-ai/frozen/v2"
 	"github.com/arr-ai/wbnf/parser"
 )
 
@@ -57,13 +55,8 @@ func (TrueSet) Equal(i Value) bool {
 	return is
 }
 
-func (t TrueSet) Hash(seed uintptr) uintptr {
-	return t.Hash128().Seeded(seed)
-}
-
-// Hash128 computes the 128-bit hash of {()}.
-func (TrueSet) Hash128() hash128.H128 {
-	return EmptyTuple.Hash128()
+func (t TrueSet) Hash() uintptr {
+	return hashSet(EmptyTuple.Hash())
 }
 
 func (t TrueSet) Eval(ctx context.Context, local Scope) (Value, error) {

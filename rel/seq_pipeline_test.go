@@ -36,7 +36,7 @@ func TestSeqPipelineNStageMaterialisesOnce(t *testing.T) {
 	assert.True(t, got.Equal(want), "%s vs %s", got, want)
 	got2, err := p.force()
 	require.NoError(t, err)
-	assert.Equal(t, got.Hash128(), got2.Hash128())
+	assert.Equal(t, got.Hash(), got2.Hash())
 }
 
 func TestSeqArrowExprReturnsPipeline(t *testing.T) {

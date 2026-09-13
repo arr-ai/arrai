@@ -3,15 +3,13 @@ package rel
 import (
 	"slices"
 
-	"github.com/arr-ai/hash/hash128"
-
 	"context"
 	"fmt"
 	"reflect"
 
 	"github.com/go-errors/errors"
 
-	"github.com/arr-ai/frozen"
+	"github.com/arr-ai/frozen/v2"
 	"github.com/arr-ai/wbnf/parser"
 
 	"github.com/arr-ai/arrai/pkg/fu"
@@ -34,13 +32,8 @@ func (m multipleValues) Equal(n interface{}) bool {
 	return false
 }
 
-func (m multipleValues) Hash(seed uintptr) uintptr {
-	return frozen.Set[Value](m).Hash(seed)
-}
-
-// Hash128 computes the 128-bit hash of the set of values.
-func (m multipleValues) Hash128() hash128.H128 {
-	return frozen.Set[Value](m).Hash128()
+func (m multipleValues) Hash() uintptr {
+	return frozen.Set[Value](m).Hash()
 }
 
 func (m multipleValues) String() string {
@@ -107,35 +100,23 @@ func NewDict(allowDupKeys bool, entries ...DictEntryTuple) (Set, error) {
 	return newDict(mb.Finish()), nil
 }
 
-func (d Dict) Hash(seed uintptr) uintptr {
-	return d.Hash128().Seeded(seed)
-}
-
-// Hash128 computes the 128-bit hash of a Dict: the xor of its entry tuples,
-// computed once per Dict. This must agree with the hash of an equal generic
-// Set of the same (@, @value) entry tuples — Dict.Equal treats the two as
-// equal — so, unlike other kinds, Dict does NOT mix in a kind-specific salt:
-// a non-empty Dict hashes exactly like GenericSet (plain xor of elements),
-// and an empty Dict hashes exactly like EmptySet (emptySetSalt), since
-// Dict{}.Equal(EmptySet{}) is also true.
-func (d Dict) Hash128() hash128.H128 {
+// Hash is the frozen set-hash of the entry tuples, so it agrees with an
+// equal GenericSet of those entries. The map's own Hash() uses a different
+// salt and must not be used. Empty hashes like EmptySet.
+func (d Dict) Hash() uintptr {
 	if d.hash == nil {
-		return emptySetSalt
+		return frozen.Set[Value]{}.Hash()
 	}
-	return d.hash.get(func() hash128.H128 {
-		var h hash128.H128
+	return d.hash.get(func() uintptr {
+		var b frozen.SetBuilder[Value]
 		for e := d.Enumerator(); e.MoveNext(); {
-			h = h.Xor(e.Current().Hash128())
+			b.Add(e.Current())
 		}
-		return h
+		return b.Finish().Hash()
 	})
 }
 
 func (d Dict) Equal(v Value) bool {
-	if hashIdentity {
-		s, ok := v.(Set)
-		return ok && d.Hash128() == s.Hash128()
-	}
 	switch v := v.(type) {
 	case Dict:
 		return d.equalDict(v)

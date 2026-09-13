@@ -1,8 +1,6 @@
 package rel
 
 import (
-	"github.com/arr-ai/hash/hash128"
-
 	"context"
 	"fmt"
 	"reflect"
@@ -25,13 +23,8 @@ func NewClosure(scope Scope, f *Function) Closure {
 }
 
 // Hash computes a hash for a Closure.
-func (c Closure) Hash(seed uintptr) uintptr {
-	return c.f.Hash(seed)
-}
-
-// Hash128 computes the 128-bit hash of a Closure, by its function's identity.
-func (c Closure) Hash128() hash128.H128 {
-	return c.f.Hash128()
+func (c Closure) Hash() uintptr {
+	return c.f.Hash()
 }
 
 // Equal tests two Values for equality. Any other type returns false.

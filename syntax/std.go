@@ -11,7 +11,6 @@ import (
 	"sync"
 	"sync/atomic"
 
-	"github.com/arr-ai/hash/hash128"
 	"github.com/arr-ai/wbnf/ast"
 	"github.com/arr-ai/wbnf/parser"
 	"github.com/arr-ai/wbnf/wbnf"
@@ -307,15 +306,15 @@ func newFloatFuncAttr(name string, f func(float64) float64) rel.Attr {
 // per-item parsing), and compiling a WBNF grammar is far more expensive than
 // a parse. Entries are verified with Equal, so a hash collision costs a
 // recompile, never a wrong grammar.
-var compiledGrammars sync.Map // hash128.H128 -> *compiledGrammar
+var compiledGrammars sync.Map // uintptr -> *compiledGrammar
 
 type compiledGrammar struct {
 	grammar rel.Value
 	parsers parser.Parsers
 }
 
-func compileGrammar(v rel.Value) (hash128.H128, parser.Parsers) {
-	key := v.Hash128()
+func compileGrammar(v rel.Value) (uintptr, parser.Parsers) {
+	key := v.Hash()
 	if cached, ok := compiledGrammars.Load(key); ok {
 		if cg := cached.(*compiledGrammar); cg.grammar.Equal(v) {
 			return key, cg.parsers
@@ -341,7 +340,7 @@ var (
 )
 
 type parsedInputKey struct {
-	grammar hash128.H128
+	grammar uintptr
 	rule    string
 	input   string
 }

@@ -3,7 +3,7 @@ package rel
 import (
 	"slices"
 
-	"github.com/arr-ai/frozen"
+	"github.com/arr-ai/frozen/v2"
 )
 
 // Intersect returns every Value from a that is also in b.
