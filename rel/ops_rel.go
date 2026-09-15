@@ -3,7 +3,7 @@ package rel
 import (
 	"fmt"
 
-	"github.com/arr-ai/frozen"
+	"github.com/arr-ai/frozen/v2"
 	"github.com/go-errors/errors"
 )
 
