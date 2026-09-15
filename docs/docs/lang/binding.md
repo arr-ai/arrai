@@ -29,12 +29,12 @@ Try out the following examples to see the first main reason for let-bindings:
 ```arrai
 @> let customer = (name: "Anders", age: 47);
  > let age = customer.age;
- > cond (
+ > cond {
  >     age < 0: "wat?",
  >     0 <= age < 40: "young",
  >     40 <= age < 60: "middle",
- >     *: "old"
- > )
+ >     _: "old"
+ > }
 ```
 
 In the following example, `velocity` illustrates the first main reason, avoiding
@@ -43,10 +43,10 @@ repetition, while `speed` illustrates the second, clarification:
 ```arrai
 @> let v = (x: 0.4, y: 0.7, z: 0.6);
  > let speed = (v.x^2 + v.y^2 + v.z^2)^0.5;
- > cond (
+ > cond {
  >     speed < 1: "too slow",
- >     *: "fast enough"
- > )
+ >     _: "fast enough"
+ > }
 ```
 
 Try a few variations of allowable characters:

@@ -108,6 +108,47 @@ combination of these states.
 The definition of `<&>` given earlier holds true regardless of what `x`, `y`
 and `z` represent.
 
+## Nest and unnest
+
+`nest` and `unnest` convert between a relation and a nested representation
+where one attribute holds a relation of the remaining attributes, grouped by
+whatever's left.
+
+The simplest form, `relation nest attr`, groups tuples by every attribute
+except `attr` and collects the values of `attr` into a set under that same
+name:
+
+```arrai
+@> {|x,y| (1, 2), (1, 3), (2, 4)} nest y
+```
+
+`relation nest |names|attr` is more explicit: the attributes listed in
+`|names|` are the ones nested *away* into `attr`, and the relation is grouped
+by whatever's left:
+
+```arrai
+@> {|x,y,z| (1, 1, 2), (1, 1, 3), (1, 2, 4)} nest |x, y|a
+```
+
+The inverse form, `relation nest ~|names|attr`, nests away every attribute
+*except* the ones listed in `|names|`, grouping by those named attributes:
+
+```arrai
+@> {|x,y,z| (1, 1, 2), (1, 1, 3), (1, 2, 4), (1, 3, 5)} nest ~|z|a
+```
+
+`unnest` reverses `nest`: `relation unnest attr` expects `attr` to hold a
+relation in each tuple, and merges it back into the outer tuple, one output
+tuple per element of the nested relation:
+
+```arrai
+@> {
+    (a: {(x: 1, y: 1)}, z: 2),
+    (a: {(x: 1, y: 1)}, z: 3),
+    (a: {(x: 1, y: 2)}, z: 4),
+} unnest a
+```
+
 ## Rank
 
 The `rank` operator computes the position of each tuple in a relation by a
