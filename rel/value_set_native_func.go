@@ -39,11 +39,6 @@ func lookupNative(name string) *NativeFunction {
 	return nil
 }
 
-// NewNativeLambda returns a nameless function.
-func NewNativeLambda(fn NativeFnBody) Value {
-	return NewNativeFunction("", fn)
-}
-
 // NewNativeFunctionAttr returns a new Attr with a named key and NativeFunction value.
 func NewNativeFunctionAttr(name string, fn NativeFnBody) Attr {
 	return NewAttr(name, NewNativeFunction(name, fn))

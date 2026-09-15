@@ -53,11 +53,6 @@ func (pc ParseContext) MustParse(ctx context.Context, s *parser.Scanner) ast.Bra
 	return ast
 }
 
-// ParseString parses input string and returns the parsed Expr or an error.
-func (pc ParseContext) ParseString(ctx context.Context, s string) (ast.Branch, error) {
-	return pc.Parse(ctx, parser.NewScanner(s))
-}
-
 type StopError struct {
 	err error
 }

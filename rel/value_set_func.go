@@ -74,15 +74,6 @@ func (f *Function) Hash() uintptr {
 }
 
 // Equal tests two Values for equality. Any other type returns false.
-func (f *Function) Equal(i interface{}) bool {
-	// Function equality is undecidable in the general case. Should we panic?
-	if g, ok := i.(*Function); ok {
-		return f.EqualFunction(g)
-	}
-	return false
-}
-
-// Equal tests two Values for equality. Any other type returns false.
 func (f *Function) EqualFunction(g *Function) bool {
 	// Function equality is undecidable in the general case, so functions are
 	// equal iff they are the same compiled node. (Comparing bodies with ==
