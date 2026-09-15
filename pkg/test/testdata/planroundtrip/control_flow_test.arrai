@@ -63,4 +63,10 @@
     # cond condition) caused an 8s parser-backtracking failure; a plain `let`
     # binding avoids whatever ambiguity that caused.
     emptySetPatternLet: (let {} = {}; 1) = 1,
+
+    # `.` is the implicit-subject identifier used throughout arr.ai (`>>`,
+    # `where`, etc. all bind it as a lambda parameter), but it can also be
+    # bound directly via `let`, distinct from the lambda-parameter binding
+    # path exercised everywhere else in this corpus.
+    letDot: (let . = 42; . + 1) = 43,
 )

@@ -9,6 +9,28 @@
     nestedPattern: ([1, [2, 3]] -> \[x, [y, z]] x + y + z) = 6,
     setPattern:    (cond {(y: 1, z: 2)} { {(:y, :z)}: {(y*z)} }) = {(2)},
 
+    # A literal-value pattern (as opposed to an ident/array/tuple/dict/set
+    # pattern) compiles to an ExprPattern, matching only if the value is
+    # exactly equal - untested elsewhere (cond's own pattern matching
+    # apparently doesn't route through Pattern.Bind the same way).
+    exprPatternMatch: (5 -> \5 'matched') = 'matched',
+
+    # Closure.Hash delegates to its underlying *Function's Hash - untested
+    # elsewhere, since the earlier Closure coverage only exercised Negate/
+    # Less/Kind (String-based), never actually hashing one.
+    closureAsSetElement: {\x x, 99} count = 2,
+
+    # extraPattern above only covers a *trailing* array-pattern rest; leading
+    # and middle positions need the matcher to compute the rest slice from
+    # both ends instead of just "everything after a fixed prefix".
+    arrayPatternRestLeading: ([1, 2, 3, 4] -> \[...t, x, y] [t, x, y]) = [[1, 2], 3, 4],
+    arrayPatternRestMiddle:  ([1, 2, 3, 4] -> \[x, ...t, y] [x, t, y]) = [1, [2, 3], 4],
+
+    # A set pattern's rest (`...t`) is "every element not matched by a
+    # literal", a distinct algorithm from an array's positional slice - sets
+    # are unordered, so there's no fixed prefix/suffix to slice around.
+    setPatternRest: ({1, 2, 3} -> \{1, 2, ...t} t) = {3},
+
     # Optional tuple attr (`b?:`) with a fallback default value, used when the
     # attr is missing from the matched tuple - a distinct compile branch
     # (compileTuplePattern's `fall`/`tail` handling) from a plain required attr.
@@ -17,4 +39,14 @@
 
     arrayPatternFallbackUsed:    ([1] -> \[x, ?y:99] [x, y]) = [1, 99],
     arrayPatternFallbackUnused:  ([1, 2] -> \[x, ?y:99] [x, y]) = [1, 2],
+
+    # A lambda value (Closure) is callable like NativeFunction, but its
+    # structural Set-interface methods (Count/Has/Enumerator/With/Without/
+    # Map/Where/ArrayEnumerator) are all panic("unimplemented") stubs -
+    # same class of gap as NativeFunction's, left alone deliberately.
+    # Negate/Less/Kind/EqualFunction are real, working methods though.
+    closureNegate: (let f = \x x; (-f) = (@neg: f)),
+    closureLessCrossKind: !((\x x) < 5),
+    closureLessSameKind: ((\x x) < (\y y)) | ((\y y) < (\x x)),
+    numberLessClosureViaKind: 5 < (\x x),
 )

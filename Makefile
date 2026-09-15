@@ -50,5 +50,13 @@ test: generate
 	[ "$$(go env GOOS)" = "darwin" ] || GOARCH=386 go build ./...
 	make build && ./arrai test
 
+# test-slowpath is a differential oracle: -tags slowpath forces every
+# representation-specific shortcut (see rel/fastpath.go) to its general
+# fallback, so a clean run here means the fast paths agree with the
+# fallbacks on every test in the suite, not just the ones written to target
+# a specific shortcut.
+test-slowpath: generate
+	go test $(GOTESTFLAGS) -tags timingsensitive,slowpath ./...
+
 docker: generate
 	docker build . -t arrai

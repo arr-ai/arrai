@@ -19,4 +19,26 @@ let r2 = {|b,c| (5,7),(6,7)};
     # against a real Relation takes Joiner's GenericJoin fallback instead of
     # the Relation<->Relation fast path every other join case above uses.
     joinDictWithRelation: ({0: 'a', 1: 'b'} <&> {(@: 0, extra: 'x'), (@: 1, extra: 'y')}) count = 2,
+
+    # Every relation elsewhere in this corpus only ever gets compared,
+    # joined, or indexed via `@`; printing one directly (with a matching %v
+    # count so it's individually formatted rather than spread/consumed -
+    # see the large_relation_test.arrai formatProbe for why that matters)
+    # exercises Relation's own Format/String/AttrsName/canonicalRelation.
+    relationFormatProbe: (//log.printf('%v %v', {r1, 99})) count = 2,
+
+    # Unary `-` on a non-empty relation wraps it, distinct from Negate's
+    # own-identity shortcut for an *empty* (IsTrue()==false) relation.
+    relationNegate: (-r1) = (@neg: r1),
+
+    # Calling a relation as a function requires a real `@` attr (unlike r1's
+    # a/b) - a 2-attr relation shaped this way is genuinely a Relation, not
+    # a canonical Dict, since its second attr name isn't @item/@value/etc.
+    relationCallAll: {|@, val| (0, 'a'), (1, 'b')}(0) = 'a',
+
+    # Nesting a relation as a set element (Hash) and unioning it with a
+    # differently-shaped/bucketed relation (getBucket/getSetBuilder) are
+    # both untested by the direct join/compare cases above.
+    relationAsSetElement: {r1, 99} count = 2,
+    relationUnionDifferentShape: (r1 | {(c: 1, d: 2)}) count = 3,
 )

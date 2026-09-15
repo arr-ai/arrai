@@ -35,6 +35,21 @@
     # seqPipeline.Enumerator directly instead of mustArray().Enumerator().
     seqPipelineEnumerator: (([1, 2, 3] >> . + 1) => \x (x.@item + 10)) = {12, 13, 14},
 
+    # Unary `-`/`<`/`!` and nesting-as-a-set-element each reach a seqPipeline
+    # method untested above: Negate/Less/IsTrue (all base-delegating, so no
+    # forcing needed) and Hash/Hash128 (forcing is required, since a set
+    # needs the pipeline's *resulting* elements to bucket/dedupe it).
+    seqPipelineNegate: (-([1, 2, 3] >> . + 1)) = (@neg: [2, 3, 4]),
+    seqPipelineLess: ([1, 2, 3] >> . + 1) < ([4, 5, 6] >> . + 1),
+    seqPipelineIsTrue: !([1, 2, 3] >> . + 1) = false,
+    seqPipelineAsSetElement: {([1, 2, 3] >> . + 1), 99} count = 2,
+
+    # dictPipeline's counterparts to the four seqPipeline cases just above.
+    dictPipelineNegate: (-({'a': 1} >> . + 1)) = (@neg: {'a': 2}),
+    dictPipelineLess: ({'a': 1} >> . + 1) < ({'b': 2} >> . + 1),
+    dictPipelineIsTrue: !({'a': 1} >> . + 1) = false,
+    dictPipelineAsSetElement: {({'a': 1} >> . + 1), 99} count = 2,
+
     emptyArrayEqualsEmptySet: [] = {},
     emptySetEqualsEmptyArray: {} = [],
 
@@ -190,6 +205,15 @@
 
     tupleLiteral: (a: 1, b: 2).a = 1,
     dictLiteral:  {'x': 1, 'y': 2}('x') = 1,
+
+    # Every other Dict in this corpus only ever gets compared or indexed.
+    # //log.printf formats its *enumerated elements*, not the set itself
+    # (it calls ArrayEnumerator then %v's each result) - so printing the
+    # dict directly (one %v) would format its raw *values*, not the dict.
+    # Nesting it as an element of an outer 2-element set, with matching
+    # %v count, formats the dict itself via that element's own Format -
+    # exercising Dict.Format/OrderedEntries and dictEntryTupleLess.
+    dictFormatProbe: (//log.printf('%v %v', {{'x': 1, 'y': 2}, 99})) count = 2,
     setLiteral:   2 <: {1, 2, 3},
 
     # A set mixing element shapes (number, string, tuple) can't canonicalise
@@ -197,6 +221,13 @@
     # value - a distinct encodeValue/decodeValue path from every other set
     # shape in this corpus.
     genericSetMixedShapes: {1, 'a', (x: 1)} = {1, 'a', (x: 1)},
+
+    # A GenericSet nested as a set element (rather than the outermost value,
+    # the only role it plays elsewhere in this corpus) - exercises whatever
+    # the outer set's construction/enumeration needs from a nested Set
+    # element, untested by comparing a bare GenericSet directly (Equal only).
+    genericSetNestedAsElement:
+        (//log.printf('%v %v', {{3, 'a', (x: 1)}, 99})) count = 2,
 
     xstrInterp: $"1 + 1 = ${1 + 1}" = "1 + 1 = 2",
     xstrNested: $"${$"${1}"}" = "1",
@@ -242,6 +273,20 @@
     # fails the fast-path's `count == len(values)` check) both fall through
     # to the generic element-by-element `+` path instead.
     bytesConcatenate:       <<'a', 'b'>> ++ <<'c'>> = <<'a', 'b', 'c'>>,
+
+    # Bytes/String/Array are only ever compared/indexed/concatenated
+    # elsewhere in this corpus - unary `-`, cross-kind/same-kind `<`, and
+    # unioning with a differently-bucketed set were all untested.
+    bytesNegate: (-<<97, 98>>) = (@neg: <<97, 98>>),
+    bytesLessCrossKind: !(<<97, 98>> < 5),
+    bytesLessSameKind: <<97, 98>> < <<97, 99>>,
+    bytesUnionDifferentBucket: (<<97, 98>> | {(x: 1, y: 2)}) count = 3,
+
+    stringNegate: (-'ab') = (@neg: 'ab'),
+    stringUnionDifferentBucket: ('ab' | {(x: 1, y: 2)}) count = 3,
+
+    arrayNegate: (-[1, 2]) = (@neg: [1, 2]),
+    arrayUnionDifferentBucket: ([1, 2] | {(x: 1, y: 2)}) count = 3,
     sparseArrayConcatenate: [1, , 3] ++ [4, 5] = [1, , 3, 4, 5],
 
     # Special-shape tuple literals constant-fold to their own Value types
@@ -251,6 +296,11 @@
     stringCharTupleLiteral: (@: 1, @char: 65) = (@: 1, @char: 65),
     bytesByteTupleLiteral:  (@: 1, @byte: 97) = (@: 1, @byte: 97),
     dictEntryTupleLiteral:  (@: {1, 2}, @value: 3) = (@: {1, 2}, @value: 3),
+
+    # A dict-shaped relation literal with two rows sharing the same key
+    # collects both values under it (multipleValues) rather than erroring
+    # like a plain `{'a': 1, 'a': 2}` dict literal would - untested probe.
+    dictHeadingDupKeyProbe: {|@, @value| (1, 'a'), (1, 'b')} count = 1,
 
     # Same 4 canonical shapes, but built at *runtime* from a function
     # argument rather than as compile-time-foldable literals - this is the
@@ -262,6 +312,40 @@
     bytesByteTupleRuntime:  (\i (@: i, @byte: i + 96))(1) = (@: 1, @byte: 97),
     dictEntryTupleRuntime:  (\i (@: {i, i + 1}, @value: i + 2))(1) = (@: {1, 2}, @value: 3),
 
+    # The 4 canonical-shape tuples above are only ever constructed and
+    # Equal-compared elsewhere in this corpus - every other Tuple-interface
+    # method on them (MustGet/With/Without/Map/Negate/IsTrue/Names/Project)
+    # is untested. `.@item`/`.@char`/etc access is MustGet; `:>` (TupleMap,
+    # distinct from `=>`'s SetMap) is Map; `.~|@|` (project-drop) exercises
+    # both Names and Project.
+    arrayItemTupleMustGet:  (@: 1, @item: 2).@item = 2,
+    stringCharTupleMustGet: (@: 1, @char: 65).@char = 65,
+    bytesByteTupleMustGet:  (@: 1, @byte: 97).@byte = 97,
+    dictEntryTupleMustGet:  (@: {1, 2}, @value: 3).@value = 3,
+
+    arrayItemTupleMap:  ((@: 1, @item: 2) :> \x x + 1) = (@: 2, @item: 3),
+    stringCharTupleMap: ((@: 1, @char: 65) :> \x x + 1) = (@: 2, @char: 66),
+    bytesByteTupleMap:  ((@: 1, @byte: 97) :> \x x + 1) = (@: 2, @byte: 98),
+    dictEntryTupleMap:  ((@: {1, 2}, @value: 3) :> \x x) = (@: {1, 2}, @value: 3),
+
+    arrayItemTupleProjectDrop:  (@: 1, @item: 2).~|@| = (@item: 2),
+    stringCharTupleProjectDrop: (@: 1, @char: 65).~|@| = (@char: 65),
+    bytesByteTupleProjectDrop:  (@: 1, @byte: 97).~|@| = (@byte: 97),
+    dictEntryTupleProjectDrop:  (@: {1, 2}, @value: 3).~|@| = (@value: 3),
+
+    # Unlike a plain Value's default Negate (wrap in `(@neg: ...)`), each
+    # canonical-shape tuple overrides Negate to negate its position/value
+    # directly, staying in its own shape (or a byte-wrapped equivalent).
+    arrayItemTupleNegate:  (-(@: 1, @item: 2)) = (@: -1, @item: -2),
+    stringCharTupleNegate: (-(@: 1, @char: 65)) = (@: -1, @char: -65),
+    bytesByteTupleNegate:  (-(@: 1, @byte: 97)) = (@: -1, @byte: 159),
+    dictEntryTupleNegate:  (-(@: {1, 2}, @value: 3)) = (@: (@neg: {1, 2}), @value: -3),
+
+    arrayItemTupleIsTrue:  !(@: 1, @item: 2) = false,
+    stringCharTupleIsTrue: !(@: 1, @char: 65) = false,
+    bytesByteTupleIsTrue:  !(@: 1, @byte: 97) = false,
+    dictEntryTupleIsTrue:  !(@: {1, 2}, @value: 3) = false,
+
     # Comparing a plain GenericTuple against one of the canonical 2-attr
     # shapes (a different concrete Go type implementing Tuple) exercises
     # GenericTuple.Equal's cross-type fallback branch, untested by the
@@ -271,6 +355,32 @@
     # A bare package member reference (no call) constant-folds to a
     # *NativeFunction value.
     nativeFunctionLiteral: (//str.lower)("ABC") = "abc",
+
+    # `//str.lower` resolves dynamically at Eval time via PackageExpr (scope
+    # lookup), never compile-time-folded into a literal Value - so comparing
+    # two *uncalled* references exercises NativeFunction.Equal directly, but
+    # (unlike other "literal" cases in this corpus) doesn't actually reach
+    # encodeValue/decodeValue's "native" PlanNode case: there's no compile-time
+    # constant-fold path that embeds a raw *NativeFunction as a plan literal,
+    # so that case (and lookupNative, its plan-decode counterpart) appears to
+    # be unreachable from any current arr.ai construct.
+    nativeFunctionEqual: (let f = //str.lower; f) = //str.lower,
+
+    # A bare *NativeFunction, like every other atomic value, is arr.ai's
+    # "1-element set containing itself" - Count/Negate/IsTrue/Less are real,
+    # working Set/Value-interface methods on it. Hash/Hash128 need forcing
+    # via nesting as a set element.
+    nativeFunctionCount:  //str.lower count = 1,
+    nativeFunctionNegate: (-//str.lower) = (@neg: //str.lower),
+    nativeFunctionIsTrue: (!//str.lower) = false,
+    nativeFunctionLessCrossKind:      (//str.lower < 5) = false,
+    nativeFunctionLessCrossKindOther: (5 < //str.lower) = true,
+
+    # Less's same-kind branch compares two NativeFunctions by String() -
+    # a real trigger for NativeFunction.String() too, since //log.printf's
+    # usual ArrayEnumerator-based trick isn't available here.
+    nativeFunctionLessSameKind: (//str.lower < //str.upper) | (//str.upper < //str.lower),
+    nativeFunctionAsSetElement: {//str.lower, 1, 'a'} count = 3,
 
     # A literal *set* of special-shape tuples constant-folds the whole set to a
     # Value at compile time (NewSetExpr), which recurses into encodeValue's
