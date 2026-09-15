@@ -9,13 +9,13 @@ The old README that used to be here is now at https://arrai.netlify.app/docs/lan
 If this is the first time you're building the docs, start with:
 
 ```bash
-yarn install
+npm ci
 ```
 
 To run a local Docusaurus server:
 
 ```bash
-yarn start
+npm start
 ```
 
 The site will be served on http://localhost:3000.
