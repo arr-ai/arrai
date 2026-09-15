@@ -37,7 +37,9 @@ func extractVersion(path string) (module, version string) {
 }
 
 // readGoMod parses the go.mod in moduleRoot (or the process cwd's if
-// moduleRoot is "").
+// moduleRoot is ""). It uses ParseLax so a directive this version of x/mod
+// does not know (written by a newer go toolchain) does not stop the pin
+// binding; only Module and Require are read.
 func readGoMod(moduleRoot string) (*modfile.File, error) {
 	modPath := "go.mod"
 	if moduleRoot != "" {
@@ -47,7 +49,7 @@ func readGoMod(moduleRoot string) (*modfile.File, error) {
 	if err != nil {
 		return nil, err
 	}
-	return modfile.Parse(modPath, data, nil)
+	return modfile.ParseLax(modPath, data, nil)
 }
 
 // goModFilePin reads require directives from go.mod (not go list) so a pin

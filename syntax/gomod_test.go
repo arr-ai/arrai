@@ -308,6 +308,26 @@ func TestMainModuleNameMissingModuleDirective(t *testing.T) {
 	require.False(t, ok, "a go.mod with no module directive must not report a name")
 }
 
+func TestGoModFilePinToleratesUnknownDirective(t *testing.T) {
+	root := withTempModule(t, `module example.com/pintest
+
+go 1.21
+
+futuredirective something
+
+require github.com/org/repo v1.0.0
+`)
+
+	path, version, ok := goModFilePin(root, "github.com/org/repo/file.arrai")
+	require.True(t, ok, "a directive unknown to x/mod must not stop the pin binding")
+	require.Equal(t, "github.com/org/repo", path)
+	require.Equal(t, "v1.0.0", version)
+
+	name, ok := mainModuleName(root)
+	require.True(t, ok)
+	require.Equal(t, "example.com/pintest", name)
+}
+
 func TestGoModFilePinMalformedGoModDoesNotPanic(t *testing.T) {
 	root := withTempModule(t, `this is not valid go.mod syntax {{{`)
 
