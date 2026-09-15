@@ -40,13 +40,25 @@
     arrayPatternFallbackUsed:    ([1] -> \[x, ?y:99] [x, y]) = [1, 99],
     arrayPatternFallbackUnused:  ([1, 2] -> \[x, ?y:99] [x, y]) = [1, 2],
 
-    # A lambda value (Closure) is callable like NativeFunction, but its
-    # structural Set-interface methods (Count/Has/Enumerator/With/Without/
-    # Map/Where/ArrayEnumerator) are all panic("unimplemented") stubs -
-    # same class of gap as NativeFunction's, left alone deliberately.
-    # Negate/Less/Kind/EqualFunction are real, working methods though.
+    # A lambda value (Closure) is callable like NativeFunction, and like
+    # NativeFunction it is also arr.ai's "1-element set containing itself":
+    # Negate/Less/Kind/EqualFunction and the structural Set-interface methods
+    # (Count/Has/Enumerator/With/Without/Map/Where/ArrayEnumerator) are all
+    # real, working methods. Closure equality is node identity, so the same
+    # bound `f` must appear on both sides - `(\x x) <: (\x x)` is false.
     closureNegate: (let f = \x x; (-f) = (@neg: f)),
     closureLessCrossKind: !((\x x) < 5),
     closureLessSameKind: ((\x x) < (\y y)) | ((\y y) < (\x x)),
     numberLessClosureViaKind: 5 < (\x x),
+    closureCount:          (\x x) count = 1,
+    closureHasOther:       !(2 <: (\x x)),
+    closureHasSelf:        (let f = \x x; f <: f),
+    closureWhereTrue:      (let f = \x x; (f where \_ true) = f),
+    closureWhereFalse:     (let f = \x x; (f where \_ false) = {}),
+    closureWith:           (let f = \x x; (f with 5) count = 2),
+    closureWithoutSelf:    (let f = \x x; (f without f) = {}),
+    closureWithoutOther:   (let f = \x x; (f without 5) = f),
+    closureMapConst:       (let f = \x x; (f => \g 1) = {1}),
+    closureMapIdentity:    (let f = \x x; (f => \x x) count = 1),
+    closureMapCall:        ((\x x) => \g g(3)) = {3},
 )

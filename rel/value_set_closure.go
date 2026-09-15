@@ -106,32 +106,34 @@ func (Closure) getBucket() fmt.Stringer {
 	return genericType
 }
 
-func (c Closure) Count() int {
-	panic("unimplemented")
+// A Closure is the one-element set {c}; see value_set_singleton.go.
+
+func (Closure) Count() int {
+	return 1
 }
 
 func (c Closure) Has(v Value) bool {
-	panic("unimplemented")
+	return c.Equal(v)
 }
 
 func (c Closure) Enumerator() ValueEnumerator {
-	panic("unimplemented")
+	return &singletonEnumerator{v: c}
 }
 
 func (c Closure) With(v Value) Set {
-	panic("unimplemented")
+	return singletonWith(c, v)
 }
 
 func (c Closure) Without(v Value) Set {
-	panic("unimplemented")
+	return singletonWithout(c, v)
 }
 
 func (c Closure) Map(f func(v Value) (Value, error)) (Set, error) {
-	panic("unimplemented")
+	return singletonMap(c, f)
 }
 
 func (c Closure) Where(p func(v Value) (bool, error)) (Set, error) {
-	panic("unimplemented")
+	return singletonWhere(c, p)
 }
 
 // FIXME: context not used properly
@@ -179,5 +181,5 @@ func (Closure) unionSetSubsetBucket() string {
 }
 
 func (c Closure) ArrayEnumerator() ValueEnumerator {
-	panic("unimplemented")
+	return &singletonEnumerator{v: c}
 }
