@@ -51,14 +51,16 @@ func TestDotExprErrorOnEvalError(t *testing.T) {
 	AssertExprErrorEquals(t, expr, err.Error())
 }
 
-func TestDotExprErrorOnNonEnumerableSet(t *testing.T) {
+// A function value is the one-element set {f}, so f.a fails the same way
+// {f}.a does: the sole element is not a tuple.
+func TestDotExprErrorOnFunctionValue(t *testing.T) {
 	t.Parallel()
 
 	expr := NewDotExpr(*parser.NewScanner("native.a"), NewNativeFunction("native", nil), "a")
 
-	AssertExprErrorEquals(t, expr, `Cannot get attr "a" from native-function`)
+	AssertExprErrorEquals(t, expr, `Cannot get attr "a" from non-tuple set elt`)
 
 	expr = NewDotExpr(*parser.NewScanner("closure.a"), NewClosure(Scope{}, nil), "a")
 
-	AssertExprErrorEquals(t, expr, `Cannot get attr "a" from closure`)
+	AssertExprErrorEquals(t, expr, `Cannot get attr "a" from non-tuple set elt`)
 }

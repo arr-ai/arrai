@@ -65,7 +65,7 @@ func (x *DotExpr) String() string {
 }
 
 // Eval returns the lhs
-func (x *DotExpr) Eval(ctx context.Context, local Scope) (_ Value, err error) {
+func (x *DotExpr) Eval(ctx context.Context, local Scope) (Value, error) {
 	if x.attr == "*" {
 		return nil, WrapContextErr(errors.Errorf("expr.* not allowed outside tuple attr"), x, local)
 	}
@@ -114,14 +114,6 @@ func (x *DotExpr) Eval(ctx context.Context, local Scope) (_ Value, err error) {
 			return nil, WrapContextErr(errors.Errorf("Cannot get attr %q from empty set", x.attr), x, local)
 		}
 
-		// This attempt to treat the set as a singleton and re-Eval against its sole element can
-		// panic if the set is not enumerable (e.g. NativeFunction). Easy to hit unexpectedly.
-		defer func() {
-			if r := recover(); r != nil {
-				err = WrapContextErr(
-					errors.Errorf("Cannot get attr %q from %s", x.attr, ValueTypeAsString(t)), x, local)
-			}
-		}()
 		e := t.Enumerator()
 		e.MoveNext()
 		v := e.Current()

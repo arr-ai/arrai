@@ -83,15 +83,16 @@ func hashRunes(s []rune) uintptr {
 // Salts distinguish empty or structurally similar values of different kinds.
 // Name hashes serve the specialised tuple kinds.
 var (
-	tupleSalt      = hashString("rel.Tuple")
-	setSalt        = hashString("rel.Set")
-	valuesSalt     = hashString("rel.Values")
-	stringSalt     = hashString("rel.String")
-	bytesSalt      = hashString("rel.Bytes")
-	arraySalt      = hashString("rel.Array")
-	posRelSalt     = hashString("github.com/arr-ai/arrai/rel.positionalRelation")
-	funcSalt       = hashString("rel.Function")
-	nativeFuncSalt = hashString("rel.NativeFunction")
+	tupleSalt       = hashString("rel.Tuple")
+	setSalt         = hashString("rel.Set")
+	valuesSalt      = hashString("rel.Values")
+	stringSalt      = hashString("rel.String")
+	bytesSalt       = hashString("rel.Bytes")
+	arraySalt       = hashString("rel.Array")
+	posRelSalt      = hashString("github.com/arr-ai/arrai/rel.positionalRelation")
+	funcSalt        = hashString("rel.Function")
+	nativeFuncSalt  = hashString("rel.NativeFunction")
+	exprClosureSalt = hashString("rel.ExprClosure")
 
 	atNameHash    = hashString("@")
 	itemNameHash  = hashString(ArrayItemAttr)

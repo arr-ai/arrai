@@ -9,6 +9,8 @@ func TestRelUnion(t *testing.T) {
 	AssertCodesEvalToSameValue(t, `{1, 2, 3}   `, `//rel.union({{1}, {2}, {3}})         `)
 	AssertCodesEvalToSameValue(t, `{1}         `, `//rel.union({{1}, {1}, {1}})         `)
 	AssertCodesEvalToSameValue(t, `{}          `, `//rel.union({})                      `)
+	// A function value is the one-element set {f} whose sole element is a set, so its union is itself.
+	AssertCodesEvalToSameValue(t, `true`, `let f = \x x; //rel.union(f) = f`)
 }
 
 func TestRelUnionError(t *testing.T) {
@@ -16,6 +18,4 @@ func TestRelUnionError(t *testing.T) {
 
 	AssertCodeErrors(t, `arg to //rel.union must be set, not tuple`, `//rel.union(())`)
 	AssertCodeErrors(t, `elems of set arg to //rel.union must be sets, not tuple`, `//rel.union({()})`)
-	// FIXME: This should error with "arg to //rel.union must be set, not closure".
-	AssertCodePanics(t, `//rel.union(\x x)`)
 }

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"reflect"
+	"unsafe"
 
 	"github.com/arr-ai/arrai/pkg/fu"
 
@@ -21,9 +22,10 @@ func NewExprClosure(scope Scope, e Expr) Value {
 	return ExprClosure{scope: scope, e: e}
 }
 
-// Hash computes a hash for a ExprClosure.
+// Hash computes a hash for a ExprClosure. It folds in only the captured
+// scope's frame, which every closure equal under EqualExprClosure shares.
 func (c ExprClosure) Hash() uintptr {
-	panic("not implemented")
+	return mix(exprClosureSalt, uintptr(unsafe.Pointer(c.scope.f)))
 }
 
 // Equal tests two Values for equality. Any other type returns false.
@@ -34,10 +36,20 @@ func (c ExprClosure) Equal(i Value) bool {
 	return false
 }
 
-// Equal tests two Values for equality. Any other type returns false.
+// EqualExprClosure tests two ExprClosures for equality. As with Function,
+// equality of the wrapped expressions is undecidable in general, so two
+// ExprClosures are equal iff they capture the same scope frame and wrap the
+// same expression node. Expression types that are not comparable (those
+// holding slices or maps) are never equal, and never panic here.
 func (c ExprClosure) EqualExprClosure(d ExprClosure) bool {
-	panic("not implemented")
-	// return c.f.EqualFunction(d.f)
+	if c.scope.f != d.scope.f {
+		return false
+	}
+	if c.e == nil || d.e == nil {
+		return c.e == nil && d.e == nil
+	}
+	ce, de := reflect.ValueOf(c.e), reflect.ValueOf(d.e)
+	return ce.Type() == de.Type() && ce.Comparable() && ce.Equal(de)
 }
 
 // String returns a string representation of the expression.
@@ -110,28 +122,30 @@ func (ExprClosure) Count() int {
 	return 1
 }
 
-func (ExprClosure) Has(Value) bool {
-	panic("unimplemented")
+// An ExprClosure is the one-element set {c}; see value_set_singleton.go.
+
+func (c ExprClosure) Has(v Value) bool {
+	return c.Equal(v)
 }
 
-func (ExprClosure) Enumerator() ValueEnumerator {
-	panic("unimplemented")
+func (c ExprClosure) Enumerator() ValueEnumerator {
+	return &singletonEnumerator{v: c}
 }
 
-func (c ExprClosure) With(Value) Set {
-	panic("unimplemented")
+func (c ExprClosure) With(v Value) Set {
+	return singletonWith(c, v)
 }
 
-func (ExprClosure) Without(Value) Set {
-	panic("unimplemented")
+func (c ExprClosure) Without(v Value) Set {
+	return singletonWithout(c, v)
 }
 
-func (ExprClosure) Map(func(Value) (Value, error)) (Set, error) {
-	panic("unimplemented")
+func (c ExprClosure) Map(f func(Value) (Value, error)) (Set, error) {
+	return singletonMap(c, f)
 }
 
-func (ExprClosure) Where(p func(v Value) (bool, error)) (Set, error) {
-	panic("unimplemented")
+func (c ExprClosure) Where(p func(v Value) (bool, error)) (Set, error) {
+	return singletonWhere(c, p)
 }
 
 func (c ExprClosure) CallAll(_ context.Context, arg Value, b SetBuilder) error {
@@ -143,6 +157,6 @@ func (ExprClosure) unionSetSubsetBucket() string {
 	return genericType.String()
 }
 
-func (ExprClosure) ArrayEnumerator() ValueEnumerator {
-	panic("unimplemented")
+func (c ExprClosure) ArrayEnumerator() ValueEnumerator {
+	return &singletonEnumerator{v: c}
 }

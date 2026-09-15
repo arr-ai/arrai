@@ -125,28 +125,30 @@ func (*NativeFunction) Count() int {
 	return 1
 }
 
-func (*NativeFunction) Has(Value) bool {
-	panic("unimplemented")
+// A NativeFunction is the one-element set {f}; see value_set_singleton.go.
+
+func (f *NativeFunction) Has(v Value) bool {
+	return f.Equal(v)
 }
 
-func (*NativeFunction) Enumerator() ValueEnumerator {
-	panic("unimplemented")
+func (f *NativeFunction) Enumerator() ValueEnumerator {
+	return &singletonEnumerator{v: f}
 }
 
-func (*NativeFunction) With(Value) Set {
-	panic("unimplemented")
+func (f *NativeFunction) With(v Value) Set {
+	return singletonWith(f, v)
 }
 
-func (*NativeFunction) Without(Value) Set {
-	panic("unimplemented")
+func (f *NativeFunction) Without(v Value) Set {
+	return singletonWithout(f, v)
 }
 
-func (*NativeFunction) Map(func(Value) (Value, error)) (Set, error) {
-	panic("unimplemented")
+func (f *NativeFunction) Map(fn func(Value) (Value, error)) (Set, error) {
+	return singletonMap(f, fn)
 }
 
-func (*NativeFunction) Where(p func(v Value) (bool, error)) (Set, error) {
-	panic("unimplemented")
+func (f *NativeFunction) Where(p func(v Value) (bool, error)) (Set, error) {
+	return singletonWhere(f, p)
 }
 
 // Call calls the NativeFunction with the given parameter.
@@ -168,6 +170,6 @@ func (*NativeFunction) unionSetSubsetBucket() string {
 	return genericType.String()
 }
 
-func (*NativeFunction) ArrayEnumerator() ValueEnumerator {
-	panic("unimplemented")
+func (f *NativeFunction) ArrayEnumerator() ValueEnumerator {
+	return &singletonEnumerator{v: f}
 }
