@@ -3,6 +3,7 @@ module github.com/arr-ai/arrai
 go 1.25.0
 
 require (
+	github.com/arr-ai/frozen v1.14.0
 	github.com/arr-ai/frozen/v2 v2.0.0
 	github.com/arr-ai/proto v0.0.0-20180422074755-2ffbedebee50
 	github.com/arr-ai/wbnf v0.38.0
@@ -19,6 +20,7 @@ require (
 	github.com/stretchr/testify v1.11.1
 	github.com/urfave/cli/v2 v2.2.0
 	github.com/xuri/excelize/v2 v2.11.0
+	golang.org/x/mod v0.40.0
 	golang.org/x/text v0.41.0
 	google.golang.org/grpc v1.83.2
 	google.golang.org/protobuf v1.36.11
@@ -26,7 +28,6 @@ require (
 )
 
 require (
-	github.com/arr-ai/frozen v1.14.0 // indirect
 	github.com/arr-ai/hash v1.2.0 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.4 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
