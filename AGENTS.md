@@ -38,8 +38,10 @@ The parser is auto-generated from `syntax/arrai.wbnf` via `tools/parser/generate
 ### Evaluation pipeline
 
 ```
-Source text → Parser (WBNF grammar) → AST → Compiler (syntax/compile.go) → Expr → Eval(ctx, Scope) → Value
+Source text → Parser (WBNF grammar) → AST → Compiler (syntax/compile.go) → Expr → Simplifier (rel/simplify.go) → Expr → Eval(ctx, Scope) → Value
 ```
+
+The simplifier is a tree-level rewrite layer (one-shot let folding, unused-let dropping) that runs at the end of `syntax.Compile`, before evaluation and before a bundle's `plan.bin` is encoded. It is off under `-tags slowpath`, so the slowpath CI job doubles as its differential oracle. Design and timing rules: `docs/simplifier.md`.
 
 ### Key packages
 

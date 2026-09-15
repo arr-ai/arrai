@@ -118,7 +118,7 @@ func addDemandedEqAttrs(e Expr, ident string, attrs *[]string) {
 	}
 	switch e := e.(type) {
 	case *BinExpr:
-		if e.op == "where" {
+		if e.op == opWhere {
 			if id, ok := e.a.(IdentExpr); ok && id.ident == ident {
 				if f, ok := e.b.(*Function); ok {
 					for _, p := range matchEqAttrPredicates(f) {
