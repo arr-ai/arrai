@@ -3,6 +3,8 @@ package syntax
 
 import (
 	"testing"
+
+	"github.com/arr-ai/arrai/rel"
 )
 
 func TestEvalCond(t *testing.T) {
@@ -140,14 +142,23 @@ func TestEvalCondWithControlVarStr(t *testing.T) {
 	AssertEvalExprString(t, `cond 1 {1: 1, (2 + 1): 3, _: 4}`, `cond (1) {1 : 1, (2 + 1) : 3, _ : 4}`)
 	AssertEvalExprString(t, `cond 1 {1: 1, (2 + 1): 3, _: 4}`, `cond (1) {(1) : 1, (2 + 1) : 3, _ : 4,}`)
 
+	// One-shot lets fold into their use (rel.Simplify) except in the
+	// slowpath build, so the printed tree depends on the build.
+	folded := func(folded, unfolded string) string {
+		if rel.SimplifyEnabled() {
+			return folded
+		}
+		return unfolded
+	}
 	AssertEvalExprString(t,
-		`(1 -> (\a cond a {1: 1}))`,
+		folded(`cond 1 {1: 1}`, `(1 -> (\a cond a {1: 1}))`),
 		`let a = 1; cond a {(1) : 1}`)
 	AssertEvalExprString(t,
-		`(1 -> (\a cond a {(1 + 2): 1, _: (1 + 2)}))`,
+		folded(`cond 1 {(1 + 2): 1, _: (1 + 2)}`, `(1 -> (\a cond a {(1 + 2): 1, _: (1 + 2)}))`),
 		`let a = 1; cond a {(1 + 2): 1, _ : 1 + 2}`)
 	AssertEvalExprString(t,
-		`(2 -> (\a (cond a {(1 + 2): 1, _: (1 + 2)} -> (\b (b * 1)))))`,
+		folded(`(cond 2 {(1 + 2): 1, _: (1 + 2)} * 1)`,
+			`(2 -> (\a (cond a {(1 + 2): 1, _: (1 + 2)} -> (\b (b * 1)))))`),
 		`let a = 2; let b = cond a {(1 + 2): 1, _ : 1 + 2}; b * 1`)
 	AssertEvalExprString(t,
 		`(3 -> (\a cond (a + 2) {(1 + 2): 1, _: (1 + 2)}))`,

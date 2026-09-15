@@ -65,7 +65,11 @@ func Compile(ctx context.Context, filePath, source string) (rel.Expr, error) {
 		return nil, err
 	}
 
-	return pc.CompileExpr(arraictx.ContextWithIsCompiling(ctx, true), ast)
+	expr, err := pc.CompileExpr(arraictx.ContextWithIsCompiling(ctx, true), ast)
+	if err != nil {
+		return nil, err
+	}
+	return rel.Simplify(expr), nil
 }
 
 func MustCompile(ctx context.Context, filePath, source string) rel.Expr {

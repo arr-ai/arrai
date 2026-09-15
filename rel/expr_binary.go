@@ -31,6 +31,12 @@ type BinExpr struct {
 	eval   binEval
 }
 
+// Operator names shared by construction, lowering and rewriting.
+const (
+	opWhere = "where"
+	opCall  = "call"
+)
+
 func newBinExpr(scanner parser.Scanner, a, b Expr, op, format string, eval binEval) Expr {
 	return &BinExpr{ExprScanner{scanner}, a, b, op, format, eval}
 }
@@ -524,7 +530,7 @@ func NewWhereExpr(scanner parser.Scanner, a, pred Expr) Expr {
 			return pushed
 		}
 	}
-	return newBinExpr(scanner, a, pred, "where", "(%s where %s)",
+	return newBinExpr(scanner, a, pred, opWhere, "(%s where %s)",
 		func(ctx context.Context, a, pred Value, local Scope) (Value, error) {
 			if x, ok := a.(Set); ok {
 				if p, ok := pred.(Closure); ok {
@@ -666,7 +672,7 @@ func Call(ctx context.Context, a, b Value, _ Scope) (Value, error) {
 
 // NewCallExpr evaluates a without b, given a set lhs.
 func NewCallExpr(scanner parser.Scanner, a, b Expr) Expr {
-	return newBinExpr(scanner, a, b, "call", "«%s»(%s)", Call)
+	return newBinExpr(scanner, a, b, opCall, "«%s»(%s)", Call)
 }
 
 func NewCallExprCurry(scanner parser.Scanner, f Expr, args ...Expr) Expr {
