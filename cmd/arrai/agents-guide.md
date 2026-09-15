@@ -158,7 +158,7 @@ $`${[1,2,3]::, }`     # = "1, 2, 3"
 let x = 42; x + 1                              # let-binding
 \x x * 2                                       # lambda
 \x \y x + y                                    # curried binary
-let rec fib = \n 1 if n < 2 else n * fib(n-1); # named recursion
+let rec fact = \n cond {n < 2: 1, _: n * fact(n-1)}; # named recursion
 let [head, ...tail] = [1, 2, 3]; tail          # pattern matching
 ```
 
@@ -212,13 +212,15 @@ Module root is the directory of the nearest `go.mod` file, searching upward.
 ### Conditional
 
 ```arrai
-expr1 if test else expr2
-
-cond (
+cond {
     age < 40: "young",
     age < 60: "middle",
-    *:        "old",
-)
+    _:        "old",
+}
+
+cond n { (0, 1): 1, _: n * fact(n - 1) }   # match n against patterns
+
+expr1 if test else expr2   # deprecated: logs a warning, use cond
 ```
 
 ## Standard Library
@@ -277,8 +279,8 @@ arrai test path/to/specific_test.arrai  # single file
 ### Read and transform JSON
 
 ```arrai
-let data = //encoding.json.decode(//os.file('data.json'));
-data('users') => .name -> //str.upper(.)
+let data = //encoding.json.decoder((strict: false))(//os.file('data.json'));
+data('users') >> //str.upper(.('name'))
 ```
 
 ### HTTP request
