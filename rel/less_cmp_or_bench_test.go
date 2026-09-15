@@ -6,7 +6,7 @@ import (
 )
 
 // cmp.Or evaluation for 🎯T14 / #741. The two-field lexicographic Less used
-// by StringCharTuple (and FilePos) is the best-case for a comparator chain:
+// by StringCharTuple is the best-case for a comparator chain:
 // two ints, no interface dispatch. Measured on Apple M4 Max / go1.25:
 //
 //	hand-rolled  4.97 ns/op  0 B  0 allocs

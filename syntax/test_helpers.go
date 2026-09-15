@@ -164,37 +164,6 @@ func AssertCodeErrors(t *testing.T, errString, code string) bool {
 	return false
 }
 
-// AssertScan asserts that a lexer's next produced token is as expected.
-func AssertScan(t *testing.T, l *Lexer, tok Token, intf interface{}, lexeme string) bool {
-	t.Helper()
-
-	if !assert.True(t, l.Scan()) {
-		return false
-	}
-
-	if !assert.Equal(
-		t, TokenRepr(tok), TokenRepr(l.Token()), "%s", l,
-	) {
-		return false
-	}
-
-	if intf == nil {
-		if !assert.Nil(t, l.Value()) {
-			return false
-		}
-	} else {
-		value, err := rel.NewValue(intf)
-		require.NoError(t, err)
-		if !assert.True(
-			t, value.Equal(l.Value()), "%s == %s", value, l.Value(),
-		) {
-			return false
-		}
-	}
-
-	return assert.Equal(t, lexeme, lexeme, l)
-}
-
 // AssertEvalExprString asserts Expr string.
 func AssertEvalExprString(t *testing.T, expected, source string) bool {
 	t.Helper()

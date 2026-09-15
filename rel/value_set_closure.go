@@ -35,11 +35,6 @@ func (c Closure) Equal(i Value) bool {
 	return false
 }
 
-// Equal tests two Values for equality. Any other type returns false.
-func (c Closure) EqualClosure(d Closure) bool {
-	return c.f.EqualFunction(d.f)
-}
-
 // String returns a string representation of the expression.
 func (c Closure) String() string {
 	return c.f.String()
