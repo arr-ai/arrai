@@ -116,13 +116,22 @@ func GetModuleFromBundle(ctx context.Context, buf []byte) (context.Context, stri
 	return ctx, fromBundleConfig(ctx).mainRoot, nil
 }
 
-// OutputArraiz writes the zip binary to the provided writer.
-func OutputArraiz(ctx context.Context, w io.Writer) error {
+// OutputArraiz writes the zip binary to the provided writer. When
+// stripSource is true, the plain .arrai source tree is omitted and only
+// /config.arrai and /plan.bin are kept, since a runtime that understands
+// plan.bin (v0.340.0+) never reads the source files to run the bundle.
+// Older runtimes cannot load a stripped bundle.
+func OutputArraiz(ctx context.Context, w io.Writer, stripSource bool) error {
 	if !isBundling(ctx) {
 		return errors.New("cannot output bundled arrai because it is not bundling")
 	}
+	if !stripSource {
+		return ctxfs.OutputZip(ctx, bundleFsKey, w)
+	}
 
-	return ctxfs.OutputZip(ctx, bundleFsKey, w)
+	return ctxfs.OutputZipFiltered(ctx, bundleFsKey, w, func(path string) bool {
+		return path == BundleConfig || path == compiledPlanPath
+	})
 }
 
 // withBundledConfig is used add bundled scripts configuration to the context.

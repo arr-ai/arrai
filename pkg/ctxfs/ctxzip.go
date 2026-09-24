@@ -78,6 +78,13 @@ func fileExists(fs afero.Fs, filePath string) (bool, error) {
 // OutputZip outputs a zip file from all the files in the filesystem to the
 // provided writer.
 func OutputZip(ctx context.Context, key interface{}, w io.Writer) error {
+	return OutputZipFiltered(ctx, key, w, nil)
+}
+
+// OutputZipFiltered outputs a zip file to the provided writer, containing
+// only the files in the filesystem for which keep returns true. A nil keep
+// keeps every file, matching OutputZip.
+func OutputZipFiltered(ctx context.Context, key interface{}, w io.Writer, keep func(path string) bool) error {
 	zipMem := ctx.Value(key).(*zipFs)
 	zipMem.Lock()
 	defer zipMem.Unlock()
@@ -91,6 +98,9 @@ func OutputZip(ctx context.Context, key interface{}, w io.Writer) error {
 			return err
 		}
 		if info.IsDir() {
+			return nil
+		}
+		if keep != nil && !keep(path) {
 			return nil
 		}
 		f, err := fs.Open(path)

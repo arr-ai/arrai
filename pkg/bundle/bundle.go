@@ -17,11 +17,14 @@ const bundledType = ".arraiz"
 
 // BundledScripts bundle scripts and writes the byte output to the provided writer.
 func BundledScripts(ctx context.Context, path string, w io.Writer) error {
-	return BundledScriptsTo(ctx, path, w, "")
+	return BundledScriptsTo(ctx, path, w, "", false)
 }
 
-// BundledScriptsTo bundle scripts and outputs it to a file.
-func BundledScriptsTo(ctx context.Context, path string, w io.Writer, out string) (err error) {
+// BundledScriptsTo bundle scripts and outputs it to a file. When stripSource
+// is true, the bundle omits its plain .arrai source tree and keeps only the
+// compiled plan, producing a smaller .arraiz that only a plan.bin-aware
+// runtime (v0.340.0+) can run.
+func BundledScriptsTo(ctx context.Context, path string, w io.Writer, out string, stripSource bool) (err error) {
 	if err := cliutil.FileExists(ctx, path); err != nil {
 		return err
 	}
@@ -55,5 +58,5 @@ func BundledScriptsTo(ctx context.Context, path string, w io.Writer, out string)
 		return err
 	}
 
-	return syntax.OutputArraiz(ctx, w)
+	return syntax.OutputArraiz(ctx, w, stripSource)
 }

@@ -10,6 +10,12 @@ import (
 	"github.com/arr-ai/arrai/pkg/bundle"
 )
 
+var stripSourceFlag = &cli.BoolFlag{
+	Name: "strip-source",
+	Usage: "Omit the plain arr.ai source tree from the bundle, keeping only the compiled plan. " +
+		"Produces a smaller .arraiz, but it can only be run by arrai v0.340.0 or later.",
+}
+
 var bundleCommand = &cli.Command{
 	Name:    "bundle",
 	Aliases: []string{"b"},
@@ -17,6 +23,7 @@ var bundleCommand = &cli.Command{
 	Action:  bundleCmd,
 	Flags: []cli.Flag{
 		outFlag,
+		stripSourceFlag,
 	},
 }
 
@@ -24,6 +31,6 @@ func bundleCmd(c *cli.Context) error {
 	file := c.Args().Get(0)
 	return bundle.BundledScriptsTo(
 		arraictx.InitCliCtx(context.Background(), c),
-		file, os.Stdout, c.Value("out").(string),
+		file, os.Stdout, c.Value("out").(string), c.Bool("strip-source"),
 	)
 }

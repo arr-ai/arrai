@@ -190,6 +190,29 @@ func TestBundleCompiledPlanRunsWithoutParse(t *testing.T) {
 	assert.True(t, v.Equal(rel.NewNumber(3)), "%s", v)
 }
 
+func TestBundleStripSourceKeepsOnlyConfigAndPlan(t *testing.T) {
+	t.Parallel()
+	ctx := arraictx.InitRunCtx(context.Background())
+	path := filepath.Join(t.TempDir(), "add.arrai")
+	require.NoError(t, os.WriteFile(path, []byte("1 + 2"), 0o644))
+
+	var buf bytes.Buffer
+	require.NoError(t, BundledScriptsTo(ctx, path, &buf, "", true))
+
+	zr, err := zip.NewReader(bytes.NewReader(buf.Bytes()), int64(buf.Len()))
+	require.NoError(t, err)
+	names := make([]string, 0, len(zr.File))
+	for _, f := range zr.File {
+		names = append(names, f.Name)
+	}
+	assert.ElementsMatch(t, []string{"config.arrai", "plan.bin"}, names,
+		"stripped bundle must contain only config.arrai and plan.bin, got %q", names)
+
+	v, err := syntax.EvaluateBundleCtx(ctx, buf.Bytes())
+	require.NoError(t, err)
+	assert.True(t, v.Equal(rel.NewNumber(3)), "%s", v)
+}
+
 // FIXME: test github module import, only works locally, unable to locate cached module in CI
 // func TestDeepModuleImports(t *testing.T) {
 // 	t.Parallel()
