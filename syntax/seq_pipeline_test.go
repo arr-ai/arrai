@@ -1,8 +1,12 @@
 package syntax
 
 import (
+	"context"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
+	"github.com/arr-ai/arrai/pkg/arraictx"
 	"github.com/arr-ai/arrai/rel"
 )
 
@@ -113,4 +117,54 @@ func TestLetFanoutTwoConsumers(t *testing.T) {
 	AssertCodesEvalToSameValue(t,
 		`[2, 4, 6, 3, 6, 9]`,
 		`let x = [0, 1, 2] >> . + 1; (x >> . * 2) ++ (x >> . * 3)`)
+}
+
+// TestSeqPipelineEffectfulMapRunsWhenDiscarded is the standing oracle for a
+// regression where >> suspended every map in a seqPipeline/dictPipeline,
+// including one whose body calls something effectful (e.g. //log.print). A
+// pipeline that is never forced — because its result is bound to `_` and
+// never used again, or is only ever asked for its count — silently dropped
+// those calls. A call is assumed effectful because the callee might be, so
+// >> must run it eagerly instead of suspending it.
+func TestSeqPipelineEffectfulMapRunsWhenDiscarded(t *testing.T) {
+	t.Parallel()
+
+	v, calls := evalCounting(t, `let _ = [1, 2, 3] >> tick(.); 0`)
+	require.Equal(t, int64(3), calls, "discarded >> result must still run its effectful body")
+	want, err := EvaluateExpr(arraictx.InitRunCtx(context.Background()), NoPath, `0`)
+	require.NoError(t, err)
+	require.True(t, want.Equal(v))
+}
+
+func TestSeqPipelineEffectfulMapRunsUnderCount(t *testing.T) {
+	t.Parallel()
+
+	v, calls := evalCounting(t, `([1, 2, 3] >> tick(.)) count`)
+	require.Equal(t, int64(3), calls, "count must not answer from metadata for an effectful >>")
+	want, err := EvaluateExpr(arraictx.InitRunCtx(context.Background()), NoPath, `3`)
+	require.NoError(t, err)
+	require.True(t, want.Equal(v))
+}
+
+func TestDictPipelineEffectfulMapRunsWhenDiscarded(t *testing.T) {
+	t.Parallel()
+
+	_, calls := evalCounting(t, `let _ = {'a': 1, 'b': 2} >> tick(.); 0`)
+	require.Equal(t, int64(2), calls, "discarded >> result over a dict must still run its effectful body")
+}
+
+// TestSeqPipelineEffectfulChainStillMaterialisesOnce checks that gating the
+// fast path on purity does not reintroduce double evaluation for a chained
+// effectful >>: each stage still runs its body exactly once per element.
+func TestSeqPipelineEffectfulChainStillMaterialisesOnce(t *testing.T) {
+	t.Parallel()
+
+	// tick ignores its argument and returns the shared counter, so only the
+	// call count (not the resulting values, whose assignment across the two
+	// stages races) is asserted here.
+	v, calls := evalCounting(t, `[1, 2] >> tick(.) >> tick(.)`)
+	require.Equal(t, int64(4), calls, "each of 2 elements through 2 effectful stages")
+	s, ok := v.(rel.Set)
+	require.True(t, ok, "%v", v)
+	require.Equal(t, 2, s.Count())
 }

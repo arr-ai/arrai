@@ -15,6 +15,13 @@ type SeqArrowExpr struct {
 	fn     *Function
 	withAt bool
 	op     string
+	// pure is whether fn's body is free of calls and other observable
+	// effects (see hasEffects). Only a pure fn may be suspended in a
+	// seqPipeline/dictPipeline: those types let Count and a later Equal or
+	// force answer from metadata or run stages out of order, which is
+	// invisible for a pure fn but would drop or reorder an effectful one's
+	// actions (e.g. //log.print calls whose result is never observed).
+	pure bool
 }
 
 // NewSequenceMapExpr returns a new SequenceMapExpr.
@@ -24,12 +31,14 @@ func NewSeqArrowExpr(withAt bool) func(scanner parser.Scanner, lhs Expr, fn Expr
 		op = ">>>"
 	}
 	return func(scanner parser.Scanner, lhs Expr, fn Expr) Expr {
+		f := ExprAsFunction(fn)
 		return &SeqArrowExpr{
 			ExprScanner: ExprScanner{scanner},
 			lhs:         lhs,
-			fn:          ExprAsFunction(fn),
+			fn:          f,
 			withAt:      withAt,
 			op:          op,
+			pure:        !hasEffects(f.body),
 		}
 	}
 }
@@ -63,14 +72,7 @@ func (e *SeqArrowExpr) Eval(ctx context.Context, local Scope) (_ Value, err erro
 
 	switch value := value.(type) {
 	case seqPipeline:
-		if fastPaths {
-			return value.then(call), nil
-		}
-		arr, err := value.force()
-		if err != nil {
-			return nil, WrapContextErr(err, e, local)
-		}
-		return e.evalArray(local, arr, call)
+		return e.evalSeqPipeline(local, value, call)
 	case String: //nolint:dupl
 		runes := make([]rune, value.size())
 		for at := range runes {
@@ -105,24 +107,11 @@ func (e *SeqArrowExpr) Eval(ctx context.Context, local Scope) (_ Value, err erro
 		}
 		return NewOffsetBytes(bytes, value.offset), nil
 	case Array:
-		if fastPaths {
-			return newSeqPipeline(value, call), nil
-		}
-		return e.evalArray(local, value, call)
+		return e.evalArrayOrSuspend(local, value, call)
 	case dictPipeline:
-		if fastPaths {
-			return value.then(call), nil
-		}
-		d, err := value.force()
-		if err != nil {
-			return nil, WrapContextErr(err, e, local)
-		}
-		return e.evalDict(local, d, call)
+		return e.evalDictPipeline(local, value, call)
 	case Dict:
-		if fastPaths {
-			return newDictPipeline(value, call), nil
-		}
-		return e.evalDict(local, value, call)
+		return e.evalDictOrSuspend(local, value, call)
 	case Set:
 		b := NewSetBuilder()
 		for i := value.Enumerator(); i.MoveNext(); {
@@ -152,6 +141,58 @@ func (e *SeqArrowExpr) Eval(ctx context.Context, local Scope) (_ Value, err erro
 	}
 	return nil, WrapContextErr(errors.Errorf(
 		"%s lhs must be an indexed type, not %s", e.op, ValueTypeAsString(value)), e, local)
+}
+
+// evalSeqPipeline continues a suspended >> chain, or forces it first when
+// this stage is not pure: see the pure field.
+func (e *SeqArrowExpr) evalSeqPipeline(
+	local Scope, value seqPipeline, call func(_, _ Value) (Value, error),
+) (Value, error) {
+	if fastPaths && e.pure {
+		return value.then(call), nil
+	}
+	arr, err := value.force()
+	if err != nil {
+		return nil, WrapContextErr(err, e, local)
+	}
+	return e.evalArray(local, arr, call)
+}
+
+// evalArrayOrSuspend suspends the map in a seqPipeline when this stage is
+// pure, or evaluates it immediately otherwise: see the pure field.
+func (e *SeqArrowExpr) evalArrayOrSuspend(
+	local Scope, value Array, call func(_, _ Value) (Value, error),
+) (Value, error) {
+	if fastPaths && e.pure {
+		return newSeqPipeline(value, call), nil
+	}
+	return e.evalArray(local, value, call)
+}
+
+// evalDictPipeline continues a suspended >> chain, or forces it first when
+// this stage is not pure: see the pure field.
+func (e *SeqArrowExpr) evalDictPipeline(
+	local Scope, value dictPipeline, call func(_, _ Value) (Value, error),
+) (Value, error) {
+	if fastPaths && e.pure {
+		return value.then(call), nil
+	}
+	d, err := value.force()
+	if err != nil {
+		return nil, WrapContextErr(err, e, local)
+	}
+	return e.evalDict(local, d, call)
+}
+
+// evalDictOrSuspend suspends the map in a dictPipeline when this stage is
+// pure, or evaluates it immediately otherwise: see the pure field.
+func (e *SeqArrowExpr) evalDictOrSuspend(
+	local Scope, value Dict, call func(_, _ Value) (Value, error),
+) (Value, error) {
+	if fastPaths && e.pure {
+		return newDictPipeline(value, call), nil
+	}
+	return e.evalDict(local, value, call)
 }
 
 // evalArray maps an array's elements, in parallel when the array is large:
