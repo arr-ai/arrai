@@ -54,7 +54,7 @@ func (e IdentExpr) Eval(ctx context.Context, local Scope) (Value, error) {
 		// as-is reuses its existing box; their value-receiver Eval would
 		// copy the struct out and heap-allocate a fresh box on every lookup.
 		switch a.(type) {
-		case String, Number, Array, Bytes:
+		case String, Number, Array, Bytes, Dict, GenericSet:
 			return a.(Value), nil
 		}
 		return a.Eval(ctx, local)
