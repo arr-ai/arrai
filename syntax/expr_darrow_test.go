@@ -127,3 +127,26 @@ func TestDArrowExprPatternMismatchExplains(t *testing.T) {
 
 	AssertCodeErrors(t, "couldn't find x in tuple (y: 1)", `{(y: 1)} => \(x: a) a`)
 }
+
+// A computed value forces the row-eval path, which must still canonicalise
+// @-shaped rows; +> and array ++ reject a plain relation, so they prove the kind.
+func TestDArrowExprComputedAtShapesAreCanonical(t *testing.T) {
+	t.Parallel()
+
+	AssertCodesEvalToSameValue(t,
+		`{'a': 2, 'z': 0}`,
+		`let j = {(v: 1, name: 'a')}; {'z': 0} +> (j => (@: .name, @value: .v + 1))`,
+	)
+	AssertCodesEvalToSameValue(t,
+		`[1, 2]`,
+		`let j = {(i: 0, v: 0), (i: 1, v: 1)}; j => (@: .i, @item: .v + 1)`,
+	)
+	AssertCodesEvalToSameValue(t,
+		`[1, 2] ++ [3]`,
+		`let j = {(i: 0, v: 0), (i: 1, v: 1)}; (j => (@: .i, @item: .v + 1)) ++ [3]`,
+	)
+	AssertCodesEvalToSameValue(t,
+		`'ab'`,
+		`let j = {(i: 0, c: 96), (i: 1, c: 97)}; j => (@: .i, @char: .c + 1)`,
+	)
+}

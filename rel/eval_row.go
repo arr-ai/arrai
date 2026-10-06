@@ -223,6 +223,9 @@ func evalAtRowTuple(
 		}
 		tuple = tuple.With(attr.name, v)
 	}
+	if g, ok := tuple.(*GenericTuple); ok {
+		return g.Canonical(), nil
+	}
 	return tuple, nil
 }
 
