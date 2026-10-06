@@ -35,4 +35,10 @@
     # matches through `value` (the "FILTER" case in compileArrow, its own
     # cond-pattern + where + darrow desugaring, untested elsewhere in this corpus).
     filterPatternMap: ({1, [2, 3], 4, [5, 6]} filter . {[a, b]: a + b}) = {5, 11},
+
+    # A computed value in a relation `=>` row must still build a real Dict /
+    # Array / String; `+>` and `++` reject a plain relation, so they prove the kind.
+    darrowComputedDict: ({'z': 0} +> ({(k: 'a', v: 1)} => (@: .k, @value: .v + 1))) = {'a': 2, 'z': 0},
+    darrowComputedArray: (({(i: 0, v: 1)} => (@: .i, @item: .v + 1)) ++ [9]) = [2, 9],
+    darrowComputedString: ({(i: 0, c: 96)} => (@: .i, @char: .c + 1)) = 'a',
 )
