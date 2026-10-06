@@ -50,6 +50,13 @@ func (e IdentExpr) String() string {
 // Eval returns the value from scope corresponding to the ident.
 func (e IdentExpr) Eval(ctx context.Context, local Scope) (Value, error) {
 	if a := e.resolve(local); a != nil {
+		// These value types evaluate to themselves. Returning the binding
+		// as-is reuses its existing box; their value-receiver Eval would
+		// copy the struct out and heap-allocate a fresh box on every lookup.
+		switch a.(type) {
+		case String, Number, Array, Bytes:
+			return a.(Value), nil
+		}
 		return a.Eval(ctx, local)
 	}
 	return nil, WrapContextErr(
