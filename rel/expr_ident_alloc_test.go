@@ -27,9 +27,11 @@ func TestIdentExprEvalSelfEvaluatingValuesDoNotAllocate(t *testing.T) {
 			require.NoError(t, err)
 			assert.True(t, v.Equal(got))
 
+			var evalErr error
 			allocs := testing.AllocsPerRun(100, func() {
-				_, _ = ident.Eval(ctx, scope)
+				_, evalErr = ident.Eval(ctx, scope)
 			})
+			require.NoError(t, evalErr)
 			assert.Zero(t, allocs)
 		})
 	}
