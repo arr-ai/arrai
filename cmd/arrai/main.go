@@ -23,18 +23,28 @@ import (
 //go:embed agents-guide.md
 var agentsGuide string
 
+// profilerFlag is a help-only flag. urfave/cli renders every flag as
+// `--name VALUE`, but prepareProfilers only accepts the `-name=VALUE` form.
+type profilerFlag struct {
+	*cli.StringFlag
+}
+
+func (f profilerFlag) String() string {
+	return fmt.Sprintf("-%s=FILE\t%s", f.Name, f.Usage)
+}
+
 // profilerFlags document -cpuprofile/-memprofile for `--help`. They're never
 // actually parsed by cli: prepareProfilers() strips them out of os.Args
 // before the app is built, since profiling must start before app.Run().
 var profilerFlags = []cli.Flag{
-	&cli.StringFlag{
+	profilerFlag{&cli.StringFlag{
 		Name:  "cpuprofile",
-		Usage: "Write a CPU profile to `FILE` for the duration of the run. Must precede the command name.",
-	},
-	&cli.StringFlag{
+		Usage: "Write a CPU profile to FILE for the duration of the run. Must precede the command name.",
+	}},
+	profilerFlag{&cli.StringFlag{
 		Name:  "memprofile",
-		Usage: "Write a heap profile to `FILE` at the end of the run. Must precede the command name.",
-	},
+		Usage: "Write a heap profile to FILE at the end of the run. Must precede the command name.",
+	}},
 }
 
 var cmds = []*cli.Command{
