@@ -200,7 +200,7 @@ func (t ArrayItemTuple) Names() Names {
 // Project returns a tuple with the given names from this tuple, or nil if any
 // name wasn't found.
 func (t ArrayItemTuple) Project(names Names) Tuple {
-	if names.Has("@") && names.Has(ArrayItemAttr) {
+	if names.Count() == 2 && names.Has("@") && names.Has(ArrayItemAttr) {
 		return t
 	}
 	return t.asGenericTuple().Project(names)
