@@ -46,8 +46,10 @@ func (p ExprPattern) String() string {
 	return p.Expr.String()
 }
 
+// Bindings returns nil: ExprPattern matches by value equality and binds no
+// names (NewExprPattern routes an IdentExpr to IdentPattern instead).
 func (p ExprPattern) Bindings() []string {
-	return []string{p.Expr.String()}
+	return nil
 }
 
 type ExprsPattern struct {
@@ -108,10 +110,8 @@ func (p ExprsPattern) String() string {
 	return b.String()
 }
 
+// Bindings returns nil: ExprsPattern matches by value equality against one
+// of several alternatives and binds no names.
 func (p ExprsPattern) Bindings() []string {
-	bindings := make([]string, len(p.exprs))
-	for i, v := range p.exprs {
-		bindings[i] = v.String()
-	}
-	return bindings
+	return nil
 }

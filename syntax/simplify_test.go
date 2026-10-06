@@ -53,6 +53,29 @@ func TestSimplifyDoesNotDuplicateWork(t *testing.T) {
 	}
 }
 
+// TestSimplifyKeepsLetUsedUnderMatchingCondLiteral is a regression test: a
+// let is live when its only use sits in the value of a `cond ctrl {...}`
+// arm whose literal pattern happens to spell the same name. The pattern
+// binds nothing, but its Bindings() result once leaked into the simplifier's
+// shadow check, making the use look shadowed and the let look unused.
+func TestSimplifyKeepsLetUsedUnderMatchingCondLiteral(t *testing.T) {
+	t.Parallel()
+
+	v, err := EvaluateExpr(arraictx.InitRunCtx(context.Background()), NoPath, `
+		let add_column_if_not_exists = \m m + 1;
+		let stepAlt = \m \type
+			cond type {
+				'add_column_if_not_exists': add_column_if_not_exists(m),
+				_: m,
+			};
+		stepAlt(1, 'add_column_if_not_exists')
+	`)
+	require.NoError(t, err)
+	want, err := EvaluateExpr(arraictx.InitRunCtx(context.Background()), NoPath, `2`)
+	require.NoError(t, err)
+	require.True(t, want.Equal(v), "= %v, want 2", v)
+}
+
 // TestSimplifyFoldsIntoRewrites checks the payoff: a where behind a let
 // binding is recognised the same way as one written inline.
 func TestSimplifyFoldsIntoRewrites(t *testing.T) {
