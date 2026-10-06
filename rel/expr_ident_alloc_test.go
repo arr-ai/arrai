@@ -10,7 +10,16 @@ import (
 )
 
 func TestIdentExprEvalSelfEvaluatingValuesDoNotAllocate(t *testing.T) {
+	dict, err := NewDict(false, NewDictEntryTuple(NewNumber(1), NewNumber(2)))
+	require.NoError(t, err)
+	require.IsType(t, Dict{}, dict)
+	set, err := NewSet(NewNumber(1), NewString([]rune("a")))
+	require.NoError(t, err)
+	require.IsType(t, GenericSet{}, set)
+
 	bound := map[string]Value{
+		"dict":  dict,
+		"set":   set,
 		"str":   NewString([]rune("properties")),
 		"num":   NewNumber(1234.5),
 		"arr":   NewArray(NewNumber(1), NewNumber(2)),
