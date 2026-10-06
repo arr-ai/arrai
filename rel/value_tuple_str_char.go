@@ -205,7 +205,16 @@ func (t StringCharTuple) Project(names Names) Tuple {
 	if names.Count() == 2 && names.Has("@") && names.Has(StringCharAttr) {
 		return t
 	}
-	return t.asGenericTuple().Project(names)
+	var b TupleBuilder
+	for e := names.Enumerator(); e.MoveNext(); {
+		name := e.Current()
+		value, found := t.Get(name)
+		if !found {
+			return nil
+		}
+		b.Put(name, value)
+	}
+	return b.Finish()
 }
 
 // Enumerator returns an enumerator over the Values in the CharTuple.
