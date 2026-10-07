@@ -166,10 +166,8 @@ func (s Scope) MatchedWith(name string, expr Expr) (Scope, error) {
 		return s, nil
 	}
 
-	if v, exists := s.Get(name); exists {
-		if v.String() != expr.String() {
-			return Scope{}, fmt.Errorf("%s is redefined differently %s vs %s", name, v, expr)
-		}
+	if v, exists := s.Get(name); exists && !sameBinding(v, expr) {
+		return Scope{}, fmt.Errorf("%s is redefined differently %s vs %s", name, v, expr)
 	}
 
 	return s.With(name, expr), nil
@@ -242,7 +240,7 @@ func (s Scope) MatchedUpdate(t Scope) (Scope, error) {
 	// directly rather than enumerating s.
 	names, vals := t.flatten()
 	for i, name := range names {
-		if v, exists := s.Get(name); exists && v.String() != vals[i].String() {
+		if v, exists := s.Get(name); exists && !sameBinding(v, vals[i]) {
 			return Scope{}, fmt.Errorf("the value of %s is different in both scopes", name)
 		}
 	}
@@ -357,7 +355,7 @@ func (b *scopeBuilder) add(name string, val Expr) error {
 		return nil
 	}
 	if j := b.index(name); j >= 0 {
-		if b.vals[j].String() != val.String() {
+		if !sameBinding(b.vals[j], val) {
 			if !b.explain {
 				return errPatternMismatch
 			}
