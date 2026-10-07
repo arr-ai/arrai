@@ -223,3 +223,80 @@ func TestBundleCompiledPlanRunsWithoutParse(t *testing.T) {
 // 		): "//{/examples/import/bar}\n",
 // 	})
 // }
+
+// 🎯T45 (arr-ai/arrai#779): a macro's @transform result is evaluated at parse
+// time and embedded in the plan as a literal. A native function cannot be
+// embedded (its name does not identify it), so bundling must fail with a
+// clear error rather than write a bundle that runs some other native.
+func TestBundleMacroReturningNativeFails(t *testing.T) {
+	t.Parallel()
+	const src = `let g = {://grammar.lang.wbnf: doc -> /{x}; :};
+let mk = (@grammar: g, @transform: (doc: \ast //encoding.json.decode));
+let f = {:mk:x:};
+f('{"a":1}')`
+	ctx := arraictx.InitRunCtx(context.Background())
+	path := filepath.Join(t.TempDir(), "m.arrai")
+	require.NoError(t, os.WriteFile(path, []byte(src), 0o644))
+	var buf bytes.Buffer
+	err := BundledScripts(ctx, path, &buf)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "cannot bundle native function ⦑decode⦒")
+	assert.Contains(t, err.Error(), "arr-ai/arrai#779")
+}
+
+// Transforms that return a closure or a plain value still bundle, and the
+// bundle (run from plan.bin, not re-parsed source) evaluates to the same
+// value as the source. The closure cases cover: calling a native through a
+// closure (the #779 workaround), two macros whose closures call natives that
+// share a name (json and csv `decode`, the exact collision behind #779), and a
+// closure capturing a let-bound value.
+func TestBundleMacroReturningClosureOrValueRunsIdentically(t *testing.T) {
+	t.Parallel()
+	const grammar = `let g = {://grammar.lang.wbnf: doc -> /{x}; :};
+`
+	cases := map[string]string{
+		"closure calling native": grammar + `
+let mk = (@grammar: g, @transform: (doc: \ast \s //encoding.json.decode(s)));
+let f = {:mk:x:};
+f('{"a":1}')`,
+		"two closures calling same-named natives": grammar + `
+let mkj = (@grammar: g, @transform: (doc: \ast \s //encoding.json.decode(s)));
+let mkc = (@grammar: g, @transform: (doc: \ast \s //encoding.csv.decode(s)));
+let fj = {:mkj:x:};
+let fc = {:mkc:x:};
+[fj('{"a":1}'), fc('p,q')]`,
+		"closure capturing a let binding": grammar + `
+let k = 10;
+let mk = (@grammar: g, @transform: (doc: \ast \n n + k));
+let f = {:mk:x:};
+f(5)`,
+		"plain value": grammar + `
+let mk = (@grammar: g, @transform: (doc: \ast (hello: 42, items: [1, 2, 3])));
+let v = {:mk:x:};
+v.items(1)`,
+	}
+	for name, src := range cases {
+		src := src
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+			ctx := arraictx.InitRunCtx(context.Background())
+			path := filepath.Join(t.TempDir(), "m.arrai")
+			require.NoError(t, os.WriteFile(path, []byte(src), 0o644))
+
+			want, err := syntax.EvaluateExpr(ctx, path, src)
+			require.NoError(t, err)
+
+			var buf bytes.Buffer
+			require.NoError(t, BundledScripts(ctx, path, &buf))
+			runCtx, err := syntax.WithBundleRun(ctx, buf.Bytes())
+			require.NoError(t, err)
+			p, err := syntax.LoadCompiledPlan(runCtx)
+			require.NoError(t, err)
+			require.NotNil(t, p, "bundle must carry plan.bin; a source fallback would hide the bug")
+
+			got, err := syntax.EvaluateBundleCtx(ctx, buf.Bytes())
+			require.NoError(t, err)
+			assert.True(t, want.Equal(got), "source=%s bundle=%s", want, got)
+		})
+	}
+}
