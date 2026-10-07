@@ -57,7 +57,11 @@ func (s *SafeTailExpr) Eval(ctx context.Context, local Scope) (value Value, err 
 func (s SafeTailStep) apply(ctx context.Context, v Value, local Scope) (Value, error) {
 	var err error
 	if s.get {
-		v, err = NewDotExpr(v.Source(), v, s.attr).Eval(ctx, local)
+		dot := &DotExpr{ExprScanner: ExprScanner{v.Source()}, lhs: v, attr: s.attr}
+		v, err = dot.eval(ctx, local, s.safe)
+		if err == errAttrMissQuiet {
+			return nil, nil
+		}
 	} else {
 		for _, arg := range s.args {
 			a, aerr := arg.Eval(ctx, local)
