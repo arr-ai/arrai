@@ -64,8 +64,18 @@ func (x *DotExpr) String() string {
 	return fmt.Sprintf("(%s.%s)", x.lhs, x.attr)
 }
 
+// errAttrMissQuiet is what eval returns, in place of a MissingAttrError, when
+// the caller only needs to know the attribute is absent. Building the real
+// error formats the available names and captures a stack.
+var errAttrMissQuiet = fmt.Errorf("attr missing")
+
 // Eval returns the lhs
 func (x *DotExpr) Eval(ctx context.Context, local Scope) (Value, error) {
+	return x.eval(ctx, local, false)
+}
+
+// eval is Eval. With quietMiss set, an absent attribute yields errAttrMissQuiet.
+func (x *DotExpr) eval(ctx context.Context, local Scope, quietMiss bool) (Value, error) {
 	if x.attr == "*" {
 		return nil, WrapContextErr(errors.Errorf("expr.* not allowed outside tuple attr"), x, local)
 	}
@@ -98,6 +108,9 @@ func (x *DotExpr) Eval(ctx context.Context, local Scope) (Value, error) {
 					panic(fmt.Errorf("not a function: %v", f))
 				}
 			}
+		}
+		if quietMiss {
+			return nil, errAttrMissQuiet
 		}
 		return nil, WrapContextErr(MissingAttrError{errors.Errorf("Missing attr %q (available: %v)", x.attr, t.Names())},
 			x, local)
