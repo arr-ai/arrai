@@ -91,6 +91,8 @@ var (
 	arraySalt       = hashString("rel.Array")
 	posRelSalt      = hashString("github.com/arr-ai/arrai/rel.positionalRelation")
 	funcSalt        = hashString("rel.Function")
+	closureSalt     = hashString("rel.Closure")
+	recCellSalt     = hashString("rel.recCell")
 	nativeFuncSalt  = hashString("rel.NativeFunction")
 	exprClosureSalt = hashString("rel.ExprClosure")
 

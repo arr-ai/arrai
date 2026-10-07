@@ -135,3 +135,136 @@ func TestExprClosureEqualHash(t *testing.T) {
 	assert.True(t, NewExprClosure(Scope{}, nil).Equal(NewExprClosure(Scope{}, nil)))
 	assert.False(t, NewExprClosure(Scope{}, nil).Equal(a))
 }
+
+// TestClosureEqualHash pins Closure's equality rule (#777): the same function
+// node and equal captured bindings, where "captured" means the function's
+// free identifiers, not the frame they live in. Hash must agree wherever
+// Equal does.
+func TestClosureEqualHash(t *testing.T) {
+	t.Parallel()
+
+	sc := *parser.NewScanner(`\a a + k`)
+	// \a a + k, with k free.
+	addK := NewFunction(sc, IdentPattern("a"), NewAddExpr(sc, NewIdentExpr(sc, "a"), NewIdentExpr(sc, "k"))).(*Function)
+	k1 := NewClosure(EmptyScope.With("k", NewNumber(1)), addK)
+	k1Again := NewClosure(EmptyScope.With("k", NewNumber(1)), addK)
+	k2 := NewClosure(EmptyScope.With("k", NewNumber(2)), addK)
+
+	assert.True(t, k1.Equal(k1), "f = f")
+	assert.True(t, k1.Equal(k1Again), "same node, equal capture in a different frame")
+	assert.Equal(t, k1.Hash(), k1Again.Hash())
+	assert.False(t, k1.Equal(k2), "same node, different capture")
+	assert.NotEqual(t, k1.Hash(), k2.Hash())
+	assert.False(t, k1.Equal(NewNumber(1)))
+
+	// A binding the body never mentions does not take part.
+	k1Extra := NewClosure(EmptyScope.With("k", NewNumber(1)).With("unused", NewNumber(9)), addK)
+	assert.True(t, k1.Equal(k1Extra))
+	assert.Equal(t, k1.Hash(), k1Extra.Hash())
+
+	// The free identifier bound in one scope but not the other.
+	assert.False(t, k1.Equal(NewClosure(EmptyScope, addK)))
+
+	// The same body text compiled twice is two nodes, hence two functions.
+	addKCopy := NewFunction(sc, IdentPattern("a"), NewAddExpr(sc, NewIdentExpr(sc, "a"), NewIdentExpr(sc, "k")))
+	assert.False(t, k1.Equal(NewClosure(EmptyScope.With("k", NewNumber(1)), addKCopy.(*Function))))
+
+	// A set of closures differing only in a captured value keeps them all.
+	set := MustNewSet(k1, k2, k1Again, NewClosure(EmptyScope.With("k", NewNumber(3)), addK))
+	assert.Equal(t, 3, set.Count())
+	assert.True(t, set.Has(k1Again))
+
+	// Function-less closures (as some tests build) compare equal.
+	assert.True(t, NewClosure(Scope{}, nil).Equal(NewClosure(Scope{}, nil)))
+	assert.Equal(t, NewClosure(Scope{}, nil).Hash(), NewClosure(Scope{}, nil).Hash())
+	assert.False(t, NewClosure(Scope{}, nil).Equal(k1))
+}
+
+// TestClosureEqualOpaqueBody checks the fallback for a body the walker cannot
+// see into (opaqueExpr, from simplify_test.go): every visible binding takes
+// part, so an otherwise-unused binding now distinguishes two closures.
+func TestClosureEqualOpaqueBody(t *testing.T) {
+	t.Parallel()
+
+	sc := *parser.NewScanner(`\a ?`)
+	f := NewFunction(sc, IdentPattern("a"), opaqueExpr{NewIdentExpr(sc, "k")}).(*Function)
+	_, known := f.freeIdents()
+	require.False(t, known)
+
+	k1 := NewClosure(EmptyScope.With("k", NewNumber(1)), f)
+	k1Again := NewClosure(EmptyScope.With("k", NewNumber(1)), f)
+	k1Extra := NewClosure(EmptyScope.With("k", NewNumber(1)).With("unused", NewNumber(9)), f)
+	k1ExtraFlat := NewClosure(EmptyScope.Update(k1Extra.scope), f)
+
+	assert.True(t, k1.Equal(k1Again))
+	assert.Equal(t, k1.Hash(), k1Again.Hash())
+	assert.False(t, k1.Equal(k1Extra))
+	assert.False(t, k1Extra.Equal(k1))
+	// Same bindings in a differently shaped chain: equal, and hashed alike.
+	assert.True(t, k1Extra.Equal(k1ExtraFlat))
+	assert.Equal(t, k1Extra.Hash(), k1ExtraFlat.Hash())
+}
+
+// TestClosureEqualRecursiveBinding checks that closures capturing a `let rec`
+// cell compare by the cell's value without looping on the self-reference,
+// and that two evaluations of the same recursion with equal captures are
+// equal while different captures are not.
+func TestClosureEqualRecursiveBinding(t *testing.T) {
+	t.Parallel()
+
+	sc := *parser.NewScanner(`\n f(k)`)
+	// \n f(k): f and k free; f will be a recursive cell holding this closure.
+	body := NewCallExpr(sc, NewIdentExpr(sc, "f"), NewIdentExpr(sc, "k"))
+	fn := NewFunction(sc, IdentPattern("n"), body).(*Function)
+	tie := func(k Value) Closure {
+		cell := &recCell{name: "f"}
+		c := NewClosure(EmptyScope.With("k", k).With("f", cell), fn)
+		cell.val, cell.set = c, true
+		return c
+	}
+	a, b, c := tie(NewNumber(1)), tie(NewNumber(1)), tie(NewNumber(2))
+
+	assert.True(t, a.Equal(a))
+	assert.True(t, a.Equal(b))
+	assert.Equal(t, a.Hash(), b.Hash())
+	assert.False(t, a.Equal(c))
+	assert.Equal(t, 2, MustNewSet(a, b, c).Count())
+
+	// An unset cell (still being evaluated) equals only itself.
+	unset := &recCell{name: "f"}
+	assert.True(t, sameBinding(unset, unset))
+	assert.False(t, sameBinding(unset, &recCell{name: "f"}))
+}
+
+// TestSameBindingComparesValues checks that the scope matchers (`[x, x]`
+// patterns and friends) compare bindings by value rather than by printed
+// form, which is what let two different closures of one function match.
+func TestSameBindingComparesValues(t *testing.T) {
+	t.Parallel()
+
+	sc := *parser.NewScanner(`\a a + k`)
+	addK := NewFunction(sc, IdentPattern("a"), NewAddExpr(sc, NewIdentExpr(sc, "a"), NewIdentExpr(sc, "k"))).(*Function)
+	k1 := NewClosure(EmptyScope.With("k", NewNumber(1)), addK)
+	k2 := NewClosure(EmptyScope.With("k", NewNumber(2)), addK)
+	require.Equal(t, k1.String(), k2.String(), "the printed forms do not tell them apart")
+
+	assert.True(t, sameBinding(k1, k1))
+	assert.False(t, sameBinding(k1, k2))
+	assert.True(t, sameBinding(NewNumber(1), NewNumber(1)))
+	assert.False(t, sameBinding(NewNumber(1), NewNumber(2)))
+	assert.True(t, sameBinding(nil, nil))
+	assert.False(t, sameBinding(nil, NewNumber(1)))
+
+	var b scopeBuilder
+	require.NoError(t, b.add("x", k1))
+	assert.NoError(t, b.add("x", k1))
+	assert.ErrorIs(t, b.add("x", k2), errPatternMismatch)
+
+	s := EmptyScope.With("x", k1)
+	_, err := s.MatchedWith("x", k1)
+	assert.NoError(t, err)
+	_, err = s.MatchedWith("x", k2)
+	assert.Error(t, err)
+	_, err = s.MatchedUpdate(EmptyScope.With("x", k2))
+	assert.Error(t, err)
+}

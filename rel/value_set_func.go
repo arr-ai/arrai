@@ -18,6 +18,15 @@ type Function struct {
 	body Expr
 	// columnOnly is 0 unknown, 1 yes, 2 no (ident used as a Value). 🎯T29.9
 	columnOnly uint32
+	// free caches freeIdents of the function, which Closure equality and
+	// hashing consult on every comparison; nil until first computed.
+	free atomic.Pointer[freeIdentSet]
+}
+
+// freeIdentSet is the cached result of freeIdents for a Function.
+type freeIdentSet struct {
+	names []string
+	known bool
 }
 
 // NewFunction returns a new function.
@@ -63,6 +72,22 @@ func (f *Function) isColumnOnly() bool {
 		atomic.StoreUint32(&f.columnOnly, 2)
 	}
 	return false
+}
+
+// freeIdents returns the identifiers the function refers to from its
+// enclosing scope (its free variables, with the formal argument bound), and
+// whether that set is known; see the package-level freeIdents. Computed once
+// per node and cached. A nil function has no free identifiers.
+func (f *Function) freeIdents() (names []string, known bool) {
+	if f == nil {
+		return nil, true
+	}
+	if cached := f.free.Load(); cached != nil {
+		return cached.names, cached.known
+	}
+	names, known = freeIdents(f)
+	f.free.Store(&freeIdentSet{names: names, known: known})
+	return names, known
 }
 
 // Hash computes a hash for a Function. Functions are compared by identity
