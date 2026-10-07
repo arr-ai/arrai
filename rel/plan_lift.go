@@ -21,7 +21,16 @@ func decodeExpr(n PlanNode) (Expr, error) {
 		if len(n.Kids) != 1 {
 			return nil, fmt.Errorf("plan: lit needs 1 kid")
 		}
-		return decodeValue(n.Kids[0])
+		v, err := decodeValue(n.Kids[0])
+		if err != nil {
+			return nil, err
+		}
+		if v == nil {
+			return nil, nil
+		}
+		// A bare Value as an Expr is re-boxed on every Eval; a LiteralExpr
+		// keeps the one box.
+		return NewLiteralExpr(planSrc, v), nil
 	case "num", "str", "bytes", "none", "true", "arrayval", "setval", "tuple",
 		"aitemval", "scharval", "bbyteval", "dentryval", "native", "hole":
 		return decodeValue(n)
