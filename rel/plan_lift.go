@@ -32,7 +32,8 @@ func decodeExpr(n PlanNode) (Expr, error) {
 		// keeps the one box.
 		return NewLiteralExpr(planSrc, v), nil
 	case "num", "str", "bytes", "none", "true", "arrayval", "setval", "tuple",
-		"aitemval", "scharval", "bbyteval", "dentryval", "native", "hole":
+		"aitemval", "scharval", "bbyteval", "dentryval", "native", "hole",
+		planClosureKind, planExprClosureKind:
 		return decodeValue(n)
 	case "bin":
 		return decodeBin(n)
@@ -629,6 +630,36 @@ func decodeValue(n PlanNode) (Value, error) {
 			return nil, fmt.Errorf("plan: unknown native %q", n.Op)
 		}
 		return f, nil
+	case planClosureKind:
+		if len(n.Kids) == 0 {
+			return nil, fmt.Errorf("plan: %s needs a fn kid", planClosureKind)
+		}
+		e, err := decodeFn(n.Kids[0])
+		if err != nil {
+			return nil, err
+		}
+		f, ok := e.(*Function)
+		if !ok {
+			return nil, fmt.Errorf("plan: %s kid 0 is %T, not a function", planClosureKind, e)
+		}
+		scope, err := decodeCaptured(planClosureKind, n.Kids[1:])
+		if err != nil {
+			return nil, err
+		}
+		return NewClosure(scope, f), nil
+	case planExprClosureKind:
+		if len(n.Kids) == 0 {
+			return nil, fmt.Errorf("plan: %s needs an expr kid", planExprClosureKind)
+		}
+		e, err := decodeExpr(n.Kids[0])
+		if err != nil {
+			return nil, err
+		}
+		scope, err := decodeCaptured(planExprClosureKind, n.Kids[1:])
+		if err != nil {
+			return nil, err
+		}
+		return NewExprClosure(scope, e), nil
 	default:
 		e, err := decodeExpr(n)
 		if err != nil {
@@ -643,4 +674,20 @@ func decodeValue(n PlanNode) (Value, error) {
 
 func compareCtor(op string) CompareFunc {
 	return CompareOps[op]
+}
+
+// decodeCaptured rebuilds a closure's captured scope from its "capture" kids.
+func decodeCaptured(kind string, kids []PlanNode) (Scope, error) {
+	scope := EmptyScope
+	for i, k := range kids {
+		if k.K != planCaptureKind || len(k.Kids) != 1 {
+			return Scope{}, fmt.Errorf("plan: %s kid %d is %q, not a capture", kind, i+1, k.K)
+		}
+		e, err := decodeExpr(k.Kids[0])
+		if err != nil {
+			return Scope{}, err
+		}
+		scope = scope.With(k.Attr, e)
+	}
+	return scope, nil
 }

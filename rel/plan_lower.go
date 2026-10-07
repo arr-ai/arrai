@@ -20,12 +20,7 @@ func encodeExpr(e Expr) (PlanNode, error) {
 		}
 	}
 	if v, ok := e.(Value); ok {
-		switch v.(type) {
-		case Closure, ExprClosure:
-			// Fall through: these are Exprs that happen to be Values.
-		default:
-			return encodeValue(v)
-		}
+		return encodeValue(v)
 	}
 	switch e := e.(type) {
 	case IdentExpr:
@@ -454,8 +449,30 @@ func encodeValue(v Value) (PlanNode, error) {
 			return PlanNode{}, err
 		}
 		return node("dentryval", at, val), nil
+	case Closure:
+		fn, err := encodeFn(v.f)
+		if err != nil {
+			return PlanNode{}, err
+		}
+		names, known := v.f.freeIdents()
+		return encodeCaptured(planClosureKind, fn, v.scope, names, known)
+	case ExprClosure:
+		body, err := encodeExpr(v.e)
+		if err != nil {
+			return PlanNode{}, err
+		}
+		names, known := freeIdents(v.e)
+		return encodeCaptured(planExprClosureKind, body, v.scope, names, known)
 	case *NativeFunction:
-		return PlanNode{K: "native", Op: v.name}, nil
+		// A native is a Go function. A plan node can only carry its name, and
+		// names are not unique (csv, json and yaml each have a `decode`), so a
+		// name-only node decoded to whichever native registered last
+		// (arr-ai/arrai#779). Refuse at bundle time instead.
+		return PlanNode{}, fmt.Errorf(
+			"plan: cannot bundle native function %s: a native is identified by name only, "+
+				"which is not unique (arr-ai/arrai#779); have the macro transform return a closure "+
+				"that calls it instead, e.g. \\x //encoding.json.decode(x)",
+			v.name)
 	case seqPipeline:
 		forced, err := v.force()
 		if err != nil {
@@ -477,6 +494,40 @@ func encodeValue(v Value) (PlanNode, error) {
 		}
 		return PlanNode{}, fmt.Errorf("plan: cannot encode value %T", v)
 	}
+}
+
+// Plan node kinds for closures (🎯T45). A closure is its function (or
+// expression) plus the bindings it captured, one "capture" kid per free
+// identifier that is bound in the captured scope. Identifiers bound in
+// neither the closure's scope nor the caller's (such as the stdlib root `//`,
+// which PackageExpr rebinds on demand) are left for the run-time scope.
+const (
+	planClosureKind     = "closure"
+	planExprClosureKind = "eclosure"
+	planCaptureKind     = "capture"
+)
+
+func encodeCaptured(kind string, body PlanNode, scope Scope, names []string, known bool) (PlanNode, error) {
+	if !known {
+		return PlanNode{}, fmt.Errorf("plan: cannot encode %s: its free identifiers are unknown", kind)
+	}
+	kids := make([]PlanNode, 0, 1+len(names))
+	kids = append(kids, body)
+	for _, name := range names {
+		binding, bound := scope.Get(name)
+		if !bound {
+			continue
+		}
+		if _, isCell := binding.(*recCell); isCell {
+			return PlanNode{}, fmt.Errorf("plan: cannot encode %s capturing recursive binding %q", kind, name)
+		}
+		n, err := encodeExpr(binding)
+		if err != nil {
+			return PlanNode{}, err
+		}
+		kids = append(kids, PlanNode{K: planCaptureKind, Attr: name, Kids: []PlanNode{n}})
+	}
+	return PlanNode{K: kind, Kids: kids}, nil
 }
 
 func encodeTuple(t Tuple) (PlanNode, error) {
