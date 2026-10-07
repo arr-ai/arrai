@@ -43,6 +43,20 @@ func (e CondExpr) String() string {
 	return b.String()
 }
 
+// isDiscardExpr reports whether e is the `_` fallback, possibly parenthesised.
+func isDiscardExpr(e Expr) bool {
+	for {
+		switch x := e.(type) {
+		case IdentExpr:
+			return x.ident == "_"
+		case ExprExpr:
+			e = x.Expr
+		default:
+			return false
+		}
+	}
+}
+
 // Eval returns the value of true condition, or default condition value.
 func (e CondExpr) Eval(ctx context.Context, local Scope) (Value, error) {
 	var trueCond *DictEntryTupleExpr
@@ -51,8 +65,8 @@ func (e CondExpr) Eval(ctx context.Context, local Scope) (Value, error) {
 	case DictExpr:
 		for _, expr := range c.entryExprs {
 			tempExpr := expr
-			// Can't call Eval if it is `_`, so compare its String.
-			if expr.at.String() == "_" {
+			// Can't call Eval if it is `_`.
+			if isDiscardExpr(expr.at) {
 				trueCond = &tempExpr
 				break
 			}
