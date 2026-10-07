@@ -6,6 +6,7 @@ import (
 	"context"
 	"fmt"
 	"reflect"
+	"sync"
 
 	"github.com/go-errors/errors"
 
@@ -43,14 +44,33 @@ func (m multipleValues) String() string {
 // Dict is a map from keys to values.
 type Dict struct {
 	m    frozen.Map[Value, any]
-	hash *hashCell // shared across copies; nil only for empty Dict{}
+	cell *dictCell // shared across copies; nil only for empty Dict{}
+}
+
+// dictCell holds what a Dict memoises. Dicts are immutable, so one
+// computation is valid for the value's lifetime.
+type dictCell struct {
+	hashCell
+	keysOnce sync.Once
+	keys     []Value
+}
+
+// orderedKeys returns the keys in ValueLess order, computed once. Less is
+// called once per comparison of a sort, so ordering the keys each time is
+// quadratic work. The slice is shared: callers must not modify it.
+func (d Dict) orderedKeys() []Value {
+	if d.cell == nil {
+		return nil
+	}
+	d.cell.keysOnce.Do(func() { d.cell.keys = d.m.Keys().OrderedElements(ValueLess) })
+	return d.cell.keys
 }
 
 func newDict(m frozen.Map[Value, any]) Dict {
 	if m.IsEmpty() {
 		return Dict{}
 	}
-	return Dict{m: m, hash: &hashCell{}}
+	return Dict{m: m, cell: &dictCell{}}
 }
 
 // AsDict checks whether a Value is a valid dictionary.
@@ -104,10 +124,10 @@ func NewDict(allowDupKeys bool, entries ...DictEntryTuple) (Set, error) {
 // equal GenericSet of those entries. The map's own Hash() uses a different
 // salt and must not be used. Empty hashes like EmptySet.
 func (d Dict) Hash() uintptr {
-	if d.hash == nil {
+	if d.cell == nil {
 		return frozen.Set[Value]{}.Hash()
 	}
-	return d.hash.get(func() uintptr {
+	return d.cell.get(func() uintptr {
 		var b frozen.SetBuilder[Value]
 		for e := d.Enumerator(); e.MoveNext(); {
 			b.Add(e.Current())
@@ -227,12 +247,12 @@ func (d Dict) Less(v Value) bool {
 	if d.Kind() != v.Kind() {
 		return d.Kind() < v.Kind()
 	}
-	dKeys := d.m.Keys().OrderedElements(ValueLess)
+	dKeys := d.orderedKeys()
 	vDict, ok := AsDict(v)
 	if !ok {
 		return true
 	}
-	vKeys := vDict.m.Keys().OrderedElements(ValueLess)
+	vKeys := vDict.orderedKeys()
 	n := len(dKeys)
 	if n > len(vKeys) {
 		n = len(vKeys)
