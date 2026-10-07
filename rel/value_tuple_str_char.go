@@ -202,7 +202,7 @@ func (t StringCharTuple) Names() Names {
 // Project returns a tuple with the given names from this tuple, or nil if any
 // name wasn't found.
 func (t StringCharTuple) Project(names Names) Tuple {
-	if names.Has("@") && names.Has(StringCharAttr) {
+	if names.Count() == 2 && names.Has("@") && names.Has(StringCharAttr) {
 		return t
 	}
 	return t.asGenericTuple().Project(names)

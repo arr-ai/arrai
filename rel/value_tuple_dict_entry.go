@@ -196,7 +196,7 @@ func (t DictEntryTuple) Names() Names {
 // Project returns a tuple with the given names from this tuple, or nil if any
 // name wasn't found.
 func (t DictEntryTuple) Project(names Names) Tuple {
-	if names.Has("@") && names.Has(DictValueAttr) {
+	if names.Count() == 2 && names.Has("@") && names.Has(DictValueAttr) {
 		return t
 	}
 	return t.asGenericTuple().Project(names)

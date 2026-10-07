@@ -205,7 +205,7 @@ func (t BytesByteTuple) Names() Names {
 // Project returns a tuple with the given names from this tuple, or nil if any
 // name wasn't found.
 func (t BytesByteTuple) Project(names Names) Tuple {
-	if names.Has("@") && names.Has(BytesByteAttr) {
+	if names.Count() == 2 && names.Has("@") && names.Has(BytesByteAttr) {
 		return t
 	}
 	return t.asGenericTuple().Project(names)
