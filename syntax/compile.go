@@ -36,8 +36,25 @@ const exprTag = "expr"
 
 var loggingOnce sync.Once
 
-// Compile compiles source string.
+// Compile compiles source string into an Expr for Go code to evaluate.
+//
+// The returned Expr's Eval Forces its result (see rel.Force), so values
+// reach the caller as concrete rel.Array/rel.Dict rather than suspended >>
+// pipelines, and errors a pipeline deferred are returned by Eval (#789).
+// Values captured in closures are not forced: call arr.ai functions from Go
+// with rel.CallForced. rel.Unforced recovers the unwrapped Expr.
 func Compile(ctx context.Context, filePath, source string) (rel.Expr, error) {
+	expr, err := compile(ctx, filePath, source)
+	if err != nil {
+		return nil, err
+	}
+	return rel.ForceResult(expr)
+}
+
+// compile is Compile without forcing the result, for code whose result is
+// consumed in-language (imports, stdlib sources), where forcing would undo
+// >> fusion and cost a walk per import.
+func compile(ctx context.Context, filePath, source string) (rel.Expr, error) {
 	dirpath := "."
 	if filePath != "" {
 		if filePath == NoPath {
@@ -72,6 +89,15 @@ func Compile(ctx context.Context, filePath, source string) (rel.Expr, error) {
 	return rel.Simplify(expr), nil
 }
 
+func mustCompileUnforced(ctx context.Context, filePath, source string) rel.Expr {
+	expr, err := compile(ctx, filePath, source)
+	if err != nil {
+		panic(err)
+	}
+	return expr
+}
+
+// MustCompile is Compile, panicking on error.
 func MustCompile(ctx context.Context, filePath, source string) rel.Expr {
 	expr, err := Compile(ctx, filePath, source)
 	if err != nil {
@@ -80,6 +106,9 @@ func MustCompile(ctx context.Context, filePath, source string) rel.Expr {
 	return expr
 }
 
+// CompileExpr compiles a parsed AST. Unlike Compile, it does not force the
+// result of the Expr it returns; Go callers that inspect the concrete types
+// of its values should wrap it with rel.ForceResult or rel.Force the values.
 func (pc ParseContext) CompileExpr(ctx context.Context, b ast.Branch) (rel.Expr, error) {
 	// Note: please make sure if it is necessary to add new syntax name before `expr`.
 	name, c := which(b,

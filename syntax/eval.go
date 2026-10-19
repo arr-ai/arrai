@@ -49,6 +49,7 @@ func EvalWithScope(ctx context.Context, path, source string, scope rel.Scope) (r
 		return nil, err
 	}
 
+	// Compile's Expr has already forced value (#789).
 	return value, nil
 }
 
@@ -82,6 +83,7 @@ func EvaluateBundleCtx(ctx context.Context, bundle []byte, args ...string) (rel.
 		done := timePhase("eval", compiledPlanPath)
 		v, err := p.Eval(arraictx.ContextWithIsCompiling(ctx, false), rel.EmptyScope)
 		done()
+		// Plan.Eval forces v (#789).
 		return v, err
 	}
 	ctx, mainFileSource, path := GetMainBundleSource(ctx)

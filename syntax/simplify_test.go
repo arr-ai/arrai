@@ -100,12 +100,12 @@ func TestSimplifyKeepsEffectOrder(t *testing.T) {
 	ctx := arraictx.InitRunCtx(context.Background())
 	e, err := Compile(ctx, NoPath, `let x = //log.print(1); x`)
 	require.NoError(t, err)
-	_, isLet := e.(*rel.ArrowExpr)
+	_, isLet := rel.Unforced(e).(*rel.ArrowExpr)
 	require.True(t, isLet, "%v", e)
 
 	// A call-free, effect-free rhs does fold, so the guard is what kept it.
 	e, err = Compile(ctx, NoPath, `let x = "A" ++ "b"; x`)
 	require.NoError(t, err)
-	_, isLet = e.(*rel.ArrowExpr)
+	_, isLet = rel.Unforced(e).(*rel.ArrowExpr)
 	require.Equal(t, !rel.SimplifyEnabled(), isLet, "%v", e)
 }

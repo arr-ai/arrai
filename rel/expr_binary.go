@@ -662,6 +662,10 @@ func NewRankExpr(scanner parser.Scanner, a, key Expr) Expr {
 		})
 }
 
+// Call calls a with b, as the arr.ai expression a(b) does. Like any
+// in-language call, its result may hold suspended >> pipelines, which are
+// not rel.Array/rel.Dict to a Go type check: use CallForced, or Force the
+// result, before inspecting its concrete type.
 func Call(ctx context.Context, a, b Value, _ Scope) (Value, error) {
 	if x, ok := a.(Set); ok {
 		return SetCall(ctx, x, b)

@@ -298,11 +298,11 @@ func fileValue(ctx context.Context, decoder rel.Tuple, filename string) (rel.Exp
 }
 
 func bytesValue(ctx context.Context, filename string, data []byte) (rel.Expr, error) {
-	compile := func() (rel.Expr, error) {
-		return Compile(ctx, filename, string(data))
+	compileFn := func() (rel.Expr, error) {
+		return compile(ctx, filename, string(data))
 	}
 	if filename != NoPath {
-		return importcache.GetOrAddFromCache(ctx, filename, compile)
+		return importcache.GetOrAddFromCache(ctx, filename, compileFn)
 	}
-	return compile()
+	return compileFn()
 }

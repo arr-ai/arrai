@@ -30,10 +30,11 @@ const (
 var errFileAndDirMustNotExist = errors.Errorf("%s and %s must not exist", dirField, fileField)
 var errFileOrDirMustExist = errors.Errorf("exactly one of %s or %s must exist", dirField, fileField)
 
-// OutputValue handles output writing for evaluated values.
+// OutputValue handles output writing for evaluated values. It Forces value
+// (see rel.Force), so nested >> results are written like any array or dict.
 func OutputValue(ctx context.Context, value rel.Value, w io.Writer, out string) error {
 	var err error
-	value, err = rel.Observe(value)
+	value, err = rel.Force(value)
 	if err != nil {
 		return err
 	}
