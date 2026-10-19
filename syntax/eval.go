@@ -49,7 +49,9 @@ func EvalWithScope(ctx context.Context, path, source string, scope rel.Scope) (r
 		return nil, err
 	}
 
-	return value, nil
+	// Materialise suspended >> pipelines so embedders see concrete
+	// rel.Array/rel.Dict values and deferred errors surface here (#789).
+	return rel.Force(value)
 }
 
 // EvaluateExpr evaluate the passed in arrai script `source` and returns the evaluated arrai value.
@@ -82,7 +84,10 @@ func EvaluateBundleCtx(ctx context.Context, bundle []byte, args ...string) (rel.
 		done := timePhase("eval", compiledPlanPath)
 		v, err := p.Eval(arraictx.ContextWithIsCompiling(ctx, false), rel.EmptyScope)
 		done()
-		return v, err
+		if err != nil {
+			return nil, err
+		}
+		return rel.Force(v)
 	}
 	ctx, mainFileSource, path := GetMainBundleSource(ctx)
 	return EvaluateExpr(ctx, path, string(mainFileSource))
