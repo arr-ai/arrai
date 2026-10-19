@@ -10,6 +10,9 @@ func encodeExpr(e Expr) (PlanNode, error) {
 	if e == nil {
 		return PlanNode{K: "nil"}, nil
 	}
+	// The root of a compiled program is wrapped to force its result at the
+	// Go boundary; Plan.Eval does that for a lowered plan.
+	e = Unforced(e)
 	for _, h := range planLowerHooks {
 		n, ok, err := h(e)
 		if err != nil {

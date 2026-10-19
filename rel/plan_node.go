@@ -74,12 +74,18 @@ func LiftPlan(p *Plan) (Expr, error) {
 	return decodeExpr(p.Root)
 }
 
+// Eval evaluates the plan as a program and Forces the result, so Go callers
+// get concrete values: see Force.
 func (p *Plan) Eval(ctx context.Context, local Scope) (Value, error) {
 	e, err := LiftPlan(p)
 	if err != nil {
 		return nil, err
 	}
-	return e.Eval(ctx, local)
+	v, err := e.Eval(ctx, local)
+	if err != nil {
+		return nil, err
+	}
+	return Force(v)
 }
 
 func EncodePlan(p *Plan) ([]byte, error) {

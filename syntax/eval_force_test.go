@@ -94,3 +94,77 @@ func TestEvaluateExprSurfacesDeferredPipelineError(t *testing.T) {
 	_, err = EvaluateExpr(context.Background(), ".", `(x: [1, 'a'] >> . + 1)`)
 	require.Error(t, err)
 }
+
+// TestCompileEvalForces covers embedders that Compile once and Eval per
+// scope (review of #790): the nested attribute and the deferred error.
+func TestCompileEvalForces(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+
+	expr, err := Compile(ctx, ".", `(appName: x >> .s)`)
+	require.NoError(t, err)
+	x, err := EvaluateExpr(ctx, ".", `[(s: 'a'), (s: 'b')]`)
+	require.NoError(t, err)
+	v, err := expr.Eval(ctx, rel.Scope{}.With("x", x))
+	require.NoError(t, err)
+	attr, _ := v.(rel.Tuple).Get("appName")
+	_, ok := attr.(rel.Array)
+	assert.True(t, ok, "appName: got %T", attr)
+	assert.Equal(t, rel.Unforced(expr).String(), expr.String(), "String delegates")
+	assert.NotEqual(t, expr, rel.Unforced(expr), "Compile wraps a non-constant expr")
+
+	bad, err := Compile(ctx, ".", `[1, 'a'] >> . + 1`)
+	require.NoError(t, err)
+	_, err = bad.Eval(ctx, rel.EmptyScope)
+	require.Error(t, err)
+
+	bad, err = Compile(ctx, ".", `\x (r: x >> . + 1)`)
+	require.NoError(t, err)
+	f, err := bad.Eval(ctx, rel.EmptyScope)
+	require.NoError(t, err)
+	_, err = rel.CallForced(ctx, f, rel.NewArray(rel.NewNumber(1), rel.NewString([]rune("a"))))
+	require.Error(t, err)
+
+	v, err = MustCompile(ctx, ".", `[1, 2] >> . + 1`).Eval(ctx, rel.EmptyScope)
+	require.NoError(t, err)
+	_, ok = v.(rel.Array)
+	assert.True(t, ok, "MustCompile: got %T", v)
+}
+
+// TestCallForcedFromGo: a closure returned to Go and called with
+// rel.CallForced yields concrete values; rel.Call stays lazy, as it is the
+// in-language call.
+func TestCallForcedFromGo(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	f, err := EvaluateExpr(ctx, ".", `\xs (appName: xs >> .s)`)
+	require.NoError(t, err)
+	arg, err := EvaluateExpr(ctx, ".", `[(s: 'a'), (s: 'b')]`)
+	require.NoError(t, err)
+
+	v, err := rel.CallForced(ctx, f, arg)
+	require.NoError(t, err)
+	attr, _ := v.(rel.Tuple).Get("appName")
+	_, ok := attr.(rel.Array)
+	assert.True(t, ok, "CallForced: got %T", attr)
+}
+
+// TestCompiledPlanEvalForces: a lowered, encoded and decoded plan (the
+// compiled-bundle path) also returns concrete values from Plan.Eval.
+func TestCompiledPlanEvalForces(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	expr, err := Compile(ctx, ".", `(appName: [(s: 'a'), (s: 'b')] >> .s)`)
+	require.NoError(t, err)
+	p, err := rel.LowerPlan(expr)
+	require.NoError(t, err)
+	b, err := rel.EncodePlan(p)
+	require.NoError(t, err)
+	p, err = rel.DecodePlan(b)
+	require.NoError(t, err)
+	v, err := p.Eval(ctx, rel.EmptyScope)
+	require.NoError(t, err)
+	attr, _ := v.(rel.Tuple).Get("appName")
+	_, ok := attr.(rel.Array)
+	assert.True(t, ok, "plan: got %T", attr)
+}

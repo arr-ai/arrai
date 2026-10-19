@@ -268,7 +268,7 @@ func createFunc3Attr(name string, f func(ctx context.Context, a, b, c rel.Value)
 }
 
 func mustParseExpr(s string) rel.Expr {
-	return MustCompile(context.TODO(), NoPath, s)
+	return mustCompileUnforced(context.TODO(), NoPath, s)
 }
 
 func mustParseLit(s string) rel.Value {
@@ -288,7 +288,7 @@ func mustParseBundle(b []byte) rel.Value {
 		panic(err)
 	}
 	ctx, mainFileSource, path := GetMainBundleSource(ctx)
-	lit, err := MustCompile(ctx, path, string(mainFileSource)).Eval(ctx, rel.EmptyScope)
+	lit, err := mustCompileUnforced(ctx, path, string(mainFileSource)).Eval(ctx, rel.EmptyScope)
 	if err != nil {
 		panic(err)
 	}

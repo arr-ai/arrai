@@ -138,7 +138,7 @@ func withBundledConfig(ctx context.Context) context.Context {
 		panic(err)
 	}
 
-	expr, err := Compile(ctx, BundleConfig, string(buf))
+	expr, err := compile(ctx, BundleConfig, string(buf))
 	if err != nil {
 		// config file not generated properly
 		panic(err)
