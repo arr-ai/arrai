@@ -1332,7 +1332,7 @@ func (pc ParseContext) compilePackage(ctx context.Context, b ast.Branch, c ast.C
 				return nil, fmt.Errorf("local import %q invalid; no local context", name)
 			}
 			importPath := filepath.Clean(filePath)
-			displayPath := filePath
+			displayPath := filepath.ToSlash(importPath)
 			if !fromRoot {
 				importPath = filepath.Join(pc.SourceDir, filePath)
 				// importPath is now absolute and, when pc.SourceDir sits inside
