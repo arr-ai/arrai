@@ -146,6 +146,26 @@ func TestBundlePlanImportPathsArePortable(t *testing.T) {
 	require.True(t, sawModule, "relative import //{./...} must lower to a /module/... path, got %q", paths)
 }
 
+func TestBundlePlanRootImportPathsUseForwardSlashes(t *testing.T) {
+	t.Parallel()
+	files := map[string]string{
+		SentinelPath("/github.com/test/test"): "module github.com/test/test\n",
+		"/github.com/test/test/test.arrai":    "//{/a/b/c}",
+		"/github.com/test/test/a/b/c.arrai":   "1",
+	}
+	zipBytes := MustCreateTestBundleFromMap(t, files, syntax.MustAbs(t, "/github.com/test/test/test.arrai"))
+	ctx, err := syntax.WithBundleRun(arraictx.InitRunCtx(context.Background()), zipBytes)
+	require.NoError(t, err)
+	p, err := syntax.LoadCompiledPlan(ctx)
+	require.NoError(t, err)
+	require.NotNil(t, p)
+	paths := collectImportPaths(p.Root)
+	require.Contains(t, paths, "a/b/c")
+	for _, path := range paths {
+		require.NotContains(t, path, `\`, "plan.bin import path must be platform-independent")
+	}
+}
+
 func collectImportPaths(n rel.PlanNode) []string {
 	var out []string
 	var walk func(rel.PlanNode)
