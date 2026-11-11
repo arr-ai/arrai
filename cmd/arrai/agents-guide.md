@@ -34,7 +34,7 @@ cd arrai
 make install    # builds binary, installs to GOPATH/bin, creates ai/ax symlinks
 ```
 
-Requires Go 1.25 or later.
+Requires Go 1.26 or later.
 
 ### From releases
 
